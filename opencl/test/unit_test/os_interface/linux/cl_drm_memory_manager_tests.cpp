@@ -440,7 +440,7 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreated
     mock->reset();
 }
 
-HWTEST2_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenAllocateGraphicsMemoryForImageIsUsed, IsAtMostXe3Core) {
+HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenAllocateGraphicsMemoryForImageIsUsed) {
     if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }

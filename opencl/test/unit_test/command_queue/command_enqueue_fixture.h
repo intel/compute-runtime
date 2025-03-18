@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
@@ -19,7 +18,6 @@
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "test_traits_common.h"
 
@@ -41,7 +39,7 @@ struct CommandDeviceFixture : public ClDeviceFixture,
 
 struct CommandEnqueueBaseFixture : CommandDeviceFixture,
                                    public IndirectHeapFixture,
-                                   virtual public ClHardwareParse {
+                                   public ClHardwareParse {
     using IndirectHeapFixture::setUp;
     void setUp(cl_command_queue_properties cmdQueueProperties = 0) {
         CommandDeviceFixture::setUp(cmdQueueProperties);
@@ -66,29 +64,6 @@ struct CommandEnqueueFixture : public CommandEnqueueBaseFixture,
     void tearDown() {
         CommandEnqueueBaseFixture::tearDown();
         CommandStreamFixture::tearDown();
-    }
-};
-
-struct SurfaceStateAccessor : virtual public ClHardwareParse {
-    template <typename FamilyType>
-    const FamilyType::RENDER_SURFACE_STATE *getSurfaceState(std::unique_ptr<MockCommandQueueHw<FamilyType>> &mockCmdQ, uint32_t index) {
-        typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
-
-        const RENDER_SURFACE_STATE *surfaceState = nullptr;
-
-        auto kernel = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel();
-        const auto &kernelInfo = kernel->getKernelInfo();
-        if (kernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode == KernelDescriptor::AddressingMode::Bindless) {
-            auto bindlessOffset = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(index).template as<ArgDescImage>().bindless);
-            auto bindlessSurfaceStateIndex = kernel->getSurfaceStateIndexForBindlessOffset(bindlessOffset);
-            void *surfaceStateAddress = ptrOffset(kernel->getSurfaceStateHeap(), bindlessSurfaceStateIndex * sizeof(RENDER_SURFACE_STATE));
-            surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(surfaceStateAddress);
-        } else {
-            uint32_t bindfulIndex = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(index).template as<ArgDescImage>().bindful) / sizeof(RENDER_SURFACE_STATE);
-            surfaceState = HardwareParse::getSurfaceState<FamilyType>(&mockCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), bindfulIndex);
-        }
-
-        return surfaceState;
     }
 };
 

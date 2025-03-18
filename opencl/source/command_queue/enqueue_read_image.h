@@ -145,9 +145,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImageImpl(
     dc.bcsSplit = bcsSplit;
     dc.direction = csrSelectionArgs.direction;
 
-    const bool useStateless = forceStateless(srcImage->getSize());
-    const bool useHeapless = this->getHeaplessModeEnabled();
-    auto eBuiltInOps = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(useStateless, useHeapless);
+    auto eBuiltInOps = EBuiltInOps::copyImage3dToBuffer;
     MultiDispatchInfo dispatchInfo(dc);
 
     const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);

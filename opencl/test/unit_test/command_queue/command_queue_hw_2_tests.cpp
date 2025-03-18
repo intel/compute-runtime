@@ -216,20 +216,20 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferCallWhenBu
 }
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueWriteImageCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
-    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
 
     bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
 
-    for (auto useHeapless : {false, heaplessAllowed}) {
+    for (auto useHeapless : {false, true}) {
+
         if (useHeapless && !heaplessAllowed) {
             continue;
         }
-
         reinterpret_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->heaplessModeEnabled = useHeapless;
-        setUpImpl(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(false, useHeapless));
+        auto builtInType = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyBufferToImage3d>(useHeapless);
+
+        setUpImpl(builtInType);
 
         std::unique_ptr<Image> dstImage(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
 
@@ -271,9 +271,7 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueWriteImageCallWhenBuiltin
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
-    setUpImpl(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(false, heaplessAllowed));
+    setUpImpl(EBuiltInOps::copyImage3dToBuffer);
 
     std::unique_ptr<Image> dstImage(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
 

@@ -180,9 +180,10 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenSurfaceStateIsCorrect) {
 
     enqueueCopyImage<FamilyType>();
 
+    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
     for (uint32_t i = 0; i < 2; ++i) {
-        const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, i);
-
+        uint32_t index = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(i).template as<ArgDescImage>().bindful) / sizeof(RENDER_SURFACE_STATE);
+        const auto surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), index);
         const auto &imageDesc = dstImage->getImageDesc();
         EXPECT_EQ(imageDesc.image_width, surfaceState->getWidth());
         EXPECT_EQ(imageDesc.image_height, surfaceState->getHeight());
@@ -200,10 +201,12 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenSurfaceStateIsCorrect) {
         EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState->getSurfaceVerticalAlignment());
     }
 
-    const auto srcSurfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, 0);
+    uint32_t srcIndex = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(0).template as<ArgDescImage>().bindful) / sizeof(RENDER_SURFACE_STATE);
+    const auto srcSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), srcIndex);
     EXPECT_EQ(srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), srcSurfaceState->getSurfaceBaseAddress());
 
-    const auto dstSurfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, 1);
+    uint32_t dstIndex = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(1).template as<ArgDescImage>().bindful) / sizeof(RENDER_SURFACE_STATE);
+    const auto dstSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), dstIndex);
     EXPECT_EQ(dstImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstSurfaceState->getSurfaceBaseAddress());
 }
 

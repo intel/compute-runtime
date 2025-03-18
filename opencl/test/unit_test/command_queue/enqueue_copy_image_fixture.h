@@ -17,7 +17,6 @@
 namespace NEO {
 
 struct EnqueueCopyImageTest : public CommandEnqueueFixture,
-                              public SurfaceStateAccessor,
                               public ::testing::Test {
 
     void SetUp(void) override {

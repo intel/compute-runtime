@@ -17,7 +17,6 @@
 namespace NEO {
 
 struct EnqueueReadImageTest : public CommandEnqueueFixture,
-                              public SurfaceStateAccessor,
                               public ::testing::Test {
     typedef CommandQueueHwFixture CommandQueueFixture;
     using CommandQueueHwFixture::pCmdQ;
