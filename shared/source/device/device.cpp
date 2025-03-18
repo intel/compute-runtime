@@ -31,6 +31,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
@@ -1188,6 +1189,10 @@ GmmHelper *Device::getGmmHelper() const {
 
 CompilerInterface *Device::getCompilerInterface() const {
     return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getCompilerInterface();
+}
+
+SipExternalLib *Device::getSipExternalLibInterface() const {
+    return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getSipExternalLibInterface();
 }
 
 BuiltIns *Device::getBuiltIns() const {

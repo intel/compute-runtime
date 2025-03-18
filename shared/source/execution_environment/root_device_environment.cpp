@@ -34,6 +34,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
@@ -153,6 +154,16 @@ CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
         }
     }
     return this->compilerInterface.get();
+}
+
+SipExternalLib *RootDeviceEnvironment::getSipExternalLibInterface() {
+    if (sipExternalLib.get() == nullptr) {
+        if (gfxCoreHelper->getSipBinaryFromExternalLib()) {
+            std::lock_guard<std::mutex> autolock(this->mtx);
+            sipExternalLib.reset(SipExternalLib::getSipExternalLibInstance());
+        }
+    }
+    return sipExternalLib.get();
 }
 
 void RootDeviceEnvironment::initHelpers() {

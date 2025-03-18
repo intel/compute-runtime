@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2024 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -121,6 +121,7 @@ append_sources_from_properties(CORE_SOURCES
                                NEO_CORE_GEN_COMMON
                                NEO_CORE_GMM_HELPER
                                NEO_CORE_HELPERS
+                               NEO_CORE_HELPERS_SIP_EXTERNAL_LIB
                                NEO_CORE_IMAGE
                                NEO_CORE_INDIRECT_HEAP
                                NEO_CORE_KERNEL

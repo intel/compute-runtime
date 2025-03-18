@@ -23,6 +23,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include "common/StateSaveAreaHeader.h"
@@ -249,13 +250,21 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
     return true;
 }
 
+bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device) {
+    return false;
+}
+
 void SipKernel::selectSipClassType(std::string &fileName, Device &device) {
     const GfxCoreHelper &gfxCoreHelper = device.getGfxCoreHelper();
     const std::string unknown("unk");
     if (fileName.compare(unknown) == 0) {
         bool debuggingEnabled = device.getDebugger() != nullptr;
         if (debuggingEnabled) {
-            SipKernel::classType = SipClassType::builtins;
+            if (device.getSipExternalLibInterface() != nullptr) {
+                SipKernel::classType = SipClassType::externalLib;
+            } else {
+                SipKernel::classType = SipClassType::builtins;
+            }
         } else {
             SipKernel::classType = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()
                                        ? SipClassType::hexadecimalHeaderFile
@@ -278,6 +287,8 @@ bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device, OsContext 
         return SipKernel::initRawBinaryFromFileKernel(type, device, fileName);
     case SipClassType::hexadecimalHeaderFile:
         return SipKernel::initHexadecimalArraySipKernel(type, device);
+    case SipClassType::externalLib:
+        return SipKernel::initSipKernelFromExternalLib(type, device);
     default:
         return SipKernel::initBuiltinsSipKernel(type, device, context);
     }

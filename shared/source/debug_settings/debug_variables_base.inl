@@ -296,7 +296,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableWaitOnUserFenceAfterBindAndUnbind, -1, "-1
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlushWithTaskCountAfterCopy, -1, "-1: default, 0: Do not force TLB flush (default), 1: Force TLB flush with task count update after copy")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdListUpdateCapability, -1, "-1: default, >=0: Use value to report command list update capability")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSynchronizedDispatchMode, -1, "-1: default, 0: disabled, 1: enable full synchronization mode")
-DECLARE_DEBUG_VARIABLE(int32_t, ForceSipClass, -1, "-1: default, otherwise based on values from enum class SipClassType (init, builtins, rawBinaryFromFile, hexadecimalHeaderFile)")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceSipClass, -1, "-1: default, otherwise based on values from enum class SipClassType (init, builtins, rawBinaryFromFile, hexadecimalHeaderFile, externalLib)")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceScratchAndMTPBufferSizeMode, -1, "-1: default, 0: Full, 1: Min. BMG+: Reduce required memory for scratch and MTP buffers on CCS context")
 DECLARE_DEBUG_VARIABLE(int32_t, CFEStackIDControl, -1, "Set Stack ID Control in CFE_STATE on Xe2+, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, StandaloneInOrderTimestampAllocationEnabled, -1, "-1: default, 0: disabled, 1: enabled. If enabled, use internal allocations, instead of Event pool for timestamps")

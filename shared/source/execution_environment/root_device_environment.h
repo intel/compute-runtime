@@ -21,6 +21,7 @@ class AubCenter;
 class BindlessHeapsHelper;
 class BuiltIns;
 class CompilerInterface;
+class SipExternalLib;
 class Debugger;
 class Device;
 class ExecutionEnvironment;
@@ -74,6 +75,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     GmmHelper *getGmmHelper() const;
     GmmClientContext *getGmmClientContext() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
+    MOCKABLE_VIRTUAL SipExternalLib *getSipExternalLibInterface();
     BuiltIns *getBuiltIns();
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
     AssertHandler *getAssertHandler(Device *neoDevice);
@@ -106,6 +108,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     std::unique_ptr<OSTime> osTime;
 
     std::unique_ptr<CompilerInterface> compilerInterface;
+    std::unique_ptr<SipExternalLib> sipExternalLib;
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<Debugger> debugger;
     std::unique_ptr<SWTagsManager> tagsManager;

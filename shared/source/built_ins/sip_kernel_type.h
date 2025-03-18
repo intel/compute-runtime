@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,8 @@ enum class SipClassType : std::uint32_t {
     init = 0,
     builtins,
     rawBinaryFromFile,
-    hexadecimalHeaderFile
+    hexadecimalHeaderFile,
+    externalLib
 };
 
 } // namespace NEO

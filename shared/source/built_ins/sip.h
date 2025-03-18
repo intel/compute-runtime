@@ -75,6 +75,7 @@ class SipKernel : NEO::NonCopyableAndNonMovableClass {
     static std::string createHeaderFilename(const std::string &filename);
 
     static bool initHexadecimalArraySipKernel(SipKernelType type, Device &device);
+    static bool initSipKernelFromExternalLib(SipKernelType type, Device &device);
     static void selectSipClassType(std::string &fileName, Device &device);
 
     const std::vector<char> stateSaveAreaHeader;

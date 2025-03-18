@@ -26,6 +26,7 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "common/StateSaveAreaHeader.h"
@@ -930,4 +931,22 @@ TEST(SipTest, whenForcingBuiltinSipClassThenPreemptionSurfaceSizeIsSetBasedOnSta
     auto preemptionSurfaceSize = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize;
     EXPECT_NE(initialPreemptionSurfaceSize, preemptionSurfaceSize);
     EXPECT_EQ(sipKernel.getStateSaveAreaSize(mockDevice.get()), preemptionSurfaceSize);
+}
+
+using DebugExternalLibSipTest = Test<DeviceFixture>;
+
+HWTEST2_F(DebugExternalLibSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFromBuiltIns, IsAtMostXe3Core) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
+    std::string fileName = "unk";
+    SipKernelMock::selectSipClassType(fileName, *pDevice);
+    EXPECT_EQ(SipKernelMock::classType, SipClassType::builtins);
+}
+
+TEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibRetunsTrueWhenGetSipExternalLibInterfaceIsCalledThenNullptrReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+    EXPECT_EQ(nullptr, pDevice->getSipExternalLibInterface());
 }

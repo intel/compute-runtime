@@ -36,6 +36,7 @@ class GmmHelper;
 class OSTime;
 class ProductHelper;
 class ReleaseHelper;
+class SipExternalLib;
 class SubDevice;
 class SyncBufferHandler;
 class UsmMemAllocPoolsManager;
@@ -157,6 +158,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         return reinterpret_cast<SpecializedDeviceT *>(specializedDevice);
     }
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface() const;
+    MOCKABLE_VIRTUAL SipExternalLib *getSipExternalLibInterface() const;
     BuiltIns *getBuiltIns() const;
     void allocateSyncBufferHandler();
 
