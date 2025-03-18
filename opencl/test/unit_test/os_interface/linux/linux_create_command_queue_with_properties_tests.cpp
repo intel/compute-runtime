@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 struct ClCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiverTest {
     void SetUp() override {
@@ -107,7 +108,7 @@ TEST_F(ClCreateCommandQueueWithPropertiesLinux, givenPossiblePropertiesWithClQue
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenCallFlushTaskAndSliceCountIsSet) {
+HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenCallFlushTaskAndSliceCountIsSet, IsHeapfulSupported) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
     clGetDeviceInfo(clDevice, CL_DEVICE_SLICE_COUNT_INTEL, sizeof(size_t), &maxSliceCount, nullptr);
@@ -152,7 +153,7 @@ HWTEST_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSlic
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(ClCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlySetWhenCreateCommandQueueThenSetQueueSliceCountNotCalled) {
+HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlySetWhenCreateCommandQueueThenSetQueueSliceCountNotCalled, IsHeapfulSupported) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
 
@@ -198,7 +199,7 @@ HWTEST_F(ClCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlyS
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenSetReturnFalseAndLastSliceCountNotModify) {
+HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenSetReturnFalseAndLastSliceCountNotModify, IsHeapfulSupported) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
     clGetDeviceInfo(clDevice, CL_DEVICE_SLICE_COUNT_INTEL, sizeof(size_t), &maxSliceCount, nullptr);

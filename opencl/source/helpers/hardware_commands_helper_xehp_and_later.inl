@@ -9,6 +9,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -22,7 +23,6 @@ typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *HardwareC
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
-
     return inlineInterfaceDescriptor;
 }
 

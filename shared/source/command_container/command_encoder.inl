@@ -42,6 +42,11 @@
 namespace NEO {
 
 template <typename Family>
+void EncodeStates<Family>::dshAlign(IndirectHeap *dsh) {
+    dsh->align(InterfaceDescriptorTraits<INTERFACE_DESCRIPTOR_DATA>::samplerStatePointerAlignSize);
+}
+
+template <typename Family>
 uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
                                                 uint32_t samplerStateOffset,
                                                 uint32_t samplerCount,
@@ -71,7 +76,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
         auto borderColorDst = dsh->getSpace(borderColorSize);
         memcpy_s(borderColorDst, borderColorSize, borderColor, borderColorSize);
 
-        dsh->align(INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+        dsh->align(InterfaceDescriptorTraits<INTERFACE_DESCRIPTOR_DATA>::samplerStatePointerAlignSize);
         samplerStateOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
 
         dstSamplerState = reinterpret_cast<SAMPLER_STATE *>(dsh->getSpace(sizeSamplerState));
@@ -86,7 +91,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
         } else {
             borderColorOffsetInDsh = bindlessHeapHelper->getAlphaBorderColorOffset();
         }
-        dsh->align(INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+        dshAlign(dsh);
         auto samplerStateInDsh = bindlessHeapHelper->allocateSSInHeap(sizeSamplerState, nullptr, BindlessHeapsHelper::BindlesHeapType::globalDsh);
         dstSamplerState = reinterpret_cast<SAMPLER_STATE *>(samplerStateInDsh.ssPtr);
         samplerStateOffsetInDsh = static_cast<uint32_t>(samplerStateInDsh.surfaceStateOffset);
@@ -492,43 +497,48 @@ template <typename Family>
 size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap,
                                                                     const void *srcKernelSsh, size_t srcKernelSshSize,
                                                                     size_t numberOfBindingTableStates, size_t offsetOfBindingTable) {
-    using BINDING_TABLE_STATE = typename Family::BINDING_TABLE_STATE;
+    if constexpr (Family::isHeaplessRequired()) {
+        UNRECOVERABLE_IF(true);
+        return 0;
+    } else {
+        using BINDING_TABLE_STATE = typename Family::BINDING_TABLE_STATE;
 
-    size_t sshSize = srcKernelSshSize;
-    DEBUG_BREAK_IF(srcKernelSsh == nullptr);
+        size_t sshSize = srcKernelSshSize;
+        DEBUG_BREAK_IF(srcKernelSsh == nullptr);
 
-    auto srcSurfaceState = srcKernelSsh;
-    // Allocate space for new ssh data
-    auto dstSurfaceState = dstHeap.getSpace(sshSize);
+        auto srcSurfaceState = srcKernelSsh;
+        // Allocate space for new ssh data
+        auto dstSurfaceState = dstHeap.getSpace(sshSize);
 
-    // Compiler sends BTI table that is already populated with surface state pointers relative to local SSH.
-    // We may need to patch these pointers so that they are relative to surface state base address
-    if (dstSurfaceState == dstHeap.getCpuBase()) {
-        // nothing to patch, we're at the start of heap (which is assumed to be the surface state base address)
-        // we need to simply copy the ssh (including BTIs from compiler)
-        memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, sshSize);
-        return offsetOfBindingTable;
+        // Compiler sends BTI table that is already populated with surface state pointers relative to local SSH.
+        // We may need to patch these pointers so that they are relative to surface state base address
+        if (dstSurfaceState == dstHeap.getCpuBase()) {
+            // nothing to patch, we're at the start of heap (which is assumed to be the surface state base address)
+            // we need to simply copy the ssh (including BTIs from compiler)
+            memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, sshSize);
+            return offsetOfBindingTable;
+        }
+
+        // We can copy-over the surface states, but BTIs will need to be patched
+        memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, offsetOfBindingTable);
+
+        uint32_t surfaceStatesOffset = static_cast<uint32_t>(ptrDiff(dstSurfaceState, dstHeap.getCpuBase()));
+
+        // march over BTIs and offset the pointers based on surface state base address
+        auto *dstBtiTableBase = reinterpret_cast<BINDING_TABLE_STATE *>(ptrOffset(dstSurfaceState, offsetOfBindingTable));
+        DEBUG_BREAK_IF(reinterpret_cast<uintptr_t>(dstBtiTableBase) % Family::INTERFACE_DESCRIPTOR_DATA::BINDINGTABLEPOINTER_ALIGN_SIZE != 0);
+        auto *srcBtiTableBase = reinterpret_cast<const BINDING_TABLE_STATE *>(ptrOffset(srcSurfaceState, offsetOfBindingTable));
+        BINDING_TABLE_STATE bti = Family::cmdInitBindingTableState;
+        for (uint32_t i = 0, e = static_cast<uint32_t>(numberOfBindingTableStates); i != e; ++i) {
+            uint32_t localSurfaceStateOffset = srcBtiTableBase[i].getSurfaceStatePointer();
+            uint32_t offsetedSurfaceStateOffset = localSurfaceStateOffset + surfaceStatesOffset;
+            bti.setSurfaceStatePointer(offsetedSurfaceStateOffset); // patch just the SurfaceStatePointer bits
+            dstBtiTableBase[i] = bti;
+            DEBUG_BREAK_IF(bti.getRawData(0) % sizeof(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE) != 0);
+        }
+
+        return ptrDiff(dstBtiTableBase, dstHeap.getCpuBase());
     }
-
-    // We can copy-over the surface states, but BTIs will need to be patched
-    memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, offsetOfBindingTable);
-
-    uint32_t surfaceStatesOffset = static_cast<uint32_t>(ptrDiff(dstSurfaceState, dstHeap.getCpuBase()));
-
-    // march over BTIs and offset the pointers based on surface state base address
-    auto *dstBtiTableBase = reinterpret_cast<BINDING_TABLE_STATE *>(ptrOffset(dstSurfaceState, offsetOfBindingTable));
-    DEBUG_BREAK_IF(reinterpret_cast<uintptr_t>(dstBtiTableBase) % Family::INTERFACE_DESCRIPTOR_DATA::BINDINGTABLEPOINTER_ALIGN_SIZE != 0);
-    auto *srcBtiTableBase = reinterpret_cast<const BINDING_TABLE_STATE *>(ptrOffset(srcSurfaceState, offsetOfBindingTable));
-    BINDING_TABLE_STATE bti = Family::cmdInitBindingTableState;
-    for (uint32_t i = 0, e = static_cast<uint32_t>(numberOfBindingTableStates); i != e; ++i) {
-        uint32_t localSurfaceStateOffset = srcBtiTableBase[i].getSurfaceStatePointer();
-        uint32_t offsetedSurfaceStateOffset = localSurfaceStateOffset + surfaceStatesOffset;
-        bti.setSurfaceStatePointer(offsetedSurfaceStateOffset); // patch just the SurfaceStatePointer bits
-        dstBtiTableBase[i] = bti;
-        DEBUG_BREAK_IF(bti.getRawData(0) % sizeof(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE) != 0);
-    }
-
-    return ptrDiff(dstBtiTableBase, dstHeap.getCpuBase());
 }
 
 template <typename Family>
@@ -543,9 +553,7 @@ inline void EncodeDispatchKernel<Family>::encodeCommon(CommandContainer &contain
 
 template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, IndirectHeap *childDsh, uint32_t &iddOffset) {
-
     if (container.nextIddInBlockRef() == container.getNumIddPerBlock()) {
-
         void *heapPointer = nullptr;
         size_t heapSize = sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock();
         if (childDsh != nullptr) {
@@ -715,7 +723,7 @@ bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
 }
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
+void EncodeDispatchKernelWithHeap<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
     auto enablePrefetch = EncodeSurfaceState<Family>::doBindingTablePrefetch();
 
     if (enablePrefetch) {
@@ -729,7 +737,6 @@ void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPT
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount) {
-    using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
     constexpr auto samplerStateSize = sizeof(typename Family::SAMPLER_STATE);
     const auto numSamplers = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
     const auto additionalDshSize = additionalSizeRequiredDsh(iddCount);
@@ -742,7 +749,7 @@ size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &
     size = alignUp(size, EncodeDispatchKernel<Family>::getDefaultDshAlignment());
 
     size += numSamplers * samplerStateSize;
-    size = alignUp(size, INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+    size = alignUp(size, InterfaceDescriptorTraits<INTERFACE_DESCRIPTOR_DATA>::samplerStatePointerAlignSize);
 
     if (additionalDshSize > 0) {
         size = alignUp(size, EncodeStates<Family>::alignInterfaceDescriptorData);

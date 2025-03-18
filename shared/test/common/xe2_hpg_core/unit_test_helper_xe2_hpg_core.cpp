@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,5 +18,6 @@ using Family = NEO::Xe2HpgCoreFamily;
 namespace NEO {
 
 template struct UnitTestHelper<Family>;
+template struct UnitTestHelperWithHeap<Family>;
 
 } // namespace NEO

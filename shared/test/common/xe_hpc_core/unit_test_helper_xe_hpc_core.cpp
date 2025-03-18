@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ bool UnitTestHelper<Family>::isAdditionalMiSemaphoreWaitRequired(const RootDevic
 }
 
 template <>
-bool UnitTestHelper<Family>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename Family::FrontEndStateCommand &feCmd) {
+bool UnitTestHelperWithHeap<Family>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename Family::FrontEndStateCommand &feCmd) {
     return feCmd.getComputeDispatchAllWalkerEnable();
 }
 
@@ -58,5 +58,6 @@ void UnitTestHelper<Family>::verifyDummyBlitWa(const RootDeviceEnvironment *root
     }
 }
 template struct UnitTestHelper<Family>;
+template struct UnitTestHelperWithHeap<Family>;
 
 } // namespace NEO

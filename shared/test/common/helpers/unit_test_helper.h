@@ -37,7 +37,20 @@ struct UnitTestSetter {
 };
 
 template <typename GfxFamily>
-struct UnitTestHelper {
+struct UnitTestHelperWithHeap {
+    static bool getDisableFusionStateFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd);
+    static bool getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd);
+};
+
+template <typename GfxFamily>
+struct UnitTestHelperNoHeap {
+};
+
+template <typename GfxFamily>
+using UnitTestHelperBase = std::conditional_t<GfxFamily::isHeaplessRequired(), UnitTestHelperNoHeap<GfxFamily>, UnitTestHelperWithHeap<GfxFamily>>;
+
+template <typename GfxFamily>
+struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
     using COHERENCY_TYPE = typename GfxFamily::RENDER_SURFACE_STATE::COHERENCY_TYPE;
 
     static bool isL3ConfigProgrammable();
@@ -107,8 +120,6 @@ struct UnitTestHelper {
 
     static std::vector<GenCmdList::iterator> findAllMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end);
     static uint32_t getInlineDataSize(bool isHeaplessEnabled);
-    static bool getDisableFusionStateFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd);
-    static bool getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd);
     static bool getSystolicFlagValueFromPipelineSelectCommand(const typename GfxFamily::PIPELINE_SELECT &pipelineSelectCmd);
     static size_t getAdditionalDshSize(uint32_t iddCount);
     static bool expectNullDsh(const DeviceInfo &deviceInfo);

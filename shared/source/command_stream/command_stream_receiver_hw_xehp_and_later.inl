@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,9 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
     size_t size = sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
     if (this->globalStatelessHeapAllocation == nullptr) {
-        size += sizeof(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+        if constexpr (!GfxFamily::isHeaplessRequired()) {
+            size += sizeof(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+        }
     }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 

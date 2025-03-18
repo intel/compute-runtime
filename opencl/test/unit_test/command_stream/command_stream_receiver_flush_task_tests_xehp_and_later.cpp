@@ -31,66 +31,78 @@ using namespace NEO;
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskXeHPAndLaterTests;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenReprogrammingSshThenBindingTablePoolIsProgrammed) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessModeEnabled) {
+    if constexpr (FamilyType::isHeaplessRequired()) {
         GTEST_SKIP();
+    } else {
+        auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+        if (commandStreamReceiver.heaplessModeEnabled) {
+            GTEST_SKIP();
+        }
+        flushTask(commandStreamReceiver);
+        parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+        auto bindingTablePoolAlloc = getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
+        ASSERT_NE(nullptr, bindingTablePoolAlloc);
+        EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
+        EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
+        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER),
+                  bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
     }
-    flushTask(commandStreamReceiver);
-    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
-    auto bindingTablePoolAlloc = getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
-    ASSERT_NE(nullptr, bindingTablePoolAlloc);
-    EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
-    EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
-    EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER),
-              bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenReprogrammingSshThenBindingTablePoolIsProgrammedWithCachingOffWhenDebugKeyPresent) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DisableCachingForHeaps.set(1);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessModeEnabled) {
+    if constexpr (FamilyType::isHeaplessRequired()) {
         GTEST_SKIP();
-    }
+    } else {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.DisableCachingForHeaps.set(1);
 
-    flushTask(commandStreamReceiver);
-    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
-    auto bindingTablePoolAlloc = getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
-    ASSERT_NE(nullptr, bindingTablePoolAlloc);
-    EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
-    EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
-    EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED),
-              bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
+        auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+        if (commandStreamReceiver.heaplessModeEnabled) {
+            GTEST_SKIP();
+        }
+
+        flushTask(commandStreamReceiver);
+        parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+        auto bindingTablePoolAlloc = getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
+        ASSERT_NE(nullptr, bindingTablePoolAlloc);
+        EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
+        EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
+        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED),
+                  bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenNotReprogrammingSshThenBindingTablePoolIsNotProgrammed) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessModeEnabled) {
+    if constexpr (FamilyType::isHeaplessRequired()) {
         GTEST_SKIP();
+    } else {
+        auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+        if (commandStreamReceiver.heaplessModeEnabled) {
+            GTEST_SKIP();
+        }
+
+        flushTask(commandStreamReceiver);
+        parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+        auto stateBaseAddress = getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
+        EXPECT_NE(nullptr, stateBaseAddress);
+        auto bindingTablePoolAlloc = getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
+        ASSERT_NE(nullptr, bindingTablePoolAlloc);
+        EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
+        EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
+        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER),
+                  bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
+
+        auto offset = commandStreamReceiver.getCS(0).getUsed();
+        // make SBA dirty (using ioh as dsh and dsh as ioh just to force SBA reprogramming)
+        commandStreamReceiver.flushTask(commandStream, 0, &ioh, &dsh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(commandStreamReceiver.getCS(0), offset);
+        stateBaseAddress = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
+        EXPECT_NE(nullptr, stateBaseAddress);
+        bindingTablePoolAlloc = hwParser.getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
+        EXPECT_EQ(nullptr, bindingTablePoolAlloc);
     }
-
-    flushTask(commandStreamReceiver);
-    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
-    auto stateBaseAddress = getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
-    EXPECT_NE(nullptr, stateBaseAddress);
-    auto bindingTablePoolAlloc = getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
-    ASSERT_NE(nullptr, bindingTablePoolAlloc);
-    EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
-    EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
-    EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER),
-              bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
-
-    auto offset = commandStreamReceiver.getCS(0).getUsed();
-    // make SBA dirty (using ioh as dsh and dsh as ioh just to force SBA reprogramming)
-    commandStreamReceiver.flushTask(commandStream, 0, &ioh, &dsh, &ssh, taskLevel, flushTaskFlags, *pDevice);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStreamReceiver.getCS(0), offset);
-    stateBaseAddress = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
-    EXPECT_NE(nullptr, stateBaseAddress);
-    bindingTablePoolAlloc = hwParser.getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
-    EXPECT_EQ(nullptr, bindingTablePoolAlloc);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToItWithTextureCacheFlushAndHdc) {
@@ -165,31 +177,35 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenSBACommandToProg
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenNotReprogrammingSshButInitProgrammingFlagsThenBindingTablePoolIsProgrammed) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessModeEnabled) {
+    if constexpr (FamilyType::isHeaplessRequired()) {
         GTEST_SKIP();
+    } else {
+        auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+        if (commandStreamReceiver.heaplessModeEnabled) {
+            GTEST_SKIP();
+        }
+        flushTask(commandStreamReceiver);
+        parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+        auto stateBaseAddress = getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
+        EXPECT_NE(nullptr, stateBaseAddress);
+        auto bindingTablePoolAlloc = getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
+        ASSERT_NE(nullptr, bindingTablePoolAlloc);
+        EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
+        EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
+        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER),
+                  bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
+
+        auto offset = commandStreamReceiver.getCS(0).getUsed();
+        commandStreamReceiver.initProgrammingFlags();
+        flushTask(commandStreamReceiver);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(commandStreamReceiver.getCS(0), offset);
+        stateBaseAddress = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
+        EXPECT_NE(nullptr, stateBaseAddress);
+        bindingTablePoolAlloc = hwParser.getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
+        EXPECT_NE(nullptr, bindingTablePoolAlloc);
     }
-    flushTask(commandStreamReceiver);
-    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
-    auto stateBaseAddress = getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
-    EXPECT_NE(nullptr, stateBaseAddress);
-    auto bindingTablePoolAlloc = getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
-    ASSERT_NE(nullptr, bindingTablePoolAlloc);
-    EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
-    EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
-    EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER),
-              bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
-
-    auto offset = commandStreamReceiver.getCS(0).getUsed();
-    commandStreamReceiver.initProgrammingFlags();
-    flushTask(commandStreamReceiver);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStreamReceiver.getCS(0), offset);
-    stateBaseAddress = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
-    EXPECT_NE(nullptr, stateBaseAddress);
-    bindingTablePoolAlloc = hwParser.getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
-    EXPECT_NE(nullptr, bindingTablePoolAlloc);
 }
 
 using isXeHPOrAbove = IsAtLeastProduct<IGFX_XE_HP_SDV>;

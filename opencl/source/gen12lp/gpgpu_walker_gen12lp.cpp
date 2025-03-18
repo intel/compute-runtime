@@ -72,7 +72,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                            numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
                                                            false, false, 0u);
 
-    HardwareCommandsHelper<GfxFamily>::template sendIndirectState<WalkerType, INTERFACE_DESCRIPTOR_DATA>(
+    HardwareCommandsHelper<GfxFamily>::template sendIndirectState<WalkerType, typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA>(
         commandStream,
         dsh,
         ioh,

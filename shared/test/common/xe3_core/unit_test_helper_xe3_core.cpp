@@ -42,5 +42,6 @@ uint32_t UnitTestHelper<Family>::getProgrammedGrfValue(CommandStreamReceiver &cs
 }
 
 template struct UnitTestHelper<Family>;
+template struct UnitTestHelperWithHeap<Family>;
 
 } // namespace NEO

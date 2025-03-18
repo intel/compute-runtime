@@ -28,6 +28,7 @@
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
@@ -248,7 +249,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWithUsedAvailableSizeWhen
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterThanZeroWhenDispatchingKernelThenSharedMemorySizeSetCorrectly) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint32_t slmTotalSize = 1;
@@ -270,7 +271,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterT
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, whenDispatchingKernelThenSetDenormMode) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -285,7 +286,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, whenDispatchingKernelThe
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenDebuggingEnabledAndAssertInKernelWhenDispatchingKernelThenSwExceptionsAreEnabled) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -303,7 +304,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenDebuggingEnabledAnd
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZeroWhenDispatchingKernelThenSharedMemorySizeSetCorrectly) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint32_t slmTotalSize = 0;
@@ -325,7 +326,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZe
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenOneBindingTableEntryWhenDispatchingKernelThenBindingTableOffsetIsCorrect) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
@@ -358,7 +359,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenOneBindingTableEntr
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhenDispatchingKernelThenBindingTableOffsetIsZero) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     uint32_t numBindingTable = 0;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
@@ -389,7 +390,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroW
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchingKernelThensamplerStateWasCopied) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     uint32_t numSamplers = 1;
     SAMPLER_STATE samplerState;
     memset(&samplerState, 2, sizeof(SAMPLER_STATE));
@@ -427,7 +428,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDi
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersZeroWhenDispatchingKernelThensamplerStateWasNotCopied) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     uint32_t numSamplers = 0;
     SAMPLER_STATE samplerState;
     memset(&samplerState, 2, sizeof(SAMPLER_STATE));
@@ -515,7 +516,7 @@ HWTEST_F(CommandEncodeStatesTest, givenIndirectOffsetsSizeWhenDispatchingKernelT
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDebugFlagWhenDispatchingKernelThenValuesAreSetUpCorrectly) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
@@ -766,7 +767,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmCha
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenDispatchKernelThenMediaInterfaceDescriptorEncoded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     uint32_t dims[] = {2, 1, 1};
@@ -792,7 +793,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWh
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenDispatchKernelAndDynamicStateHeapDirtyThenStateBaseAddressEncodedAndMediaInterfaceDescriptorEncoded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     uint32_t dims[] = {2, 1, 1};
@@ -823,7 +824,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWh
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenHeapIsDirtyThenSamplerStateWasCopiedAndStateBaseAddressEncoded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     uint32_t numSamplers = 1;
@@ -873,7 +874,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenHe
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneAndNextIDDInBlockWhenHeapIsDirtyThenSamplerStateWasCopiedAndStateBaseAddressEncoded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     uint32_t numSamplers = 1;
@@ -1061,7 +1062,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithRequiringSshForMisali
 }
 
 HWTEST2_F(EncodeDispatchKernelTest, givenKernelsSharingISAParentAllocationsWhenProgrammingWalkerThenKernelStartPointerHasProperOffset, IsBeforeXeHpCore) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto dispatchInterface = std::make_unique<MockDispatchKernelEncoder>();
@@ -1076,13 +1077,13 @@ HWTEST2_F(EncodeDispatchKernelTest, givenKernelsSharingISAParentAllocationsWhenP
 }
 
 HWTEST_F(EncodeDispatchKernelTest, givenKernelStartPointerAlignmentInInterfaceDescriptorWhenHelperGetterUsedThenCorrectValueReturned) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::KERNELSTARTPOINTER_ALIGN_SIZE, pDevice->getGfxCoreHelper().getKernelIsaPointerAlignment());
 }
 
 HWTEST2_F(EncodeDispatchKernelTest, givenKernelsSharingISAParentAllocationsWhenProgrammingWalkerThenKernelStartPointerHasProperOffset, IsAtLeastXeHpCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
 
     auto dispatchInterface = std::make_unique<MockDispatchKernelEncoder>();
     dispatchInterface->getIsaOffsetInParentAllocationResult = 8 << INTERFACE_DESCRIPTOR_DATA::KERNELSTARTPOINTER_BIT_SHIFT;
@@ -1125,7 +1126,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenPrintKernelDispatchParametersWhenEncodi
     EXPECT_NE(std::string::npos, outputString.find("threadGroupDispatchSize enum"));
 }
 
-HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatchingKernelThenSurfaceStateOffsetInCrossThreadDataIsNotPatched) {
+HWTEST2_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatchingKernelThenSurfaceStateOffsetInCrossThreadDataIsNotPatched, IsHeapfulSupported) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t numBindingTable = 1;
@@ -1394,7 +1395,7 @@ using namespace NEO;
 using InterfaceDescriptorDataTests = ::testing::Test;
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, InterfaceDescriptorDataTests, givenVariousValuesWhenCallingSetBarrierEnableThenCorrectValueIsSet) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
     MockDevice device;
     auto hwInfo = device.getHardwareInfo();
@@ -1446,7 +1447,7 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindles
     EXPECT_EQ(commandContainer->getIndirectHeap(HeapType::surfaceState), nullptr);
 }
 
-HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindlessModeEnabledThenCmdContainerHasSsh) {
+HWTEST2_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindlessModeEnabledThenCmdContainerHasSsh, IsHeapfulSupported) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore dbgRestorer;
@@ -1525,7 +1526,7 @@ HWTEST2_F(NgenGeneratorDispatchKernelEncodeTest, givenBindfulKernelAndIsNotGener
 }
 
 HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThenReturnCorrectValues) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
 
     size_t additionalSize = UnitTestHelper<FamilyType>::getAdditionalDshSize(cmdContainer->getNumIddPerBlock());
@@ -1542,7 +1543,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
     kernelInfo.kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
 
     // align samplers
-    size_t alignedSamplers = alignUp(2 * sizeof(SAMPLER_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+    size_t alignedSamplers = alignUp(2 * sizeof(SAMPLER_STATE), InterfaceDescriptorTraits<INTERFACE_DESCRIPTOR_DATA>::samplerStatePointerAlignSize);
 
     // additional IDD for requiring platforms
     if (additionalSize > 0) {
@@ -1559,7 +1560,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
     kernelInfo.kernelDescriptor.payloadMappings.samplerTable.tableOffset = 32;
 
     // align border color state and samplers
-    alignedSamplers = alignUp(alignUp(32, FamilyType::cacheLineSize) + 3 * sizeof(SAMPLER_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+    alignedSamplers = alignUp(alignUp(32, FamilyType::cacheLineSize) + 3 * sizeof(SAMPLER_STATE), InterfaceDescriptorTraits<INTERFACE_DESCRIPTOR_DATA>::samplerStatePointerAlignSize);
 
     // additional IDD for requiring platforms
     if (additionalSize > 0) {

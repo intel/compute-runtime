@@ -8,6 +8,7 @@
 #pragma once
 
 using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
+using IsAtLeastGen12LP = IsAtLeastGfxCore<IGFX_GEN12LP_CORE>;
 using IsXeHpgCore = IsGfxCore<IGFX_XE_HPG_CORE>;
 using IsXeHpcCore = IsGfxCore<IGFX_XE_HPC_CORE>;
 using IsNotXeHpcCore = IsNotGfxCore<IGFX_XE_HPC_CORE>;

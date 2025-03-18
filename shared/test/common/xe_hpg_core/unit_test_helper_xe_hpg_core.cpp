@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ template <>
 const bool UnitTestHelper<Family>::additionalMiFlushDwRequired = true;
 
 template <>
-bool UnitTestHelper<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::FrontEndStateCommand &feCmd) {
+bool UnitTestHelperWithHeap<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::FrontEndStateCommand &feCmd) {
     return feCmd.getFusedEuDispatch();
 }
 
@@ -50,4 +50,5 @@ bool UnitTestHelper<Family>::requiresTimestampPacketsInSystemMemory(HardwareInfo
 }
 
 template struct UnitTestHelper<Family>;
+template struct UnitTestHelperWithHeap<Family>;
 } // namespace NEO

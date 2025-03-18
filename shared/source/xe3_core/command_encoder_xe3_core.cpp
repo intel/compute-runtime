@@ -173,4 +173,5 @@ bool EncodeEnableRayTracing<Family>::is48bResourceNeededForRayTracing() {
 
 namespace NEO {
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue);
+template struct EncodeDispatchKernelWithHeap<Family>;
 } // namespace NEO

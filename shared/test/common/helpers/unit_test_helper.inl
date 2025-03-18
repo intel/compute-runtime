@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,12 +62,12 @@ void UnitTestHelper<GfxFamily>::validateSbaMocs(uint32_t expectedMocs, CommandSt
 }
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::getDisableFusionStateFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd) {
+bool UnitTestHelperWithHeap<GfxFamily>::getDisableFusionStateFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd) {
     return false;
 }
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd) {
+bool UnitTestHelperWithHeap<GfxFamily>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd) {
     return false;
 }
 

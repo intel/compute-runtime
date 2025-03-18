@@ -30,6 +30,9 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
+
 namespace L0 {
 namespace ult {
 
@@ -776,15 +779,16 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQue
     itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(itor, cmdList.end());
     EXPECT_NE(itor, cmdList.end());
 
-    auto secondWalker = itor;
-    itor = find<typename FamilyType::FrontEndStateCommand *>(firstWalker, secondWalker);
-
-    EXPECT_EQ(itor, secondWalker);
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        auto secondWalker = itor;
+        itor = find<typename FamilyType::FrontEndStateCommand *>(firstWalker, secondWalker);
+        EXPECT_EQ(itor, secondWalker);
+    }
 
     context->freeMem(alloc);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenDisableOverdispatchPropertyWhenUpdateStreamPropertiesIsCalledThenRequiredStateAndFinalStateAreCorrectlySet, MatchAny) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenDisableOverdispatchPropertyWhenUpdateStreamPropertiesIsCalledThenRequiredStateAndFinalStateAreCorrectlySet, IsHeapfulSupported) {
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();

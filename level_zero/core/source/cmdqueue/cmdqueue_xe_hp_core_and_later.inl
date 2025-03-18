@@ -111,7 +111,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatchSize(bool bindingTableBaseAddress) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
-    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     size_t size = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
@@ -119,7 +118,10 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatch
         size += sizeof(STATE_BASE_ADDRESS);
     }
     if (bindingTableBaseAddress) {
-        size += sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+        if constexpr (!GfxFamily::isHeaplessRequired()) {
+            using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
+            size += sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+        }
     }
     size += estimateStateBaseAddressDebugTracking();
     return size;
@@ -163,7 +165,6 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint64_t scratchAddress,
                                                   bool patchNewScratchAddress) {
-    using CFE_STATE = typename GfxFamily::CFE_STATE;
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
@@ -171,15 +172,21 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     for (auto &commandToPatch : commandsToPatch) {
         switch (commandToPatch.type) {
         case CommandToPatch::FrontEndState: {
-            uint32_t lowScratchAddress = uint32_t(0xFFFFFFFF & scratchAddress);
-            CFE_STATE *cfeStateCmd = nullptr;
-            cfeStateCmd = reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
+            if constexpr (GfxFamily::isHeaplessRequired() == false) {
+                using CFE_STATE = typename GfxFamily::CFE_STATE;
+                uint32_t lowScratchAddress = uint32_t(0xFFFFFFFF & scratchAddress);
+                CFE_STATE *cfeStateCmd = nullptr;
+                cfeStateCmd = reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
 
-            cfeStateCmd->setScratchSpaceBuffer(lowScratchAddress);
-            NEO::PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(cfeStateCmd, false);
+                cfeStateCmd->setScratchSpaceBuffer(lowScratchAddress);
+                NEO::PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(cfeStateCmd, false);
 
-            *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
-            break;
+                *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
+                break;
+            } else {
+                UNRECOVERABLE_IF(true);
+                break;
+            }
         }
         case CommandToPatch::PauseOnEnqueueSemaphoreStart: {
             NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),

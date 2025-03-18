@@ -35,11 +35,12 @@ template void NEO::EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields<Fami
 template void NEO::EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker<Family::DefaultWalkerType, Family::DefaultWalkerType::InterfaceDescriptorType>(Family::DefaultWalkerType &walkerCmd, const Family::DefaultWalkerType::InterfaceDescriptorType *idd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs);
 
 template struct NEO::EncodeStates<Family>;
+template struct NEO::EncodeMediaInterfaceDescriptorLoad<Family>;
+
 template struct NEO::EncodeMath<Family>;
 template struct NEO::EncodeMathMMIO<Family>;
 template struct NEO::EncodeIndirectParams<Family>;
 template struct NEO::EncodeSetMMIO<Family>;
-template struct NEO::EncodeMediaInterfaceDescriptorLoad<Family>;
 template struct NEO::EncodeStateBaseAddress<Family>;
 template struct NEO::EncodeStoreMMIO<Family>;
 template struct NEO::EncodeSurfaceState<Family>;

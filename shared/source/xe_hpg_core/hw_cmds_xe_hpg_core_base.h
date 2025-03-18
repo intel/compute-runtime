@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -171,6 +171,10 @@ struct XeHpgCoreFamily : public XeHpgCore {
 
     template <typename WalkerType>
     static constexpr bool isHeaplessMode() {
+        return false;
+    }
+
+    static constexpr bool isHeaplessRequired() {
         return false;
     }
 

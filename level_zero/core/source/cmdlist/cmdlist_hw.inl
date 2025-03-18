@@ -3381,9 +3381,19 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDis
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect) {
-    using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
+void CommandListCoreFamily<gfxCoreFamily>::appendVfeStateCmdToPatch() {
+    if constexpr (GfxFamily::isHeaplessRequired() == false) {
+        auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+        using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
+        auto frontEndStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), device->getHwInfo(), engineGroupType);
+        auto frontEndStateCmd = new FrontEndStateCommand;
+        NEO::PreambleHelper<GfxFamily>::programVfeState(frontEndStateCmd, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState);
+        commandsToPatch.push_back({frontEndStateAddress, frontEndStateCmd, 0, CommandToPatch::FrontEndState});
+    }
+}
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect) {
     size_t currentSurfaceStateSize = NEO::StreamPropertySizeT::initValue;
     size_t currentDynamicStateSize = NEO::StreamPropertySizeT::initValue;
     size_t currentIndirectObjectSize = NEO::StreamPropertySizeT::initValue;
@@ -3477,11 +3487,9 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     bool isPatchingVfeStateAllowed = (NEO::debugManager.flags.AllowPatchingVfeStateInCommandLists.get() || (this->frontEndStateTracking && this->dispatchCmdListBatchBufferAsPrimary));
     if (finalStreamState.frontEndState.isDirty()) {
         if (isPatchingVfeStateAllowed) {
-            auto frontEndStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), device->getHwInfo(), engineGroupType);
-            auto frontEndStateCmd = new FrontEndStateCommand;
-            NEO::PreambleHelper<GfxFamily>::programVfeState(frontEndStateCmd, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState);
-            commandsToPatch.push_back({frontEndStateAddress, frontEndStateCmd, 0, CommandToPatch::FrontEndState});
+            appendVfeStateCmdToPatch();
         }
+
         if (this->frontEndStateTracking && !this->dispatchCmdListBatchBufferAsPrimary) {
             auto &stream = *commandContainer.getCommandStream();
             NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferEnd(stream);
@@ -3531,29 +3539,49 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
-    using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
-
-    for (auto &commandToPatch : commandsToPatch) {
-        switch (commandToPatch.type) {
-        case CommandToPatch::FrontEndState:
-            UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
-            delete reinterpret_cast<FrontEndStateCommand *>(commandToPatch.pCommand);
-            break;
-        case CommandToPatch::PauseOnEnqueueSemaphoreStart:
-        case CommandToPatch::PauseOnEnqueueSemaphoreEnd:
-        case CommandToPatch::PauseOnEnqueuePipeControlStart:
-        case CommandToPatch::PauseOnEnqueuePipeControlEnd:
-            UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
-            break;
-        case CommandToPatch::ComputeWalkerInlineDataScratch:
-        case CommandToPatch::ComputeWalkerImplicitArgsScratch:
-        case CommandToPatch::NoopSpace:
-            break;
-        default:
-            UNRECOVERABLE_IF(true);
+    if constexpr (GfxFamily::isHeaplessRequired()) {
+        for (auto &commandToPatch : commandsToPatch) {
+            switch (commandToPatch.type) {
+            case CommandToPatch::PauseOnEnqueueSemaphoreStart:
+            case CommandToPatch::PauseOnEnqueueSemaphoreEnd:
+            case CommandToPatch::PauseOnEnqueuePipeControlStart:
+            case CommandToPatch::PauseOnEnqueuePipeControlEnd:
+                UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
+                break;
+            case CommandToPatch::ComputeWalkerInlineDataScratch:
+            case CommandToPatch::ComputeWalkerImplicitArgsScratch:
+            case CommandToPatch::NoopSpace:
+                break;
+            default:
+                UNRECOVERABLE_IF(true);
+            }
         }
+        commandsToPatch.clear();
+    } else {
+        using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
+
+        for (auto &commandToPatch : commandsToPatch) {
+            switch (commandToPatch.type) {
+            case CommandToPatch::FrontEndState:
+                UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
+                delete reinterpret_cast<FrontEndStateCommand *>(commandToPatch.pCommand);
+                break;
+            case CommandToPatch::PauseOnEnqueueSemaphoreStart:
+            case CommandToPatch::PauseOnEnqueueSemaphoreEnd:
+            case CommandToPatch::PauseOnEnqueuePipeControlStart:
+            case CommandToPatch::PauseOnEnqueuePipeControlEnd:
+                UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
+                break;
+            case CommandToPatch::ComputeWalkerInlineDataScratch:
+            case CommandToPatch::ComputeWalkerImplicitArgsScratch:
+            case CommandToPatch::NoopSpace:
+                break;
+            default:
+                UNRECOVERABLE_IF(true);
+            }
+        }
+        commandsToPatch.clear();
     }
-    commandsToPatch.clear();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

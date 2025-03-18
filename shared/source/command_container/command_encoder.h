@@ -120,14 +120,45 @@ struct EncodeWalkerArgs {
     bool hasSample = false;
 };
 
+template <class T>
+concept LegacyInterfaceDescriptorType = requires() {
+                                            T::SAMPLERSTATEPOINTER_ALIGN_SIZE;
+                                        };
+
+template <class InterfaceDescriptorType>
+struct InterfaceDescriptorTraits {
+    static constexpr uint32_t samplerStatePointerAlignSize = 32;
+};
+
+template <LegacyInterfaceDescriptorType InterfaceDescriptorType>
+struct InterfaceDescriptorTraits<InterfaceDescriptorType> {
+    static constexpr uint32_t samplerStatePointerAlignSize = InterfaceDescriptorType::SAMPLERSTATEPOINTER_ALIGN_SIZE;
+};
+
 template <typename GfxFamily>
-struct EncodeDispatchKernel {
+struct EncodeDispatchKernelWithHeap {
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
+    using BINDING_TABLE_STATE = GfxFamily::BINDING_TABLE_STATE;
+    static void adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount);
+};
+
+template <typename GfxFamily>
+struct EncodeDispatchKernelWithoutHeap {
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
+};
+
+template <typename GfxFamily>
+using EncodeDispatchKernelBase = std::conditional_t<GfxFamily::isHeaplessRequired(), EncodeDispatchKernelWithoutHeap<GfxFamily>, EncodeDispatchKernelWithHeap<GfxFamily>>;
+
+template <typename GfxFamily>
+struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
+    using INTERFACE_DESCRIPTOR_DATA = typename EncodeDispatchKernelBase<GfxFamily>::INTERFACE_DESCRIPTOR_DATA;
     static constexpr size_t timestampDestinationAddressAlignment = 16;
     static constexpr size_t immWriteDestinationAddressAlignment = 8;
 
     using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
-    using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
     static void encodeCommon(CommandContainer &container, EncodeDispatchKernelArgs &args);
 
@@ -184,8 +215,6 @@ struct EncodeDispatchKernel {
     static void encodeThreadGroupDispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo,
                                           const uint32_t *threadGroupDimensions, const uint32_t threadGroupCount, const uint32_t grfCount, const uint32_t threadsPerThreadGroup,
                                           WalkerType &walkerCmd);
-
-    static void adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount);
 
     template <typename WalkerType>
     static void adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
@@ -249,8 +278,8 @@ struct EncodeDispatchKernel {
 
 template <typename GfxFamily>
 struct EncodeStates {
-    using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
     using SAMPLER_BORDER_COLOR_STATE = typename GfxFamily::SAMPLER_BORDER_COLOR_STATE;
 
@@ -267,6 +296,7 @@ struct EncodeStates {
 
     static void adjustSamplerStateBorderColor(SAMPLER_STATE &samplerState, const SAMPLER_BORDER_COLOR_STATE &borderColorState);
     static size_t getSshHeapSize();
+    static void dshAlign(IndirectHeap *dsh);
 };
 
 template <typename GfxFamily>
@@ -404,8 +434,6 @@ struct EncodeL3State {
 
 template <typename GfxFamily>
 struct EncodeMediaInterfaceDescriptorLoad {
-    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
-
     static void encode(CommandContainer &container, IndirectHeap *childDsh);
 };
 

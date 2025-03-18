@@ -162,59 +162,62 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, whenProgra
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateEnabledWhenSratchAllocationRequestedThenProgramCfeStateWithScratchAllocation) {
-
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if constexpr (FamilyType::isHeaplessRequired()) {
         GTEST_SKIP();
+    } else {
+        auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+        if (compilerProductHelper.isHeaplessModeEnabled()) {
+            GTEST_SKIP();
+        }
+
+        using CFE_STATE = typename FamilyType::CFE_STATE;
+        using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+        size_t gws = 1;
+        MockContext ctx(pClDevice);
+        MockKernelWithInternals kernel(*pClDevice);
+        CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
+        auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+        auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver->getScratchSpaceController());
+        scratchController->slotId = 2u;
+        pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+        auto &commandStreamCSR = commandStreamReceiver->getCS();
+
+        kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 0x1000;
+        auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+        uint32_t computeUnits = gfxCoreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment());
+        auto perThreadScratchSize = kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
+
+        size_t scratchSpaceSize = perThreadScratchSize * computeUnits;
+
+        auto &productHelper = pDevice->getProductHelper();
+        productHelper.adjustScratchSize(scratchSpaceSize);
+
+        commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
+        commandQueue.flush();
+
+        parseCommands<FamilyType>(commandStreamCSR, 0);
+        findHardwareCommands<FamilyType>();
+
+        EXPECT_EQ(kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0], commandStreamReceiver->requiredScratchSlot0Size);
+        EXPECT_EQ(scratchSpaceSize, scratchController->scratchSlot0SizeInBytes);
+        EXPECT_EQ(scratchSpaceSize, scratchController->getScratchSpaceSlot0Allocation()->getUnderlyingBufferSize());
+        ASSERT_NE(nullptr, cmdMediaVfeState);
+        auto cfeState = static_cast<CFE_STATE *>(cmdMediaVfeState);
+        uint32_t bufferOffset = static_cast<uint32_t>(scratchController->slotId * scratchController->singleSurfaceStateSize * 2);
+        EXPECT_EQ(bufferOffset, cfeState->getScratchSpaceBuffer());
+        RENDER_SURFACE_STATE *scratchState = reinterpret_cast<RENDER_SURFACE_STATE *>(scratchController->surfaceStateHeap + bufferOffset);
+        EXPECT_EQ(scratchController->scratchSlot0Allocation->getGpuAddress(), scratchState->getSurfaceBaseAddress());
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_SCRATCH, scratchState->getSurfaceType());
+
+        SurfaceStateBufferLength length = {0};
+        length.length = static_cast<uint32_t>(computeUnits - 1);
+        EXPECT_EQ(length.surfaceState.depth + 1u, scratchState->getDepth());
+        EXPECT_EQ(length.surfaceState.width + 1u, scratchState->getWidth());
+        EXPECT_EQ(length.surfaceState.height + 1u, scratchState->getHeight());
+
+        EXPECT_EQ(perThreadScratchSize, EncodeSurfaceState<FamilyType>::getPitchForScratchInBytes(scratchState, productHelper));
     }
-
-    using CFE_STATE = typename FamilyType::CFE_STATE;
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
-    size_t gws = 1;
-    MockContext ctx(pClDevice);
-    MockKernelWithInternals kernel(*pClDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver->getScratchSpaceController());
-    scratchController->slotId = 2u;
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
-    auto &commandStreamCSR = commandStreamReceiver->getCS();
-
-    kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 0x1000;
-    auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    uint32_t computeUnits = gfxCoreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment());
-    auto perThreadScratchSize = kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
-
-    size_t scratchSpaceSize = perThreadScratchSize * computeUnits;
-
-    auto &productHelper = pDevice->getProductHelper();
-    productHelper.adjustScratchSize(scratchSpaceSize);
-
-    commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
-    commandQueue.flush();
-
-    parseCommands<FamilyType>(commandStreamCSR, 0);
-    findHardwareCommands<FamilyType>();
-
-    EXPECT_EQ(kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0], commandStreamReceiver->requiredScratchSlot0Size);
-    EXPECT_EQ(scratchSpaceSize, scratchController->scratchSlot0SizeInBytes);
-    EXPECT_EQ(scratchSpaceSize, scratchController->getScratchSpaceSlot0Allocation()->getUnderlyingBufferSize());
-    ASSERT_NE(nullptr, cmdMediaVfeState);
-    auto cfeState = static_cast<CFE_STATE *>(cmdMediaVfeState);
-    uint32_t bufferOffset = static_cast<uint32_t>(scratchController->slotId * scratchController->singleSurfaceStateSize * 2);
-    EXPECT_EQ(bufferOffset, cfeState->getScratchSpaceBuffer());
-    RENDER_SURFACE_STATE *scratchState = reinterpret_cast<RENDER_SURFACE_STATE *>(scratchController->surfaceStateHeap + bufferOffset);
-    EXPECT_EQ(scratchController->scratchSlot0Allocation->getGpuAddress(), scratchState->getSurfaceBaseAddress());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_SCRATCH, scratchState->getSurfaceType());
-
-    SurfaceStateBufferLength length = {0};
-    length.length = static_cast<uint32_t>(computeUnits - 1);
-    EXPECT_EQ(length.surfaceState.depth + 1u, scratchState->getDepth());
-    EXPECT_EQ(length.surfaceState.width + 1u, scratchState->getWidth());
-    EXPECT_EQ(length.surfaceState.height + 1u, scratchState->getHeight());
-
-    EXPECT_EQ(perThreadScratchSize, EncodeSurfaceState<FamilyType>::getPitchForScratchInBytes(scratchState, productHelper));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateEnabledWhenNewSshProvidedAndNoScratchAllocationExistThenNoDirtyBitSet) {

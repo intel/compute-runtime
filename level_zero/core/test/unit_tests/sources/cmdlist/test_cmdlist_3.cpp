@@ -26,7 +26,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
-#include "test_traits_common.h"
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 namespace L0 {
 namespace ult {
@@ -1414,7 +1415,6 @@ HWTEST2_F(CommandListCreateTests, whenGettingCommandsToPatchThenCorrectValuesAre
 }
 
 HWTEST2_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsToPatchIsCalledThenCommandsAreCorrectlyCleared, MatchAny) {
-    using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
@@ -1431,10 +1431,13 @@ HWTEST2_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsT
     EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
     pCommandList->commandsToPatch.clear();
 
-    commandToPatch.pCommand = new FrontEndStateCommand;
-    pCommandList->commandsToPatch.push_back(commandToPatch);
-    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
-    EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
+        commandToPatch.pCommand = new FrontEndStateCommand;
+        pCommandList->commandsToPatch.push_back(commandToPatch);
+        EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
+        EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+    }
 
     commandToPatch = {};
     commandToPatch.type = CommandToPatch::PauseOnEnqueueSemaphoreStart;

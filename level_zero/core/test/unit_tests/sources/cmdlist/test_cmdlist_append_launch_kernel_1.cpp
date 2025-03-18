@@ -33,6 +33,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include "test_traits_common.h"
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 namespace L0 {
 namespace ult {
@@ -1499,7 +1501,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, MatchAny) {
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct MockCommandListCoreFamilyWithoutHeapSupport : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+    using BaseClass = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
+    using BaseClass::appendVfeStateCmdToPatch;
+    using BaseClass::BaseClass;
+};
+
+HWTEST2_F(CommandListAppendLaunchKernel, whenAppendVfeStateCmdPatchIsCalledAndHeaplessRequiredThenDoNothing, IsHeaplessRequired) {
+    auto commandList = std::make_unique<MockCommandListCoreFamilyWithoutHeapSupport<gfxCoreFamily>>();
+    commandList->appendVfeStateCmdToPatch();
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, IsHeapfulSupported) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
@@ -15,6 +16,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/cache_policy.h"
@@ -751,24 +754,27 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
 
 template <typename Family>
 size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container, bool isRcs) {
-    auto &hwInfo = device.getHardwareInfo();
-    auto &productHelper = device.getProductHelper();
+    if constexpr (!Family::isHeaplessRequired()) {
+        auto &hwInfo = device.getHardwareInfo();
+        auto &productHelper = device.getProductHelper();
 
-    size_t size = sizeof(typename Family::STATE_BASE_ADDRESS);
-    if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-        size += sizeof(typename Family::STATE_BASE_ADDRESS);
+        size_t size = sizeof(typename Family::STATE_BASE_ADDRESS);
+        if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+            size += sizeof(typename Family::STATE_BASE_ADDRESS);
+        }
+        if (container.isHeapDirty(HeapType::surfaceState)) {
+            size += sizeof(typename Family::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+        }
+
+        return size;
+    } else {
+        UNRECOVERABLE_IF(true);
+        return 0;
     }
-
-    if (container.isHeapDirty(HeapType::surfaceState)) {
-        size += sizeof(typename Family::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
-    }
-
-    return size;
 }
 
 template <typename Family>
-inline void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &container, IndirectHeap *childDsh) {
-}
+inline void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &container, IndirectHeap *childDsh) {}
 
 template <typename Family>
 void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs &args) {

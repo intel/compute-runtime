@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -155,6 +155,10 @@ struct Gen12LpFamily : public Gen12Lp {
 
     template <typename WalkerType>
     static constexpr bool isHeaplessMode() {
+        return false;
+    }
+
+    static constexpr bool isHeaplessRequired() {
         return false;
     }
 

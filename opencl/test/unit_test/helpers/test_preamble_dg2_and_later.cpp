@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,12 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
 using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 using PreambleCfeStateDg2AndLater = PreambleFixture;
 using IsDG2AndLater = IsAtLeastXeHpgCore;
 
-HWTEST2_F(PreambleCfeStateDg2AndLater, whenprogramVFEStateIsCalledWithProperAdditionalKernelExecInfoThenProperStateIsSet, IsDG2AndLater) {
+HWTEST2_F(PreambleCfeStateDg2AndLater, whenprogramVFEStateIsCalledWithProperAdditionalKernelExecInfoThenProperStateIsSet, IsHeapfulSupportedAndDG2AndLater) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -55,7 +56,7 @@ HWTEST2_F(PreambleCfeStateDg2AndLater, whenprogramVFEStateIsCalledWithProperAddi
     EXPECT_FALSE(cfeState->getComputeOverdispatchDisable());
 }
 
-HWTEST2_F(PreambleCfeStateDg2AndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue, IsDG2AndLater) {
+HWTEST2_F(PreambleCfeStateDg2AndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue, IsHeapfulSupportedAndDG2AndLater) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     uint32_t expectedValue1 = 1u;

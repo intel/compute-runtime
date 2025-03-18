@@ -208,7 +208,7 @@ uint32_t UnitTestHelper<Family>::getDebugModeRegisterOffset() {
 }
 
 template <>
-bool UnitTestHelper<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::FrontEndStateCommand &feCmd) {
+bool UnitTestHelperWithHeap<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::FrontEndStateCommand &feCmd) {
     return feCmd.getDisableSlice0Subslice2();
 }
 
@@ -218,4 +218,5 @@ bool UnitTestHelper<Family>::getSystolicFlagValueFromPipelineSelectCommand(const
 }
 
 template struct UnitTestHelper<Family>;
+template struct UnitTestHelperWithHeap<Family>;
 } // namespace NEO

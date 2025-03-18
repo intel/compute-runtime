@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,11 +22,24 @@ struct CrossThreadInfo;
 struct MultiDispatchInfo;
 
 template <typename GfxFamily>
-struct HardwareCommandsHelper : public PerThreadDataHelper {
-    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+struct HardwareCommandsHelperNoHeap : public PerThreadDataHelper {};
+
+template <typename GfxFamily>
+struct HardwareCommandsHelperWithHeap : public PerThreadDataHelper {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
+};
+
+template <typename GfxFamily>
+using HardwareCommandsHelperBase = std::conditional_t<
+    GfxFamily::isHeaplessRequired(),
+    HardwareCommandsHelperNoHeap<GfxFamily>,
+    HardwareCommandsHelperWithHeap<GfxFamily>>;
+
+template <typename GfxFamily>
+struct HardwareCommandsHelper : public HardwareCommandsHelperBase<GfxFamily> {
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 

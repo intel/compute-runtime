@@ -251,7 +251,9 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     size_t getPaddingForISAAllocation() const override;
 
     size_t getKernelIsaPointerAlignment() const override {
-        return static_cast<size_t>(GfxFamily::cmdInitInterfaceDescriptorData.KERNELSTARTPOINTER_ALIGN_SIZE);
+        using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+        using InterfaceDescriptorType = typename DefaultWalkerType::InterfaceDescriptorType;
+        return GfxFamily::template getInitInterfaceDescriptor<InterfaceDescriptorType>().KERNELSTARTPOINTER_ALIGN_SIZE;
     }
 
     uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const override;

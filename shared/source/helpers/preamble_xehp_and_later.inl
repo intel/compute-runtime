@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,8 +33,12 @@ template <typename GfxFamily>
 void *PreambleHelper<GfxFamily>::getSpaceForVfeState(LinearStream *pCommandStream,
                                                      const HardwareInfo &hwInfo,
                                                      EngineGroupType engineGroupType) {
-    using CFE_STATE = typename Family::CFE_STATE;
-    return pCommandStream->getSpace(sizeof(CFE_STATE));
+    if constexpr (GfxFamily::isHeaplessRequired() == false) {
+        using CFE_STATE = typename GfxFamily::CFE_STATE;
+        return pCommandStream->getSpace(sizeof(CFE_STATE));
+    } else {
+        return nullptr;
+    }
 }
 
 template <typename GfxFamily>
@@ -44,33 +48,35 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
                                                 uint64_t scratchAddress,
                                                 uint32_t maxFrontEndThreads,
                                                 const StreamProperties &streamProperties) {
-    using CFE_STATE = typename Family::CFE_STATE;
+    if constexpr (GfxFamily::isHeaplessRequired() == false) {
+        using CFE_STATE = typename GfxFamily::CFE_STATE;
 
-    auto cfeState = reinterpret_cast<CFE_STATE *>(pVfeState);
-    CFE_STATE cmd = Family::cmdInitCfeState;
+        auto cfeState = reinterpret_cast<CFE_STATE *>(pVfeState);
+        CFE_STATE cmd = GfxFamily::cmdInitCfeState;
 
-    uint32_t lowAddress = uint32_t(0xFFFFFFFF & scratchAddress);
-    cmd.setScratchSpaceBuffer(lowAddress);
-    cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
+        uint32_t lowAddress = uint32_t(0xFFFFFFFF & scratchAddress);
+        cmd.setScratchSpaceBuffer(lowAddress);
+        cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
 
-    cmd.setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
+        cmd.setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
 
-    PreambleHelper<Family>::setSingleSliceDispatchMode(&cmd, streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
+        PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(&cmd, streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
 
-    appendProgramVFEState(rootDeviceEnvironment, streamProperties, &cmd);
+        appendProgramVFEState(rootDeviceEnvironment, streamProperties, &cmd);
 
-    if (debugManager.flags.ComputeOverdispatchDisable.get() != -1) {
-        cmd.setComputeOverdispatchDisable(debugManager.flags.ComputeOverdispatchDisable.get());
+        if (debugManager.flags.ComputeOverdispatchDisable.get() != -1) {
+            cmd.setComputeOverdispatchDisable(debugManager.flags.ComputeOverdispatchDisable.get());
+        }
+
+        if (debugManager.flags.MaximumNumberOfThreads.get() != -1) {
+            cmd.setMaximumNumberOfThreads(debugManager.flags.MaximumNumberOfThreads.get());
+        }
+        if (debugManager.flags.OverDispatchControl.get() != -1) {
+            cmd.setOverDispatchControl(static_cast<typename CFE_STATE::OVER_DISPATCH_CONTROL>(debugManager.flags.OverDispatchControl.get()));
+        }
+
+        *cfeState = cmd;
     }
-
-    if (debugManager.flags.MaximumNumberOfThreads.get() != -1) {
-        cmd.setMaximumNumberOfThreads(debugManager.flags.MaximumNumberOfThreads.get());
-    }
-    if (debugManager.flags.OverDispatchControl.get() != -1) {
-        cmd.setOverDispatchControl(static_cast<typename CFE_STATE::OVER_DISPATCH_CONTROL>(debugManager.flags.OverDispatchControl.get()));
-    }
-
-    *cfeState = cmd;
 }
 
 template <typename GfxFamily>
@@ -80,8 +86,12 @@ uint64_t PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(Line
 
 template <typename GfxFamily>
 size_t PreambleHelper<GfxFamily>::getVFECommandsSize() {
-    using CFE_STATE = typename Family::CFE_STATE;
-    return sizeof(CFE_STATE);
+    if constexpr (GfxFamily::isHeaplessRequired() == false) {
+        using CFE_STATE = typename GfxFamily::CFE_STATE;
+        return sizeof(CFE_STATE);
+    } else {
+        return 0;
+    }
 }
 
 template <typename GfxFamily>
@@ -91,12 +101,14 @@ uint32_t PreambleHelper<GfxFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(void *cmd, bool enable) {
-    auto cfeState = reinterpret_cast<typename GfxFamily::CFE_STATE *>(cmd);
+    if constexpr (GfxFamily::isHeaplessRequired() == false) {
+        auto cfeState = reinterpret_cast<typename GfxFamily::CFE_STATE *>(cmd);
 
-    cfeState->setSingleSliceDispatchCcsMode(enable);
+        cfeState->setSingleSliceDispatchCcsMode(enable);
 
-    if (debugManager.flags.CFESingleSliceDispatchCCSMode.get() != -1) {
-        cfeState->setSingleSliceDispatchCcsMode(debugManager.flags.CFESingleSliceDispatchCCSMode.get());
+        if (debugManager.flags.CFESingleSliceDispatchCCSMode.get() != -1) {
+            cfeState->setSingleSliceDispatchCcsMode(debugManager.flags.CFESingleSliceDispatchCCSMode.get());
+        }
     }
 }
 

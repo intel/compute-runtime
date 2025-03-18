@@ -16,4 +16,6 @@ namespace NEO {
 using FamilyType = Xe3CoreFamily;
 } // namespace NEO
 
+template struct NEO::HardwareCommandsHelperWithHeap<NEO::FamilyType>;
+
 #include "opencl/source/helpers/enable_hardware_commands_helper_cw.inl"

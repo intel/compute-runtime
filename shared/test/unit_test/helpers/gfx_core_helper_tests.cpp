@@ -31,6 +31,9 @@
 
 #include <numeric>
 
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
+
 TEST(GfxCoreHelperTestCreate, WhenGfxCoreHelperIsCalledWithUnknownGfxCoreThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, GfxCoreHelper::create(IGFX_UNKNOWN_CORE));
 }
@@ -1209,7 +1212,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenComputeS
     EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 65536, nullptr, false));
 }
 
-HWTEST_F(GfxCoreHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
+HWTEST2_F(GfxCoreHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned, IsHeapfulSupported) {
     using SHARED_LOCAL_MEMORY_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
     auto hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();

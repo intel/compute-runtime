@@ -32,6 +32,7 @@
 
 #include <iostream>
 using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 void HardwareCommandsTest::SetUp() {
     ClDeviceFixture::setUp();
@@ -872,7 +873,7 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     delete pKernel;
 }
 
-HWTEST_F(HardwareCommandsTest, givenNoBTEntriesInKernelDescriptorAndGTPinInitializedWhenSettingBTPointerThenBTPointerIsSet) {
+HWTEST2_F(HardwareCommandsTest, givenNoBTEntriesInKernelDescriptorAndGTPinInitializedWhenSettingBTPointerThenBTPointerIsSet, IsHeapfulSupported) {
     isGTPinInitialized = true;
 
     auto pKernelInfo = std::make_unique<MockKernelInfo>();

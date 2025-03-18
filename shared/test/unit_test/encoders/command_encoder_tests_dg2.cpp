@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ using namespace NEO;
 using DG2CommandEncoderTest = Test<DeviceFixture>;
 HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_IsAtLeastXeHpCore, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(CommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_Platforms, IGFX_DG2);
-HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_IsAtLeastXeHpCore, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned_IsHeapfulSupportedAndAtLeastXeHpCore, IGFX_DG2);
 
 HWTEST2_F(DG2CommandEncoderTest, givenDG2WhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsDG2) {
     class MockCommandContainer : public CommandContainer {

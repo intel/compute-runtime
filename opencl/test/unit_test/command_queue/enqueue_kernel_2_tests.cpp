@@ -32,6 +32,7 @@
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 struct TestParam2 {
     uint32_t scratchSize;
@@ -718,7 +719,7 @@ INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
 
 using EnqueueKernelTests = ::testing::Test;
 
-HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy) {
+HWTEST2_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy, IsHeapfulSupported) {
     struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
         using CommandStreamReceiverHw<FamilyType>::streamProperties;
     };
@@ -790,7 +791,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
               csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
-HWTEST_F(EnqueueKernelTests, givenAgeBasedThreadArbitrationPolicyWhenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy) {
+HWTEST2_F(EnqueueKernelTests, givenAgeBasedThreadArbitrationPolicyWhenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy, IsHeapfulSupported) {
     struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
         using CommandStreamReceiverHw<FamilyType>::streamProperties;
     };

@@ -34,6 +34,9 @@
 
 #include "test_traits_common.h"
 
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
+
 namespace L0 {
 namespace ult {
 
@@ -204,7 +207,7 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
 }
 
 using CommandListTestsReserveSize = Test<DeviceFixture>;
-HWTEST2_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen16slotSpaceReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen16slotSpaceReturned, IsHeapfulSupportedAndAtLeastXeHpCore) {
     L0::CommandListCoreFamily<gfxCoreFamily> commandList(1u);
     commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
 
@@ -212,7 +215,7 @@ HWTEST2_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen
 }
 
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
-HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamPropertiesIsCalledThenRequiredStateFinalStateAndCommandsToPatchAreCorrectlySet, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamPropertiesIsCalledThenRequiredStateFinalStateAndCommandsToPatchAreCorrectlySet, IsHeapfulSupportedAndAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
 
     debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
@@ -288,7 +291,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamProp
     EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowedWhenUpdateStreamPropertiesIsCalledThenCommandsToPatchAreEmpty, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowedWhenUpdateStreamPropertiesIsCalledThenCommandsToPatchAreEmpty, IsHeapfulSupportedAndAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
 
     Mock<::L0::KernelImp> defaultKernel;
@@ -1359,7 +1362,11 @@ struct MultiTileCommandListSignalAllocLayoutTest : public MultiTileCommandListSi
 };
 
 HWTEST2_F(MultiTileCommandListSignalAllocLayoutTest, givenDynamicLayoutEnabledWhenAppendEventForProfilingCalledThenProgramOffsetMmio, IsAtLeastXeHpCore) {
-    EXPECT_NE(ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset(), ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset());
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        EXPECT_NE(ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset(), ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset());
+    } else {
+        EXPECT_EQ(ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset(), ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset());
+    }
 
     testAppendSignalEventForProfiling<gfxCoreFamily>();
 }
@@ -2235,7 +2242,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
 
 HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
           givenImmediateFlushOnCsrSharedHeapsWhenAppendingSecondKernelWithScratchThenExpectScratchStateAndAllocation,
-          IsAtLeastXeHpCore) {
+          IsHeapfulSupportedAndAtLeastXeHpCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 

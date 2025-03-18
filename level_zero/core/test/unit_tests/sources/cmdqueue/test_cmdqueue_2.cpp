@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
-#include "test_traits_common.h"
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 namespace L0 {
 namespace ult {
@@ -759,7 +760,7 @@ struct DeviceWithDualStorage : Test<DeviceFixture> {
     std::unique_ptr<L0::ult::Module> mockModule;
 };
 
-HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAndBlitterDisabledWhenExecuteCmdListThenCfeStateOnceProgrammed, IsAtLeastXeHpCore) {
+HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAndBlitterDisabledWhenExecuteCmdListThenCfeStateOnceProgrammed, IsHeapfulSupportedAndAtLeastXeHpCore) {
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     if (compilerProductHelper.isHeaplessModeEnabled()) {
@@ -952,8 +953,6 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
 }
 
 HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorrectlyPatched, IsAtLeastXeHpCore) {
-    using CFE_STATE = typename FamilyType::CFE_STATE;
-
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
@@ -965,40 +964,51 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
     EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
     commandList->commandsToPatch.clear();
 
-    CFE_STATE destinationCfeStates[4];
-    int32_t initialScratchAddress = 0x123400;
-    for (size_t i = 0; i < 4; i++) {
-        auto sourceCfeState = new CFE_STATE;
-        *sourceCfeState = FamilyType::cmdInitCfeState;
-        if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
-            sourceCfeState->setNumberOfWalkers(2);
-        }
-        sourceCfeState->setMaximumNumberOfThreads(16);
-        sourceCfeState->setScratchSpaceBuffer(initialScratchAddress);
-
-        destinationCfeStates[i] = FamilyType::cmdInitCfeState;
-        if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
-            EXPECT_NE(destinationCfeStates[i].getNumberOfWalkers(), sourceCfeState->getNumberOfWalkers());
-        }
-        EXPECT_NE(destinationCfeStates[i].getMaximumNumberOfThreads(), sourceCfeState->getMaximumNumberOfThreads());
-
+    if constexpr (FamilyType::isHeaplessRequired()) {
         CommandToPatch commandToPatch;
-        commandToPatch.pDestination = &destinationCfeStates[i];
-        commandToPatch.pCommand = sourceCfeState;
-        commandToPatch.type = CommandToPatch::CommandType::FrontEndState;
+        commandToPatch.pDestination = nullptr;
+        commandToPatch.pCommand = nullptr;
+        commandToPatch.type = CommandToPatch::FrontEndState;
         commandList->commandsToPatch.push_back(commandToPatch);
-    }
+        EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
+        commandList->commandsToPatch.clear();
+    } else {
+        using CFE_STATE = typename FamilyType::CFE_STATE;
+        CFE_STATE destinationCfeStates[4];
+        int32_t initialScratchAddress = 0x123400;
+        for (size_t i = 0; i < 4; i++) {
+            auto sourceCfeState = new CFE_STATE;
+            *sourceCfeState = FamilyType::cmdInitCfeState;
+            if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+                sourceCfeState->setNumberOfWalkers(2);
+            }
+            sourceCfeState->setMaximumNumberOfThreads(16);
+            sourceCfeState->setScratchSpaceBuffer(initialScratchAddress);
 
-    uint64_t patchedScratchAddress = 0xABCD00;
-    commandQueue->patchCommands(*commandList, patchedScratchAddress, false);
-    for (size_t i = 0; i < 4; i++) {
-        EXPECT_EQ(patchedScratchAddress, destinationCfeStates[i].getScratchSpaceBuffer());
-        auto &sourceCfeState = *reinterpret_cast<CFE_STATE *>(commandList->commandsToPatch[i].pCommand);
-        if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
-            EXPECT_EQ(destinationCfeStates[i].getNumberOfWalkers(), sourceCfeState.getNumberOfWalkers());
+            destinationCfeStates[i] = FamilyType::cmdInitCfeState;
+            if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+                EXPECT_NE(destinationCfeStates[i].getNumberOfWalkers(), sourceCfeState->getNumberOfWalkers());
+            }
+            EXPECT_NE(destinationCfeStates[i].getMaximumNumberOfThreads(), sourceCfeState->getMaximumNumberOfThreads());
+
+            CommandToPatch commandToPatch;
+            commandToPatch.pDestination = &destinationCfeStates[i];
+            commandToPatch.pCommand = sourceCfeState;
+            commandToPatch.type = CommandToPatch::CommandType::FrontEndState;
+            commandList->commandsToPatch.push_back(commandToPatch);
         }
-        EXPECT_EQ(destinationCfeStates[i].getMaximumNumberOfThreads(), sourceCfeState.getMaximumNumberOfThreads());
-        EXPECT_EQ(destinationCfeStates[i].getScratchSpaceBuffer(), sourceCfeState.getScratchSpaceBuffer());
+
+        uint64_t patchedScratchAddress = 0xABCD00;
+        commandQueue->patchCommands(*commandList, patchedScratchAddress, false);
+        for (size_t i = 0; i < 4; i++) {
+            EXPECT_EQ(patchedScratchAddress, destinationCfeStates[i].getScratchSpaceBuffer());
+            auto &sourceCfeState = *reinterpret_cast<CFE_STATE *>(commandList->commandsToPatch[i].pCommand);
+            if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+                EXPECT_EQ(destinationCfeStates[i].getNumberOfWalkers(), sourceCfeState.getNumberOfWalkers());
+            }
+            EXPECT_EQ(destinationCfeStates[i].getMaximumNumberOfThreads(), sourceCfeState.getMaximumNumberOfThreads());
+            EXPECT_EQ(destinationCfeStates[i].getScratchSpaceBuffer(), sourceCfeState.getScratchSpaceBuffer());
+        }
     }
 }
 

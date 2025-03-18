@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -299,4 +299,11 @@ HWTEST2_F(PreambleHwTest, GivenAtLeastXeHpCoreWhenPreambleAddsPipeControlBeforeC
 
     PreambleHelper<FamilyType>::addPipeControlBeforeVfeCmd(&stream, &hwInfo, EngineGroupType::compute);
     EXPECT_EQ(0u, stream.getUsed());
+}
+
+HWTEST2_F(PreambleHwTest, givenHwWithForcedHeaplessModeWhenCallingSetSingleSliceDispatchModeThenDoNothing, IsAtLeastXeHpCore) {
+    if (FamilyType::isHeaplessRequired() == false) {
+        GTEST_SKIP();
+    }
+    PreambleHelper<FamilyType>::setSingleSliceDispatchMode(nullptr, true);
 }

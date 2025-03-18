@@ -148,7 +148,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
 
   protected:
     uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const override;
-    CompilerProductHelperHw() = default;
+    CompilerProductHelperHw();
 };
 
 template <PRODUCT_FAMILY gfxProduct>

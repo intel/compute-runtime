@@ -69,7 +69,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kerne
         requiredWalkOrder,
         simdSize);
     auto size = kernel.getCrossThreadDataSize() +
-                getPerThreadDataSizeTotal(simdSize, grfSize, grfCount, numChannels, localWorkSize, isHwLocalIdGeneration, rootDeviceEnvironment);
+                HardwareCommandsHelper::getPerThreadDataSizeTotal(simdSize, grfSize, grfCount, numChannels, localWorkSize, isHwLocalIdGeneration, rootDeviceEnvironment);
 
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {
@@ -148,7 +148,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
         pInterfaceDescriptor = inlineInterfaceDescriptor;
         interfaceDescriptor.setKernelStartPointer(kernelStartOffset);
     } else {
-        pInterfaceDescriptor = getInterfaceDescriptor(indirectHeap, offsetInterfaceDescriptor, inlineInterfaceDescriptor);
+        pInterfaceDescriptor = HardwareCommandsHelper::getInterfaceDescriptor(indirectHeap, offsetInterfaceDescriptor, inlineInterfaceDescriptor);
         interfaceDescriptor.setKernelStartPointer(static_cast<uint32_t>(kernelStartOffset));
     }
 

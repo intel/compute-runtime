@@ -51,7 +51,11 @@ HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterWhenIsForceToStateless
     EXPECT_TRUE(compilerProductHelper.isForceToStatelessRequired());
 
     debugManager.flags.DisableForceToStateless.set(true);
-    EXPECT_FALSE(compilerProductHelper.isForceToStatelessRequired());
+    if constexpr (FamilyType::isHeaplessRequired()) {
+        EXPECT_TRUE(compilerProductHelper.isForceToStatelessRequired());
+    } else {
+        EXPECT_FALSE(compilerProductHelper.isForceToStatelessRequired());
+    }
 }
 
 HWTEST2_F(CompilerProductHelperFixture, GivenGen11AndLaterThenSubgroupLocalBlockIoIsSupported, MatchAny) {

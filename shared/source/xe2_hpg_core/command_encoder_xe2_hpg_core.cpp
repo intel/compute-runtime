@@ -142,4 +142,5 @@ void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceS
 namespace NEO {
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue);
 
+template struct EncodeDispatchKernelWithHeap<Family>;
 } // namespace NEO

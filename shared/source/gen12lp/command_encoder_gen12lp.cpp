@@ -67,7 +67,6 @@ void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfac
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
-
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
 
@@ -223,7 +222,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     uint32_t numIDD = 0u;
-    void *iddPtr = getInterfaceDescriptor(container, args.dynamicStateHeap, numIDD);
+    void *iddPtr = EncodeDispatchKernel::getInterfaceDescriptor(container, args.dynamicStateHeap, numIDD);
 
     auto slmSizeNew = args.dispatchInterface->getSlmTotalSize();
     bool dirtyHeaps = container.isAnyHeapDirty();
@@ -302,6 +301,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         .requiredSystemFence = args.requiresSystemMemoryFence(),
         .hasSample = false};
 
+    using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, cmd, walkerArgs);
     EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(cmd, walkerArgs);
     EncodeDispatchKernel<Family>::template encodeComputeDispatchAllWalker<WalkerType, INTERFACE_DESCRIPTOR_DATA>(cmd, nullptr, rootDeviceEnvironment, walkerArgs);
@@ -351,6 +351,7 @@ void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &contai
 
     MEDIA_INTERFACE_DESCRIPTOR_LOAD cmd = Family::cmdInitMediaInterfaceDescriptorLoad;
     cmd.setInterfaceDescriptorDataStartAddress(iddOffset);
+    using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
     cmd.setInterfaceDescriptorTotalLength(sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock());
 
     auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
@@ -801,6 +802,7 @@ namespace NEO {
 template struct EncodeL3State<Family>;
 
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue);
+template struct EncodeDispatchKernelWithHeap<Family>;
 } // namespace NEO
 
 #include "shared/source/command_container/implicit_scaling_before_xe_hp.inl"

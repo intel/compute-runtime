@@ -178,6 +178,10 @@ struct Xe3CoreFamily : public Xe3Core {
         return false;
     }
 
+    static constexpr bool isHeaplessRequired() {
+        return false;
+    }
+
     template <typename InterfaceDescriptorType>
     static constexpr bool isInterfaceDescriptorHeaplessMode() {
         return false;

@@ -28,6 +28,7 @@
 #include "test_traits_common.h"
 
 using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
@@ -142,7 +143,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     alignedFree(memory);
 }
 
-HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNotUsedWhenCopyingSamplerStateThenDynamicPatternIsUsedAndOffsetFromDshProgrammed) {
+HWTEST2_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNotUsedWhenCopyingSamplerStateThenDynamicPatternIsUsedAndOffsetFromDshProgrammed, IsHeapfulSupported) {
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
@@ -176,7 +177,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNot
     auto expectedValue = usedBefore + ptrDiff(dsh->getGpuBase(), globalBase);
     auto usedAfter = dsh->getUsed();
 
-    EXPECT_EQ(alignUp(usedBefore + sizeof(SAMPLER_BORDER_COLOR_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE) + sizeof(SAMPLER_STATE), usedAfter);
+    EXPECT_EQ(alignUp(usedBefore + sizeof(SAMPLER_BORDER_COLOR_STATE), InterfaceDescriptorTraits<INTERFACE_DESCRIPTOR_DATA>::samplerStatePointerAlignSize) + sizeof(SAMPLER_STATE), usedAfter);
 
     auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(ptrDiff(dsh->getSpace(0), sizeof(SAMPLER_STATE)));
 
@@ -364,7 +365,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherenc
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStateBaseAddressCalledThenStateBaseAddressAreNotSet, MatchAny) {
+HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStateBaseAddressCalledThenStateBaseAddressAreNotSet, IsHeapfulSupported) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     cmdContainer->dirtyHeaps = 0;
 
@@ -460,7 +461,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, whenAdjustPipelineSelect
     EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotInitializedSshThenExpectCorrectSbaCommand, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotInitializedSshThenExpectCorrectSbaCommand, IsHeapfulSupportedAndAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
@@ -491,7 +492,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotIniti
     EXPECT_EQ(commands.end(), itorCmd);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, IsHeapfulSupportedAndAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 

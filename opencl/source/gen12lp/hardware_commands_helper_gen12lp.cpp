@@ -22,13 +22,13 @@ template <typename GfxFamily>
 typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *HardwareCommandsHelper<GfxFamily>::getInterfaceDescriptor(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
-    HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
+    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
     return static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getCpuBase(), (size_t)offsetInterfaceDescriptor));
 }
 
 template <typename GfxFamily>
 uint32_t HardwareCommandsHelper<GfxFamily>::additionalSizeRequiredDsh() {
-    return sizeof(INTERFACE_DESCRIPTOR_DATA);
+    return sizeof(typename HardwareCommandsHelper::INTERFACE_DESCRIPTOR_DATA);
 }
 
 template <typename GfxFamily>
@@ -129,5 +129,7 @@ size_t HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() {
 }
 
 } // namespace NEO
+
+template struct NEO::HardwareCommandsHelperWithHeap<NEO::FamilyType>;
 
 #include "opencl/source/helpers/enable_hardware_commands_helper_gpgpu.inl"
