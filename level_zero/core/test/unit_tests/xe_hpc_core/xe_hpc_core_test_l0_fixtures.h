@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,9 +19,6 @@ struct DeviceFixtureXeHpcTests : public DeviceFixture {
     DebugManagerStateRestore restorer;
 };
 
-struct CommandListStatePrefetchXeHpcCore : public ModuleFixture {
-    void checkIfDebugFlagSetWhenPrefetchApiCalledAThenStatePrefetchProgrammed(HardwareInfo *hwInfo);
-    void checkIfCommandBufferIsExhaustedWhenPrefetchApiCalledThenStatePrefetchProgrammed(HardwareInfo *hwInfo);
-};
+struct CommandListStatePrefetchXeHpcCore : public ModuleFixture {};
 } // namespace ult
 } // namespace L0

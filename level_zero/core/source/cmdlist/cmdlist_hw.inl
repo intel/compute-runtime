@@ -2031,20 +2031,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const voi
         }
     }
 
-    if (NEO::debugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.get() != 1) {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    auto gpuAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-
-    commandContainer.addToResidencyContainer(gpuAlloc);
-
-    size_t offset = ptrDiff(ptr, gpuAlloc->getGpuAddress());
-
-    NEO::LinearStream &cmdStream = *commandContainer.getCommandStream();
-
-    NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *gpuAlloc, static_cast<uint32_t>(size), offset, device->getNEODevice()->getRootDeviceEnvironment());
-
     return ZE_RESULT_SUCCESS;
 }
 

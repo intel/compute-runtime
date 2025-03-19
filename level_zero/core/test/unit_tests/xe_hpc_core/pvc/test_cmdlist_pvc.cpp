@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,25 +17,6 @@
 
 namespace L0 {
 namespace ult {
-
-using CommandListStatePrefetchPvcXt = Test<CommandListStatePrefetchXeHpcCore>;
-
-PVCTEST_F(CommandListStatePrefetchPvcXt, givenCommandBufferIsExhaustedWhenPrefetchApiCalledAndIsPvcXtNotBaseDieA0ThenProgramStatePrefetch) {
-    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = device->getProductHelper();
-    hwInfo->platform.usDeviceID = pvcXtDeviceIds.front();
-    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo); // not BD A0
-    checkIfCommandBufferIsExhaustedWhenPrefetchApiCalledThenStatePrefetchProgrammed(hwInfo);
-}
-
-PVCTEST_F(CommandListStatePrefetchPvcXt, givenDebugFlagSetWhenPrefetchApiCalledAndIsPvcXtNotBaseDieA0ThenProgramStatePrefetch) {
-    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = device->getProductHelper();
-    hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usDeviceID = pvcXtDeviceIds.front();
-    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo); // not BD A0
-    checkIfDebugFlagSetWhenPrefetchApiCalledAThenStatePrefetchProgrammed(hwInfo);
-}
 
 using CommandListEventFenceTestsPvc = Test<ModuleFixture>;
 

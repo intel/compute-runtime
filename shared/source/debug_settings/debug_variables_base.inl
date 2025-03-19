@@ -552,7 +552,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceBCSForInternalCopyEngine, -1, "-1: default,
 DECLARE_DEBUG_VARIABLE(int32_t, Force32BitDriverSupport, -1, "-1: default, 0: disable, 1: enable, Forces the driver to support 32 bit.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicPipelineSelect, -1, "set SYSTOLIC MODE ENABLE in PIPELINE_SELECT cmd, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicInComputeWalker, -1, "set SYSTOLIC MODE ENABLE in COMPUTE_WALKER cmd, -1:default, 0:disable, 1:enable")
-DECLARE_DEBUG_VARIABLE(int32_t, AddStatePrefetchCmdToMemoryPrefetchAPI, -1, "Add STATE_PREFETCH to zeCommandListAppendMemoryPrefetch, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDrmCompletionFence, -1, "Enables DRM completion fence, -1:default (disabled), 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, UseDrmCompletionFenceForAllAllocations, -1, "Uses DRM completion fence for all allocations, -1:default (disabled), 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableChipsetUniqueUUID, -1, "Enables retrieving chipset unique UUID using telemetry, -1:default (enabled), 0:disable, 1:enable")

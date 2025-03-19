@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,102 +26,4 @@ void DeviceFixtureXeHpcTests::checkIfCallingGetMemoryPropertiesWithNonNullPtrThe
     EXPECT_EQ(1u, count);
 
     EXPECT_EQ(memProperties.maxClockRate, 0u);
-}
-
-void CommandListStatePrefetchXeHpcCore::checkIfDebugFlagSetWhenPrefetchApiCalledAThenStatePrefetchProgrammed(HardwareInfo *hwInfo) {
-    using STATE_PREFETCH = typename XeHpcCoreFamily::STATE_PREFETCH;
-    DebugManagerStateRestore restore;
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    constexpr size_t size = MemoryConstants::cacheLineSize * 2;
-    constexpr size_t alignment = MemoryConstants::pageSize64k;
-    constexpr size_t offset = MemoryConstants::cacheLineSize;
-    constexpr uint32_t mocsIndexForL3 = (2 << 1);
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    context->allocDeviceMem(device->toHandle(), &deviceDesc, size + offset, alignment, &ptr);
-    EXPECT_NE(nullptr, ptr);
-
-    auto cmdListBaseOffset = pCommandList->commandContainer.getCommandStream()->getUsed();
-
-    {
-        auto ret = pCommandList->appendMemoryPrefetch(ptrOffset(ptr, offset), size);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-        EXPECT_EQ(cmdListBaseOffset, pCommandList->commandContainer.getCommandStream()->getUsed());
-    }
-
-    {
-        debugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.set(1);
-
-        auto ret = pCommandList->appendMemoryPrefetch(ptrOffset(ptr, offset), size);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-        EXPECT_EQ(cmdListBaseOffset + sizeof(STATE_PREFETCH), pCommandList->commandContainer.getCommandStream()->getUsed());
-
-        auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(ptrOffset(pCommandList->commandContainer.getCommandStream()->getCpuBase(), cmdListBaseOffset));
-
-        EXPECT_EQ(statePrefetchCmd->getAddress(), reinterpret_cast<uint64_t>(ptrOffset(ptr, offset)));
-        EXPECT_FALSE(statePrefetchCmd->getKernelInstructionPrefetch());
-        EXPECT_EQ(mocsIndexForL3, statePrefetchCmd->getMemoryObjectControlState());
-        EXPECT_EQ(1u, statePrefetchCmd->getPrefetchSize());
-
-        EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), pCommandList->commandContainer.getResidencyContainer().back()->getGpuAddress());
-    }
-
-    context->freeMem(ptr);
-}
-
-void CommandListStatePrefetchXeHpcCore::checkIfCommandBufferIsExhaustedWhenPrefetchApiCalledThenStatePrefetchProgrammed(HardwareInfo *hwInfo) {
-    using STATE_PREFETCH = typename XeHpcCoreFamily::STATE_PREFETCH;
-    using MI_BATCH_BUFFER_END = typename XeHpcCoreFamily::MI_BATCH_BUFFER_END;
-
-    DebugManagerStateRestore restore;
-    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
-
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    constexpr size_t size = MemoryConstants::cacheLineSize * 2;
-    constexpr size_t alignment = MemoryConstants::pageSize64k;
-    constexpr size_t offset = MemoryConstants::cacheLineSize;
-    constexpr uint32_t mocsIndexForL3 = (2 << 1);
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    context->allocDeviceMem(device->toHandle(), &deviceDesc, size + offset, alignment, &ptr);
-    EXPECT_NE(nullptr, ptr);
-
-    auto firstBatchBufferAllocation = pCommandList->commandContainer.getCommandStream()->getGraphicsAllocation();
-
-    auto useSize = pCommandList->commandContainer.getCommandStream()->getAvailableSpace();
-    useSize -= sizeof(MI_BATCH_BUFFER_END);
-    pCommandList->commandContainer.getCommandStream()->getSpace(useSize);
-
-    debugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.set(1);
-
-    auto ret = pCommandList->appendMemoryPrefetch(ptrOffset(ptr, offset), size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    auto secondBatchBufferAllocation = pCommandList->commandContainer.getCommandStream()->getGraphicsAllocation();
-
-    EXPECT_NE(firstBatchBufferAllocation, secondBatchBufferAllocation);
-
-    auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(pCommandList->commandContainer.getCommandStream()->getCpuBase());
-
-    EXPECT_EQ(statePrefetchCmd->getAddress(), reinterpret_cast<uint64_t>(ptrOffset(ptr, offset)));
-    EXPECT_FALSE(statePrefetchCmd->getKernelInstructionPrefetch());
-    EXPECT_EQ(mocsIndexForL3, statePrefetchCmd->getMemoryObjectControlState());
-    EXPECT_EQ(1u, statePrefetchCmd->getPrefetchSize());
-
-    NEO::ResidencyContainer::iterator it = pCommandList->commandContainer.getResidencyContainer().end();
-    it--;
-    EXPECT_EQ(secondBatchBufferAllocation->getGpuAddress(), (*it)->getGpuAddress());
-    it--;
-    EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), (*it)->getGpuAddress());
-
-    context->freeMem(ptr);
 }
