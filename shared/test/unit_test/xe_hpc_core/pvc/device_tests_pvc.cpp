@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,29 @@ PVCTEST_F(DeviceTestsPvc, WhenDeviceIsCreatedThenOnlyOneCcsEngineIsExposed) {
     auto computeEngineGroupIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
     auto computeEngineGroup = device->getRegularEngineGroups()[computeEngineGroupIndex];
     EXPECT_EQ(1u, computeEngineGroup.engines.size());
+}
+
+PVCTEST_F(DeviceTestsPvc, givenZexNumberOfCssEnvVariableDefinedForXeHpcWhenSingleDeviceIsCreatedThenCreateDevicesWithProperCcsCount) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.ZEX_NUMBER_OF_CCS.set("0:4");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1);
+    executionEnvironment.incRefInternal();
+    UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
+
+    {
+        auto hardwareInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hardwareInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+        executionEnvironment.adjustCcsCount();
+        EXPECT_EQ(std::min(4u, defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled), hardwareInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
+    }
 }
 
 struct MemoryManagerDirectSubmissionImplicitScalingPvcTest : public ::testing::Test {

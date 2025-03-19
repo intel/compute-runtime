@@ -794,6 +794,38 @@ HWCMDTEST_F(IGFX_XE_HPC_CORE, DeviceTests, givenDeviceIsCreatedWithMalformedZexN
     }
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDeviceIsCreatedWithZexNumberOfCssEnvVariableDefinedForXeHpAndHwInfoCcsCountIsSetToDefaultWhenAdjustCcsCountForSpecificRootDeviceIsInvokedThenVerifyHwInfoCcsCountIsRestoredForAllDevices) {
+
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.ZEX_NUMBER_OF_CCS.set("2");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo, false, 2);
+    executionEnvironment.incRefInternal();
+
+    UltDeviceFactory deviceFactory{2, 0, executionEnvironment};
+    {
+        auto hardwareInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        hardwareInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+        executionEnvironment.adjustCcsCount(0);
+        EXPECT_EQ(std::min(2u, defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled), hardwareInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
+    }
+
+    {
+        auto hardwareInfo = executionEnvironment.rootDeviceEnvironments[1]->getMutableHardwareInfo();
+        hardwareInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+        executionEnvironment.adjustCcsCount(1);
+        EXPECT_EQ(std::min(2u, defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled), hardwareInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
+    }
+}
+
 HWCMDTEST_F(IGFX_XE_HPC_CORE, DeviceTests, givenDeviceIsCreatedWithZexNumberOfCssEnvVariableDefinedAndHwInfoCcsCountIsSetToDefaultWhenAdjustCcsCountForSpecificRootDeviceIsInvokedThenVerifyHwInfoCcsCountIsRestored) {
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -884,46 +916,7 @@ HWCMDTEST_F(IGFX_XE_HPC_CORE, DeviceTests, givenZexNumberOfCssAndZeAffinityMaskS
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevicesModelForXeHpThenProperSubDeviceHierarchyMapisSet) {
-    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    DebugManagerStateRestore restorer;
-
-    uint32_t numRootDevices = 4;
-    uint32_t numSubDevices = 4;
-
-    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-
-    uint32_t expectedRootDevices = 4;
-    debugManager.flags.ZE_AFFINITY_MASK.set("0,3,4,1.1,9,15,25");
-
-    debugManager.flags.SetCommandStreamReceiver.set(1);
-
-    auto hwInfo = *defaultHwInfo;
-
-    MockExecutionEnvironment executionEnvironment(&hwInfo, false, numRootDevices);
-    executionEnvironment.incRefInternal();
-
-    auto devices = DeviceFactory::createDevices(executionEnvironment);
-    EXPECT_EQ(devices.size(), expectedRootDevices);
-    std::vector<uint32_t> expectedRootDeviceIndices = {0, 0, 1, 2};
-    std::vector<uint32_t> expectedSubDeviceIndices = {0, 3, 0, 1};
-    for (uint32_t i = 0u; i < devices.size(); i++) {
-        std::tuple<uint32_t, uint32_t, uint32_t> subDeviceMap;
-        EXPECT_TRUE(executionEnvironment.getSubDeviceHierarchy(i, &subDeviceMap));
-        auto hwRootDeviceIndex = std::get<0>(subDeviceMap);
-        auto hwSubDeviceIndex = std::get<1>(subDeviceMap);
-        auto hwSubDevicesCount = std::get<2>(subDeviceMap);
-        EXPECT_EQ(hwRootDeviceIndex, expectedRootDeviceIndices[i]);
-        EXPECT_EQ(hwSubDeviceIndex, expectedSubDeviceIndices[i]);
-        EXPECT_EQ(hwSubDevicesCount, numSubDevices);
-    }
-}
-
-HWCMDTEST_F(IGFX_XE_HPC_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevicesModelThenProperSubDeviceHierarchyMapisSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetAndTilesAsDevicesModelThenProperSubDeviceHierarchyMapisSet) {
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<UltHwConfig> backup(&ultHwConfig);

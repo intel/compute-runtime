@@ -147,7 +147,6 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
 
 template <>
 void ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
-
     auto numberOfCcsEntries = StringHelpers::split(ccsModeString, ",");
 
     for (const auto &entry : numberOfCcsEntries) {
