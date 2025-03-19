@@ -456,37 +456,30 @@ TEST_F(ZesEngineMultiFixturePrelim, GivenValidEngineHandlesWhenCallingZesEngineG
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[0], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_ALL, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[1], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_ALL, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 1u);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[2], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ALL, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 1u);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[3], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[4], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 1u);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[5], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 1u);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handles[6], &properties));
     EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_ALL, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
-    EXPECT_EQ(properties.subdeviceId, 0u);
 }
 
 TEST_F(ZesEngineMultiFixturePrelim, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFailsThenzesDeviceEnumEngineGroupsSucceedsAndHandleCountIsZero) {

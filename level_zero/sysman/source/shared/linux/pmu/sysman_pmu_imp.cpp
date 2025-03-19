@@ -113,7 +113,7 @@ static ze_result_t getShiftValue(const std::string_view &readFile, FsAccessInter
     return result;
 }
 
-int32_t PmuInterfaceImp::getConfigAfterFormat(const std::string_view &formatDir, uint64_t &config, uint32_t engineClass, uint32_t engineInstance, uint32_t gt) {
+int32_t PmuInterfaceImp::getConfigAfterFormat(const std::string_view &formatDir, uint64_t &config, uint64_t engineClass, uint64_t engineInstance, uint64_t gt) {
 
     // The final config is computed by the bitwise OR operation of the config fetched from the event file and value obtained by shifting the parameters gt,
     // engineClass and engineInstance with the shift value fetched from the corresponding file in /sys/devices/xe_<bdf>/format/ directory.

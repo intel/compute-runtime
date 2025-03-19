@@ -995,13 +995,15 @@ TEST_F(IoctlPrelimHelperTests, whenCallingGetStatusAndFlagsForResetStatsThenExpe
     EXPECT_FALSE(ioctlHelper.validPageFault(0u));
 }
 
-TEST_F(IoctlPrelimHelperTests, whenCallingGetTileIdFromGtIdThenMinusOneIsReturned) {
+TEST_F(IoctlPrelimHelperTests, whenCallingGetTileIdFromGtIdThenExpectedValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     MockIoctlHelperPrelim20 ioctlHelper{*drm};
 
-    EXPECT_EQ(-1, ioctlHelper.getTileIdFromGtId(0));
-    EXPECT_EQ(-1, ioctlHelper.getTileIdFromGtId(1));
+    int32_t gtId = 0;
+    EXPECT_EQ(gtId, ioctlHelper.getTileIdFromGtId(gtId));
+    gtId = 1;
+    EXPECT_EQ(gtId, ioctlHelper.getTileIdFromGtId(gtId));
 }
 
 TEST(DrmTest, GivenDrmWhenAskedForPreemptionThenCorrectValueReturned) {

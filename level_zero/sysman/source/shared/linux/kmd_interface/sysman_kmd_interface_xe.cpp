@@ -104,7 +104,7 @@ std::string SysmanKmdInterfaceXe::getEnergyCounterNodeFile(zes_power_domain_t po
     return filePath;
 }
 
-ze_result_t SysmanKmdInterfaceXe::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
+ze_result_t SysmanKmdInterfaceXe::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t gtId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -134,14 +134,14 @@ ze_result_t SysmanKmdInterfaceXe::getEngineActivityFdList(zes_engine_group_t eng
     }
 
     const std::string formatDir = std::string(sysDevicesDir) + sysmanDeviceDirName + "/format/";
-    ret = pPmuInterface->getConfigAfterFormat(formatDir, activeTicksConfig, engineClass->second, engineInstance, subDeviceId);
+    ret = pPmuInterface->getConfigAfterFormat(formatDir, activeTicksConfig, engineClass->second, engineInstance, gtId);
     if (ret < 0) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get config for the active ticks after format and returning error:0x%x\n", __FUNCTION__, result);
         return result;
     }
 
-    ret = pPmuInterface->getConfigAfterFormat(formatDir, totalTicksConfig, engineClass->second, engineInstance, subDeviceId);
+    ret = pPmuInterface->getConfigAfterFormat(formatDir, totalTicksConfig, engineClass->second, engineInstance, gtId);
     if (ret < 0) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get config for the total ticks after format and returning error:0x%x\n", __FUNCTION__, result);

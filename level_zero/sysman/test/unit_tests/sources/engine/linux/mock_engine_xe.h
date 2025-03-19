@@ -17,6 +17,39 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
+struct MockIoctlHelperXe : public NEO::IoctlHelperXe {
+
+    MockIoctlHelperXe(NEO::Drm &drmArg) : NEO::IoctlHelperXe(drmArg) {}
+
+    int getTileIdFromGtId(int gtId) const override {
+        return 0;
+    }
+};
+
+struct MockXeEngineInfo : public NEO::EngineInfo {
+
+    using NEO::EngineInfo::tileToEngineMap;
+    uint32_t count = 2;
+
+    MockXeEngineInfo(NEO::Drm *drm, StackVec<std::vector<NEO::EngineCapabilities>, 2> &engineInfosPerTile) : NEO::EngineInfo(drm, engineInfosPerTile) {
+
+        std::vector<NEO::EngineCapabilities> mockEngineCapabilities(4);
+        mockEngineCapabilities[0].engine.engineClass = EngineClass::ENGINE_CLASS_RENDER;
+        mockEngineCapabilities[0].engine.engineInstance = 0;
+        mockEngineCapabilities[1].engine.engineClass = EngineClass::ENGINE_CLASS_COPY;
+        mockEngineCapabilities[1].engine.engineInstance = 0;
+        mockEngineCapabilities[2].engine.engineClass = EngineClass::ENGINE_CLASS_COMPUTE;
+        mockEngineCapabilities[2].engine.engineInstance = 0;
+        mockEngineCapabilities[3].engine.engineClass = EngineClass::ENGINE_CLASS_VIDEO_ENHANCE;
+        mockEngineCapabilities[3].engine.engineInstance = 0;
+
+        tileToEngineMap.emplace(0, mockEngineCapabilities[0].engine);
+        tileToEngineMap.emplace(0, mockEngineCapabilities[1].engine);
+        tileToEngineMap.emplace(0, mockEngineCapabilities[2].engine);
+        tileToEngineMap.emplace(1, mockEngineCapabilities[3].engine);
+    }
+};
+
 struct MockNeoDrm : public NEO::Drm {
 
   public:
@@ -26,24 +59,10 @@ struct MockNeoDrm : public NEO::Drm {
 
     MockNeoDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : NEO::Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 
-    bool mockSysmanQueryEngineInfoReturnFalse = true;
     bool sysmanQueryEngineInfo() override {
-        if (mockSysmanQueryEngineInfoReturnFalse != true) {
-            return mockSysmanQueryEngineInfoReturnFalse;
-        }
 
-        std::vector<NEO::EngineCapabilities> mockEngineInfo(3);
-        mockEngineInfo[0].engine.engineClass = EngineClass::ENGINE_CLASS_RENDER;
-        mockEngineInfo[0].engine.engineInstance = 0;
-        mockEngineInfo[1].engine.engineClass = EngineClass::ENGINE_CLASS_COPY;
-        mockEngineInfo[1].engine.engineInstance = 0;
-        mockEngineInfo[2].engine.engineClass = EngineClass::ENGINE_CLASS_VIDEO_ENHANCE;
-        mockEngineInfo[2].engine.engineInstance = 0;
-        mockEngineInfo[3].engine.engineClass = UINT16_MAX;
-        mockEngineInfo[3].engine.engineInstance = 0;
-
-        StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{mockEngineInfo};
-        this->engineInfo.reset(new NEO::EngineInfo(this, engineInfosPerTile));
+        StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{};
+        this->engineInfo.reset(new MockXeEngineInfo(this, engineInfosPerTile));
         return true;
     }
 };

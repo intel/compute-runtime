@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,15 +24,15 @@ EngineHandleContext::~EngineHandleContext() {
     releaseEngines();
 }
 
-void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice) {
-    std::unique_ptr<Engine> pEngine = std::make_unique<EngineImp>(pOsSysman, engineType, engineInstance, subDeviceId, onSubdevice);
+void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubdevice) {
+    std::unique_ptr<Engine> pEngine = std::make_unique<EngineImp>(pOsSysman, engineType, engineInstance, gtId, onSubdevice);
     if (pEngine->initSuccess == true) {
         handleList.push_back(std::move(pEngine));
     }
 }
 
 void EngineHandleContext::init(uint32_t subDeviceCount) {
-    std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> engineGroupInstance = {}; // set contains pair of engine group and struct containing engine instance and subdeviceId
+    std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> engineGroupInstance = {}; // set contains pair of engine group and struct containing engine instance and gtId
     deviceEngineInitStatus = OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman);
 
     if (deviceEngineInitStatus != ZE_RESULT_SUCCESS) {
@@ -40,12 +40,8 @@ void EngineHandleContext::init(uint32_t subDeviceCount) {
     }
 
     for (auto itr = engineGroupInstance.begin(); itr != engineGroupInstance.end(); ++itr) {
-        for (uint32_t subDeviceId = 0; subDeviceId <= subDeviceCount; subDeviceId++) {
-            if (subDeviceId == itr->second.second) {
-                const auto isSubDevice = subDeviceCount > 0;
-                createHandle(itr->first, itr->second.first, subDeviceId, isSubDevice);
-            }
-        }
+        const auto isSubDevice = subDeviceCount > 0;
+        createHandle(itr->first, itr->second.first, itr->second.second, isSubDevice);
     }
 }
 

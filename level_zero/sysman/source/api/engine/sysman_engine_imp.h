@@ -22,7 +22,7 @@ class EngineImp : public Engine, NEO::NonCopyableAndNonMovableClass {
     ze_result_t engineGetActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override;
 
     EngineImp() = default;
-    EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice);
+    EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubdevice);
     ~EngineImp() override;
 
     std::unique_ptr<OsEngine> pOsEngine;

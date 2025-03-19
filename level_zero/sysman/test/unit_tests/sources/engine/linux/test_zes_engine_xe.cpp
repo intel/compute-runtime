@@ -18,7 +18,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint32_t mockEngineHandleCount = 3u;
+constexpr uint32_t mockEngineHandleCount = 4u;
 
 class ZesEngineFixtureXe : public SysmanDeviceFixture {
   protected:

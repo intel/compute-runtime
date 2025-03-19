@@ -22,7 +22,7 @@ class WddmEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
     bool isEngineModuleSupported() override;
 
     WddmEngineImp() = default;
-    WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId);
+    WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t gtId);
     ~WddmEngineImp() override = default;
 
   protected:

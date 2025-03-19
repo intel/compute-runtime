@@ -104,21 +104,21 @@ std::string SysmanKmdInterfaceI915Prelim::getEnergyCounterNodeFile(zes_power_dom
     return filePath;
 }
 
-ze_result_t SysmanKmdInterfaceI915Prelim::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
+ze_result_t SysmanKmdInterfaceI915Prelim::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t gtId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
     uint64_t config = UINT64_MAX;
     switch (engineGroup) {
     case ZES_ENGINE_GROUP_ALL:
-        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY_TICKS(subDeviceId);
+        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY_TICKS(gtId);
         break;
     case ZES_ENGINE_GROUP_COMPUTE_ALL:
     case ZES_ENGINE_GROUP_RENDER_ALL:
-        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY_TICKS(subDeviceId);
+        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY_TICKS(gtId);
         break;
     case ZES_ENGINE_GROUP_COPY_ALL:
-        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY_TICKS(subDeviceId);
+        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY_TICKS(gtId);
         break;
     case ZES_ENGINE_GROUP_MEDIA_ALL:
-        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY_TICKS(subDeviceId);
+        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY_TICKS(gtId);
         break;
     default:
         auto engineClass = engineGroupToEngineClass.find(engineGroup);

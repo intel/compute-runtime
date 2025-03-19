@@ -60,7 +60,7 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         return returnValue;
     }
 
-    int32_t getConfigAfterFormat(const std::string_view &formatDir, uint64_t &config, uint32_t engineClass, uint32_t engineInstance, uint32_t gt) override {
+    int32_t getConfigAfterFormat(const std::string_view &formatDir, uint64_t &config, uint64_t engineClass, uint64_t engineInstance, uint64_t gt) override {
         int32_t returnValue = 0;
         if (!mockFormatConfigReturnValue.empty()) {
             returnValue = mockFormatConfigReturnValue.front();

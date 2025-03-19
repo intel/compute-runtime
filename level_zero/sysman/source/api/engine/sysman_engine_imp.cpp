@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,8 +30,8 @@ void EngineImp::init() {
     }
 }
 
-EngineImp::EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice) {
-    pOsEngine = OsEngine::create(pOsSysman, engineType, engineInstance, subDeviceId, onSubdevice);
+EngineImp::EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubdevice) {
+    pOsEngine = OsEngine::create(pOsSysman, engineType, engineInstance, gtId, onSubdevice);
     init();
 }
 

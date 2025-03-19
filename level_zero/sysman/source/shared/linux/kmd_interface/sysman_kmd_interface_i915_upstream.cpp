@@ -97,7 +97,7 @@ std::string SysmanKmdInterfaceI915Upstream::getEnergyCounterNodeFile(zes_power_d
     return filePath;
 }
 
-ze_result_t SysmanKmdInterfaceI915Upstream::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
+ze_result_t SysmanKmdInterfaceI915Upstream::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t gtId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
     uint64_t config = UINT64_MAX;
     auto engineClass = engineGroupToEngineClass.find(engineGroup);
     config = I915_PMU_ENGINE_BUSY(engineClass->second, engineInstance);
