@@ -166,19 +166,20 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
         LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR8, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true, isBcs);
         LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR8 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true, isBcs);
 
-        EncodeAluHelper<GfxFamily, 10> aluHelper;
-        aluHelper.setMocs(miMathMocs);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr2);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr6);
-        aluHelper.setNextAlu(AluRegisters::opcodeShl);
-        aluHelper.setNextAlu(AluRegisters::opcodeStore, AluRegisters::gpr7, AluRegisters::accu);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr7);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr8);
-        aluHelper.setNextAlu(AluRegisters::opcodeAdd);
-        aluHelper.setNextAlu(AluRegisters::opcodeStore, AluRegisters::gpr6, AluRegisters::accu);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoadind, AluRegisters::gpr0, AluRegisters::accu);
-        aluHelper.setNextAlu(AluRegisters::opcodeFenceRd);
+        EncodeAluHelper<GfxFamily, 10> aluHelper({{
+            {AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr2},
+            {AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr6},
+            {AluRegisters::opcodeShl, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+            {AluRegisters::opcodeStore, AluRegisters::gpr7, AluRegisters::accu},
+            {AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr7},
+            {AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr8},
+            {AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+            {AluRegisters::opcodeStore, AluRegisters::gpr6, AluRegisters::accu},
+            {AluRegisters::opcodeLoadind, AluRegisters::gpr0, AluRegisters::accu},
+            {AluRegisters::opcodeFenceRd, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+        }});
 
+        aluHelper.setMocs(miMathMocs);
         aluHelper.copyToCmdStream(schedulerCmdStream);
 
         EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&schedulerCmdStream, 0, false, true, false);
@@ -204,23 +205,24 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
         LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR8, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true, isBcs);
         LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR8 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true, isBcs);
 
-        EncodeAluHelper<GfxFamily, 14> aluHelper;
-        aluHelper.setMocs(miMathMocs);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr1);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr7);
-        aluHelper.setNextAlu(AluRegisters::opcodeShl);
-        aluHelper.setNextAlu(AluRegisters::opcodeStore, AluRegisters::gpr7, AluRegisters::accu);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr7);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr8);
-        aluHelper.setNextAlu(AluRegisters::opcodeAdd);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoadind, AluRegisters::gpr7, AluRegisters::accu);
-        aluHelper.setNextAlu(AluRegisters::opcodeFenceRd);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr6);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad0, AluRegisters::srcb, AluRegisters::opcodeNone);
-        aluHelper.setNextAlu(AluRegisters::opcodeAdd);
-        aluHelper.setNextAlu(AluRegisters::opcodeStoreind, AluRegisters::accu, AluRegisters::gpr7);
-        aluHelper.setNextAlu(AluRegisters::opcodeFenceWr);
+        EncodeAluHelper<GfxFamily, 14> aluHelper({{
+            {AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr1},
+            {AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr7},
+            {AluRegisters::opcodeShl, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+            {AluRegisters::opcodeStore, AluRegisters::gpr7, AluRegisters::accu},
+            {AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr7},
+            {AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr8},
+            {AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+            {AluRegisters::opcodeLoadind, AluRegisters::gpr7, AluRegisters::accu},
+            {AluRegisters::opcodeFenceRd, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+            {AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr6},
+            {AluRegisters::opcodeLoad0, AluRegisters::srcb, AluRegisters::opcodeNone},
+            {AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+            {AluRegisters::opcodeStoreind, AluRegisters::accu, AluRegisters::gpr7},
+            {AluRegisters::opcodeFenceWr, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+        }});
 
+        aluHelper.setMocs(miMathMocs);
         aluHelper.copyToCmdStream(schedulerCmdStream);
     }
 
@@ -271,12 +273,13 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
         LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::semaphoreSectionSize), true, isBcs);
         LriHelper<GfxFamily>::program(&schedulerCmdStream, RegisterOffsets::csGprR10 + 4, 0, true, isBcs);
 
-        EncodeAluHelper<GfxFamily, 4> aluHelper;
+        EncodeAluHelper<GfxFamily, 4> aluHelper({{
+            {AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr9},
+            {AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr10},
+            {AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+            {AluRegisters::opcodeStore, AluRegisters::gpr0, AluRegisters::accu},
+        }});
         aluHelper.setMocs(miMathMocs);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr9);
-        aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr10);
-        aluHelper.setNextAlu(AluRegisters::opcodeAdd);
-        aluHelper.setNextAlu(AluRegisters::opcodeStore, AluRegisters::gpr0, AluRegisters::accu);
         aluHelper.copyToCmdStream(schedulerCmdStream);
 
         EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalRegMemBatchBufferStart(schedulerCmdStream, 0, semaphoreGpuVa, RegisterOffsets::csGprR11, CompareOperation::greaterOrEqual, true, isBcs);
@@ -843,18 +846,18 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSect
 
     const uint32_t miMathMocs = this->rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
-    EncodeAluHelper<GfxFamily, 9> aluHelper;
+    EncodeAluHelper<GfxFamily, 9> aluHelper({{
+        {AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr1},
+        {AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr8},
+        {AluRegisters::opcodeShl, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+        {AluRegisters::opcodeStore, AluRegisters::gpr8, AluRegisters::accu},
+        {AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr8},
+        {AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr6},
+        {AluRegisters::opcodeAdd, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+        {AluRegisters::opcodeStoreind, AluRegisters::accu, AluRegisters::gpr7},
+        {AluRegisters::opcodeFenceWr, AluRegisters::opcodeNone, AluRegisters::opcodeNone},
+    }});
     aluHelper.setMocs(miMathMocs);
-    aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr1);
-    aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr8);
-    aluHelper.setNextAlu(AluRegisters::opcodeShl);
-    aluHelper.setNextAlu(AluRegisters::opcodeStore, AluRegisters::gpr8, AluRegisters::accu);
-    aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srca, AluRegisters::gpr8);
-    aluHelper.setNextAlu(AluRegisters::opcodeLoad, AluRegisters::srcb, AluRegisters::gpr6);
-    aluHelper.setNextAlu(AluRegisters::opcodeAdd);
-    aluHelper.setNextAlu(AluRegisters::opcodeStoreind, AluRegisters::accu, AluRegisters::gpr7);
-    aluHelper.setNextAlu(AluRegisters::opcodeFenceWr);
-
     aluHelper.copyToCmdStream(stream);
 
     EncodeMathMMIO<GfxFamily>::encodeIncrement(stream, AluRegisters::gpr1, isBcs);
