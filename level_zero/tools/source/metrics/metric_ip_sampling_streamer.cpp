@@ -137,6 +137,25 @@ ze_result_t IpSamplingMetricCalcOpImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t IpSamplingMetricCalcOpImp::getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
+
+    if (*pCount == 0) {
+        *pCount = metricCount;
+        return ZE_RESULT_SUCCESS;
+    } else if (*pCount < metricCount) {
+        METRICS_LOG_ERR("%s", "Metric can't be smaller than report size");
+        *pCount = 0;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    *pCount = metricCount;
+    for (uint32_t index = 0; index < metricCount; index++) {
+        phMetrics[index] = metricsInReport[index]->toHandle();
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t MultiDeviceIpSamplingMetricGroupImp::streamerOpen(
     zet_context_handle_t hContext,
     zet_device_handle_t hDevice,

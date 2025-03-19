@@ -85,8 +85,15 @@ ze_result_t ZE_APICALL zetIntelMetricCalculateOperationCreateExp(zet_context_han
     return L0::metricCalculateOperationCreate(hContext, hDevice, pCalculateDesc, pCount, phExcludedMetrics, phCalculateOperation);
 }
 
-ze_result_t zetIntelMetricCalculateOperationDestroyExp(zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation) {
+ze_result_t ZE_APICALL zetIntelMetricCalculateOperationDestroyExp(zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation) {
     return L0::metricCalculateOperationDestroy(hCalculateOperation);
+}
+
+ze_result_t ZE_APICALL zetIntelMetricCalculateGetReportFormatExp(
+    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+    uint32_t *pCount,
+    zet_metric_handle_t *phMetrics) {
+    return L0::metricCalculateGetReportFormat(hCalculateOperation, pCount, phMetrics);
 }
 
 } // namespace L0
@@ -190,4 +197,12 @@ ze_result_t zetIntelMetricCalculateOperationDestroyExp(
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation) {
     return L0::zetIntelMetricCalculateOperationDestroyExp(hCalculateOperation);
 }
+
+ze_result_t zetIntelMetricCalculateGetReportFormatExp(
+    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+    uint32_t *pCount,
+    zet_metric_handle_t *phMetrics) {
+    return L0::zetIntelMetricCalculateGetReportFormatExp(hCalculateOperation, pCount, phMetrics);
 }
+
+} // extern "C"

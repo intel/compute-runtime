@@ -495,6 +495,9 @@ ze_result_t metricCalculateOperationCreate(zet_context_handle_t hContext, zet_de
 
 ze_result_t metricCalculateOperationDestroy(zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation);
 
+ze_result_t metricCalculateGetReportFormat(zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+                                           uint32_t *pCount, zet_metric_handle_t *phMetrics);
+
 ze_result_t metricsEnable(zet_device_handle_t hDevice);
 
 } // namespace L0

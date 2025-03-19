@@ -883,6 +883,13 @@ ze_result_t metricCalculateOperationDestroy(
     return MetricCalcOp::fromHandle(hCalculateOperation)->destroy();
 }
 
+ze_result_t metricCalculateGetReportFormat(
+    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+    uint32_t *pCount,
+    zet_metric_handle_t *phMetrics) {
+    return MetricCalcOp::fromHandle(hCalculateOperation)->getReportFormat(pCount, phMetrics);
+}
+
 ze_result_t metricsEnable(zet_device_handle_t hDevice) {
     auto isFailed = false;
 
