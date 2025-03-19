@@ -19,6 +19,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -768,6 +769,15 @@ bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyBindingTablePoolBas
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport) const {
     propertiesSupport.bindingTablePoolBaseAddress = getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport();
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
+
+    auto ccsCount = StringHelpers::toUint32t(ccsModeString);
+
+    rootDeviceNumCcsMap.insert({rootDeviceIndex, ccsCount});
+    rootDeviceEnvironment->setNumberOfCcs(ccsCount);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
