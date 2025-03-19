@@ -24,7 +24,7 @@ class MockMemoryOperationsHandler : public MemoryOperationsHandler {
     MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override { return MemoryOperationsStatus::unsupported; }
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::unsupported; }
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::unsupported; }
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override { return MemoryOperationsStatus::unsupported; }
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) override { return MemoryOperationsStatus::unsupported; }
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::unsupported; }
 };
 
@@ -35,7 +35,7 @@ class MockMemoryOperationsHandlerTests : public MemoryOperationsHandler {
     ADDMETHOD_NOBASE(lock, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations));
     ADDMETHOD_NOBASE(evict, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, GraphicsAllocation &gfxAllocation));
     ADDMETHOD_NOBASE(isResident, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, GraphicsAllocation &gfxAllocation));
-    ADDMETHOD_NOBASE(makeResidentWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence));
+    ADDMETHOD_NOBASE(makeResidentWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock));
     ADDMETHOD_NOBASE(evictWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (OsContext * osContext, GraphicsAllocation &gfxAllocation));
 };
 
@@ -85,7 +85,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
         return MemoryOperationsStatus::success;
     }
 
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override {
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) override {
         makeResidentCalledCount++;
         if (osContext) {
             makeResidentContextId = osContext->getContextId();

@@ -23,7 +23,7 @@ struct MockDrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler
     using BaseClass = DrmMemoryOperationsHandlerDefault;
     using DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault;
     using DrmMemoryOperationsHandlerDefault::residency;
-    ADDMETHOD(makeResidentWithinOsContext, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence), (osContext, gfxAllocations, evictable, forcePagingFence));
+    ADDMETHOD(makeResidentWithinOsContext, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock), (osContext, gfxAllocations, evictable, forcePagingFence, acquireLock));
     ADDMETHOD(flushDummyExec, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations), (device, gfxAllocations));
     ADDMETHOD(evictWithinOsContext, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (OsContext * osContext, GraphicsAllocation &gfxAllocation), (osContext, gfxAllocation));
 };

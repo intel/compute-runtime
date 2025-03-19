@@ -98,7 +98,7 @@ MemoryOperationsStatus AubMemoryOperationsHandler::free(Device *device, Graphics
     return MemoryOperationsStatus::success;
 }
 
-MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) {
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) {
     return makeResident(nullptr, gfxAllocations, false, forcePagingFence);
 }
 

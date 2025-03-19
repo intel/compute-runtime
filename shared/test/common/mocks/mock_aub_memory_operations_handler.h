@@ -36,9 +36,9 @@ struct MockAubMemoryOperationsHandler : public AubMemoryOperationsHandler {
         return AubMemoryOperationsHandler::isResident(device, gfxAllocation);
     }
 
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override {
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) override {
         makeResidentWithinOsContextCalled = true;
-        return AubMemoryOperationsHandler::makeResidentWithinOsContext(osContext, gfxAllocations, evictable, forcePagingFence);
+        return AubMemoryOperationsHandler::makeResidentWithinOsContext(osContext, gfxAllocations, evictable, forcePagingFence, acquireLock);
     }
 
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {

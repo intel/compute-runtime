@@ -31,7 +31,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *devi
     MemoryOperationsStatus result = MemoryOperationsStatus::success;
     for (const auto &engine : engines) {
         engine.commandStreamReceiver->initializeResources(false, device->getPreemptionMode());
-        result = this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false, forcePagingFence);
+        result = this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false, forcePagingFence, true);
         if (result != MemoryOperationsStatus::success) {
             break;
         }
@@ -46,7 +46,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::lock(Device *device, Arra
     return makeResident(device, gfxAllocations, false, false);
 }
 
-MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) {
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) {
     auto deviceBitfield = osContext->getDeviceBitfield();
 
     std::lock_guard<std::mutex> lock(mutex);
@@ -144,11 +144,11 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::mergeWithResidencyContain
         auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
 
         auto allocLock = memoryManager->acquireAllocLock();
-        this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(memoryManager->getSysMemAllocs()), true, false);
-        this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(memoryManager->getLocalMemAllocs(this->rootDeviceIndex)), true, false);
+        this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(memoryManager->getSysMemAllocs()), true, false, true);
+        this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(memoryManager->getLocalMemAllocs(this->rootDeviceIndex)), true, false, true);
     }
 
-    auto retVal = this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer), true, false);
+    auto retVal = this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer), true, false, true);
     if (retVal != MemoryOperationsStatus::success) {
         return retVal;
     }

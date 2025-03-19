@@ -19,7 +19,7 @@ class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
     DrmMemoryOperationsHandlerDefault(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex) : DrmMemoryOperationsHandlerDefault(rootDeviceIndex) {}
     ~DrmMemoryOperationsHandlerDefault() override;
 
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override;
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) override;
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override;
     MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;

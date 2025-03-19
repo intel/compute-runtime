@@ -1535,7 +1535,7 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
     if (ioctlHelper->makeResidentBeforeLockNeeded()) {
         auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
         auto graphicsAllocationPtr = &graphicsAllocation;
-        [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&graphicsAllocationPtr, 1), false, false) == MemoryOperationsStatus::success;
+        [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&graphicsAllocationPtr, 1), false, false, true) == MemoryOperationsStatus::success;
         DEBUG_BREAK_IF(!ret);
     }
 
@@ -1689,8 +1689,10 @@ bool DrmMemoryManager::makeAllocationResident(GraphicsAllocation *allocation) {
     auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
     const auto &engines = this->getRegisteredEngines(rootDeviceIndex);
     for (const auto &engine : engines) {
-        if (engine.osContext->isDirectSubmissionLightActive()) {
-            memoryOperationsInterface->makeResidentWithinOsContext(engine.osContext, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false);
+        if (engine.osContext->isDirectSubmissionLightActive() &&
+            allocation->getAllocationType() != AllocationType::ringBuffer &&
+            allocation->getAllocationType() != AllocationType::semaphoreBuffer) {
+            memoryOperationsInterface->makeResidentWithinOsContext(engine.osContext, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false, true);
         }
     }
 

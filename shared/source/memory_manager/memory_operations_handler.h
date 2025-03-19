@@ -26,7 +26,7 @@ class MemoryOperationsHandler {
     virtual MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) = 0;
     virtual MemoryOperationsStatus free(Device *device, GraphicsAllocation &gfxAllocation) { return MemoryOperationsStatus::success; }
 
-    virtual MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) = 0;
+    virtual MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) = 0;
     virtual MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) = 0;
     virtual void processFlushResidency(CommandStreamReceiver *csr) {}
 };

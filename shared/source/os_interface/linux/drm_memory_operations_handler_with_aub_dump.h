@@ -61,9 +61,9 @@ class DrmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
         return BaseOperationsHandler::isResident(device, gfxAllocation);
     }
 
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override {
-        aubMemoryOperationsHandler->makeResidentWithinOsContext(osContext, gfxAllocations, evictable, forcePagingFence);
-        return BaseOperationsHandler::makeResidentWithinOsContext(osContext, gfxAllocations, evictable, forcePagingFence);
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) override {
+        aubMemoryOperationsHandler->makeResidentWithinOsContext(osContext, gfxAllocations, evictable, forcePagingFence, acquireLock);
+        return BaseOperationsHandler::makeResidentWithinOsContext(osContext, gfxAllocations, evictable, forcePagingFence, acquireLock);
     }
 
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {

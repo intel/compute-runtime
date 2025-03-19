@@ -1428,7 +1428,7 @@ struct MockMergeResidencyContainerMemoryOperationsHandler : public DrmMemoryOper
                      (OsContext * osContext, ResidencyContainer &residencyContainer));
 
     ADDMETHOD_NOBASE(makeResidentWithinOsContext, NEO::MemoryOperationsStatus, NEO::MemoryOperationsStatus::success,
-                     (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence));
+                     (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock));
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContainerFailsThenFlushReturnsError) {

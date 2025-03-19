@@ -28,7 +28,7 @@ class AubMemoryOperationsHandler : public MemoryOperationsHandler {
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus free(Device *device, GraphicsAllocation &gfxAllocation) override;
 
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override;
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) override;
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override;
 
     void processFlushResidency(CommandStreamReceiver *csr) override;

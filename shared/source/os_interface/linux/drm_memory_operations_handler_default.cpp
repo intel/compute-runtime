@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/os_context.h"
 
 #include <algorithm>
+#include <iostream>
 
 namespace NEO {
 
@@ -24,8 +25,12 @@ DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault(uint32_t ro
 ;
 DrmMemoryOperationsHandlerDefault::~DrmMemoryOperationsHandlerDefault() = default;
 
-MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) {
-    std::lock_guard<std::mutex> lock(mutex);
+MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence, const bool acquireLock) {
+    std::unique_lock<std::mutex> lock;
+    if (acquireLock) {
+        lock = std::unique_lock<std::mutex>(this->mutex);
+    }
+
     this->residency.insert(this->residency.end(), gfxAllocations.begin(), gfxAllocations.end());
     this->newResourcesSinceLastRingSubmit = true;
     return MemoryOperationsStatus::success;
@@ -33,7 +38,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsCo
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) {
     OsContext *osContext = nullptr;
-    auto ret = this->makeResidentWithinOsContext(osContext, gfxAllocations, false, forcePagingFence);
+    auto ret = this->makeResidentWithinOsContext(osContext, gfxAllocations, false, forcePagingFence, true);
     if (!isDummyExecNeeded || ret != MemoryOperationsStatus::success) {
         return ret;
     }
@@ -55,7 +60,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::lock(Device *device, A
             bo->requireExplicitLockedMemory(true);
         }
     }
-    return this->makeResidentWithinOsContext(osContext, gfxAllocations, false, false);
+    return this->makeResidentWithinOsContext(osContext, gfxAllocations, false, false, true);
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
