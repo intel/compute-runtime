@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2015,7 +2015,7 @@ TEST(EventTimestampTest, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabled
     {
         debugManager.flags.EnableTimestampWaitForEvents.set(-1);
         const auto &productHelper = mockDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-        EXPECT_EQ(event.isWaitForTimestampsEnabled(), productHelper.isTimestampWaitSupportedForEvents());
+        EXPECT_EQ(event.isWaitForTimestampsEnabled(), productHelper.isTimestampWaitSupportedForEvents() && cmdQ.isTimestampWaitEnabled());
     }
 
     {

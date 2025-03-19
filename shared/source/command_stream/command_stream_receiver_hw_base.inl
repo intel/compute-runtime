@@ -24,6 +24,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -1300,8 +1301,15 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBu
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
     auto &gfxCoreHelper = getGfxCoreHelper();
+    auto &productHelper = this->peekRootDeviceEnvironment().template getHelper<ProductHelper>();
+
     auto enabled = gfxCoreHelper.isUpdateTaskCountFromWaitSupported();
-    enabled &= this->isAnyDirectSubmissionEnabled();
+
+    if (productHelper.isL3FlushAfterPostSyncRequired(this->heaplessModeEnabled) && ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless()) {
+        enabled &= true;
+    } else {
+        enabled &= this->isAnyDirectSubmissionEnabled();
+    }
 
     switch (debugManager.flags.UpdateTaskCountFromWait.get()) {
     case 0:

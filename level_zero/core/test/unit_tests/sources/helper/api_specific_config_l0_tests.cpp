@@ -88,6 +88,10 @@ TEST(ImplicitScalingApiTests, givenLevelZeroApiUsedThenSupportEnabled) {
     EXPECT_TRUE(ImplicitScaling::apiSupport);
 }
 
+TEST(ApiSpecificConfigL0Tests, WhenCheckingIsUpdateTagFromWaitEnabledForHeaplessThenFalseIsReturned) {
+    EXPECT_FALSE(ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless());
+}
+
 TEST(ApiSpecificConfigL0Tests, WhenGettingCompilerCacheFileExtensionThenReturnProperFileExtensionString) {
     EXPECT_EQ(0, strcmp(".l0_cache", ApiSpecificConfig::compilerCacheFileExtension().c_str()));
 }

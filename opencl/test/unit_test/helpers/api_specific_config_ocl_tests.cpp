@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,10 @@ TEST(ApiSpecificConfigOclTests, WhenGettingCompilerCacheFileExtensionThenReturnP
 
 TEST(ApiSpecificConfigOclTests, WhenCheckingIfCompilerCacheIsEnabledByDefaultThenReturnTrue) {
     EXPECT_EQ(1u, ApiSpecificConfig::compilerCacheDefaultEnabled());
+}
+
+TEST(ApiSpecificConfigOclTests, WhenCheckingIsUpdateTagFromWaitEnabledForHeaplessThenTrueIsReturned) {
+    EXPECT_TRUE(ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless());
 }
 
 } // namespace NEO

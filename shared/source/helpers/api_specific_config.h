@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,5 +44,6 @@ struct ApiSpecificConfig {
     static std::string compilerCacheLocation();
     static std::string compilerCacheFileExtension();
     static int64_t compilerCacheDefaultEnabled();
+    static bool isUpdateTagFromWaitEnabledForHeapless();
 };
 } // namespace NEO

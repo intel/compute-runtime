@@ -1334,8 +1334,14 @@ bool CommandQueue::isWaitForTimestampsEnabled() const {
     auto &productHelper = getDevice().getProductHelper();
 
     auto enabled = CommandQueue::isTimestampWaitEnabled();
-    enabled &= productHelper.isTimestampWaitSupportedForQueues(false);
-    enabled &= !productHelper.isDcFlushAllowed();
+    enabled &= productHelper.isTimestampWaitSupportedForQueues(this->heaplessModeEnabled);
+
+    if (productHelper.isL3FlushAfterPostSyncRequired(this->heaplessModeEnabled)) {
+        enabled &= true;
+    } else {
+        enabled &= !productHelper.isDcFlushAllowed();
+    }
+
     enabled &= !getDevice().getRootDeviceEnvironment().isWddmOnLinux();
     enabled &= !this->isOOQEnabled(); // TSP for OOQ dispatch is optional. We need to wait for task count.
 

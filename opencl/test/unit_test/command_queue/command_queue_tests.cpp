@@ -170,7 +170,18 @@ TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenRe
     {
         debugManager.flags.EnableTimestampWaitForQueues.set(-1);
         const auto &productHelper = mockDevice->getProductHelper();
-        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), productHelper.isTimestampWaitSupportedForQueues(false) && !productHelper.isDcFlushAllowed());
+        const auto &compilerProductHelper = mockDevice->getCompilerProductHelper();
+        bool heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+
+        auto enabled = productHelper.isTimestampWaitSupportedForQueues(heaplessEnabled);
+
+        if (productHelper.isL3FlushAfterPostSyncRequired(heaplessEnabled)) {
+            enabled &= true;
+        } else {
+            enabled &= !productHelper.isDcFlushAllowed();
+        }
+
+        EXPECT_EQ(enabled, cmdQ.isWaitForTimestampsEnabled());
     }
 
     {

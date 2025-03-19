@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,6 +111,10 @@ std::string ApiSpecificConfig::compilerCacheLocation() {
 
 std::string ApiSpecificConfig::compilerCacheFileExtension() {
     return ".cl_cache";
+}
+
+bool ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless() {
+    return true;
 }
 
 int64_t ApiSpecificConfig::compilerCacheDefaultEnabled() {

@@ -89,4 +89,8 @@ bool ApiSpecificConfig::isGlobalStatelessEnabled(const RootDeviceEnvironment &ro
     return false;
 }
 
+bool ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless() {
+    return true;
+}
+
 } // namespace NEO

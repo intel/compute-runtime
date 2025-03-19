@@ -110,4 +110,8 @@ bool ApiSpecificConfig::isGlobalStatelessEnabled(const RootDeviceEnvironment &ro
     return l0GfxCoreHelper.getHeapAddressModel(rootDeviceEnvironment) == HeapAddressModel::globalStateless;
 }
 
+bool ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless() {
+    return false;
+}
+
 } // namespace NEO

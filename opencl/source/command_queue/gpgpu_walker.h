@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,13 @@ class GpgpuWalkerHelper {
         WalkerType *walkerCmd,
         TagNodeBase *timestampPacketNode,
         const RootDeviceEnvironment &rootDeviceEnvironment);
+
+    template <typename WalkerType>
+    static void setupTimestampPacketFlushL3(
+        WalkerType *walkerCmd,
+        const ProductHelper &productHelper,
+        bool flushL3AfterPostSyncForHostUsm,
+        bool flushL3AfterPostSyncForExternalAllocation);
 
     static void adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxFamily> *storeCmd);
 

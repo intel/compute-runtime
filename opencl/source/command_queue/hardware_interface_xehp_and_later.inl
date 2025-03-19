@@ -84,18 +84,34 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto &device = commandQueue.getDevice();
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
 
+    bool kernelSystemAllocation = false;
+    if (kernel.isBuiltIn) {
+        kernelSystemAllocation = kernel.getDestinationAllocationInSystemMemory();
+    } else {
+        kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
+    }
+
     TagNodeBase *timestampPacketNode = nullptr;
     if (walkerArgs.currentTimestampPacketNodes && (walkerArgs.currentTimestampPacketNodes->peekNodes().size() > walkerArgs.currentDispatchIndex)) {
         timestampPacketNode = walkerArgs.currentTimestampPacketNodes->peekNodes()[walkerArgs.currentDispatchIndex];
     }
 
+    constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
+
     if (timestampPacketNode) {
+
         GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacket<WalkerType>(&commandStream, &walkerCmd, timestampPacketNode, rootDeviceEnvironment);
+
+        if constexpr (heaplessModeEnabled) {
+            auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+            bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation;
+            bool flushL3AfterPostSyncForExternalAllocation = kernel.isUsingSharedObjArgs();
+
+            GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacketFlushL3<WalkerType>(&walkerCmd, productHelper, flushL3AfterPostSyncForHostUsm, flushL3AfterPostSyncForExternalAllocation);
+        }
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
-
-    constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
     if constexpr (heaplessModeEnabled == false) {
         if (auto kernelAllocation = kernelInfo.getGraphicsAllocation()) {
@@ -134,13 +150,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         localIdsGenerationByRuntime,
         scratchAddress,
         device);
-
-    bool kernelSystemAllocation = false;
-    if (kernel.isBuiltIn) {
-        kernelSystemAllocation = kernel.getDestinationAllocationInSystemMemory();
-    } else {
-        kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
-    }
 
     EncodeWalkerArgs encodeWalkerArgs{
         .kernelExecutionType = kernel.getExecutionType(),
