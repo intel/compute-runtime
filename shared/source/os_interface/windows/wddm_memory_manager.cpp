@@ -474,7 +474,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     }
 
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), alignedPtr, alignedSize, 0u,
-                       CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), {}, gmmRequirements);
+                       CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.hostPtr, allocationData.size, productHelper), {}, gmmRequirements);
 
     wddmAllocation->setDefaultGmm(gmm);
 

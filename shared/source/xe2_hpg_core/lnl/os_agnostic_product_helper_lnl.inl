@@ -93,4 +93,9 @@ bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
+    return true;
+}
+
 } // namespace NEO

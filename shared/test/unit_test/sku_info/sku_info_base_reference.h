@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,8 @@ struct SkuInfoBaseReference {
         refWaTable.WaAuxTable16KGranular = 1;
         refWaTable.WaAuxTable64KGranular = 1;
         refWaTable.Wa_15010089951 = 1;
+        refWaTable.Wa_14018976079 = 1;
+        refWaTable.Wa_14018984349 = 1;
     }
 
     static void fillReferenceFtrToReceive(FeatureTable &refFtrTable) {
@@ -149,6 +151,8 @@ struct SkuInfoBaseReference {
         refWaTable.flags.waDisableFusedThreadScheduling = true;
         refWaTable.flags.waAuxTable64KGranular = true;
         refWaTable.flags.wa_15010089951 = true;
+        refWaTable.flags.wa_14018976079 = true;
+        refWaTable.flags.wa_14018984349 = true;
     }
 }; // namespace SkuInfoBaseReference
 } // namespace NEO

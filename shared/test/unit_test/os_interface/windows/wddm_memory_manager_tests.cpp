@@ -1050,7 +1050,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenCreateAllocationFromHandleAndMapCallFail
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryImplCalled);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhenNotAlignedPtrIsPassedThenAlignedGraphicsAllocationIsCreated) {
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhenNotAlignedPtrIsPassedThenAlignedGraphicsAllocationIsCreatedWithCorrectGmmResource) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     auto size = 13u;
     auto hostPtr = reinterpret_cast<const void *>(0x10001);
@@ -1063,6 +1063,14 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrI
     EXPECT_EQ(hostPtr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(1u, allocation->getAllocationOffset());
+
+    const auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+    auto expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+    if (productHelper.isMisalignedUserPtr2WayCoherent()) {
+        expectedUsage = GMM_RESOURCE_USAGE_HW_CONTEXT;
+    }
+    EXPECT_EQ(expectedUsage, allocation->getGmm(0)->resourceParams.Usage);
+
     memoryManager->freeGraphicsMemory(allocation);
 }
 

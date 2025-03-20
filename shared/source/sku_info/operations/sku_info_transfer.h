@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,8 @@ class SkuInfoTransfer {
         TRANSFER_WA_TO_GMM(UntypedBufferCompression);
         TRANSFER_WA_TO_GMM(AuxTable64KGranular);
         TRANSFER_WA_TO_GMM(_15010089951);
-
+        TRANSFER_WA_TO_GMM(_14018976079);
+        TRANSFER_WA_TO_GMM(_14018984349);
 #undef TRANSFER_WA_TO_GMM
     }
 };

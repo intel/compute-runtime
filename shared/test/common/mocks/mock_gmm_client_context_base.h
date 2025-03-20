@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@ class MockGmmClientContextBase : public GmmClientContext {
     struct MockPatIndex {
         static constexpr uint32_t uncached = 1;
         static constexpr uint32_t cached = 2;
+        static constexpr uint32_t TwoWayCoherent = 3;
         static constexpr uint32_t error = GMM_PAT_ERROR;
     };
 

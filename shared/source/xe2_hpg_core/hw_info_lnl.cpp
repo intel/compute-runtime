@@ -90,6 +90,8 @@ void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelp
     featureTable->flags.ftrPml5Support = true;
 
     featureTable->ftrBcsInfo = 1;
+    hwInfo->workaroundTable.flags.wa_14018976079 = true;
+    hwInfo->workaroundTable.flags.wa_14018984349 = true;
 }
 
 FeatureTable LNL::featureTable{};

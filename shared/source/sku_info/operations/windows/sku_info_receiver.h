@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,6 +103,8 @@ class SkuInfoReceiver {
         RECEIVE_WA(DisableFusedThreadScheduling);
         RECEIVE_WA(AuxTable64KGranular);
         RECEIVE_WA(_15010089951);
+        RECEIVE_WA(_14018984349);
+        RECEIVE_WA(_14018976079);
 
 #undef RECEIVE_WA
     }

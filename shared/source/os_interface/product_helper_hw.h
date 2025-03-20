@@ -204,6 +204,7 @@ class ProductHelperHw : public ProductHelper {
     bool isSharingWith3dOrMediaAllowed() const override;
     bool isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const override;
     void overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const override;
+    bool isMisalignedUserPtr2WayCoherent() const override;
 
     ~ProductHelperHw() override = default;
 

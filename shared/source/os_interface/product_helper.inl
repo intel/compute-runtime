@@ -1030,6 +1030,11 @@ void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(std::chrono::
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForQueues(bool heaplessEnabled) const {
     return false;
 }

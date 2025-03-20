@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,7 +110,9 @@ struct WorkaroundTableBase {
         uint32_t waDisableFusedThreadScheduling : 1;
         uint32_t waAuxTable64KGranular : 1;
         uint32_t wa_15010089951 : 1; // NOLINT(readability-identifier-naming)
-        uint32_t reserved : 10;
+        uint32_t wa_14018976079 : 1; // NOLINT(readability-identifier-naming)
+        uint32_t wa_14018984349 : 1; // NOLINT(readability-identifier-naming)
+        uint32_t reserved : 8;
     };
 
     union {

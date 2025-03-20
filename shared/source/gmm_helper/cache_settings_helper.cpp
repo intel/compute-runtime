@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -121,6 +122,15 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
         [[fallthrough]];
     default:
         return productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+    }
+}
+
+// Set 2-way coherency for allocations which are not aligned to cacheline
+GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageTypeForUserPtr(const void *userPtr, size_t size, const ProductHelper &productHelper) {
+    if (!isL3Capable(userPtr, size) && productHelper.isMisalignedUserPtr2WayCoherent()) {
+        return GMM_RESOURCE_USAGE_HW_CONTEXT;
+    } else {
+        return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     }
 }
 
