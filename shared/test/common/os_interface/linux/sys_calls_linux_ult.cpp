@@ -73,6 +73,7 @@ uint32_t mkfifoFuncCalled = 0;
 bool failMkfifo = 0;
 bool failFcntl = false;
 bool failFcntl1 = false;
+bool failAccess = false;
 
 std::vector<void *> mmapVector(64);
 std::vector<void *> mmapCapturedExtendedPointers(64);
@@ -237,6 +238,9 @@ unsigned long getNumThreads() {
 
 int access(const char *pathName, int mode) {
     accessFuncCalled++;
+    if (failAccess) {
+        return -1;
+    }
     if (F_OK == mode) {
         if (mkfifoPathNamePassed == pathName) {
             return 0;
