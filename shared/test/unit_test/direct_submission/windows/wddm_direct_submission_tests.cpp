@@ -1131,11 +1131,20 @@ HWTEST_F(WddmDirectSubmissionTest, givenResidencyControllerWhenUpdatingResidency
     EXPECT_EQ(mockGa.updateCompletionDataForAllocationAndFragmentsCalledtimes, 1u);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffersThenUpdateResidencyCalled) {
+HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffersAndResidencyContainerIsNullThenUpdateResidencyNotCalled) {
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     wddmDirectSubmission.handleSwitchRingBuffers(nullptr);
+    EXPECT_EQ(wddmDirectSubmission.updateMonitorFenceValueForResidencyListCalled, 0u);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffersThenUpdateResidencyCalled) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    ResidencyContainer container;
+    wddmDirectSubmission.handleSwitchRingBuffers(&container);
     EXPECT_EQ(wddmDirectSubmission.updateMonitorFenceValueForResidencyListCalled, 1u);
 }
 
@@ -1157,7 +1166,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffers
 
     MyMockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     std::thread th([&]() {
-        wddmDirectSubmission.handleSwitchRingBuffers(nullptr);
+        ResidencyContainer container;
+        wddmDirectSubmission.handleSwitchRingBuffers(&container);
     });
     while (!wddmDirectSubmission.lockInTesting)
         ;
