@@ -17,7 +17,7 @@ namespace NEO {
 
 namespace WaitUtils {
 
-constexpr uint64_t defaultCounterValue = 10000;
+constexpr uint64_t defaultCounterValue = 16000;
 constexpr uint32_t defaultControlValue = 0;
 constexpr uint32_t defaultWaitCount = 1u;
 

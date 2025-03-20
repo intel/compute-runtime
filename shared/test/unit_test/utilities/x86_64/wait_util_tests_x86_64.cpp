@@ -115,7 +115,7 @@ TEST_F(WaitPkgTest, givenDefaultSettingsAndWaitpkgSupportTrueWhenWaitInitialized
     CpuInfo::cpuidFunc = mockCpuidEnableAll;
 
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
-    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_FALSE(WaitUtils::waitpkgUse);
 
@@ -125,7 +125,7 @@ TEST_F(WaitPkgTest, givenDefaultSettingsAndWaitpkgSupportTrueWhenWaitInitialized
 
     WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
-    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_FALSE(WaitUtils::waitpkgUse);
 }
@@ -137,7 +137,7 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportFalseWhenWaitIni
 
     WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
-    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_FALSE(WaitUtils::waitpkgUse);
 }
@@ -149,7 +149,7 @@ TEST_F(WaitPkgTest, givenDisabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitIni
 
     WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
-    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_FALSE(WaitUtils::waitpkgUse);
 }
@@ -163,7 +163,7 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInit
 
     WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
-    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_FALSE(WaitUtils::waitpkgUse);
 }
@@ -178,7 +178,7 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInit
     WaitUtils::init(false);
 
     EXPECT_EQ(0u, WaitUtils::waitCount);
-    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_TRUE(WaitUtils::waitpkgUse);
 }
@@ -191,7 +191,7 @@ TEST_F(WaitPkgTest, givenEnabledSetToTrueAndWaitpkgSupportTrueWhenWaitInitialize
     WaitUtils::init(true);
 
     EXPECT_EQ(0u, WaitUtils::waitCount);
-    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_TRUE(WaitUtils::waitpkgUse);
 }
@@ -221,7 +221,7 @@ TEST_F(WaitPkgTest, givenFullyEnabledWaitPkgAndOverrideControlValueWhenWaitIniti
 
     WaitUtils::init(false);
     EXPECT_EQ(0u, WaitUtils::waitCount);
-    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(1u, WaitUtils::waitpkgControlValue);
     EXPECT_TRUE(WaitUtils::waitpkgUse);
 }
@@ -234,7 +234,7 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInit
     WaitUtils::init(true);
 
     EXPECT_EQ(0u, WaitUtils::waitCount);
-    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_TRUE(WaitUtils::waitpkgUse);
 
@@ -243,7 +243,7 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInit
     WaitUtils::init(true);
 
     EXPECT_EQ(0u, WaitUtils::waitCount);
-    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_TRUE(WaitUtils::waitpkgUse);
 }
