@@ -616,6 +616,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     using BaseClass::dummyBlitWa;
     using BaseClass::enableInOrderExecution;
     using BaseClass::encodeMiFlush;
+    using BaseClass::getDeviceCounterAllocForResidency;
     using BaseClass::ownedPrivateAllocations;
     using BaseClass::taskCountUpdateFenceRequired;
 

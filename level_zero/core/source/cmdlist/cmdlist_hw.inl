@@ -2648,6 +2648,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+NEO::GraphicsAllocation *CommandListCoreFamily<gfxCoreFamily>::getDeviceCounterAllocForResidency(NEO::GraphicsAllocation *counterDeviceAlloc) {
+    NEO::GraphicsAllocation *counterDeviceAllocForResidency = counterDeviceAlloc;
+
+    if (counterDeviceAllocForResidency && (counterDeviceAllocForResidency->getRootDeviceIndex() != device->getRootDeviceIndex())) {
+        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+
+        counterDeviceAllocForResidency = driverHandle->getCounterPeerAllocation(device, *counterDeviceAllocForResidency);
+        UNRECOVERABLE_IF(!counterDeviceAllocForResidency);
+        UNRECOVERABLE_IF(counterDeviceAllocForResidency->getGpuAddress() != counterDeviceAlloc->getGpuAddress());
+    }
+    return counterDeviceAllocForResidency;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::shared_ptr<NEO::InOrderExecInfo> &inOrderExecInfo, CommandToPatchContainer *outListCommands,
                                                                          uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency, bool skipAddingWaitEventsToResidency,
                                                                          bool noopDispatch, bool copyOffloadOperation) {
@@ -2655,16 +2669,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 
     UNRECOVERABLE_IF(waitValue > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) && !isQwordInOrderCounter());
 
-    auto deviceAllocForResidency = inOrderExecInfo->getDeviceCounterAllocation();
-
-    if (deviceAllocForResidency && (deviceAllocForResidency->getRootDeviceIndex() != device->getRootDeviceIndex())) {
-        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
-
-        deviceAllocForResidency = driverHandle->getCounterPeerAllocation(device, *deviceAllocForResidency);
-        UNRECOVERABLE_IF(!deviceAllocForResidency);
-        UNRECOVERABLE_IF(deviceAllocForResidency->getGpuAddress() != inOrderExecInfo->getDeviceCounterAllocation()->getGpuAddress());
-    }
-
+    auto deviceAllocForResidency = this->getDeviceCounterAllocForResidency(inOrderExecInfo->getDeviceCounterAllocation());
     if (!skipAddingWaitEventsToResidency) {
         commandContainer.addToResidencyContainer(deviceAllocForResidency);
     }

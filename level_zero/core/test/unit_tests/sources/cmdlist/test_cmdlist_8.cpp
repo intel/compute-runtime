@@ -1872,5 +1872,62 @@ HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPr
     neoDevice->getMemoryManager()->freeGraphicsMemory(commandList->commandContainer.getResidencyContainer()[0]);
 }
 
+HWTEST2_F(CommandListCreate, givenCounterDeviceAllocWhenGetDeviceCounterAllocForResidencyThenReturnCorrectAllocation, MatchAny) {
+    auto commandList = std::make_unique<MockCommandListCoreFamily<gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    MockGraphicsAllocation counterDeviceAlloc(this->device->getRootDeviceIndex(), nullptr, 0x0);
+    auto result = commandList->getDeviceCounterAllocForResidency(&counterDeviceAlloc);
+    EXPECT_EQ(result, &counterDeviceAlloc);
+}
+
+HWTEST2_F(CommandListCreate, givenCounterDeviceAllocFromDifferentRootDeviceWhenGetDeviceCounterAllocForResidencyThenReturnPeerAllocation, MatchAny) {
+    auto commandList = std::make_unique<MockCommandListCoreFamily<gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    uint32_t baseDeviceIndex = this->device->getRootDeviceIndex();
+    uint32_t peerDeviceIndex = baseDeviceIndex + 1;
+
+    MockGraphicsAllocation counterDeviceAlloc(baseDeviceIndex, reinterpret_cast<void *>(0x1234), 0x0u);
+    MockGraphicsAllocation peerAllocation(peerDeviceIndex, reinterpret_cast<void *>(0x5678), 0x0u);
+    ASSERT_NE(counterDeviceAlloc.getRootDeviceIndex(), peerAllocation.getRootDeviceIndex());
+    ASSERT_NE(counterDeviceAlloc.getGpuAddress(), peerAllocation.getGpuAddress());
+
+    auto result = commandList->getDeviceCounterAllocForResidency(&peerAllocation);
+    EXPECT_EQ(result->getGpuAddress(), peerAllocation.getGpuAddress());
+}
+
+HWTEST2_F(CommandListCreate, givenCounterDeviceAllocFromDifferentRootDeviceWhenGetDeviceCounterAllocForResidencyAndAllocIsAlreadyImportedThenReturnPeerAllocation, MatchAny) {
+    auto commandList = std::make_unique<MockCommandListCoreFamily<gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    uint32_t baseDeviceIndex = this->device->getRootDeviceIndex();
+    uint32_t peerDeviceIndex = baseDeviceIndex + 1;
+
+    MockGraphicsAllocation counterDeviceAlloc(baseDeviceIndex, reinterpret_cast<void *>(0x1234), 0x0u);
+    MockGraphicsAllocation peerAllocation(peerDeviceIndex, reinterpret_cast<void *>(0x5678), 0x0u);
+    ASSERT_NE(counterDeviceAlloc.getRootDeviceIndex(), peerAllocation.getRootDeviceIndex());
+    ASSERT_NE(counterDeviceAlloc.getGpuAddress(), peerAllocation.getGpuAddress());
+
+    auto deviceImp = static_cast<DeviceImp *>(this->device);
+    NEO::SvmAllocationData allocData(peerDeviceIndex);
+    allocData.gpuAllocations.addAllocation(&peerAllocation);
+    deviceImp->peerCounterAllocations.allocations.insert({reinterpret_cast<void *>(peerAllocation.getGpuAddress()), allocData});
+
+    auto result = commandList->getDeviceCounterAllocForResidency(&peerAllocation);
+    EXPECT_EQ(result->getGpuAddress(), peerAllocation.getGpuAddress());
+
+    deviceImp->peerCounterAllocations.remove(allocData);
+}
+
+HWTEST2_F(CommandListCreate, givenNullptrPeerAllocationWhenGetDeviceCounterAllocForResidencyThenAbortIsThrown, MatchAny) {
+    auto commandList = std::make_unique<MockCommandListCoreFamily<gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    uint32_t baseDeviceIndex = this->device->getRootDeviceIndex();
+    uint32_t peerDeviceIndex = baseDeviceIndex + 1;
+
+    MockGraphicsAllocation counterDeviceAlloc(peerDeviceIndex, nullptr, 0x0);
+
+    EXPECT_ANY_THROW(commandList->getDeviceCounterAllocForResidency(&counterDeviceAlloc));
+}
+
 } // namespace ult
 } // namespace L0
