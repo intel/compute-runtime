@@ -1213,7 +1213,7 @@ struct TOKSTR_GMM_RESOURCE_FLAG_REC {
         TokenVariableLength base;
 
         TOKSTR_ANONYMOUS6797(uint16_t tokenId, uint32_t elementId = 0)
-            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS6797, __PreWddm2SVM) + sizeof(__PreWddm2SVM) - offsetof(TOKSTR_ANONYMOUS6797, AllowVirtualPadding), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS6797, NotCompressed) + sizeof(NotCompressed) - offsetof(TOKSTR_ANONYMOUS6797, AllowVirtualPadding), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
         TOKSTR_ANONYMOUS6797()
             : base(TOK_S_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797, 0, sizeof(*this) - sizeof(base)) {}
@@ -1258,6 +1258,7 @@ struct TOKSTR_GMM_RESOURCE_FLAG_REC {
         TokenDword XAdapter = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__XADAPTER};
         TokenDword __PreallocatedResInfo = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797____PREALLOCATED_RES_INFO};
         TokenDword __PreWddm2SVM = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797____PRE_WDDM2SVM};
+        TokenDword NotCompressed = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__NOT_COMPRESSED};
     };
     static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS6797>, "");
     static_assert(sizeof(TOKSTR_ANONYMOUS6797) % sizeof(uint32_t) == 0, "");
