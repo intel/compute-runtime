@@ -30,7 +30,7 @@
 
 namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() {
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::tpause);
     this->configureNeoEnvironment();
 }
 

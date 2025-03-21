@@ -9,6 +9,7 @@
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/mocks/mock_cpuid_functions.h"
 
@@ -201,6 +202,20 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSetToTpauseAndWaitpkgSupportTrueWhenWaitI
     debugManager.flags.EnableWaitpkg.set(2);
 
     WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+
+    EXPECT_EQ(1u, WaitUtils::waitCount);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
+    EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    EXPECT_EQ(1, WaitUtils::waitPkgThresholdInMicroSeconds);
+}
+
+TEST_F(WaitPkgTest, givenWaitpkgSupportTrueWhenCreateExecutionEnvironmentThenWaitPkgEnabled) {
+    CpuInfo::cpuidFunc = mockCpuidEnableAll;
+
+    WaitUtils::waitpkgSupport = true;
+
+    MockExecutionEnvironment executionEnvironment;
 
     EXPECT_EQ(1u, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
