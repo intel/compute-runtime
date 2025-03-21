@@ -30,6 +30,14 @@ static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetM
       {"XTAL_COUNT", 128},
       {"VCCGT_ENERGY_ACCUMULATOR", 407},
       {"VCCDDR_ENERGY_ACCUMULATOR", 410}}},
+    {0x1e2f8201, // BMG PUNIT rev 2
+     {{"XTAL_CLK_FREQUENCY", 1},
+      {"ACCUM_PACKAGE_ENERGY", 12},
+      {"ACCUM_PSYS_ENERGY", 13},
+      {"VRAM_BANDWIDTH", 14},
+      {"XTAL_COUNT", 128},
+      {"VCCGT_ENERGY_ACCUMULATOR", 407},
+      {"VCCDDR_ENERGY_ACCUMULATOR", 410}}},
     {0x5e2f8210, // BMG OOBMSM rev 15
      {{"PACKAGE_ENERGY_STATUS_SKU", 34},
       {"PLATFORM_ENERGY_STATUS", 35},
@@ -893,7 +901,6 @@ template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     uint32_t energyCounter = 0;
-    std::string key;
 
     PlatformMonitoringTech *pPmt = pWddmSysmanImp->getSysmanPmt();
     if (pPmt == nullptr) {
@@ -902,24 +909,30 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
 
     switch (powerDomain) {
     case ZES_POWER_DOMAIN_PACKAGE:
-        key = "PACKAGE_ENERGY_STATUS_SKU";
+        status = pPmt->readValue("ACCUM_PACKAGE_ENERGY", energyCounter);
+
+        if (status != ZE_RESULT_SUCCESS) {
+            status = pPmt->readValue("PACKAGE_ENERGY_STATUS_SKU", energyCounter);
+        }
         break;
     case ZES_POWER_DOMAIN_CARD:
-        key = "PLATFORM_ENERGY_STATUS";
+        status = pPmt->readValue("ACCUM_PSYS_ENERGY", energyCounter);
+
+        if (status != ZE_RESULT_SUCCESS) {
+            status = pPmt->readValue("PLATFORM_ENERGY_STATUS", energyCounter);
+        }
         break;
     case ZES_POWER_DOMAIN_MEMORY:
-        key = "VCCDDR_ENERGY_ACCUMULATOR";
+        status = pPmt->readValue("VCCDDR_ENERGY_ACCUMULATOR", energyCounter);
         break;
     case ZES_POWER_DOMAIN_GPU:
-        key = "VCCGT_ENERGY_ACCUMULATOR";
+        status = pPmt->readValue("VCCGT_ENERGY_ACCUMULATOR", energyCounter);
         break;
     default:
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         break;
     }
-
-    status = pPmt->readValue(key, energyCounter);
 
     if (status != ZE_RESULT_SUCCESS) {
         return status;

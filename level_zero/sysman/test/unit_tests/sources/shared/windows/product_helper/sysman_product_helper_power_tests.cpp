@@ -29,6 +29,16 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
      {"PACKAGE_ENERGY_STATUS_SKU", {34, 1}},
      {"PLATFORM_ENERGY_STATUS", {35, 1}}}};
 
+const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMapToGetEnergyCounterFromPunit = {
+    {{"XTAL_CLK_FREQUENCY", {1, 0}},
+     {"ACCUM_PACKAGE_ENERGY", {12, 0}},
+     {"ACCUM_PSYS_ENERGY", {13, 0}},
+     {"XTAL_COUNT", {128, 0}},
+     {"VCCGT_ENERGY_ACCUMULATOR", {407, 0}},
+     {"VCCDDR_ENERGY_ACCUMULATOR", {410, 0}},
+     {"PACKAGE_ENERGY_STATUS_SKU", {34, 1}},
+     {"PLATFORM_ENERGY_STATUS", {35, 1}}}};
+
 static const std::vector<double> indexToXtalClockFrequecyMap = {24, 19.2, 38.4, 25};
 constexpr uint32_t powerHandleDomainCount = 4u;
 
@@ -57,6 +67,14 @@ class SysmanProductHelperPowerTest : public SysmanDeviceFixture {
         pWddmSysmanImp->pPmt.reset(pPmt);
         pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
     }
+
+    void updatePmtKeyOffsetMap(const std::map<std::string, std::pair<uint32_t, uint32_t>> keyOffsetMap) {
+        auto pPmt = new PublicPlatformMonitoringTech(pmtInterfacePower, pWddmSysmanImp->getSysmanProductHelper());
+        pPmt->keyOffsetMap = keyOffsetMap;
+        pWddmSysmanImp->pPmt.reset(pPmt);
+        pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    }
+
     void TearDown() override {
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
         SysmanDeviceFixture::TearDown();
@@ -130,6 +148,83 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenGettingPowerEne
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(energyCounter.energy, expectedEnergyCounterValue);
+        EXPECT_EQ(energyCounter.timestamp, static_cast<uint64_t>(mockPmtTimestampVariableBackupValue / indexToXtalClockFrequecyMap[mockPmtFrequencyIndexVariableBackupValue]));
+    }
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenGettingPowerEnergyCounterAndBothPunitAndOobmsmBasedEnergyCounterIsAvailableThenValidPowerReadingsRetrieved, IsBMG) {
+
+    static constexpr uint32_t mockPmtEnergyCounterVariableFromOobmsmBackupValue = 100;
+    static constexpr uint32_t mockPmtEnergyCounterVariableFromPunitBackupValue = 90;
+    static constexpr uint32_t mockPmtTimestampVariableBackupValue = 10000000;
+    static constexpr uint32_t mockPmtFrequencyIndexVariableBackupValue = 2;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        PmtSysman::PmtTelemetryRead *readRequest = static_cast<PmtSysman::PmtTelemetryRead *>(lpInBuffer);
+        switch (readRequest->offset) {
+        case 1:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockPmtFrequencyIndexVariableBackupValue;
+            return true;
+        case 12:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockPmtEnergyCounterVariableFromPunitBackupValue;
+            return true;
+        case 13:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockPmtEnergyCounterVariableFromPunitBackupValue;
+            return true;
+        case 128:
+            *lpBytesReturned = 8;
+            *static_cast<uint64_t *>(lpOutBuffer) = mockPmtTimestampVariableBackupValue;
+            return true;
+        default:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockPmtEnergyCounterVariableFromOobmsmBackupValue;
+            return true;
+        }
+    });
+    // Setting allow set calls or not
+    init(true);
+    updatePmtKeyOffsetMap(dummyKeyOffsetMapToGetEnergyCounterFromPunit);
+
+    // Calculate the expected energy counter value from the mockPmtEnergyCounterVariableFromOobmsmBackupValue
+    uint32_t integerPart = static_cast<uint32_t>(mockPmtEnergyCounterVariableFromOobmsmBackupValue >> 14);
+    uint32_t decimalBits = static_cast<uint32_t>((mockPmtEnergyCounterVariableFromOobmsmBackupValue & 0x3FFF));
+    double decimalPart = static_cast<double>(decimalBits) / (1 << 14);
+    double result = static_cast<double>(integerPart + decimalPart);
+    uint64_t expectedEnergyCounterValueFromOobmsm = static_cast<uint64_t>((result * convertJouleToMicroJoule));
+
+    // Calculate the expected energy counter value from the mockPmtEnergyCounterVariableFromPunitBackupValue
+    integerPart = static_cast<uint32_t>(mockPmtEnergyCounterVariableFromPunitBackupValue >> 14);
+    decimalBits = static_cast<uint32_t>((mockPmtEnergyCounterVariableFromPunitBackupValue & 0x3FFF));
+    decimalPart = static_cast<double>(decimalBits) / (1 << 14);
+    result = static_cast<double>(integerPart + decimalPart);
+    uint64_t expectedEnergyCounterValueFromPunit = static_cast<uint64_t>((result * convertJouleToMicroJoule));
+
+    auto handles = getPowerHandles(powerHandleDomainCount);
+    for (auto handle : handles) {
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+        zes_power_limit_ext_desc_t defaultLimit = {};
+        extProperties.defaultLimit = &defaultLimit;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        properties.pNext = &extProperties;
+
+        ze_result_t result = zesPowerGetProperties(handle, &properties);
+
+        zes_power_energy_counter_t energyCounter;
+        result = zesPowerGetEnergyCounter(handle, &energyCounter);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        if (extProperties.domain == ZES_POWER_DOMAIN_CARD || extProperties.domain == ZES_POWER_DOMAIN_PACKAGE) {
+            EXPECT_EQ(energyCounter.energy, expectedEnergyCounterValueFromPunit);
+        } else {
+            EXPECT_EQ(energyCounter.energy, expectedEnergyCounterValueFromOobmsm);
+        }
         EXPECT_EQ(energyCounter.timestamp, static_cast<uint64_t>(mockPmtTimestampVariableBackupValue / indexToXtalClockFrequecyMap[mockPmtFrequencyIndexVariableBackupValue]));
     }
 }
