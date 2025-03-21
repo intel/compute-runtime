@@ -3516,6 +3516,7 @@ inline void marshall(TOKSTR_GmmResourceInfoWinStruct &dst, const GmmResourceInfo
     dst.GmmResourceInfoCommon.Surf.Flags.Info.XAdapter.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.XAdapter);
     dst.GmmResourceInfoCommon.Surf.Flags.Info.__PreallocatedResInfo.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.__PreallocatedResInfo);
     dst.GmmResourceInfoCommon.Surf.Flags.Info.__PreWddm2SVM.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.__PreWddm2SVM);
+    dst.GmmResourceInfoCommon.Surf.Flags.Info.NotCompressed.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.NotCompressed);
     dst.GmmResourceInfoCommon.Surf.Flags.Wa.GTMfx2ndLevelBatchRingSizeAlign.setValue(src.GmmResourceInfoCommon.Surf.Flags.Wa.GTMfx2ndLevelBatchRingSizeAlign);
     dst.GmmResourceInfoCommon.Surf.Flags.Wa.ILKNeedAvcMprRowStore32KAlign.setValue(src.GmmResourceInfoCommon.Surf.Flags.Wa.ILKNeedAvcMprRowStore32KAlign);
     dst.GmmResourceInfoCommon.Surf.Flags.Wa.ILKNeedAvcDmvBuffer32KAlign.setValue(src.GmmResourceInfoCommon.Surf.Flags.Wa.ILKNeedAvcDmvBuffer32KAlign);
