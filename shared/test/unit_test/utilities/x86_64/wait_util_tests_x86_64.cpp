@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -19,10 +18,6 @@ using namespace NEO;
 
 struct WaitPkgFixture {
     using CpuIdFuncT = void (*)(int *, int);
-
-    struct MockCpuInfo : public NEO::CpuInfo {
-        using CpuInfo::features;
-    };
 
 #ifdef SUPPORTS_WAITPKG
     constexpr static bool expectedWaitpkgSupport = SUPPORTS_WAITPKG;
@@ -48,13 +43,8 @@ struct WaitPkgFixture {
         CpuInfo::cpuidFunc = savedCpuIdFunc;
     }
 
-    MockCpuInfo *getMockCpuInfo(const NEO::CpuInfo &cpuInfo) {
-        return static_cast<MockCpuInfo *>(const_cast<NEO::CpuInfo *>(&CpuInfo::getInstance()));
-    }
-
     DebugManagerStateRestore restore;
     std::unique_ptr<VariableBackup<MockCpuInfo>> backupCpuInfo;
-    std::unique_ptr<VariableBackup<CpuIdFuncT>> backupCpuIdFunc;
     std::unique_ptr<VariableBackup<bool>> backupWaitpkgSupport;
     std::unique_ptr<VariableBackup<WaitUtils::WaitpkgUse>> backupWaitpkgUse;
     std::unique_ptr<VariableBackup<uint64_t>> backupWaitpkgCounter;

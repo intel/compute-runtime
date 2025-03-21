@@ -24,7 +24,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -743,28 +742,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFailingExecWhenFlushingThe
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(commandBuffer);
 }
-
-struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTest {
-    template <typename GfxFamily>
-    void setUpT() {
-        debugManager.flags.EnableDirectSubmission.set(1u);
-        debugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
-        debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
-        DrmCommandStreamEnhancedTest::setUpT<GfxFamily>();
-        auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
-        auto engineType = device->getDefaultEngine().osContext->getEngineType();
-        hwInfo->capabilityTable.directSubmissionEngines.data[engineType].engineSupported = true;
-        csr->initDirectSubmission();
-    }
-
-    template <typename GfxFamily>
-    void tearDownT() {
-        this->dbgState.reset();
-        DrmCommandStreamEnhancedTest::tearDownT<GfxFamily>();
-    }
-
-    DebugManagerStateRestore restorer;
-};
 
 struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDirectSubmissionTest {
     template <typename GfxFamily>

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -43,6 +43,12 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
 )
+
+if(${NEO_TARGET_PROCESSOR} STREQUAL "x86_64")
+  list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests_x86_64.cpp
+  )
+endif()
 
 if(NEO_ENABLE_I915_PRELIM_DETECTION)
   list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
