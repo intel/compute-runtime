@@ -10,7 +10,6 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
@@ -34,10 +33,6 @@ bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *
 }
 
 bool ApiSpecificConfig::getBindlessMode(const Device &device) {
-    if (device.getCompilerProductHelper().isForceBindlessRequired()) {
-        return true;
-    }
-
     if (debugManager.flags.UseBindlessMode.get() != -1) {
         return debugManager.flags.UseBindlessMode.get();
     }

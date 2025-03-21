@@ -1653,7 +1653,7 @@ TEST_F(BuiltInTests, WhenBuiltinsLibIsCreatedThenAllStoragesSizeIsTwo) {
 
 TEST_F(BuiltInTests, GivenTypeAnyWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled()), BuiltinCode::ECodeType::any, *pDevice);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
@@ -1661,7 +1661,7 @@ TEST_F(BuiltInTests, GivenTypeAnyWhenGettingBuiltinCodeThenCorrectBuiltinReturne
 
 TEST_F(BuiltInTests, GivenTypeBinaryWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled()), BuiltinCode::ECodeType::binary, *pDevice);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
@@ -1810,7 +1810,7 @@ TEST_F(BuiltInTests, GivenTypeIntermediateWhenCreatingProgramFromCodeThenNullPoi
 
 TEST_F(BuiltInTests, GivenTypeBinaryWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled()), BuiltinCode::ECodeType::binary, *pDevice);
+    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
@@ -1898,7 +1898,7 @@ TEST_F(BuiltInTests, givenSipKernelWhenAllocationFailsThenItHasNullptrGraphicsAl
 TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuiltinCodeBinary) {
     debugManager.flags.RebuildPrecompiledKernels.set(true);
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(false, pDevice->getCompilerProductHelper().isHeaplessModeEnabled()), BuiltinCode::ECodeType::binary, *pDevice);
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::binary, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);

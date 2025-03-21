@@ -1680,17 +1680,20 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
     using namespace testing;
     DebugManagerStateRestore restorer;
 
-    if (!pDevice->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    {
+
         debugManager.flags.UseBindlessMode.set(0);
         MockProgram programNoBindless(pContext, false, toClDeviceVector(*pClDevice));
         auto internalOptionsNoBindless = programNoBindless.getInternalOptions();
         EXPECT_FALSE(CompilerOptions::contains(internalOptionsNoBindless, CompilerOptions::bindlessMode)) << internalOptionsNoBindless;
     }
+    {
 
-    debugManager.flags.UseBindlessMode.set(1);
-    MockProgram programBindless(pContext, false, toClDeviceVector(*pClDevice));
-    auto internalOptionsBindless = programBindless.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptionsBindless, CompilerOptions::bindlessMode)) << internalOptionsBindless;
+        debugManager.flags.UseBindlessMode.set(1);
+        MockProgram programBindless(pContext, false, toClDeviceVector(*pClDevice));
+        auto internalOptionsBindless = programBindless.getInternalOptions();
+        EXPECT_TRUE(CompilerOptions::contains(internalOptionsBindless, CompilerOptions::bindlessMode)) << internalOptionsBindless;
+    }
 }
 
 TEST_F(ProgramTests, GivenForce32BitAddressesWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
