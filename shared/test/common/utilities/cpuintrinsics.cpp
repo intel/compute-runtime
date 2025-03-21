@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,8 @@ std::atomic<uintptr_t> lastUmonitorPtr(0u);
 std::atomic<uint32_t> umonitorCounter(0u);
 
 std::atomic<uint32_t> rdtscCounter(0u);
+
+std::atomic_uint32_t tpauseCounter{};
 
 volatile TagAddressType *pauseAddress = nullptr;
 TaskCountType pauseValue = 0u;
@@ -66,6 +68,11 @@ void pause() {
             CpuIntrinsicsTests::pauseAddress = ptrOffset(CpuIntrinsicsTests::pauseAddress, CpuIntrinsicsTests::pauseOffset);
         }
     }
+}
+
+uint8_t tpause(uint32_t control, uint64_t counter) {
+    CpuIntrinsicsTests::tpauseCounter++;
+    return 0;
 }
 
 unsigned char umwait(unsigned int ctrl, uint64_t counter) {

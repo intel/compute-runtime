@@ -1007,7 +1007,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushZeroAn
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmDirectSubmissionTest, givenMultipleActiveTilesWhenWaitingForTagUpdateThenQueryAllActiveTiles) {
     using Dispatcher = RenderDispatcher<FamilyType>;
 
-    VariableBackup<bool> backupWaitpkgUse(&WaitUtils::waitpkgUse, false);
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::noUse);
     VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount, 1);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
@@ -1283,7 +1283,7 @@ HWTEST_F(DrmDirectSubmissionTest,
 HWTEST_F(DrmDirectSubmissionTest, givenGpuHangWhenWaitCalledThenGpuHangDetected) {
     using Dispatcher = RenderDispatcher<FamilyType>;
 
-    VariableBackup<bool> backupWaitpkgUse(&WaitUtils::waitpkgUse, false);
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::noUse);
     VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount, 1);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);

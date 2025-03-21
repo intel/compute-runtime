@@ -49,6 +49,14 @@ void pause() {
     _mm_pause();
 }
 
+uint8_t tpause(uint32_t control, uint64_t counter) {
+#ifdef SUPPORTS_WAITPKG
+    return _tpause(control, counter);
+#else
+    return 0;
+#endif
+}
+
 unsigned char umwait(unsigned int ctrl, uint64_t counter) {
 #ifdef SUPPORTS_WAITPKG
     return _umwait(ctrl, counter);

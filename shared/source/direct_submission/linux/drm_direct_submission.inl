@@ -288,9 +288,10 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::isCompletionFenceSupported() {
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(TaskCountType taskCountToWait) {
     auto lastHangCheckTime = std::chrono::high_resolution_clock::now();
+    auto waitStartTime = lastHangCheckTime;
     auto pollAddress = this->tagAddress;
     for (uint32_t i = 0; i < this->activeTiles; i++) {
-        while (!WaitUtils::waitFunction(pollAddress, taskCountToWait) &&
+        while (!WaitUtils::waitFunction(pollAddress, taskCountToWait, std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - waitStartTime).count()) &&
                !isGpuHangDetected(lastHangCheckTime)) {
         }
         pollAddress = ptrOffset(pollAddress, this->immWritePostSyncOffset);

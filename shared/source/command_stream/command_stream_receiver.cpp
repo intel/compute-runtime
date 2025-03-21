@@ -504,10 +504,10 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
     for (uint32_t i = 0; i < activePartitions; i++) {
-        while (*partitionAddress < taskCountToWait && timeDiff <= params.waitTimeout) {
+        while (*partitionAddress < taskCountToWait && (!params.enableTimeout || timeDiff <= params.waitTimeout)) {
             this->downloadTagAllocation(taskCountToWait);
 
-            if (!params.indefinitelyPoll && WaitUtils::waitFunction(partitionAddress, taskCountToWait)) {
+            if (!params.indefinitelyPoll && WaitUtils::waitFunction(partitionAddress, taskCountToWait, timeDiff)) {
                 break;
             }
 
@@ -516,9 +516,7 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
                 return WaitStatus::gpuHang;
             }
 
-            if (params.enableTimeout) {
-                timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime).count();
-            }
+            timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime).count();
         }
 
         partitionAddress = ptrOffset(partitionAddress, this->immWritePostSyncWriteOffset);
@@ -1047,7 +1045,7 @@ void CommandStreamReceiver::downloadTagAllocation(TaskCountType taskCountToWait)
 bool CommandStreamReceiver::testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait) {
     this->downloadTagAllocation(taskCountToWait);
     for (uint32_t i = 0; i < activePartitions; i++) {
-        if (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {
+        if (!WaitUtils::waitFunction(pollAddress, taskCountToWait, 0)) {
             return false;
         }
 

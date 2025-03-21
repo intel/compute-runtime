@@ -1113,7 +1113,7 @@ extern std::function<void()> setupPauseAddress;
 } // namespace CpuIntrinsicsTests
 
 HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenCallWaitUtils) {
-    VariableBackup<bool> backupWaitpkgUse(&WaitUtils::waitpkgUse, false);
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::noUse);
     VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount, 1);
 
     DebugManagerStateRestore restorer;

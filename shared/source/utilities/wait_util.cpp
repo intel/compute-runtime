@@ -14,9 +14,11 @@ namespace NEO {
 
 namespace WaitUtils {
 
+WaitpkgUse waitpkgUse = WaitpkgUse::uninitialized;
+
+int64_t waitPkgThresholdInMicroSeconds = defaultWaitPkgThresholdInMicroSeconds;
 uint64_t waitpkgCounterValue = defaultCounterValue;
 uint32_t waitpkgControlValue = defaultControlValue;
-
 uint32_t waitCount = defaultWaitCount;
 
 #ifdef SUPPORTS_WAITPKG
@@ -24,37 +26,41 @@ bool waitpkgSupport = SUPPORTS_WAITPKG;
 #else
 bool waitpkgSupport = false;
 #endif
-bool waitpkgUse = false;
 
-void init(bool enable) {
-    if (waitpkgUse) {
+void init(WaitpkgUse inputWaitpkgUse) {
+    if (debugManager.flags.WaitLoopCount.get() != -1) {
+        waitCount = debugManager.flags.WaitLoopCount.get();
+    }
+
+    if (waitpkgUse > WaitpkgUse::noUse) {
+        return;
+    }
+
+    if (!(waitpkgSupport && CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureWaitPkg))) {
+        waitpkgUse = WaitpkgUse::noUse;
         return;
     }
 
     if (debugManager.flags.EnableWaitpkg.get() != -1) {
-        enable = debugManager.flags.EnableWaitpkg.get();
+        inputWaitpkgUse = static_cast<WaitpkgUse>(debugManager.flags.EnableWaitpkg.get());
     }
 
-    if (enable && waitpkgSupport) {
-        if (CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureWaitPkg)) {
-            waitpkgUse = true;
-            waitCount = 0;
-        }
+    waitpkgUse = inputWaitpkgUse;
+
+    if (waitpkgUse == WaitpkgUse::umonitorAndUmwait) {
+        waitCount = 0u;
     }
 
-    int64_t overrideWaitPkgCounter = debugManager.flags.WaitpkgCounterValue.get();
-    if (overrideWaitPkgCounter != -1) {
-        waitpkgCounterValue = static_cast<uint64_t>(overrideWaitPkgCounter);
+    if (debugManager.flags.WaitpkgCounterValue.get() != -1) {
+        waitpkgCounterValue = debugManager.flags.WaitpkgCounterValue.get();
     }
 
-    int32_t overrideWaitPkgControl = debugManager.flags.WaitpkgControlValue.get();
-    if (overrideWaitPkgControl != -1) {
-        waitpkgControlValue = static_cast<uint32_t>(overrideWaitPkgControl);
+    if (debugManager.flags.WaitpkgControlValue.get() != -1) {
+        waitpkgControlValue = debugManager.flags.WaitpkgControlValue.get();
     }
 
-    int32_t overrideWaitCount = debugManager.flags.WaitLoopCount.get();
-    if (overrideWaitCount != -1) {
-        waitCount = static_cast<uint32_t>(overrideWaitCount);
+    if (debugManager.flags.WaitpkgThreshold.get() != -1) {
+        waitPkgThresholdInMicroSeconds = debugManager.flags.WaitpkgThreshold.get();
     }
 }
 

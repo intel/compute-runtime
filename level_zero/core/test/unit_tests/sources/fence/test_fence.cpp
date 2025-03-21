@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -241,7 +241,7 @@ TEST_F(FenceSynchronizeTest, givenInfiniteTimeoutWhenWaitingForFenceCompletionTh
     constexpr uint32_t activePartitions = 2;
     constexpr uint32_t postSyncOffset = 16;
 
-    VariableBackup<bool> backupWaitpkgUse(&NEO::WaitUtils::waitpkgUse, false);
+    VariableBackup<WaitUtils::WaitpkgUse> backupWaitpkgUse(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::noUse);
     VariableBackup<uint32_t> backupWaitCount(&NEO::WaitUtils::waitCount, 1);
 
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());

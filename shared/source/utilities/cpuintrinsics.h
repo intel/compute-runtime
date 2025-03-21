@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,8 @@ void clFlush(void const *ptr);
 void clFlushOpt(void *ptr);
 
 void pause();
+
+uint8_t tpause(uint32_t control, uint64_t counter);
 
 unsigned char umwait(unsigned int ctrl, uint64_t counter);
 

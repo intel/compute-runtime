@@ -21,7 +21,8 @@ namespace NEO {
 extern unsigned int testCaseMaxTimeInMs;
 
 void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
-    WaitUtils::waitpkgUse = false;
+    WaitUtils::waitpkgUse = WaitUtils::WaitpkgUse::uninitialized;
+    WaitUtils::waitPkgThresholdInMicroSeconds = WaitUtils::defaultWaitPkgThresholdInMicroSeconds;
     WaitUtils::waitpkgCounterValue = WaitUtils::defaultCounterValue;
     WaitUtils::waitpkgControlValue = WaitUtils::defaultControlValue;
     WaitUtils::waitCount = WaitUtils::defaultWaitCount;
