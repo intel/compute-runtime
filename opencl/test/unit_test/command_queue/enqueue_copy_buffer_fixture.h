@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,19 +78,6 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
     void enqueueCopyBufferAndParse() {
         enqueueCopyBuffer();
         parseCommands<FamilyType>(*pCmdQ);
-    }
-
-    int32_t adjustBuiltInType(bool isHeaplessEnabled, int32_t builtInType) {
-
-        if (isHeaplessEnabled) {
-            switch (builtInType) {
-            case EBuiltInOps::copyBufferToBuffer:
-            case EBuiltInOps::copyBufferToBufferStateless:
-                return EBuiltInOps::copyBufferToBufferStatelessHeapless;
-            }
-        }
-
-        return builtInType;
     }
 
     MockContext context;

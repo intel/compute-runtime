@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -211,12 +212,9 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
-
     enqueueCopyBuffer();
 
-    auto builtInType = adjustBuiltInType(heaplessEnabled, EBuiltInOps::copyBufferToBuffer);
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(pDevice->getCompilerProductHelper().isForceToStatelessRequired(), pCmdQ->getHeaplessModeEnabled());
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
@@ -238,6 +236,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), kernelDescriptor, rootDeviceIndex));
 
     auto crossThreadDatSize = kernel->getCrossThreadDataSize();
+    auto heaplessEnabled = pDevice->getCompilerProductHelper().isHeaplessModeEnabled();
     auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(heaplessEnabled);
     bool crossThreadDataFitsInInlineData = (crossThreadDatSize <= inlineDataSize);
 
@@ -391,9 +390,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentZeroMatchesSourceAd
 
     // Extract the kernel used
 
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
-    auto builtInType = adjustBuiltInType(heaplessEnabled, EBuiltInOps::copyBufferToBuffer);
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(pDevice->getCompilerProductHelper().isForceToStatelessRequired(), pCmdQ->getHeaplessModeEnabled());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             pCmdQ->getClDevice());
@@ -424,9 +421,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     enqueueCopyBufferAndParse<FamilyType>();
 
     // Extract the kernel used
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
-    auto builtInType = adjustBuiltInType(heaplessEnabled, EBuiltInOps::copyBufferToBuffer);
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(pDevice->getCompilerProductHelper().isForceToStatelessRequired(), pCmdQ->getHeaplessModeEnabled());
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
@@ -491,7 +486,7 @@ HWTEST_F(EnqueueCopyBufferStatelessTest, givenBuffersWhenCopyingBufferStatelessT
 
 using EnqueueCopyBufferStatefulTest = EnqueueCopyBufferHw;
 
-HWTEST_F(EnqueueCopyBufferStatefulTest, givenBuffersWhenCopyingBufferStatefulThenSuccessIsReturned) {
+HWTEST2_F(EnqueueCopyBufferStatefulTest, givenBuffersWhenCopyingBufferStatefulThenSuccessIsReturned, IsStatefulBufferPreferredForProduct) {
     auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     if (cmdQ->getHeaplessModeEnabled()) {
         GTEST_SKIP();
