@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/source/sharings/unified/unified_sharing.h"
 
+#include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/helpers/timestamp_packet.h"
@@ -34,23 +35,36 @@ void UnifiedSharing::synchronizeObject(UpdateData &updateData) {
 void UnifiedSharing::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
 }
 
-GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, AllocationType allocationType) {
-    return createGraphicsAllocation(context, description, nullptr, allocationType);
-}
-
-GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType) {
+std::unique_ptr<MultiGraphicsAllocation> UnifiedSharing::createMultiGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType, cl_int *errcodeRet) {
+    ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
     auto memoryManager = context->getMemoryManager();
 
-    if (description.type != UnifiedSharingHandleType::win32Nt && description.type != UnifiedSharingHandleType::linuxFd && description.type != UnifiedSharingHandleType::win32Shared)
+    if (description.type != UnifiedSharingHandleType::win32Nt && description.type != UnifiedSharingHandleType::linuxFd && description.type != UnifiedSharingHandleType::win32Shared) {
+        errorCode.set(CL_INVALID_MEM_OBJECT);
         return nullptr;
+    }
 
-    const AllocationProperties properties{context->getDevice(0)->getRootDeviceIndex(),
-                                          false, // allocateMemory
-                                          imgInfo,
-                                          allocationType,
-                                          context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
+    auto pRootDeviceIndices = &context->getRootDeviceIndices();
+    auto multiGraphicsAllocation = std::make_unique<MultiGraphicsAllocation>(context->getMaxRootDeviceIndex());
     MemoryManager::OsHandleData osHandleData{description.handle};
-    return memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+
+    for (auto &rootDeviceIndex : *pRootDeviceIndices) {
+        const AllocationProperties properties{rootDeviceIndex,
+                                              false, // allocateMemory
+                                              imgInfo,
+                                              allocationType,
+                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
+
+        auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+        if (!graphicsAllocation) {
+            errorCode.set(CL_INVALID_MEM_OBJECT);
+            return nullptr;
+        }
+
+        multiGraphicsAllocation->addAllocation(graphicsAllocation);
+    }
+
+    return multiGraphicsAllocation;
 }
 
 template <>

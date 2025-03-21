@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,11 @@
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/source/sharings/unified/unified_sharing_types.h"
 
+#include "CL/cl.h"
+
 namespace NEO {
 struct ImageInfo;
+class MultiGraphicsAllocation;
 
 class UnifiedSharingFunctions : public SharingFunctions {
   public:
@@ -32,8 +35,7 @@ class UnifiedSharing : public SharingHandler {
     void synchronizeObject(UpdateData &updateData) override;
     void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
 
-    static GraphicsAllocation *createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, AllocationType allocationType);
-    static GraphicsAllocation *createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType);
+    static std::unique_ptr<MultiGraphicsAllocation> createMultiGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType, cl_int *errcodeRet);
 
   private:
     UnifiedSharingFunctions *sharingFunctions;

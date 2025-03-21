@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "unified_buffer.h"
-
-#include "shared/source/helpers/get_info.h"
+#include "opencl/source/sharings/unified/unified_buffer.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -15,19 +13,12 @@
 using namespace NEO;
 
 Buffer *UnifiedBuffer::createSharedUnifiedBuffer(Context *context, cl_mem_flags flags, UnifiedSharingMemoryDescription extMem, cl_int *errcodeRet) {
-    ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
-
-    auto graphicsAllocation = UnifiedBuffer::createGraphicsAllocation(context, extMem, AllocationType::sharedBuffer);
-    if (!graphicsAllocation) {
-        errorCode.set(CL_INVALID_MEM_OBJECT);
+    auto multiGraphicsAllocation = UnifiedBuffer::createMultiGraphicsAllocation(context, extMem, nullptr, AllocationType::sharedBuffer, errcodeRet);
+    if (!multiGraphicsAllocation) {
         return nullptr;
     }
 
-    UnifiedSharingFunctions *sharingFunctions = context->getSharing<UnifiedSharingFunctions>();
-    auto sharingHandler = new UnifiedBuffer(sharingFunctions, extMem.type);
-    auto rootDeviceIndex = graphicsAllocation->getRootDeviceIndex();
-    auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
-    multiGraphicsAllocation.addAllocation(graphicsAllocation);
+    auto sharingHandler = new UnifiedBuffer(context->getSharing<UnifiedSharingFunctions>(), extMem.type);
 
-    return Buffer::createSharedBuffer(context, flags, sharingHandler, std::move(multiGraphicsAllocation));
+    return Buffer::createSharedBuffer(context, flags, sharingHandler, std::move(*multiGraphicsAllocation));
 }
