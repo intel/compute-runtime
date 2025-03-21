@@ -342,15 +342,21 @@ class MemoryManager {
         return std::unique_lock<std::mutex>(hostAllocationsReuseMtx);
     }
 
-    void recordHostAllocationSaveForReuse(size_t size) {
+    void initUsmReuseMaxSize();
+
+    uint64_t getMaxAllocationsSavedForReuseSize() const {
+        return maxAllocationsSavedForReuseSize;
+    }
+
+    void recordHostAllocationSaveForReuse(uint64_t size) {
         hostAllocationsSavedForReuseSize += size;
     }
 
-    void recordHostAllocationGetFromReuse(size_t size) {
+    void recordHostAllocationGetFromReuse(uint64_t size) {
         hostAllocationsSavedForReuseSize -= size;
     }
 
-    size_t getHostAllocationsSavedForReuseSize() const {
+    uint64_t getHostAllocationsSavedForReuseSize() const {
         return hostAllocationsSavedForReuseSize;
     }
 
@@ -430,7 +436,8 @@ class MemoryManager {
     std::mutex physicalMemoryAllocationMapMutex;
     std::unique_ptr<std::atomic<size_t>[]> localMemAllocsSize;
     std::atomic<size_t> sysMemAllocsSize;
-    size_t hostAllocationsSavedForReuseSize = 0u;
+    uint64_t maxAllocationsSavedForReuseSize = 0u;
+    uint64_t hostAllocationsSavedForReuseSize = 0u;
     mutable std::mutex hostAllocationsReuseMtx;
     std::map<std::pair<AllocationType, bool>, CustomHeapAllocatorConfig> customHeapAllocators;
 };

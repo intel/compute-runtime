@@ -62,6 +62,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::latestContextId;
     using MemoryManager::localMemAllocsSize;
     using MemoryManager::localMemorySupported;
+    using MemoryManager::maxAllocationsSavedForReuseSize;
     using MemoryManager::reservedMemory;
     using MemoryManager::secondaryEngines;
 

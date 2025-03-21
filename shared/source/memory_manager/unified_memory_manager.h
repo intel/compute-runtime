@@ -201,7 +201,6 @@ class SVMAllocsManager {
         std::vector<SvmCacheAllocationInfo> allocations;
 
         std::mutex mtx;
-        size_t maxSize = 0;
         SVMAllocsManager *svmAllocsManager = nullptr;
         MemoryManager *memoryManager = nullptr;
         bool enablePerformanceLogging = false;

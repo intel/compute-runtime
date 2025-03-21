@@ -94,6 +94,7 @@ bool UltDeviceFactory::initializeMemoryManager(ExecutionEnvironment &executionEn
         bool enableLocalMemory = gfxCoreHelper.getEnableLocalMemory(*defaultHwInfo);
         bool aubUsage = (testMode == TestMode::aubTests) || (testMode == TestMode::aubTestsWithTbx);
         executionEnvironment.memoryManager.reset(new MockMemoryManager(false, enableLocalMemory, aubUsage, executionEnvironment));
+        executionEnvironment.memoryManager->initUsmReuseMaxSize();
     }
     return true;
 }

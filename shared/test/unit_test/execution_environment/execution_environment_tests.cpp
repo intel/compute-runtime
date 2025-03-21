@@ -396,7 +396,9 @@ TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecu
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
     MockExecutionEnvironment executionEnvironment{};
     executionEnvironment.initializeMemoryManager();
-    EXPECT_NE(nullptr, executionEnvironment.memoryManager);
+    ASSERT_NE(nullptr, executionEnvironment.memoryManager);
+    EXPECT_TRUE(executionEnvironment.memoryManager->isInitialized());
+    EXPECT_NE(0u, executionEnvironment.memoryManager->getMaxAllocationsSavedForReuseSize());
 }
 
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManager>) +

@@ -389,6 +389,15 @@ uint32_t MemoryManager::getFirstContextIdForRootDevice(uint32_t rootDeviceIndex)
     return 0;
 }
 
+void MemoryManager::initUsmReuseMaxSize() {
+    const auto totalSystemMemory = this->getSystemSharedMemory(0u);
+    auto fractionOfTotalMemoryForRecycling = 0.02;
+    if (debugManager.flags.ExperimentalEnableHostAllocationCache.get() != -1) {
+        fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableHostAllocationCache.get());
+    }
+    this->maxAllocationsSavedForReuseSize = static_cast<size_t>(fractionOfTotalMemoryForRecycling * totalSystemMemory);
+}
+
 OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
                                                      const EngineDescriptor &engineDescriptor) {
     auto rootDeviceIndex = commandStreamReceiver->getRootDeviceIndex();

@@ -75,7 +75,7 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         }
     } else {
         auto lock = memoryManager->obtainHostAllocationsReuseLock();
-        if (size + memoryManager->getHostAllocationsSavedForReuseSize() > this->maxSize) {
+        if (size + memoryManager->getHostAllocationsSavedForReuseSize() > memoryManager->getMaxAllocationsSavedForReuseSize()) {
             isSuccess = false;
         } else {
             memoryManager->recordHostAllocationSaveForReuse(size);
@@ -912,14 +912,8 @@ void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
 }
 
 void SVMAllocsManager::initUsmHostAllocationsCache() {
-    const auto totalSystemMemory = this->memoryManager->getSystemSharedMemory(0u);
-    auto fractionOfTotalMemoryForRecycling = 0.02;
-    if (debugManager.flags.ExperimentalEnableHostAllocationCache.get() != -1) {
-        fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableHostAllocationCache.get());
-    }
     this->usmHostAllocationsCache.reset(new SvmAllocationCache);
-    this->usmHostAllocationsCache->maxSize = static_cast<size_t>(fractionOfTotalMemoryForRecycling * totalSystemMemory);
-    if (this->usmHostAllocationsCache->maxSize > 0u) {
+    if (memoryManager->getMaxAllocationsSavedForReuseSize() > 0u) {
         this->usmHostAllocationsCache->allocations.reserve(128u);
         this->usmHostAllocationsCache->svmAllocsManager = this;
         this->usmHostAllocationsCache->memoryManager = memoryManager;
