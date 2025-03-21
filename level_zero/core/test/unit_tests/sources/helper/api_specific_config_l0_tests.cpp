@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -109,7 +110,7 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfBindlessAddressingIsEnabledThenRetu
     EXPECT_TRUE(ApiSpecificConfig::getBindlessMode(mockDevice));
 
     mockAilConfigurationHelper.setDisableBindlessAddressing(true);
-    EXPECT_FALSE(ApiSpecificConfig::getBindlessMode(mockDevice));
+    EXPECT_EQ(mockDevice.getCompilerProductHelper().isHeaplessModeEnabled(), ApiSpecificConfig::getBindlessMode(mockDevice));
 }
 
 } // namespace NEO

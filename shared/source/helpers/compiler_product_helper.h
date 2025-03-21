@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,6 +86,7 @@ class CompilerProductHelper {
     virtual void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const = 0;
     virtual void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const = 0;
     virtual bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const = 0;
+    virtual bool isForceBindlessRequired() const = 0;
     virtual const char *getCustomIgcLibraryName() const = 0;
     virtual const char *getFinalizerLibraryName() const = 0;
 
@@ -139,6 +140,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const override;
     void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const override;
     bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const override;
+    bool isForceBindlessRequired() const override;
     const char *getCustomIgcLibraryName() const override;
     const char *getFinalizerLibraryName() const override;
 
