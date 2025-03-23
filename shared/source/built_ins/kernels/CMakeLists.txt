@@ -74,11 +74,17 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
   set(OUTPUT_FILE_SPV
       ${OUTPUTDIR}/${mode}_${BASENAME}_${platform_it_lower}.spv
   )
+
+  set(heapless_mode "disable")
+  if(${mode} STREQUAL "heapless")
+    set(heapless_mode "enable")
+  endif()
+
   list(APPEND __ocloc__options__ "-cl-kernel-arg-info")
   set(INTERNAL_OPTIONS "${${mode}_INTERNAL_OPTIONS}")
   add_custom_command(
                      OUTPUT ${OUTPUT_FILE_SPV}
-                     COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -spv_only -device ${platform_it_lower} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                     COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -spv_only -device ${platform_it_lower} -heapless_mode ${heapless_mode} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      DEPENDS ${builtin} ocloc copy_compiler_files
   )
@@ -109,7 +115,7 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
       get_filename_component(absolute_filepath_spv ${OUTPUT_FILE_SPV} ABSOLUTE)
       add_custom_command(
                          OUTPUT ${OUTPUT_FILES_BINARIES}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${RELEASE} ${builtin_options} -${bits} -stateful_address_mode ${stateful_address_mode} -output ${mode}_${BASENAME}_${RELEASE_FILENAME} -output_no_suffix -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${RELEASE} -heapless_mode ${heapless_mode} ${builtin_options} -${bits} -stateful_address_mode ${stateful_address_mode} -output ${mode}_${BASENAME}_${RELEASE_FILENAME} -output_no_suffix -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files ${OUTPUT_FILES_BINARIES_PREV}
       )

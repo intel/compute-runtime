@@ -5,7 +5,7 @@
 #
 
 set(SHARED_TEST_PROJECTS_SUB_FOLDER "prepare test files")
-function(compile_kernels_gen device revision_id platform_name use_stateless_suffix)
+function(compile_kernels_gen device revision_id platform_name use_stateless_suffix use_heapless)
 
   set(outputdir "${TargetDir}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/")
   set(compiled_kernels)
@@ -17,7 +17,9 @@ function(compile_kernels_gen device revision_id platform_name use_stateless_suff
     get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
     set(outputname_base "${basename}_${platform_name}")
-    if(${use_stateless_suffix})
+    if(${use_heapless})
+      set(outputname_base "${outputname_base}-heapless")
+    elseif(${use_stateless_suffix})
       set(outputname_base "${outputname_base}-cl-intel-greater-than-4GB-buffer-required_")
     endif()
 
@@ -29,9 +31,14 @@ function(compile_kernels_gen device revision_id platform_name use_stateless_suff
           ${outputpath_base}.bin
       )
 
+      set(heapless_mode "disable")
+      if(${use_heapless})
+        set(heapless_mode "enable")
+      endif()
+
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id}
+                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -heapless_mode ${heapless_mode} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc copy_compiler_files
       )
@@ -79,10 +86,15 @@ macro(macro_for_each_platform)
 
   foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
     parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-    compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} FALSE ${KERNELS_TO_COMPILE})
+
+    compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} FALSE FALSE ${KERNELS_TO_COMPILE})
 
     if(${STATELESS_SUPPORT})
-      compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} TRUE ${KERNELS_TO_COMPILE})
+      compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} TRUE FALSE ${KERNELS_TO_COMPILE})
+    endif()
+
+    if(${HEAPLESS_SUPPORT})
+      compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} FALSE TRUE ${KERNELS_TO_COMPILE})
     endif()
 
     add_custom_target(prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${compiled_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID}} ${PREVIOUS_TARGET})
