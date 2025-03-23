@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,6 @@ HWTEST_EXCLUDE_PRODUCT(CommandStreamReceiverHwTestDg2AndLater, givenGen12AndLate
 HWTEST_EXCLUDE_PRODUCT(DeviceGetCapsTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(ClGfxCoreHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThenCorrectValuesAreReturned, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(EnqueueReadBufferRectStatefulTest, WhenReadingBufferRectStatefulThenSuccessIsReturned, IGFX_XE_HPC_CORE);
-HWTEST_EXCLUDE_PRODUCT(EnqueueCopyBufferRectStateful, GivenValidParametersWhenCopyingBufferRectStatefulThenSuccessIsReturned, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(EnqueueSvmMemCopyHwTest, givenEnqueueSVMMemCopyWhenUsingCopyBufferToBufferStatefulBuilderThenSuccessIsReturned, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLocalBufferStatefulBuilderThenSuccessIsReturned, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(EnqueueFillBufferStatefulTest, givenBuffersWhenFillingBufferStatefulThenSuccessIsReturned, IGFX_XE_HPC_CORE);

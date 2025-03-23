@@ -545,7 +545,7 @@ HWTEST_F(EnqueueCopyBufferRectStateless, GivenValidParametersWhenCopyingBufferRe
 
 using EnqueueCopyBufferRectStateful = EnqueueCopyBufferRectHw;
 
-HWTEST_F(EnqueueCopyBufferRectStateful, GivenValidParametersWhenCopyingBufferRectStatefulThenSuccessIsReturned) {
+HWTEST2_F(EnqueueCopyBufferRectStateful, GivenValidParametersWhenCopyingBufferRectStatefulThenSuccessIsReturned, IsStatefulBufferPreferredForProduct) {
 
     std::unique_ptr<CommandQueueHw<FamilyType>> cmdQ(new CommandQueueStateful<FamilyType>(context.get(), device.get()));
     if (cmdQ->getHeaplessModeEnabled()) {
