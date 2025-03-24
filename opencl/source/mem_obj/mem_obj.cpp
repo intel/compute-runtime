@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -134,7 +134,8 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     cl_mem clAssociatedMemObject = static_cast<cl_mem>(this->associatedMemObject);
     cl_context ctx = nullptr;
     uint64_t internalHandle = 0llu;
-    auto allocation = getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
+    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
+    auto allocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     cl_bool usesCompression;
 
     switch (paramName) {
@@ -204,7 +205,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_ALLOCATION_HANDLE_INTEL: {
-        auto retVal = multiGraphicsAllocation.getDefaultGraphicsAllocation()->peekInternalHandle(this->memoryManager, internalHandle);
+        auto retVal = allocation->peekInternalHandle(this->memoryManager, internalHandle);
         if (retVal != 0) {
             return CL_OUT_OF_RESOURCES;
         }

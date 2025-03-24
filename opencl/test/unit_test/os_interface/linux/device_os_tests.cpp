@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,7 +69,7 @@ TEST(DeviceOsTest, WhenDeviceIsCreatedThenSimultaneousInteropsIsSupported) {
     EXPECT_TRUE(pDevice->simultaneousInterops == expected);
 }
 
-TEST(ApiOsTest, GivenUnupportedApiTokensWhenGettingInfoThenInvalidValueErrorIsReturned) {
+TEST(ApiOsTest, GivenUnsupportedApiTokensWhenGettingInfoThenInvalidValueErrorIsReturned) {
     MockContext context;
     MockBuffer buffer;
 
@@ -79,8 +79,11 @@ TEST(ApiOsTest, GivenUnupportedApiTokensWhenGettingInfoThenInvalidValueErrorIsRe
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     void *paramVal = nullptr;
+    buffer.context = &context;
     retVal = buffer.getMemObjectInfo(CL_MEM_D3D10_RESOURCE_KHR, sizeof(void *), paramVal, &size);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    buffer.context = nullptr;
 }
 
 TEST(ApiOsTest, GivenUnsupportedApiWhenGettingDispatchThenNullIsReturned) {
