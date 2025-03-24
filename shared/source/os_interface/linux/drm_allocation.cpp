@@ -58,6 +58,7 @@ std::string DrmAllocation::getPatIndexInfoString(const ProductHelper &productHel
         ss << " Gmm resource usage: "
            << "[ " << gmm->getUsageTypeString() << " ],";
         ss << " Cacheable: " << gmm->resourceParams.Flags.Info.Cacheable;
+        ss << " NotLockable: " << gmm->resourceParams.Flags.Info.NotLockable;
     }
     return ss.str();
 }
