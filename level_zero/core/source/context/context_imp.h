@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/stackvec.h"
@@ -25,8 +26,9 @@ struct IpcCounterBasedEventData;
 ContextExt *createContextExt(DriverHandle *driverHandle);
 void destroyContextExt(ContextExt *ctxExt);
 
-struct ContextImp : Context {
+struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     ContextImp(DriverHandle *driverHandle);
+    ContextImp(const ContextImp &) = delete;
     ~ContextImp() override;
     ze_result_t destroy() override;
     ze_result_t getStatus() override;
@@ -206,5 +208,7 @@ struct ContextImp : Context {
     uint32_t numDevices = 0;
     ContextExt *contextExt = nullptr;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<ContextImp>);
 
 } // namespace L0
