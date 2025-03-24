@@ -12,7 +12,7 @@
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper.inl"
-#include "shared/source/os_interface/product_helper_tgllp_and_later.inl"
+#include "shared/source/os_interface/product_helper_before_xe_hpg.inl"
 
 constexpr static auto gfxProduct = IGFX_ALDERLAKE_P;
 

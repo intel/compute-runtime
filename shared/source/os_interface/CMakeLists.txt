@@ -23,17 +23,12 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_tgllp_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe_hpc_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_handle.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_inc_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library.cpp
@@ -46,8 +41,13 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters.h
     ${CMAKE_CURRENT_SOURCE_DIR}/print.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_before_xe_hpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_hw.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_inc_base.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe_hpc_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_common.h
 )
 
