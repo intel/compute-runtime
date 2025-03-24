@@ -68,7 +68,6 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictWithinOsContext(O
     auto ret = std::find(this->residency.begin(), this->residency.end(), &gfxAllocation);
     if (ret != this->residency.end()) {
         this->residency.erase(ret);
-        this->newResourcesSinceLastRingSubmit = true;
     }
     return MemoryOperationsStatus::success;
 }
