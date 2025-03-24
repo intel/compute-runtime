@@ -47,9 +47,8 @@ uint64_t ProductHelperHw<gfxProduct>::getCrossDeviceSharedMemCapabilities() cons
 
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::enableCompression(HardwareInfo *hwInfo) const {
-    const bool isCompressionEnabled = hwInfo->featureTable.flags.ftrE2ECompression && hwInfo->featureTable.flags.ftrXe2Compression;
-    hwInfo->capabilityTable.ftrRenderCompressedImages = isCompressionEnabled;
-    hwInfo->capabilityTable.ftrRenderCompressedBuffers = isCompressionEnabled;
+    hwInfo->capabilityTable.ftrRenderCompressedImages = hwInfo->featureTable.flags.ftrXe2Compression;
+    hwInfo->capabilityTable.ftrRenderCompressedBuffers = hwInfo->featureTable.flags.ftrXe2Compression;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
