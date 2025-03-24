@@ -14,7 +14,7 @@ class MockGmmClientContextBase : public GmmClientContext {
     struct MockPatIndex {
         static constexpr uint32_t uncached = 1;
         static constexpr uint32_t cached = 2;
-        static constexpr uint32_t TwoWayCoherent = 3;
+        static constexpr uint32_t twoWayCoherent = 3;
         static constexpr uint32_t error = GMM_PAT_ERROR;
     };
 

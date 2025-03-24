@@ -3820,7 +3820,7 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWhenAllocateGraphicsMemoryThe
     EXPECT_EQ(1u, allocation->getAllocationOffset());
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     if (productHelper.isMisalignedUserPtr2WayCoherent()) {
-        EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::TwoWayCoherent, allocation->getBO()->peekPatIndex());
+        EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::twoWayCoherent, allocation->getBO()->peekPatIndex());
     } else {
         EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, allocation->getBO()->peekPatIndex());
     }

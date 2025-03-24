@@ -49,7 +49,7 @@ uint32_t MockGmmClientContextBase::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmm
     }
 
     if (usage == GMM_RESOURCE_USAGE_HW_CONTEXT) {
-        return MockPatIndex::TwoWayCoherent;
+        return MockPatIndex::twoWayCoherent;
     }
 
     return MockPatIndex::cached;
