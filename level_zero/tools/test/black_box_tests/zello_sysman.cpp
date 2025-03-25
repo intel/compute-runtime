@@ -1078,6 +1078,16 @@ std::string getMemoryHealth(zes_mem_health_t memHealth) {
         return mgetMemoryHealth.at(memHealth);
 }
 
+std::string getMemoryLocation(zes_mem_loc_t memLocation) {
+    if (memLocation == ZES_MEM_LOC_DEVICE) {
+        return "ZES_MEM_LOC_DEVICE";
+    } else if (memLocation == ZES_MEM_LOC_SYSTEM) {
+        return "ZES_MEM_LOC_SYSTEM";
+    } else {
+        return "NOT SUPPORTED MEMORY LOCATION SET";
+    }
+}
+
 void testSysmanMemory(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Memory tests ---- " << std::endl;
@@ -1100,8 +1110,10 @@ void testSysmanMemory(ze_device_handle_t &device) {
             std::cout << "Memory Type = " << getMemoryType(memoryProperties.type) << std::endl;
             std::cout << "On Subdevice = " << static_cast<uint32_t>(memoryProperties.onSubdevice) << std::endl;
             std::cout << "Subdevice Id = " << memoryProperties.subdeviceId << std::endl;
+            std::cout << "Memory Location = " << getMemoryLocation(memoryProperties.location) << std::endl;
             std::cout << "Memory Size = " << memoryProperties.physicalSize << std::endl;
             std::cout << "Number of channels = " << memoryProperties.numChannels << std::endl;
+            std::cout << "Memory busWidth = " << memoryProperties.busWidth << std::endl;
         }
 
         VALIDATECALL(zesMemoryGetState(handle, &memoryState));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,6 +75,38 @@ TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenCallingGett
     }
 }
 
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGettingPropertiesThenCallSucceeds) {
+    pKmdSysManager->mockMemoryDomains = 1;
+    clearMemHandleListAndReinit();
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 1u);
+
+    std::vector<zes_mem_handle_t> handles(count, nullptr);
+    EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+
+    for (auto handle : handles) {
+        EXPECT_NE(handle, nullptr);
+        zes_mem_properties_t properties{};
+        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+            EXPECT_EQ(properties.location, ZES_MEM_LOC_SYSTEM);
+            EXPECT_GT(properties.physicalSize, 0u);
+            EXPECT_EQ(properties.numChannels, -1);
+            EXPECT_EQ(properties.busWidth, -1);
+        } else {
+            EXPECT_EQ(properties.type, ZES_MEM_TYPE_GDDR6);
+            EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
+            EXPECT_EQ(properties.physicalSize, pKmdSysManager->mockMemoryPhysicalSize);
+            EXPECT_EQ(static_cast<uint32_t>(properties.numChannels), pKmdSysManager->mockMemoryChannels);
+            EXPECT_EQ(static_cast<uint32_t>(properties.busWidth), pKmdSysManager->mockMemoryBus);
+        }
+    }
+}
+
 TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingStateThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
@@ -120,6 +152,51 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidOsMemoryObjectWhenGettingMemoryBandW
     EXPECT_EQ(mockMemoryCurrentBandwidthWrite, bandwidth.writeCounter);
     EXPECT_EQ(mockMemoryMaxBandwidth, bandwidth.maxBandwidth);
     EXPECT_EQ(mockMemoryBandwidthTimestamp, bandwidth.timestamp);
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenMockedComponentCountZeroWhenEnumeratingMemoryModulesThenExpectNonZeroCountAndValidHandlesForIntegratedPlatforms) {
+    pKmdSysManager->mockMemoryDomains = 0;
+    clearMemHandleListAndReinit();
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(count, 1u);
+        std::vector<zes_mem_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        for (auto handle : handles) {
+            EXPECT_NE(handle, nullptr);
+        }
+    } else {
+        EXPECT_EQ(count, 0u);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenMockedComponentCountZeroWhenEnumeratingMemoryModulesThenExpectNonZeroCountAndValidPropertiesForIntegratedPlatforms) {
+    pKmdSysManager->mockMemoryDomains = 0;
+    clearMemHandleListAndReinit();
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(count, 1u);
+        std::vector<zes_mem_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        for (auto handle : handles) {
+            EXPECT_NE(handle, nullptr);
+            zes_mem_properties_t properties{};
+            EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+
+            EXPECT_EQ(properties.location, ZES_MEM_LOC_SYSTEM);
+            EXPECT_FALSE(properties.onSubdevice);
+            EXPECT_EQ(properties.subdeviceId, 0u);
+            EXPECT_GT(properties.physicalSize, 0u);
+        }
+    } else {
+        EXPECT_EQ(count, 0u);
+    }
 }
 
 } // namespace ult

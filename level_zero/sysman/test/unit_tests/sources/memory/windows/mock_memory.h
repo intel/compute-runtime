@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -182,6 +182,11 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
 
     void setLocalSupportedAndReinit(bool supported) {
         pMemoryManager->localMemorySupported[0] = supported;
+        pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
+        pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());
+    }
+
+    void clearMemHandleListAndReinit() {
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());
     }
