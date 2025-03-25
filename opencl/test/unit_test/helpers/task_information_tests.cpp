@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -270,7 +270,11 @@ HWTEST_F(DispatchFlagsTests, givenCommandMapUnmapWhenSubmitThenPassCorrectDispat
     EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.dcFlush);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.useSLM);
-    EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    if (mockCsr->isUpdateTagFromWaitEnabled()) {
+        EXPECT_FALSE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    } else {
+        EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
     EXPECT_FALSE(mockCsr->passedDispatchFlags.gsba32BitRequired);
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::low, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
@@ -313,7 +317,11 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
     EXPECT_EQ(flushDC, mockCsr->passedDispatchFlags.dcFlush);
     EXPECT_EQ(slmUsed, mockCsr->passedDispatchFlags.useSLM);
-    EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    if (mockCsr->isUpdateTagFromWaitEnabled()) {
+        EXPECT_FALSE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    } else {
+        EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
     EXPECT_EQ(ndRangeKernel, mockCsr->passedDispatchFlags.gsba32BitRequired);
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::low, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
@@ -357,7 +365,12 @@ HWTEST_F(DispatchFlagsTests, givenClCommandCopyImageWhenSubmitThenFlushTextureCa
     EXPECT_EQ(flushDC, mockCsr->passedDispatchFlags.dcFlush);
     EXPECT_EQ(mockCmdQ->isTextureCacheFlushNeeded(commandType), mockCsr->passedDispatchFlags.textureCacheFlush);
     EXPECT_EQ(slmUsed, mockCsr->passedDispatchFlags.useSLM);
-    EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+
+    if (mockCsr->isUpdateTagFromWaitEnabled()) {
+        EXPECT_FALSE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    } else {
+        EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
     EXPECT_FALSE(mockCsr->passedDispatchFlags.gsba32BitRequired);
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::low, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
@@ -396,7 +409,11 @@ HWTEST_F(DispatchFlagsTests, givenCommandWithoutKernelWhenSubmitThenPassCorrectD
     EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.dcFlush);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.useSLM);
-    EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    if (mockCsr->isUpdateTagFromWaitEnabled()) {
+        EXPECT_FALSE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    } else {
+        EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
     EXPECT_FALSE(mockCsr->passedDispatchFlags.gsba32BitRequired);
     EXPECT_EQ(mockCmdQ->getPriority() == QueuePriority::low, mockCsr->passedDispatchFlags.lowPriority);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);

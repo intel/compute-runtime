@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -205,7 +205,11 @@ HWTEST_F(BarrierTest, WhenEnqueingBarrierWithWaitListThenDependenciesShouldSync)
     // in this case only cmdQ raises the taskLevel while csr stays intact
     EXPECT_EQ(8u, pCmdQ->taskLevel);
     if (csr.peekTimestampPacketWriteEnabled()) {
-        EXPECT_EQ(pCmdQ->taskLevel + 1, commandStreamReceiver.peekTaskLevel());
+        auto expectedTaskLevel = pCmdQ->taskLevel;
+        if (!commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
+            expectedTaskLevel++;
+        }
+        EXPECT_EQ(expectedTaskLevel, commandStreamReceiver.peekTaskLevel());
     } else {
         EXPECT_EQ(7u, commandStreamReceiver.peekTaskLevel());
     }

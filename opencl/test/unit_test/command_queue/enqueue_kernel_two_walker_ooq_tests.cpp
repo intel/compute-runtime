@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,5 +43,10 @@ HWTEST_F(OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeC
     auto itorCmd = find<typename FamilyType::PIPE_CONTROL *>(itorWalker1, itorWalker2);
     // Workaround for DRM i915 coherency patch
     // EXPECT_EQ(itorWalker2, itorCmd);
-    EXPECT_NE(itorWalker2, itorCmd);
+
+    if (pCmdQ->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled()) {
+        EXPECT_EQ(itorWalker2, itorCmd);
+    } else {
+        EXPECT_NE(itorWalker2, itorCmd);
+    }
 }

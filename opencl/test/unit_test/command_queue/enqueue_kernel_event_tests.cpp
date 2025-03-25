@@ -90,7 +90,12 @@ TEST_F(EventTests, WhenWaitingForEventThenPipeControlIsNotInserted) {
     TaskCountType taskCountOfEvent = pEvent->peekTaskCount();
     EXPECT_LE(taskCountOfEvent, pCmdQ->getHwTag());
     // no more tasks after WFE, no need to write PC
-    EXPECT_EQ(pEvent->taskLevel + 1, csr.peekTaskLevel());
+
+    auto expectedTaskLevel = pEvent->taskLevel.load();
+    if (!csr.isUpdateTagFromWaitEnabled()) {
+        expectedTaskLevel++;
+    }
+    EXPECT_EQ(expectedTaskLevel, csr.peekTaskLevel());
 
     pCmdQ->finish();
 
@@ -134,10 +139,14 @@ TEST_F(EventTests, GivenTwoEnqueuesWhenWaitingForBothEventsThenTaskLevelIsCorrec
 
     retVal = Event::waitForEvents(2, event);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pEvent1->taskLevel + 1, csr.peekTaskLevel());
 
+    auto expectedTaskLevel1 = pEvent1->taskLevel.load();
+    if (!csr.isUpdateTagFromWaitEnabled()) {
+        expectedTaskLevel1++;
+    }
+    EXPECT_EQ(expectedTaskLevel1, csr.peekTaskLevel());
     pCmdQ->finish();
-    EXPECT_EQ(pEvent1->taskLevel + 1, csr.peekTaskLevel());
+    EXPECT_EQ(expectedTaskLevel1, csr.peekTaskLevel());
     // Check CL_EVENT_COMMAND_TYPE
     {
         cl_command_type cmdType = 0;
@@ -169,15 +178,28 @@ TEST_F(EventTests, GivenNoEventsWhenEnqueuingKernelThenTaskLevelIsIncremented) {
 
     retVal = Event::waitForEvents(1, &event);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pEvent->taskLevel + 1, csr.peekTaskLevel());
+
+    auto taskLevelEvent = pEvent->taskLevel.load();
+    if (!csr.isUpdateTagFromWaitEnabled()) {
+        taskLevelEvent++;
+    }
+
+    EXPECT_EQ(taskLevelEvent, csr.peekTaskLevel());
 
     retVal = callOneWorkItemNDRKernel(eventWaitList, numEventsInWaitList, nullptr);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pEvent->taskLevel + 2, csr.peekTaskLevel());
+
+    taskLevelEvent = pEvent->taskLevel.load();
+    if (!csr.isUpdateTagFromWaitEnabled()) {
+        taskLevelEvent += 2;
+    } else {
+        taskLevelEvent += 1;
+    }
+    EXPECT_EQ(taskLevelEvent, csr.peekTaskLevel());
 
     pCmdQ->finish();
-    EXPECT_EQ(pEvent->taskLevel + 2, csr.peekTaskLevel());
+    EXPECT_EQ(taskLevelEvent, csr.peekTaskLevel());
 
     // Check CL_EVENT_COMMAND_TYPE
     {

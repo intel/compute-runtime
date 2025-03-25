@@ -69,7 +69,12 @@ HWTEST_F(EnqueueCopyImageToBufferTest, WhenCopyingImageToBufferThenTaskCountIsAl
 
     enqueueCopyImageToBuffer<FamilyType>();
     EXPECT_EQ(csr.peekTaskCount(), pCmdQ->taskCount);
-    EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
+
+    auto cmdQTaskLevel = pCmdQ->taskLevel;
+    if (!csr.isUpdateTagFromWaitEnabled()) {
+        cmdQTaskLevel++;
+    }
+    EXPECT_EQ(csr.peekTaskLevel(), cmdQTaskLevel);
 }
 
 HWTEST_F(EnqueueCopyImageToBufferTest, WhenCopyingImageToBufferThenTaskLevelIsIncremented) {

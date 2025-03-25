@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,11 +115,16 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, TwoIOQsTwoDependentWalkers, GivenTwoCommandQueues
 }
 
 HWTEST_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeControlIsInsertedBetweenWalkers) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     parseWalkers<FamilyType>();
     auto itorCmd = find<PIPE_CONTROL *>(itorWalker1, itorWalker2);
 
     // Should find a PC.
-    EXPECT_NE(itorWalker2, itorCmd);
+
+    if (pCmdQ2->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled()) {
+        EXPECT_EQ(itorWalker2, itorCmd);
+    } else {
+        EXPECT_NE(itorWalker2, itorCmd);
+    }
 }

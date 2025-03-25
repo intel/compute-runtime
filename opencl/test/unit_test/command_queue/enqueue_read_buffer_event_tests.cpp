@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -341,9 +341,14 @@ TEST_F(EnqueueReadBuffer, givenOutOfOrderQueueAndDisabledSupportCpuCopiesAndDstP
     ASSERT_NE(nullptr, event);
 
     auto pEvent = castToObject<Event>(event);
-    if (pCmdOOQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        EXPECT_EQ(taskLevelEvent2 + 1, pCmdOOQ->taskLevel);
-        EXPECT_EQ(taskLevelEvent2 + 1, pEvent->taskLevel);
+    auto &csr = pCmdOOQ->getGpgpuCommandStreamReceiver();
+    if (csr.peekTimestampPacketWriteEnabled()) {
+        auto taskLevel = taskLevelEvent2;
+        if (!csr.isUpdateTagFromWaitEnabled()) {
+            taskLevel++;
+        }
+        EXPECT_EQ(taskLevel, pCmdOOQ->taskLevel);
+        EXPECT_EQ(taskLevel, pEvent->taskLevel);
     } else {
         EXPECT_EQ(19u, pCmdOOQ->taskLevel);
         EXPECT_EQ(19u, pEvent->taskLevel);

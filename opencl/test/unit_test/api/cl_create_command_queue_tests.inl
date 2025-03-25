@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,9 @@ TEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenQueueIs
 }
 
 HWTEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToBatchingMode) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+
     using BaseType = typename CommandQueue::BaseType;
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
@@ -119,6 +122,9 @@ HWTEST_F(ClCreateCommandQueueTest, givenForcedDispatchModeAndOoqParametersWhenQu
 }
 
 HWTEST_F(ClCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+
     using BaseType = typename CommandQueue::BaseType;
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;

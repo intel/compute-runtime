@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,7 +191,11 @@ HWTEST_F(MarkerTest, GivenEventWithWaitDependenciesWhenEnqueingMarkerThenCsrLeve
     // Should sync CSR & CmdQ levels.
     if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         EXPECT_EQ(initialTaskLevel, pCmdQ->taskLevel);
-        EXPECT_EQ(initialTaskLevel + 1, commandStreamReceiver.peekTaskLevel());
+
+        if (!commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
+            initialTaskLevel++;
+        }
+        EXPECT_EQ(initialTaskLevel, commandStreamReceiver.peekTaskLevel());
     } else {
         EXPECT_EQ(commandStreamReceiver.peekTaskLevel(), pCmdQ->taskLevel);
     }
