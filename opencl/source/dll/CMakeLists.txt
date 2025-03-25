@@ -13,16 +13,7 @@ endif()
 set(RUNTIME_SRCS_DLL_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_dll.cpp
-    ${NEO_SHARED_DIRECTORY}/dll/create_deferred_deleter.cpp
-    ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_${DRIVER_MODEL}.cpp
-    ${NEO_SHARED_DIRECTORY}/dll/create_tbx_sockets.cpp
-    ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
-    ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
-    ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
-    ${NEO_SHARED_DIRECTORY}/dll/unified_memory_reuse_cleaner_enabled.cpp
     ${NEO_SHARED_DIRECTORY}/built_ins/sip_init.cpp
-    ${NEO_SHARED_DIRECTORY}/dll/create_command_stream.cpp
-    ${NEO_SHARED_DIRECTORY}/dll/options_dll.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
     ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
@@ -39,6 +30,7 @@ set(RUNTIME_SRCS_DLL_BASE
     ${GTPIN_INIT_FILE}
     ${HW_SRC_LINK}
     ${EXPORTS_FILENAME}
+    $<TARGET_OBJECTS:neo_shared_dlls_precompiled_objects>
 )
 
 append_sources_from_properties(RUNTIME_SRCS_DLL_BASE
