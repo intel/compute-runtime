@@ -994,7 +994,14 @@ TaskCountType CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineTyp
 }
 
 bool CommandQueue::isTextureCacheFlushNeeded(uint32_t commandType) const {
-    return (commandType == CL_COMMAND_COPY_IMAGE || commandType == CL_COMMAND_WRITE_IMAGE) && getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled();
+    switch (commandType) {
+    case CL_COMMAND_COPY_IMAGE:
+    case CL_COMMAND_WRITE_IMAGE:
+    case CL_COMMAND_FILL_IMAGE:
+        return getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled();
+    default:
+        return false;
+    }
 }
 
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeapType heapType, size_t minRequiredSize) {

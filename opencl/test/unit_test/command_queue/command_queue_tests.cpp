@@ -451,8 +451,8 @@ HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsTextureCacheFlushNeededThenRe
 
     EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(CL_COMMAND_COPY_BUFFER_RECT));
 
-    for (auto i = CL_COMMAND_NDRANGE_KERNEL; i < CL_COMMAND_RELEASE_GL_OBJECTS; i++) {
-        if (i == CL_COMMAND_COPY_IMAGE || i == CL_COMMAND_WRITE_IMAGE) {
+    for (auto i = CL_COMMAND_NDRANGE_KERNEL; i < CL_COMMAND_SVM_MIGRATE_MEM; i++) {
+        if (i == CL_COMMAND_COPY_IMAGE || i == CL_COMMAND_WRITE_IMAGE || i == CL_COMMAND_FILL_IMAGE) {
             commandStreamReceiver.directSubmissionAvailable = true;
             EXPECT_TRUE(cmdQ.isTextureCacheFlushNeeded(i));
             commandStreamReceiver.directSubmissionAvailable = false;
