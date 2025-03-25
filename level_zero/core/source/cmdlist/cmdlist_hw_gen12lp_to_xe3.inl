@@ -10,7 +10,7 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-constexpr bool CommandListCoreFamily<gfxCoreFamily>::isAllocationImported(NEO::GraphicsAllocation *gpuAllocation, NEO::SVMAllocsManager *svmManager) const {
+constexpr bool CommandListCoreFamily<gfxCoreFamily>::checkIfAllocationImportedRequired() {
     return false;
 }
 

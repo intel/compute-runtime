@@ -3056,5 +3056,14 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitNotRequiredWhenEncodeMiFlushThen
     EXPECT_EQ(commandContainer.getResidencyContainer().size(), 0u);
 }
 
+HWTEST2_F(CommandListCreateTests, givenEmptySvmManagerWhenIsAllocationImportedThenFalseIsReturned, MatchAny) {
+    auto commandListCore = std::make_unique<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListCore->initialize(device, NEO::EngineGroupType::compute, 0u);
+
+    NEO::SVMAllocsManager *svmManager = nullptr;
+
+    EXPECT_FALSE(commandListCore->isAllocationImported(nullptr, svmManager));
+}
+
 } // namespace ult
 } // namespace L0

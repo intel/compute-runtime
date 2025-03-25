@@ -354,7 +354,8 @@ struct CommandListCoreFamily : public CommandListImp {
     void dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl,
                                         bool skipPartitionOffsetProgramming, bool copyOperation);
 
-    constexpr bool isAllocationImported(NEO::GraphicsAllocation *gpuAllocation, NEO::SVMAllocsManager *svmManager) const;
+    bool isAllocationImported(NEO::GraphicsAllocation *gpuAllocation, NEO::SVMAllocsManager *svmManager) const;
+    static constexpr bool checkIfAllocationImportedRequired();
 
     bool isKernelUncachedMocsRequired(bool kernelState) {
         this->containsStatelessUncachedResource |= kernelState;

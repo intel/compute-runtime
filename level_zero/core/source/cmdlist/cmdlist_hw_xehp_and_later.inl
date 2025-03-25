@@ -224,7 +224,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     auto svmManager = device->getDriverHandle() ? device->getDriverHandle()->getSvmAllocsManager() : nullptr;
 
     if (!launchParams.isBuiltInKernel) {
-        auto verifyKernelUsingSystemAllocations = [&isKernelUsingSystemAllocation, &isKernelUsingExternalAllocation, svmManager, this](const NEO::ResidencyContainer &kernelResidencyContainer) {
+        auto verifyKernelUsingSystemAllocations = [&](const NEO::ResidencyContainer &kernelResidencyContainer) {
             for (const auto &allocation : kernelResidencyContainer) {
                 if (allocation == nullptr) {
                     continue;
@@ -235,7 +235,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     isKernelUsingSystemAllocation = true;
                 }
 
-                isKernelUsingExternalAllocation = this->isAllocationImported(allocation, svmManager);
+                if constexpr (checkIfAllocationImportedRequired()) {
+                    isKernelUsingExternalAllocation = this->isAllocationImported(allocation, svmManager);
+                }
             }
         };
 
