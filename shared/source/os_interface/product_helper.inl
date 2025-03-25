@@ -1039,4 +1039,72 @@ bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForQueues(bool heaples
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const {
+    return {};
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getMaxLocalRegionSize(const HardwareInfo &hwInfo) const {
+    return 0;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getMaxLocalSubRegionSize(const HardwareInfo &hwInfo) const {
+    return 0;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
+    return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
+    return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
+    if (debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
+        return debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
+    }
+    return 0u;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
+    return true;
+}
+
 } // namespace NEO

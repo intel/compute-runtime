@@ -10,19 +10,11 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/os_interface/product_helper.inl"
-#include "shared/source/os_interface/product_helper_from_xe_hpg_to_xe3.inl"
-#include "shared/source/os_interface/product_helper_xe_hpg_and_xe_hpc.inl"
 
 #include "aubstream/product_family.h"
 #include "platforms.h"
 
 namespace NEO {
-
-template <>
-uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
-    return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess);
-}
 
 template <>
 bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
@@ -59,28 +51,8 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(c
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationData &allocationData) const {
     return allocationData.type == AllocationType::commandBuffer;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQueue() const {
-    return 2u;
 }
 
 template <>
@@ -114,12 +86,8 @@ std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t p
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
-    return true;
+bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
+    return false;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
-    return true;
-}
 } // namespace NEO

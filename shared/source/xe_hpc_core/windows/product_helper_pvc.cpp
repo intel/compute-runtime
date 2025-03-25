@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/kernel/kernel_properties.h"
-#include "shared/source/os_interface/product_helper.h"
-#include "shared/source/os_interface/product_helper.inl"
+#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 
 constexpr static auto gfxProduct = IGFX_PVC;

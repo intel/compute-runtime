@@ -5,6 +5,10 @@
  *
  */
 
+#include "shared/source/os_interface/product_helper.inl"
+#include "shared/source/os_interface/product_helper_before_xe2.inl"
+#include "shared/source/os_interface/product_helper_before_xe_hpg.inl"
+
 namespace NEO {
 template <>
 void ProductHelperHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
@@ -18,21 +22,28 @@ bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
-    return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
+bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
+    return false;
 }
 
 template <>
-const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const {
-    return {};
+bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
+    return false;
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getMaxLocalRegionSize(const HardwareInfo &hwInfo) const {
-    return 0;
+bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+    return false;
 }
+
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getMaxLocalSubRegionSize(const HardwareInfo &hwInfo) const {
-    return 0;
+bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
+    return false;
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return false;
+}
+
 } // namespace NEO

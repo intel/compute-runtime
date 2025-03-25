@@ -6,9 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/os_interface/product_helper.h"
-#include "shared/source/os_interface/product_helper.inl"
-#include "shared/source/os_interface/product_helper_xe2_and_later.inl"
+#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/xe3_core/hw_cmds_ptl.h"
 #include "shared/source/xe3_core/hw_info_ptl.h"
 

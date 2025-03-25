@@ -1,15 +1,18 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 
 #include "aubstream/product_family.h"
 
 namespace NEO {
+
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     switch (stepping) {

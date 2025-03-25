@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/direct_submission/direct_submission_controller.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 
 #include "aubstream/product_family.h"
 
@@ -91,11 +93,6 @@ TimeoutParams ProductHelperHw<gfxProduct>::getDirectSubmissionControllerTimeoutP
     params.timeoutDivisor = 1;
     params.directSubmissionEnabled = true;
     return params;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
-    return true;
 }
 
 template <>

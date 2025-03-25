@@ -22,20 +22,6 @@ void ProductHelperHw<IGFX_UNKNOWN>::adjustSamplerState(void *sampler, const Hard
 }
 
 template <>
-const std::vector<uint32_t> ProductHelperHw<IGFX_UNKNOWN>::getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const {
-    return {};
-}
-template <>
-uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxLocalRegionSize(const HardwareInfo &hwInfo) const {
-    return 0;
-}
-
-template <>
-uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxLocalSubRegionSize(const HardwareInfo &hwInfo) const {
-    return 0;
-}
-
-template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
     return 0;
 }
@@ -432,33 +418,33 @@ std::vector<uint32_t> ProductHelperHw<IGFX_UNKNOWN>::getSupportedNumGrfs(const R
     return {};
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isBufferPoolAllocatorSupported() const {
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isHostUsmPoolAllocatorSupported() const {
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isDeviceUsmPoolAllocatorSupported() const {
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isDeviceUsmAllocationReuseSupported() const {
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isHostUsmAllocationReuseSupported() const {
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::useLocalPreferredForCacheableBuffers() const {
     return false;
 }
 

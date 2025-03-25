@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/helpers/constants.h"
 
 #include "aubstream/product_family.h"
 

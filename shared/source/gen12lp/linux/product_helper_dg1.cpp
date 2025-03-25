@@ -8,9 +8,7 @@
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/gen12lp/hw_info_dg1.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/product_helper.h"
-#include "shared/source/os_interface/product_helper.inl"
-#include "shared/source/os_interface/product_helper_before_xe_hpg.inl"
+#include "shared/source/os_interface/product_helper_hw.h"
 
 constexpr static auto gfxProduct = IGFX_DG1;
 

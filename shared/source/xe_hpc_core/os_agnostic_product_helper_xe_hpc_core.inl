@@ -55,17 +55,17 @@ bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
+template <>
 bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
+template <>
 bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
+template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
     return false;
 }

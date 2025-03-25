@@ -5,11 +5,8 @@
  *
  */
 
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/product_helper.h"
-#include "shared/source/os_interface/product_helper.inl"
-#include "shared/source/os_interface/product_helper_xe2_and_later.inl"
+#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_bmg.h"
 #include "shared/source/xe2_hpg_core/hw_info_bmg.h"
 

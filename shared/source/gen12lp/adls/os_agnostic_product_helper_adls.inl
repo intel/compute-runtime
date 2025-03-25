@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
 #include "aubstream/product_family.h"
