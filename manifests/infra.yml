@@ -3,7 +3,7 @@ components:
     branch: master
     dest_dir: infra
     fetch_tags: true
-    revision: v6818
+    revision: v6820
     type: git
 converter: M-3107
 version: '1'
