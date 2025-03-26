@@ -26,11 +26,9 @@
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/utilities/wait_util.h"
 
 namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() {
-    WaitUtils::init(WaitUtils::WaitpkgUse::tpause);
     this->configureNeoEnvironment();
 }
 

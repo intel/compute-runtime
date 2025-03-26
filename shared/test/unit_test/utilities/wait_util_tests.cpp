@@ -7,6 +7,7 @@
 
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -35,7 +36,7 @@ using WaitPredicateOnlyTest = Test<WaitPredicateOnlyFixture>;
 TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenNoPollAddressProvidedThenPauseDefaultTimeAndReturnFalse) {
     EXPECT_EQ(1u, WaitUtils::defaultWaitCount);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
 
     uint32_t oldCount = CpuIntrinsicsTests::pauseCounter.load();
@@ -48,7 +49,7 @@ TEST_F(WaitPredicateOnlyTest, givenDebugFlagOverridesWhenNoPollAddressProvidedTh
     uint32_t count = 10u;
     debugManager.flags.WaitLoopCount.set(count);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(count, WaitUtils::waitCount);
 
     uint32_t oldCount = CpuIntrinsicsTests::pauseCounter.load();
@@ -58,7 +59,7 @@ TEST_F(WaitPredicateOnlyTest, givenDebugFlagOverridesWhenNoPollAddressProvidedTh
 }
 
 TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenPollAddressProvidedDoesNotMeetCriteriaThenPauseDefaultTimeAndReturnFalse) {
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
 
     volatile TagAddressType pollValue = 1u;
@@ -71,7 +72,7 @@ TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenPollAddressProvidedDoesNot
 }
 
 TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenPollAddressProvidedMeetsCriteriaThenPauseDefaultTimeAndReturnTrue) {
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
 
     volatile TagAddressType pollValue = 3u;
@@ -87,7 +88,7 @@ TEST_F(WaitPredicateOnlyTest, givenDebugFlagSetZeroWhenPollAddressProvidedMeetsC
     uint32_t count = 0u;
     debugManager.flags.WaitLoopCount.set(count);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(count, WaitUtils::waitCount);
 
     volatile TagAddressType pollValue = 3u;

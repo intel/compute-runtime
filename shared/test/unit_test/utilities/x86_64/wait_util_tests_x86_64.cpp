@@ -7,6 +7,7 @@
 
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -83,7 +84,7 @@ struct WaitPkgEnabledFixture : public WaitPkgFixture {
         CpuInfo::cpuidFunc = mockCpuidEnableAll;
         WaitUtils::waitpkgSupport = true;
 
-        WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+        WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
 
         CpuIntrinsicsTests::lastUmwaitCounter = 0;
         CpuIntrinsicsTests::lastUmwaitControl = 0;
@@ -120,7 +121,7 @@ TEST_F(WaitPkgTest, givenDefaultSettingsAndWaitpkgSupportTrueWhenWaitInitialized
 
     WaitUtils::waitpkgSupport = true;
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
@@ -132,7 +133,7 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportFalseWhenWaitIni
 
     debugManager.flags.EnableWaitpkg.set(1);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
@@ -145,7 +146,7 @@ TEST_F(WaitPkgTest, givenDisabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitIni
 
     debugManager.flags.EnableWaitpkg.set(0);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
@@ -160,7 +161,7 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInit
 
     debugManager.flags.EnableWaitpkg.set(1);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
@@ -175,13 +176,13 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInit
 
     debugManager.flags.EnableWaitpkg.set(1);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
 
     EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::umonitorAndUmwait);
-    EXPECT_EQ(12, WaitUtils::waitPkgThresholdInMicroSeconds);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
 }
 
 TEST_F(WaitPkgTest, givenEnabledWaitPkgSetToTpauseAndWaitpkgSupportTrueWhenWaitInitializedAndCpuSupportsOperandThenWaitPkgEnabled) {
@@ -191,16 +192,16 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSetToTpauseAndWaitpkgSupportTrueWhenWaitI
 
     debugManager.flags.EnableWaitpkg.set(2);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
 
     EXPECT_EQ(1u, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
-    EXPECT_EQ(12, WaitUtils::waitPkgThresholdInMicroSeconds);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
 }
 
-TEST_F(WaitPkgTest, givenWaitpkgSupportTrueWhenCreateExecutionEnvironmentThenWaitPkgEnabled) {
+TEST_F(WaitPkgTest, givenWaitpkgSupportTrueWhenSetHwInfoThenWaitPkgEnabled) {
     CpuInfo::cpuidFunc = mockCpuidEnableAll;
 
     WaitUtils::waitpkgSupport = true;
@@ -211,7 +212,7 @@ TEST_F(WaitPkgTest, givenWaitpkgSupportTrueWhenCreateExecutionEnvironmentThenWai
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
-    EXPECT_EQ(12, WaitUtils::waitPkgThresholdInMicroSeconds);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
 }
 
 TEST_F(WaitPkgTest, givenEnabledWaitPkgSetToTpauseAndWaitpkgThresholdAndWaitpkgSupportTrueWhenWaitInitializedAndCpuSupportsOperandThenWaitPkgEnabled) {
@@ -222,7 +223,7 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSetToTpauseAndWaitpkgThresholdAndWaitpkgS
     debugManager.flags.EnableWaitpkg.set(2);
     debugManager.flags.WaitpkgThreshold.set(56789);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
 
     EXPECT_EQ(1u, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
@@ -236,13 +237,13 @@ TEST_F(WaitPkgTest, givenEnabledSetToTrueAndWaitpkgSupportTrueWhenWaitInitialize
 
     WaitUtils::waitpkgSupport = true;
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::umonitorAndUmwait);
+    WaitUtils::init(WaitUtils::WaitpkgUse::umonitorAndUmwait, *defaultHwInfo);
 
     EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::umonitorAndUmwait);
-    EXPECT_EQ(12, WaitUtils::waitPkgThresholdInMicroSeconds);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
 }
 
 TEST_F(WaitPkgTest, givenEnabledSetToTpauseAndWaitpkgSupportTrueWhenWaitInitializedAndCpuSupportsOperandThenWaitPkgEnabled) {
@@ -250,13 +251,13 @@ TEST_F(WaitPkgTest, givenEnabledSetToTpauseAndWaitpkgSupportTrueWhenWaitInitiali
 
     WaitUtils::waitpkgSupport = true;
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::tpause);
+    WaitUtils::init(WaitUtils::WaitpkgUse::tpause, *defaultHwInfo);
 
     EXPECT_EQ(1u, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
-    EXPECT_EQ(12, WaitUtils::waitPkgThresholdInMicroSeconds);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
 }
 
 TEST_F(WaitPkgTest, givenFullyEnabledWaitPkgAndOverrideCounterValueWhenWaitInitializedThenNewCounterValueSet) {
@@ -267,12 +268,12 @@ TEST_F(WaitPkgTest, givenFullyEnabledWaitPkgAndOverrideCounterValueWhenWaitIniti
     debugManager.flags.EnableWaitpkg.set(1);
     debugManager.flags.WaitpkgCounterValue.set(1234);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(1234u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::umonitorAndUmwait);
-    EXPECT_EQ(12, WaitUtils::waitPkgThresholdInMicroSeconds);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
 }
 
 TEST_F(WaitPkgTest, givenFullyEnabledWaitPkgAndOverrideControlValueWhenWaitInitializedThenNewControlValueSet) {
@@ -283,12 +284,12 @@ TEST_F(WaitPkgTest, givenFullyEnabledWaitPkgAndOverrideControlValueWhenWaitIniti
     debugManager.flags.EnableWaitpkg.set(1);
     debugManager.flags.WaitpkgControlValue.set(1);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::noUse);
+    WaitUtils::init(WaitUtils::WaitpkgUse::noUse, *defaultHwInfo);
     EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(1u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::umonitorAndUmwait);
-    EXPECT_EQ(12, WaitUtils::waitPkgThresholdInMicroSeconds);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
 }
 
 TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInitializedTwiceThenInitOnce) {
@@ -296,23 +297,23 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInit
 
     WaitUtils::waitpkgSupport = true;
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::umonitorAndUmwait);
+    WaitUtils::init(WaitUtils::WaitpkgUse::umonitorAndUmwait, *defaultHwInfo);
 
     EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::umonitorAndUmwait);
-    EXPECT_EQ(12, WaitUtils::waitPkgThresholdInMicroSeconds);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
 
     debugManager.flags.WaitpkgControlValue.set(1);
 
-    WaitUtils::init(WaitUtils::WaitpkgUse::umonitorAndUmwait);
+    WaitUtils::init(WaitUtils::WaitpkgUse::umonitorAndUmwait, *defaultHwInfo);
 
     EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::umonitorAndUmwait);
-    EXPECT_EQ(12, WaitUtils::waitPkgThresholdInMicroSeconds);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
 }
 
 TEST_F(WaitPkgEnabledTest, givenMonitoredAddressChangedWhenAddressMatchesPredicateValueThenWaitReturnsTrue) {

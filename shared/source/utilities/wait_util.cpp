@@ -8,6 +8,7 @@
 #include "shared/source/utilities/wait_util.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/cpu_info.h"
 
 namespace NEO {
@@ -27,7 +28,7 @@ bool waitpkgSupport = SUPPORTS_WAITPKG;
 bool waitpkgSupport = false;
 #endif
 
-void init(WaitpkgUse inputWaitpkgUse) {
+void init(WaitpkgUse inputWaitpkgUse, const HardwareInfo &hwInfo) {
     if (debugManager.flags.WaitLoopCount.get() != -1) {
         waitCount = debugManager.flags.WaitLoopCount.get();
     }
@@ -46,6 +47,10 @@ void init(WaitpkgUse inputWaitpkgUse) {
     }
 
     waitpkgUse = inputWaitpkgUse;
+
+    if (!hwInfo.capabilityTable.isIntegratedDevice) {
+        waitPkgThresholdInMicroSeconds = WaitUtils::defaultWaitPkgThresholdForDiscreteInMicroSeconds;
+    }
 
     if (waitpkgUse == WaitpkgUse::umonitorAndUmwait) {
         waitCount = 0u;

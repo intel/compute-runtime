@@ -1442,7 +1442,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
             this->osContext->setDirectSubmissionActive();
             if (this->osContext->isDirectSubmissionLightActive()) {
                 this->pushAllocationsForMakeResident = false;
-                WaitUtils::init(WaitUtils::WaitpkgUse::tpause);
+                WaitUtils::init(WaitUtils::WaitpkgUse::tpause, *this->peekExecutionEnvironment().rootDeviceEnvironments[this->getRootDeviceIndex()]->getHardwareInfo());
             }
         }
     }

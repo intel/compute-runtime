@@ -36,6 +36,7 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/utilities/software_tags_manager.h"
+#include "shared/source/utilities/wait_util.h"
 
 namespace NEO {
 
@@ -85,6 +86,8 @@ void RootDeviceEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
     if (debugManager.flags.DisableSupportForL0Debugger.get() == 1) {
         this->hwInfo->capabilityTable.l0DebuggerSupported = false;
     }
+
+    WaitUtils::init(WaitUtils::WaitpkgUse::tpause, *hwInfo);
 }
 
 bool RootDeviceEnvironment::isFullRangeSvm() const {
