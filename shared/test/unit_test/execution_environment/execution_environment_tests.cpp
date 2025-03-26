@@ -398,7 +398,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     executionEnvironment.initializeMemoryManager();
     ASSERT_NE(nullptr, executionEnvironment.memoryManager);
     EXPECT_TRUE(executionEnvironment.memoryManager->isInitialized());
-    EXPECT_NE(0u, executionEnvironment.memoryManager->getMaxAllocationsSavedForReuseSize());
+    EXPECT_NE(0u, executionEnvironment.memoryManager->usmReuseInfo.getMaxAllocationsSavedForReuseSize());
 }
 
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManager>) +

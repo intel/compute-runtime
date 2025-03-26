@@ -210,10 +210,9 @@ void Device::initializeCommonResources() {
         deviceBitfields.emplace(getRootDeviceIndex(), getDeviceBitfield());
         deviceUsmMemAllocPoolsManager.reset(new UsmMemAllocPoolsManager(getMemoryManager(), rootDeviceIndices, deviceBitfields, this, InternalMemoryType::deviceUnifiedMemory));
     }
-    initUsmReuseMaxSize();
 }
 
-void Device::initUsmReuseMaxSize() {
+void Device::initUsmReuseLimits() {
     const bool usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() && this->getProductHelper().isDeviceUsmAllocationReuseSupported();
     auto ailConfiguration = this->getAilConfigurationHelper();
     const bool limitDeviceMemoryForReuse = ailConfiguration && ailConfiguration->limitAmountOfDeviceMemoryForRecycling();
@@ -222,7 +221,27 @@ void Device::initUsmReuseMaxSize() {
         fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableDeviceAllocationCache.get());
     }
     const auto totalDeviceMemory = this->getGlobalMemorySize(static_cast<uint32_t>(this->getDeviceBitfield().to_ulong()));
-    this->maxAllocationsSavedForReuseSize = static_cast<uint64_t>(fractionOfTotalMemoryForRecycling * totalDeviceMemory);
+    auto maxAllocationsSavedForReuseSize = static_cast<uint64_t>(fractionOfTotalMemoryForRecycling * totalDeviceMemory);
+
+    auto limitAllocationsReuseThreshold = UsmReuseInfo::notLimited;
+    const auto limitFlagValue = debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.get();
+    if (limitFlagValue != -1) {
+        if (limitFlagValue == 0) {
+            limitAllocationsReuseThreshold = UsmReuseInfo::notLimited;
+        } else {
+            const auto fractionOfTotalMemoryToLimitReuse = limitFlagValue / 100.0;
+            limitAllocationsReuseThreshold = static_cast<uint64_t>(fractionOfTotalMemoryToLimitReuse * totalDeviceMemory);
+        }
+    }
+    this->usmReuseInfo.init(maxAllocationsSavedForReuseSize, limitAllocationsReuseThreshold);
+}
+
+bool Device::shouldLimitAllocationsReuse() const {
+    const bool isIntegratedDevice = getHardwareInfo().capabilityTable.isIntegratedDevice;
+    if (isIntegratedDevice) {
+        return getMemoryManager()->shouldLimitAllocationsReuse();
+    }
+    return getMemoryManager()->getUsedLocalMemorySize(getRootDeviceIndex()) >= this->usmReuseInfo.getLimitAllocationsReuseThreshold();
 }
 
 bool Device::initDeviceFully() {
@@ -269,6 +288,7 @@ bool Device::initDeviceFully() {
 
     createBindlessHeapsHelper();
     uuid.isValid = false;
+    initUsmReuseLimits();
 
     if (getRootDeviceEnvironment().osInterface == nullptr) {
         return true;

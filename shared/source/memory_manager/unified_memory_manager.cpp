@@ -64,21 +64,24 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
     if (false == sizeAllowed(size)) {
         return false;
     }
+    if (svmData->device ? svmData->device->shouldLimitAllocationsReuse() : memoryManager->shouldLimitAllocationsReuse()) {
+        return false;
+    }
     std::lock_guard<std::mutex> lock(this->mtx);
     bool isSuccess = true;
     if (auto device = svmData->device) {
-        auto lock = device->obtainAllocationsReuseLock();
-        if (size + device->getAllocationsSavedForReuseSize() > device->getMaxAllocationsSavedForReuseSize()) {
+        auto lock = device->usmReuseInfo.obtainAllocationsReuseLock();
+        if (size + device->usmReuseInfo.getAllocationsSavedForReuseSize() > device->usmReuseInfo.getMaxAllocationsSavedForReuseSize()) {
             isSuccess = false;
         } else {
-            device->recordAllocationSaveForReuse(size);
+            device->usmReuseInfo.recordAllocationSaveForReuse(size);
         }
     } else {
-        auto lock = memoryManager->obtainHostAllocationsReuseLock();
-        if (size + memoryManager->getHostAllocationsSavedForReuseSize() > memoryManager->getMaxAllocationsSavedForReuseSize()) {
+        auto lock = memoryManager->usmReuseInfo.obtainAllocationsReuseLock();
+        if (size + memoryManager->usmReuseInfo.getAllocationsSavedForReuseSize() > memoryManager->usmReuseInfo.getMaxAllocationsSavedForReuseSize()) {
             isSuccess = false;
         } else {
-            memoryManager->recordHostAllocationSaveForReuse(size);
+            memoryManager->usmReuseInfo.recordAllocationSaveForReuse(size);
         }
     }
     if (isSuccess) {
@@ -133,11 +136,11 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
             svmData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags &&
             false == isInUse(svmData)) {
             if (svmData->device) {
-                auto lock = svmData->device->obtainAllocationsReuseLock();
-                svmData->device->recordAllocationGetFromReuse(allocationIter->allocationSize);
+                auto lock = svmData->device->usmReuseInfo.obtainAllocationsReuseLock();
+                svmData->device->usmReuseInfo.recordAllocationGetFromReuse(allocationIter->allocationSize);
             } else {
-                auto lock = memoryManager->obtainHostAllocationsReuseLock();
-                memoryManager->recordHostAllocationGetFromReuse(allocationIter->allocationSize);
+                auto lock = memoryManager->usmReuseInfo.obtainAllocationsReuseLock();
+                memoryManager->usmReuseInfo.recordAllocationGetFromReuse(allocationIter->allocationSize);
             }
             if (enablePerformanceLogging) {
                 logCacheOperation({.allocationSize = allocationIter->allocationSize,
@@ -167,11 +170,11 @@ void SVMAllocsManager::SvmAllocationCache::trim() {
         SvmAllocationData *svmData = svmAllocsManager->getSVMAlloc(cachedAllocationInfo.allocation);
         UNRECOVERABLE_IF(nullptr == svmData);
         if (svmData->device) {
-            auto lock = svmData->device->obtainAllocationsReuseLock();
-            svmData->device->recordAllocationGetFromReuse(cachedAllocationInfo.allocationSize);
+            auto lock = svmData->device->usmReuseInfo.obtainAllocationsReuseLock();
+            svmData->device->usmReuseInfo.recordAllocationGetFromReuse(cachedAllocationInfo.allocationSize);
         } else {
-            auto lock = memoryManager->obtainHostAllocationsReuseLock();
-            memoryManager->recordHostAllocationGetFromReuse(cachedAllocationInfo.allocationSize);
+            auto lock = memoryManager->usmReuseInfo.obtainAllocationsReuseLock();
+            memoryManager->usmReuseInfo.recordAllocationGetFromReuse(cachedAllocationInfo.allocationSize);
         }
         if (enablePerformanceLogging) {
             logCacheOperation({.allocationSize = cachedAllocationInfo.allocationSize,
@@ -234,7 +237,7 @@ void SVMAllocsManager::SvmAllocationCache::logCacheOperation(const SvmAllocation
                                           isSuccessString);
 }
 
-void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint) {
+void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool shouldLimitReuse) {
     if (this->allocations.empty()) {
         return;
     }
@@ -248,11 +251,11 @@ void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resol
         SvmAllocationData *svmData = svmAllocsManager->getSVMAlloc(allocationPtr);
         UNRECOVERABLE_IF(nullptr == svmData);
         if (svmData->device) {
-            auto lock = svmData->device->obtainAllocationsReuseLock();
-            svmData->device->recordAllocationGetFromReuse(allocCleanCandidate->allocationSize);
+            auto lock = svmData->device->usmReuseInfo.obtainAllocationsReuseLock();
+            svmData->device->usmReuseInfo.recordAllocationGetFromReuse(allocCleanCandidate->allocationSize);
         } else {
-            auto lock = memoryManager->obtainHostAllocationsReuseLock();
-            memoryManager->recordHostAllocationGetFromReuse(allocCleanCandidate->allocationSize);
+            auto lock = memoryManager->usmReuseInfo.obtainAllocationsReuseLock();
+            memoryManager->usmReuseInfo.recordAllocationGetFromReuse(allocCleanCandidate->allocationSize);
         }
         if (enablePerformanceLogging) {
             logCacheOperation({.allocationSize = allocCleanCandidate->allocationSize,
@@ -262,8 +265,12 @@ void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resol
                                .isSuccess = true});
         }
         svmAllocsManager->freeSVMAllocImpl(allocCleanCandidate->allocation, FreePolicyType::defer, svmData);
-        allocations.erase(allocCleanCandidate);
-        break;
+        if (shouldLimitReuse) {
+            allocCleanCandidate = allocations.erase(allocCleanCandidate);
+        } else {
+            allocations.erase(allocCleanCandidate);
+            break;
+        }
     }
 }
 
@@ -901,7 +908,7 @@ void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
 
 void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
     this->usmDeviceAllocationsCache.reset(new SvmAllocationCache);
-    if (device.getMaxAllocationsSavedForReuseSize() > 0u) {
+    if (device.usmReuseInfo.getMaxAllocationsSavedForReuseSize() > 0u) {
         this->usmDeviceAllocationsCache->allocations.reserve(128u);
         this->usmDeviceAllocationsCache->svmAllocsManager = this;
         this->usmDeviceAllocationsCache->memoryManager = memoryManager;
@@ -913,7 +920,7 @@ void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
 
 void SVMAllocsManager::initUsmHostAllocationsCache() {
     this->usmHostAllocationsCache.reset(new SvmAllocationCache);
-    if (memoryManager->getMaxAllocationsSavedForReuseSize() > 0u) {
+    if (memoryManager->usmReuseInfo.getMaxAllocationsSavedForReuseSize() > 0u) {
         this->usmHostAllocationsCache->allocations.reserve(128u);
         this->usmHostAllocationsCache->svmAllocsManager = this;
         this->usmHostAllocationsCache->memoryManager = memoryManager;

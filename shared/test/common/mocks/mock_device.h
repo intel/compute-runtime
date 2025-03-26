@@ -33,7 +33,6 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 struct MockSubDevice : public SubDevice {
     using Device::allEngines;
     using Device::createEngines;
-    using Device::maxAllocationsSavedForReuseSize;
     using SubDevice::getDeviceBitfield;
     using SubDevice::getGlobalMemorySize;
     using SubDevice::SubDevice;
@@ -67,8 +66,7 @@ class MockDevice : public RootDevice {
     using Device::generateUuidFromPciBusInfo;
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
-    using Device::initUsmReuseMaxSize;
-    using Device::maxAllocationsSavedForReuseSize;
+    using Device::initUsmReuseLimits;
     using Device::maxBufferPoolCount;
     using Device::microsecondResolution;
     using Device::preemptionMode;

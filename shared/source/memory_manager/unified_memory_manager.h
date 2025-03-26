@@ -194,7 +194,7 @@ class SVMAllocsManager {
         bool isInUse(SvmAllocationData *svmData);
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
         void trim();
-        void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint);
+        void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool shouldLimitReuse);
         void cleanup();
         void logCacheOperation(const SvmAllocationCachePerfInfo &cachePerfEvent) const;
 

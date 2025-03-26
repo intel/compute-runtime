@@ -389,13 +389,25 @@ uint32_t MemoryManager::getFirstContextIdForRootDevice(uint32_t rootDeviceIndex)
     return 0;
 }
 
-void MemoryManager::initUsmReuseMaxSize() {
-    const auto totalSystemMemory = this->getSystemSharedMemory(0u);
-    auto fractionOfTotalMemoryForRecycling = 0.02;
+void MemoryManager::initUsmReuseLimits() {
+    const auto systemSharedMemorySize = this->getSystemSharedMemory(0u);
+    auto fractionOfTotalMemoryForReuse = 0.02;
     if (debugManager.flags.ExperimentalEnableHostAllocationCache.get() != -1) {
-        fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableHostAllocationCache.get());
+        fractionOfTotalMemoryForReuse = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableHostAllocationCache.get());
     }
-    this->maxAllocationsSavedForReuseSize = static_cast<size_t>(fractionOfTotalMemoryForRecycling * totalSystemMemory);
+    auto maxAllocationsSavedForReuseSize = static_cast<uint64_t>(fractionOfTotalMemoryForReuse * systemSharedMemorySize);
+
+    auto limitAllocationsReuseThreshold = std::numeric_limits<uint64_t>::max();
+    const auto limitFlagValue = debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.get();
+    if (limitFlagValue != -1) {
+        if (limitFlagValue == 0) {
+            limitAllocationsReuseThreshold = std::numeric_limits<uint64_t>::max();
+        } else {
+            const auto fractionOfTotalMemoryToLimitReuse = limitFlagValue / 100.0;
+            limitAllocationsReuseThreshold = static_cast<uint64_t>(fractionOfTotalMemoryToLimitReuse * systemSharedMemorySize);
+        }
+    }
+    this->usmReuseInfo.init(maxAllocationsSavedForReuseSize, limitAllocationsReuseThreshold);
 }
 
 OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,

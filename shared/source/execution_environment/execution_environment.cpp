@@ -88,7 +88,7 @@ bool ExecutionEnvironment::initializeMemoryManager() {
     } break;
     }
 
-    memoryManager->initUsmReuseMaxSize();
+    memoryManager->initUsmReuseLimits();
 
     return memoryManager->isInitialized();
 }

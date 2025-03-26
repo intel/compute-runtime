@@ -22,6 +22,7 @@ class UnifiedMemoryReuseCleaner : NEO::NonCopyableAndNonMovableClass {
   public:
     static constexpr auto sleepTime = std::chrono::milliseconds(15u);
     static constexpr auto maxHoldTime = std::chrono::seconds(10u);
+    static constexpr auto limitedHoldTime = std::chrono::seconds(2u);
     UnifiedMemoryReuseCleaner();
     virtual ~UnifiedMemoryReuseCleaner();
 
