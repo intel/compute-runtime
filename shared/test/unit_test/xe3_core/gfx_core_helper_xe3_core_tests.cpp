@@ -22,6 +22,11 @@
 
 using GfxCoreHelperTestsXe3Core = GfxCoreHelperTest;
 
+XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, whenGettingMetricsLibraryGenIdThenXe3IsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe3), gfxCoreHelper.getMetricsLibraryGenId());
+}
+
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::commandBuffer, false, mockDeviceBitfield);

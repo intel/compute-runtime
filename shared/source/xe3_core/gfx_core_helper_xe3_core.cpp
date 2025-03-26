@@ -73,7 +73,7 @@ void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo, con
 
 template <>
 uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
-    return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe2HPG);
+    return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe3);
 }
 
 template <>
