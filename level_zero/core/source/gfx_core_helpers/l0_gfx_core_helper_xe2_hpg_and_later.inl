@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -136,18 +136,7 @@ bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdate(std::map<uint64_t, void *> 
     stallSumData->instFetchCount += getCount();
     stallSumData->activeCount += getCount();
 
-#pragma pack(1)
-    struct StallCntrInfo {
-        uint16_t subslice;
-        uint16_t flags;
-    } stallCntrInfo = {};
-#pragma pack()
-
-    tempAddr = pRawIpData + stallSamplingReportSubSliceAndFlagsOffset;
-    memcpy_s(reinterpret_cast<uint8_t *>(&stallCntrInfo), sizeof(stallCntrInfo), tempAddr, sizeof(stallCntrInfo));
-
-    constexpr int32_t overflowDropFlag = (1 << 8);
-    return stallCntrInfo.flags & overflowDropFlag;
+    return false;
 }
 
 // Order of ipDataValues must match stallSamplingReportList
