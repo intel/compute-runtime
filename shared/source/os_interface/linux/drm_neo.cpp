@@ -179,15 +179,6 @@ int Drm::getEnabledPooledEu(int &enabled) {
     return getParamIoctl(DrmParam::paramHasPooledEu, &enabled);
 }
 
-std::string Drm::getSysFsPciPathBaseName() {
-    auto fullPath = getSysFsPciPath();
-    size_t pos = fullPath.rfind("/");
-    if (std::string::npos == pos) {
-        return fullPath;
-    }
-    return fullPath.substr(pos + 1, std::string::npos);
-}
-
 std::string Drm::getSysFsPciPath() {
     std::string path = std::string(Os::sysFsPciPathPrefix) + hwDeviceId->getPciPath() + "/drm";
     std::string expectedFilePrefix = path + "/card";
