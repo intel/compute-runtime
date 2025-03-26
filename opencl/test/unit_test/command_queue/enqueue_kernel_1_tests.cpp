@@ -1269,7 +1269,13 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenWaitForEventsIsCalledWithU
 
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    EXPECT_EQ(mockCsr->heaplessStateInitialized ? 2u : 1u, mockCsr->flushCalledCount);
+
+    auto expectedFlushCalledCount = mockCsr->heaplessStateInitialized ? 2u : 1u;
+    if (mockCsr->isUpdateTagFromWaitEnabled()) {
+        expectedFlushCalledCount++;
+    }
+
+    EXPECT_EQ(expectedFlushCalledCount, mockCsr->flushCalledCount);
 
     status = clReleaseEvent(event);
     EXPECT_EQ(CL_SUCCESS, status);
@@ -1419,7 +1425,12 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEv
     EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
     EXPECT_EQ(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
-    EXPECT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
+
+    if (mockCsr->isUpdateTagFromWaitEnabled()) {
+        EXPECT_EQ(nullptr, cmdBuffer->epiloguePipeControlLocation);
+    } else {
+        EXPECT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
+    }
 
     clReleaseCommandQueue(inOrderQueue);
     clReleaseEvent(event);
@@ -1505,6 +1516,10 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenBlockingCallIsMadeThenEven
     auto expectedCount = mockCsr->heaplessStateInitialized ? 2u : 1u;
 
     EXPECT_EQ(expectedCount, neoEvent->flushStamp->peekStamp());
+
+    if (mockCsr->isUpdateTagFromWaitEnabled()) {
+        expectedCount++;
+    }
     EXPECT_EQ(expectedCount, mockCsr->flushCalledCount);
 
     auto status = clReleaseEvent(event);

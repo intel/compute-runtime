@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,10 @@ TYPED_TEST_P(OOQTaskTypedTests, givenNonBlockingCallWhenDoneOnOutOfOrderQueueThe
 
     auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
     auto taskLevelClosed = blockingCall ? 1u : 0u; // for blocking commands task level will be closed
+
+    if (commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
+        taskLevelClosed = 0u;
+    }
 
     // for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
     if (!blockingCall) {

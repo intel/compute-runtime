@@ -1103,6 +1103,7 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenDispatchingWorkThenRegisterCsr
 }
 
 HWTEST_F(CommandQueueHwTest, givenCsrClientWhenCallingSyncPointsThenUnregister) {
+
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
@@ -1134,7 +1135,11 @@ HWTEST_F(CommandQueueHwTest, givenCsrClientWhenCallingSyncPointsThenUnregister) 
     clWaitForEvents(1, &e0);
     EXPECT_EQ(baseNumClients + 1, csr.getNumClients()); // CSR task count < queue task count
 
-    *csr.tagAddress = mockCmdQueueHw.taskCount;
+    if (csr.isUpdateTagFromWaitEnabled()) {
+        *csr.tagAddress = mockCmdQueueHw.taskCount + 1;
+    } else {
+        *csr.tagAddress = mockCmdQueueHw.taskCount;
+    }
 
     clWaitForEvents(1, &e0);
     EXPECT_EQ(baseNumClients, csr.getNumClients()); // queue ready

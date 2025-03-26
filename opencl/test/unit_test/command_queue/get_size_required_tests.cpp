@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,7 +72,7 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAndCommandBufferAreNot
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     size_t expectedStreamSize = 0;
-    if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && (!pCmdQ->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled())) {
         expectedStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
                                          pDevice->getRootDeviceEnvironment(), false),
                                      MemoryConstants::cacheLineSize);

@@ -349,7 +349,12 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // wait for event do not sent flushTask
-    EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekTaskCount());
+
+    if (commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
+        EXPECT_EQ(expectedTaskCount + 1, commandStreamReceiver.peekTaskCount());
+    } else {
+        EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekTaskCount());
+    }
     EXPECT_EQ(expectedTaskCount, mockCmdQueue.latestTaskCountWaited);
 
     EXPECT_TRUE(neoEvent->updateStatusAndCheckCompletion());
@@ -364,7 +369,12 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
         nullptr,
         &unmapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekTaskCount());
+
+    if (commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
+        EXPECT_EQ(expectedTaskCount + 1, commandStreamReceiver.peekTaskCount());
+    } else {
+        EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekTaskCount());
+    }
 
     auto unmapEvent = castToObject<Event>(unmapEventReturned);
     EXPECT_TRUE(CL_COMMAND_UNMAP_MEM_OBJECT == unmapEvent->getCommandType());
@@ -538,8 +548,11 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     retVal = clWaitForEvents(1, &eventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
-
+    if (commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
+        EXPECT_EQ(expectedTaskCount + 1, commandStreamReceiver.peekLatestSentTaskCount());
+    } else {
+        EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
+    }
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -602,7 +615,12 @@ HWTEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsC
 
     commandStreamReceiver.peekTaskCount();
 
-    EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
+    if (commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
+        EXPECT_EQ(expectedTaskCount + 1, commandStreamReceiver.peekLatestSentTaskCount());
+    } else {
+        EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
+    }
+
     EXPECT_EQ(expectedTaskCount, mockCmdQueue.latestTaskCountWaited);
 
     retVal = clReleaseMemObject(buffer);

@@ -690,7 +690,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenBlock
     }
 
     EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
-    EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    if (mockCsr->isUpdateTagFromWaitEnabled()) {
+        EXPECT_FALSE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    } else {
+        EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
     EXPECT_EQ(pDevice->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
 
     cmdQ0->isQueueBlocked();

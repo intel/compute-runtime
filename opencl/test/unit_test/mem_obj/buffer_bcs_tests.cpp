@@ -42,7 +42,10 @@ struct BcsBufferTests : public ::testing::Test {
 
         WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait,
                                                          bool useQuickKmdSleep, QueueThrottle throttle) override {
-            EXPECT_EQ(this->latestFlushedTaskCount, taskCountToWait);
+
+            if (!this->isUpdateTagFromWaitEnabled()) {
+                EXPECT_EQ(this->latestFlushedTaskCount, taskCountToWait);
+            }
             EXPECT_EQ(0u, flushStampToWait);
             EXPECT_FALSE(useQuickKmdSleep);
             EXPECT_EQ(throttle, QueueThrottle::MEDIUM);
@@ -54,7 +57,9 @@ struct BcsBufferTests : public ::testing::Test {
 
         WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(TaskCountType requiredTaskCount) override {
             EXPECT_EQ(1u, waitForTaskCountWithKmdNotifyFallbackCalled);
-            EXPECT_EQ(this->latestFlushedTaskCount, requiredTaskCount);
+            if (!this->isUpdateTagFromWaitEnabled()) {
+                EXPECT_EQ(this->latestFlushedTaskCount, requiredTaskCount);
+            }
             waitForTaskCountAndCleanAllocationListCalled++;
 
             return WaitStatus::ready;
@@ -585,6 +590,8 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenAllEnginesReadyWhenWaitingForEventThenCl
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenAllBcsEnginesReadyWhenWaitingForEventThenClearDeferredNodes) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
     auto &productHelper = device->getProductHelper();
     auto copyDefaultEngineType = productHelper.getDefaultCopyEngine();
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
@@ -1036,8 +1043,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCal
 
     EXPECT_NE(outputTimestampPacketAllocation, inputTimestampPacketAllocation);
 
-    EXPECT_EQ(cmdQ->taskCount, inputTimestampPacketAllocation->getDefaultGraphicsAllocation()->getTaskCount(bcsCsr->getOsContext().getContextId()));
-    EXPECT_EQ(cmdQ->taskCount, outputTimestampPacketAllocation->getDefaultGraphicsAllocation()->getTaskCount(bcsCsr->getOsContext().getContextId()));
+    auto expectedTaskCount = bcsCsr->isUpdateTagFromWaitEnabled() ? cmdQ->taskCount + 1 : cmdQ->taskCount;
+    EXPECT_EQ(expectedTaskCount, inputTimestampPacketAllocation->getDefaultGraphicsAllocation()->getTaskCount(bcsCsr->getOsContext().getContextId()));
+    EXPECT_EQ(expectedTaskCount, outputTimestampPacketAllocation->getDefaultGraphicsAllocation()->getTaskCount(bcsCsr->getOsContext().getContextId()));
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockingWriteBufferWhenUsingBcsThenCallWait) {

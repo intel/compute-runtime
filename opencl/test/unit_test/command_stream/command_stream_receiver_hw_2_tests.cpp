@@ -620,6 +620,7 @@ HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferThenCommandBufferIsConstru
 
 HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferAndForceTlbFlushAfterCopyThenCommandBufferIsConstructedProperlyAndTlbFlushDetected) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
     debugManager.flags.ForceTlbFlushWithTaskCountAfterCopy.set(1);
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     auto bcsOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, pDevice->getRootDeviceIndex(), 0,
@@ -676,6 +677,7 @@ HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferAndForceTlbFlushAfterCopyT
 HWTEST_F(BcsTests, givenProfilingDisabledWhenBlitBufferAndForceTlbFlushAfterCopyThenCommandBufferIsConstructedProperlyAndTlbFlushDetected) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceTlbFlushWithTaskCountAfterCopy.set(1);
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     auto bcsOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, pDevice->getRootDeviceIndex(), 0,
                                                                      EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, pDevice->getDeviceBitfield())));

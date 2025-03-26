@@ -215,6 +215,9 @@ TEST_F(EventTests, GivenNoEventsWhenEnqueuingKernelThenTaskLevelIsIncremented) {
 }
 
 TEST_F(EventTests, WhenEnqueuingMarkerThenPassedEventHasTheSameLevelAsPreviousCommand) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event event = nullptr;

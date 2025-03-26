@@ -392,7 +392,11 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     retVal = clWaitForEvents(1, &unmapEventReturned);
 
     taskCount = commandStreamReceiver.peekTaskCount();
-    EXPECT_EQ(expectedTaskCount, taskCount);
+    if (commandStreamReceiver.isUpdateTagFromWaitEnabled()) {
+        EXPECT_EQ(expectedTaskCount + 1, taskCount);
+    } else {
+        EXPECT_EQ(expectedTaskCount, taskCount);
+    }
 
     clReleaseEvent(mapEventReturned);
     clReleaseEvent(unmapEventReturned);

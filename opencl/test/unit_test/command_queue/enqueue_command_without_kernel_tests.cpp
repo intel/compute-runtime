@@ -318,7 +318,11 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
                                           eventsRequest, eventBuilder, 0, csrDeps, &bcsCsr, false);
 
     EXPECT_TRUE(mockCsr->passedDispatchFlags.implicitFlush);
-    EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    if (mockCsr->isUpdateTagFromWaitEnabled()) {
+        EXPECT_FALSE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    } else {
+        EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
     EXPECT_EQ(L3CachingSettings::notApplicable, mockCsr->passedDispatchFlags.l3CacheSettings);
     EXPECT_EQ(GrfConfig::notApplicable, mockCsr->passedDispatchFlags.numGrfRequired);
 }
@@ -556,6 +560,9 @@ HWTEST_F(DispatchFlagsTests, givenMockKernelWhenSettingAdditionalKernelExecInfoT
 }
 
 HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenEnqueuedHandlerThenProgramPipeControl) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+
     std::unique_ptr<MockCommandQueueWithCacheFlush<FamilyType>> mockCmdQ(new MockCommandQueueWithCacheFlush<FamilyType>(context, pClDevice, 0));
 
     mockCmdQ->commandRequireCacheFlush = true;
