@@ -375,6 +375,8 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
     };
     template <typename GfxFamily>
     void setUpT() {
+        debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+
         mock = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
@@ -423,6 +425,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
     const uint32_t rootDeviceIndex = 0u;
     const uint32_t expectedHandleId = 1u;
 
+    DebugManagerStateRestore restorer;
     CommandStreamReceiver *csr = nullptr;
     DrmMemoryManager *memoryManager = nullptr;
     DrmMock *mock = nullptr;
@@ -477,6 +480,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
 
 struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
     void SetUp() override {
+        debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
 
@@ -525,9 +530,13 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
     std::unique_ptr<OsContextLinux> osContext;
     DrmMemoryManager *memoryManager;
     std::unique_ptr<HardwareInfo> hwInfo;
+    DebugManagerStateRestore restorer;
 };
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenTwoTilesWhenFlushIsCalledThenExecIsExecutedOnEveryTile) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+
     auto csr = createCsr<FamilyType>();
 
     auto size = 1024u;
@@ -627,6 +636,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceExecutionTile.set(1);
     debugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
 
     struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
@@ -668,6 +678,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledImplicitScalingWhenFlushingThenUseOnlyOneContext) {
     DebugManagerStateRestore debugRestore{};
     debugManager.flags.EnableWalkerPartition.set(0);
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
 
     struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
@@ -706,6 +717,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTileCsrWhenFlushThenVmHandleIdEqualsTileId) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
     struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
         using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
         int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) override {

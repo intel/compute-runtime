@@ -26,6 +26,8 @@ extern ApiSpecificConfig::ApiType apiTypeForUlts;
 using namespace NEO;
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenL0ApiConfigWhenCreatingDrmCsrThenEnableImmediateDispatch) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
     MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1);
     EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);
@@ -85,6 +87,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenNoTagAddressWhenGettingCompletionA
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenExecBufferErrorWhenFlushInternalThenProperErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+
     mock->execBufferResult = -1;
     mock->baseErrno = false;
     mock->errnoRetVal = EWOULDBLOCK;
@@ -1356,6 +1361,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUserFenceForCompletionWait.set(0);
     debugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.set(1);
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;

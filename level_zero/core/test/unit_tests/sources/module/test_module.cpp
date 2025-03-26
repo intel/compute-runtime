@@ -3887,7 +3887,7 @@ TEST_F(ModuleTest, givenInternalOptionsWhenBindlessDisabledThenBindlesOptionsNot
 
     module->createBuildOptions("", buildOptions, internalBuildOptions);
 
-    EXPECT_FALSE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessMode));
+    EXPECT_EQ(device->getCompilerProductHelper().isHeaplessModeEnabled(), NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessMode));
 }
 
 TEST_F(ModuleTest, givenSrcOptLevelInSrcNamesWhenMovingBuildOptionsThenOptionIsRemovedFromSrcNamesAndTranslatedOptionsStoredInDstNames) {

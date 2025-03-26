@@ -307,6 +307,11 @@ bool CompilerProductHelperHw<gfxProduct>::isBindlessAddressingDisabled(const Rel
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isForceBindlessRequired() const {
+    return this->isHeaplessModeEnabled();
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 const char *CompilerProductHelperHw<gfxProduct>::getCustomIgcLibraryName() const {
     return nullptr;
 }

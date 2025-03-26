@@ -29,6 +29,7 @@ using namespace NEO;
 
 struct DeviceCommandStreamLeaksTest : ::testing::Test {
     void SetUp() override {
+        debugManager.flags.ForceL3FlushAfterPostSync.set(0);
         HardwareInfo *hwInfo = nullptr;
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
         executionEnvironment->incRefInternal();
@@ -40,9 +41,12 @@ struct DeviceCommandStreamLeaksTest : ::testing::Test {
     }
 
     ExecutionEnvironment *executionEnvironment;
+    DebugManagerStateRestore dbgState;
 };
 
 HWTEST_F(DeviceCommandStreamLeaksTest, WhenCreatingDeviceCsrThenValidPointerIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
     std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
     DrmMockSuccess mockDrm(mockFd, *executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, ptr);
@@ -62,6 +66,8 @@ HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultDrmCsrWithAubDumWhenItIsCreat
 }
 
 HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultDrmCsrWhenOsInterfaceIsNullptrThenValidateDrm) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
     std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
     auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
     EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->osInterface);
@@ -89,6 +95,7 @@ HWTEST_F(DeviceCommandStreamLeaksTest, givenDisabledGemCloseWorkerWhenCsrIsCreat
 HWTEST_F(DeviceCommandStreamLeaksTest, givenEnabledGemCloseWorkerWhenCsrIsCreatedThenGemCloseWorkerActiveModeIsSelected) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableGemCloseWorker.set(1u);
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
 
     executionEnvironment->memoryManager = DrmMemoryManager::create(*executionEnvironment);
 
@@ -103,6 +110,9 @@ HWTEST_F(DeviceCommandStreamLeaksTest, givenEnabledGemCloseWorkerWhenCsrIsCreate
 }
 
 HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultGemCloseWorkerWhenCsrIsCreatedThenGemCloseWorkerActiveModeIsSelected) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+
     executionEnvironment->memoryManager = DrmMemoryManager::create(*executionEnvironment);
     std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
     auto osContext = OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), 0, 0,

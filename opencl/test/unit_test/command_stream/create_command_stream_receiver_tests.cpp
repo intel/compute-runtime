@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,8 @@ struct CreateCommandStreamReceiverTest : public ::testing::TestWithParam<Command
 
 HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetToValidTypeThenTheFuntionReturnsCommandStreamReceiver) {
     DebugManagerStateRestore stateRestorer;
+    debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     ASSERT_NE(nullptr, executionEnvironment->memoryManager.get());

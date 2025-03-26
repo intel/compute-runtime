@@ -80,7 +80,7 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
 
-    if (debugManager.flags.UseBindlessMode.get() == 1) {
+    if (NEO::ApiSpecificConfig::getBindlessMode(pClDevice->getDevice())) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
     }
 
