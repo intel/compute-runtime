@@ -276,6 +276,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
         crossThreadData += inlineSize - offsetInBytes;
 
         void *payloadData = ih.getCpuBase();
+
+        auto pImplicitArgs = kernel->getImplicitArgs();
+        if (pImplicitArgs) {
+            payloadData = ptrOffset(payloadData, alignUp(pImplicitArgs->getSize(), MemoryConstants::cacheLineSize));
+        }
         EXPECT_EQ(0, memcmp(payloadData, crossThreadData, crossThreadDataSize));
     },
                walkerVariant);
@@ -445,7 +450,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
 
             EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
             EXPECT_EQ(1u, walker->getGenerateLocalId());
-            EXPECT_EQ(4u, walker->getWalkOrder());
+            EXPECT_EQ(0u, walker->getWalkOrder());
         }
     },
                walkerVariant);
