@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/device/device.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -201,12 +203,44 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSetToTpauseAndWaitpkgSupportTrueWhenWaitI
     EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
 }
 
-TEST_F(WaitPkgTest, givenWaitpkgSupportTrueWhenSetHwInfoThenWaitPkgEnabled) {
+TEST_F(WaitPkgTest, givenWaitpkgSupportTrueWhenCreateExecutionEnvironmentThenWaitPkgEnabled) {
     CpuInfo::cpuidFunc = mockCpuidEnableAll;
 
     WaitUtils::waitpkgSupport = true;
 
     MockExecutionEnvironment executionEnvironment;
+
+    EXPECT_EQ(1u, WaitUtils::waitCount);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
+    EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
+}
+
+TEST_F(WaitPkgTest, givenWaitpkgSupportTrueWhenCreateDevicesThenWaitPkgEnabled) {
+    CpuInfo::cpuidFunc = mockCpuidEnableAll;
+
+    WaitUtils::waitpkgSupport = true;
+
+    auto executionEnvironment = new NEO::ExecutionEnvironment;
+    executionEnvironment->incRefInternal();
+    NEO::DeviceFactory::createDevices(*executionEnvironment);
+    executionEnvironment->decRefInternal();
+
+    EXPECT_EQ(1u, WaitUtils::waitCount);
+    EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
+    EXPECT_EQ(WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::tpause);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 12 : 28, WaitUtils::waitPkgThresholdInMicroSeconds);
+}
+
+TEST_F(WaitPkgTest, givenWaitpkgSupportTrueWhenPrepareDeviceEnvironmentsThenWaitPkgEnabled) {
+    CpuInfo::cpuidFunc = mockCpuidEnableAll;
+
+    WaitUtils::waitpkgSupport = true;
+
+    ExecutionEnvironment executionEnvironment;
+    EXPECT_TRUE(NEO::DeviceFactory::prepareDeviceEnvironments(executionEnvironment));
 
     EXPECT_EQ(1u, WaitUtils::waitCount);
     EXPECT_EQ(16000u, WaitUtils::waitpkgCounterValue);

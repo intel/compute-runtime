@@ -130,6 +130,7 @@ bool Wddm::init() {
     if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, rootDeviceEnvironment)) {
         return false;
     }
+    rootDeviceEnvironment.initWaitUtils();
     setPlatformSupportEvictIfNecessaryFlag(productHelper);
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);

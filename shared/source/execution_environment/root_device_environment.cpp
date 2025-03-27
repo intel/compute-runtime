@@ -68,6 +68,10 @@ void RootDeviceEnvironment::initDebuggerL0(Device *neoDevice) {
     this->debugger = DebuggerL0::create(neoDevice);
 }
 
+void RootDeviceEnvironment::initWaitUtils() {
+    WaitUtils::init(WaitUtils::WaitpkgUse::tpause, *hwInfo);
+}
+
 const HardwareInfo *RootDeviceEnvironment::getHardwareInfo() const {
     return hwInfo.get();
 }
@@ -86,8 +90,6 @@ void RootDeviceEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
     if (debugManager.flags.DisableSupportForL0Debugger.get() == 1) {
         this->hwInfo->capabilityTable.l0DebuggerSupported = false;
     }
-
-    WaitUtils::init(WaitUtils::WaitpkgUse::tpause, *hwInfo);
 }
 
 bool RootDeviceEnvironment::isFullRangeSvm() const {
@@ -178,6 +180,7 @@ void RootDeviceEnvironment::initHelpers() {
     initCompilerProductHelper();
     initReleaseHelper();
     initAilConfigurationHelper();
+    initWaitUtils();
 }
 
 void RootDeviceEnvironment::initializeGfxCoreHelperFromHwInfo() {

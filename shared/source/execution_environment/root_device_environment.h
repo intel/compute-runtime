@@ -67,6 +67,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     void initOsTime();
     void initGmm();
     void initDebuggerL0(Device *neoDevice);
+    void initWaitUtils();
     MOCKABLE_VIRTUAL void initDummyAllocation();
     void setDummyBlitProperties(uint32_t rootDeviceIndex);
 
