@@ -23,6 +23,7 @@
 
 namespace NEO {
 struct KernelDescriptor;
+struct MetadataGeneration;
 class SharedIsaAllocation;
 
 namespace Zebin::Debug {
@@ -158,6 +159,9 @@ struct ModuleImp : public Module {
         return allocatePrivateMemoryPerDispatch;
     }
 
+    void populateZebinExtendedArgsMetadata() override;
+    void generateDefaultExtendedArgsMetadata() override;
+
     uint32_t getProfileFlags() const override { return profileFlags; }
 
     ModuleTranslationUnit *getTranslationUnit() {
@@ -226,6 +230,8 @@ struct ModuleImp : public Module {
 
     NEO::Linker::PatchableSegments isaSegmentsForPatching;
     std::vector<std::vector<char>> patchedIsaTempStorage;
+
+    std::unique_ptr<NEO::MetadataGeneration> metadataGeneration;
 };
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName);

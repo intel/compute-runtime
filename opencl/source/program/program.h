@@ -33,6 +33,7 @@ class CompilerInterface;
 class Device;
 class ExecutionEnvironment;
 class Program;
+struct MetadataGeneration;
 struct KernelInfo;
 template <>
 struct OpenCLObjectMapper<_cl_program> {
@@ -379,11 +380,7 @@ class Program : public BaseObject<_cl_program> {
 
     size_t exportedFunctionsKernelId = std::numeric_limits<size_t>::max();
 
-    struct MetadataGenerationFlags {
-        std::once_flag extractAndDecodeMetadataOnce;
-        std::once_flag generateDefaultMetadataOnce;
-    };
-    std::unique_ptr<MetadataGenerationFlags> metadataGenerationFlags;
+    std::unique_ptr<MetadataGeneration> metadataGeneration;
 
     struct DecodedSingleDeviceBinary {
         bool isSet = false;

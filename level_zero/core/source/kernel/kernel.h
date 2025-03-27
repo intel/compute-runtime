@@ -139,6 +139,8 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
                                          uint32_t globalSizeZ, uint32_t *groupSizeX,
                                          uint32_t *groupSizeY, uint32_t *groupSizeZ) = 0;
     virtual ze_result_t getKernelName(size_t *pSize, char *pName) = 0;
+    virtual ze_result_t getArgumentSize(uint32_t argIndex, uint32_t *argSize) const = 0;
+    virtual ze_result_t getArgumentType(uint32_t argIndex, uint32_t *pSize, char *pString) const = 0;
 
     virtual uint32_t *getGlobalOffsets() = 0;
     virtual ze_result_t setGlobalOffsetExp(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) = 0;

@@ -21,6 +21,8 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/zebin/debug_zebin.h"
+#include "shared/source/device_binary_format/zebin/zebin_decoder.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
@@ -40,6 +42,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/program/metadata_generation.h"
 #include "shared/source/program/program_initialization.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -507,6 +510,7 @@ ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType 
     auto &hwInfo = device->getHwInfo();
     this->isaAllocationPageSize = gfxCoreHelper.useSystemMemoryPlacementForISA(hwInfo) ? MemoryConstants::pageSize : MemoryConstants::pageSize64k;
     this->productFamily = hwInfo.platform.eProductFamily;
+    this->metadataGeneration = std::make_unique<NEO::MetadataGeneration>();
 }
 
 ModuleImp::~ModuleImp() {
@@ -536,6 +540,15 @@ NEO::Zebin::Debug::Segments ModuleImp::getZebinSegments() {
     ArrayRef<const uint8_t> strings = {reinterpret_cast<const uint8_t *>(translationUnit->programInfo.globalStrings.initData),
                                        translationUnit->programInfo.globalStrings.size};
     return NEO::Zebin::Debug::Segments(translationUnit->globalVarBuffer, translationUnit->globalConstBuffer, strings, kernels);
+}
+
+void ModuleImp::populateZebinExtendedArgsMetadata() {
+    auto refBin = ArrayRef<const uint8_t>::fromAny(translationUnit->unpackedDeviceBinary.get(), translationUnit->unpackedDeviceBinarySize);
+    this->metadataGeneration->callPopulateZebinExtendedArgsMetadataOnce(refBin, this->translationUnit->programInfo.kernelMiscInfoPos, this->translationUnit->programInfo.kernelInfos);
+}
+
+void ModuleImp::generateDefaultExtendedArgsMetadata() {
+    this->metadataGeneration->callGenerateDefaultExtendedArgsMetadataOnce(this->translationUnit->programInfo.kernelInfos);
 }
 
 ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {

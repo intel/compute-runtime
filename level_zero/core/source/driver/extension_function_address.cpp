@@ -31,6 +31,9 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexDriverGetHostPointerBaseAddress);
 
     RETURN_FUNC_PTR_IF_EXIST(zexKernelGetBaseAddress);
+    RETURN_FUNC_PTR_IF_EXIST(zexKernelGetArgumentSize);
+    RETURN_FUNC_PTR_IF_EXIST(zexKernelGetArgumentType);
+
     RETURN_FUNC_PTR_IF_EXIST(zeIntelKernelGetBinaryExp);
 
     RETURN_FUNC_PTR_IF_EXIST(zexMemGetIpcHandles);

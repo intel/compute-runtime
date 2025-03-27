@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,19 @@ ze_result_t ZE_APICALL
 zexKernelGetBaseAddress(
     ze_kernel_handle_t hKernel,
     uint64_t *baseAddress);
+
+ze_result_t ZE_APICALL
+zexKernelGetArgumentSize(
+    ze_kernel_handle_t hKernel,
+    uint32_t argIndex,
+    uint32_t *pArgSize);
+
+ze_result_t ZE_APICALL
+zexKernelGetArgumentType(
+    ze_kernel_handle_t hKernel,
+    uint32_t argIndex,
+    uint32_t *pSize,
+    char *pString);
 
 } // namespace L0
 

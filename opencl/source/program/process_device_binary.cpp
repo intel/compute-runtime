@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -388,116 +388,6 @@ void Program::createDebugData(ClDevice *clDevice) {
     } else {
         processDebugData(rootDeviceIndex);
     }
-}
-
-void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) {
-    auto &buildInfo = this->buildInfos[rootDeviceIndex];
-    auto extractAndDecodeMetadata = [&]() {
-        auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
-        if (false == NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(refBin)) {
-            return;
-        }
-        std::string errors{}, warnings{};
-        auto zeInfo = Zebin::getZeInfoFromZebin(refBin, errors, warnings);
-        auto decodeError = Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(buildInfo.kernelMiscInfoPos, buildInfo.kernelInfoArray, zeInfo, errors, warnings);
-        if (NEO::DecodeError::success != decodeError) {
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error in decodeAndPopulateKernelMiscInfo: %s\n", errors.c_str());
-        }
-    };
-    std::call_once(metadataGenerationFlags->extractAndDecodeMetadataOnce, extractAndDecodeMetadata);
-}
-
-void Program::callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) {
-    auto ensureTypeNone = [](ArgTypeTraits &typeTraits) -> void {
-        typeTraits.typeQualifiers.constQual = false;
-        typeTraits.typeQualifiers.pipeQual = false;
-        typeTraits.typeQualifiers.restrictQual = false;
-        typeTraits.typeQualifiers.unknownQual = false;
-        typeTraits.typeQualifiers.volatileQual = false;
-    };
-
-    auto &buildInfo = this->buildInfos[rootDeviceIndex];
-    auto generateDefaultMetadata = [&]() {
-        for (const auto &kernelInfo : buildInfo.kernelInfoArray) {
-            if (false == kernelInfo->kernelDescriptor.explicitArgsExtendedMetadata.empty()) {
-                continue;
-            }
-            size_t argIndex = 0u;
-            kernelInfo->kernelDescriptor.explicitArgsExtendedMetadata.resize(kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.size());
-            for (auto &kernelArg : kernelInfo->kernelDescriptor.payloadMappings.explicitArgs) {
-                ArgTypeMetadataExtended argMetadataExtended;
-                auto &argTypeTraits = kernelArg.getTraits();
-                argMetadataExtended.argName = std::string("arg" + std::to_string(argIndex));
-
-                if (kernelArg.is<ArgDescriptor::argTValue>()) {
-                    const auto &argAsValue = kernelArg.as<ArgDescValue>(false);
-                    uint16_t maxSourceOffset = 0u, elemSize = 0u;
-                    for (const auto &elem : argAsValue.elements) {
-                        if (maxSourceOffset <= elem.sourceOffset) {
-                            maxSourceOffset = elem.sourceOffset;
-                            elemSize = elem.size;
-                        }
-                    }
-                    if (maxSourceOffset != 0u) {
-                        argMetadataExtended.type = std::string("__opaque_var;" + std::to_string(maxSourceOffset + elemSize));
-                    } else {
-                        argMetadataExtended.type = std::string("__opaque;" + std::to_string(elemSize));
-                    }
-                    ensureTypeNone(argTypeTraits);
-                    argTypeTraits.addressQualifier = KernelArgMetadata::AddrPrivate;
-                    argTypeTraits.accessQualifier = KernelArgMetadata::AccessNone;
-                } else if (kernelArg.is<ArgDescriptor::argTPointer>()) {
-                    const auto &argAsPtr = kernelArg.as<ArgDescPointer>(false);
-                    argMetadataExtended.type = std::string("__opaque_ptr;" + std::to_string(argAsPtr.pointerSize));
-                } else if (kernelArg.is<ArgDescriptor::argTImage>()) {
-                    const auto &argAsImage = kernelArg.as<ArgDescImage>(false);
-                    switch (argAsImage.imageType) {
-                    case NEOImageType::imageTypeBuffer:
-                        argMetadataExtended.type = std::string("image1d_buffer_t");
-                        break;
-                    case NEOImageType::imageType1D:
-                        argMetadataExtended.type = std::string("image1d_t");
-                        break;
-                    case NEOImageType::imageType1DArray:
-                        argMetadataExtended.type = std::string("image1d_array_t");
-                        break;
-                    case NEOImageType::imageType2DArray:
-                        argMetadataExtended.type = std::string("image2d_array_t");
-                        break;
-                    case NEOImageType::imageType3D:
-                        argMetadataExtended.type = std::string("image3d_t");
-                        break;
-                    case NEOImageType::imageType2DDepth:
-                        argMetadataExtended.type = std::string("image2d_depth_t");
-                        break;
-                    case NEOImageType::imageType2DArrayDepth:
-                        argMetadataExtended.type = std::string("image2d_array_depth_t");
-                        break;
-                    case NEOImageType::imageType2DMSAA:
-                        argMetadataExtended.type = std::string("image2d_msaa_t");
-                        break;
-                    case NEOImageType::imageType2DMSAADepth:
-                        argMetadataExtended.type = std::string("image2d_msaa_depth_t");
-                        break;
-                    case NEOImageType::imageType2DArrayMSAA:
-                        argMetadataExtended.type = std::string("image2d_array_msaa_t");
-                        break;
-                    case NEOImageType::imageType2DArrayMSAADepth:
-                        argMetadataExtended.type = std::string("image2d_array_msaa_depth_t");
-                        break;
-                    default:
-                        argMetadataExtended.type = std::string("image2d_t");
-                        break;
-                    }
-                } else if (kernelArg.is<ArgDescriptor::argTSampler>()) {
-                    argMetadataExtended.type = std::string("sampler_t");
-                }
-                kernelInfo->kernelDescriptor.explicitArgsExtendedMetadata.at(argIndex) = std::move(argMetadataExtended);
-                argIndex++;
-            }
-        }
-    };
-    std::call_once(metadataGenerationFlags->generateDefaultMetadataOnce, generateDefaultMetadata);
 }
 
 } // namespace NEO

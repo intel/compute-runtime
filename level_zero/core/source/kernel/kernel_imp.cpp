@@ -1539,4 +1539,65 @@ uint8_t KernelImp::getRequiredSlmAlignment(uint32_t argIndex) const {
     return nextArg.requiredSlmAlignment;
 }
 
+ze_result_t KernelImp::getArgumentSize(uint32_t argIndex, uint32_t *argSize) const {
+    if (argIndex >= kernelArgHandlers.size()) {
+        return ZE_RESULT_ERROR_INVALID_KERNEL_ARGUMENT_INDEX;
+    }
+    if (argSize == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    uint32_t outArgSize = 0u;
+    auto &argDescriptor = this->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex];
+
+    switch (argDescriptor.type) {
+    case NEO::ArgDescriptor::argTPointer:
+        outArgSize = argDescriptor.as<NEO::ArgDescPointer>().pointerSize;
+        break;
+    case NEO::ArgDescriptor::argTImage:
+        outArgSize = sizeof(ze_image_handle_t);
+        break;
+    case NEO::ArgDescriptor::argTSampler:
+        outArgSize = argDescriptor.as<NEO::ArgDescSampler>().size;
+        break;
+    case NEO::ArgDescriptor::argTValue: {
+        auto numOfElements = argDescriptor.as<NEO::ArgDescValue>().elements.size();
+        if (numOfElements == 0) {
+            outArgSize = 0;
+            break;
+        }
+        auto &lastElement = argDescriptor.as<NEO::ArgDescValue>().elements[numOfElements - 1];
+        outArgSize = lastElement.sourceOffset + lastElement.size;
+    } break;
+    default:
+        break;
+    }
+
+    *argSize = outArgSize;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t KernelImp::getArgumentType(uint32_t argIndex, uint32_t *pSize, char *pString) const {
+    this->module->populateZebinExtendedArgsMetadata();
+    this->module->generateDefaultExtendedArgsMetadata();
+
+    if (argIndex >= kernelArgHandlers.size()) {
+        return ZE_RESULT_ERROR_INVALID_KERNEL_ARGUMENT_INDEX;
+    }
+    if (pSize == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if (this->kernelImmData->getDescriptor().explicitArgsExtendedMetadata.empty()) {
+        // Failed to populate/generate extended args metadata.
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    const auto &argMetadata = this->kernelImmData->getDescriptor().explicitArgsExtendedMetadata[argIndex];
+    auto userSize = *pSize;
+    *pSize = static_cast<uint32_t>(argMetadata.type.length() + 1);
+    if (pString != nullptr && userSize >= argMetadata.type.length()) {
+        strncpy_s(pString, *pSize, argMetadata.type.c_str(), argMetadata.type.length());
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0

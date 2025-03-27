@@ -61,6 +61,8 @@ struct Module : _ze_module_handle_t, NEO::NonCopyableAndNonMovableClass {
     virtual bool shouldAllocatePrivateMemoryPerDispatch() const = 0;
     virtual uint32_t getProfileFlags() const = 0;
     virtual void checkIfPrivateMemoryPerDispatchIsNeeded() = 0;
+    virtual void populateZebinExtendedArgsMetadata() = 0;
+    virtual void generateDefaultExtendedArgsMetadata() = 0;
 
     static Module *fromHandle(ze_module_handle_t handle) { return static_cast<Module *>(handle); }
 

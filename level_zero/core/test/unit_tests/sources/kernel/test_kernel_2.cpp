@@ -21,6 +21,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/kernel_max_cooperative_groups_count_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -1003,6 +1004,131 @@ TEST_F(KernelImpTest, givenCorrectEngineTypeWhenGettingMaxWgCountPerTileThenRetu
     EXPECT_EQ(4u, kernel.getMaxWgCountPerTile(NEO::EngineGroupType::compute));
     EXPECT_EQ(2u, kernel.getMaxWgCountPerTile(NEO::EngineGroupType::renderCompute));
     EXPECT_EQ(100u, kernel.getMaxWgCountPerTile(NEO::EngineGroupType::cooperativeCompute));
+}
+
+using KernelArgumentInfoTests = Test<ModuleImmutableDataFixture>;
+
+TEST_F(KernelArgumentInfoTests, givenKernelWhenGetArgumentSizeCalledWithInvalidArgsThenReturnFailure) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernelImmData->resizeExplicitArgs(1);
+    kernel->initialize(&desc);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, kernel->getArgumentSize(0, nullptr));
+    uint32_t argSize = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_ARGUMENT_INDEX, kernel->getArgumentSize(1, &argSize));
+}
+
+TEST_F(KernelArgumentInfoTests, givenKernelWhenGetArgumentSizeCalledThenReturnCorrectSizeAndStatus) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    auto ptrByValueArg = ArgDescriptor(ArgDescriptor::argTValue);
+    ptrByValueArg.as<ArgDescValue>().elements.push_back(ArgDescValue::Element{0u, 100u});
+
+    auto ptrArg = ArgDescriptor(ArgDescriptor::argTPointer);
+    ptrArg.as<ArgDescPointer>().pointerSize = 8u;
+
+    auto argDescriptorSampler = NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
+    argDescriptorSampler.as<NEO::ArgDescSampler>().size = 10u;
+
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.push_back(ptrByValueArg);
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.push_back(ptrArg);
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.push_back(ArgDescriptor(ArgDescriptor::argTImage));
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.push_back(argDescriptorSampler);
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.push_back(ArgDescriptor(ArgDescriptor::argTUnknown));
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.push_back(ArgDescriptor(ArgDescriptor::argTValue));
+    kernel->initialize(&desc);
+
+    uint32_t argSize = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getArgumentSize(0, &argSize));
+    EXPECT_EQ(100u, argSize);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getArgumentSize(1, &argSize));
+    EXPECT_EQ(8u, argSize);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getArgumentSize(2, &argSize));
+    EXPECT_EQ(sizeof(ze_image_handle_t), argSize);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getArgumentSize(3, &argSize));
+    EXPECT_EQ(10u, argSize);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getArgumentSize(4, &argSize));
+    EXPECT_EQ(0u, argSize);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getArgumentSize(5, &argSize));
+    EXPECT_EQ(0u, argSize);
+}
+
+TEST_F(KernelArgumentInfoTests, givenKernelWhenGetArgumentTypeCalledWithInvalidArgsThenReturnFailure) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernelImmData->resizeExplicitArgs(1);
+    kernel->initialize(&desc);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, kernel->getArgumentType(0, nullptr, nullptr));
+    uint32_t argSize = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_ARGUMENT_INDEX, kernel->getArgumentType(1, &argSize, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, kernel->getArgumentType(0, &argSize, nullptr));
+}
+
+TEST_F(KernelArgumentInfoTests, givenKernelWhenGetArgumentTypeCalledThenReturnCorrectTypeAndStatus) {
+    constexpr ConstStringRef argType = "uint32_t";
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernelImmData->resizeExplicitArgs(1);
+
+    ArgTypeMetadataExtended metadata;
+    metadata.type = argType.data();
+    mockKernelImmData->mockKernelDescriptor->explicitArgsExtendedMetadata.push_back(metadata);
+    kernel->initialize(&desc);
+
+    uint32_t argSize = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getArgumentType(0, &argSize, nullptr));
+    EXPECT_EQ(argType.size() + 1, argSize);
+    auto data = new char[argSize];
+    memset(data, 0, argSize);
+
+    // Do not copy if passed size is lower than required
+    argSize = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getArgumentType(0, &argSize, data));
+    EXPECT_NE(0, memcmp(argType.data(), data, 1));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getArgumentType(0, &argSize, data));
+    EXPECT_EQ(0, memcmp(argType.data(), data, argSize));
+    delete[] data;
 }
 
 TEST_F(KernelImpTest, givenDefaultGroupSizeWhenGetGroupSizeCalledThenReturnDefaultValues) {

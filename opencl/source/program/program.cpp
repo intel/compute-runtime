@@ -28,6 +28,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/program/metadata_generation.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
@@ -59,7 +60,7 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
 
     buildInfos.resize(maxRootDeviceIndex + 1);
     debuggerInfos.resize(maxRootDeviceIndex + 1);
-    metadataGenerationFlags = std::make_unique<MetadataGenerationFlags>();
+    metadataGeneration = std::make_unique<MetadataGeneration>();
 }
 
 std::string Program::getInternalOptions() const {
@@ -367,7 +368,7 @@ void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
         delete kernelInfo;
     }
     buildInfo.kernelInfoArray.clear();
-    metadataGenerationFlags.reset(new MetadataGenerationFlags());
+    metadataGeneration.reset(new MetadataGeneration());
 }
 
 void Program::updateNonUniformFlag() {
@@ -681,4 +682,16 @@ StackVec<NEO::GraphicsAllocation *, 32> Program::getModuleAllocations(uint32_t r
     }
     return allocs;
 }
+
+void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) {
+    auto &buildInfo = this->buildInfos[rootDeviceIndex];
+    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
+    metadataGeneration->callPopulateZebinExtendedArgsMetadataOnce(refBin, buildInfo.kernelMiscInfoPos, buildInfo.kernelInfoArray);
+}
+
+void Program::callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) {
+    auto &buildInfo = this->buildInfos[rootDeviceIndex];
+    metadataGeneration->callGenerateDefaultExtendedArgsMetadataOnce(buildInfo.kernelInfoArray);
+}
+
 } // namespace NEO
