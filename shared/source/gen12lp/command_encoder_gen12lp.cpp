@@ -590,20 +590,21 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cm
 }
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::setupPostSyncMocs(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {}
+uint32_t EncodePostSync<Family>::getPostSyncMocs(const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {
+    return 0;
+}
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
+template <typename CommandType>
+void EncodePostSync<Family>::setupPostSyncForRegularEvent(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encodeL3FlushAfterPostSync(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
+template <typename CommandType>
+void EncodePostSync<Family>::encodeL3Flush(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
+template <typename CommandType>
+void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
 template <typename Family>
 template <typename WalkerType>
@@ -708,8 +709,8 @@ template <typename WalkerType>
 void EncodeDispatchKernel<Family>::setWalkerRegionSettings(WalkerType &walkerCmd, const NEO::Device &device, uint32_t partitionCount, uint32_t workgroupSize, uint32_t threadGroupCount, uint32_t maxWgCountPerTile, bool requiredDispatchWalkOrder) {}
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
+template <typename CommandType>
+void EncodePostSync<Family>::adjustTimestampPacket(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
 template <>
 size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {

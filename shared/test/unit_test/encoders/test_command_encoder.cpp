@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -212,4 +212,20 @@ HWTEST2_F(CommandEncoderTest, givenPredicateBitSetWhenProgrammingBbStartThenSetC
 
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(&cmdStream, 0, false, false, true);
     EXPECT_EQ(1u, cmd.getPredicationEnable());
+}
+
+HWTEST_F(CommandEncoderTest, givenEncodePostSyncArgsWhenCallingRequiresSystemMemoryFenceThenCorrectValuesAreReturned) {
+    EncodePostSyncArgs args{};
+    for (bool hostScopeSignalEvent : {true, false}) {
+        for (bool kernelUsingSystemAllocation : {true, false}) {
+            args.isHostScopeSignalEvent = hostScopeSignalEvent;
+            args.isKernelUsingSystemAllocation = kernelUsingSystemAllocation;
+
+            if (hostScopeSignalEvent && kernelUsingSystemAllocation) {
+                EXPECT_TRUE(args.requiresSystemMemoryFence());
+            } else {
+                EXPECT_FALSE(args.requiresSystemMemoryFence());
+            }
+        }
+    }
 }

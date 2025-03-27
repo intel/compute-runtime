@@ -370,10 +370,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                    requiredWorkgroupOrder,
                                                    rootDeviceEnvironment);
 
+    auto postSyncArgs = EncodePostSync<Family>::createPostSyncArgs(args);
     if (args.inOrderExecInfo) {
-        EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(walkerCmd, args);
+        EncodePostSync<Family>::setupPostSyncForInOrderExec(walkerCmd, postSyncArgs);
     } else if (args.eventAddress) {
-        EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(walkerCmd, args);
+        EncodePostSync<Family>::setupPostSyncForRegularEvent(walkerCmd, postSyncArgs);
     } else {
         EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(walkerCmd);
     }
@@ -482,19 +483,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 }
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {
-    using POSTSYNC_DATA = decltype(Family::template getPostSyncType<WalkerType>());
+template <typename CommandType>
+void EncodePostSync<Family>::setupPostSyncForRegularEvent(CommandType &cmd, const EncodePostSyncArgs &args) {
+    using POSTSYNC_DATA = decltype(Family::template getPostSyncType<CommandType>());
 
-    auto &postSync = walkerCmd.getPostSync();
-
-    postSync.setDataportPipelineFlush(true);
-    postSync.setDataportSubsliceCacheFlush(true);
-
-    if (NEO::debugManager.flags.ForcePostSyncL1Flush.get() != -1) {
-        postSync.setDataportPipelineFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
-        postSync.setDataportSubsliceCacheFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
-    }
+    auto &postSync = cmd.getPostSync();
 
     auto operationType = POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA;
     uint64_t gpuVa = args.eventAddress;
@@ -508,30 +501,33 @@ void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walk
     } else {
         UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
     }
+    uint32_t mocs = getPostSyncMocs(args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
+    setPostSyncData(postSync, operationType, gpuVa, immData, 0, mocs, false, false);
 
-    postSync.setOperation(operationType);
-    postSync.setImmediateData(immData);
-    postSync.setDestinationAddress(gpuVa);
-
-    EncodeDispatchKernel<Family>::encodeL3FlushAfterPostSync(walkerCmd, args);
-    EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
-    EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, args);
+    encodeL3Flush(cmd, args);
+    adjustTimestampPacket(cmd, args);
 }
 
 template <typename Family>
-template <typename WalkerType>
-inline void EncodeDispatchKernel<Family>::setupPostSyncMocs(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {
-    auto &postSyncData = walkerCmd.getPostSync();
+template <typename PostSyncT>
+void EncodePostSync<Family>::setPostSyncDataCommon(PostSyncT &postSyncData, typename PostSyncT::OPERATION operation, uint64_t gpuVa, uint64_t immData) {
+    postSyncData.setOperation(operation);
+    postSyncData.setImmediateData(immData);
+    postSyncData.setDestinationAddress(gpuVa);
+}
+
+template <typename Family>
+inline uint32_t EncodePostSync<Family>::getPostSyncMocs(const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
-    if (dcFlush) {
-        postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
-    } else {
-        postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    if (debugManager.flags.OverridePostSyncMocs.get() != -1) {
+        return debugManager.flags.OverridePostSyncMocs.get();
     }
 
-    if (debugManager.flags.OverridePostSyncMocs.get() != -1) {
-        postSyncData.setMocs(debugManager.flags.OverridePostSyncMocs.get());
+    if (dcFlush) {
+        return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    } else {
+        return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     }
 }
 

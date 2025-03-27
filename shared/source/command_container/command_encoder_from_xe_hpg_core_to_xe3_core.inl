@@ -43,29 +43,37 @@ bool EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(bool co
 }
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {
-    using POSTSYNC_DATA = decltype(Family::template getPostSyncType<WalkerType>());
+template <typename CommandType>
+void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const EncodePostSyncArgs &args) {
+    using POSTSYNC_DATA = decltype(Family::template getPostSyncType<CommandType>());
 
-    auto &postSync = walkerCmd.getPostSync();
-
-    postSync.setDataportPipelineFlush(true);
-    postSync.setDataportSubsliceCacheFlush(true);
-    if (NEO::debugManager.flags.ForcePostSyncL1Flush.get() != -1) {
-        postSync.setDataportPipelineFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
-        postSync.setDataportSubsliceCacheFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
-    }
+    auto &postSync = cmd.getPostSync();
 
     uint64_t gpuVa = args.inOrderExecInfo->getBaseDeviceAddress() + args.inOrderExecInfo->getAllocationOffset();
-
     UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
 
-    postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA);
-    postSync.setImmediateData(args.inOrderCounterValue);
-    postSync.setDestinationAddress(gpuVa);
+    uint32_t mocs = getPostSyncMocs(args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
 
-    EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
-    EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, args);
+    setPostSyncData(postSync, POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, gpuVa, args.inOrderCounterValue, 0, mocs, false, false);
+    adjustTimestampPacket(cmd, args);
+}
+
+template <typename Family>
+template <typename PostSyncT>
+void EncodePostSync<Family>::setPostSyncData(PostSyncT &postSyncData, typename PostSyncT::OPERATION operation, uint64_t gpuVa, uint64_t immData,
+                                             [[maybe_unused]] uint32_t atomicOpcode, uint32_t mocs, [[maybe_unused]] bool interrupt, bool requiresSystemMemoryFence) {
+    setPostSyncDataCommon(postSyncData, operation, gpuVa, immData);
+
+    postSyncData.setDataportPipelineFlush(true);
+    postSyncData.setDataportSubsliceCacheFlush(true);
+
+    if (NEO::debugManager.flags.ForcePostSyncL1Flush.get() != -1) {
+        postSyncData.setDataportPipelineFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
+        postSyncData.setDataportSubsliceCacheFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
+    }
+
+    postSyncData.setMocs(mocs);
+    postSyncData.setSystemMemoryFenceRequest(requiresSystemMemoryFence);
 }
 
 template <typename Family>
@@ -76,16 +84,20 @@ void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t a
 }
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
+template <typename CommandType>
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, CommandType &cmd, const EncodeWalkerArgs &walkerArgs) {}
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
+template <typename CommandType>
+void EncodePostSync<Family>::adjustTimestampPacket(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encodeL3FlushAfterPostSync(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
+template <typename CommandType>
+void EncodePostSync<Family>::encodeL3Flush(CommandType &cmd, const EncodePostSyncArgs &args) {}
+
+template <typename Family>
+template <typename CommandType>
+void EncodePostSync<Family>::setCommandLevelInterrupt(CommandType &cmd, bool interrupt) {}
 
 template <typename Family>
 template <typename WalkerType>

@@ -699,11 +699,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammi
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenSetupPostSyncMocsThenNothingHappen) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-
-    DefaultWalkerType walkerCmd{};
     MockExecutionEnvironment executionEnvironment{};
-    EXPECT_NO_THROW(EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, *executionEnvironment.rootDeviceEnvironments[0], false));
+    uint32_t mocs;
+    EXPECT_NO_THROW(mocs = EncodePostSync<FamilyType>::getPostSyncMocs(*executionEnvironment.rootDeviceEnvironments[0], false));
+    EXPECT_EQ(0u, mocs);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSetupPostSyncMocsThenCorrect) {
@@ -716,7 +715,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
 
     {
         DefaultWalkerType walkerCmd{};
-        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, dcFlush);
+        uint32_t mocs = 0;
+        EXPECT_NO_THROW(mocs = EncodePostSync<FamilyType>::getPostSyncMocs(*executionEnvironment.rootDeviceEnvironments[0], dcFlush));
+        EXPECT_NO_THROW(walkerCmd.getPostSync().setMocs(mocs));
 
         auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
         auto expectedMocs = dcFlush ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
@@ -728,7 +729,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
         auto expectedMocs = 9u;
         debugManager.flags.OverridePostSyncMocs.set(expectedMocs);
         DefaultWalkerType walkerCmd{};
-        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, dcFlush);
+        uint32_t mocs = 0;
+        EXPECT_NO_THROW(mocs = EncodePostSync<FamilyType>::getPostSyncMocs(*executionEnvironment.rootDeviceEnvironments[0], false));
+        EXPECT_NO_THROW(walkerCmd.getPostSync().setMocs(mocs));
         EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
     }
 }

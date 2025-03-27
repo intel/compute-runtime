@@ -227,22 +227,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
                                           WalkerType &walkerCmd);
 
     template <typename WalkerType>
-    static void adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
-
-    template <typename WalkerType>
-    static void encodeL3FlushAfterPostSync(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
-
-    template <typename WalkerType>
-    static void setupPostSyncForRegularEvent(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
-
-    template <typename WalkerType>
     static void setWalkerRegionSettings(WalkerType &walkerCmd, const NEO::Device &device, uint32_t partitionCount, uint32_t workgroupSize, uint32_t threadGroupCount, uint32_t maxWgCountPerTile, bool requiredDispatchWalkOrder);
-
-    template <typename WalkerType>
-    static void setupPostSyncForInOrderExec(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
-
-    template <typename WalkerType>
-    static void setupPostSyncMocs(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush);
 
     template <typename WalkerType>
     static void adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
@@ -721,6 +706,60 @@ struct EncodeMemoryFence {
 template <typename GfxFamily>
 struct EnodeUserInterrupt {
     static void encode(LinearStream &commandStream);
+};
+
+struct EncodePostSyncArgs {
+    uint64_t eventAddress = 0;
+    uint64_t postSyncImmValue = 0;
+    uint64_t inOrderCounterValue = 0;
+    uint64_t inOrderIncrementGpuAddress = 0;
+    uint64_t inOrderIncrementValue = 0;
+    Device *device = nullptr;
+    NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
+    bool isTimestampEvent = false;
+    bool isHostScopeSignalEvent = false;
+    bool isKernelUsingSystemAllocation = false;
+    bool dcFlushEnable = false;
+    bool interruptEvent = false;
+    bool isFlushL3ForExternalAllocationRequired = false;
+    bool isFlushL3ForHostUsmRequired = false;
+    bool requiresSystemMemoryFence() const {
+        return (isHostScopeSignalEvent && isKernelUsingSystemAllocation);
+    }
+};
+
+template <typename GfxFamily>
+struct EncodePostSync {
+    static constexpr size_t timestampDestinationAddressAlignment = 16;
+    static constexpr size_t immWriteDestinationAddressAlignment = 8;
+
+    static EncodePostSyncArgs createPostSyncArgs(const EncodeDispatchKernelArgs &args);
+
+    template <typename CommandType>
+    static void encodeL3Flush(CommandType &cmd, const EncodePostSyncArgs &args);
+
+    template <typename CommandType>
+    static void setupPostSyncForRegularEvent(CommandType &cmd, const EncodePostSyncArgs &args);
+
+    template <typename CommandType>
+    static void setupPostSyncForInOrderExec(CommandType &cmd, const EncodePostSyncArgs &args);
+
+    static uint32_t getPostSyncMocs(const RootDeviceEnvironment &rootDeviceEnvironment, const bool dcFlush);
+
+    template <typename CommandType>
+    static auto &getPostSync(CommandType &cmd, size_t index);
+
+    template <typename PostSyncT>
+    static void setPostSyncData(PostSyncT &postSyncData, const typename PostSyncT::OPERATION operation, const uint64_t gpuVa, const uint64_t immData, [[maybe_unused]] const uint32_t atomicOpcode, const uint32_t mocs, [[maybe_unused]] const bool interrupt, const bool requiresSystemMemoryFence);
+
+    template <typename PostSyncT>
+    static void setPostSyncDataCommon(PostSyncT &postSyncData, const typename PostSyncT::OPERATION operation, const uint64_t gpuVa, const uint64_t immData);
+
+    template <typename CommandType>
+    static void setCommandLevelInterrupt(CommandType &cmd, bool interrupt);
+
+    template <typename CommandType>
+    static void adjustTimestampPacket(CommandType &cmd, const EncodePostSyncArgs &args);
 };
 
 } // namespace NEO
