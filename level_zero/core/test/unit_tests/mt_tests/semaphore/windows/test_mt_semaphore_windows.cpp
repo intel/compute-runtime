@@ -71,6 +71,32 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenValidExternalSemaphoreWhenImportExter
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+HWTEST_F(WddmExternalSemaphoreMTTest, givenValidTimelineSemaphoreWhenImportExternalSemaphoreIsCalledThenSuccessIsReturned) {
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
+    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    ze_external_semaphore_ext_desc_t desc = {};
+    ze_external_semaphore_ext_handle_t hSemaphore;
+    HANDLE extSemaphoreHandle = 0;
+    const char *extSemName = "timeline_semaphore_name";
+
+    l0Device->setDriverHandle(driverHandleImp.get());
+
+    ze_external_semaphore_win32_ext_desc_t win32Desc = {};
+
+    desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_VK_TIMELINE_SEMAPHORE_WIN32;
+
+    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC;
+    win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
+    win32Desc.name = extSemName;
+
+    desc.pNext = &win32Desc;
+
+    ze_result_t result = zeDeviceImportExternalSemaphoreExt(l0Device->toHandle(), &desc, &hSemaphore);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    result = zeDeviceReleaseExternalSemaphoreExt(hSemaphore);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 class MockFailGdi : public MockGdi {
   public:
     MockFailGdi() : MockGdi() {

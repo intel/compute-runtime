@@ -48,6 +48,7 @@ ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze
     this->desc = semaphoreDesc;
     NEO::ExternalSemaphore::Type externalSemaphoreType;
     void *handle = nullptr;
+    const char *name = nullptr;
     int fd = 0;
 
     if (semaphoreDesc->pNext != nullptr) {
@@ -57,6 +58,7 @@ ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze
             const ze_external_semaphore_win32_ext_desc_t *extendedSemaphoreDesc =
                 reinterpret_cast<const ze_external_semaphore_win32_ext_desc_t *>(extendedDesc);
             handle = extendedSemaphoreDesc->handle;
+            name = extendedSemaphoreDesc->name;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_FD_EXT_DESC) { // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
             const ze_external_semaphore_fd_ext_desc_t *extendedSemaphoreDesc =
                 reinterpret_cast<const ze_external_semaphore_fd_ext_desc_t *>(extendedDesc);
@@ -100,7 +102,7 @@ ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    this->neoExternalSemaphore = NEO::ExternalSemaphore::create(deviceImp->getOsInterface(), externalSemaphoreType, handle, fd);
+    this->neoExternalSemaphore = NEO::ExternalSemaphore::create(deviceImp->getOsInterface(), externalSemaphoreType, handle, fd, name);
     if (!this->neoExternalSemaphore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
