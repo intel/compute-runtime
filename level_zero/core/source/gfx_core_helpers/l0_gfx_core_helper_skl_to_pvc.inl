@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -208,5 +208,11 @@ std::vector<std::pair<const char *, const char *>> L0GfxCoreHelperHw<Family>::ge
     };
     return stallSamplingReportList;
 }
+
+template <typename Family>
+uint64_t L0GfxCoreHelperHw<Family>::getOaTimestampValidBits() const {
+    constexpr uint64_t oaTimestampValidBits = 32u;
+    return oaTimestampValidBits;
+};
 
 } // namespace L0

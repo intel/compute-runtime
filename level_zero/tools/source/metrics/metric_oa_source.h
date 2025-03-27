@@ -81,7 +81,7 @@ class OaMetricSourceImp : public MetricSource {
     bool useCompute = false;
     std::unique_ptr<MultiDomainDeferredActivationTracker> activationTracker{};
     ze_result_t getTimerResolution(uint64_t &resolution);
-    ze_result_t getTimestampValidBits(uint64_t &validBits);
+    void getTimestampValidBits(uint64_t &validBits);
 };
 
 template <>

@@ -7,10 +7,12 @@
 
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_multidevice_programmable.h"
 #include "level_zero/tools/source/metrics/metric_multidevice_programmable.inl"
@@ -47,27 +49,10 @@ ze_result_t OaMetricSourceImp::getTimerResolution(uint64_t &resolution) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t OaMetricSourceImp::getTimestampValidBits(uint64_t &validBits) {
-    ze_result_t retVal = ZE_RESULT_SUCCESS;
-
-    uint64_t maxNanoSeconds = 0;
-    if (!metricEnumeration->readGlobalSymbol(globalSymbolOaMaxTimestamp.data(), maxNanoSeconds)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    uint64_t timerFreqquency;
-    retVal = getTimerResolution(timerFreqquency);
-    if (retVal != ZE_RESULT_SUCCESS) {
-        validBits = 0;
-        return retVal;
-    }
-
-    uint64_t maxTimeStamp = maxNanoSeconds * timerFreqquency / CommonConstants::nsecPerSec;
-
-    auto bits = std::bitset<64>(maxTimeStamp);
-    validBits = bits.count();
-
-    return retVal;
+void OaMetricSourceImp::getTimestampValidBits(uint64_t &validBits) {
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(&getDevice());
+    auto &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    validBits = l0GfxCoreHelper.getOaTimestampValidBits();
 }
 
 bool OaMetricSourceImp::isAvailable() {
@@ -220,12 +205,8 @@ ze_result_t OaMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_gr
                 return retVal;
             }
 
-            retVal = getTimestampValidBits(metricsTimestampProperties->timestampValidBits);
-            if (retVal != ZE_RESULT_SUCCESS) {
-                metricsTimestampProperties->timerResolution = 0;
-                metricsTimestampProperties->timestampValidBits = 0;
-                return retVal;
-            }
+            getTimestampValidBits(metricsTimestampProperties->timestampValidBits);
+
         } else if (extendedProperties->stype == ZET_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP) {
             zet_metric_group_type_exp_t *groupType = reinterpret_cast<zet_metric_group_type_exp_t *>(extendedProperties);
             groupType->type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER;

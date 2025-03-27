@@ -134,9 +134,6 @@ class Mock<IMetricsDevice_1_13> : public IMetricsDevice_1_13 {
     MetricsDiscovery::TTypedValue_1_0 symbolValue = {};
     bool forceGetSymbolByNameFail = false;
     bool forceGetGpuCpuTimestampsFail = false;
-    bool forceGetMaxTimestampFail = false;
-    uint32_t failGetGpuTimestampFrequencyOnCall = 0;
-    uint32_t getGpuTimestampFrequencyCallCount = 0;
     TTypedValue_1_0 *GetGlobalSymbolValueByName(const char *name) override {
         bool found = false;
         if (forceGetSymbolByNameFail) {
@@ -146,17 +143,10 @@ class Mock<IMetricsDevice_1_13> : public IMetricsDevice_1_13 {
             symbolValue.ValueUInt32 = 1024;
             found = true;
         } else if (std::strcmp(name, "MaxTimestamp") == 0) {
-            if (forceGetMaxTimestampFail) {
-                return nullptr;
-            }
             symbolValue.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT64;
             symbolValue.ValueUInt64 = 171798691800UL; // PVC as reference
             found = true;
         } else if (std::strcmp(name, "GpuTimestampFrequency") == 0) {
-            getGpuTimestampFrequencyCallCount++;
-            if (failGetGpuTimestampFrequencyOnCall && (getGpuTimestampFrequencyCallCount >= failGetGpuTimestampFrequencyOnCall)) {
-                return nullptr;
-            }
             symbolValue.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT64;
             symbolValue.ValueUInt64 = 25000000UL; // PVC as reference
             found = true;
@@ -180,14 +170,6 @@ class Mock<IMetricsDevice_1_13> : public IMetricsDevice_1_13 {
         *cpuTimestampNs += 10;
         *cpuId = 0;
         return MetricsDiscovery::CC_OK;
-    }
-
-    void resetMockVars() {
-        forceGetSymbolByNameFail = false;
-        forceGetGpuCpuTimestampsFail = false;
-        forceGetMaxTimestampFail = false;
-        failGetGpuTimestampFrequencyOnCall = 0;
-        getGpuTimestampFrequencyCallCount = 0;
     }
 
     std::vector<IConcurrentGroup_1_13 *> getConcurrentGroupResults;

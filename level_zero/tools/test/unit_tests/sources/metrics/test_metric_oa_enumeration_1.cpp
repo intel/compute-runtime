@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/test_base.h"
 
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
@@ -548,7 +549,10 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFreq
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
 
     EXPECT_EQ(metricTimestampProperties.timerResolution, 25000000UL);
-    EXPECT_EQ(metricTimestampProperties.timestampValidBits, 32UL);
+
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    uint64_t expectedValidBits = l0GfxCoreHelper.getOaTimestampValidBits();
+    EXPECT_EQ(metricTimestampProperties.timestampValidBits, expectedValidBits);
 }
 
 TEST_F(MetricEnumerationTest, whenReadingMetricCroupCalculateParametersThenExpectedValuesAreReturned) {
@@ -767,7 +771,7 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingFrequencyAndIntern
     EXPECT_NE(metricTimestampProperties.timerResolution, 0UL);
     EXPECT_NE(metricTimestampProperties.timestampValidBits, 0UL);
 
-    metricsDevice.failGetGpuTimestampFrequencyOnCall = true;
+    metricsDevice.forceGetSymbolByNameFail = true;
 
     EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
@@ -778,29 +782,6 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingFrequencyAndIntern
 
     EXPECT_EQ(metricTimestampProperties.timerResolution, 0UL);
     EXPECT_EQ(metricTimestampProperties.timestampValidBits, 0UL);
-
-    metricsDevice.resetMockVars();
-    metricsDevice.forceGetMaxTimestampFail = true;
-
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_ERROR_NOT_AVAILABLE);
-    EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
-    EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
-    EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
-    EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
-
-    EXPECT_EQ(metricTimestampProperties.timerResolution, 0UL);
-    EXPECT_EQ(metricTimestampProperties.timestampValidBits, 0UL);
-
-    metricsDevice.resetMockVars();
-    metricsDevice.failGetGpuTimestampFrequencyOnCall = 2;
-
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_ERROR_NOT_AVAILABLE);
-    EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
-    EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
-    EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
-    EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
 }
 
 TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFrequencyThenValuesAreUpdated) {

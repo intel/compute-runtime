@@ -120,6 +120,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const = 0;
     virtual std::unique_ptr<NEO::TagAllocatorBase> getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, size_t initialTagCount, size_t packetsCountPerElement, size_t tagAlignment,
                                                                                 NEO::DeviceBitfield deviceBitfield) const = 0;
+    virtual uint64_t getOaTimestampValidBits() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -174,6 +175,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const override;
     std::unique_ptr<NEO::TagAllocatorBase> getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, size_t initialTagCount, size_t packetsCountPerElement, size_t tagAlignment,
                                                                         NEO::DeviceBitfield deviceBitfield) const override;
+    uint64_t getOaTimestampValidBits() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

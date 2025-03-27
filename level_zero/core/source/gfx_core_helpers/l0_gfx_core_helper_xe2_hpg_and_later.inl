@@ -206,4 +206,10 @@ std::vector<std::pair<const char *, const char *>> L0GfxCoreHelperHw<Family>::ge
     return stallSamplingReportList;
 }
 
+template <typename Family>
+uint64_t L0GfxCoreHelperHw<Family>::getOaTimestampValidBits() const {
+    constexpr uint64_t oaTimestampValidBits = 56u;
+    return oaTimestampValidBits;
+};
+
 } // namespace L0

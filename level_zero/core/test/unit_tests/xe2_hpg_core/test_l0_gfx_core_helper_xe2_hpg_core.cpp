@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,6 +137,11 @@ XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenCheckingL0HelperFor
     stallSumIpDataMap.emplace(std::pair<uint64_t, void *>(0ull, nullptr));
     l0GfxCoreHelper.stallIpDataMapDelete(stallSumIpDataMap);
     EXPECT_NE(0u, stallSumIpDataMap.size());
+}
+
+XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenCheckingL0HelperForGetOaTimestampValidBitsThenCorrectValueIsReturned) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(56u, l0GfxCoreHelper.getOaTimestampValidBits());
 }
 
 } // namespace ult
