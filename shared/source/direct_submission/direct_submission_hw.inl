@@ -438,9 +438,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
         *this->pciBarrierPtr = 0u;
     }
 
-    if (debugManager.flags.DirectSubmissionPrintSemaphoreUsage.get() == 1) {
-        printf("DirectSubmission semaphore %" PRIx64 " unlocked with value: %u\n", semaphoreGpuVa, currentQueueWorkCount);
-    }
+    PRINT_DEBUG_STRING(debugManager.flags.DirectSubmissionPrintSemaphoreUsage.get() == 1, stdout, "DirectSubmission semaphore %" PRIx64 " unlocked with value: %u\n", semaphoreGpuVa, currentQueueWorkCount);
 
     semaphoreData->queueWorkCount = currentQueueWorkCount;
 
