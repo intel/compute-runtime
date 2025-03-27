@@ -1176,3 +1176,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenIsExposingSubdevicesAllowedThe
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingIsPrimaryContextsAggregationSupportedThenReturnCorrectValue) {
     EXPECT_FALSE(productHelper->isPrimaryContextsAggregationSupported());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingUseAdditionalBlitPropertiesThenFalseReturned) {
+    EXPECT_FALSE(productHelper->useAdditionalBlitProperties());
+}

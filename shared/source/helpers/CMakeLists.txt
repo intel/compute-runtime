@@ -234,6 +234,12 @@ if(SUPPORT_XE3_AND_LATER)
   )
 endif()
 
+if(SUPPORT_XE3_AND_BEFORE)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_from_gen12lp_to_xe3.inl
+  )
+endif()
+
 set(NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.h

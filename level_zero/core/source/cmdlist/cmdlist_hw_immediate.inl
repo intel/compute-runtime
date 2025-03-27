@@ -812,7 +812,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uintptr_t, uintptr_t>(this, dstAddress, srcAddress, size, nullptr, 0u, nullptr, false, relaxedOrdering, direction, [&](uintptr_t dstAddressParam, uintptr_t srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             this->appendMemoryCopyBlit(dstAddressParam, dstAllocation, 0u,
                                        srcAddressParam, srcAllocation, 0u,
-                                       sizeParam);
+                                       sizeParam, nullptr);
             return CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEventParam, false);
         });
     } else {
