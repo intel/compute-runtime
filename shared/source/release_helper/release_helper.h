@@ -27,7 +27,7 @@ using createReleaseHelperFunctionType = std::unique_ptr<ReleaseHelper> (*)(Hardw
 inline createReleaseHelperFunctionType *releaseHelperFactory[maxArchitecture]{};
 
 using ThreadsPerEUConfigs = StackVec<uint32_t, 6>;
-using SizeToPreferredSlmValueArray = std::array<SizeToPreferredSlmValue, 20>;
+using SizeToPreferredSlmValueArray = std::array<SizeToPreferredSlmValue, 23>;
 
 class ReleaseHelper {
   public:
