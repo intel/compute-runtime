@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -228,19 +228,59 @@ void DrmMockXe::initInstance() {
     xeQueryConfig->info[DRM_XE_QUERY_CONFIG_VA_BITS] = 48;
     xeQueryConfig->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] = mockMaxExecQueuePriority;
 
+    constexpr drm_xe_gt tile0MainGt = {
+        .type = DRM_XE_QUERY_GT_TYPE_MAIN,
+        .tile_id = 0,
+        .gt_id = 0,
+        .pad = {0},
+        .reference_clock = mockTimestampFrequency,
+        .near_mem_regions = 0b100,
+        .far_mem_regions = 0x011,
+    };
+
+    constexpr drm_xe_gt tile1MediaGt = {
+        .type = DRM_XE_QUERY_GT_TYPE_MEDIA,
+        .tile_id = 1,
+        .gt_id = 1,
+        .pad = {0},
+        .reference_clock = mockTimestampFrequency,
+        .near_mem_regions = 0b001,
+        .far_mem_regions = 0x110,
+    };
+
+    constexpr drm_xe_gt tile1MainGt = {
+        .type = DRM_XE_QUERY_GT_TYPE_MAIN,
+        .tile_id = 1,
+        .gt_id = 2,
+        .pad = {0},
+        .reference_clock = mockTimestampFrequency,
+        .near_mem_regions = 0b010,
+        .far_mem_regions = 0x101,
+    };
+
+    constexpr drm_xe_gt tile2MainGt = {
+        .type = DRM_XE_QUERY_GT_TYPE_MAIN,
+        .tile_id = 2,
+        .gt_id = 3,
+        .pad = {0},
+        .reference_clock = mockTimestampFrequency,
+        .near_mem_regions = 0b100,
+        .far_mem_regions = 0x011,
+    };
+
     auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(this->queryEngines);
     xeQueryEngines->num_engines = 11;
-    xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_RENDER, 0, 0}, {}};
-    xeQueryEngines->engines[1] = {{DRM_XE_ENGINE_CLASS_COPY, 1, 0}, {}};
-    xeQueryEngines->engines[2] = {{DRM_XE_ENGINE_CLASS_COPY, 2, 0}, {}};
-    xeQueryEngines->engines[3] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0}, {}};
-    xeQueryEngines->engines[4] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0}, {}};
-    xeQueryEngines->engines[5] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1}, {}};
-    xeQueryEngines->engines[6] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1}, {}};
-    xeQueryEngines->engines[7] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 7, 1}, {}};
-    xeQueryEngines->engines[8] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1}, {}};
-    xeQueryEngines->engines[9] = {{DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1}, {}};
-    xeQueryEngines->engines[10] = {{DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}, {}};
+    xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_RENDER, 0, tile0MainGt.gt_id}, {}};
+    xeQueryEngines->engines[1] = {{DRM_XE_ENGINE_CLASS_COPY, 1, tile0MainGt.gt_id}, {}};
+    xeQueryEngines->engines[2] = {{DRM_XE_ENGINE_CLASS_COPY, 2, tile0MainGt.gt_id}, {}};
+    xeQueryEngines->engines[3] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 3, tile0MainGt.gt_id}, {}};
+    xeQueryEngines->engines[4] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 4, tile0MainGt.gt_id}, {}};
+    xeQueryEngines->engines[5] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 5, tile1MainGt.gt_id}, {}};
+    xeQueryEngines->engines[6] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 6, tile1MainGt.gt_id}, {}};
+    xeQueryEngines->engines[7] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 7, tile1MainGt.gt_id}, {}};
+    xeQueryEngines->engines[8] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 8, tile1MainGt.gt_id}, {}};
+    xeQueryEngines->engines[9] = {{DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, tile1MainGt.gt_id}, {}};
+    xeQueryEngines->engines[10] = {{DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, tile0MainGt.gt_id}, {}};
 
     auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(this->queryMemUsage);
     xeQueryMemUsage->num_mem_regions = 3;
@@ -269,41 +309,9 @@ void DrmMockXe::initInstance() {
     this->queryGtList.resize(49); // 1 qword for num gts and 12 qwords per gt
     auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(this->queryGtList.begin());
     xeQueryGtList->num_gt = 4;
-    xeQueryGtList->gt_list[0] = {
-        DRM_XE_QUERY_GT_TYPE_MAIN, // type
-        0,                         // tile_id
-        0,                         // gt_id
-        {0},                       // padding
-        mockTimestampFrequency,    // reference_clock
-        0b100,                     // native mem regions
-        0x011,                     // slow mem regions
-    };
-    xeQueryGtList->gt_list[1] = {
-        DRM_XE_QUERY_GT_TYPE_MEDIA, // type
-        1,                          // tile_id
-        1,                          // gt_id
-        {0},                        // padding
-        mockTimestampFrequency,     // reference_clock
-        0b001,                      // native mem regions
-        0x110,                      // slow mem regions
-    };
-    xeQueryGtList->gt_list[2] = {
-        DRM_XE_QUERY_GT_TYPE_MAIN, // type
-        1,                         // tile_id
-        2,                         // gt_id
-        {0},                       // padding
-        mockTimestampFrequency,    // reference_clock
-        0b010,                     // native mem regions
-        0x101,                     // slow mem regions
-    };
-    xeQueryGtList->gt_list[3] = {
-        DRM_XE_QUERY_GT_TYPE_MAIN, // type
-        2,                         // tile_id
-        3,                         // gt_id
-        {0},                       // padding
-        mockTimestampFrequency,    // reference_clock
-        0b100,                     // native mem regions
-        0x011,                     // slow mem regions
-    };
+    xeQueryGtList->gt_list[0] = tile0MainGt;
+    xeQueryGtList->gt_list[1] = tile1MediaGt;
+    xeQueryGtList->gt_list[2] = tile1MainGt;
+    xeQueryGtList->gt_list[3] = tile2MainGt;
     this->reset();
 }

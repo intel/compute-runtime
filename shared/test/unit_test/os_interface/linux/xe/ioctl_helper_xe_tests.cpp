@@ -1746,6 +1746,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlFailureWhenSetGpuCpuTimesIsCalledThenFalseIs
     rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
     auto drm = DrmMockXe::create(rootDeviceEnvironment);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
     auto engineInfo = xeIoctlHelper->createEngineInfo(false);
     ASSERT_NE(nullptr, engineInfo);
 
@@ -1764,6 +1765,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlFailureWhenSetGpuCpuTimesIsCalledThenProperV
     rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
     auto drm = DrmMockXe::create(rootDeviceEnvironment);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
     auto engineInfo = xeIoctlHelper->createEngineInfo(false);
     ASSERT_NE(nullptr, engineInfo);
 
@@ -1790,6 +1792,7 @@ TEST_F(IoctlHelperXeTest, whenDeviceTimestampWidthSetThenProperValuesAreSet) {
     rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
     auto drm = DrmMockXe::create(rootDeviceEnvironment);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
     auto engineInfo = xeIoctlHelper->createEngineInfo(false);
     ASSERT_NE(nullptr, engineInfo);
 
@@ -1816,7 +1819,7 @@ TEST_F(IoctlHelperXeTest, whenSetDefaultEngineIsCalledThenProperEngineIsSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(&hwInfo);
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-
+    xeIoctlHelper->initialize();
     auto engineInfo = xeIoctlHelper->createEngineInfo(true);
     ASSERT_NE(nullptr, engineInfo);
 
@@ -2108,7 +2111,7 @@ TEST_F(IoctlHelperXeTest, givenLowPriorityContextWhenSettingPropertiesThenCorrec
 TEST_F(IoctlHelperXeTest, givenLowPriorityContextWhenCreatingDrmContextThenExtPropertyIsSetCorrectly) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
-
+    drm->ioctlHelper->initialize();
     drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;

@@ -309,7 +309,10 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
 
     for (auto i = 0u; i < numberHwEngines; i++) {
         const auto &engine = queryEngines->engines[i].instance;
-        auto tile = engine.gt_id;
+        if (gtIdToTileId[engine.gt_id] == invalidIndex) {
+            continue;
+        }
+        auto tile = static_cast<uint16_t>(gtIdToTileId[engine.gt_id]);
         multiTileMask.set(tile);
         EngineClassInstance engineClassInstance{};
         engineClassInstance.engineClass = engine.engine_class;
