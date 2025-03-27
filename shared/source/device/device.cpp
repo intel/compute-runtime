@@ -223,7 +223,7 @@ void Device::initUsmReuseLimits() {
     const auto totalDeviceMemory = this->getGlobalMemorySize(static_cast<uint32_t>(this->getDeviceBitfield().to_ulong()));
     auto maxAllocationsSavedForReuseSize = static_cast<uint64_t>(fractionOfTotalMemoryForRecycling * totalDeviceMemory);
 
-    auto limitAllocationsReuseThreshold = UsmReuseInfo::notLimited;
+    auto limitAllocationsReuseThreshold = static_cast<uint64_t>(0.8 * totalDeviceMemory);
     const auto limitFlagValue = debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.get();
     if (limitFlagValue != -1) {
         if (limitFlagValue == 0) {

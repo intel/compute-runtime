@@ -397,11 +397,11 @@ void MemoryManager::initUsmReuseLimits() {
     }
     auto maxAllocationsSavedForReuseSize = static_cast<uint64_t>(fractionOfTotalMemoryForReuse * systemSharedMemorySize);
 
-    auto limitAllocationsReuseThreshold = std::numeric_limits<uint64_t>::max();
+    auto limitAllocationsReuseThreshold = static_cast<uint64_t>(0.8 * systemSharedMemorySize);
     const auto limitFlagValue = debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.get();
     if (limitFlagValue != -1) {
         if (limitFlagValue == 0) {
-            limitAllocationsReuseThreshold = std::numeric_limits<uint64_t>::max();
+            limitAllocationsReuseThreshold = UsmReuseInfo::notLimited;
         } else {
             const auto fractionOfTotalMemoryToLimitReuse = limitFlagValue / 100.0;
             limitAllocationsReuseThreshold = static_cast<uint64_t>(fractionOfTotalMemoryToLimitReuse * systemSharedMemorySize);

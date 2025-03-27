@@ -242,22 +242,22 @@ TEST_F(SvmDeviceAllocationCacheTest, givenReuseLimitFlagWhenInitUsmReuseLimitCal
         DebugManagerStateRestore restore;
         debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.set(0);
         device->initUsmReuseLimits();
-        const auto expectedLimitThreshold = std::numeric_limits<uint64_t>::max();
-        EXPECT_EQ(expectedLimitThreshold, device->usmReuseInfo.getLimitAllocationsReuseThreshold());
+        EXPECT_EQ(UsmReuseInfo::notLimited, device->usmReuseInfo.getLimitAllocationsReuseThreshold());
     }
     {
         DebugManagerStateRestore restore;
-        debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.set(80);
+        debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.set(70);
         device->initUsmReuseLimits();
         const auto totalDeviceMemory = device->getGlobalMemorySize(static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
-        const auto expectedLimitThreshold = static_cast<uint64_t>(0.8 * totalDeviceMemory);
+        const auto expectedLimitThreshold = static_cast<uint64_t>(0.7 * totalDeviceMemory);
         EXPECT_EQ(expectedLimitThreshold, device->usmReuseInfo.getLimitAllocationsReuseThreshold());
     }
     {
         DebugManagerStateRestore restore;
         debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.set(-1);
         device->initUsmReuseLimits();
-        const auto expectedLimitThreshold = std::numeric_limits<uint64_t>::max();
+        const auto totalDeviceMemory = device->getGlobalMemorySize(static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
+        const auto expectedLimitThreshold = static_cast<uint64_t>(0.8 * totalDeviceMemory);
         EXPECT_EQ(expectedLimitThreshold, device->usmReuseInfo.getLimitAllocationsReuseThreshold());
     }
 }
@@ -1091,22 +1091,22 @@ TEST_F(SvmHostAllocationCacheTest, givenReuseLimitFlagWhenInitUsmReuseLimitCalle
         DebugManagerStateRestore restore;
         debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.set(0);
         memoryManager->initUsmReuseLimits();
-        const auto expectedLimitThreshold = std::numeric_limits<uint64_t>::max();
-        EXPECT_EQ(expectedLimitThreshold, memoryManager->usmReuseInfo.getLimitAllocationsReuseThreshold());
+        EXPECT_EQ(UsmReuseInfo::notLimited, memoryManager->usmReuseInfo.getLimitAllocationsReuseThreshold());
     }
     {
         DebugManagerStateRestore restore;
-        debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.set(80);
+        debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.set(70);
         memoryManager->initUsmReuseLimits();
         const auto systemSharedMemory = memoryManager->getSystemSharedMemory(device->getRootDeviceIndex());
-        const auto expectedLimitThreshold = static_cast<uint64_t>(0.8 * systemSharedMemory);
+        const auto expectedLimitThreshold = static_cast<uint64_t>(0.7 * systemSharedMemory);
         EXPECT_EQ(expectedLimitThreshold, memoryManager->usmReuseInfo.getLimitAllocationsReuseThreshold());
     }
     {
         DebugManagerStateRestore restore;
         debugManager.flags.ExperimentalUSMAllocationReuseLimitThreshold.set(-1);
         memoryManager->initUsmReuseLimits();
-        const auto expectedLimitThreshold = std::numeric_limits<uint64_t>::max();
+        const auto systemSharedMemory = memoryManager->getSystemSharedMemory(device->getRootDeviceIndex());
+        const auto expectedLimitThreshold = static_cast<uint64_t>(0.8 * systemSharedMemory);
         EXPECT_EQ(expectedLimitThreshold, memoryManager->usmReuseInfo.getLimitAllocationsReuseThreshold());
     }
 }
