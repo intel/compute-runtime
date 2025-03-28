@@ -1750,7 +1750,8 @@ NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer
     NEO::AllocationProperties properties = {getRootDeviceIndex(), false, size,
                                             NEO::AllocationType::externalHostPtr,
                                             false, neoDevice->getDeviceBitfield()};
-    properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
+    // L3 must be flushed only if host memory is a transfer destination.
+    properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = !hostCopyAllowed;
     auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties,
                                                                                           buffer);
     if (allocation == nullptr && hostCopyAllowed) {

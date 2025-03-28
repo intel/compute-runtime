@@ -633,7 +633,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
 
     bo->setAddress(gpuVirtualAddress);
 
-    auto usageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.hostPtr, allocationData.size, productHelper);
+    auto usageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, productHelper);
     auto patIndex = rootDeviceEnvironment->getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, false, true);
     bo->setPatIndex(patIndex);
 

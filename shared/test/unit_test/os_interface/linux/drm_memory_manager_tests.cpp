@@ -3803,7 +3803,7 @@ TEST_F(DrmMemoryManagerBasic, givenSpecificAddressSpaceWhenInitializingMemoryMan
     EXPECT_EQ(maxNBitValue(48 - 1), limit);
 }
 
-TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWhenAllocateGraphicsMemoryThenSetCorrectPatIndex) {
+TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredWhenAllocateGraphicsMemoryThenSetCorrectPatIndex) {
     AllocationData allocationData;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
 
@@ -3812,6 +3812,7 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWhenAllocateGraphicsMemoryThe
     allocationData.size = 13;
     allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
     allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.flushL3 = true;
     auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 
     EXPECT_NE(nullptr, allocation);
@@ -3828,6 +3829,23 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWhenAllocateGraphicsMemoryThe
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3NotRequiredWhenAllocateGraphicsMemoryThenSetCorrectPatIndex) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(MemoryConstants::max48BitAddress);
+
+    allocationData.size = 13;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.flushL3 = false;
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, allocation->getBO()->peekPatIndex());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerBasic, givenAlignedHostPtrWhenAllocateGraphicsMemoryThenSetCorrectPatIndex) {
     AllocationData allocationData;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
@@ -3837,6 +3855,7 @@ TEST_F(DrmMemoryManagerBasic, givenAlignedHostPtrWhenAllocateGraphicsMemoryThenS
     allocationData.size = MemoryConstants::cacheLineSize;
     allocationData.hostPtr = reinterpret_cast<const void *>(MemoryConstants::pageSize);
     allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.flushL3 = true;
     auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 
     EXPECT_NE(nullptr, allocation);
