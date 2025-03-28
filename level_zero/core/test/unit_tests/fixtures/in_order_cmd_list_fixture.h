@@ -109,19 +109,19 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         constexpr uint32_t counterBasedFlags = (ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE | ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE);
 
         const EventDescriptor eventDescriptor = {
-            nullptr,                           // eventPoolAllocation
-            pNext,                             // extension
-            0,                                 // totalEventSize
-            EventPacketsCount::maxKernelSplit, // maxKernelCount
-            0,                                 // maxPacketsCount
-            counterBasedFlags,                 // counterBasedFlags
-            0,                                 // index
-            0,                                 // signalScope
-            0,                                 // waitScope
-            false,                             // timestampPool
-            false,                             // kernelMappedTsPoolFlag
-            false,                             // importedIpcPool
-            false,                             // ipcPool
+            .eventPoolAllocation = nullptr,
+            .extensions = pNext,
+            .totalEventSize = 0,
+            .maxKernelCount = EventPacketsCount::maxKernelSplit,
+            .maxPacketsCount = 0,
+            .counterBasedFlags = counterBasedFlags,
+            .index = 0,
+            .signalScope = 0,
+            .waitScope = 0,
+            .timestampPool = false,
+            .kernelMappedTsPoolFlag = false,
+            .importedIpcPool = false,
+            .ipcPool = false,
         };
 
         standaloneCbEventStorage.push_back(1);

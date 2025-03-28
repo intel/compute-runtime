@@ -119,19 +119,19 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
 template <typename TagSizeT>
 Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
     EventDescriptor eventDescriptor = {
-        &eventPool->getAllocation(),                   // eventPoolAllocation
-        desc->pNext,                                   // extensions
-        eventPool->getEventSize(),                     // totalEventSize
-        eventPool->getMaxKernelCount(),                // maxKernelCount
-        eventPool->getEventMaxPackets(),               // maxPacketsCount
-        eventPool->getCounterBasedFlags(),             // counterBasedFlags
-        desc->index,                                   // index
-        desc->signal,                                  // signalScope
-        desc->wait,                                    // waitScope
-        eventPool->isEventPoolTimestampFlagSet(),      // timestampPool
-        eventPool->isEventPoolKernelMappedTsFlagSet(), // kernelMappedTsPoolFlag
-        eventPool->getImportedIpcPool(),               // importedIpcPool
-        eventPool->isIpcPoolFlagSet(),                 // ipcPool
+        .eventPoolAllocation = &eventPool->getAllocation(),
+        .extensions = desc->pNext,
+        .totalEventSize = eventPool->getEventSize(),
+        .maxKernelCount = eventPool->getMaxKernelCount(),
+        .maxPacketsCount = eventPool->getEventMaxPackets(),
+        .counterBasedFlags = eventPool->getCounterBasedFlags(),
+        .index = desc->index,
+        .signalScope = desc->signal,
+        .waitScope = desc->wait,
+        .timestampPool = eventPool->isEventPoolTimestampFlagSet(),
+        .kernelMappedTsPoolFlag = eventPool->isEventPoolKernelMappedTsFlagSet(),
+        .importedIpcPool = eventPool->getImportedIpcPool(),
+        .ipcPool = eventPool->isIpcPoolFlagSet(),
     };
 
     if (eventPool->getCounterBasedFlags() != 0 && standaloneInOrderTimestampAllocationEnabled()) {

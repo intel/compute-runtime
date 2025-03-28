@@ -308,19 +308,19 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
                                                                               ipcData.counterValue, ipcData.devicePartitions, ipcData.hostPartitions);
 
     const EventDescriptor eventDescriptor = {
-        nullptr,                           // eventPoolAllocation
-        nullptr,                           // extensions
-        0,                                 // totalEventSize
-        EventPacketsCount::maxKernelSplit, // maxKernelCount
-        1,                                 // maxPacketsCount
-        ipcData.counterBasedFlags,         // counterBasedFlags
-        0,                                 // index
-        ipcData.signalScopeFlags,          // signalScope
-        ipcData.waitScopeFlags,            // waitScope
-        false,                             // timestampPool
-        false,                             // kernelMappedTsPoolFlag
-        true,                              // importedIpcPool
-        false,                             // ipcPool
+        .eventPoolAllocation = nullptr,
+        .extensions = nullptr,
+        .totalEventSize = 0,
+        .maxKernelCount = EventPacketsCount::maxKernelSplit,
+        .maxPacketsCount = 1,
+        .counterBasedFlags = ipcData.counterBasedFlags,
+        .index = 0,
+        .signalScope = ipcData.signalScopeFlags,
+        .waitScope = ipcData.waitScopeFlags,
+        .timestampPool = false,
+        .kernelMappedTsPoolFlag = false,
+        .importedIpcPool = true,
+        .ipcPool = false,
     };
 
     ze_result_t result = ZE_RESULT_SUCCESS;

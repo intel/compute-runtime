@@ -73,19 +73,19 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
     }
 
     EventDescriptor eventDescriptor = {
-        nullptr,                           // eventPoolAllocation
-        desc->pNext,                       // extensions
-        0,                                 // totalEventSize
-        EventPacketsCount::maxKernelSplit, // maxKernelCount
-        1,                                 // maxPacketsCount
-        inputCbFlags,                      // counterBasedFlags
-        0,                                 // index
-        signalScope,                       // signalScope
-        desc->waitScope,                   // waitScope
-        timestampFlag,                     // timestampPool
-        mappedTimestampFlag,               // kernelMappedTsPoolFlag
-        false,                             // importedIpcPool
-        ipcFlag,                           // ipcPool
+        .eventPoolAllocation = nullptr,
+        .extensions = desc->pNext,
+        .totalEventSize = 0,
+        .maxKernelCount = EventPacketsCount::maxKernelSplit,
+        .maxPacketsCount = 1,
+        .counterBasedFlags = inputCbFlags,
+        .index = 0,
+        .signalScope = signalScope,
+        .waitScope = desc->waitScope,
+        .timestampPool = timestampFlag,
+        .kernelMappedTsPoolFlag = mappedTimestampFlag,
+        .importedIpcPool = false,
+        .ipcPool = ipcFlag,
     };
 
     ze_result_t result = ZE_RESULT_SUCCESS;
