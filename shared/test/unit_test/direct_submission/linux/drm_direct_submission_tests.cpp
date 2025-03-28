@@ -852,7 +852,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenExecTimeoutReach
     ResidencyContainer residencyContainer{};
     batchBuffer.allocationsForResidency = &residencyContainer;
     drmDirectSubmission.ringStart = true;
-    EXPECT_TRUE(static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface.get())->obtainAndResetNewResourcesSinceLastRingSubmit());
+    static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface.get())->obtainAndResetNewResourcesSinceLastRingSubmit();
 
     drmDirectSubmission.lastUllsLightExecTimestamp = std::chrono::steady_clock::time_point{};
     drmDirectSubmission.cpuTimePointReturnValue = std::chrono::time_point<std::chrono::steady_clock>::max();
@@ -871,7 +871,6 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenExecTimeoutReach
 
     drmDirectSubmission.ringStart = false;
     executionEnvironment.memoryManager->freeGraphicsMemory(commandBuffer);
-    EXPECT_FALSE(static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface.get())->obtainAndResetNewResourcesSinceLastRingSubmit());
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenNoRegisteredResourcesThenNoRestart) {

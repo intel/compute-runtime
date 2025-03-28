@@ -1406,19 +1406,7 @@ void DrmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
             waitForEnginesCompletion(*allocation);
         }
     } else {
-        bool callBoWait = true;
-
-        const auto &engines = this->getRegisteredEngines(allocation->getRootDeviceIndex());
-        for (const auto &engine : engines) {
-            if (engine.osContext->isDirectSubmissionLightActive() && !allocationTypeForCompletionFence(allocation->getAllocationType())) {
-                callBoWait = false;
-                break;
-            }
-        }
-
-        if (callBoWait) {
-            static_cast<DrmAllocation *>(allocation)->getBO()->wait(-1);
-        }
+        static_cast<DrmAllocation *>(allocation)->getBO()->wait(-1);
     }
 }
 
