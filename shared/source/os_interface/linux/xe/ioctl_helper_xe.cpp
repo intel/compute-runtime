@@ -231,20 +231,30 @@ bool IoctlHelperXe::initialize() {
     }
     xeGtListData = reinterpret_cast<drm_xe_query_gt_list *>(queryGtListData.data());
 
+    auto assignValue = [](auto &container, uint16_t id, uint16_t value) {
+        if (container.size() < id + 1u) {
+            container.resize(id + 1, invalidIndex);
+        }
+        container[id] = value;
+    };
+
     gtIdToTileId.resize(xeGtListData->num_gt, invalidIndex);
     for (auto i = 0u; i < xeGtListData->num_gt; i++) {
         const auto &gt = xeGtListData->gt_list[i];
         if (gt.type == DRM_XE_QUERY_GT_TYPE_MAIN) {
             gtIdToTileId[gt.gt_id] = gt.tile_id;
-            if (tileIdToGtId.size() < gt.tile_id + 1u) {
-                tileIdToGtId.resize(gt.tile_id + 1, invalidIndex);
-            }
 
-            tileIdToGtId[gt.tile_id] = gt.gt_id;
+            assignValue(tileIdToGtId, gt.tile_id, gt.gt_id);
+        } else if (isMediaGt(gt.type)) {
+            assignValue(mediaGtIdToTileId, gt.gt_id, gt.tile_id);
         }
     }
     querySupportedFeatures();
     return true;
+}
+
+bool IoctlHelperXe::isMediaGt(uint16_t gtType) const {
+    return (gtType == DRM_XE_QUERY_GT_TYPE_MEDIA);
 }
 
 IoctlHelperXe::~IoctlHelperXe() {
@@ -307,17 +317,28 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
     auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
     auto defaultEngineClass = getDefaultEngineClass(hwInfo->capabilityTable.defaultEngineType);
 
+    auto containsGtId = [](const auto &container, uint16_t gtId) {
+        return ((container.size() > gtId) && (container[gtId] != invalidIndex));
+    };
+
     for (auto i = 0u; i < numberHwEngines; i++) {
         const auto &engine = queryEngines->engines[i].instance;
-        if (gtIdToTileId[engine.gt_id] == invalidIndex) {
+
+        uint16_t tile = 0;
+
+        if (containsGtId(gtIdToTileId, engine.gt_id)) {
+            tile = static_cast<uint16_t>(gtIdToTileId[engine.gt_id]);
+        } else if (containsGtId(mediaGtIdToTileId, engine.gt_id)) {
+            tile = static_cast<uint16_t>(mediaGtIdToTileId[engine.gt_id]);
+        } else {
             continue;
         }
-        auto tile = static_cast<uint16_t>(gtIdToTileId[engine.gt_id]);
+
         multiTileMask.set(tile);
         EngineClassInstance engineClassInstance{};
         engineClassInstance.engineClass = engine.engine_class;
         engineClassInstance.engineInstance = engine.engine_instance;
-        xeLog("\t%s:%d:%d\n", xeGetClassName(engineClassInstance.engineClass), engineClassInstance.engineInstance, engine.gt_id);
+        xeLog("\t%s:%d:%d %d\n", xeGetClassName(engineClassInstance.engineClass), engineClassInstance.engineInstance, engine.gt_id, tile);
 
         const bool isBaseEngineClass = engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassCompute) ||
                                        engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassRender) ||

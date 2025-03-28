@@ -306,7 +306,7 @@ void DrmMockXe::initInstance() {
         MemoryConstants::gigaByte      // used size
     };
 
-    this->queryGtList.resize(49); // 1 qword for num gts and 12 qwords per gt
+    this->queryGtList.resize(1 + (6 * 12)); // 1 qword for num gts and 12 qwords per gt
     auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(this->queryGtList.begin());
     xeQueryGtList->num_gt = 4;
     xeQueryGtList->gt_list[0] = tile0MainGt;

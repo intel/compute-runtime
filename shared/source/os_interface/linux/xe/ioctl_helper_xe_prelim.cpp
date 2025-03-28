@@ -9,6 +9,10 @@
 
 namespace NEO {
 
+bool IoctlHelperXePrelim::isMediaGt(uint16_t gtType) const {
+    return IoctlHelperXe::isMediaGt(gtType);
+}
+
 bool IoctlHelperXePrelim::isPrimaryContext(const OsContextLinux &osContext, uint32_t deviceIndex) {
     return false;
 }

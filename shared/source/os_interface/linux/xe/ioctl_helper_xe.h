@@ -34,6 +34,8 @@ struct BindInfo {
 
 class IoctlHelperXe : public IoctlHelper {
   public:
+    using GtIdContainer = StackVec<int, 4>;
+
     using IoctlHelper::IoctlHelper;
     static std::unique_ptr<IoctlHelperXe> create(Drm &drmArg);
     static bool queryDeviceIdAndRevision(Drm &drm);
@@ -157,6 +159,7 @@ class IoctlHelperXe : public IoctlHelper {
     virtual bool isExtraEngineClassAllowed(uint16_t engineClass) const { return false; }
     virtual std::optional<uint32_t> getCxlType() { return {}; }
     virtual uint32_t getNumEngines(uint64_t *enginesData) const;
+    virtual bool isMediaGt(uint16_t gtType) const;
 
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;
@@ -186,8 +189,9 @@ class IoctlHelperXe : public IoctlHelper {
 
     std::vector<uint64_t> queryGtListData;
     constexpr static int invalidIndex = -1;
-    StackVec<int, 2> gtIdToTileId;
-    StackVec<int, 2> tileIdToGtId;
+    GtIdContainer gtIdToTileId;
+    GtIdContainer tileIdToGtId;
+    GtIdContainer mediaGtIdToTileId;
     XeDrm::drm_xe_query_gt_list *xeGtListData = nullptr;
 
     std::unique_ptr<XeDrm::drm_xe_engine_class_instance> defaultEngine;
