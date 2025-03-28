@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "level_zero/core/source/device/device_imp_drm/device_imp_peer.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -22,7 +24,7 @@ const std::string iafDirectoryLegacy = "iaf.";
 const std::string iafDirectory = "i915.iaf.";
 const std::string fabricIdFile = "/iaf_fabric_id";
 
-ze_result_t DeviceImp::queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) {
+ze_result_t queryFabricStatsDrm(DeviceImp *pSourceDevice, DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) {
     auto &osPeerInterface = pPeerDevice->getNEODevice()->getRootDeviceEnvironment().osInterface;
 
     if (osPeerInterface == nullptr) {
@@ -57,7 +59,7 @@ ze_result_t DeviceImp::queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latenc
     size_t end = 0;
     uint32_t fabricId = static_cast<uint32_t>(std::stoul(fabricIdStr, &end, 16));
 
-    auto &osInterface = this->getNEODevice()->getRootDeviceEnvironment().osInterface;
+    auto &osInterface = pSourceDevice->getNEODevice()->getRootDeviceEnvironment().osInterface;
     auto pDrm = osInterface->getDriverModel()->as<NEO::Drm>();
     bool success = pDrm->getIoctlHelper()->getFabricLatency(fabricId, latency, bandwidth);
     if (success == false) {
@@ -66,7 +68,7 @@ ze_result_t DeviceImp::queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latenc
 
     PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                        "Connection detected between device %d and peer device %d: latency %d hops, bandwidth %d GBPS\n",
-                       this->getRootDeviceIndex(), pPeerDevice->getRootDeviceIndex(), latency, bandwidth);
+                       pSourceDevice->getRootDeviceIndex(), pPeerDevice->getRootDeviceIndex(), latency, bandwidth);
 
     return ZE_RESULT_SUCCESS;
 }

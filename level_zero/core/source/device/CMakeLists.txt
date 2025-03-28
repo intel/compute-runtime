@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2024 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -17,14 +17,10 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/device_imp.h
 )
 
-if(UNIX AND NEO_ENABLE_I915_PRELIM_DETECTION)
+if(UNIX)
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/device_imp_drm/device_imp_peer.cpp
-  )
-else()
-  target_sources(${L0_STATIC_LIB_NAME}
-                 PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/device_imp_peer_stub.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/device_imp_drm/device_imp_peer.h
   )
 endif()
