@@ -82,6 +82,7 @@ extern bool failMkfifo;
 extern bool failFcntl;
 extern bool failFcntl1;
 extern bool failAccess;
+extern int setErrno;
 
 extern std::vector<void *> mmapVector;
 extern std::vector<void *> mmapCapturedExtendedPointers;

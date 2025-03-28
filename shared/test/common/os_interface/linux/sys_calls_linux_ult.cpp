@@ -522,6 +522,11 @@ long sysconf(int name) {
 int mkfifo(const char *pathname, mode_t mode) {
     mkfifoFuncCalled++;
     if (failMkfifo) {
+        errno = 0;
+        if (setErrno != 0) {
+            errno = setErrno;
+            setErrno = 0;
+        }
         return -1;
     }
     if (nullptr == pathname) {
