@@ -7,9 +7,10 @@
 
 #pragma once
 
-#include <level_zero/zet_api.h>
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 
-struct _zet_tracer_exp_handle_t {};
+struct _zet_tracer_exp_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_zet_tracer_exp_handle_t>);
 
 namespace L0 {
 

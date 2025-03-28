@@ -10,18 +10,13 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
-#include <level_zero/ze_api.h>
-#include <level_zero/zes_api.h>
 
 #include <memory>
 #include <string>
 #include <vector>
 
-struct _ze_driver_handle_t {
-    const uint64_t objMagic = objMagicValue;
-    static const zel_handle_type_t handleType = ZEL_HANDLE_DRIVER;
-    virtual ~_ze_driver_handle_t() = default;
-};
+struct _ze_driver_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_DRIVER> {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_driver_handle_t>);
 
 namespace NEO {
 class Device;
@@ -36,6 +31,7 @@ struct Device;
 struct L0EnvVariables;
 
 struct BaseDriver : _ze_driver_handle_t {
+    virtual ~BaseDriver() = default;
     virtual ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) = 0;
     static BaseDriver *fromHandle(ze_driver_handle_t handle) { return static_cast<BaseDriver *>(handle); }
 };

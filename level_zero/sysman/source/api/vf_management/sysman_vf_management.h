@@ -22,6 +22,7 @@ struct OsSysman;
 
 class VfManagement : _zes_vf_handle_t {
   public:
+    virtual ~VfManagement() = default;
     virtual ze_result_t vfGetCapabilities(zes_vf_exp2_capabilities_t *pCapability) = 0;
     virtual ze_result_t vfGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2_t *pMemUtil) = 0;
     virtual ze_result_t vfGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) = 0;

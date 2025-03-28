@@ -14,16 +14,12 @@
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
-#include <level_zero/ze_api.h>
-#include <level_zero/zet_api.h>
 
 #include <memory>
 #include <vector>
 
-struct _ze_kernel_handle_t {
-    const uint64_t objMagic = objMagicValue;
-    static const zel_handle_type_t handleType = ZEL_HANDLE_KERNEL;
-};
+struct _ze_kernel_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_KERNEL> {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_kernel_handle_t>);
 
 namespace NEO {
 class Device;

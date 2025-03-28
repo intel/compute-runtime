@@ -56,7 +56,7 @@ void globalDriverTeardown() {
             if (globalDriver != nullptr) {
 
                 if (globalDriver->pid == NEO::SysCalls::getCurrentProcessId()) {
-                    delete globalDriver;
+                    delete static_cast<BaseDriver *>(globalDriver);
                 }
                 globalDriver = nullptr;
             }
