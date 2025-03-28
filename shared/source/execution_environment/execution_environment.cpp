@@ -119,7 +119,7 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
 
             auto groupCount = gfxCoreHelper.getContextGroupContextsCount();
             if (rootDeviceEnvironment->osInterface && rootDeviceEnvironment->osInterface->getAggregatedProcessCount() > 1) {
-                groupCount = std::min(groupCount / rootDeviceEnvironment->osInterface->getAggregatedProcessCount(), 2u);
+                groupCount = std::max(groupCount / rootDeviceEnvironment->osInterface->getAggregatedProcessCount(), 2u);
             }
             numSecondaryContexts += numRegularEngines * groupCount;
             numSecondaryContexts += numHpEngines * groupCount;

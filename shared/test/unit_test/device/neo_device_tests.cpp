@@ -1747,6 +1747,8 @@ HWTEST_F(DeviceTests, givenDeviceWithCCSEngineAndAggregatedProcessesWhenDeviceIs
                 }
             }
         }
+        auto memoryManager = static_cast<MockMemoryManager *>(executionEnvironment->memoryManager.get());
+        EXPECT_GT(memoryManager->maxOsContextCount, memoryManager->latestContextId);
         executionEnvironment->memoryManager->reInitLatestContextId();
     }
     executionEnvironment->decRefInternal();
