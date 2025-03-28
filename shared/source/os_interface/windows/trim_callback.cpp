@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,6 +106,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
     }
 
     if (flags.TrimToBudget) {
+        auto csrLock = csr->obtainUniqueOwnership();
         auto lock = this->acquireLock();
         trimResidencyToBudget(bytes);
     }

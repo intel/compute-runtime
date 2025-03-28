@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -746,6 +746,15 @@ TEST_F(WddmResidencyControllerLockTest, givenTrimToBudgetWhenTrimmingResidencyTh
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
     EXPECT_EQ(1u, residencyController->acquireLockCallCount);
+}
+
+HWTEST_F(WddmResidencyControllerLockTest, givenTrimToBudgetWhenTrimmingToBudgetThenLockCsr) {
+    D3DKMT_TRIMNOTIFICATION trimNotification = {0};
+    trimNotification.Flags.TrimToBudget = 1;
+    trimNotification.NumBytesToTrim = 0;
+
+    residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    EXPECT_EQ(1u, static_cast<UltCommandStreamReceiver<FamilyType> *>(residencyController->csr)->recursiveLockCounter);
 }
 
 TEST_F(WddmResidencyControllerLockTest, givenPeriodicTrimAndTrimToBudgetWhenTrimmingResidencyThenLockTwice) {

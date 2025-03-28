@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 namespace NEO {
 class MockWddmResidencyController : public WddmResidencyController {
   public:
+    using WddmResidencyController::csr;
     using WddmResidencyController::lastTrimFenceValue;
     using WddmResidencyController::lock;
     using WddmResidencyController::trimCallbackHandle;
