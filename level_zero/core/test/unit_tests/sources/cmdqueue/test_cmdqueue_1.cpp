@@ -458,11 +458,12 @@ HWTEST2_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferT
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandQueueHwEstimateSizeTest : public MockCommandQueueHw<gfxCoreFamily> {
+    using CommandListExecutionContext = typename MockCommandQueueHwEstimateSizeTest<gfxCoreFamily>::CommandListExecutionContext;
 
     MockCommandQueueHwEstimateSizeTest(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
         : MockCommandQueueHw<gfxCoreFamily>(device, csr, desc) {}
 
-    ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize) override {
+    ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize, CommandListExecutionContext &ctx) override {
         requiredSizeCalled = requiredSize;
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }

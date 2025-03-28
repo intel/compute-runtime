@@ -1596,6 +1596,19 @@ HWTEST2_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularThe
     }
 }
 
+HWTEST2_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularCmdListThenDoNotConsumeQueueInternalLinearStream, MatchAny) {
+    auto immediateQueue = whiteboxCast(commandListImmediate->cmdQImmediate);
+
+    commandList->close();
+    auto cmdListHandle = commandList->toHandle();
+
+    auto usedBefore = immediateQueue->commandStream.getUsed();
+    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    auto usedAfter = immediateQueue->commandStream.getUsed();
+
+    EXPECT_EQ(usedBefore, usedAfter);
+}
+
 HWTEST2_F(ImmediateCommandListTest,
           givenImmediateCmdListWithPrimaryBatchBufferWhenAppendingRegularCmdListThenCorrectEpilogueCmdBufferIsUsed, MatchAny) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;

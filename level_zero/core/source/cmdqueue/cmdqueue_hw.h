@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,7 +152,7 @@ struct CommandQueueHw : public CommandQueueImp {
     inline size_t estimateLinearStreamSizeComplementary(CommandListExecutionContext &ctx,
                                                         ze_command_list_handle_t *phCommandLists,
                                                         uint32_t numCommandLists);
-    MOCKABLE_VIRTUAL ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize);
+    MOCKABLE_VIRTUAL ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize, CommandListExecutionContext &ctx);
     inline void getGlobalFenceAndMakeItResident();
     inline void getWorkPartitionAndMakeItResident();
     inline void getGlobalStatelessHeapAndMakeItResident(CommandListExecutionContext &ctx);

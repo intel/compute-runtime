@@ -162,7 +162,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     }
 
     NEO::LinearStream child(nullptr);
-    if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate); ret != ZE_RESULT_SUCCESS) {
+    if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate, ctx); ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
 
@@ -328,7 +328,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
 
     NEO::LinearStream child(nullptr);
-    if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate); ret != ZE_RESULT_SUCCESS) {
+    if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate, ctx); ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
 
@@ -497,7 +497,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     linearStreamSizeEstimate += NEO::EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
 
     NEO::LinearStream child(nullptr);
-    if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate); ret != ZE_RESULT_SUCCESS) {
+    if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate, ctx); ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
 
@@ -1027,7 +1027,10 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandQueueHw<gfxCoreFamily>::makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize) {
+ze_result_t CommandQueueHw<gfxCoreFamily>::makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize, CommandListExecutionContext &ctx) {
+    if (ctx.containsParentImmediateStream) {
+        return ZE_RESULT_SUCCESS;
+    }
 
     size_t alignedSize = alignUp<size_t>(requiredSize, this->minCmdBufferPtrAlign);
 
