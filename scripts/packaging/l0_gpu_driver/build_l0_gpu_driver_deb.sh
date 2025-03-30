@@ -130,6 +130,10 @@ EOF
         NEO_SKIP_UNIT_TESTS="TRUE"
         export NEO_DISABLE_BUILTINS_COMPILATION="TRUE"
     fi
+    if [ "${TARGET_ARCH}" == "riscv64" ]; then
+        NEO_SKIP_UNIT_TESTS="TRUE"
+        export NEO_DISABLE_BUILTINS_COMPILATION="TRUE"
+    fi
     export NEO_DISABLE_BUILTINS_COMPILATION
     export NEO_SKIP_UNIT_TESTS
 
