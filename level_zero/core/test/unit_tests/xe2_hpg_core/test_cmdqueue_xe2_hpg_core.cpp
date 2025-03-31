@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,10 @@ namespace ult {
 using CommandQueueCommandsXe2HpgCore = Test<DeviceFixture>;
 
 HWTEST2_F(CommandQueueCommandsXe2HpgCore, givenCommandQueueWhenExecutingCommandListsThenStateSystemMemFenceAddressCmdIsGenerated, IsXe2HpgCore) {
+    if (neoDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
+
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
