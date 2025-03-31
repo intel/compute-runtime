@@ -639,6 +639,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitEnable
     EXPECT_NE(itorPipeControl, cmdList.end());
     auto cmd = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*itorPipeControl);
     EXPECT_EQ(cmd->getDcFlushEnable(), mockCsr->getDcFlushSupport());
+    EXPECT_TRUE(cmd->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(cmd->getTextureCacheInvalidationEnable());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitEnabledAndBlockingFlagWhenFlushTaskThenTaskCountIsFlushed) {

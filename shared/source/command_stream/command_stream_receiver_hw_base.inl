@@ -1828,7 +1828,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::processBarrierWithPostSync(Linea
         }
     }
 
-    this->heapStorageRequiresRecyclingTag = false;
     epiloguePipeControlLocation = ptrOffset(commandStreamTask.getCpuBase(), commandStreamTask.getUsed());
 
     if ((dispatchFlags.outOfOrderExecutionAllowed || timestampPacketWriteEnabled) &&
@@ -1845,9 +1844,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::processBarrierWithPostSync(Linea
     args.dcFlushEnable |= this->checkDcFlushRequiredForDcMitigationAndReset();
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
-    args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
+    args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush || this->heapStorageRequiresRecyclingTag;
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
-    args.stateCacheInvalidationEnable = dispatchFlags.stateCacheInvalidation;
+    args.stateCacheInvalidationEnable |= dispatchFlags.stateCacheInvalidation || this->heapStorageRequiresRecyclingTag;
+    this->heapStorageRequiresRecyclingTag = false;
 
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         commandStreamTask,
