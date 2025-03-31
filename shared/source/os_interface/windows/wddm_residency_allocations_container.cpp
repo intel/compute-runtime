@@ -80,7 +80,7 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(c
         resourceHandles.push_back(handles[i]);
     }
     lock.unlock();
-    wddm->waitOnPagingFenceFromCpu(forcePagingFence);
+    wddm->waitOnPagingFenceFromCpu(false);
     return MemoryOperationsStatus::success;
 }
 
