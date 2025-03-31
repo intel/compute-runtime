@@ -60,6 +60,10 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSuppor
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
+LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckDirectSubmissionSupportedThenFalseIsReturned) {
+    EXPECT_FALSE(productHelper->isDirectSubmissionSupported(releaseHelper));
+}
+
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
     EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
 }
