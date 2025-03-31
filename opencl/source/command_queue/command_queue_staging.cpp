@@ -54,8 +54,10 @@ cl_int CommandQueue::enqueueStagingImageTransfer(cl_command_type commandType, Im
 
     bool isSingleTransfer = false;
     ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
-        auto isFirstTransfer = (globalOrigin[1] == origin[1]);
-        auto isLastTransfer = (globalOrigin[1] + globalRegion[1] == origin[1] + region[1]);
+        auto isFirstTransfer = (globalOrigin[1] == origin[1] && globalOrigin[2] == origin[2]);
+
+        auto isLastTransfer = (globalOrigin[1] + globalRegion[1] == origin[1] + region[1]) &&
+                              (globalOrigin[2] + globalRegion[2] == origin[2] + region[2]);
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
         cl_int ret = 0;
@@ -69,9 +71,10 @@ cl_int CommandQueue::enqueueStagingImageTransfer(cl_command_type commandType, Im
     };
     auto bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     auto dstRowPitch = inputRowPitch ? inputRowPitch : globalRegion[0] * bytesPerPixel;
+    auto dstSlicePitch = inputSlicePitch ? inputSlicePitch : globalRegion[1] * dstRowPitch;
 
     auto stagingBufferManager = this->context->getStagingBufferManager();
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, dstRowPitch, bytesPerPixel, chunkWrite, &csr, isRead);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, dstRowPitch, dstSlicePitch, bytesPerPixel, chunkWrite, &csr, isRead);
 
     if (isRead && context->isProvidingPerformanceHints()) {
         auto hostPtrSize = calculateHostPtrSizeForImage(globalRegion, inputRowPitch, inputSlicePitch, image);

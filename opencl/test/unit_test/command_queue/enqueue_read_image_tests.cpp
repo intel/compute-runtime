@@ -1139,10 +1139,10 @@ HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledThenReturn
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
 }
 
-HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithoutRowPitchThenReturnSuccess) {
+HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithoutRowPitchNorSlicePitchThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     region[0] = MemoryConstants::megaByte / srcImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, 0u, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, 0u, 0u, ptr, nullptr);
 
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(4ul, mockCommandQueueHw.enqueueReadImageCounter);
@@ -1234,4 +1234,25 @@ HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithGpuHan
 
     EXPECT_EQ(res, CL_OUT_OF_RESOURCES);
     EXPECT_EQ(2ul, mockCommandQueueHw.enqueueReadImageCounter);
+}
+
+HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledFor3DImageThenReturnSuccess) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    imageDesc.num_mip_levels = 0;
+    imageDesc.image_width = 4;
+    imageDesc.image_height = 4;
+    imageDesc.image_depth = 64;
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {2, 2, 4};
+    auto image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(context, &imageDesc));
+
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, image.get(), false, origin, region, 4u, MemoryConstants::megaByte, ptr, nullptr);
+    EXPECT_EQ(res, CL_SUCCESS);
+
+    // (2, 2, 4) splitted into (2, 2, 2) * 2
+    EXPECT_EQ(2ul, mockCommandQueueHw.enqueueReadImageCounter);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
 }

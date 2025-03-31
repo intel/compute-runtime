@@ -866,10 +866,10 @@ HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledThenRetu
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
 }
 
-HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledWithoutRowPitchThenReturnSuccess) {
+HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledWithoutRowPitchNorSlicePitchThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     region[0] = MemoryConstants::megaByte / dstImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, 0u, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, 0u, 0u, ptr, nullptr);
 
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(4ul, mockCommandQueueHw.enqueueWriteImageCounter);
@@ -962,4 +962,25 @@ HWTEST_F(WriteImageStagingBufferTest, givenIsValidForStagingTransferWhenUserPtrI
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(mockCommandQueueHw.isValidForStagingTransfer(buffer, mappedPtr, buffer->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));
     delete buffer;
+}
+
+HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledFor3DImageThenReturnSuccess) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    imageDesc.num_mip_levels = 0;
+    imageDesc.image_width = 4;
+    imageDesc.image_height = 4;
+    imageDesc.image_depth = 64;
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {2, 2, 4};
+    auto image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(context, &imageDesc));
+
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, image.get(), false, origin, region, 4u, MemoryConstants::megaByte, ptr, nullptr);
+    EXPECT_EQ(res, CL_SUCCESS);
+
+    // (2, 2, 4) splitted into (2, 2, 2) * 2
+    EXPECT_EQ(2ul, mockCommandQueueHw.enqueueWriteImageCounter);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
 }
