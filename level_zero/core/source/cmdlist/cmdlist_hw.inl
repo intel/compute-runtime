@@ -1058,7 +1058,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    if (this->device->getNEODevice()->isAnyDirectSubmissionEnabled(false)) {
+    if (this->device->getNEODevice()->isAnyDirectSubmissionEnabled()) {
         NEO::PipeControlArgs pipeControlArgs;
         pipeControlArgs.textureCacheInvalidationEnable = true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), pipeControlArgs);
@@ -4097,7 +4097,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
             if (isImmediateType()) {
                 pipeControlArgs.constantCacheInvalidationEnable = getCsr(false)->isDirectSubmissionEnabled();
             } else {
-                pipeControlArgs.constantCacheInvalidationEnable = this->device->getNEODevice()->isAnyDirectSubmissionEnabled(false);
+                pipeControlArgs.constantCacheInvalidationEnable = this->device->getNEODevice()->isAnyDirectSubmissionEnabled();
             }
         }
 

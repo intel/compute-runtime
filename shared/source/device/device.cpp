@@ -1095,7 +1095,15 @@ void Device::stopDirectSubmissionAndWaitForCompletion() {
     }
 }
 
-bool Device::isAnyDirectSubmissionEnabled(bool light) const {
+bool Device::isAnyDirectSubmissionEnabled() const {
+    return this->isAnyDirectSubmissionEnabledImpl(false);
+}
+
+bool Device::isAnyDirectSubmissionLightEnabled() const {
+    return this->isAnyDirectSubmissionEnabledImpl(true);
+}
+
+bool Device::isAnyDirectSubmissionEnabledImpl(bool light) const {
     for (const auto &engine : allEngines) {
         auto enabled = light ? engine.osContext->isDirectSubmissionLightActive() : engine.commandStreamReceiver->isAnyDirectSubmissionEnabled();
         if (enabled) {

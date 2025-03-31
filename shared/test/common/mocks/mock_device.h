@@ -168,7 +168,7 @@ class MockDevice : public RootDevice {
         rtDispatchGlobalsForceAllocation = true;
     }
 
-    bool isAnyDirectSubmissionEnabled(bool light) const override {
+    bool isAnyDirectSubmissionEnabledImpl(bool light) const override {
         return anyDirectSubmissionEnabledReturnValue;
     }
 

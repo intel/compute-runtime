@@ -107,7 +107,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         auto &compilerProductHelper = device->getCompilerProductHelper();
         auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
 
-        bcsAllowed = !device->getDevice().isAnyDirectSubmissionEnabled(true) &&
+        bcsAllowed = !device->getDevice().isAnyDirectSubmissionLightEnabled() &&
                      productHelper.isBlitterFullySupported(hwInfo) &&
                      gfxCoreHelper.isSubDeviceEngineSupported(rootDeviceEnvironment, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
 

@@ -205,7 +205,8 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         return deviceUsmMemAllocPoolsManager.get();
     }
     MOCKABLE_VIRTUAL void stopDirectSubmissionAndWaitForCompletion();
-    MOCKABLE_VIRTUAL bool isAnyDirectSubmissionEnabled(bool light) const;
+    bool isAnyDirectSubmissionEnabled() const;
+    bool isAnyDirectSubmissionLightEnabled() const;
     bool isStateSipRequired() const {
         return (getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr) && getCompilerInterface();
     }
@@ -278,6 +279,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
     MOCKABLE_VIRTUAL size_t getMaxParameterSizeFromIGC() const;
+    MOCKABLE_VIRTUAL bool isAnyDirectSubmissionEnabledImpl(bool light) const;
     double getPercentOfGlobalMemoryAvailable() const;
     virtual void createBindlessHeapsHelper() {}
     bool createSubDevices();
