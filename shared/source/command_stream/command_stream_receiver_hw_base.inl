@@ -1383,6 +1383,15 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue() const 
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programExceptions(LinearStream &csr, Device &device) {
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForExceptions() const {
+    return 0u;
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission(bool blocking, bool needsLock) {
     if (this->isAnyDirectSubmissionEnabled()) {
         std::unique_lock<MutexType> lock;
@@ -2105,6 +2114,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitS
             flushData.contextOneTimeInit = true;
             flushData.estimatedSize += PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
         }
+        flushData.estimatedSize += this->getCmdSizeForExceptions();
     } else if (this->getPreemptionMode() == PreemptionMode::Initial) {
         flushData.contextOneTimeInit = true;
         flushData.estimatedSize += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(device.getPreemptionMode(), this->getPreemptionMode());
@@ -2137,6 +2147,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
                                                                device,
                                                                device.getDebugSurface());
             this->setCsrSurfaceProgrammed(true);
+            this->programExceptions(csrStream, device);
         } else if (this->getPreemptionMode() == PreemptionMode::Initial) {
             PreemptionHelper::programCmdStream<GfxFamily>(csrStream, device.getPreemptionMode(), this->getPreemptionMode(), this->getPreemptionAllocation());
             PreemptionHelper::programCsrBaseAddress<GfxFamily>(csrStream,

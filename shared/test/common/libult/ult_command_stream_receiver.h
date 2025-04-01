@@ -61,6 +61,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::dcFlushSupport;
     using BaseClass::directSubmission;
     using BaseClass::dshState;
+    using BaseClass::getCmdSizeForExceptions;
     using BaseClass::getCmdSizeForHeaplessPrologue;
     using BaseClass::getCmdSizeForPrologue;
     using BaseClass::getScratchPatchAddress;
@@ -84,6 +85,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::primaryCsr;
     using BaseClass::programActivePartitionConfig;
     using BaseClass::programEnginePrologue;
+    using BaseClass::programExceptions;
     using BaseClass::programPerDssBackedBuffer;
     using BaseClass::programPreamble;
     using BaseClass::programStallingCommandsForBarrier;
@@ -99,6 +101,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::activePartitions;
     using BaseClass::CommandStreamReceiver::activePartitionsConfig;
+    using BaseClass::CommandStreamReceiver::areExceptionsSent;
     using BaseClass::CommandStreamReceiver::baseWaitFunction;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
     using BaseClass::CommandStreamReceiver::checkForNewResources;
