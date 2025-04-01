@@ -475,6 +475,10 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsS
     EXPECT_TRUE(productHelper->isDisableScratchPagesRequiredForDebugger());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfPlatformSupportsSvmHeapReservationThenReturnTrue, IsXeHpcCore) {
+    EXPECT_TRUE(productHelper->isSvmHeapReservationSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckBlitEnqueuePreferredThenReturnTrue) {
     EXPECT_TRUE(productHelper->blitEnqueuePreferred(false));
 }

@@ -268,6 +268,7 @@ class ProductHelper {
     virtual bool isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const = 0;
     virtual void overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const = 0;
     virtual bool isMisalignedUserPtr2WayCoherent() const = 0;
+    virtual bool isSvmHeapReservationSupported() const = 0;
 
     virtual ~ProductHelper() = default;
 

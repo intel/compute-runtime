@@ -1035,6 +1035,11 @@ bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isSvmHeapReservationSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForQueues(bool heaplessEnabled) const {
     return false;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1559,7 +1559,7 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
 };
 
-TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartInSvmRangeWithSuccessfulAllocationThenSuccessReturned) {
+HWTEST2_F(ContextTest, whenCallingVirtualMemReserveWithPStartInSvmRangeWithSuccessfulAllocationThenSuccessReturned, IsNotMTL) {
     ze_context_handle_t hContext{};
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -1763,7 +1763,7 @@ TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryWithMultiplePhysica
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingVirtualMemoryReservationWhenOutOfMemoryThenOutOfMemoryReturned) {
+HWTEST2_F(ContextTest, whenCallingVirtualMemoryReservationWhenOutOfMemoryThenOutOfMemoryReturned, IsNotMTL) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -1955,7 +1955,7 @@ class MockCpuInfoOverrideVirtualAddressSize {
     uint32_t virtualAddressSizeSave = 0;
 };
 
-TEST_F(ContextTest, Given32BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected) {
+HWTEST2_F(ContextTest, Given32BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected, IsNotMTL) {
     MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(32);
 
     ze_context_handle_t hContext;
@@ -2000,7 +2000,7 @@ TEST_F(ContextTest, Given32BitCpuAddressWidthWhenCallingVirtualMemoryReservation
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected) {
+HWTEST2_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected, IsNotMTL) {
     MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(48);
 
     ze_context_handle_t hContext;
@@ -2044,7 +2044,7 @@ TEST_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservation
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, Given57BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected) {
+HWTEST2_F(ContextTest, Given57BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected, IsNotMTL) {
     MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(57);
 
     ze_context_handle_t hContext;

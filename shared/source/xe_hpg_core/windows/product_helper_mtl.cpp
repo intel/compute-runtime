@@ -14,4 +14,13 @@ constexpr static auto gfxProduct = IGFX_METEORLAKE;
 #include "shared/source/xe_hpg_core/xe_lpg/os_agnostic_product_helper_xe_lpg.inl"
 #include "shared/source/xe_hpg_core/xe_lpg/windows/product_helper_xe_lpg_windows.inl"
 
-template class NEO::ProductHelperHw<gfxProduct>;
+namespace NEO {
+
+template <>
+bool ProductHelperHw<gfxProduct>::isSvmHeapReservationSupported() const {
+    return false;
+}
+
+template class ProductHelperHw<gfxProduct>;
+
+} // namespace NEO

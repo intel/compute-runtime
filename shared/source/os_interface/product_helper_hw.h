@@ -205,6 +205,7 @@ class ProductHelperHw : public ProductHelper {
     bool isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const override;
     void overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const override;
     bool isMisalignedUserPtr2WayCoherent() const override;
+    bool isSvmHeapReservationSupported() const override;
 
     ~ProductHelperHw() override = default;
 

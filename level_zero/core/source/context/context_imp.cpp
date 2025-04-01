@@ -1067,6 +1067,13 @@ ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
     if (castToUint64(pStart) <= maxCpuVa) {
         reserveOnSvmHeap = true;
     }
+
+    bool platformSupportSvmHeapReservation = true;
+    for (auto &device : this->driverHandle->devices) {
+        auto &productHelper = device->getNEODevice()->getProductHelper();
+        platformSupportSvmHeapReservation &= productHelper.isSvmHeapReservationSupported();
+    }
+    reserveOnSvmHeap &= platformSupportSvmHeapReservation;
     reserveOnSvmHeap &= NEO::debugManager.flags.EnableReservingInSvmRange.get();
 
     NEO::AddressRange addressRange{};

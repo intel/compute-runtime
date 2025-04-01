@@ -93,4 +93,8 @@ HWTEST_F(ProductHelperTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoT
     productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
+
+HWTEST2_F(ProductHelperTestWindows, givenProductHelperWhenAskedIfPlatformSupportsSvmHeapReservationThenReturnFalseForMTL, IsMTL) {
+    EXPECT_FALSE(productHelper->isSvmHeapReservationSupported());
+}
 } // namespace NEO
