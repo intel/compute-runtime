@@ -35,6 +35,7 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/range.h
     ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/shared_pool_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/software_tags.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/software_tags.h
     ${CMAKE_CURRENT_SOURCE_DIR}/software_tags_manager.cpp
@@ -47,6 +48,8 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/time_measure_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/timer_util.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_pool_allocator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_pool_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wait_util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wait_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator.cpp

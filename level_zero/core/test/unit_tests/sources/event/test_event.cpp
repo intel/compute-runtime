@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -123,9 +124,15 @@ struct EventPoolFailTests : public ::testing::Test {
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<DriverHandleImp>();
         driverHandle->initialize(std::move(devices));
-        prevMemoryManager = driverHandle->getMemoryManager();
+
+        prevMemoryManagerDriver = driverHandle->getMemoryManager();
+        prevMemoryManagerExecEnv = neoDevice->executionEnvironment->memoryManager.release();
+
         currMemoryManager = new MemoryManagerEventPoolFailMock(*neoDevice->executionEnvironment);
+
         driverHandle->setMemoryManager(currMemoryManager);
+        neoDevice->executionEnvironment->memoryManager.reset(currMemoryManager);
+
         device = driverHandle->devices[0];
 
         context = std::make_unique<ContextImp>(driverHandle.get());
@@ -137,11 +144,19 @@ struct EventPoolFailTests : public ::testing::Test {
     }
 
     void TearDown() override {
-        driverHandle->setMemoryManager(prevMemoryManager);
+        driverHandle->setMemoryManager(prevMemoryManagerDriver);
+
+        neoDevice->executionEnvironment->memoryManager.release();
+        neoDevice->executionEnvironment->memoryManager.reset(prevMemoryManagerExecEnv);
+
         delete currMemoryManager;
     }
-    NEO::MemoryManager *prevMemoryManager = nullptr;
+
+    NEO::MemoryManager *prevMemoryManagerDriver = nullptr;
+    NEO::MemoryManager *prevMemoryManagerExecEnv = nullptr;
+
     NEO::MemoryManager *currMemoryManager = nullptr;
+
     std::unique_ptr<DriverHandleImp> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
@@ -153,6 +168,21 @@ TEST_F(EventPoolFailTests, whenCreatingEventPoolAndAllocationFailsThenOutOfDevic
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
         nullptr,
         ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        1};
+
+    ze_event_pool_handle_t eventPool = {};
+    ze_result_t res = context->createEventPool(&eventPoolDesc, 0, nullptr, &eventPool);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+}
+
+TEST_F(EventPoolFailTests, givenEnabledTimestampPoolAllocatorWhenCreatingEventPoolAndAllocationFailsThenOutOfDeviceMemoryIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(1);
+
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
         1};
 
     ze_event_pool_handle_t eventPool = {};
@@ -373,6 +403,34 @@ TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
     }
     eventPool->destroy();
 }
+
+TEST_F(EventPoolCreate, GivenEnabledTimestampPoolAllocatorWhenCreatingEventPoolWithIpcFlagThenTimestampPoolAllocatorIsNotUsed) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(1);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+
+    {
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_IPC;
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, eventPool);
+
+        EXPECT_FALSE(driverHandle->devices[0]->getNEODevice()->getDeviceTimestampPoolAllocator().isPoolBuffer(eventPool->getAllocation().getDefaultGraphicsAllocation()));
+    }
+    {
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, eventPool);
+
+        EXPECT_TRUE(driverHandle->devices[0]->getNEODevice()->getDeviceTimestampPoolAllocator().isPoolBuffer(eventPool->getAllocation().getDefaultGraphicsAllocation()));
+    }
+}
+
 struct EventPoolIpcMockGraphicsAllocation : public NEO::MockGraphicsAllocation {
     using NEO::MockGraphicsAllocation::MockGraphicsAllocation;
 
@@ -1611,6 +1669,190 @@ HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseCon
     EXPECT_TRUE(event->isUsingContextEndOffset());
 
     event->destroy();
+}
+
+template <typename GfxFamily>
+struct MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw : L0::L0GfxCoreHelperHw<GfxFamily> {
+    bool alwaysAllocateEventInLocalMem() const override { return true; }
+};
+
+HWTEST_F(EventCreate, GivenEnabledTimestampPoolAllocatorAndForcedEventAllocateInLocalMemoryWhenCreatingMultipleEventPoolsForSingleDeviceThenEventsUseSharedAllocationAndHaveUniqueAddresses) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(1);
+
+    MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType> mockL0GfxCoreHelper{};
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper));
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+
+    ASSERT_TRUE(device->getNEODevice()->getDeviceTimestampPoolAllocator().isEnabled());
+
+    ze_device_handle_t devices[] = {device->toHandle()};
+
+    std::vector<std::unique_ptr<L0::EventPool>> eventPools;
+    std::vector<std::unique_ptr<Event>> events;
+    std::set<uint64_t> gpuAddresses;
+
+    constexpr size_t numEventPools = 5;
+    constexpr size_t numEventsInPool = 2;
+    constexpr size_t numEvents = numEventPools * numEventsInPool;
+
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        numEventsInPool};
+
+    ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        0,
+        ZE_EVENT_SCOPE_FLAG_DEVICE,
+        ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    for (size_t i = 0; i < numEventPools; i++) {
+        eventPools.emplace_back(EventPool::create(driverHandle.get(), context, 1, devices, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, eventPools[i]);
+
+        for (size_t j = 0; j < numEventsInPool; j++) {
+            eventDesc.index = static_cast<uint32_t>(j);
+            events.emplace_back(static_cast<Event *>(getHelper<L0GfxCoreHelper>().createEvent(eventPools[i].get(), &eventDesc, device)));
+            EXPECT_NE(nullptr, events.back());
+        }
+    }
+
+    const auto expectedSharedAllocation = events[0]->getAllocation(device);
+    EXPECT_TRUE(device->getNEODevice()->getDeviceTimestampPoolAllocator().isPoolBuffer(expectedSharedAllocation));
+
+    for (auto &event : events) {
+        EXPECT_EQ(expectedSharedAllocation, event->getAllocation(device));
+
+        uint64_t gpuAddress = event->getGpuAddress(device);
+        auto [iterator, wasInserted] = gpuAddresses.insert(gpuAddress);
+        EXPECT_TRUE(wasInserted) << "Duplicate GPU address found: " << std::hex << "0x" << gpuAddress;
+    }
+
+    EXPECT_EQ(numEvents, gpuAddresses.size());
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+    l0GfxCoreHelperBackup.release();
+}
+
+HWTEST_F(EventPoolCreateMultiDevice, GivenEnabledTimestampPoolAllocatorAndForcedLocalMemoryWhenCreatingEventPoolsForTwoDevicesThenEventsShareAllocationWithinDeviceButNotBetweenDevices) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(1);
+
+    MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType> mockL0GfxCoreHelper0{};
+    MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType> mockL0GfxCoreHelper1{};
+
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup0(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper0));
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup1(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper1));
+
+    ASSERT_GE(driverHandle->devices.size(), 2u);
+
+    auto device0 = driverHandle->devices[0];
+    auto device1 = driverHandle->devices[1];
+    auto neoDevice0 = device0->getNEODevice();
+    auto neoDevice1 = device1->getNEODevice();
+
+    ASSERT_TRUE(neoDevice0->getDeviceTimestampPoolAllocator().isEnabled());
+    ASSERT_TRUE(neoDevice1->getDeviceTimestampPoolAllocator().isEnabled());
+
+    neoDevice0->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup0);
+    neoDevice1->getExecutionEnvironment()->rootDeviceEnvironments[1]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup1);
+
+    std::vector<std::unique_ptr<L0::EventPool>> eventPoolsDevice0;
+    std::vector<std::unique_ptr<L0::EventPool>> eventPoolsDevice1;
+    std::vector<std::unique_ptr<Event>> eventsDevice0;
+    std::vector<std::unique_ptr<Event>> eventsDevice1;
+    std::set<uint64_t> gpuAddressesDevice0;
+    std::set<uint64_t> gpuAddressesDevice1;
+
+    constexpr size_t numEventPools = 3;
+    constexpr size_t numEventsInPool = 2;
+    constexpr size_t numEvents = numEventPools * numEventsInPool;
+
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        numEventsInPool};
+
+    ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        0,
+        ZE_EVENT_SCOPE_FLAG_DEVICE,
+        ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    auto &l0GfxCoreHelper = neoDevice0->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    // Create events for device0
+    ze_device_handle_t devices0[] = {device0->toHandle()};
+    for (size_t i = 0; i < numEventPools; i++) {
+        eventPoolsDevice0.emplace_back(EventPool::create(driverHandle.get(), context, 1, devices0, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, eventPoolsDevice0[i]);
+
+        for (size_t j = 0; j < numEventsInPool; j++) {
+            eventDesc.index = static_cast<uint32_t>(j);
+            eventsDevice0.emplace_back(static_cast<Event *>(l0GfxCoreHelper.createEvent(eventPoolsDevice0[i].get(), &eventDesc, device0)));
+            EXPECT_NE(nullptr, eventsDevice0.back());
+        }
+    }
+
+    // Create events for device1
+    ze_device_handle_t devices1[] = {device1->toHandle()};
+    for (size_t i = 0; i < numEventPools; i++) {
+        eventPoolsDevice1.emplace_back(EventPool::create(driverHandle.get(), context, 1, devices1, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, eventPoolsDevice1[i]);
+
+        for (size_t j = 0; j < numEventsInPool; j++) {
+            eventDesc.index = static_cast<uint32_t>(j);
+            eventsDevice1.emplace_back(static_cast<Event *>(l0GfxCoreHelper.createEvent(eventPoolsDevice1[i].get(), &eventDesc, device1)));
+            EXPECT_NE(nullptr, eventsDevice1.back());
+        }
+    }
+
+    // Verify allocations and GPU addresses for device0
+    const auto expectedSharedAllocationDevice0 = eventsDevice0[0]->getAllocation(device0);
+    EXPECT_TRUE(neoDevice0->getDeviceTimestampPoolAllocator().isPoolBuffer(expectedSharedAllocationDevice0));
+    EXPECT_FALSE(neoDevice1->getDeviceTimestampPoolAllocator().isPoolBuffer(expectedSharedAllocationDevice0));
+
+    for (auto &event : eventsDevice0) {
+        EXPECT_EQ(expectedSharedAllocationDevice0, event->getAllocation(device0));
+
+        uint64_t gpuAddress = event->getGpuAddress(device0);
+        auto [iterator, wasInserted] = gpuAddressesDevice0.insert(gpuAddress);
+        EXPECT_TRUE(wasInserted) << "Duplicate GPU address found for device0: " << std::hex << "0x" << gpuAddress;
+    }
+
+    // Verify allocations and GPU addresses for device1
+    const auto expectedSharedAllocationDevice1 = eventsDevice1[0]->getAllocation(device1);
+    EXPECT_TRUE(neoDevice1->getDeviceTimestampPoolAllocator().isPoolBuffer(expectedSharedAllocationDevice1));
+    EXPECT_FALSE(neoDevice0->getDeviceTimestampPoolAllocator().isPoolBuffer(expectedSharedAllocationDevice1));
+
+    for (auto &event : eventsDevice1) {
+        EXPECT_EQ(expectedSharedAllocationDevice1, event->getAllocation(device1));
+
+        uint64_t gpuAddress = event->getGpuAddress(device1);
+        auto [iterator, wasInserted] = gpuAddressesDevice1.insert(gpuAddress);
+        EXPECT_TRUE(wasInserted) << "Duplicate GPU address found for device1: " << std::hex << "0x" << gpuAddress;
+    }
+
+    EXPECT_NE(expectedSharedAllocationDevice0, expectedSharedAllocationDevice1);
+    EXPECT_EQ(numEvents, gpuAddressesDevice0.size());
+    EXPECT_EQ(numEvents, gpuAddressesDevice1.size());
+
+    neoDevice0->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup0);
+    neoDevice1->getExecutionEnvironment()->rootDeviceEnvironments[1]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup1);
+    l0GfxCoreHelperBackup0.release();
+    l0GfxCoreHelperBackup1.release();
 }
 
 using EventSynchronizeTest = Test<EventFixture<1, 0>>;
@@ -3853,6 +4095,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
 
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
     auto eventAllocation = event->getAllocation(device);
+    auto offsetInSharedAlloc = event->getOffsetInSharedAlloc();
 
     EXPECT_TRUE(eventAllocation->getAubInfo().writeMemoryOnly);
 
@@ -3868,7 +4111,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(sizeof(uint64_t) * expectedCallCount, ultCsr.writeMemoryParams.latestChunkSize);
-    EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
+    EXPECT_EQ(0u + offsetInSharedAlloc, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
     EXPECT_FALSE(eventAllocation->isTbxWritable(expectedBanks));
 
     auto status = event->hostSignal(false);
@@ -3879,7 +4122,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(event->getSinglePacketSize(), ultCsr.writeMemoryParams.latestChunkSize);
-    EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
+    EXPECT_EQ(0u + offsetInSharedAlloc, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
 
     EXPECT_FALSE(eventAllocation->isTbxWritable(expectedBanks));
 
@@ -3899,7 +4142,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(event->getSinglePacketSize(), ultCsr.writeMemoryParams.latestChunkSize);
-    EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
+    EXPECT_EQ(0u + offsetInSharedAlloc, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
 
     EXPECT_FALSE(eventAllocation->isTbxWritable(expectedBanks));
 

@@ -53,7 +53,8 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
 
     event->totalEventSize = eventDescriptor.totalEventSize;
     event->eventPoolOffset = eventDescriptor.index * event->totalEventSize;
-    event->hostAddressFromPool = ptrOffset(baseHostAddress, event->eventPoolOffset);
+    event->offsetInSharedAlloc = eventDescriptor.offsetInSharedAlloc;
+    event->hostAddressFromPool = ptrOffset(baseHostAddress, event->eventPoolOffset + event->offsetInSharedAlloc);
     event->signalScope = eventDescriptor.signalScope;
 
     if (NEO::debugManager.flags.ForceHostSignalScope.get() == 1) {
@@ -136,6 +137,10 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 
     if (eventPool->getCounterBasedFlags() != 0 && standaloneInOrderTimestampAllocationEnabled()) {
         eventDescriptor.eventPoolAllocation = nullptr;
+    }
+
+    if (eventPool->getSharedTimestampAllocation()) {
+        eventDescriptor.offsetInSharedAlloc = eventPool->getSharedTimestampAllocation()->getOffset();
     }
 
     ze_result_t result = ZE_RESULT_SUCCESS;

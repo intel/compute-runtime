@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/utilities/cpuintrinsics.h"
+#include "shared/source/utilities/timestamp_pool_allocator.h"
 #include "shared/source/utilities/wait_util.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -116,17 +117,30 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
     auto neoDevice = devices[0]->getNEODevice();
     if (this->isDeviceEventPoolAllocation) {
         this->isHostVisibleEventPoolAllocation = !(isEventPoolDeviceAllocationFlagSet());
-        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, neoDevice->getDeviceBitfield()};
-        allocationProperties.alignment = eventAlignment;
 
-        auto memoryManager = driver->getMemoryManager();
-        auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
-        if (graphicsAllocation) {
-            eventPoolAllocations->addAllocation(graphicsAllocation);
-            allocatedMemory = true;
-            if (isIpcPoolFlagSet()) {
-                uint64_t handle = 0;
-                this->isShareableEventMemory = (graphicsAllocation->peekInternalHandle(memoryManager, handle) == 0);
+        if (neoDevice->getDeviceTimestampPoolAllocator().isEnabled() &&
+            !isIpcPoolFlagSet()) {
+            auto sharedTsAlloc = neoDevice->getDeviceTimestampPoolAllocator().requestGraphicsAllocationForTimestamp(this->eventPoolSize);
+            if (sharedTsAlloc) {
+                this->sharedTimestampAllocation.reset(sharedTsAlloc);
+                eventPoolAllocations->addAllocation(this->sharedTimestampAllocation->getGraphicsAllocation());
+                allocatedMemory = true;
+            }
+        }
+
+        if (!allocatedMemory) {
+            NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, neoDevice->getDeviceBitfield()};
+            allocationProperties.alignment = eventAlignment;
+
+            auto memoryManager = driver->getMemoryManager();
+            auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
+            if (graphicsAllocation) {
+                eventPoolAllocations->addAllocation(graphicsAllocation);
+                allocatedMemory = true;
+                if (isIpcPoolFlagSet()) {
+                    uint64_t handle = 0;
+                    this->isShareableEventMemory = (graphicsAllocation->peekInternalHandle(memoryManager, handle) == 0);
+                }
             }
         }
     } else {
@@ -156,9 +170,16 @@ EventPool::~EventPool() {
     if (eventPoolAllocations) {
         auto graphicsAllocations = eventPoolAllocations->getGraphicsAllocations();
         auto memoryManager = devices[0]->getDriverHandle()->getMemoryManager();
+        auto sharedTsAlloc = this->sharedTimestampAllocation ? this->sharedTimestampAllocation->getGraphicsAllocation() : nullptr;
         for (auto gpuAllocation : graphicsAllocations) {
-            memoryManager->freeGraphicsMemory(gpuAllocation);
+            if (gpuAllocation != sharedTsAlloc) {
+                memoryManager->freeGraphicsMemory(gpuAllocation);
+            }
         }
+    }
+    if (this->sharedTimestampAllocation) {
+        auto neoDevice = devices[0]->getNEODevice();
+        neoDevice->getDeviceTimestampPoolAllocator().freeSharedTimestampAllocation(this->sharedTimestampAllocation.release());
     }
 }
 
@@ -555,7 +576,7 @@ uint64_t Event::getGpuAddress(Device *device) const {
     if (!inOrderTimestampNode.empty()) {
         return inOrderTimestampNode.back()->getGpuAddress();
     }
-    return getAllocation(device)->getGpuAddress() + this->eventPoolOffset;
+    return getAllocation(device)->getGpuAddress() + this->eventPoolOffset + this->offsetInSharedAlloc;
 }
 
 void *Event::getHostAddress() const {

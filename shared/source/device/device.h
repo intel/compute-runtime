@@ -18,6 +18,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/source/utilities/reference_tracked_object.h"
+#include "shared/source/utilities/timestamp_pool_allocator.h"
 
 #include <array>
 #include <mutex>
@@ -201,6 +202,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     ISAPoolAllocator &getIsaPoolAllocator() {
         return isaPoolAllocator;
     }
+    TimestampPoolAllocator &getDeviceTimestampPoolAllocator() {
+        return deviceTimestampPoolAllocator;
+    }
     UsmMemAllocPoolsManager *getUsmMemAllocPoolsManager() {
         return deviceUsmMemAllocPoolsManager.get();
     }
@@ -325,6 +329,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     std::vector<RTDispatchGlobalsInfo *> rtDispatchGlobalsInfos;
 
     ISAPoolAllocator isaPoolAllocator;
+    TimestampPoolAllocator deviceTimestampPoolAllocator;
     std::unique_ptr<UsmMemAllocPoolsManager> deviceUsmMemAllocPoolsManager;
 
     std::atomic_uint32_t bufferPoolCount = 0u;

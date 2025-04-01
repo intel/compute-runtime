@@ -250,6 +250,8 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendSignalExte
 }
 
 HWTEST2_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendSignalExternalSemaphoresExpIsCalledThenErrorIsReturned, MatchAny) {
+    DebugManagerStateRestore restorer;
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto failMemoryManager = std::make_unique<FailMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
@@ -268,6 +270,8 @@ HWTEST2_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendSignalExtern
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
     cmdList.setCmdListContext(context);
+
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
 
     ze_external_semaphore_signal_params_ext_t signalParams = {};
     ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
@@ -400,6 +404,8 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendWaitExtern
 }
 
 HWTEST2_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned, MatchAny) {
+    DebugManagerStateRestore restorer;
+
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto failMemoryManager = std::make_unique<FailMemoryManager>();
     auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
@@ -418,6 +424,8 @@ HWTEST2_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendWaitExternal
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
     cmdList.setCmdListContext(context);
+
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
 
     ze_external_semaphore_wait_params_ext_t waitParams = {};
     ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
