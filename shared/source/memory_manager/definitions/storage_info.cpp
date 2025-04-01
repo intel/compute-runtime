@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,9 +29,11 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         return storageInfo;
     }
 
-    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo());
+    const auto *rootDeviceEnv{executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex].get()};
+
+    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(rootDeviceEnv->getHardwareInfo());
     const auto leastOccupiedBank = getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);
-    const auto subDevicesMask = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->deviceAffinityMask.getGenericSubDevicesMask().to_ulong();
+    const auto subDevicesMask = rootDeviceEnv->deviceAffinityMask.getGenericSubDevicesMask().to_ulong();
 
     const DeviceBitfield allTilesValue(properties.subDevicesBitfield.count() == 1 ? maxNBitValue(deviceCount) & subDevicesMask : properties.subDevicesBitfield);
     DeviceBitfield preferredTile;
@@ -50,7 +52,6 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, properties.allocationType,
                                           sizeof(storageInfo.resourceTag));
 
-    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getReleaseHelper();
     switch (properties.allocationType) {
     case AllocationType::constantSurface:
     case AllocationType::kernelIsa:
@@ -128,9 +129,6 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.colouringPolicy = colouringPolicy;
             storageInfo.colouringGranularity = granularity;
         }
-        if (!releaseHelper || releaseHelper->isLocalOnlyAllowed()) {
-            storageInfo.localOnlyRequired = true;
-        }
 
         if (properties.flags.shareable) {
             storageInfo.isLockable = false;
@@ -140,9 +138,12 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     default:
         break;
     }
-    if (properties.flags.preferCompressed && (!releaseHelper || releaseHelper->isLocalOnlyAllowed())) {
-        storageInfo.localOnlyRequired = true;
-    }
+
+    storageInfo.localOnlyRequired = getLocalOnlyRequired(properties.allocationType,
+                                                         rootDeviceEnv->getProductHelper(),
+                                                         rootDeviceEnv->getReleaseHelper(),
+                                                         properties.flags.preferCompressed);
+
     if (debugManager.flags.ForceMultiTileAllocPlacement.get()) {
         UNRECOVERABLE_IF(properties.allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & debugManager.flags.ForceMultiTileAllocPlacement.get()) {

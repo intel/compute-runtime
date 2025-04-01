@@ -3167,6 +3167,30 @@ HWTEST_F(MemoryAllocatorTest, givenUseLocalPreferredForCacheableBuffersAndCompre
     }
 }
 
+HWTEST_F(MemoryAllocatorTest, givenNonDefaultLocalMemoryAllocationModeAndLocalPreferredForCacheableBuffersWhenGettingAllocDataForDeviceUsmThenLocalOnlyRequiredIsNotOverriden) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseLocalPreferredForCacheableBuffers.set(1);
+
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
+    properties.flags.uncacheable = false;
+
+    MockMemoryManager mockMemoryManager;
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    mockMemoryManager.executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.get());
+
+    for (const auto debugKeyValue : std::to_array({1, 2})) {
+        mockMemoryManager.usmDeviceAllocationMode = toLocalMemAllocationMode(debugKeyValue);
+        releaseHelper->isLocalOnlyAllowedResult = (debugKeyValue == 1);
+        auto storageInfo{mockMemoryManager.createStorageInfoFromProperties(properties)};
+        bool expectedValue{storageInfo.localOnlyRequired};
+
+        AllocationData allocData;
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, storageInfo);
+        EXPECT_EQ(expectedValue, allocData.storageInfo.localOnlyRequired);
+    }
+    releaseHelper.release();
+}
+
 TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallbackToCopyOnCPU) {
     constexpr uint32_t dataSize = 16;
     uint8_t destData[dataSize] = {};

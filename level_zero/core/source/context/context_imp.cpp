@@ -305,16 +305,28 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
             this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
             usmPtr =
                 this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
-            if (usmPtr) {
-                *ptr = usmPtr;
-                return ZE_RESULT_SUCCESS;
-            }
         }
+    }
+    if (usmPtr == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
-    *ptr = usmPtr;
 
-    return ZE_RESULT_SUCCESS;
+    ze_result_t ret{ZE_RESULT_SUCCESS};
+
+    if (this->driverHandle->getMemoryManager()->isLocalOnlyAllocationMode()) {
+        auto *allocData{this->driverHandle->svmAllocsManager->getSVMAlloc(usmPtr)};
+        DEBUG_BREAK_IF(allocData == nullptr);
+        auto *gpuAllocation{allocData->gpuAllocations.getDefaultGraphicsAllocation()};
+        DEBUG_BREAK_IF(gpuAllocation == nullptr);
+
+        if (allocData->memoryType == InternalMemoryType::deviceUnifiedMemory && gpuAllocation->storageInfo.localOnlyRequired) {
+            ret = this->makeMemoryResident(hDevice, usmPtr, size);
+        }
+    }
+    if (ret == ZE_RESULT_SUCCESS) {
+        *ptr = usmPtr;
+    }
+    return ret;
 }
 
 ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,

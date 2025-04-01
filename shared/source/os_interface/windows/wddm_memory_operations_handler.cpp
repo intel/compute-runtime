@@ -85,7 +85,6 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::isResident(Device *device, G
 
 MemoryOperationsStatus WddmMemoryOperationsHandler::free(Device *device, GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isExplicitlyMadeResident()) {
-
         WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
 
         if (wddmAllocation.fragmentsStorage.fragmentCount > 0) {

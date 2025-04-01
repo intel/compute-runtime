@@ -1085,4 +1085,8 @@ bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const {
+    return defaultValue;
+}
 } // namespace NEO

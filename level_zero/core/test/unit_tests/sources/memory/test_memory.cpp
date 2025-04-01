@@ -2295,7 +2295,15 @@ struct SVMAllocsManagerRelaxedSizeMock : public NEO::SVMAllocsManager {
     void *createUnifiedMemoryAllocation(size_t size,
                                         const UnifiedMemoryProperties &svmProperties) override {
         validateMemoryProperties(svmProperties);
-        return alignedMalloc(4096u, 4096u);
+        auto retPtr{alignedMalloc(4096u, 4096u)};
+
+        SvmAllocationData allocData(svmProperties.getRootDeviceIndex());
+        mockUnifiedMemoryAllocation.setGpuPtr(reinterpret_cast<uint64_t>(retPtr));
+        mockUnifiedMemoryAllocation.setAllocationOffset(0U);
+        allocData.gpuAllocations.addAllocation(&mockUnifiedMemoryAllocation);
+        insertSVMAlloc(retPtr, allocData);
+
+        return retPtr;
     }
 
     void *createSharedUnifiedMemoryAllocation(size_t size,
@@ -2311,6 +2319,8 @@ struct SVMAllocsManagerRelaxedSizeMock : public NEO::SVMAllocsManager {
         return alignedMalloc(4096u, 4096u);
     }
     std::function<void(const UnifiedMemoryProperties &)> validateMemoryProperties = [](const UnifiedMemoryProperties &properties) -> void {};
+
+    MockGraphicsAllocation mockUnifiedMemoryAllocation{};
 };
 
 struct ContextRelaxedSizeMock : public ContextImp {

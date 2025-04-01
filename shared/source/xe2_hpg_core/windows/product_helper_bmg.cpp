@@ -11,6 +11,7 @@
 
 constexpr static auto gfxProduct = IGFX_BMG;
 
+#include "shared/source/helpers/windows/product_helper_dg2_and_later_discrete.inl"
 #include "shared/source/xe2_hpg_core/bmg/os_agnostic_product_helper_bmg.inl"
 #include "shared/source/xe2_hpg_core/os_agnostic_product_helper_xe2_hpg_core.inl"
 

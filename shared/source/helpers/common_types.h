@@ -121,6 +121,17 @@ enum class SynchronizedDispatchMode : uint32_t {
     limited = 2
 };
 
+enum class LocalMemAllocationMode : uint32_t {
+    hwDefault = 0U,
+    localOnly = 1U,
+    localPreferred = 2U,
+    count = 3U
+};
+constexpr inline auto toLocalMemAllocationMode(std::underlying_type_t<LocalMemAllocationMode> modeFlag) {
+    DEBUG_BREAK_IF(modeFlag >= toUnderlying(LocalMemAllocationMode::count));
+    return toEnum<LocalMemAllocationMode>(modeFlag);
+}
+
 namespace InterruptId {
 static constexpr uint32_t notUsed = std::numeric_limits<uint32_t>::max();
 }

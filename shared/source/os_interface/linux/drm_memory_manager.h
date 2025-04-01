@@ -198,6 +198,7 @@ class DrmMemoryManager : public MemoryManager {
     bool retrieveMmapOffsetForBufferObject(uint32_t rootDeviceIndex, BufferObject &bo, uint64_t flags, uint64_t &offset);
     BufferObject::BOType getBOTypeFromPatIndex(uint64_t patIndex, bool isPatIndexSupported) const;
     void setLocalMemBanksCount(uint32_t rootDeviceIndex);
+    bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const override;
 
     std::vector<BufferObject *> pinBBs;
     std::vector<void *> memoryForPinBBs;

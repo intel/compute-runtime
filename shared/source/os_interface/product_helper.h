@@ -52,6 +52,7 @@ enum class GfxMemoryAllocationMethod : uint32_t;
 enum class AllocationType;
 enum class CacheRegion : uint16_t;
 enum class CachePolicy : uint32_t;
+enum class LocalMemAllocationMode : uint32_t;
 
 using ProductHelperCreateFunctionType = std::unique_ptr<ProductHelper> (*)();
 extern ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT];
@@ -268,7 +269,7 @@ class ProductHelper {
     virtual bool isCompressionForbidden(const HardwareInfo &hwInfo) const = 0;
     virtual bool isExposingSubdevicesAllowed() const = 0;
     virtual bool useAdditionalBlitProperties() const = 0;
-
+    virtual bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const = 0;
     virtual ~ProductHelper() = default;
 
   protected:

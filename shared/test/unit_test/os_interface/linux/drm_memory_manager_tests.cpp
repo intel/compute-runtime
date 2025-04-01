@@ -18,6 +18,7 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
@@ -33,6 +34,7 @@
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
+// #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
@@ -5664,6 +5666,17 @@ TEST(DrmMemoryManagerSimpleTest, WhenDrmIsCreatedThenQueryPageFaultSupportIsCall
 
 using DrmMemoryManagerWithLocalMemoryTest = Test<DrmMemoryManagerWithLocalMemoryFixture>;
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithoutLocalMemoryWhenPreferCompressedIsSetThenLocalOnlyRequriedDeterminedByReleaseHelper) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+
+    AllocationProperties properties{1, true, 4096, AllocationType::unknown, false, 0b10};
+    properties.flags.preferCompressed = true;
+    auto storageInfo = memoryManager.createStorageInfoFromProperties(properties);
+
+    const auto *releaseHelper{executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper()};
+    EXPECT_EQ(storageInfo.localOnlyRequired, (!releaseHelper || releaseHelper->isLocalOnlyAllowed()));
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnAllocationInLocalMemoryThenReturnNullPtr) {
     DrmAllocation drmAllocation(rootDeviceIndex, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
 
@@ -8998,4 +9011,17 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenGfxPartitionWhenReleasedAndReiniti
     EXPECT_EQ(heapExternalDeviceFrontWindow, heapExternalDeviceFrontWindow2);
     EXPECT_EQ(heapInternalFrontWindow, heapInternalFrontWindow2);
     EXPECT_EQ(heapInternalDeviceFrontWindow, heapInternalDeviceFrontWindow2);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDeviceUsmAllocationWhenLocalOnlyFlagValueComputedThenProductHelperIsNotUsed) {
+    constexpr bool preferCompressed{false};
+    MockProductHelper productHelper{};
+
+    EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);
+
+    productHelper.getStorageInfoLocalOnlyFlagResult = false;
+    EXPECT_EQ(memoryManager->getLocalOnlyRequired(AllocationType::buffer, productHelper, nullptr, preferCompressed), true);
+    EXPECT_EQ(memoryManager->getLocalOnlyRequired(AllocationType::svmGpu, productHelper, nullptr, preferCompressed), true);
+
+    EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);
 }

@@ -12,6 +12,8 @@
 
 namespace NEO {
 
+enum class LocalMemAllocationMode : uint32_t;
+
 struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     using ProductHelper::setupPreemptionSurfaceSize;
     MockProductHelper() = default;
@@ -27,5 +29,6 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(isDeviceUsmPoolAllocatorSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(is2MBLocalMemAlignmentEnabled, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDisableScratchPagesRequiredForDebugger, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(getStorageInfoLocalOnlyFlag, bool, false, (LocalMemAllocationMode, bool));
 };
 } // namespace NEO

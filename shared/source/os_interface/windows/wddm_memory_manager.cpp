@@ -76,6 +76,7 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
         alignmentSelector.addCandidateAlignment(customAlignment, false, AlignmentSelector::anyWastage);
     }
     osMemory = OSMemory::create();
+    usmDeviceAllocationMode = toLocalMemAllocationMode(debugManager.flags.NEO_LOCAL_MEMORY_ALLOCATION_MODE.get());
 
     initialized = true;
 }

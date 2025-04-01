@@ -58,6 +58,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::getBOTypeFromPatIndex;
     using DrmMemoryManager::getDefaultDrmContextId;
     using DrmMemoryManager::getDrm;
+    using DrmMemoryManager::getLocalOnlyRequired;
     using DrmMemoryManager::getRootDeviceIndex;
     using DrmMemoryManager::getUserptrAlignment;
     using DrmMemoryManager::gfxPartitions;

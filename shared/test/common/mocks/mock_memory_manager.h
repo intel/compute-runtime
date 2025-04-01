@@ -39,6 +39,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::defaultEngineIndex;
     using MemoryManager::externalLocalMemoryUsageBankSelector;
     using MemoryManager::getAllocationData;
+    using MemoryManager::getLocalOnlyRequired;
     using MemoryManager::gfxPartitions;
     using MemoryManager::internalLocalMemoryUsageBankSelector;
     using MemoryManager::isNonSvmBuffer;

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/heap_assigner.h"
@@ -46,6 +47,7 @@ class HostPtrManager;
 class OsContext;
 class PrefetchManager;
 class HeapAllocator;
+class ReleaseHelper;
 
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
@@ -342,6 +344,8 @@ class MemoryManager {
 
     void initUsmReuseLimits();
     UsmReuseInfo usmReuseInfo;
+    LocalMemAllocationMode usmDeviceAllocationMode = LocalMemAllocationMode::hwDefault;
+    bool isLocalOnlyAllocationMode() const { return usmDeviceAllocationMode == LocalMemAllocationMode::localOnly; }
 
     bool shouldLimitAllocationsReuse() const {
         return getUsedSystemMemorySize() >= usmReuseInfo.getLimitAllocationsReuseThreshold();
@@ -387,6 +391,7 @@ class MemoryManager {
     void zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size);
     void updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex);
     virtual DeviceBitfield computeStorageInfoMemoryBanks(const AllocationProperties &properties, DeviceBitfield preferredBank, DeviceBitfield allBanks);
+    virtual bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const;
 
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;

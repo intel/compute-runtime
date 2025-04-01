@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -114,6 +115,29 @@ HWTEST2_F(ProductHelperTestWindows, givenE2ECompressionWhenConfiguringHwInfoWddm
     productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+}
+
+HWTEST_F(ProductHelperTestWindows, givenProductFamilyWhenLocalMemAllocationModeSupportedThenLocalOnlyFlagIsSetAccordingly) {
+    DebugManagerStateRestore restore;
+    EXPECT_EQ(0, debugManager.flags.NEO_LOCAL_MEMORY_ALLOCATION_MODE.get());
+
+    const auto productFamily{defaultHwInfo->platform.eProductFamily};
+    const bool isLocalMemModeKeySupported{productFamily == IGFX_DG2 || productFamily == IGFX_BMG};
+
+    EXPECT_TRUE(productHelper->getStorageInfoLocalOnlyFlag(LocalMemAllocationMode::hwDefault, true));
+    EXPECT_FALSE(productHelper->getStorageInfoLocalOnlyFlag(LocalMemAllocationMode::hwDefault, false));
+
+    if (isLocalMemModeKeySupported) {
+        EXPECT_TRUE(productHelper->getStorageInfoLocalOnlyFlag(LocalMemAllocationMode::localOnly, true));
+        EXPECT_TRUE(productHelper->getStorageInfoLocalOnlyFlag(LocalMemAllocationMode::localOnly, false));
+        EXPECT_FALSE(productHelper->getStorageInfoLocalOnlyFlag(LocalMemAllocationMode::localPreferred, true));
+        EXPECT_FALSE(productHelper->getStorageInfoLocalOnlyFlag(LocalMemAllocationMode::localPreferred, false));
+    } else {
+        EXPECT_TRUE(productHelper->getStorageInfoLocalOnlyFlag(LocalMemAllocationMode::localOnly, true));
+        EXPECT_FALSE(productHelper->getStorageInfoLocalOnlyFlag(LocalMemAllocationMode::localOnly, false));
+        EXPECT_TRUE(productHelper->getStorageInfoLocalOnlyFlag(LocalMemAllocationMode::localPreferred, true));
+        EXPECT_FALSE(productHelper->getStorageInfoLocalOnlyFlag(LocalMemAllocationMode::localPreferred, false));
+    }
 }
 
 } // namespace NEO

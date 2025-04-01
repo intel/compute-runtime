@@ -44,6 +44,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include <cstring>
 #include <memory>
@@ -3097,5 +3098,15 @@ bool DrmMemoryManager::reInitDeviceSpecificGfxPartition(uint32_t rootDeviceIndex
 
 void DrmMemoryManager::releaseDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) {
     gfxPartitions.at(rootDeviceIndex).reset();
+}
+
+bool DrmMemoryManager::getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const ReleaseHelper *releaseHelper, bool preferCompressed) const {
+    const bool enabledForRelease{!releaseHelper || releaseHelper->isLocalOnlyAllowed()};
+
+    if (preferCompressed || allocationType == AllocationType::buffer || allocationType == AllocationType::svmGpu) {
+        return enabledForRelease;
+    }
+
+    return false;
 }
 } // namespace NEO

@@ -700,6 +700,76 @@ TEST_F(ContextMakeMemoryResidentTests,
     context->freeMem(ptr);
 }
 
+TEST_F(ContextMakeMemoryResidentTests, givenDeviceUnifiedMemoryAndLocalOnlyAllocationModeThenCallMakeMemoryResidentImmediately) {
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+
+    auto *driverHandleImp{static_cast<DriverHandleImp *>(hostDriverHandle.get())};
+    driverHandleImp->memoryManager->usmDeviceAllocationMode = NEO::LocalMemAllocationMode::localOnly;
+    static_cast<MockMemoryManager *>(driverHandleImp->memoryManager)->returnFakeAllocation = true;
+
+    EXPECT_EQ(0U, mockMemoryInterface->makeResidentCalled);
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
+    ze_result_t res1 = context->allocDeviceMem(device->toHandle(),
+                                               &deviceDesc,
+                                               size,
+                                               0,
+                                               &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res1);
+
+    auto allocData{driverHandleImp->svmAllocsManager->getSVMAlloc(ptr)};
+    EXPECT_NE(allocData, nullptr);
+    const bool lmemAllocationModeSupported{allocData->gpuAllocations.getDefaultGraphicsAllocation()->storageInfo.localOnlyRequired};
+    EXPECT_EQ(mockMemoryInterface->makeResidentCalled, (lmemAllocationModeSupported ? 1U : 0U));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::outOfMemory;
+    ze_result_t res2 = context->allocDeviceMem(device->toHandle(),
+                                               &deviceDesc,
+                                               size,
+                                               0,
+                                               &ptr);
+    EXPECT_EQ(res2, (lmemAllocationModeSupported ? ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY : ZE_RESULT_SUCCESS));
+    EXPECT_EQ(mockMemoryInterface->makeResidentCalled, (lmemAllocationModeSupported ? 2U : 0U));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+TEST_F(ContextMakeMemoryResidentTests, givenNonDeviceUnifiedMemoryWhenAllocDeviceMemCalledThenMakeMemoryResidentIsNotImmediatelyCalled) {
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+
+    auto *driverHandleImp{static_cast<DriverHandleImp *>(hostDriverHandle.get())};
+    driverHandleImp->memoryManager->usmDeviceAllocationMode = NEO::LocalMemAllocationMode::localOnly;
+    static_cast<MockMemoryManager *>(driverHandleImp->memoryManager)->returnFakeAllocation = true;
+
+    auto *origSvmAllocsManager{driverHandleImp->svmAllocsManager};
+    auto fakeAllocationAddr{reinterpret_cast<void *>(0x1234)};
+
+    MockGraphicsAllocation mockUnifiedAllocation{};
+    SvmAllocationData allocData(0U);
+    allocData.gpuAllocations.addAllocation(&mockUnifiedAllocation);
+    allocData.memoryType = InternalMemoryType::notSpecified;
+
+    MockSVMAllocsManager mockSvmAllocsManager{driverHandleImp->memoryManager};
+    mockSvmAllocsManager.createUnifiedMemoryAllocationCallBase = false;
+    mockSvmAllocsManager.createUnifiedMemoryAllocationReturnValue = fakeAllocationAddr;
+    mockSvmAllocsManager.insertSVMAlloc(fakeAllocationAddr, allocData);
+    driverHandleImp->svmAllocsManager = &mockSvmAllocsManager;
+
+    EXPECT_EQ(0U, mockMemoryInterface->makeResidentCalled);
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
+    ze_result_t res1 = context->allocDeviceMem(device->toHandle(),
+                                               &deviceDesc,
+                                               size,
+                                               0,
+                                               &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res1);
+    EXPECT_EQ(mockMemoryInterface->makeResidentCalled, 0U);
+    driverHandleImp->svmAllocsManager = origSvmAllocsManager;
+}
+
 struct ContextMakeMemoryResidentAndMigrationTests : public ContextMakeMemoryResidentTests {
     struct MockResidentTestsPageFaultManager : public MockPageFaultManager {
         void moveAllocationToGpuDomain(void *ptr) override {

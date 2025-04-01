@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -745,4 +746,52 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageE
             }
         }
     }
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenBufferOrSvmGpuAllocationWhenLocalOnlyFlagValueComputedThenProductHelperIsUsed) {
+    constexpr bool preferCompressed{false};
+    MockProductHelper productHelper{};
+    MockReleaseHelper mockReleaseHelper{};
+
+    EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);
+
+    const auto isEnabledForRelease{[](ReleaseHelper *releaseHelper) { return (!releaseHelper || releaseHelper->isLocalOnlyAllowed()); }};
+
+    for (const auto allocationType : std::array{AllocationType::buffer, AllocationType::svmGpu}) {
+        productHelper.getStorageInfoLocalOnlyFlagResult = isEnabledForRelease(nullptr);
+        EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, nullptr, preferCompressed),
+                  productHelper.getStorageInfoLocalOnlyFlagResult);
+
+        for (const bool allowed : std::array{false, true}) {
+            mockReleaseHelper.isLocalOnlyAllowedResult = allowed;
+            productHelper.getStorageInfoLocalOnlyFlagResult = isEnabledForRelease(&mockReleaseHelper);
+            EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, &mockReleaseHelper, preferCompressed),
+                      productHelper.getStorageInfoLocalOnlyFlagResult);
+        }
+    }
+    EXPECT_EQ(6U, productHelper.getStorageInfoLocalOnlyFlagCalled);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenNeitherBufferNorSvmGpuAllocationWhenLocalOnlyFlagValueComputedThenProductHelperIsNotUsed) {
+    MockProductHelper productHelper{};
+    MockReleaseHelper mockReleaseHelper{};
+
+    EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);
+
+    const auto allocationType{AllocationType::unknown};
+
+    bool preferCompressed{true};
+    for (const bool allowed : std::array{false, true}) {
+        mockReleaseHelper.isLocalOnlyAllowedResult = allowed;
+        EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, &mockReleaseHelper, preferCompressed),
+                  mockReleaseHelper.isLocalOnlyAllowedResult);
+    }
+
+    preferCompressed = false;
+    for (const bool allowed : std::array{false, true}) {
+        mockReleaseHelper.isLocalOnlyAllowedResult = allowed;
+        EXPECT_EQ(memoryManager->getLocalOnlyRequired(allocationType, productHelper, &mockReleaseHelper, preferCompressed),
+                  false);
+    }
+    EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);
 }
