@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstring>
 #include <regex>
 #include <stddef.h>
 #include <string>
@@ -50,6 +51,11 @@ inline bool memoryZeroed(const void *mem, const size_t size) {
         }
     }
     return memoryZeroed;
+}
+
+inline bool memoryEqualsPointer(const void *mem, const uintptr_t expectedPointer) {
+    auto ptrToExpectedPointer = &expectedPointer;
+    return 0 == memcmp(mem, ptrToExpectedPointer, sizeof(uintptr_t));
 }
 
 inline bool hasSubstr(const std::string &str, const std::string &subStr) {

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/test.h"
@@ -419,7 +420,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentZeroMatchesSourceAd
     // Determine where the argument is
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(kernel->getKernelInfo(), 0u, pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 0), rootDeviceIndex);
     if (pArgument) {
-        EXPECT_EQ(addrToPtr(ptrOffset(srcBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), srcBuffer->getOffset())), *pArgument);
+        EXPECT_TRUE(memoryEqualsPointer(pArgument, static_cast<uintptr_t>(ptrOffset(srcBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), srcBuffer->getOffset()))));
     }
 }
 
@@ -449,7 +450,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     // Determine where the argument is
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(kernel->getKernelInfo(), 1u, pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 0), rootDeviceIndex);
     if (pArgument) {
-        EXPECT_EQ(addrToPtr(ptrOffset(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstBuffer->getOffset())), *pArgument);
+        EXPECT_TRUE(memoryEqualsPointer(pArgument, static_cast<uintptr_t>(ptrOffset(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstBuffer->getOffset()))));
     }
 }
 

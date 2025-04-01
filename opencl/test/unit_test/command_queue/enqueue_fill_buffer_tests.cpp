@@ -14,6 +14,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
@@ -319,7 +320,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
     // Determine where the argument is
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(kernel->getKernelInfo(), 0u, pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 0), rootDeviceIndex);
 
-    EXPECT_EQ(addrToPtr(ptrOffset(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset())), *pArgument);
+    if (pArgument) {
+        EXPECT_TRUE(memoryEqualsPointer(pArgument, static_cast<uintptr_t>(ptrOffset(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset()))));
+    }
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -351,7 +354,10 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
 
     // Determine where the argument is
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(kernel->getKernelInfo(), 2u, pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 0), rootDeviceIndex);
-    EXPECT_NE(nullptr, *pArgument);
+
+    if (pArgument) {
+        EXPECT_FALSE(memoryZeroed(pArgument, sizeof(void *)));
+    }
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
