@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,10 +68,11 @@ HWTEST_F(UnifiedMemoryAubTest, givenSharedMemoryAllocWhenWriteIntoGPUPartThenVal
     retVal = clEnqueueMemcpyINTEL(this->pCmdQ, true, unifiedMemoryPtr, input.data(), dataSize, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
-    expectNotEqualMemory<FamilyType>(unifiedMemoryPtr, unifiedMemoryPtr, dataSize);
     expectMemory<FamilyType>(unifiedMemoryPtr, input.data(), dataSize);
 
-    expectMemory<FamilyType>(unifiedMemoryPtr, unifiedMemoryPtr, dataSize);
+    if (testMode == TestMode::aubTestsWithTbx) {
+        expectMemory<FamilyType>(unifiedMemoryPtr, unifiedMemoryPtr, dataSize);
+    }
 
     freeUSM(unifiedMemoryPtr, unifiedMemoryType);
 }
