@@ -29,10 +29,6 @@ endmacro()
 
 add_subdirectories()
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-  list(APPEND __ocloc__options__ "-D DEBUG")
-endif()
-
 function(get_builtin_options core_type neo_arch mode_type)
   if("${neo_arch}" STREQUAL "x32")
     set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATELESS}" PARENT_SCOPE)
