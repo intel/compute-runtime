@@ -910,7 +910,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
 
     auto &compilerProductHelper = mockDevice->getCompilerProductHelper();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 
@@ -950,7 +950,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
 
     auto &compilerProductHelper = mockDevice->getCompilerProductHelper();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 

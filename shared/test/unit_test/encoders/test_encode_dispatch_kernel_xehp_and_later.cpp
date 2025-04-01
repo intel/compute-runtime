@@ -63,7 +63,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterTha
     auto &idd = cmd->getInterfaceDescriptor();
     auto &gfxcoreHelper = this->getHelper<GfxCoreHelper>();
     auto releaseHelper = ReleaseHelper::create(pDevice->getHardwareInfo().ipVersion);
-    bool isHeapless = pDevice->getCompilerProductHelper().isHeaplessModeEnabled();
+    bool isHeapless = pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo);
 
     uint32_t expectedValue = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
         gfxcoreHelper.computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize, releaseHelper.get(), isHeapless));
@@ -372,7 +372,7 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
     auto cmd = genCmdCast<COMPUTE_WALKER *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
-    if (pDevice->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    if (pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
         auto borderColor = reinterpret_cast<const SAMPLER_BORDER_COLOR_STATE *>(ptrOffset(dispatchInterface->getDynamicStateHeapData(), samplerTableBorderColorOffset));
         EncodeStates<FamilyType>::adjustSamplerStateBorderColor(samplerState, *borderColor);
     } else {

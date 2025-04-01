@@ -142,7 +142,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     testDrmCsr->useUserFenceWait = true;
     testDrmCsr->activePartitions = static_cast<uint32_t>(drmCtxSize);
 
-    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1 : 0;
+    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo) ? 1 : 0;
     auto tagPtr = const_cast<TagAddressType *>(testDrmCsr->getTagAddress());
     *tagPtr = hasFirstSubmission;
     uint64_t tagAddress = castToUint64(tagPtr);

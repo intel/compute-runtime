@@ -1301,7 +1301,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
 HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenWaitForCompletionFalse, MatchAny) {
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
 
     ze_command_queue_desc_t desc = {};
@@ -1356,7 +1356,7 @@ HWTEST2_F(ExecuteCommandListTests, givenSuccessfulSubmitBatchBufferThenExecuteCo
 HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenMVSDirtyFlagAndGSBADirtyFlagAreSetOnlyOnce, MatchAny) {
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (heaplessEnabled) {
         GTEST_SKIP();
     }
@@ -1757,7 +1757,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
 HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPrivateScratchUniquePerCmdListThenCFEIsProgrammedOncePerSubmission, IsHeapfulSupportedAndAtLeastXeHpCore) {
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (heaplessEnabled) {
         GTEST_SKIP();
     }

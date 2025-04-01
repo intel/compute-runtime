@@ -1804,7 +1804,7 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         debugPauseStateAddress = csr.getDebugPauseStateGPUAddress();
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+        auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
         heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
     }
 

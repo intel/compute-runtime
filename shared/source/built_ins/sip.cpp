@@ -125,7 +125,7 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
 SipKernelType SipKernel::getSipKernelType(Device &device) {
     if (device.getDebugger() != nullptr) {
         auto &compilerProductHelper = device.getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-        if (compilerProductHelper.isHeaplessModeEnabled()) {
+        if (compilerProductHelper.isHeaplessModeEnabled(device.getHardwareInfo())) {
             return SipKernelType::dbgHeapless;
         } else {
             return SipKernelType::dbgBindless;
@@ -309,7 +309,7 @@ const SipKernel &SipKernel::getSipKernelImpl(Device &device) {
 const SipKernel &SipKernel::getDebugSipKernel(Device &device) {
     SipKernelType debugSipType;
     auto &compilerProductHelper = device.getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(device.getHardwareInfo())) {
         debugSipType = SipKernelType::dbgHeapless;
     } else {
         debugSipType = SipKernelType::dbgBindless;
@@ -327,7 +327,7 @@ const SipKernel &SipKernel::getDebugSipKernel(Device &device) {
 const SipKernel &SipKernel::getDebugSipKernel(Device &device, OsContext *context) {
     SipKernelType debugSipType;
     auto &compilerProductHelper = device.getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(device.getHardwareInfo())) {
         debugSipType = SipKernelType::dbgHeapless;
     } else {
         debugSipType = SipKernelType::dbgBindless;

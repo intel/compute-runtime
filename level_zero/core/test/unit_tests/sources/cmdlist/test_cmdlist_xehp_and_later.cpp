@@ -44,7 +44,7 @@ using CommandListTests = Test<DeviceFixture>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed) {
 
     auto &compilerProductHelper = device->getNEODevice()->getCompilerProductHelper();
-    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (isHeaplessEnabled) {
         GTEST_SKIP();
     }
@@ -121,7 +121,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
 HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandIsEnabledThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed, IsAtLeastXeHpCore) {
 
     auto &compilerProductHelper = device->getNEODevice()->getCompilerProductHelper();
-    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (isHeaplessEnabled) {
         GTEST_SKIP();
     }
@@ -1727,7 +1727,7 @@ void find3dBtdCommand(LinearStream &cmdStream, size_t offset, size_t size, uint6
 HWTEST2_F(RayTracingCmdListTest,
           givenRayTracingKernelWhenRegularCmdListExecutedAndRegularExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
           RayTracingMatcher) {
-    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1800,7 +1800,7 @@ HWTEST2_F(RayTracingCmdListTest,
 HWTEST2_F(RayTracingCmdListTest,
           givenRayTracingKernelWhenRegularCmdListExecutedAndImmediateExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
           RayTracingMatcher) {
-    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1858,7 +1858,7 @@ HWTEST2_F(RayTracingCmdListTest,
 HWTEST2_F(RayTracingCmdListTest,
           givenRayTracingKernelWhenImmediateCmdListExecutedAndImmediateExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
           RayTracingMatcher) {
-    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1920,7 +1920,7 @@ HWTEST2_F(RayTracingCmdListTest,
 HWTEST2_F(RayTracingCmdListTest,
           givenRayTracingKernelWhenImmediateCmdListExecutedAndRegularExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
           RayTracingMatcher) {
-    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 

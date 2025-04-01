@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
         this->pDevice = pDevice;
         this->pClDevice = pDevice->getSpecializedDevice<ClDevice>();
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+        auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
         this->heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
     }
 

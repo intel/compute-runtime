@@ -617,7 +617,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySe
     }
 
     auto &compilerProductHelper = pClDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 
@@ -697,7 +697,7 @@ HEAPFUL_HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKern
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto &compilerProductHelper = this->pDevice->getCompilerProductHelper();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 

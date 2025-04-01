@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -267,7 +267,7 @@ HWTEST2_F(L0DebuggerPerContextAddressSpaceGlobalBindlessTest, givenDebuggingEnab
 HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesArePrinted, Gen12Plus) {
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (isHeaplessEnabled) {
         GTEST_SKIP();
     }
@@ -374,7 +374,7 @@ HWTEST2_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueue
 HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititalizedOrResetThenSSHAddressIsTracked, Gen12Plus) {
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (isHeaplessEnabled) {
         GTEST_SKIP();
     }

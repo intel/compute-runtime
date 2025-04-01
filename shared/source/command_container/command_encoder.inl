@@ -65,7 +65,8 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
     auto borderColor = reinterpret_cast<const SAMPLER_BORDER_COLOR_STATE *>(ptrOffset(fnDynamicStateHeap, borderColorOffset));
 
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    bool heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    bool heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
 
     if (!bindlessHeapHelper || (!bindlessHeapHelper->isGlobalDshSupported())) {
         borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
@@ -98,7 +99,6 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
     }
 
     auto &helper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto srcSamplerState = reinterpret_cast<const SAMPLER_STATE *>(ptrOffset(fnDynamicStateHeap, samplerStateOffset));
     SAMPLER_STATE state = {};
     for (uint32_t i = 0; i < samplerCount; i++) {

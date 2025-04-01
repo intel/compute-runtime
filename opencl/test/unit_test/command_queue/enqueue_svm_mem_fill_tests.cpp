@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
         ASSERT_NE(nullptr, svmAlloc);
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        this->useHeapless = compilerProductHelper.isHeaplessModeEnabled();
+        this->useHeapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     }
 
     void tearDown() {

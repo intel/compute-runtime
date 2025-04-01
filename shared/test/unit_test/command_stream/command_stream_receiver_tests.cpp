@@ -84,7 +84,7 @@ struct CommandStreamReceiverTest : public DeviceFixture,
         internalAllocationStorage = commandStreamReceiver->getInternalAllocationStorage();
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
         this->heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
     }
 
@@ -5110,7 +5110,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto stateSipCmd = hwParserCsr.getCommand<STATE_SIP>();
     ASSERT_NE(nullptr, stateSipCmd);
 
-    auto expectedAddress = compilerProductHelper.isHeaplessModeEnabled() ? sipAllocation->getGpuAddress() : sipAllocation->getGpuAddressToPatch();
+    auto expectedAddress = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo) ? sipAllocation->getGpuAddress() : sipAllocation->getGpuAddressToPatch();
     EXPECT_EQ(expectedAddress, stateSipCmd->getSystemInstructionPointer());
 
     EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());

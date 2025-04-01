@@ -110,7 +110,7 @@ void DrmMemoryManagerFixture::tearDown() {
     }
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto isHeapless = compilerProductHelper.isHeaplessModeEnabled();
+    auto isHeapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto isHeaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(isHeapless);
     if (isHeaplessStateInit) {
         mock->ioctlExpected.gemClose += 1;

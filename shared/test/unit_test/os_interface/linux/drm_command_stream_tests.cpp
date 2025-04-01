@@ -1140,7 +1140,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
         drmCtxIds[i] = 5u + i;
     }
 
-    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1 : 0;
+    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo) ? 1 : 0;
     FlushStamp handleToWait = 123;
     *testedCsr->getTagAddress() = hasFirstSubmission;
     testedCsr->waitForFlushStamp(handleToWait);
@@ -1291,7 +1291,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->ioctlCnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
 
-    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1 : 0;
+    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo) ? 1 : 0;
     FlushStamp handleToWait = 123;
     *testedCsr->getTagAddress() = hasFirstSubmission;
     testedCsr->waitForFlushStamp(handleToWait);

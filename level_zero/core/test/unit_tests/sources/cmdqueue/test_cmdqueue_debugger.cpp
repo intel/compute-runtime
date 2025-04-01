@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaPro
     debugManager.flags.EnableStateBaseAddressTracking.set(1);
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     if (heaplessEnabled) {
         GTEST_SKIP();
@@ -174,7 +174,7 @@ HWTEST2_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTim
     DebugManagerStateRestore restorer;
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto heplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
     if (heplessStateInitEnabled) {
         GTEST_SKIP();

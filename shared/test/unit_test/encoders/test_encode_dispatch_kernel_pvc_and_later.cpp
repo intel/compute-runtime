@@ -91,7 +91,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandCon
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (heaplessEnabled) {
         GTEST_SKIP();
     }

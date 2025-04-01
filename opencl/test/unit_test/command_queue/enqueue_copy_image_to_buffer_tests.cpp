@@ -221,7 +221,7 @@ HWTEST_P(MipMapCopyImageToBufferTest, GivenImageWithMipLevelNonZeroWhenCopyImage
     const auto &compilerProductHelper = pCmdQ->getDevice().getCompilerProductHelper();
 
     EBuiltInOps::Type builtInType = EBuiltInOps::copyImage3dToBuffer;
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
         builtInType = EBuiltInOps::copyImage3dToBufferHeapless;
     } else if (compilerProductHelper.isForceToStatelessRequired()) {
         builtInType = EBuiltInOps::copyImage3dToBufferStateless;

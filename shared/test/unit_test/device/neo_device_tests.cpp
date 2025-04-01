@@ -186,7 +186,7 @@ TEST(Device, WhenCreatingDeviceThenCapsInitilizedBeforeEnginesAreCreated) {
 using DeviceTest = Test<DeviceFixture>;
 
 TEST_F(DeviceTest, whenInitializeRayTracingIsCalledAndRtBackedBufferIsNullptrThenMemoryBackedBufferIsCreated) {
-    if (pDevice->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    if (pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 

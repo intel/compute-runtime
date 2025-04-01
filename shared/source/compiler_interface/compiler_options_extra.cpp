@@ -9,7 +9,7 @@
 
 namespace NEO {
 namespace CompilerOptions {
-void applyExtraInternalOptions(std::string &internalOptions, const CompilerProductHelper &compilerProductHelper, HeaplessMode heaplessMode) {
+void applyExtraInternalOptions(std::string &internalOptions, const HardwareInfo &hwInfo, const CompilerProductHelper &compilerProductHelper, HeaplessMode heaplessMode) {
 }
 
 } // namespace CompilerOptions

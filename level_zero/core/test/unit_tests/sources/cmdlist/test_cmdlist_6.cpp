@@ -112,7 +112,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     UnitTestSetter::disableHeaplessStateInit(restorer);
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto &productHelper = device->getProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};

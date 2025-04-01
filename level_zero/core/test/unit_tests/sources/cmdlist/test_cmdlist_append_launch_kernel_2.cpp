@@ -327,7 +327,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     groupCountStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimX);
     auto &compilerProductHelper = device->getCompilerProductHelper();
 
-    bool heapless = compilerProductHelper.isHeaplessModeEnabled();
+    bool heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(heapless);
 
     groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupXOffset - inlineDataSize);

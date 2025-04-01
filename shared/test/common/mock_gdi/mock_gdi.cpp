@@ -9,8 +9,11 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/sku_info/operations/sku_info_transfer.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include <map>
 
@@ -47,6 +50,7 @@ void mockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSystemInfo, uin
     if (pGTSystemInfo != NULL) {
         gAdapterInfo.SystemInfo = *(GT_SYSTEM_INFO *)pGTSystemInfo;
     }
+    NEO::SkuInfoTransfer::transferFtrTableForGmm(&gAdapterInfo.SkuTable, &NEO::defaultHwInfo->featureTable);
     gGpuAddressSpace = gpuAddressSpace;
     initGfxPartition();
 }

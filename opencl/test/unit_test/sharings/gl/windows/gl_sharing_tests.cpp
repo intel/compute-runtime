@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -935,7 +935,7 @@ TEST_F(GlSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledThenCopyOnGpu
         gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmHelper()), handleId);
     }
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
-    auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+    auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
 
     auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);

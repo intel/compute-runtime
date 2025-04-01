@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,7 @@ BMGTEST_F(BmgHwInfoTest, givenBoolWhenCallBmgHardwareInfoSetupThenFeatureTableAn
         EXPECT_EQ(setParamBool, featureTable.flags.ftrXe2PlusTiling);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3TransientDataFlush);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPml5Support);
+        EXPECT_FALSE(featureTable.flags.ftrHeaplessMode);
     }
 }
 

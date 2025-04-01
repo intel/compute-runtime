@@ -71,7 +71,7 @@ struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
         }
 
         auto &compilerProductHelper = device->getCompilerProductHelper();
-        heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     }
 
     DebugManagerStateRestore restore;
@@ -628,7 +628,7 @@ HWTEST2_F(XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqu
     debugManager.flags.OverrideSystolicInComputeWalker.set(true);
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (heaplessEnabled) {
         GTEST_SKIP();
     }

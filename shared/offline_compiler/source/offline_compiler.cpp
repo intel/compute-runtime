@@ -1223,7 +1223,7 @@ void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     }
 
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper->getCachingPolicyOptions(false));
-    CompilerOptions::applyExtraInternalOptions(internalOptions, *compilerProductHelper, this->heaplessMode);
+    CompilerOptions::applyExtraInternalOptions(internalOptions, hwInfo, *compilerProductHelper, this->heaplessMode);
 }
 
 void OfflineCompiler::parseDebugSettings() {

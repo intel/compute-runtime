@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -703,7 +703,7 @@ TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetV
     auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     auto &compilerProductHelper = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
 
-    bool heapless = compilerProductHelper.isHeaplessModeEnabled();
+    bool heapless = compilerProductHelper.isHeaplessModeEnabled(*drm->getRootDeviceEnvironment().getHardwareInfo());
 
     ASSERT_NE(drm, nullptr);
     if (drm->isVmBindAvailable()) {
@@ -763,7 +763,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
     std::string errStr = ::testing::internal::GetCapturedStderr();
 
     auto &compilerProductHelper = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-    bool heapless = compilerProductHelper.isHeaplessModeEnabled();
+    bool heapless = compilerProductHelper.isHeaplessModeEnabled(*drm->getRootDeviceEnvironment().getHardwareInfo());
     if (heapless) {
         EXPECT_FALSE(hasSubstr(errStr, std::string("WARNING: Debugging not supported\n")));
 

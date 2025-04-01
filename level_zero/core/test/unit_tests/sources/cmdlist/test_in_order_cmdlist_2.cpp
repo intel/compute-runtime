@@ -3463,7 +3463,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1u : 0u;
+    const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo) ? 1u : 0u;
 
     uint32_t copyData = 0;
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;
@@ -3593,7 +3593,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1u : 0u;
+    const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo) ? 1u : 0u;
 
     uint32_t copyData = 0;
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;
@@ -3646,7 +3646,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithR
 
     auto eventPool = createEvents<FamilyType>(1, true);
 
-    const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1u : 0u;
+    const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo) ? 1u : 0u;
 
     auto eventHandle = events[0]->toHandle();
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;

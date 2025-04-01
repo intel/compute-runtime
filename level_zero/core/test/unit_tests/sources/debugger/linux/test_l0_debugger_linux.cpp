@@ -210,7 +210,7 @@ TEST(L0DebuggerLinux, givenPrintDebugSettingsAndIncorrectSetupWhenInitializingDe
     result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
     output = testing::internal::GetCapturedStderr();
     auto drm = osInterface->getDriverModel()->as<NEO::Drm>();
-    if (drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled()) {
+    if (drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled(*defaultHwInfo)) {
         EXPECT_NE(std::string("Debugging not enabled. VmBind: 1, per-context VMs: 0\n"), output);
         EXPECT_TRUE(result);
 
@@ -237,7 +237,7 @@ TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsTh
     auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
     auto drm = osInterface->getDriverModel()->as<NEO::Drm>();
 
-    if (drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled()) {
+    if (drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled(*defaultHwInfo)) {
         EXPECT_TRUE(result);
         EXPECT_TRUE(drmMock->registerClassesCalled);
     } else {

@@ -79,14 +79,14 @@ class CompilerProductHelper {
     virtual std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const = 0;
     virtual StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const = 0;
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
-    virtual bool isHeaplessModeEnabled() const = 0;
+    virtual bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isHeaplessStateInitEnabled(bool heaplessModeEnabled) const = 0;
     virtual void getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const = 0;
     virtual void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const = 0;
     virtual void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const = 0;
     virtual void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const = 0;
     virtual bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const = 0;
-    virtual bool isForceBindlessRequired() const = 0;
+    virtual bool isForceBindlessRequired(const HardwareInfo &hwInfo) const = 0;
     virtual const char *getCustomIgcLibraryName() const = 0;
     virtual const char *getFinalizerLibraryName() const = 0;
 
@@ -133,14 +133,14 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const override;
     StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const override;
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
-    bool isHeaplessModeEnabled() const override;
+    bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const override;
     bool isHeaplessStateInitEnabled(bool heaplessModeEnabled) const override;
     void getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const override;
     void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const override;
     void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const override;
     void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const override;
     bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const override;
-    bool isForceBindlessRequired() const override;
+    bool isForceBindlessRequired(const HardwareInfo &hwInfo) const override;
     const char *getCustomIgcLibraryName() const override;
     const char *getFinalizerLibraryName() const override;
 

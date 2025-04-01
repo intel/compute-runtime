@@ -171,7 +171,7 @@ TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenRe
         debugManager.flags.EnableTimestampWaitForQueues.set(-1);
         const auto &productHelper = mockDevice->getProductHelper();
         const auto &compilerProductHelper = mockDevice->getCompilerProductHelper();
-        bool heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        bool heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
         auto enabled = productHelper.isTimestampWaitSupportedForQueues(heaplessEnabled);
 
@@ -2626,7 +2626,7 @@ HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingNonBlockedEnq
     setUpImpl<CsrType>();
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -2648,7 +2648,7 @@ HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDo
     setUpImpl<CsrType>();
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -2678,7 +2678,7 @@ HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingBlockedEnqueu
     setUpImpl<CsrType>();
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -2996,7 +2996,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     cl_command_queue_properties properties[5] = {};
 
     auto &compilerProductHelper = context.getDevice(0)->getCompilerProductHelper();
-    auto heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heaplessModeEnabled);
 
     OsContext &osContext = *context.getDevice(0)->getEngine(aub_stream::ENGINE_CCS, EngineUsage::regular).osContext;

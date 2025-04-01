@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ using DebuggerSingleAddressSpaceAub = Test<DebuggerSingleAddressSpaceAubFixture>
 using PlatformsSupportingSingleAddressSpace = MatchAny;
 
 HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked, PlatformsSupportingSingleAddressSpace) {
-    if (neoDevice->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    if (neoDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
     constexpr size_t bufferSize = MemoryConstants::pageSize;

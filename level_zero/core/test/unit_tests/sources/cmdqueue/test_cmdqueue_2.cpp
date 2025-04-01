@@ -763,7 +763,7 @@ struct DeviceWithDualStorage : Test<DeviceFixture> {
 HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAndBlitterDisabledWhenExecuteCmdListThenCfeStateOnceProgrammed, IsHeapfulSupportedAndAtLeastXeHpCore) {
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    if (compilerProductHelper.isHeaplessModeEnabled()) {
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 

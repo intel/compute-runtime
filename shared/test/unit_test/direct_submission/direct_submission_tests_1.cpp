@@ -850,7 +850,7 @@ HWTEST_F(DirectSubmissionTest,
         GTEST_SKIP();
     }
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled());
+    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
 
     DebugManagerStateRestore restore;
     debugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
@@ -931,7 +931,7 @@ HWTEST_F(DirectSubmissionTest,
     }
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled());
+    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
 
     uint32_t execCount = 5u;
     DebugManagerStateRestore restore;
@@ -1040,7 +1040,7 @@ HWTEST_F(DirectSubmissionTest,
     }
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled());
+    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
 
     DebugManagerStateRestore restore;
     debugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);

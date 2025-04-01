@@ -108,7 +108,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
         auto exportedFunctionHeapId = linkerInput->getExportedFunctionsSegmentId();
         buildInfos[rootDeviceIndex].exportedFunctionsSurface = kernelInfoArray[exportedFunctionHeapId]->getGraphicsAllocation();
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        if (compilerProductHelper.isHeaplessModeEnabled()) {
+        if (compilerProductHelper.isHeaplessModeEnabled(pDevice->getHardwareInfo())) {
             exportedFunctions.gpuAddress = static_cast<uintptr_t>(buildInfos[rootDeviceIndex].exportedFunctionsSurface->getGpuAddress());
         } else {
             exportedFunctions.gpuAddress = static_cast<uintptr_t>(buildInfos[rootDeviceIndex].exportedFunctionsSurface->getGpuAddressToPatch());

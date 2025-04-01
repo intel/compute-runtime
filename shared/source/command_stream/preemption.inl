@@ -49,7 +49,7 @@ void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
 
     auto &compilerProductHelper = device.getCompilerProductHelper();
-    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled();
+    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(device.getHardwareInfo());
 
     if (isMidThreadPreemption || debuggingEnabled) {
         GraphicsAllocation *sipAllocation = SipKernel::getSipKernel(device, context).getSipAllocation();

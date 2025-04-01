@@ -997,7 +997,7 @@ HEAPFUL_HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocation
         auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
         if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
             GTEST_SKIP();
         }

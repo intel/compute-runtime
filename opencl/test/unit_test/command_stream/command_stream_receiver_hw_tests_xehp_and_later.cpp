@@ -166,7 +166,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
         GTEST_SKIP();
     } else {
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        if (compilerProductHelper.isHeaplessModeEnabled()) {
+        if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
             GTEST_SKIP();
         }
 

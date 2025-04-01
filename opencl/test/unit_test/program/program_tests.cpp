@@ -1680,7 +1680,7 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
     using namespace testing;
     DebugManagerStateRestore restorer;
 
-    if (!pDevice->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    if (!pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
         debugManager.flags.UseBindlessMode.set(0);
         MockProgram programNoBindless(pContext, false, toClDeviceVector(*pClDevice));
         auto internalOptionsNoBindless = programNoBindless.getInternalOptions();

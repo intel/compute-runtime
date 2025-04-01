@@ -99,7 +99,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     registeredClients.reserve(16);
 
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
     this->evictionAllocations.reserve(2 * MemoryConstants::kiloByte);
 }
 

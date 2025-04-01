@@ -705,7 +705,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     }
 
     TaskCountType taskCountToWaitForL3Flush = 0;
-    if (((this->isCounterBased() && !this->inOrderTimestampNode.empty()) || this->mitigateHostVisibleSignal) && this->device->getProductHelper().isDcFlushAllowed() && !this->device->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    auto &hwInfo = this->device->getHwInfo();
+    if (((this->isCounterBased() && !this->inOrderTimestampNode.empty()) || this->mitigateHostVisibleSignal) && this->device->getProductHelper().isDcFlushAllowed() && !this->device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo)) {
         auto lock = this->csrs[0]->obtainUniqueOwnership();
         this->csrs[0]->flushTagUpdate();
         taskCountToWaitForL3Flush = this->csrs[0]->peekLatestFlushedTaskCount();
@@ -717,7 +718,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported();
 
     do {
-        if (this->isCounterBased() && !this->inOrderTimestampNode.empty() && !this->device->getCompilerProductHelper().isHeaplessModeEnabled()) {
+        if (this->isCounterBased() && !this->inOrderTimestampNode.empty() && !this->device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo)) {
             synchronizeTimestampCompletionWithTimeout();
             if (this->isTimestampPopulated()) {
                 inOrderExecInfo->setLastWaitedCounterValue(getInOrderExecSignalValueWithSubmissionCounter());

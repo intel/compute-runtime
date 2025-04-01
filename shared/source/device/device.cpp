@@ -563,7 +563,7 @@ bool Device::initializeEngines() {
         }
 
         auto &compilerProductHelper = this->getCompilerProductHelper();
-        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(this->getHardwareInfo());
 
         bool isHeaplessStateInit = engine.osContext->getIsPrimaryEngine() && compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
         bool initializeDevice = (engine.osContext->isPartOfContextGroup() || isHeaplessStateInit) && !firstSubmissionDone;
@@ -1181,7 +1181,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         dispatchGlobalsAsArray[7] = 1;
 
         if (releaseHelper) {
-            bool heaplessEnabled = this->getCompilerProductHelper().isHeaplessModeEnabled();
+            bool heaplessEnabled = this->getCompilerProductHelper().isHeaplessModeEnabled(this->getHardwareInfo());
             releaseHelper->adjustRTDispatchGlobals(static_cast<void *>(&dispatchGlobals), rtStacksPerDss, heaplessEnabled, maxBvhLevels);
         }
 

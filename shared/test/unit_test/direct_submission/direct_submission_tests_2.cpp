@@ -51,7 +51,7 @@ struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchB
         miMemFenceSupported = pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : productHelper.isGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo());
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-        heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled());
+        heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
     }
 
     template <typename FamilyType>

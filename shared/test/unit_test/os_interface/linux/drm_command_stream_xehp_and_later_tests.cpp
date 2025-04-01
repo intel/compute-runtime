@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,7 +129,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     EXPECT_NE(0u, postSyncOffset);
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+    auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::commandBuffer});

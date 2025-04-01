@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,10 +25,11 @@ bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
 
         const bool vmBindAvailable = drm->isVmBindAvailable();
         const bool perContextVms = drm->isPerContextVMRequired();
+        auto &hwInfo = *drm->getHardwareInfo();
         bool allowDebug = false;
 
         if (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::online) {
-            allowDebug = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled() ? true : perContextVms;
+            allowDebug = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled(hwInfo) ? true : perContextVms;
         } else if (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::offline) {
             allowDebug = true;
         }

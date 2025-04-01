@@ -75,7 +75,8 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 
     drm->queryPageFaultSupport();
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled() && !compilerProductHelper.isHeaplessModeEnabled()) {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled() && !compilerProductHelper.isHeaplessModeEnabled(hwInfo)) {
         if (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::offline) {
             drm->setPerContextVMRequired(false);
         } else {
@@ -94,7 +95,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     drm->configureGpuFaultCheckThreshold();
 
     if (!drm->isPerContextVMRequired()) {
-        if (!drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()))) {
+        if (!drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(&hwInfo))) {
             printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
         buffer = BufferHelper<>::create();
 
         auto &compilerProductHelper = this->pDevice->getCompilerProductHelper();
-        isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     }
 
     void tearDown() {

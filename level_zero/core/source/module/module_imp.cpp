@@ -158,7 +158,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
     bool isDebuggerActive = neoDevice.getDebugger() != nullptr;
     NEO::CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
 
-    NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
+    NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, device->getHwInfo(), compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
     return internalOptions;
 }
 
@@ -1091,7 +1091,7 @@ bool ModuleImp::linkBinary() {
     GraphicsAllocation *constantsForPatching = translationUnit->globalConstBuffer;
 
     auto &compilerProductHelper = this->device->getNEODevice()->getCompilerProductHelper();
-    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled();
+    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(this->device->getHwInfo());
 
     if (globalsForPatching != nullptr) {
         globals.gpuAddress = static_cast<uintptr_t>(globalsForPatching->getGpuAddress());
@@ -1453,7 +1453,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                     patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize));
 
                     uintptr_t isaAddressToPatch = 0;
-                    if (compilerProductHelper.isHeaplessModeEnabled()) {
+                    if (compilerProductHelper.isHeaplessModeEnabled(this->device->getHwInfo())) {
                         isaAddressToPatch = static_cast<uintptr_t>(kernelImmDatas.at(i)->getIsaGraphicsAllocation()->getGpuAddress() +
                                                                    kernelImmDatas.at(i)->getIsaOffsetInParentAllocation());
                     } else {

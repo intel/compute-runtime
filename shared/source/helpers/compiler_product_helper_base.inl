@@ -224,7 +224,7 @@ StackVec<OclCVersion, 5> CompilerProductHelperHw<gfxProduct>::getDeviceOpenCLCVe
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isHeaplessModeEnabled() const {
+bool CompilerProductHelperHw<gfxProduct>::isHeaplessModeEnabled(const HardwareInfo &hwInfo) const {
     return false;
 }
 
@@ -310,8 +310,8 @@ bool CompilerProductHelperHw<gfxProduct>::isBindlessAddressingDisabled(const Rel
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isForceBindlessRequired() const {
-    return this->isHeaplessModeEnabled();
+bool CompilerProductHelperHw<gfxProduct>::isForceBindlessRequired(const HardwareInfo &hwInfo) const {
+    return this->isHeaplessModeEnabled(hwInfo);
 }
 
 template <PRODUCT_FAMILY gfxProduct>

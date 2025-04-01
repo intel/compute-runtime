@@ -149,7 +149,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenCommandListThatRequiresDisabledEU
     };
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     if (heaplessEnabled) {
         GTEST_SKIP();

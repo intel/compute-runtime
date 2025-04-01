@@ -388,7 +388,7 @@ HWTEST_F(CompilerProductHelperFixture, givenProductHelperWhenGetAndOverrideHwIpV
 
 HWTEST2_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeaplessModeEnabledThenFalseIsReturned, IsAtMostXe3Core) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    EXPECT_FALSE(compilerProductHelper.isHeaplessModeEnabled());
+    EXPECT_FALSE(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
 }
 
 HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {

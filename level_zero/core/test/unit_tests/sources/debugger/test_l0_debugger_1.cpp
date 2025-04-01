@@ -58,7 +58,7 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIs
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipTypeThenDebugBindlessIsReturned) {
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
     if (heaplessEnabled) {
@@ -93,7 +93,7 @@ using L0DebuggerPerContextAddressSpaceTest = Test<L0DebuggerPerContextAddressSpa
 HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValidKernelDebugCommandsAreAdded) {
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
         GTEST_SKIP();
     }
@@ -169,7 +169,7 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenTwoComma
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
         GTEST_SKIP();
     }

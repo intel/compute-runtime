@@ -132,7 +132,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
             device->getDevice().getL0Debugger()->notifyCommandQueueCreated(&device->getDevice());
         }
 
-        this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
         this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(this->heaplessModeEnabled);
 
         this->isForceStateless = compilerProductHelper.isForceToStatelessRequired();

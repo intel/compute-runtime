@@ -87,7 +87,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
@@ -113,7 +113,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     mockHelper->globalBindlessDsh = true;
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
@@ -157,7 +157,7 @@ HWTEST2_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNo
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     SAMPLER_BORDER_COLOR_STATE borderColorState;
     borderColorState.init();

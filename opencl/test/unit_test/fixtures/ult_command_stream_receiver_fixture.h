@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ struct UltCommandStreamReceiverTest
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
-        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
         this->heaplessStateEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
     }
 

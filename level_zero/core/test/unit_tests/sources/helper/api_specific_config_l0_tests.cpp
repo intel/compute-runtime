@@ -114,7 +114,7 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfBindlessAddressingIsEnabledThenRetu
     EXPECT_TRUE(ApiSpecificConfig::getBindlessMode(mockDevice));
 
     mockAilConfigurationHelper.setDisableBindlessAddressing(true);
-    EXPECT_EQ(mockDevice.getCompilerProductHelper().isHeaplessModeEnabled(), ApiSpecificConfig::getBindlessMode(mockDevice));
+    EXPECT_EQ(mockDevice.getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo), ApiSpecificConfig::getBindlessMode(mockDevice));
 }
 
 } // namespace NEO

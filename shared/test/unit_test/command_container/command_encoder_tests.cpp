@@ -182,7 +182,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
         EXPECT_FALSE(inOrderExecInfo->isHostStorageDuplicated());
         EXPECT_FALSE(inOrderExecInfo->isRegularCmdList());
 
-        auto heaplessEnabled = mockDevice.getCompilerProductHelper().isHeaplessModeEnabled();
+        auto heaplessEnabled = mockDevice.getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo);
 
         if (heaplessEnabled) {
             EXPECT_TRUE(inOrderExecInfo->isAtomicDeviceSignalling());

@@ -938,7 +938,7 @@ HWTEST_F(InOrderCmdListTests, givenDebugFlagSetAndSingleTileCmdListWhenAskingFor
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto &compilerProductHelper = device->getNEODevice()->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     if (heaplessEnabled) {
         EXPECT_TRUE(immCmdList->inOrderAtomicSignalingEnabled);

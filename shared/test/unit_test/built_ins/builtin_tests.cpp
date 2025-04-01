@@ -174,7 +174,7 @@ HWTEST2_F(BuiltInSharedTest, GivenHeaplessModeEnabledWhenGetBuiltinResourceNames
 
     class MockCompilerProductHelper : public CompilerProductHelperHw<productFamily> {
       public:
-        bool isHeaplessModeEnabled() const override {
+        bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const override {
             return true;
         }
     };

@@ -182,7 +182,7 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto builtIn = compilerProductHelper.isHeaplessModeEnabled() ? EBuiltInOps::copyBufferToBufferStatelessHeapless : EBuiltInOps::copyBufferToBuffer;
+    auto builtIn = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo) ? EBuiltInOps::copyBufferToBufferStatelessHeapless : EBuiltInOps::copyBufferToBuffer;
     setUpImpl(builtIn);
     BufferDefaults::context = context;
     auto buffer = clUniquePtr(BufferHelper<>::create());
@@ -314,7 +314,7 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinP
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferRectCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto builtIn = compilerProductHelper.isHeaplessModeEnabled() ? EBuiltInOps::copyBufferRectStatelessHeapless : EBuiltInOps::copyBufferRect;
+    auto builtIn = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo) ? EBuiltInOps::copyBufferRectStatelessHeapless : EBuiltInOps::copyBufferRect;
     setUpImpl(builtIn);
 
     BufferDefaults::context = context;
@@ -1245,7 +1245,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithEventThe
 }
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingSubsequentBlitsThenGpgpuCommandStreamIsNotObtained) {
-    if (pDevice->getCompilerProductHelper().isHeaplessModeEnabled()) {
+    if (pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }
 

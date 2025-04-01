@@ -67,7 +67,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenP
     auto sipCommand = genCmdCast<STATE_SIP *>(cmdStream.getCpuBase());
     auto sipAddress = sipCommand->getSystemInstructionPointer();
 
-    auto expectedAddress = compilerProductHelper.isHeaplessModeEnabled() ? sipAllocation->getGpuAddress() : sipAllocation->getGpuAddressToPatch();
+    auto expectedAddress = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo) ? sipAllocation->getGpuAddress() : sipAllocation->getGpuAddressToPatch();
     EXPECT_EQ(expectedAddress, sipAddress);
 
     SipKernel::freeSipKernels(&device->getRootDeviceEnvironmentRef(), device->getMemoryManager());
@@ -107,6 +107,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     auto sipCommand = genCmdCast<STATE_SIP *>(cmdStream.getCpuBase());
     auto sipAddress = sipCommand->getSystemInstructionPointer();
 
-    auto expectedAddress = compilerProductHelper.isHeaplessModeEnabled() ? sipAllocation->getGpuAddress() : sipAllocation->getGpuAddressToPatch();
+    auto expectedAddress = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo) ? sipAllocation->getGpuAddress() : sipAllocation->getGpuAddressToPatch();
     EXPECT_EQ(expectedAddress, sipAddress);
 }

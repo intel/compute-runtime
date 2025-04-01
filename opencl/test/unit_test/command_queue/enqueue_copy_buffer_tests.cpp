@@ -243,7 +243,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), kernelDescriptor, rootDeviceIndex));
 
     auto crossThreadDatSize = kernel->getCrossThreadDataSize();
-    auto heaplessEnabled = pDevice->getCompilerProductHelper().isHeaplessModeEnabled();
+    auto heaplessEnabled = pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo);
     auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(heaplessEnabled);
     bool crossThreadDataFitsInInlineData = (crossThreadDatSize <= inlineDataSize);
 

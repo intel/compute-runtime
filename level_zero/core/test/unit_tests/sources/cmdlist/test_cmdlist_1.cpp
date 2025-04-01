@@ -1166,7 +1166,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     ultCsr->recordFlushedBatchBuffer = true;
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
 
     auto verifyFlags = [&ultCsr, useImmediateFlushTask](ze_result_t result, bool dispatchFlag, bool bbFlag) {
@@ -2709,7 +2709,7 @@ HWTEST_F(CommandListCreateTests, whenCommandListIsResetThenContainsStatelessUnca
 HWTEST_F(CommandListCreateTests, givenBindlessModeDisabledWhenCommandListsResetThenSbaReloaded) {
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
         GTEST_SKIP();

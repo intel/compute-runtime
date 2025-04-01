@@ -37,7 +37,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionEnabledWhenCommandLi
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
         GTEST_SKIP();
     }
@@ -73,7 +73,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionDisabledWhenCommandL
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
         GTEST_SKIP();
     }
@@ -273,7 +273,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
     if (heaplessStateInit) {
         GTEST_SKIP();
@@ -326,7 +326,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenEx
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
         GTEST_SKIP();
     }

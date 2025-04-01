@@ -322,7 +322,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndHostPointersWhenMemoryCopyRe
 
     auto pc = genCmdCast<PIPE_CONTROL *>(*genCmdList.rbegin());
 
-    if (!device->getProductHelper().isL3FlushAfterPostSyncRequired(device->getCompilerProductHelper().isHeaplessModeEnabled()) && NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
+    if (!device->getProductHelper().isL3FlushAfterPostSyncRequired(device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) && NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         EXPECT_NE(nullptr, pc);
         EXPECT_TRUE(pc->getDcFlushEnable());
     } else {
@@ -677,7 +677,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndHostPointersWhenMemoryCopyCa
     }
 
     uint32_t expectedDcFlushPipeControl =
-        !device->getProductHelper().isL3FlushAfterPostSyncRequired(device->getCompilerProductHelper().isHeaplessModeEnabled()) && NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()) ? 1 : 0;
+        !device->getProductHelper().isL3FlushAfterPostSyncRequired(device->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) && NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()) ? 1 : 0;
     EXPECT_EQ(expectedDcFlushPipeControl, dcFlushPipeControl);
 }
 

@@ -42,7 +42,7 @@ struct EnqueueMapBufferTest : public ClDeviceFixture,
         buffer = BufferHelper<BufferUseHostPtr<>>::create();
 
         auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
-        auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+        auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
         heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
     }
 
