@@ -826,9 +826,10 @@ HWTEST_F(EnqueueWriteImageTest, whenisValidForStagingTransferCalledThenReturnCor
 
     image.reset(Image2dHelper<>::create(context));
     EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, image->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));
+    pCmdQ->finish();
 
     image.reset(Image3dHelper<>::create(context));
-    EXPECT_FALSE(pCmdQ->isValidForStagingTransfer(image.get(), ptr, image->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));
+    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, image->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));
 }
 
 struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {

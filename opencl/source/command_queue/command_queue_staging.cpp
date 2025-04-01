@@ -201,6 +201,7 @@ bool CommandQueue::isValidForStagingTransfer(MemObj *memObj, const void *ptr, si
         return isValidForStaging && !this->bufferCpuCopyAllowed(castToObject<Buffer>(memObj), commandType, isBlocking, size, const_cast<void *>(ptr), 0, nullptr);
     case CL_MEM_OBJECT_IMAGE1D:
     case CL_MEM_OBJECT_IMAGE2D:
+    case CL_MEM_OBJECT_IMAGE3D:
         return isValidForStaging;
     default:
         return false;
