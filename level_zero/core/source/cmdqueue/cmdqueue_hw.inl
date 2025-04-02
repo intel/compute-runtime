@@ -143,7 +143,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     auto neoDevice = this->device->getNEODevice();
     this->csr->initializeDeviceWithFirstSubmission(*neoDevice);
 
-    this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence, parentImmediateCommandlistLinearStream);
+    ze_result_t retVal = this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence, parentImmediateCommandlistLinearStream);
+    if (retVal != ZE_RESULT_SUCCESS) {
+        return retVal;
+    }
     ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
     bool instructionCacheFlushRequired = this->csr->isInstructionCacheFlushRequired();
     bool stateCacheFlushRequired = neoDevice->getBindlessHeapsHelper() ? neoDevice->getBindlessHeapsHelper()->getStateDirtyForContext(this->csr->getOsContext().getContextId()) : false;
@@ -228,7 +231,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     if (!parentImmediateCommandlistLinearStream) {
         completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
     }
-    ze_result_t retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
+    retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
 
     if (!parentImmediateCommandlistLinearStream) {
         this->csr->getResidencyAllocations().clear();
@@ -288,7 +291,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     ze_fence_handle_t hFence,
     NEO::LinearStream *parentImmediateCommandlistLinearStream) {
 
-    this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence, parentImmediateCommandlistLinearStream);
+    ze_result_t retVal = this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence, parentImmediateCommandlistLinearStream);
+    if (retVal != ZE_RESULT_SUCCESS) {
+        return retVal;
+    }
     ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
 
     std::unique_lock<std::mutex> lockForIndirect;
@@ -453,7 +459,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     if (!parentImmediateCommandlistLinearStream) {
         completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
     }
-    ze_result_t retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
+    retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
 
     if (!parentImmediateCommandlistLinearStream) {
         this->csr->getResidencyAllocations().clear();
@@ -472,7 +478,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     ze_fence_handle_t hFence,
     NEO::LinearStream *parentImmediateCommandlistLinearStream) {
 
-    this->setupCmdListsAndContextParams(ctx, phCommandLists, numCommandLists, hFence, parentImmediateCommandlistLinearStream);
+    ze_result_t retVal = this->setupCmdListsAndContextParams(ctx, phCommandLists, numCommandLists, hFence, parentImmediateCommandlistLinearStream);
+    if (retVal != ZE_RESULT_SUCCESS) {
+        return retVal;
+    }
     ctx.isDirectSubmissionEnabled = this->csr->isBlitterDirectSubmissionEnabled();
 
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx);
@@ -541,7 +550,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     if (!parentImmediateCommandlistLinearStream) {
         completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
     }
-    ze_result_t retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
+    retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
 
     if (!parentImmediateCommandlistLinearStream) {
         this->csr->getResidencyAllocations().clear();
@@ -777,7 +786,7 @@ size_t CommandQueueHw<gfxCoreFamily>::computePreemptionSizeForCommandList(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
+ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
     CommandListExecutionContext &ctx,
     ze_command_list_handle_t *phCommandLists,
     uint32_t numCommandLists,
@@ -788,6 +797,9 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = static_cast<CommandListImp *>(CommandList::fromHandle(phCommandLists[i]));
+        if (!commandList->isClosed()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
         commandList->storeReferenceTsToMappedEvents(false);
         commandList->addRegularCmdListSubmissionCounter();
         commandList->patchInOrderCmds();
@@ -845,6 +857,8 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
     }
     ctx.isDispatchTaskCountPostSyncRequired = isDispatchTaskCountPostSyncRequired(hFence, ctx.containsAnyRegularCmdList,
                                                                                   ctx.containsParentImmediateStream);
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

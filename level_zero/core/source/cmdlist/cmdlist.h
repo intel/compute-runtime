@@ -410,6 +410,10 @@ struct CommandList : _ze_command_list_handle_t {
         return localDispatchSupport;
     }
 
+    bool isClosed() const {
+        return closedCmdList;
+    }
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
@@ -504,6 +508,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool localDispatchSupport = false;
     bool copyOperationOffloadEnabled = false;
     bool l3FlushAfterPostSyncRequired = false;
+    bool closedCmdList = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

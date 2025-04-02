@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -561,7 +561,8 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsed
     ze_command_list_handle_t commandLists[] = {
         CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
-    auto commandList = CommandList::fromHandle(commandLists[0]);
+    auto commandList = whiteboxCast(static_cast<L0::CommandListImp *>(CommandList::fromHandle(commandLists[0])));
+    commandList->closedCmdList = true;
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

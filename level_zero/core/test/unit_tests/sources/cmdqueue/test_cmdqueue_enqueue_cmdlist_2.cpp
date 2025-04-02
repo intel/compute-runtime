@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -916,6 +916,34 @@ HWTEST_F(CommandQueueExecuteCommandListsMultiDeviceTest, GivenDirtyFlagForContex
         commandList->destroy();
     }
 
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenRegularCommandListNotClosedWhenExecutingCommandListThenReturnError) {
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto engineGroupType = neoDevice->getGfxCoreHelper().getEngineGroupType(neoDevice->getDefaultEngine().getEngineType(),
+                                                                            neoDevice->getDefaultEngine().getEngineUsage(), neoDevice->getHardwareInfo());
+
+    auto commandList = CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_FALSE(commandList->isClosed());
+
+    auto commandListHandle = commandList->toHandle();
+
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+
+    commandList->close();
+    EXPECT_TRUE(commandList->isClosed());
+
+    commandList->reset();
+    EXPECT_FALSE(commandList->isClosed());
+
+    commandList->destroy();
     commandQueue->destroy();
 }
 

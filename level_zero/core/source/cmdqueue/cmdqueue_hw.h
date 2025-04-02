@@ -132,11 +132,11 @@ struct CommandQueueHw : public CommandQueueImp {
     inline size_t computePreemptionSizeForCommandList(CommandListExecutionContext &ctx,
                                                       CommandList *commandList,
                                                       bool &dirtyState);
-    inline void setupCmdListsAndContextParams(CommandListExecutionContext &ctx,
-                                              ze_command_list_handle_t *phCommandLists,
-                                              uint32_t numCommandLists,
-                                              ze_fence_handle_t hFence,
-                                              NEO::LinearStream *parentImmediateCommandlistLinearStream);
+    inline ze_result_t setupCmdListsAndContextParams(CommandListExecutionContext &ctx,
+                                                     ze_command_list_handle_t *phCommandLists,
+                                                     uint32_t numCommandLists,
+                                                     ze_fence_handle_t hFence,
+                                                     NEO::LinearStream *parentImmediateCommandlistLinearStream);
     MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList, bool containsParentImmediateStream) const;
     inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx);
     size_t estimateStreamSizeForExecuteCommandListsRegularHeapless(CommandListExecutionContext &ctx,

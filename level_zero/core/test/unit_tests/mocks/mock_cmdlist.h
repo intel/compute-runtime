@@ -48,6 +48,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendWriteKernelTimestamp;
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::clearCommandsToPatch;
+    using BaseClass::closedCmdList;
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;
@@ -189,6 +190,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::appendLaunchKernelWithParams;
     using BaseClass::appendMemoryCopyBlitRegion;
     using BaseClass::clearCommandsToPatch;
+    using BaseClass::closedCmdList;
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;
@@ -281,6 +283,7 @@ template <>
 struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass = ::L0::CommandListImp;
     using BaseClass::BaseClass;
+    using BaseClass::closedCmdList;
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;

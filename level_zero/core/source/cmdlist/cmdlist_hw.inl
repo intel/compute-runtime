@@ -153,6 +153,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
     latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     taskCountUpdateFenceRequired = false;
+    closedCmdList = false;
 
     this->inOrderPatchCmds.clear();
 
@@ -375,6 +376,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
     } else {
         NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferEnd(commandContainer);
     }
+    closedCmdList = true;
 
     return ZE_RESULT_SUCCESS;
 }

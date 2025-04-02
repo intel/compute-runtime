@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,9 @@ struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
 
         auto commandList = CommandList::fromHandle(commandLists[0]);
         this->heaplessStateInit = commandList->isHeaplessStateInitEnabled();
+        commandList->close();
+
+        CommandList::fromHandle(commandLists[1])->close();
     }
 
     void tearDown() {
@@ -92,11 +95,13 @@ struct MultiDeviceCommandQueueExecuteCommandListsFixture : public MultiDeviceFix
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         EXPECT_EQ(2u, CommandList::fromHandle(commandLists[0])->getPartitionCount());
+        CommandList::fromHandle(commandLists[0])->close();
 
         commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         EXPECT_EQ(2u, CommandList::fromHandle(commandLists[1])->getPartitionCount());
+        CommandList::fromHandle(commandLists[1])->close();
     }
 
     void tearDown() {
@@ -355,6 +360,9 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
     ASSERT_NE(nullptr, commandQueue);
     usedSpaceBefore = commandQueue->commandStream.getUsed();
 
+    CommandList::fromHandle(commandLists[0])->close();
+    CommandList::fromHandle(commandLists[1])->close();
+
     result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(2048u, neoDevice->getDefaultEngine().commandStreamReceiver->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
@@ -556,6 +564,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
     pCommandListWithCooperativeKernels->appendLaunchKernelWithParams(&kernel, threadGroupDimensions, nullptr, launchParams);
+    pCommandListWithCooperativeKernels->close();
     ze_command_list_handle_t commandListCooperative[] = {pCommandListWithCooperativeKernels->toHandle()};
     auto result = pCommandQueue->executeCommandLists(1, commandListCooperative, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -566,6 +575,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
 
     launchParams.isCooperative = false;
     pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, threadGroupDimensions, nullptr, launchParams);
+    pCommandListWithNonCooperativeKernels->close();
     ze_command_list_handle_t commandListNonCooperative[] = {pCommandListWithNonCooperativeKernels->toHandle()};
     result = pCommandQueue->executeCommandLists(1, commandListNonCooperative, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -593,9 +603,11 @@ void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest
 
     auto commandListDisabled = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     commandListDisabled->commandListPreemptionMode = NEO::PreemptionMode::Disabled;
+    commandListDisabled->close();
 
     auto commandListThreadGroup = CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     commandListThreadGroup->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
+    commandListThreadGroup->close();
 
     ze_command_list_handle_t commandLists[] = {commandListDisabled->toHandle(),
                                                commandListThreadGroup->toHandle(),
@@ -900,6 +912,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_TRUE(commandQueue->peekIsCopyOnlyCommandQueue());
 
+    commandList->close();
     zet_command_list_handle_t cmdListHandle = commandList->toHandle();
     returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -934,9 +947,11 @@ struct CommandQueueExecuteCommandListSWTagsTestsFixture : public DeviceFixture {
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
-        commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
+        auto cmdList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false);
+        commandLists[0] = cmdList->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        cmdList->close();
 
         ze_command_queue_desc_t desc = {};
         commandQueue = whiteboxCast(CommandQueue::create(productFamily,
@@ -1194,6 +1209,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenUpdateTaskCountFromWaitWhenExecut
     ASSERT_NE(nullptr, fence);
     ze_fence_handle_t fenceHandle = fence->toHandle();
 
+    commandList->close();
     zet_command_list_handle_t cmdListHandle = commandList->toHandle();
     returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, fenceHandle, false, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1248,6 +1264,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     ze_fence_handle_t fenceHandle = fence->toHandle();
 
     zet_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandList->close();
     returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, fenceHandle, false, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
