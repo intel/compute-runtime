@@ -98,6 +98,7 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
     if (this->ringStart) {
         this->stopRingBuffer(true);
     }
+    this->tagAddress = nullptr;
     if (this->isCompletionFenceSupported()) {
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto &drm = osContextLinux->getDrm();
@@ -120,7 +121,9 @@ TaskCountType *DrmDirectSubmission<GfxFamily, Dispatcher>::getCompletionValuePoi
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
-    this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
+    if (this->tagAddress) {
+        this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>

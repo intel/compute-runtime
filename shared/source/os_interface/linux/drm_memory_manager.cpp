@@ -1363,6 +1363,12 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
     }
     auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();
     for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
+        std::unique_lock<CommandStreamReceiver::MutexType> lock;
+        if (engine.osContext->isDirectSubmissionLightActive()) {
+            lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+            engine.commandStreamReceiver->stopDirectSubmission(true, false);
+        }
+
         auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
         memoryOperationsInterface->evictWithinOsContext(engine.osContext, *gfxAllocation);
     }
