@@ -47,7 +47,6 @@ class ProductHelperHw : public ProductHelper {
     std::optional<aub_stream::ProductFamily> getAubStreamProductFamily() const override;
     bool isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;
-    bool allowCompression(const HardwareInfo &hwInfo) const override;
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     bool isNewResidencyModelSupported() const override;
     bool isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const override;

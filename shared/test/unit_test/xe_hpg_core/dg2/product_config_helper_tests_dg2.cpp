@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -13,19 +14,18 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
-#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_command_stream_receiver.h"
-#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/product_config_fixture.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "aubstream/product_family.h"
+#include "gtest/gtest.h"
 #include "platforms.h"
+
+#include <array>
 
 using namespace NEO;
 using ProductConfigHelperDg2Tests = ::testing::Test;
@@ -517,27 +517,6 @@ DG2TEST_F(ProductHelperTestDg2, givenB0rCSteppingWhenAskingIfTile64With3DSurface
         productHelper->configureHardwareCustom(&hwInfo, nullptr);
 
         EXPECT_EQ(paramBool, productHelper->isTile64With3DSurfaceOnBCSSupported(hwInfo));
-    }
-}
-
-DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0WhenConfigureCalledThenDisableCompression) {
-
-    for (uint8_t revision : {REVISION_A0, REVISION_A1}) {
-        for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
-            HardwareInfo hwInfo = *defaultHwInfo;
-            hwInfo.featureTable.flags.ftrE2ECompression = true;
-
-            hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(revision, hwInfo);
-            hwInfo.platform.usDeviceID = deviceId;
-
-            productHelper->configureHardwareCustom(&hwInfo, nullptr);
-
-            auto compressionExpected = DG2::isG10(hwInfo) ? (revision != REVISION_A0) : true;
-
-            EXPECT_EQ(compressionExpected, hwInfo.capabilityTable.ftrRenderCompressedBuffers);
-            EXPECT_EQ(compressionExpected, hwInfo.capabilityTable.ftrRenderCompressedImages);
-            EXPECT_EQ(compressionExpected, productHelper->allowCompression(hwInfo));
-        }
     }
 }
 

@@ -21,7 +21,6 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/kernel/kernel_descriptor.h"
-#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -35,7 +34,6 @@
 #include "ocl_igc_shared/indirect_access_detection/version.h"
 
 #include <bitset>
-#include <limits>
 
 namespace NEO {
 
@@ -303,11 +301,6 @@ bool ProductHelperHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const Ha
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return getFrontEndPropertyDisableOverDispatchSupport();
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) const {
-    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

@@ -8,17 +8,17 @@
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
-#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -26,7 +26,6 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "clos_matchers.h"
@@ -34,7 +33,6 @@
 #include "ocl_igc_shared/indirect_access_detection/version.h"
 #include "test_traits_common.h"
 
-#include <limits>
 using namespace NEO;
 
 ProductHelperTest::ProductHelperTest() {
@@ -362,11 +360,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedForDefaultEngineTypeAdjus
 HWCMDTEST_F(IGFX_GEN12LP_CORE, ProductHelperTest, givenProductHelperWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
 
     EXPECT_FALSE(productHelper->isDisableOverdispatchAvailable(pInHwInfo));
-}
-
-HWTEST_F(ProductHelperTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned) {
-
-    EXPECT_TRUE(productHelper->allowCompression(pInHwInfo));
 }
 
 HWTEST_F(ProductHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {

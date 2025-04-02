@@ -21,10 +21,7 @@ namespace NEO {
 
 template <>
 int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
-    if (allowCompression(*hwInfo)) {
-        enableCompression(hwInfo);
-    }
-
+    enableCompression(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
     hwInfo->workaroundTable.flags.wa_15010089951 = true;
