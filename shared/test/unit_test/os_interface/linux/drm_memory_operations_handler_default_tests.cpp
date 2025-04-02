@@ -7,13 +7,18 @@
 
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 
@@ -267,4 +272,19 @@ TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerW
     pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::outOfMemory;
     auto ret = drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
     EXPECT_EQ(ret, MemoryOperationsStatus::outOfMemory);
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenDirectSubmissionLightWhenFreeGraphicsMemoryThenStopDirectSubmission) {
+    drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = true;
+    drmMemoryOperationsHandler->evictWithinOsContextCallBase = true;
+    auto allocation = pMemManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize});
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false), MemoryOperationsStatus::success);
+    EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
+    EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), allocation) != drmMemoryOperationsHandler->residency.end());
+    EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *allocation), MemoryOperationsStatus::success);
+    pMemManager->getRegisteredEngines(0u)[0].osContext->setDirectSubmissionActive();
+
+    pMemManager->freeGraphicsMemoryImpl(allocation);
+
+    EXPECT_TRUE(static_cast<UltCommandStreamReceiver<FamilyType> *>(pMemManager->getRegisteredEngines(0u)[0].commandStreamReceiver)->stopDirectSubmissionCalled);
 }
