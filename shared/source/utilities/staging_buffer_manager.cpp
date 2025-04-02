@@ -132,7 +132,7 @@ size_t calculateSizeForRegion(size_t region[3], const ImageMetadata &imageMetada
 }
 
 StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQueue &stagingQueue, size_t &submittedChunks, const void *ptr, auto sliceOffset,
-                                                                       size_t baseRowOffset, size_t rowsToCopy, size_t origin[3], size_t region[3], ImageMetadata &imageMetadata,
+                                                                       size_t baseRowOffset, size_t rowsToCopy, size_t origin[4], size_t region[3], ImageMetadata &imageMetadata,
                                                                        ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead) {
     auto rowPitch = imageMetadata.rowPitch;
     auto rowsPerChunk = std::max<size_t>(1ul, chunkSize / rowPitch);
@@ -184,12 +184,15 @@ StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQu
  * Several slices and rows can be packed into single chunk if size of such chunk does not exceeds maximum chunk size (2MB).
  * Caller provides actual function to enqueue read/write operation for single chunk.
  */
-StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead) {
+StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, bool isMipMapped, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead) {
     StagingQueue stagingQueue;
-    size_t origin[3] = {};
+    size_t origin[4] = {};
     size_t region[3] = {};
     origin[0] = globalOrigin[0];
     region[0] = globalRegion[0];
+    if (isMipMapped && globalRegion[2] > 1) {
+        origin[3] = globalOrigin[3];
+    }
     StagingTransferStatus result{};
     size_t submittedChunks = 0;
 
