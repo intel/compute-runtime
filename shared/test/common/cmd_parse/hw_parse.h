@@ -247,4 +247,6 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
     bool parsePipeControl = false;
 };
 
+static_assert(NEO::NonCopyableAndNonMovable<HardwareParse>);
+
 } // namespace NEO

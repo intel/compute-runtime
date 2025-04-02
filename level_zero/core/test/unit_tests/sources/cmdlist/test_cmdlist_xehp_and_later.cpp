@@ -1625,11 +1625,9 @@ HWTEST2_F(CommandListAppendLaunchRayTracingKernelTest, givenKernelUsingRayTracin
     result = pCommandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 
-    neoDevice->rtMemoryBackedBuffer = buffer1;
+    rtMemoryBackedBuffer = buffer1;
     result = pCommandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    rtMemoryBackedBuffer = buffer1;
 }
 
 HWTEST2_F(CommandListAppendLaunchRayTracingKernelTest, givenDcFlushMitigationWhenAppendLaunchKernelWithRayTracingIsCalledThenRequireDcFlush, RayTracingMatcher) {
