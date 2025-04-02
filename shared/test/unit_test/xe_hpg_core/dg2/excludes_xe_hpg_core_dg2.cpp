@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@ HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenHardwareInfoWhenCallingIsAddition
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenHardwareInfoWhenCallingIsMaxThreadsForWorkgroupWARequiredThenFalseIsReturned, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedForDefaultEngineTypeAdjustmentThenFalseIsReturned, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenTrueIsReturned, IGFX_DG2);
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfStorageInfoAdjustmentIsRequiredThenFalseIsReturned, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption_IsAtLeastXeHpgCore, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenGetL1CachePolicyThenReturnWriteByPass_IsAtLeastXeHpgCore, IGFX_DG2);

@@ -154,11 +154,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isDisableOverdispatchAvailable(const Hardwar
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::allowCompression(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
     return false;
 }

@@ -114,14 +114,6 @@ bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareI
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) const {
-    if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo, *this)) {
-        return false;
-    }
-    return true;
-}
-
-template <>
 LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
     if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this)) {
         return LocalMemoryAccessMode::cpuAccessDisallowed;
