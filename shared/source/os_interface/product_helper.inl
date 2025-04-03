@@ -39,7 +39,6 @@ namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
 int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
-    enableCompression(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
     return 0;
@@ -1103,6 +1102,23 @@ bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
     return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isCompressionForbiddenCommon(bool defaultValue) const {
+    auto images = debugManager.flags.RenderCompressedImagesEnabled.get();
+    auto buffers = debugManager.flags.RenderCompressedBuffersEnabled.get();
+
+    if (images == -1 && buffers == -1) {
+        return defaultValue;
+    } else {
+        return (images == 0 && buffers == 0);
+    }
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwInfo) const {
+    return isCompressionForbiddenCommon(false);
 }
 
 } // namespace NEO

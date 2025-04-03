@@ -8,7 +8,6 @@
 #include "opencl/source/mem_obj/image.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -43,8 +42,6 @@
 #include "opencl/source/sharings/unified/unified_image.h"
 
 #include "igfxfmid.h"
-
-#include <map>
 
 namespace NEO {
 
@@ -210,7 +207,10 @@ Image *Image::create(Context *context,
     }
 
     auto &clGfxCoreHelper = defaultDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-    bool preferCompression = MemObjHelper::isSuitableForCompression(!imgInfo.linearStorage, memoryProperties,
+    auto hwInfo = defaultDevice->getRootDeviceEnvironment().getHardwareInfo();
+    bool compressionSupported = !imgInfo.linearStorage && !defaultProductHelper.isCompressionForbidden(*hwInfo);
+
+    bool preferCompression = MemObjHelper::isSuitableForCompression(compressionSupported, memoryProperties,
                                                                     *context, true);
     preferCompression &= clGfxCoreHelper.allowImageCompression(surfaceFormat->oclImageFormat);
     preferCompression &= !clGfxCoreHelper.isFormatRedescribable(surfaceFormat->oclImageFormat);

@@ -25,7 +25,6 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *rel
 
 template <>
 int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
-    enableCompression(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
     hwInfo->workaroundTable.flags.wa_15010089951 = true;

@@ -268,6 +268,8 @@ class ProductHelper {
     virtual void overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const = 0;
     virtual bool isMisalignedUserPtr2WayCoherent() const = 0;
     virtual bool isSvmHeapReservationSupported() const = 0;
+    virtual void setRenderCompressedFlags(HardwareInfo &hwInfo) const = 0;
+    virtual bool isCompressionForbidden(const HardwareInfo &hwInfo) const = 0;
 
     virtual ~ProductHelper() = default;
 

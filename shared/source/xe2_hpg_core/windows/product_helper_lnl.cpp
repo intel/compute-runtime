@@ -17,14 +17,6 @@ constexpr static auto gfxProduct = IGFX_LUNARLAKE;
 namespace NEO {
 
 template <>
-int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
-    enableCompression(hwInfo);
-    enableBlitterOperationsSupport(hwInfo);
-
-    return 0;
-}
-
-template <>
 uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const {
     if (this->overridePatToUCAndTwoWayCohForDcFlushMitigation(allocationType)) {
         if (debugManager.flags.OverrideReadWritePatForDcFlushMitigation.get() != -1) {

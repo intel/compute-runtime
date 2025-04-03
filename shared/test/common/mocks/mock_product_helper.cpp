@@ -342,10 +342,6 @@ void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, con
 }
 
 template <>
-void ProductHelperHw<IGFX_UNKNOWN>::enableCompression(HardwareInfo *hwInfo) const {
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
@@ -503,6 +499,14 @@ template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::is48bResourceNeededForRayTracing() const {
     return true;
 }
+
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isCompressionForbidden(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+void ProductHelperHw<IGFX_UNKNOWN>::setRenderCompressedFlags(HardwareInfo &hwInfo) const {}
 
 } // namespace NEO
 

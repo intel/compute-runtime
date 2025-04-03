@@ -17,14 +17,6 @@ constexpr static auto gfxProduct = IGFX_BMG;
 namespace NEO {
 
 template <>
-int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
-    enableCompression(hwInfo);
-    enableBlitterOperationsSupport(hwInfo);
-
-    return 0;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::restartDirectSubmissionForHostptrFree() const {
     return true;
 }

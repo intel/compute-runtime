@@ -9,8 +9,6 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -18,7 +16,6 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
-#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
@@ -60,22 +57,6 @@ struct GmmAdditionalCompressionSettingsTests : public MockExecutionEnvironmentGm
 };
 
 using ProductHelperAtLeastXe2Tests = ::Test<DeviceFixture>;
-
-HWTEST2_F(ProductHelperAtLeastXe2Tests, givenFtrXe2CompressionIsTrueWhenEnableCompressionThenSetCompression, IsAtLeastXe2HpgCore) {
-    auto &productHelper = getHelper<ProductHelper>();
-    auto hwInfo = this->hardwareInfo;
-    hwInfo.featureTable.flags.ftrE2ECompression = true;
-    hwInfo.featureTable.flags.ftrXe2Compression = false;
-    productHelper.configureHardwareCustom(&hwInfo, nullptr);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedImages);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedBuffers);
-
-    hwInfo.featureTable.flags.ftrE2ECompression = false;
-    hwInfo.featureTable.flags.ftrXe2Compression = true;
-    productHelper.configureHardwareCustom(&hwInfo, nullptr);
-    EXPECT_TRUE(hwInfo.capabilityTable.ftrRenderCompressedImages);
-    EXPECT_TRUE(hwInfo.capabilityTable.ftrRenderCompressedBuffers);
-}
 
 HWTEST2_F(GmmAdditionalCompressionSettingsTests, whenApplyAdditionalCompressionSettingsThenSetNotCompressed, IsAtLeastXe2HpgCore) {
     auto gmm = std::make_unique<MockGmm>(getGmmHelper());

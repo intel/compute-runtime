@@ -5,40 +5,43 @@
  *
  */
 
-#include "shared/source/built_ins/built_ins.h"
-#include "shared/source/command_stream/command_stream_receiver_hw.h"
-#include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/image/image_surface_state.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
-#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
+#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mem_obj/image_compression_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+
+#include "CL/cl.h"
+#include "memory_properties_flags.h"
 
 using namespace NEO;
 
@@ -1113,7 +1116,13 @@ HWTEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferC
     ASSERT_NE(nullptr, image);
     EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
+
+    auto compressionAllowed = !context.getDevice(0)->getProductHelper().isCompressionForbidden(*defaultHwInfo);
+    if (compressionAllowed) {
+        EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
+    } else {
+        EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
+    }
 }
 
 TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPreferCompression) {
@@ -1146,7 +1155,13 @@ HWTEST_F(ImageCompressionTests, givenTiledImageAndVariousFlagsWhenCreatingAlloca
     ASSERT_NE(nullptr, image);
     EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
+
+    auto compressionAllowed = !context.getDevice(0)->getProductHelper().isCompressionForbidden(*defaultHwInfo);
+    if (compressionAllowed) {
+        EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
+    } else {
+        EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
+    }
 
     newFlags = flags | CL_MEM_UNCOMPRESSED_HINT_INTEL;
     surfaceFormat = Image::getSurfaceFormatFromTable(

@@ -364,8 +364,10 @@ Buffer *Buffer::create(Context *context,
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
         auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        auto &defaultProductHelper = defaultDevice->getProductHelper();
+        bool compressionSupported = GfxCoreHelper::compressedBuffersSupported(*hwInfo) && !defaultProductHelper.isCompressionForbidden(*hwInfo);
 
-        bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
+        bool compressionEnabled = MemObjHelper::isSuitableForCompression(compressionSupported, memoryProperties, *context,
                                                                          gfxCoreHelper.isBufferSizeSuitableForCompression(size));
 
         allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled,

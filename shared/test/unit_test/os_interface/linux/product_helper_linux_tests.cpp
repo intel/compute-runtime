@@ -9,20 +9,16 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/i915.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
-
-#include <cstring>
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 
@@ -273,15 +269,6 @@ TEST_F(MockProductHelperTestLinux, GivenConfigPreemptionDrmEnabledAllPreemptionD
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
-TEST_F(MockProductHelperTestLinux, givenPlatformEnabledFtrCompressionWhenInitializingThenFlagsAreSet) {
-    pInHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    pInHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
-    EXPECT_EQ(0, ret);
-    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
-    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
-}
-
 TEST_F(MockProductHelperTestLinux, givenPointerToHwInfoWhenConfigureHwInfoCalledThenRequiedSurfaceSizeIsSettedProperly) {
     EXPECT_EQ(MemoryConstants::pageSize, pInHwInfo.capabilityTable.requiredPreemptionSurfaceSize);
     int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
@@ -335,6 +322,7 @@ TEST_F(MockProductHelperTestLinux, givenFailingGttSizeIoctlWhenInitializingHwInf
     EXPECT_NE(0u, outHwInfo.capabilityTable.gpuAddressSpace);
     EXPECT_EQ(pInHwInfo.capabilityTable.gpuAddressSpace, outHwInfo.capabilityTable.gpuAddressSpace);
 }
+
 using HwConfigLinux = ::testing::Test;
 
 HWTEST2_F(HwConfigLinux, givenPlatformWithPlatformQuerySupportedWhenItIsCalledThenReturnTrue, IsAtLeastMtl) {
@@ -351,4 +339,32 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsPlatformQueryNotSupportedTh
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnTrue, IsAtLeastXeHpcCore) {
     EXPECT_TRUE(productHelper->isDisableScratchPagesSupported());
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenE2ECompressionWhenConfiguringHwInfoDrmThenCompressionFlagsAreCorrectlySet, IsBeforeXe2HpgCore) {
+    pInHwInfo.featureTable.flags.ftrE2ECompression = true;
+    int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    EXPECT_EQ(0, ret);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+
+    pInHwInfo.featureTable.flags.ftrE2ECompression = false;
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    EXPECT_EQ(0, ret);
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenXe2CompressionWhenConfiguringHwInfoDrmThenCompressionFlagsAreCorrectlySet, IsAtLeastXe2HpgCore) {
+    pInHwInfo.featureTable.flags.ftrXe2Compression = true;
+    int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    EXPECT_EQ(0, ret);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+
+    pInHwInfo.featureTable.flags.ftrXe2Compression = false;
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
+    EXPECT_EQ(0, ret);
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 }
