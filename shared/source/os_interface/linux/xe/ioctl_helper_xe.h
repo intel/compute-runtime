@@ -140,7 +140,7 @@ class IoctlHelperXe : public IoctlHelper {
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
 
-    const char *xeGetClassName(int className);
+    virtual const char *xeGetClassName(int className) const;
     const char *xeGetBindOperationName(int bindOperation);
 
     const char *xeGetengineClassName(uint32_t engineClass);
@@ -156,7 +156,7 @@ class IoctlHelperXe : public IoctlHelper {
     int debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg);
     int getEudebugExtProperty();
     uint64_t getEudebugExtPropertyValue();
-    virtual bool isExtraEngineClassAllowed(uint16_t engineClass) const { return false; }
+    virtual bool isMediaEngine(uint16_t engineClass) const { return false; }
     virtual std::optional<uint32_t> getCxlType() { return {}; }
     virtual uint32_t getNumEngines(uint64_t *enginesData) const;
     virtual bool isMediaGt(uint16_t gtType) const;

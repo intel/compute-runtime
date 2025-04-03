@@ -47,7 +47,7 @@
 
 namespace NEO {
 
-const char *IoctlHelperXe::xeGetClassName(int className) {
+const char *IoctlHelperXe::xeGetClassName(int className) const {
     switch (className) {
     case DRM_XE_ENGINE_CLASS_RENDER:
         return "rcs";
@@ -325,10 +325,11 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
         const auto &engine = queryEngines->engines[i].instance;
 
         uint16_t tile = 0;
+        const bool mediaEngine = isMediaEngine(engine.engine_class);
 
-        if (containsGtId(gtIdToTileId, engine.gt_id)) {
+        if (containsGtId(gtIdToTileId, engine.gt_id) && !mediaEngine) {
             tile = static_cast<uint16_t>(gtIdToTileId[engine.gt_id]);
-        } else if (containsGtId(mediaGtIdToTileId, engine.gt_id)) {
+        } else if (containsGtId(mediaGtIdToTileId, engine.gt_id) && mediaEngine) {
             tile = static_cast<uint16_t>(mediaGtIdToTileId[engine.gt_id]);
         } else {
             continue;
@@ -338,7 +339,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
         EngineClassInstance engineClassInstance{};
         engineClassInstance.engineClass = engine.engine_class;
         engineClassInstance.engineInstance = engine.engine_instance;
-        xeLog("\t%s:%d:%d %d\n", xeGetClassName(engineClassInstance.engineClass), engineClassInstance.engineInstance, engine.gt_id, tile);
+        xeLog("\tclass: %s, instance: %d, gt_id: %d, tile: %d\n", xeGetClassName(engineClassInstance.engineClass), engineClassInstance.engineInstance, engine.gt_id, tile);
 
         const bool isBaseEngineClass = engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassCompute) ||
                                        engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassRender) ||
@@ -347,7 +348,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
         const bool isSysmanEngineClass = isSysmanEnabled && (engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassVideo) ||
                                                              engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassVideoEnhance));
 
-        if (isBaseEngineClass || isSysmanEngineClass || isExtraEngineClassAllowed(engineClassInstance.engineClass)) {
+        if (isBaseEngineClass || isSysmanEngineClass || mediaEngine) {
             if (enginesPerTile.size() <= tile) {
                 enginesPerTile.resize(tile + 1);
             }
