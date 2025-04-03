@@ -154,8 +154,9 @@ class SVMAllocsManager {
     struct SvmCacheAllocationInfo {
         size_t allocationSize;
         void *allocation;
+        SvmAllocationData *svmData;
         std::chrono::high_resolution_clock::time_point saveTime;
-        SvmCacheAllocationInfo(size_t allocationSize, void *allocation) : allocationSize(allocationSize), allocation(allocation) {
+        SvmCacheAllocationInfo(size_t allocationSize, void *allocation, SvmAllocationData *svmData) : allocationSize(allocationSize), allocation(allocation), svmData(svmData) {
             saveTime = std::chrono::high_resolution_clock::now();
         }
         bool operator<(SvmCacheAllocationInfo const &other) const {

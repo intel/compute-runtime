@@ -304,6 +304,9 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledWhenFreeingDevic
         for (auto i = 0u; i < svmManager->usmDeviceAllocationsCache->allocations.size(); ++i) {
             if (svmManager->usmDeviceAllocationsCache->allocations[i].allocation == testData.allocation) {
                 foundInCache = true;
+                auto svmData = svmManager->getSVMAlloc(testData.allocation);
+                EXPECT_NE(nullptr, svmData);
+                EXPECT_EQ(svmData, svmManager->usmDeviceAllocationsCache->allocations[i].svmData);
                 break;
             }
         }
@@ -1153,6 +1156,9 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationCacheEnabledWhenFreeingHostAll
         for (auto i = 0u; i < svmManager->usmHostAllocationsCache->allocations.size(); ++i) {
             if (svmManager->usmHostAllocationsCache->allocations[i].allocation == testData.allocation) {
                 foundInCache = true;
+                auto svmData = svmManager->getSVMAlloc(testData.allocation);
+                EXPECT_NE(nullptr, svmData);
+                EXPECT_EQ(svmData, svmManager->usmHostAllocationsCache->allocations[i].svmData);
                 break;
             }
         }
