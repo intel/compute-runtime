@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,10 @@ struct FreeGpuVirtualAddressCall : CallResult {
 };
 struct MemoryOperationResult : CallResult {
     MemoryOperationsStatus operationSuccess = MemoryOperationsStatus::unsupported;
+};
+
+struct WaitOnPagingFenceFromCpuResult : CallResult {
+    bool isKmdWaitNeededPassed = false;
 };
 
 struct SubmitResult : CallResult {

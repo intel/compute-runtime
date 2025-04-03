@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -330,6 +330,7 @@ volatile uint64_t *WddmMock::getPagingFenceAddress() {
 
 void WddmMock::waitOnPagingFenceFromCpu(bool isKmdWaitNeeded) {
     waitOnPagingFenceFromCpuResult.called++;
+    waitOnPagingFenceFromCpuResult.isKmdWaitNeededPassed = isKmdWaitNeeded;
     Wddm::waitOnPagingFenceFromCpu(isKmdWaitNeeded);
 }
 

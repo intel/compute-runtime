@@ -1144,6 +1144,15 @@ TEST_F(WddmLockWithMakeResidentTests, givenAllocationThatNeedsMakeResidentBefore
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
 }
 
+TEST_F(WddmLockWithMakeResidentTests, givenAllocationAndForcePagingFenceTrueWhenApplyBlockingMakeResidentThenWaitOnPagingFenceFromCpuIsCalledWithIsKmdWaitNeededAsFalse) {
+    auto allocHandle = ALLOCATION_HANDLE;
+    const bool forcePagingFence = true;
+    wddm->temporaryResources->makeResidentResources(&allocHandle, 1u, 0x1000, forcePagingFence);
+    EXPECT_EQ(1u, mockTemporaryResources->acquireLockResult.called);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(&mockTemporaryResources->resourcesLock), mockTemporaryResources->acquireLockResult.uint64ParamPassed);
+    EXPECT_NE(forcePagingFence, wddm->waitOnPagingFenceFromCpuResult.isKmdWaitNeededPassed);
+}
+
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentThenAcquireUniqueLock) {
     wddm->temporaryResources->makeResidentResource(ALLOCATION_HANDLE, 0x1000);
     EXPECT_EQ(1u, mockTemporaryResources->acquireLockResult.called);

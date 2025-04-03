@@ -180,7 +180,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult registerTrimCallbackResult;
     WddmMockHelpers::CallResult getPagingFenceAddressResult;
     WddmMockHelpers::CallResult reserveGpuVirtualAddressResult;
-    WddmMockHelpers::CallResult waitOnPagingFenceFromCpuResult;
+    WddmMockHelpers::WaitOnPagingFenceFromCpuResult waitOnPagingFenceFromCpuResult;
     WddmMockHelpers::CallResult setAllocationPriorityResult;
     WddmMockHelpers::CallResult delayPagingFenceFromCpuResult;
 
