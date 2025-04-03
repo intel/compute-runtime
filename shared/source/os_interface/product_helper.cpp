@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "shared/source/os_interface/product_helper.h"
 
-#include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -45,6 +44,7 @@ void ProductHelper::setupKmdNotifyProperties(KmdNotifyProperties &kmdNotifyPrope
 
 int ProductHelper::setupProductSpecificConfig(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto osInterface = rootDeviceEnvironment.osInterface.get();
+    setRenderCompressedFlags(hwInfo);
     int ret = configureHardwareCustom(&hwInfo, osInterface);
     if (ret != 0) {
         hwInfo = {};

@@ -204,19 +204,21 @@ class ProductHelperHw : public ProductHelper {
     bool isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const override;
     void overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const override;
     bool isMisalignedUserPtr2WayCoherent() const override;
+    void setRenderCompressedFlags(HardwareInfo &hwInfo) const override;
+    bool isCompressionForbidden(const HardwareInfo &hwInfo) const override;
 
     ~ProductHelperHw() override = default;
 
   protected:
     ProductHelperHw() = default;
 
-    void enableCompression(HardwareInfo *hwInfo) const;
     void enableBlitterOperationsSupport(HardwareInfo *hwInfo) const;
     bool getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability) const;
     uint64_t getHostMemCapabilitiesValue() const;
     bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) const;
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const override;
+    bool isCompressionForbiddenCommon(bool defaultValue) const;
 };
 
 template <PRODUCT_FAMILY gfxProduct>

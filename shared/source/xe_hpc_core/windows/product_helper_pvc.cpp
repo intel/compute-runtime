@@ -16,14 +16,6 @@ constexpr static auto gfxProduct = IGFX_PVC;
 
 namespace NEO {
 
-template <>
-int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
-    enableCompression(hwInfo);
-    enableBlitterOperationsSupport(hwInfo);
-
-    return 0;
-}
-
 template class ProductHelperHw<gfxProduct>;
 
 } // namespace NEO

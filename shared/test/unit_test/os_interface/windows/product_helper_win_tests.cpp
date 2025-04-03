@@ -12,7 +12,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -93,4 +92,34 @@ HWTEST_F(ProductHelperTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoT
     productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
+
+HWTEST2_F(ProductHelperTestWindows, givenE2ECompressionWhenConfiguringHwInfoWddmThenCompressionFlagsAreCorrectlySet, IsBeforeXe2HpgCore) {
+    HardwareInfo initialHwInfo = *defaultHwInfo;
+
+    outHwInfo.featureTable.flags.ftrE2ECompression = true;
+    productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+
+    outHwInfo.featureTable.flags.ftrE2ECompression = false;
+    productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+}
+
+HWTEST2_F(ProductHelperTestWindows, givenE2ECompressionWhenConfiguringHwInfoWddmThenCompressionFlagsAreCorrectlySet, IsAtLeastXe2HpgCore) {
+    HardwareInfo initialHwInfo = *defaultHwInfo;
+
+    outHwInfo.featureTable.flags.ftrXe2Compression = true;
+    productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+
+    outHwInfo.featureTable.flags.ftrXe2Compression = false;
+    productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+}
+
+>>>>>>> c010d17842 (fix: respect compression flag in capability table)
 } // namespace NEO

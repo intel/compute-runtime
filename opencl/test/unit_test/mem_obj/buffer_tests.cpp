@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
-#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
@@ -775,8 +774,10 @@ TEST_F(CompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhe
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
-    auto &gfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
-    if (gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize)) {
+    auto contextDevice = context->getDevice(0);
+    auto &gfxCoreHelper = contextDevice->getGfxCoreHelper();
+    auto &productHelper = contextDevice->getProductHelper();
+    if (gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize) && !productHelper.isCompressionForbidden(*hwInfo)) {
         EXPECT_FALSE(buffer->isMemObjZeroCopy());
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::buffer);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, allocation->isCompressionEnabled());
@@ -797,9 +798,11 @@ TEST_F(CompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelect
 
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
-    auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    auto &gfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
-    if (gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize)) {
+    auto contextDevice = context->getDevice(0);
+    auto graphicsAllocation = buffer->getGraphicsAllocation(contextDevice->getRootDeviceIndex());
+    auto &gfxCoreHelper = contextDevice->getGfxCoreHelper();
+    auto &productHelper = contextDevice->getProductHelper();
+    if (gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize) && !productHelper.isCompressionForbidden(*hwInfo)) {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::buffer);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, graphicsAllocation->isCompressionEnabled());
     } else if (!device->getProductHelper().isNewCoherencyModelSupported()) {
@@ -858,9 +861,11 @@ TEST_F(CompressedBuffersCopyHostMemoryTests, givenCompressedBufferWhenCopyFromHo
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
 
     buffer.reset(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, bufferSize, hostPtr, retVal));
-    auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    auto &gfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
-    if (gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize)) {
+    auto contextDevice = context->getDevice(0);
+    auto graphicsAllocation = buffer->getGraphicsAllocation(contextDevice->getRootDeviceIndex());
+    auto &gfxCoreHelper = contextDevice->getGfxCoreHelper();
+    auto &productHelper = contextDevice->getProductHelper();
+    if (gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize) && !productHelper.isCompressionForbidden(*hwInfo)) {
         EXPECT_TRUE(graphicsAllocation->isCompressionEnabled());
         EXPECT_EQ(1u, mockCmdQ->writeBufferCounter);
         EXPECT_TRUE(mockCmdQ->writeBufferBlocking);
@@ -900,8 +905,10 @@ TEST_F(CompressedBuffersCopyHostMemoryTests, givenNonCompressedBufferWhenCopyFro
 }
 
 TEST_F(CompressedBuffersCopyHostMemoryTests, givenCompressedBufferWhenWriteBufferFailsThenReturnErrorCode) {
-    auto &gfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
-    if (is32bit || !gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize)) {
+    auto contextDevice = context->getDevice(0);
+    auto &gfxCoreHelper = contextDevice->getGfxCoreHelper();
+    auto &productHelper = contextDevice->getProductHelper();
+    if (is32bit || !gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize) || productHelper.isCompressionForbidden(*hwInfo)) {
         return;
     }
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;

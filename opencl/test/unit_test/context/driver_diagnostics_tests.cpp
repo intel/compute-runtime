@@ -7,10 +7,10 @@
 
 #include "driver_diagnostics_tests.h"
 
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -684,9 +684,10 @@ HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenPrope
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto compressionSupported = gfxCoreHelper.isBufferSizeSuitableForCompression(size) &&
-                                GfxCoreHelper::compressedBuffersSupported(hwInfo);
-    if (compressionSupported) {
+    auto &productHelper = device->getProductHelper();
+    auto compressionEnabled = gfxCoreHelper.isBufferSizeSuitableForCompression(size) &&
+                              GfxCoreHelper::compressedBuffersSupported(hwInfo) && !productHelper.isCompressionForbidden(hwInfo);
+    if (compressionEnabled) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
         EXPECT_FALSE(containsHint(expectedHint, userData));

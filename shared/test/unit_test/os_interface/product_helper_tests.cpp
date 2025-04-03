@@ -1136,3 +1136,22 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetMaxLocalSubRegionSizeCalle
     auto hwInfo = *defaultHwInfo;
     EXPECT_EQ(0u, productHelper->getMaxLocalSubRegionSize(hwInfo));
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsCompressionForbiddenThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restore;
+    auto hwInfo = *defaultHwInfo;
+
+    debugManager.flags.RenderCompressedImagesEnabled.set(0);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    EXPECT_TRUE(productHelper->isCompressionForbidden(hwInfo));
+
+    debugManager.flags.RenderCompressedImagesEnabled.set(1);
+    EXPECT_FALSE(productHelper->isCompressionForbidden(hwInfo));
+
+    debugManager.flags.RenderCompressedImagesEnabled.set(0);
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    EXPECT_FALSE(productHelper->isCompressionForbidden(hwInfo));
+
+    debugManager.flags.RenderCompressedImagesEnabled.set(1);
+    EXPECT_FALSE(productHelper->isCompressionForbidden(hwInfo));
+}

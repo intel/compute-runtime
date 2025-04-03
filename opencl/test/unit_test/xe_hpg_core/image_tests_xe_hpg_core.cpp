@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/test/common/helpers/unit_test_helper.h"
-
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/mem_obj/image_compression_fixture.h"
@@ -48,7 +46,13 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenDifferentImageFormatsWhenCreatingI
 
         ASSERT_NE(nullptr, image);
         EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-        EXPECT_EQ(format.isCompressable, myMemoryManager->capturedPreferCompressed);
+
+        auto compressionAllowed = !context.getDevice(0)->getProductHelper().isCompressionForbidden(*defaultHwInfo);
+        if (compressionAllowed) {
+            EXPECT_EQ(format.isCompressable, myMemoryManager->capturedPreferCompressed);
+        } else {
+            EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
+        }
     }
 }
 
@@ -64,7 +68,13 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAll
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
+
+    auto compressionAllowed = !context.getDevice(0)->getProductHelper().isCompressionForbidden(*defaultHwInfo);
+    if (compressionAllowed) {
+        EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
+    } else {
+        EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
+    }
 
     imageFormat.image_channel_order = CL_RG;
     surfaceFormat = Image::getSurfaceFormatFromTable(
@@ -73,5 +83,10 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAll
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-    EXPECT_TRUE(myMemoryManager->capturedPreferCompressed);
+
+    if (compressionAllowed) {
+        EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
+    } else {
+        EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
+    }
 }
