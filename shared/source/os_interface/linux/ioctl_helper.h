@@ -169,6 +169,7 @@ class IoctlHelper {
 
     virtual bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const;
     virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) = 0;
+    virtual void destroyDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmContextId);
     virtual bool createMediaContext(uint32_t vmId, void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, void *&outDoorbell) { return false; }
     virtual bool releaseMediaContext(void *doorbellHandle) { return false; }
 

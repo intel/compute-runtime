@@ -121,4 +121,8 @@ BufferObject *IoctlHelper::allocUserptr(DrmMemoryManager &memoryManager, const A
     return memoryManager.allocUserptr(address, size, allocData.type, rootDeviceIndex);
 }
 
+void IoctlHelper::destroyDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmContextId) {
+    drm.destroyDrmContext(drmContextId);
+}
+
 } // namespace NEO
