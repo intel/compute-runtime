@@ -141,6 +141,7 @@ StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQu
     auto numOfChunksInYDim = rowsToCopy / rowsPerChunk;
     auto remainder = rowsToCopy % (rowsPerChunk * numOfChunksInYDim);
     StagingTransferStatus result{};
+    imageMetadata.slicesInChunk = region[2];
 
     // Split (X, Y, Z') region into several (X, Y', Z') chunks.
     for (auto rowId = 0u; rowId < numOfChunksInYDim; rowId++) {
@@ -151,7 +152,7 @@ StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQu
         auto chunkPtr = ptrOffset(ptr, sliceOffset * slicePitch + rowId * rowsPerChunk * rowPitch);
 
         imageMetadata.rowsInChunk = rowsPerChunk;
-        UserData userData{chunkPtr, size, imageMetadata};
+        UserData userData{chunkPtr, size, imageMetadata, true};
 
         result = performChunkTransfer(submittedChunks++, isRead, userData, stagingQueue, csr, chunkTransferImageFunc, origin, region);
         if (result.chunkCopyStatus != 0 || result.waitStatus == WaitStatus::gpuHang) {
@@ -167,7 +168,7 @@ StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQu
         auto chunkPtr = ptrOffset(ptr, sliceOffset * slicePitch + numOfChunksInYDim * rowsPerChunk * rowPitch);
 
         imageMetadata.rowsInChunk = remainder;
-        UserData userData{chunkPtr, size, imageMetadata};
+        UserData userData{chunkPtr, size, imageMetadata, true};
 
         result = performChunkTransfer(submittedChunks++, isRead, userData, stagingQueue, csr, chunkTransferImageFunc, origin, region);
         if (result.chunkCopyStatus != 0 || result.waitStatus == WaitStatus::gpuHang) {
@@ -265,6 +266,23 @@ StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *pt
     return result;
 }
 
+void StagingBufferManager::copyImageToHost(void *dst, const void *stagingBuffer, size_t size, const ImageMetadata &imageData) const {
+    auto sliceSize = imageData.rowSize * imageData.rowsInChunk;
+
+    if (imageData.rowSize < imageData.rowPitch || sliceSize < imageData.slicePitch) {
+        for (auto sliceId = 0u; sliceId < imageData.slicesInChunk; sliceId++) {
+            auto sliceOffset = sliceId * imageData.slicePitch;
+            for (auto rowId = 0u; rowId < imageData.rowsInChunk; rowId++) {
+                auto rowOffset = rowId * imageData.rowPitch;
+                auto offset = sliceOffset + rowOffset;
+                memcpy(ptrOffset(dst, offset), ptrOffset(stagingBuffer, offset), imageData.rowSize);
+            }
+        }
+    } else {
+        memcpy(dst, stagingBuffer, size);
+    }
+}
+
 /*
  * This method is used for read transfers. It waits for transfer to finish
  * and copies data associated with that transfer to host allocation.
@@ -280,14 +298,12 @@ WaitStatus StagingBufferManager::copyStagingToHost(const std::pair<UserData, Sta
     tracker = transfer.second;
     auto stagingBuffer = addrToPtr(tracker.chunkAddress);
     auto userDst = const_cast<void *>(userData.ptr);
-    if (userData.imageMetadata.rowSize < userData.imageMetadata.rowPitch) {
-        for (auto rowId = 0u; rowId < userData.imageMetadata.rowsInChunk; rowId++) {
-            auto offset = rowId * userData.imageMetadata.rowPitch;
-            memcpy(ptrOffset(userDst, offset), ptrOffset(stagingBuffer, offset), userData.imageMetadata.rowSize);
-        }
-    } else {
-        memcpy(userDst, stagingBuffer, userData.size);
+    if (userData.isImageOperation) {
+        copyImageToHost(userDst, stagingBuffer, userData.size, userData.imageMetadata);
+        return WaitStatus::ready;
     }
+
+    memcpy(userDst, stagingBuffer, userData.size);
     return WaitStatus::ready;
 }
 

@@ -66,12 +66,14 @@ struct ImageMetadata {
     size_t slicePitch = 0;
 
     size_t rowsInChunk = 0;
+    size_t slicesInChunk = 0;
 };
 
 struct UserData {
     const void *ptr = nullptr;
     size_t size = 0;
     ImageMetadata imageMetadata{};
+    bool isImageOperation = false;
 };
 
 struct StagingTransferStatus {
@@ -113,6 +115,7 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
 
     WaitStatus copyStagingToHost(const std::pair<UserData, StagingBufferTracker> &transfer, StagingBufferTracker &tracker) const;
     WaitStatus drainAndReleaseStagingQueue(bool isRead, const StagingQueue &stagingQueue, size_t numOfSubmittedTransfers) const;
+    void copyImageToHost(void *dst, const void *stagingBuffer, size_t size, const ImageMetadata &imageData) const;
 
     bool isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies);
 

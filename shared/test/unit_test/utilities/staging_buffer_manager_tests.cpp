@@ -521,10 +521,9 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageWriteWithRema
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadThenRegionCovered) {
-    size_t expectedChunks = 8;
     const size_t globalOrigin[3] = {0, 0, 0};
-    const size_t globalRegion[3] = {4, expectedChunks, 1};
-    imageTransferThroughStagingBuffers(true, stagingBufferSize, globalOrigin, globalRegion, expectedChunks);
+    const size_t globalRegion[3] = {4, 1, 1};
+    imageTransferThroughStagingBuffers(true, 4, globalOrigin, globalRegion, 1);
 }
 
 HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadThenDownloadAllocationsCalledForAllReadChunks) {
@@ -726,6 +725,38 @@ INSTANTIATE_TEST_SUITE_P(
     StagingBufferManager3DImageTest,
     testing::ValuesIn(imageTestsInfo));
 
+TEST_F(StagingBufferManager3DImageTest, givenStagingBufferWhenPerformImageTransferCalledWith3DImageAndSlicePitchThenCopyDataCorrectly) {
+    auto rowPitch = 16u;
+    auto slicePitch = 256u;
+    const size_t globalOrigin[3] = {0, 0, 0};
+    const size_t globalRegion[3] = {16u, 4u, 4u};
+    auto size = stagingBufferSize;
+    auto userDst = new char[size];
+    auto imageData = new char[size];
+    memset(userDst, 0, size);
+    memset(imageData, 0xFF, size);
+
+    ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
+        for (auto sliceId = 0u; sliceId < 4u; sliceId++) {
+            auto offset = (sliceId * slicePitch);
+            memcpy(ptrOffset(stagingBuffer, offset), imageData + offset, region[0] * region[1]);
+        }
+        return 0;
+    };
+    auto ret = stagingBufferManager->performImageTransfer(userDst, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, true);
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+
+    for (auto sliceId = 0u; sliceId < 4u; sliceId++) {
+        auto sliceOffset = (sliceId * slicePitch);
+        EXPECT_EQ(0, memcmp(userDst + sliceOffset, imageData + sliceOffset, rowPitch * globalRegion[1]));
+    }
+    EXPECT_NE(0, memcmp(userDst, imageData, stagingBufferSize));
+
+    delete[] userDst;
+    delete[] imageData;
+}
+
 HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringSliceRemainderChunkReadFromImageThenReturnImmediatelyWithFailure) {
     auto expectedChunks = 5u;
     size_t rowPitch = 4u;
@@ -841,6 +872,26 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkBufferWriteThe
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(1u, chunkCounter);
     delete[] ptr;
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenReadBufferThenDataCopiedCorrectly) {
+    size_t expectedChunks = 4;
+    auto ptr = new unsigned char[stagingBufferSize * expectedChunks];
+    auto bufferData = new unsigned char[stagingBufferSize * expectedChunks];
+    memset(ptr, 0, stagingBufferSize * expectedChunks);
+    memset(bufferData, 0xFF, stagingBufferSize * expectedChunks);
+
+    ChunkTransferBufferFunc chunkWrite = [&](void *stagingBuffer, size_t offset, size_t size) -> int32_t {
+        memcpy(stagingBuffer, bufferData + offset, size);
+        return 0;
+    };
+    auto ret = stagingBufferManager->performBufferTransfer(ptr, 0, stagingBufferSize * expectedChunks, chunkWrite, csr, true);
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_EQ(0, memcmp(ptr, bufferData, stagingBufferSize * expectedChunks));
+
+    delete[] ptr;
+    delete[] bufferData;
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkBufferWriteWithRemainderThenReturnWithFailure) {
