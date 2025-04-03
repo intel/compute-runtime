@@ -185,15 +185,16 @@ StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQu
  * Several slices and rows can be packed into single chunk if size of such chunk does not exceeds maximum chunk size (2MB).
  * Caller provides actual function to enqueue read/write operation for single chunk.
  */
-StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, bool isMipMapped, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead) {
+StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, bool isMipMapped3DImage, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead) {
     StagingQueue stagingQueue;
     size_t origin[4] = {};
     size_t region[3] = {};
     origin[0] = globalOrigin[0];
     region[0] = globalRegion[0];
-    if (isMipMapped && globalRegion[2] > 1) {
+    if (isMipMapped3DImage) {
         origin[3] = globalOrigin[3];
     }
+
     StagingTransferStatus result{};
     size_t submittedChunks = 0;
 

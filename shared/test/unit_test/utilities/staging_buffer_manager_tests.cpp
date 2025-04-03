@@ -837,7 +837,9 @@ TEST_P(StagingBufferManagerImageMipMapTest, givenStagingBufferWhenPerformImageTr
 ImageMipMapTestInfo imageMipMapTestsInfo[] = {
     {{4u, 1u, 1u}, 1},
     {{4u, 4u, 1u}, 2},
-    {{4u, 4u, 4u}, 3}};
+    {{4u, 4u, 4u}, 3},
+    {{4u, 1u, 1u}, 2},  // 2D image with (4, 1, 1) region
+    {{4u, 1u, 1u}, 3}}; // 3D image with (4, 1, 1) region
 
 INSTANTIATE_TEST_SUITE_P(
     StagingBufferManagerTest_,

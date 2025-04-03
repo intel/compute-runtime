@@ -985,3 +985,20 @@ HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledFor3DIma
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
 }
+
+HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledForMipMapped3DImageThenReturnSuccess) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    imageDesc.image_width = 4;
+    imageDesc.image_height = 4;
+    imageDesc.image_depth = 64;
+
+    imageDesc.num_mip_levels = 2;
+    size_t origin[4] = {0, 0, 0, 10};
+    size_t region[3] = {2, 2, 4};
+    auto image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(context, &imageDesc));
+
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, image.get(), false, origin, region, 4u, MemoryConstants::megaByte, ptr, nullptr);
+    EXPECT_EQ(res, CL_SUCCESS);
+}
