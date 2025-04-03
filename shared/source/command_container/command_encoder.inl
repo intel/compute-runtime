@@ -117,7 +117,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 }
 
 template <typename Family>
-void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32_t offset, uint32_t val, uint64_t dstAddress, bool isBcs) {
+void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32_t offset, uint32_t val, uint64_t dstAddress, bool isBcs, EncodeStoreMMIOParams *outStoreMMIOParams) {
     int logLws = 0;
     int i = val;
     while (val >> logLws) {
@@ -139,7 +139,15 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
         EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR0, RegisterOffsets::csGprR2, isBcs);
         i++;
     }
-    EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::csGprR1, dstAddress, false, nullptr, isBcs);
+    void **outStoreMMIOCmd = nullptr;
+    if (outStoreMMIOParams) {
+        outStoreMMIOParams->address = dstAddress;
+        outStoreMMIOParams->offset = RegisterOffsets::csGprR1;
+        outStoreMMIOParams->workloadPartition = false;
+        outStoreMMIOParams->isBcs = isBcs;
+        outStoreMMIOCmd = &outStoreMMIOParams->command;
+    }
+    EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::csGprR1, dstAddress, false, outStoreMMIOCmd, isBcs);
 }
 
 /*
@@ -586,44 +594,75 @@ bool EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(const KernelDes
 }
 
 template <typename Family>
-void EncodeIndirectParams<Family>::encode(CommandContainer &container, uint64_t crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface, uint64_t implicitArgsGpuPtr) {
+void EncodeIndirectParams<Family>::encode(CommandContainer &container, uint64_t crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface, uint64_t implicitArgsGpuPtr, IndirectParamsInInlineDataArgs *outArgs) {
     const auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
-    setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, crossThreadDataGpuVa);
-    setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, crossThreadDataGpuVa, dispatchInterface->getGroupSize());
+    if (outArgs) {
+        for (int i = 0; i < 3; i++) {
+            if (!NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[i]) && kernelDescriptor.kernelAttributes.inlineDataPayloadSize > kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[i]) {
+                outArgs->storeGroupCountInInlineData[i] = true;
+            }
+            if (!NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[i]) && kernelDescriptor.kernelAttributes.inlineDataPayloadSize > kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[i]) {
+                outArgs->storeGlobalWorkSizeInInlineData[i] = true;
+            }
+        }
+        if (!NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.dispatchTraits.workDim) && kernelDescriptor.kernelAttributes.inlineDataPayloadSize > kernelDescriptor.payloadMappings.dispatchTraits.workDim) {
+            outArgs->storeWorkDimInInlineData = true;
+        }
+    }
+    setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, crossThreadDataGpuVa, outArgs);
+    setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, crossThreadDataGpuVa, dispatchInterface->getGroupSize(), outArgs);
     UNRECOVERABLE_IF(NEO::isValidOffset(kernelDescriptor.payloadMappings.dispatchTraits.workDim) && (kernelDescriptor.payloadMappings.dispatchTraits.workDim & 0b11) != 0u);
-    setWorkDimIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.workDim, crossThreadDataGpuVa, dispatchInterface->getGroupSize());
+    setWorkDimIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.workDim, crossThreadDataGpuVa, dispatchInterface->getGroupSize(), outArgs);
     if (implicitArgsGpuPtr) {
         const auto version = container.getDevice()->getGfxCoreHelper().getImplicitArgsVersion();
         if (version == 0) {
             constexpr CrossThreadDataOffset groupCountOffset[] = {offsetof(ImplicitArgsV0, groupCountX), offsetof(ImplicitArgsV0, groupCountY), offsetof(ImplicitArgsV0, groupCountZ)};
             constexpr CrossThreadDataOffset globalSizeOffset[] = {offsetof(ImplicitArgsV0, globalSizeX), offsetof(ImplicitArgsV0, globalSizeY), offsetof(ImplicitArgsV0, globalSizeZ)};
             constexpr auto numWorkDimOffset = offsetof(ImplicitArgsV0, numWorkDim);
-            setGroupCountIndirect(container, groupCountOffset, implicitArgsGpuPtr);
-            setGlobalWorkSizeIndirect(container, globalSizeOffset, implicitArgsGpuPtr, dispatchInterface->getGroupSize());
-            setWorkDimIndirect(container, numWorkDimOffset, implicitArgsGpuPtr, dispatchInterface->getGroupSize());
+            setGroupCountIndirect(container, groupCountOffset, implicitArgsGpuPtr, nullptr);
+            setGlobalWorkSizeIndirect(container, globalSizeOffset, implicitArgsGpuPtr, dispatchInterface->getGroupSize(), nullptr);
+            setWorkDimIndirect(container, numWorkDimOffset, implicitArgsGpuPtr, dispatchInterface->getGroupSize(), nullptr);
         } else if (version == 1) {
             constexpr CrossThreadDataOffset groupCountOffsetV1[] = {offsetof(ImplicitArgsV1, groupCountX), offsetof(ImplicitArgsV1, groupCountY), offsetof(ImplicitArgsV1, groupCountZ)};
             constexpr CrossThreadDataOffset globalSizeOffsetV1[] = {offsetof(ImplicitArgsV1, globalSizeX), offsetof(ImplicitArgsV1, globalSizeY), offsetof(ImplicitArgsV1, globalSizeZ)};
             constexpr auto numWorkDimOffsetV1 = offsetof(ImplicitArgsV1, numWorkDim);
-            setGroupCountIndirect(container, groupCountOffsetV1, implicitArgsGpuPtr);
-            setGlobalWorkSizeIndirect(container, globalSizeOffsetV1, implicitArgsGpuPtr, dispatchInterface->getGroupSize());
-            setWorkDimIndirect(container, numWorkDimOffsetV1, implicitArgsGpuPtr, dispatchInterface->getGroupSize());
+            setGroupCountIndirect(container, groupCountOffsetV1, implicitArgsGpuPtr, nullptr);
+            setGlobalWorkSizeIndirect(container, globalSizeOffsetV1, implicitArgsGpuPtr, dispatchInterface->getGroupSize(), nullptr);
+            setWorkDimIndirect(container, numWorkDimOffsetV1, implicitArgsGpuPtr, dispatchInterface->getGroupSize(), nullptr);
         }
     }
 }
 
 template <typename Family>
-void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress) {
+void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, IndirectParamsInInlineDataArgs *outArgs) {
     for (int i = 0; i < 3; ++i) {
         if (NEO::isUndefinedOffset(offsets[i])) {
             continue;
         }
-        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::gpgpuDispatchDim[i], ptrOffset(crossThreadAddress, offsets[i]), false, nullptr, false);
+        void **storeCmd = nullptr;
+        if (outArgs && outArgs->storeGroupCountInInlineData[i]) {
+            outArgs->commandsToPatch.push_back({});
+            auto &commandArgs = outArgs->commandsToPatch.back();
+            storeCmd = &commandArgs.command;
+            commandArgs.address = offsets[i];
+            commandArgs.offset = RegisterOffsets::gpgpuDispatchDim[i];
+            commandArgs.isBcs = false;
+            commandArgs.workloadPartition = false;
+        }
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::gpgpuDispatchDim[i], ptrOffset(crossThreadAddress, offsets[i]), false, storeCmd, false);
     }
 }
 
 template <typename Family>
-void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset workDimOffset, uint64_t crossThreadAddress, const uint32_t *groupSize) {
+void EncodeIndirectParams<Family>::applyInlineDataGpuVA(IndirectParamsInInlineDataArgs &args, uint64_t inlineDataGpuVa) {
+    for (auto &commandArgs : args.commandsToPatch) {
+        auto commandToPatch = reinterpret_cast<MI_STORE_REGISTER_MEM *>(commandArgs.command);
+        EncodeStoreMMIO<Family>::encode(commandToPatch, commandArgs.offset, commandArgs.address + inlineDataGpuVa, commandArgs.workloadPartition, commandArgs.isBcs);
+    }
+}
+
+template <typename Family>
+void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset workDimOffset, uint64_t crossThreadAddress, const uint32_t *groupSize, IndirectParamsInInlineDataArgs *outArgs) {
     if (NEO::isValidOffset(workDimOffset)) {
         auto dstPtr = ptrOffset(crossThreadAddress, workDimOffset);
         constexpr uint32_t resultRegister = RegisterOffsets::csGprR0;
@@ -709,7 +748,17 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
                 EncodeMath<Family>::addition(container, resultAluRegister, backupAluRegister, resultAluRegister);
             }
         }
-        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), resultRegister, dstPtr, false, nullptr, false);
+        void **storeCmd = nullptr;
+        if (outArgs && outArgs->storeWorkDimInInlineData) {
+            outArgs->commandsToPatch.push_back({});
+            auto &commandArgs = outArgs->commandsToPatch.back();
+            storeCmd = &commandArgs.command;
+            commandArgs.address = workDimOffset;
+            commandArgs.offset = resultRegister;
+            commandArgs.isBcs = false;
+            commandArgs.workloadPartition = false;
+        }
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), resultRegister, dstPtr, false, storeCmd, false);
     }
 }
 
@@ -777,12 +826,20 @@ size_t EncodeDispatchKernel<Family>::getDefaultDshAlignment() {
 }
 
 template <typename Family>
-void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, const uint32_t *lws) {
+void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, const uint32_t *lws, IndirectParamsInInlineDataArgs *outArgs) {
     for (int i = 0; i < 3; ++i) {
         if (NEO::isUndefinedOffset(offsets[i])) {
             continue;
         }
-        EncodeMathMMIO<Family>::encodeMulRegVal(container, RegisterOffsets::gpgpuDispatchDim[i], lws[i], ptrOffset(crossThreadAddress, offsets[i]), false);
+        EncodeStoreMMIOParams *storeParams = nullptr;
+
+        auto patchLocation = ptrOffset(crossThreadAddress, offsets[i]);
+        if (outArgs && outArgs->storeGlobalWorkSizeInInlineData[i]) {
+            outArgs->commandsToPatch.push_back({});
+            storeParams = &outArgs->commandsToPatch.back();
+            patchLocation = offsets[i];
+        }
+        EncodeMathMMIO<Family>::encodeMulRegVal(container, RegisterOffsets::gpgpuDispatchDim[i], lws[i], patchLocation, false, storeParams);
     }
 }
 

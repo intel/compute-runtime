@@ -213,7 +213,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
         if (args.isIndirect) {
             auto crossThreadDataGpuVA = heapIndirect->getGraphicsAllocation()->getGpuAddress() + heapIndirect->getUsed() - sizeThreadData;
-            EncodeIndirectParams<Family>::encode(container, crossThreadDataGpuVA, args.dispatchInterface, implicitArgsGpuVA);
+            EncodeIndirectParams<Family>::encode(container, crossThreadDataGpuVA, args.dispatchInterface, implicitArgsGpuVA, nullptr);
         }
 
         ptr = ptrOffset(ptr, sizeCrossThreadData);

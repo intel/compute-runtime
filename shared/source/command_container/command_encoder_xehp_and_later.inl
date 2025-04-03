@@ -251,6 +251,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
     uint32_t sizeForImplicitArgsStruct = NEO::ImplicitArgsHelper::getSizeForImplicitArgsStruct(pImplicitArgs, kernelDescriptor, true, rootDeviceEnvironment);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching + args.reserveExtraPayloadSpace;
+    IndirectParamsInInlineDataArgs encodeIndirectParamsArgs{};
     {
         void *ptr = nullptr;
         if (!args.makeCommandView) {
@@ -279,7 +280,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 if (pImplicitArgs) {
                     implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - sizeForImplicitArgsStruct;
                 }
-                EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr);
+                EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr, &encodeIndirectParamsArgs);
             }
         } else {
             ptr = args.cpuPayloadBuffer;
@@ -458,6 +459,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             args.outWalkerPtr = buffer;
             *buffer = walkerCmd;
         }
+    }
+
+    if (args.isIndirect) {
+        auto walkerGpuVa = listCmdBufferStream->getGpuBase() + ptrDiff(args.outWalkerPtr, listCmdBufferStream->getCpuBase());
+        EncodeIndirectParams<Family>::applyInlineDataGpuVA(encodeIndirectParamsArgs, walkerGpuVa + ptrDiff(walkerCmd.getInlineDataPointer(), &walkerCmd));
     }
 
     if (args.cpuWalkerBuffer) {
