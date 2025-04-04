@@ -73,8 +73,3 @@ MTLTEST_F(MtlProductHelperLinux, givenBooleanUncachedWhenCallOverridePatIndexThe
     EXPECT_EQ(0u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
     EXPECT_EQ(3u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::commandBuffer));
 }
-
-MTLTEST_F(MtlProductHelperLinux, givenProductHelperThenCompressionIsNotAllowed) {
-    auto hwInfo = *defaultHwInfo;
-    EXPECT_TRUE(productHelper->isCompressionForbidden(hwInfo));
-}
