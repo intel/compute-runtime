@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,7 @@ struct DebugSessionWindows : DebugSessionImp {
     ze_result_t handleContextCreateDestroyEvent(DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY_EVENT_PARAMS &contextCreateDestroyParams);
     ze_result_t handleDeviceCreateDestroyEvent(DBGUMD_READ_EVENT_DEVICE_CREATE_DESTROY_EVENT_PARAMS &deviceCreateDestroyParams);
     ze_result_t handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS &createDebugDataParams);
+    ze_result_t handleSyncHostEvent(DBGUMD_READ_EVENT_SYNC_HOST_DATA_PARAMS &syncHostDataParams);
     ze_result_t readAllocationDebugData(uint32_t seqNo, uint64_t umdDataBufferPtr, void *outBuf, size_t outBufSize);
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override;
@@ -95,7 +96,7 @@ struct DebugSessionWindows : DebugSessionImp {
         UNRECOVERABLE_IF(true);
     }
 
-    void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override {}
+    ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override;
 
     static void *asyncThreadFunction(void *arg);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -351,7 +351,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return DebugSessionImp::readThreadScratchRegisters(thread, start, count, pRegisterValues);
     }
 
-    void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override {}
+    ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override { return ZE_RESULT_SUCCESS; }
     void resumeAccidentallyStoppedThreads(const std::vector<EuThread::ThreadId> &threadIds) override {
         resumeAccidentallyStoppedCalled++;
         return DebugSessionImp::resumeAccidentallyStoppedThreads(threadIds);

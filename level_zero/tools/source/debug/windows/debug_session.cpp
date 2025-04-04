@@ -126,6 +126,7 @@ void *DebugSessionWindows::asyncThreadFunction(void *arg) {
 
     while (self->asyncThread.threadActive) {
         self->readAndHandleEvent(100);
+        self->pollFifo();
         self->generateEventsAndResumeStoppedThreads();
         self->sendInterrupts();
     }
@@ -195,6 +196,8 @@ ze_result_t DebugSessionWindows::readAndHandleEvent(uint64_t timeoutMs) {
         return handleDeviceCreateDestroyEvent(eventParamsBuffer.eventParamsBuffer.DeviceCreateDestroyEventParams);
     case DBGUMD_READ_EVENT_CREATE_DEBUG_DATA:
         return handleCreateDebugDataEvent(eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams);
+    case DBGUMD_READ_EVENT_SYNC_HOST:
+        return handleSyncHostEvent(eventParamsBuffer.eventParamsBuffer.SyncHostDataParams);
     default:
         break;
     }
@@ -242,57 +245,15 @@ ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU
                             euAttentionBitsParams.hContextHandle, euAttentionBitsParams.LRCA,
                             euAttentionBitsParams.BitMaskSizeInBytes, &euAttentionBitsParams.BitmaskArrayPtr);
 
-    auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    newAttentionRaised();
+    AttentionEventFields attentionEventFields;
+    attentionEventFields.bitmask = reinterpret_cast<uint8_t *>(&euAttentionBitsParams.BitmaskArrayPtr);
+    attentionEventFields.bitmaskSize = euAttentionBitsParams.BitMaskSizeInBytes;
+    attentionEventFields.contextHandle = euAttentionBitsParams.hContextHandle;
+    attentionEventFields.lrcHandle = euAttentionBitsParams.LRCA;
 
-    auto threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0u,
-                                                                               reinterpret_cast<uint8_t *>(&euAttentionBitsParams.BitmaskArrayPtr),
-                                                                               euAttentionBitsParams.BitMaskSizeInBytes);
-
-    printBitmask(reinterpret_cast<uint8_t *>(&euAttentionBitsParams.BitmaskArrayPtr), euAttentionBitsParams.BitMaskSizeInBytes);
-
-    PRINT_DEBUGGER_THREAD_LOG("ATTENTION received for thread count = %d\n", (int)threadsWithAttention.size());
-
-    if (threadsWithAttention.size() > 0) {
-
-        uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
-        {
-            if (allContexts.empty()) {
-                return ZE_RESULT_ERROR_UNINITIALIZED;
-            }
-            memoryHandle = *allContexts.begin();
-        }
-
-        auto gpuVa = getContextStateSaveAreaGpuVa(memoryHandle);
-        auto stateSaveAreaSize = getContextStateSaveAreaSize(memoryHandle);
-        auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
-
-        std::unique_lock<std::mutex> lock(threadStateMutex);
-
-        if (gpuVa != 0 && stateSaveAreaSize != 0) {
-            std::vector<EuThread::ThreadId> newThreads;
-            getNotStoppedThreads(threadsWithAttention, newThreads);
-            if (newThreads.size() > 0) {
-                allocateStateSaveAreaMemory(stateSaveAreaSize);
-                stateSaveReadResult = readGpuMemory(memoryHandle, stateSaveAreaMemory.data(), stateSaveAreaSize, gpuVa);
-            }
-        } else {
-            PRINT_DEBUGGER_ERROR_LOG("Context state save area bind info invalid\n", "");
-            DEBUG_BREAK_IF(true);
-        }
-
-        if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
-
-            for (auto &threadId : threadsWithAttention) {
-                PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
-                addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle, stateSaveAreaMemory.data());
-            }
-        }
-    }
-
-    checkTriggerEventsForAttention();
-
-    return ZE_RESULT_SUCCESS;
+    return updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, 0, threadsWithAttention);
 }
 
 ze_result_t DebugSessionWindows::handleAllocationDataEvent(uint32_t seqNo, DBGUMD_READ_EVENT_READ_ALLOCATION_DATA_PARAMS &allocationDataParams) {
@@ -392,6 +353,84 @@ ze_result_t DebugSessionWindows::handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CR
         pushApiEvent(debugEvent, 0, 0);
     }
 
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionWindows::handleSyncHostEvent(DBGUMD_READ_EVENT_SYNC_HOST_DATA_PARAMS &readEventSyncHostDataParams) {
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_SYNC_HOST: hContextHandle=0x%llX\n",
+                            readEventSyncHostDataParams.hContextHandle);
+
+    uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
+    {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        if (allContexts.empty()) {
+            return ZE_RESULT_ERROR_UNINITIALIZED;
+        }
+        memoryHandle = *allContexts.begin();
+    }
+
+    AttentionEventFields attentionEventFields = {};
+    attentionEventFields.clientHandle = debugHandle;
+    attentionEventFields.contextHandle = readEventSyncHostDataParams.hContextHandle;
+
+    attentionEventContext[memoryHandle] = attentionEventFields;
+
+    handleStoppedThreads();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionWindows::updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) {
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+
+    if (threadsWithAttention.size() == 0) {
+        threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0u,
+                                                                              attention.bitmask, attention.bitmaskSize);
+
+        printBitmask(attention.bitmask, attention.bitmaskSize);
+    }
+
+    PRINT_DEBUGGER_THREAD_LOG("ATTENTION for tile = %d thread count = %d\n", tileIndex, (int)threadsWithAttention.size());
+
+    if (threadsWithAttention.size() > 0) {
+
+        uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
+        {
+            if (allContexts.empty()) {
+                PRINT_DEBUGGER_ERROR_LOG("No contexts found\n", "");
+                return ZE_RESULT_ERROR_UNINITIALIZED;
+            }
+            memoryHandle = *allContexts.begin();
+        }
+
+        auto gpuVa = getContextStateSaveAreaGpuVa(memoryHandle);
+        auto stateSaveAreaSize = getContextStateSaveAreaSize(memoryHandle);
+        auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
+
+        std::unique_lock<std::mutex> lock(threadStateMutex);
+
+        if (gpuVa != 0 && stateSaveAreaSize != 0) {
+            std::vector<EuThread::ThreadId> newThreads;
+            getNotStoppedThreads(threadsWithAttention, newThreads);
+            if (newThreads.size() > 0) {
+                allocateStateSaveAreaMemory(stateSaveAreaSize);
+                stateSaveReadResult = readGpuMemory(memoryHandle, stateSaveAreaMemory.data(), stateSaveAreaSize, gpuVa);
+            }
+        } else {
+            PRINT_DEBUGGER_ERROR_LOG("Context state save area bind info invalid\n", "");
+            DEBUG_BREAK_IF(true);
+        }
+
+        if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
+
+            for (auto &threadId : threadsWithAttention) {
+                PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
+                addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle, stateSaveAreaMemory.data());
+            }
+        }
+    }
+
+    checkTriggerEventsForAttention();
     return ZE_RESULT_SUCCESS;
 }
 
