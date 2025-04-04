@@ -22,6 +22,9 @@
 
 template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
 constexpr inline TNoRef alignUp(T before, size_t alignment) {
+    if (alignment == 0) {
+        return before;
+    }
     OPTIONAL_UNRECOVERABLE_IF(!Math::isPow2(alignment));
     TNoRef mask = static_cast<TNoRef>(alignment - 1);
     return (before + mask) & ~mask;
