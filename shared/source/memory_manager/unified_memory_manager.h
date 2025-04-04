@@ -165,6 +165,12 @@ class SVMAllocsManager {
         bool operator<(size_t const &size) const {
             return allocationSize < size;
         }
+        void markForDelete() {
+            allocationSize = 0u;
+        }
+        static bool isMarkedForDelete(SvmCacheAllocationInfo const &info) {
+            return 0 == info.allocationSize;
+        }
     };
 
     struct SvmAllocationCache {
@@ -195,7 +201,7 @@ class SVMAllocsManager {
         bool isInUse(SvmAllocationData *svmData);
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
         void trim();
-        void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool shouldLimitReuse);
+        void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll);
         void cleanup();
         void logCacheOperation(const SvmAllocationCachePerfInfo &cachePerfEvent) const;
 

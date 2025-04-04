@@ -235,38 +235,42 @@ void SVMAllocsManager::SvmAllocationCache::logCacheOperation(const SvmAllocation
                                           isSuccessString);
 }
 
-void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool shouldLimitReuse) {
+void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) {
     if (this->allocations.empty()) {
         return;
     }
     std::lock_guard<std::mutex> lock(this->mtx);
-    for (auto allocCleanCandidate = allocations.begin(); allocCleanCandidate != allocations.end();) {
-        if (allocCleanCandidate->saveTime > trimTimePoint) {
-            ++allocCleanCandidate;
+    auto allocCleanCandidateIndex = allocations.size();
+    while (0u != allocCleanCandidateIndex) {
+        auto &allocCleanCandidate = allocations[--allocCleanCandidateIndex];
+        if (allocCleanCandidate.saveTime > trimTimePoint) {
             continue;
         }
-        DEBUG_BREAK_IF(nullptr == allocCleanCandidate->svmData);
-        if (allocCleanCandidate->svmData->device) {
-            auto lock = allocCleanCandidate->svmData->device->usmReuseInfo.obtainAllocationsReuseLock();
-            allocCleanCandidate->svmData->device->usmReuseInfo.recordAllocationGetFromReuse(allocCleanCandidate->allocationSize);
+        DEBUG_BREAK_IF(nullptr == allocCleanCandidate.svmData);
+        if (allocCleanCandidate.svmData->device) {
+            auto lock = allocCleanCandidate.svmData->device->usmReuseInfo.obtainAllocationsReuseLock();
+            allocCleanCandidate.svmData->device->usmReuseInfo.recordAllocationGetFromReuse(allocCleanCandidate.allocationSize);
         } else {
             auto lock = memoryManager->usmReuseInfo.obtainAllocationsReuseLock();
-            memoryManager->usmReuseInfo.recordAllocationGetFromReuse(allocCleanCandidate->allocationSize);
+            memoryManager->usmReuseInfo.recordAllocationGetFromReuse(allocCleanCandidate.allocationSize);
         }
         if (enablePerformanceLogging) {
-            logCacheOperation({.allocationSize = allocCleanCandidate->allocationSize,
+            logCacheOperation({.allocationSize = allocCleanCandidate.allocationSize,
                                .timePoint = std::chrono::high_resolution_clock::now(),
-                               .allocationType = allocCleanCandidate->svmData->memoryType,
+                               .allocationType = allocCleanCandidate.svmData->memoryType,
                                .operationType = CacheOperationType::trimOld,
                                .isSuccess = true});
         }
-        svmAllocsManager->freeSVMAllocImpl(allocCleanCandidate->allocation, FreePolicyType::defer, allocCleanCandidate->svmData);
-        if (shouldLimitReuse) {
-            allocCleanCandidate = allocations.erase(allocCleanCandidate);
+        svmAllocsManager->freeSVMAllocImpl(allocCleanCandidate.allocation, FreePolicyType::defer, allocCleanCandidate.svmData);
+        if (trimAll) {
+            allocCleanCandidate.markForDelete();
         } else {
-            allocations.erase(allocCleanCandidate);
+            allocations.erase(allocations.begin() + allocCleanCandidateIndex);
             break;
         }
+    }
+    if (trimAll) {
+        std::erase_if(allocations, SvmCacheAllocationInfo::isMarkedForDelete);
     }
 }
 

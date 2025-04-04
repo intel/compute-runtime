@@ -108,6 +108,14 @@ TEST(SvmAllocationCacheSimpleTest, givenDifferentSizesWhenCheckingIfSizeAllowsTh
     EXPECT_FALSE(SVMAllocsManager::SvmAllocationCache::sizeAllowed(256 * MemoryConstants::megaByte + 1));
 }
 
+TEST(SvmAllocationCacheSimpleTest, givenSvmAllocationCacheInfoWhenMarkedForDeleteThenSetSizeToZero) {
+    SVMAllocsManager::SvmCacheAllocationInfo info(MemoryConstants::pageSize64k, nullptr, nullptr);
+    EXPECT_FALSE(SVMAllocsManager::SvmCacheAllocationInfo::isMarkedForDelete(info));
+    info.markForDelete();
+    EXPECT_EQ(0u, info.allocationSize);
+    EXPECT_TRUE(SVMAllocsManager::SvmCacheAllocationInfo::isMarkedForDelete(info));
+}
+
 TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenCheckingIsInUseThenReturnCorrectValue) {
     SVMAllocsManager::SvmAllocationCache allocationCache;
     MockMemoryManager memoryManager;
@@ -990,7 +998,7 @@ TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCall
     svmManager->cleanupUSMAllocCaches();
 }
 
-TEST_F(SvmDeviceAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCalledThenTrimAllocationsSavedBeforeTimePoint) {
+TEST_F(SvmDeviceAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCalledThenTrimAllocationsSavedBeforeTimePointLargestFirst) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
@@ -1004,9 +1012,9 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCal
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device;
-    auto allocation = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
-    auto allocation2 = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
-    auto allocation3 = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
+    auto allocation = svmManager->createUnifiedMemoryAllocation(1 * MemoryConstants::pageSize64k, unifiedMemoryProperties);
+    auto allocation2 = svmManager->createUnifiedMemoryAllocation(2 * MemoryConstants::pageSize64k, unifiedMemoryProperties);
+    auto allocation3 = svmManager->createUnifiedMemoryAllocation(3 * MemoryConstants::pageSize64k, unifiedMemoryProperties);
     EXPECT_NE(allocation, nullptr);
     EXPECT_NE(allocation2, nullptr);
     EXPECT_NE(allocation3, nullptr);
@@ -1014,19 +1022,25 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCal
     svmManager->freeSVMAlloc(allocation2);
     svmManager->freeSVMAlloc(allocation3);
     EXPECT_EQ(3u, svmManager->usmDeviceAllocationsCache->allocations.size());
+    EXPECT_EQ(1 * MemoryConstants::pageSize64k, svmManager->usmDeviceAllocationsCache->allocations[0].allocationSize);
+    EXPECT_EQ(2 * MemoryConstants::pageSize64k, svmManager->usmDeviceAllocationsCache->allocations[1].allocationSize);
+    EXPECT_EQ(3 * MemoryConstants::pageSize64k, svmManager->usmDeviceAllocationsCache->allocations[2].allocationSize);
 
     const auto baseTimePoint = std::chrono::high_resolution_clock::now();
     const auto timeDiff = std::chrono::microseconds(1);
 
     svmManager->usmDeviceAllocationsCache->allocations[0].saveTime = baseTimePoint;
-    svmManager->usmDeviceAllocationsCache->allocations[1].saveTime = baseTimePoint + timeDiff;
-    svmManager->usmDeviceAllocationsCache->allocations[2].saveTime = baseTimePoint + timeDiff * 2;
+    svmManager->usmDeviceAllocationsCache->allocations[1].saveTime = baseTimePoint + timeDiff * 2;
+    svmManager->usmDeviceAllocationsCache->allocations[2].saveTime = baseTimePoint + timeDiff;
 
     svmManager->usmDeviceAllocationsCache->trimOldAllocs(baseTimePoint + timeDiff, false);
     EXPECT_EQ(2u, svmManager->usmDeviceAllocationsCache->allocations.size());
+    EXPECT_EQ(1 * MemoryConstants::pageSize64k, svmManager->usmDeviceAllocationsCache->allocations[0].allocationSize);
+    EXPECT_EQ(2 * MemoryConstants::pageSize64k, svmManager->usmDeviceAllocationsCache->allocations[1].allocationSize);
 
     svmManager->usmDeviceAllocationsCache->trimOldAllocs(baseTimePoint + timeDiff, false);
     EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+    EXPECT_EQ(2 * MemoryConstants::pageSize64k, svmManager->usmDeviceAllocationsCache->allocations[0].allocationSize);
 
     svmManager->usmDeviceAllocationsCache->trimOldAllocs(baseTimePoint + timeDiff, false);
     EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
@@ -1700,7 +1714,7 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationInUsageWhenAllocatingAfterFree
     svmManager->cleanupUSMAllocCaches();
 }
 
-TEST_F(SvmHostAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCalledThenTrimAllocationsSavedBeforeTimePoint) {
+TEST_F(SvmHostAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCalledThenTrimAllocationsSavedBeforeTimePointLargestFirst) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
@@ -1714,9 +1728,9 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCalle
     EXPECT_NE(nullptr, svmManager->usmHostAllocationsCache);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
-    auto allocation = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
-    auto allocation2 = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
-    auto allocation3 = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
+    auto allocation = svmManager->createUnifiedMemoryAllocation(1 * MemoryConstants::pageSize64k, unifiedMemoryProperties);
+    auto allocation2 = svmManager->createUnifiedMemoryAllocation(2 * MemoryConstants::pageSize64k, unifiedMemoryProperties);
+    auto allocation3 = svmManager->createUnifiedMemoryAllocation(3 * MemoryConstants::pageSize64k, unifiedMemoryProperties);
     EXPECT_NE(allocation, nullptr);
     EXPECT_NE(allocation2, nullptr);
     EXPECT_NE(allocation3, nullptr);
@@ -1724,19 +1738,25 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCalle
     svmManager->freeSVMAlloc(allocation2);
     svmManager->freeSVMAlloc(allocation3);
     EXPECT_EQ(3u, svmManager->usmHostAllocationsCache->allocations.size());
+    EXPECT_EQ(1 * MemoryConstants::pageSize64k, svmManager->usmHostAllocationsCache->allocations[0].allocationSize);
+    EXPECT_EQ(2 * MemoryConstants::pageSize64k, svmManager->usmHostAllocationsCache->allocations[1].allocationSize);
+    EXPECT_EQ(3 * MemoryConstants::pageSize64k, svmManager->usmHostAllocationsCache->allocations[2].allocationSize);
 
     auto baseTimePoint = std::chrono::high_resolution_clock::now();
     auto timeDiff = std::chrono::microseconds(1);
 
     svmManager->usmHostAllocationsCache->allocations[0].saveTime = baseTimePoint;
-    svmManager->usmHostAllocationsCache->allocations[1].saveTime = baseTimePoint + timeDiff;
-    svmManager->usmHostAllocationsCache->allocations[2].saveTime = baseTimePoint + timeDiff * 2;
+    svmManager->usmHostAllocationsCache->allocations[1].saveTime = baseTimePoint + timeDiff * 2;
+    svmManager->usmHostAllocationsCache->allocations[2].saveTime = baseTimePoint + timeDiff;
 
     svmManager->usmHostAllocationsCache->trimOldAllocs(baseTimePoint + timeDiff, false);
     EXPECT_EQ(2u, svmManager->usmHostAllocationsCache->allocations.size());
+    EXPECT_EQ(1 * MemoryConstants::pageSize64k, svmManager->usmHostAllocationsCache->allocations[0].allocationSize);
+    EXPECT_EQ(2 * MemoryConstants::pageSize64k, svmManager->usmHostAllocationsCache->allocations[1].allocationSize);
 
     svmManager->usmHostAllocationsCache->trimOldAllocs(baseTimePoint + timeDiff, false);
     EXPECT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
+    EXPECT_EQ(2 * MemoryConstants::pageSize64k, svmManager->usmHostAllocationsCache->allocations[0].allocationSize);
 
     svmManager->usmHostAllocationsCache->trimOldAllocs(baseTimePoint + timeDiff, false);
     EXPECT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
