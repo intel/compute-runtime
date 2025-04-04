@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,7 +107,7 @@ TEST_F(ClEnqueueWriteImageTests, GivenValidParametersWhenWritingImageThenSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(ClEnqueueReadImageTests, GivenQueueIncapableParametersWhenWritingImageThenInvalidOperationIsReturned) {
+TEST_F(ClEnqueueWriteImageTests, GivenQueueIncapableParametersWhenWritingImageThenInvalidOperationIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     const size_t origin[] = {2, 2, 0};
@@ -129,6 +129,36 @@ TEST_F(ClEnqueueReadImageTests, GivenQueueIncapableParametersWhenWritingImageThe
 
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
     retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(ClEnqueueWriteImageTests, GivenMappedPtrWhenWritingImageToMappedPtrThenSuccessIsReturned) {
+    imageFormat.image_channel_order = CL_RGBA;
+    imageDesc.image_depth = 4;
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+    const size_t origin[] = {0, 0, 0};
+    const size_t region[] = {2, 2, 1};
+    auto imgSize = pCommandQueue->calculateHostPtrSizeForImage(region, imageDesc.image_row_pitch, imageDesc.image_slice_pitch, castToObject<Image>(image));
+
+    auto buffer = clCreateBuffer(pContext, 0, imgSize, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_NE(nullptr, buffer);
+    auto ptr = clEnqueueMapBuffer(pCommandQueue, buffer, CL_TRUE,
+                                  CL_MAP_READ | CL_MAP_WRITE, 0, imgSize, 0,
+                                  nullptr, nullptr, &retVal);
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto retVal = clEnqueueWriteImage(pCommandQueue, image, false, origin, region,
+                                      0, 0, ptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -204,4 +234,5 @@ TEST_F(ClEnqueueWriteImageYUV, GivenInvalidRegionWhenWritingYuvImageThenInvalidV
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
 } // namespace ULT
