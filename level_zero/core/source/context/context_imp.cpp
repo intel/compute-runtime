@@ -562,9 +562,9 @@ ze_result_t ContextImp::makeImageResident(ze_device_handle_t hDevice, ze_image_h
 
     NEO::Device *neoDevice = L0::Device::fromHandle(hDevice)->getNEODevice();
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1), true, false);
+    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1), true, true);
     if (implicitArgsAlloc) {
-        memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&implicitArgsAlloc, 1), true, false);
+        memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&implicitArgsAlloc, 1), true, true);
     }
     return changeMemoryOperationStatusToL0ResultType(success);
 }
