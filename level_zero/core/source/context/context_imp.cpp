@@ -791,7 +791,12 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
 
         handles.push_back(static_cast<NEO::osHandle>(handle));
     }
-    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+
+    auto device = Device::fromHandle(hDevice);
+    auto neoDevice = device->getNEODevice();
+    if (device->isImplicitScalingCapable()) {
+        neoDevice = device->getNEODevice()->getRootDevice();
+    }
     NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
     *pptr = this->driverHandle->importFdHandles(neoDevice, flags, handles, nullptr, nullptr, allocDataInternal);
     if (nullptr == *pptr) {
