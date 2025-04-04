@@ -33,6 +33,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -1016,6 +1017,26 @@ TEST_F(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesAreAd
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsOption));
     EXPECT_TRUE(hasSubstr(pCompilerInterface->buildInternalOptions, extensionsWithFeaturesOption));
+}
+
+TEST_F(ProgramFromSourceTest, GivenDumpZEBinWhenBuildingProgramFromSourceThenZebinIsDumped) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DumpZEBin.set(1);
+
+    KernelBinaryHelper kbHelper(binaryFileName, true);
+
+    createProgramWithSource(
+        pContext,
+        sourceFileName);
+
+    std::string fileName = "dumped_zebin_module.elf";
+    EXPECT_FALSE(virtualFileExists(fileName));
+
+    retVal = pProgram->build(pProgram->getDevices(), nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(virtualFileExists(fileName));
+    removeVirtualFile(fileName);
 }
 
 class Callback {

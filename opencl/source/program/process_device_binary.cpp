@@ -15,6 +15,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
@@ -203,6 +204,10 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
 
         } else {
             return CL_INVALID_BINARY;
+        }
+    } else {
+        if (NEO::debugManager.flags.DumpZEBin.get() == 1 && isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize))) {
+            dumpFileIncrement(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get(), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize, "dumped_zebin_module", ".elf");
         }
     }
 
