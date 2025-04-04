@@ -652,7 +652,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
         }
         if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
             this->usmHostAllocationsCache) {
-            if (this->usmHostAllocationsCache->insert(svmData->size, ptr, svmData)) {
+            if (this->usmHostAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
                 return true;
             }
         }
@@ -676,13 +676,13 @@ bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
     if (svmData) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             this->usmDeviceAllocationsCache) {
-            if (this->usmDeviceAllocationsCache->insert(svmData->size, ptr, svmData)) {
+            if (this->usmDeviceAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
                 return true;
             }
         }
         if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
             this->usmHostAllocationsCache) {
-            if (this->usmHostAllocationsCache->insert(svmData->size, ptr, svmData)) {
+            if (this->usmHostAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
                 return true;
             }
         }

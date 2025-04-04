@@ -307,6 +307,8 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledWhenFreeingDevic
                 auto svmData = svmManager->getSVMAlloc(testData.allocation);
                 EXPECT_NE(nullptr, svmData);
                 EXPECT_EQ(svmData, svmManager->usmDeviceAllocationsCache->allocations[i].svmData);
+                EXPECT_EQ(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(),
+                          svmManager->usmDeviceAllocationsCache->allocations[i].allocationSize);
                 break;
             }
         }
@@ -1159,6 +1161,8 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationCacheEnabledWhenFreeingHostAll
                 auto svmData = svmManager->getSVMAlloc(testData.allocation);
                 EXPECT_NE(nullptr, svmData);
                 EXPECT_EQ(svmData, svmManager->usmHostAllocationsCache->allocations[i].svmData);
+                EXPECT_EQ(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(),
+                          svmManager->usmHostAllocationsCache->allocations[i].allocationSize);
                 break;
             }
         }
