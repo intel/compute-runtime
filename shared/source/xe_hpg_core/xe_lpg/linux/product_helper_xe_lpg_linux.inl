@@ -49,9 +49,4 @@ bool ProductHelperHw<gfxProduct>::useGemCreateExtInAllocateMemoryByKMD() const {
     return true;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwInfo) const {
-    return isCompressionForbiddenCommon(true);
-}
-
 } // namespace NEO

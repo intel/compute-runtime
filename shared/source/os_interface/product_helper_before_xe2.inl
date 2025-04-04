@@ -40,4 +40,9 @@ void ProductHelperHw<gfxProduct>::setRenderCompressedFlags(HardwareInfo &hwInfo)
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = hwInfo.featureTable.flags.ftrE2ECompression;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwInfo) const {
+    return isCompressionForbiddenCommon(true);
+}
+
 } // namespace NEO

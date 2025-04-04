@@ -29,10 +29,5 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     return 0;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwInfo) const {
-    return isCompressionForbiddenCommon(true);
-}
-
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO
