@@ -12,19 +12,12 @@ namespace NEO {
 
 template <typename Family>
 bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
-    if ((debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 1) ||
-        (debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 1) ||
-        (debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 1) ||
-        (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 1)) {
-        return true;
-    }
     if ((debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 0) &&
         (debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 0) &&
-        (debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0) &&
-        (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0)) {
+        (debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0)) {
         return false;
     }
-    return !hwInfo.capabilityTable.isIntegratedDevice;
+    return true;
 }
 
 template <typename Family>

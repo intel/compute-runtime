@@ -847,14 +847,15 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenStateBaseAddressNotChangedWhe
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
     configureCSRHeapStatesToNonDirty<FamilyType>();
-    auto usedBefore = commandStreamReceiver.commandStream.getUsed();
-    flushTaskFlags.l3CacheSettings = L3CachingSettings::notApplicable;
 
     flushTask(commandStreamReceiver);
 
-    parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedBefore);
-    auto stateBaseAddressItor = find<typename FamilyType::STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(cmdList.end(), stateBaseAddressItor);
+    auto base = commandStreamReceiver.commandStream.getCpuBase();
+
+    auto stateBaseAddress = base
+                                ? genCmdCast<typename FamilyType::STATE_BASE_ADDRESS *>(base)
+                                : nullptr;
+    EXPECT_EQ(nullptr, stateBaseAddress);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEmptyCqsWhenFlushingTaskThenCommandNotAdded) {
@@ -936,7 +937,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
                                                                              flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled);
     flushTask(commandStreamReceiver);
 
-    EXPECT_GE(sizeNeeded, csrCS.getUsed());
+    EXPECT_EQ(sizeNeeded, csrCS.getUsed());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAndSbaWhenFlushingTaskThenOnlyAvailableMemoryIsUsed) {
@@ -976,7 +977,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
                                                                              flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled);
     flushTask(commandStreamReceiver);
 
-    EXPECT_GE(sizeNeeded, csrCS.getUsed());
+    EXPECT_EQ(sizeNeeded, csrCS.getUsed());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAndSbaAndPipeControlWhenFlushingTaskThenOnlyAvailableMemoryIsUsed) {
@@ -1025,7 +1026,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
         *mockDevice);
 
     // Verify that we didn't grab a new CS buffer
-    EXPECT_GE(expectedUsed, csrCS.getUsed());
+    EXPECT_EQ(expectedUsed, csrCS.getUsed());
     EXPECT_EQ(expectedBase, csrCS.getCpuBase());
 }
 

@@ -42,7 +42,6 @@ struct MemorySynchronizationViaMiSemaphoreWaitTest : public UltCommandStreamRece
         debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
         debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
         debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
-        debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -223,15 +222,13 @@ XE3_CORETEST_F(SystemMemoryFenceViaComputeWalkerTestXe3Core, givenSystemMemoryFe
     commandStreamReceiver.programEnginePrologue(cmdStream);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        HardwareParse hwParser;
-        hwParser.parseCommands<FamilyType>(cmdStream);
-        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
-    }
+    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
 }
 
 struct SystemMemoryFenceViaKernelInstructionTest : public UltCommandStreamReceiverTest {
@@ -262,15 +259,13 @@ XE3_CORETEST_F(SystemMemoryFenceViaKernelInstructionTestXe3Core, givenSystemMemo
     commandStreamReceiver.programEnginePrologue(cmdStream);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        HardwareParse hwParser;
-        hwParser.parseCommands<FamilyType>(cmdStream);
-        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
-    }
+    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
 }
 
 struct Xe3MidThreadCommandStreamReceiverTest : public UltCommandStreamReceiverTest {

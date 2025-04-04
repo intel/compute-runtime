@@ -379,7 +379,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDefaultSettingForFenceWhenKernelUse
 
     auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_EQ(postSyncData.getSystemMemoryFenceRequest(), !pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice);
+    EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 }
 
 XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagSetWhenSetPropertiesAllCalledThenDisablePipelinedThreadArbitrationPolicy) {

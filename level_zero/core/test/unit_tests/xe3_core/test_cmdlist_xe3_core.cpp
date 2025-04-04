@@ -478,7 +478,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
 
     auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_EQ(postSyncData.getSystemMemoryFenceRequest(), !device->getHwInfo().capabilityTable.isIntegratedDevice);
+    EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);

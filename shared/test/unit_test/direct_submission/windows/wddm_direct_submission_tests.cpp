@@ -17,7 +17,6 @@
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -87,6 +86,7 @@ using WddmDirectSubmissionWithMockGdiDllTest = Test<WddmDirectSubmissionWithMock
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThenExpectProperCommandsDispatched) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+
     std::unique_ptr<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>> wddmDirectSubmission =
         std::make_unique<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>>(*device->getDefaultEngine().commandStreamReceiver);
 
@@ -120,15 +120,9 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
     EXPECT_EQ(1u, wddmMockInterface->destroyMonitorFenceCalled);
 }
 
-struct WddmDirectSubmissionGlobalFenceTest : public WddmDirectSubmissionTest {
-    void SetUp() override {
-        debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(1);
-        WddmDirectSubmissionTest::SetUp();
-    }
+HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedWithMiMemFenceSupportedThenMakeGlobalFenceResident) {
     DebugManagerStateRestore restorer;
-};
-
-HWTEST_F(WddmDirectSubmissionGlobalFenceTest, givenWddmWhenDirectIsInitializedWithMiMemFenceSupportedThenMakeGlobalFenceResident) {
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(1);
     std::unique_ptr<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>> wddmDirectSubmission =
         std::make_unique<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>>(*device->getDefaultEngine().commandStreamReceiver);
 
