@@ -215,6 +215,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
         memPrefetchSubDeviceIds = subDeviceIds;
         setMemPrefetchCalled = true;
+        setMemPrefetchCalledCount++;
         return MemoryManager::setMemPrefetch(gfxAllocation, subDeviceIds, rootDeviceIndex);
     }
 
@@ -318,6 +319,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t handleFenceCompletionCalled = 0u;
     uint32_t waitForEnginesCompletionCalled = 0u;
     uint32_t allocateGraphicsMemoryWithPropertiesCount = 0;
+    uint32_t setMemPrefetchCalledCount = 0;
     osHandle capturedSharedHandle = 0u;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;

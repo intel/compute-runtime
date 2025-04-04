@@ -223,6 +223,44 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
     commandQueue->destroy();
 }
 
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenExecutingCommandListsOnImmediateCommandListThenMemoryPrefetchIsCalledOnce, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseKmdMigration.set(true);
+    debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+    debugManager.flags.EnableBOChunkingPrefetch.set(false);
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {};
+
+    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false)->toHandle();
+    auto commandList = CommandList::fromHandle(commandListHandle);
+    commandList->close();
+
+    auto commandListImmediate = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandListImmediate->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto mockMemoryManager = reinterpret_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());
+    EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
+    EXPECT_EQ(1u, mockMemoryManager->setMemPrefetchCalledCount);
+
+    context->freeMem(ptr);
+    commandList->destroy();
+    commandListImmediate->destroy();
+}
+
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenNoForceMemoryPrefetchForKmdMigratedSharedAllocationsAndNoEnableBOChunkingPrefetchWhenExecutingCommandListsOnCommandQueueThenMemoryPrefetchIsNotCalled, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(true);

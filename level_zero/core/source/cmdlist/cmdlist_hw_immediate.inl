@@ -432,12 +432,13 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImmediateWithFlushTaskImpl(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, NEO::AppendOperations appendOperation,
                                                                                                                bool requireTaskCountUpdate, CommandQueue *cmdQ,
                                                                                                                MutexLock *outerLock) {
+    auto cmdQImp = static_cast<CommandQueueImp *>(cmdQ);
     this->commandContainer.removeDuplicatesFromResidencyContainer();
 
     auto commandStream = this->commandContainer.getCommandStream();
     size_t commandStreamStart = this->cmdListCurrentStartOffset;
     if (appendOperation == NEO::AppendOperations::cmdList && this->dispatchCmdListBatchBufferAsPrimary) {
-        auto cmdListStartCmdBufferStream = reinterpret_cast<CommandQueueImp *>(cmdQ)->getStartingCmdBuffer();
+        auto cmdListStartCmdBufferStream = cmdQImp->getStartingCmdBuffer();
         // check if queue starting stream is the same as immediate,
         // if they are the same - immediate command list buffer has preamble in it including jump from immediate to regular cmdlist - proceed normal
         // if not - regular cmdlist is the starting command buffer - no queue preamble or waiting commands
@@ -447,15 +448,17 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         }
     }
 
-    auto csr = static_cast<CommandQueueImp *>(cmdQ)->getCsr();
+    auto csr = cmdQImp->getCsr();
     auto lockCSR = outerLock != nullptr ? std::move(*outerLock) : csr->obtainUniqueOwnership();
 
-    if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
-        auto svmAllocMgr = this->device->getDriverHandle()->getSvmAllocsManager();
-        svmAllocMgr->prefetchSVMAllocs(*this->device->getNEODevice(), *csr);
-    }
+    if (appendOperation != NEO::AppendOperations::cmdList) {
+        if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
+            auto svmAllocMgr = this->device->getDriverHandle()->getSvmAllocsManager();
+            svmAllocMgr->prefetchSVMAllocs(*this->device->getNEODevice(), *csr);
+        }
 
-    cmdQ->registerCsrClient();
+        cmdQ->registerCsrClient();
+    }
 
     std::unique_lock<std::mutex> lockForIndirect;
     if (this->hasIndirectAllocationsAllowed()) {
@@ -501,7 +504,6 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
-    auto cmdQImp = static_cast<CommandQueueImp *>(cmdQ);
     cmdQImp->clearHeapContainer();
 
     // save offset from immediate stream - even when not used to dispatch commands, can be used for epilogue
