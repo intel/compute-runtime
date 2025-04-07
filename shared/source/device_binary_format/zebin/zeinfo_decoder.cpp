@@ -1487,6 +1487,9 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
     case Types::Kernel::argTypeInlineSampler:
         return populateInlineSampler(dst, Tags::Kernel::PayloadArgument::ArgType::inlineSampler);
+
+    case Types::Kernel::argTypeBufferSize:
+        return populateWithOffsetChecked(dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true).bufferSize, sizeof(int64_t), Tags::Kernel::PayloadArgument::ArgType::bufferSize);
     }
 
     UNREACHABLE();

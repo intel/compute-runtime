@@ -1527,6 +1527,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
     const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex];
     const auto &argAsPtr = arg.as<ArgDescPointer>();
+    patch<int64_t, int64_t>(0, crossThreadData, argAsPtr.bufferSize);
 
     if (clMem && *clMem) {
         auto clMemObj = *clMem;
@@ -1538,6 +1539,8 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         if (!buffer) {
             return CL_INVALID_MEM_OBJECT;
         }
+
+        patch<int64_t, int64_t>(static_cast<int64_t>(buffer->getSize()), getCrossThreadData(), argAsPtr.bufferSize);
 
         auto gfxAllocationType = buffer->getGraphicsAllocation(rootDeviceIndex)->getAllocationType();
         if (!isBuiltIn) {

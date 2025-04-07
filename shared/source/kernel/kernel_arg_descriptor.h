@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,6 +40,7 @@ struct ArgDescPointer final {
     CrossThreadDataOffset stateless = undefined<CrossThreadDataOffset>;
     CrossThreadDataOffset bindless = undefined<CrossThreadDataOffset>;
     CrossThreadDataOffset bufferOffset = undefined<CrossThreadDataOffset>;
+    CrossThreadDataOffset bufferSize = undefined<CrossThreadDataOffset>;
     CrossThreadDataOffset slmOffset = undefined<CrossThreadDataOffset>;
     uint8_t requiredSlmAlignment = 0;
     uint8_t pointerSize = 0;

@@ -5356,6 +5356,27 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeWorkDimensionsWhenSizeIsValidThe
     EXPECT_EQ(32U, kernelDescriptor->payloadMappings.dispatchTraits.workDim);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeBufferSizeWhenSizeIsValidThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+                - arg_type: buffer_size
+                  offset: 32
+                  size: 8
+                  arg_index: 0
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, kernelDescriptor->payloadMappings.explicitArgs.size());
+    const auto &arg = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescPointer>();
+    EXPECT_EQ(32, arg.bufferSize);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeImplicitArgBufferWhenPopulatingKernelDescriptorThenProperOffsetIsSetAndImplicitArgsAreRequired) {
     ConstStringRef zeinfo = R"===(
 kernels:

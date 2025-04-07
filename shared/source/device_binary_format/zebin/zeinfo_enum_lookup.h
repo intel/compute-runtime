@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ using namespace Tags::Kernel::PayloadArgument::ArgType::Sampler::Vme;
 using ArgType = Types::Kernel::ArgType;
 
 inline constexpr ConstStringRef name = "argument type";
-inline constexpr LookupArray<ConstStringRef, ArgType, 46> lookup({{
+inline constexpr LookupArray<ConstStringRef, ArgType, 47> lookup({{
     {packedLocalIds, ArgType::argTypePackedLocalIds},
     {localId, ArgType::argTypeLocalId},
     {localSize, ArgType::argTypeLocalSize},
@@ -69,6 +69,7 @@ inline constexpr LookupArray<ConstStringRef, ArgType, 46> lookup({{
     {regionGroupWgCount, ArgType::argTypeRegionGroupWgCount},
     {regionGroupBarrierBuffer, ArgType::argTypeRegionGroupBarrierBuffer},
     {inlineSampler, ArgType::argTypeInlineSampler},
+    {bufferSize, ArgType::argTypeBufferSize},
 }});
 static_assert(lookup.size() == ArgType::argTypeMax - 1, "Every enum field must be present");
 } // namespace ArgType

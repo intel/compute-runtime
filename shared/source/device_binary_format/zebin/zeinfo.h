@@ -134,6 +134,7 @@ inline constexpr ConstStringRef regionGroupDimension("region_group_dimension");
 inline constexpr ConstStringRef regionGroupWgCount("region_group_wg_count");
 inline constexpr ConstStringRef regionGroupBarrierBuffer("region_group_barrier_buffer");
 inline constexpr ConstStringRef inlineSampler("inline_sampler");
+inline constexpr ConstStringRef bufferSize("buffer_size");
 
 namespace Image {
 inline constexpr ConstStringRef width("image_width");
@@ -540,6 +541,7 @@ enum ArgType : uint8_t {
     argTypeRegionGroupWgCount,
     argTypeRegionGroupBarrierBuffer,
     argTypeInlineSampler,
+    argTypeBufferSize,
     argTypeMax
 };
 

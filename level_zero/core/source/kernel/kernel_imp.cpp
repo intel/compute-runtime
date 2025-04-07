@@ -644,6 +644,8 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
 ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) {
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
     const auto val = argVal;
+    const int64_t bufferSize = static_cast<int64_t>(allocation->getUnderlyingBufferSize() - (ptrDiff(argVal, allocation->getGpuAddress())));
+    NEO::patchNonPointer<int64_t, int64_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.bufferSize, bufferSize);
 
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg, val);
     if (NEO::isValidOffset(arg.bindful) || NEO::isValidOffset(arg.bindless)) {
@@ -719,6 +721,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     const auto &allArgs = kernelImmData->getDescriptor().payloadMappings.explicitArgs;
     const auto &currArg = allArgs[argIndex];
     if (currArg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal) {
+        NEO::patchNonPointer<int64_t, int64_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), currArg.as<NEO::ArgDescPointer>().bufferSize, static_cast<int64_t>(argSize));
         slmArgSizes[argIndex] = static_cast<uint32_t>(argSize);
         kernelArgInfos[argIndex] = KernelArgInfo{nullptr, 0, 0, false};
         UNRECOVERABLE_IF(NEO::isUndefinedOffset(currArg.as<NEO::ArgDescPointer>().slmOffset));
@@ -777,6 +780,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
             argumentsResidencyContainer[argIndex] = nullptr;
             const auto &argAsPtr = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
             auto patchLocation = ptrOffset(getCrossThreadData(), argAsPtr.stateless);
+            NEO::patchNonPointer<int64_t, int64_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), argAsPtr.bufferSize, 0);
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), argAsPtr.pointerSize, reinterpret_cast<uintptr_t>(requestedAddress));
             kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, 0, 0, false};
             return ZE_RESULT_SUCCESS;
