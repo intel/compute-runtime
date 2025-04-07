@@ -417,7 +417,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         .localRegionSize = args.localRegionSize,
         .maxFrontEndThreads = args.device->getDeviceInfo().maxFrontEndThreads,
         .requiredSystemFence = args.requiresSystemMemoryFence() && args.device->getGfxCoreHelper().isFenceAllocationRequired(hwInfo),
-        .hasSample = kernelDescriptor.kernelAttributes.flags.hasSample};
+        .hasSample = kernelDescriptor.kernelAttributes.flags.hasSample,
+        .l0DebuggerEnabled = args.device->getL0Debugger() != nullptr};
 
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
     EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(walkerCmd, rootDeviceEnvironment, walkerArgs);

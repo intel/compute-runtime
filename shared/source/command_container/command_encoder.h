@@ -128,6 +128,7 @@ struct EncodeWalkerArgs {
     uint32_t maxFrontEndThreads = 0;
     bool requiredSystemFence = false;
     bool hasSample = false;
+    bool l0DebuggerEnabled = false;
 };
 
 template <class T>
