@@ -631,6 +631,13 @@ void EncodeIndirectParams<Family>::encode(CommandContainer &container, uint64_t 
             setWorkDimIndirect(container, numWorkDimOffsetV1, implicitArgsGpuPtr, dispatchInterface->getGroupSize(), nullptr);
         }
     }
+    if (outArgs && !outArgs->commandsToPatch.empty()) {
+        auto &commandStream = *container.getCommandStream();
+        EncodeMiArbCheck<Family>::program(commandStream, true);
+        auto gpuVa = commandStream.getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<Family>::getBatchBufferStartSize();
+        EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(&commandStream, gpuVa, !(container.getFlushTaskUsedForImmediate() || container.isUsingPrimaryBuffer()), false, false);
+        EncodeMiArbCheck<Family>::program(commandStream, false);
+    }
 }
 
 template <typename Family>

@@ -10,6 +10,7 @@
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
@@ -487,6 +488,64 @@ HWTEST_F(CommandEncoderMathTest, givenPayloadArgumentStoredInInlineDataWhenEncod
         itor = find<MI_STORE_REGISTER_MEM *>(++itor, commands.end());
         ASSERT_EQ(itor, commands.end());
     }
+}
+
+HWTEST_F(CommandEncoderMathTest, givenPayloadArgumentStoredInInlineDataWhenEncodeIndirectParamsThenPreparserMitigationIsProgrammed) {
+    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    CommandContainer cmdContainer0;
+    cmdContainer0.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+
+    CommandContainer cmdContainer1;
+    cmdContainer1.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+
+    uint64_t crossThreadGpuVa = 0xBADF000;
+
+    IndirectParamsInInlineDataArgs args{};
+
+    MockDispatchKernelEncoder dispatchInterface;
+
+    auto &kernelDescriptor = dispatchInterface.kernelDescriptor;
+    uint32_t groupSizes[3] = {1, 2, 3};
+    dispatchInterface.getGroupSizeResult = groupSizes;
+
+    kernelDescriptor.kernelAttributes.inlineDataPayloadSize = 0x100;
+    kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 0x100;
+    kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[1] = 0x110;
+    kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[2] = undefined<CrossThreadDataOffset>;
+
+    kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = undefined<CrossThreadDataOffset>;
+    kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[1] = 0x120;
+    kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[2] = 0x130;
+
+    kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0x140;
+
+    EncodeIndirectParams<FamilyType>::encode(cmdContainer0, crossThreadGpuVa, &dispatchInterface, 0u, &args);
+
+    kernelDescriptor.payloadMappings.dispatchTraits.workDim = 0x60;
+
+    EncodeIndirectParams<FamilyType>::encode(cmdContainer1, crossThreadGpuVa, &dispatchInterface, 0u, &args);
+
+    auto used0 = cmdContainer0.getCommandStream()->getUsed();
+    auto used1 = cmdContainer1.getCommandStream()->getUsed();
+
+    auto expectedDiff = sizeof(MI_ARB_CHECK) * 2 + sizeof(MI_BATCH_BUFFER_START);
+    EXPECT_EQ(expectedDiff, used1 - used0);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer1.getCommandStream()->getCpuBase(), used0), used1 - used0);
+    auto itor = commands.begin();
+    itor = find<MI_ARB_CHECK *>(itor, commands.end());
+    ASSERT_NE(itor, commands.end());
+    itor = find<MI_BATCH_BUFFER_START *>(++itor, commands.end());
+
+    ASSERT_NE(itor, commands.end());
+    itor = find<MI_ARB_CHECK *>(++itor, commands.end());
+
+    ASSERT_NE(itor, commands.end());
+    itor = find<MI_ARB_CHECK *>(++itor, commands.end());
+
+    EXPECT_EQ(itor, commands.end());
 }
 
 using CommandEncodeAluTests = ::testing::Test;
