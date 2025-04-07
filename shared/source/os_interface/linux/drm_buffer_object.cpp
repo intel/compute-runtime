@@ -348,11 +348,13 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
             }
         }
     } else {
+        StackVec<std::unique_lock<NEO::CommandStreamReceiver::MutexType>, 1> locks{};
         if (this->drm->getRootDeviceEnvironment().executionEnvironment.memoryManager.get()) {
             const auto &engines = this->drm->getRootDeviceEnvironment().executionEnvironment.memoryManager->getRegisteredEngines(osContext->getRootDeviceIndex());
             for (const auto &engine : engines) {
                 if (engine.osContext->isDirectSubmissionLightActive()) {
-                    engine.commandStreamReceiver->stopDirectSubmission(false, true);
+                    locks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
+                    engine.commandStreamReceiver->stopDirectSubmission(false, false);
                 }
             }
         }

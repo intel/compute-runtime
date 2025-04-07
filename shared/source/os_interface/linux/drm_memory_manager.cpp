@@ -1367,6 +1367,7 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
         if (engine.osContext->isDirectSubmissionLightActive()) {
             lock = engine.commandStreamReceiver->obtainUniqueOwnership();
             engine.commandStreamReceiver->stopDirectSubmission(true, false);
+            handleFenceCompletion(gfxAllocation);
         }
 
         auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
