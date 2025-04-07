@@ -42,6 +42,7 @@ struct MemorySynchronizationViaMiSemaphoreWaitTest : public UltCommandStreamRece
         debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
         debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
         debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -161,6 +162,7 @@ struct SystemMemoryFenceInDisabledConfigurationTest : public UltCommandStreamRec
         debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
         debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
         debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -247,13 +249,15 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaMiMemFenceTestXe2HpgCore, givenSystemMemo
     commandStreamReceiver.flushBcsTask(blitPropertiesContainer, false, *pDevice);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(cmdStream);
-    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    if (!pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(cmdStream);
+        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+    }
 }
 
 struct SystemMemoryFenceViaComputeWalkerTest : public UltCommandStreamReceiverTest {
@@ -283,13 +287,15 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaComputeWalkerTestXe2HpgCore, givenSystemM
     commandStreamReceiver.programEnginePrologue(cmdStream);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(cmdStream);
-    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    if (!pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(cmdStream);
+        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+    }
 }
 
 XE2_HPG_CORETEST_F(SystemMemoryFenceViaComputeWalkerTestXe2HpgCore, givenSystemMemoryFenceGeneratedAsPostSyncOperationInComputeWalkerWhenDispatchWalkerIsCalledThenSystemMemoryFenceRequestInPostSyncDataIsProgrammed) {
@@ -347,13 +353,15 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaKernelInstructionTestXe2HpgCore, givenSys
     commandStreamReceiver.programEnginePrologue(cmdStream);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(cmdStream);
-    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(cmdStream);
+        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
+    }
 }
 
 struct SystemMemoryFenceInDefaultConfigurationTest : public UltCommandStreamReceiverTest {
@@ -374,6 +382,9 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -411,6 +422,9 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -449,6 +463,9 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -490,6 +507,9 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -532,6 +552,10 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
+    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        GTEST_SKIP();
+    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);

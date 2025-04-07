@@ -303,7 +303,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, cmd, walkerArgs);
-    EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(cmd, walkerArgs);
+    EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(cmd, rootDeviceEnvironment, walkerArgs);
     EncodeDispatchKernel<Family>::template encodeComputeDispatchAllWalker<WalkerType, INTERFACE_DESCRIPTOR_DATA>(cmd, nullptr, rootDeviceEnvironment, walkerArgs);
 
     memcpy_s(iddPtr, sizeof(idd), &idd, sizeof(idd));
@@ -434,7 +434,7 @@ inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const Roo
 
 template <typename Family>
 template <typename WalkerType>
-inline void EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
+inline void EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs) {}
 
 template <typename Family>
 template <typename WalkerType, typename InterfaceDescriptorType>

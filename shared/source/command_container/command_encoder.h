@@ -12,7 +12,9 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debugger/debugger.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_execution_type.h"
@@ -93,7 +95,7 @@ struct EncodeDispatchKernelArgs {
     bool isFlushL3AfterPostSyncForHostUsmRequired = false;
 
     bool requiresSystemMemoryFence() const {
-        return (isHostScopeSignalEvent && isKernelUsingSystemAllocation);
+        return (isHostScopeSignalEvent && isKernelUsingSystemAllocation && !device->getHardwareInfo().capabilityTable.isIntegratedDevice);
     }
 };
 
@@ -279,7 +281,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     template <typename WalkerType, typename InterfaceDescriptorType>
     static void overrideDefaultValues(WalkerType &walkerCmd, InterfaceDescriptorType &interfaceDescriptor);
     template <typename WalkerType>
-    static void encodeWalkerPostSyncFields(WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
+    static void encodeWalkerPostSyncFields(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs);
     template <typename WalkerType, typename InterfaceDescriptorType>
     static void encodeComputeDispatchAllWalker(WalkerType &walkerCmd, const InterfaceDescriptorType *idd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs);
 };

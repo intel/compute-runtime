@@ -29,6 +29,7 @@ struct MemorySynchronizationViaMiSemaphoreWaitTest : public UltCommandStreamRece
         debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
         debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
         debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;
@@ -58,6 +59,7 @@ struct SystemMemoryFenceInDisabledConfigurationTest : public UltCommandStreamRec
         debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
         debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
         debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(0);
+        debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
         UltCommandStreamReceiverTest::SetUp();
     }
     DebugManagerStateRestore restore;

@@ -415,11 +415,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         .requiredDispatchWalkOrder = args.requiredDispatchWalkOrder,
         .localRegionSize = args.localRegionSize,
         .maxFrontEndThreads = args.device->getDeviceInfo().maxFrontEndThreads,
-        .requiredSystemFence = args.requiresSystemMemoryFence(),
+        .requiredSystemFence = args.requiresSystemMemoryFence() && args.device->getGfxCoreHelper().isFenceAllocationRequired(hwInfo),
         .hasSample = kernelDescriptor.kernelAttributes.flags.hasSample};
 
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
-    EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(walkerCmd, walkerArgs);
+    EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(walkerCmd, rootDeviceEnvironment, walkerArgs);
     EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(walkerCmd, &idd, rootDeviceEnvironment, walkerArgs);
 
     EncodeDispatchKernel<Family>::overrideDefaultValues(walkerCmd, idd);
@@ -1176,8 +1176,8 @@ void EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(InterfaceDescriptor
 
 template <typename Family>
 template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
-    auto programGlobalFenceAsPostSyncOperationInComputeWalker = walkerArgs.requiredSystemFence;
+void EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs) {
+    auto programGlobalFenceAsPostSyncOperationInComputeWalker = !rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice && walkerArgs.requiredSystemFence;
     int32_t overrideProgramSystemMemoryFence = debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();
     if (overrideProgramSystemMemoryFence != -1) {
         programGlobalFenceAsPostSyncOperationInComputeWalker = !!overrideProgramSystemMemoryFence;
