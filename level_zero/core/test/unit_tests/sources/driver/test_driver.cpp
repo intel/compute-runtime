@@ -1049,6 +1049,30 @@ TEST_F(GetDriverPropertiesTest, whenGettingDdiHandlesExtensionPropertiesThenSupp
     EXPECT_EQ(ze_driver_ddi_handle_ext_flag_t::ZE_DRIVER_DDI_HANDLE_EXT_FLAG_DDI_HANDLE_EXT_SUPPORTED, ddiHandlesExtProperties.flags);
 }
 
+TEST_F(GetDriverPropertiesTest, givenBaseStructStypeNotSetWhenGettingDdiHandlesExtensionPropertiesThenSupportIsNotExposedEvenIfDebugKeyIsSet) {
+    DebugManagerStateRestore restorer;
+
+    ze_driver_properties_t driverProperties{};
+    ze_driver_ddi_handles_ext_properties_t ddiHandlesExtProperties = {ZE_STRUCTURE_TYPE_DRIVER_DDI_HANDLES_EXT_PROPERTIES};
+    driverProperties.pNext = &ddiHandlesExtProperties;
+
+    ze_result_t result = driverHandle->getProperties(&driverProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, ddiHandlesExtProperties.flags);
+
+    ddiHandlesExtProperties = {ZE_STRUCTURE_TYPE_DRIVER_DDI_HANDLES_EXT_PROPERTIES};
+    NEO::debugManager.flags.EnableDdiHandlesExtension.set(0);
+    result = driverHandle->getProperties(&driverProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, ddiHandlesExtProperties.flags);
+
+    ddiHandlesExtProperties = {ZE_STRUCTURE_TYPE_DRIVER_DDI_HANDLES_EXT_PROPERTIES};
+    NEO::debugManager.flags.EnableDdiHandlesExtension.set(1);
+    result = driverHandle->getProperties(&driverProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, ddiHandlesExtProperties.flags);
+}
+
 TEST(zeDriverHandleGetApiVersion, whenZeDriverGetApiIsCalledThenGetApiVersionIsCalled) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     Mock<DriverHandle> driverHandle;

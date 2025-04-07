@@ -126,6 +126,9 @@ ze_result_t DriverHandleImp::getProperties(ze_driver_properties_t *properties) {
     memcpy_s(properties->uuid.id, sizeof(uniqueId), &uniqueId, sizeof(uniqueId));
 
     auto pNext = reinterpret_cast<ze_base_properties_t *>(properties->pNext);
+    if (properties->stype != ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES) {
+        pNext = nullptr;
+    }
     while (pNext) {
         if (pNext->stype == ZE_STRUCTURE_TYPE_DRIVER_DDI_HANDLES_EXT_PROPERTIES && NEO::debugManager.flags.EnableDdiHandlesExtension.get()) {
             ze_driver_ddi_handles_ext_properties_t *pDdiHandlesExtProperties = reinterpret_cast<ze_driver_ddi_handles_ext_properties_t *>(pNext);
