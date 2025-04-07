@@ -880,12 +880,14 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
     wait.boHandle = waitHandle;
     wait.timeoutNs = timeout;
 
+    StackVec<std::unique_lock<NEO::CommandStreamReceiver::MutexType>, 1> locks{};
     if (this->rootDeviceEnvironment.executionEnvironment.memoryManager) {
         const auto &mulitEngines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
         for (const auto &engines : mulitEngines) {
             for (const auto &engine : engines) {
                 if (engine.osContext->isDirectSubmissionLightActive()) {
-                    engine.commandStreamReceiver->stopDirectSubmission(false, true);
+                    locks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
+                    engine.commandStreamReceiver->stopDirectSubmission(false, false);
                 }
             }
         }
