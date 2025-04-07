@@ -240,8 +240,8 @@ HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenCheckingAsser
 
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
     device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
-    static_cast<MockCommandListImmediate<gfxCoreFamily> *>(commandList.get())->kernelWithAssertAppended = true;
-    static_cast<MockCommandListImmediate<gfxCoreFamily> *>(commandList.get())->checkAssert();
+    static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> *>(commandList.get())->kernelWithAssertAppended = true;
+    static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> *>(commandList.get())->checkAssert();
 
     EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
 }
@@ -256,8 +256,8 @@ HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListAndNoAssertHandle
                                                                               NEO::EngineGroupType::renderCompute, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    static_cast<MockCommandListImmediate<gfxCoreFamily> *>(commandList.get())->kernelWithAssertAppended = true;
-    EXPECT_THROW(static_cast<MockCommandListImmediate<gfxCoreFamily> *>(commandList.get())->checkAssert(), std::exception);
+    static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> *>(commandList.get())->kernelWithAssertAppended = true;
+    EXPECT_THROW(static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> *>(commandList.get())->checkAssert(), std::exception);
 }
 
 HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsynchronousImmCommandListThenAssertIsNotChecked, MatchAny) {
@@ -272,7 +272,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsy
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
@@ -301,7 +301,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSyn
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
     kernel.module = &module;
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
@@ -341,7 +341,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynch
     csr.callBaseWaitForCompletionWithTimeout = false;
     csr.returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
 
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;

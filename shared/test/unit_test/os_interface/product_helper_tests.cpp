@@ -613,7 +613,7 @@ HWTEST2_F(ProductHelperTest, WhenFillingScmPropertiesSupportThenExpectUseCorrect
     EXPECT_EQ(productHelper->getScmPropertyZPassAsyncComputeThreadLimitSupport(), scmPropertiesSupport.zPassAsyncComputeThreadLimit);
     EXPECT_EQ(productHelper->getScmPropertyPixelAsyncComputeThreadLimitSupport(), scmPropertiesSupport.pixelAsyncComputeThreadLimit);
     EXPECT_EQ(productHelper->getScmPropertyDevicePreemptionModeSupport(), scmPropertiesSupport.devicePreemptionMode);
-    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         EXPECT_EQ(productHelper->isGrfNumReportedWithScm(), scmPropertiesSupport.largeGrfMode);
     }
 }

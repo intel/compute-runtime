@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,7 +128,7 @@ struct CommandListXe2AndLaterFixture : public DeviceFixture {
 using CommandListXe2AndLaterTests = Test<CommandListXe2AndLaterFixture>;
 
 HWTEST2_F(CommandListXe2AndLaterTests, given64bEventWhenTimestampIsWrittenThenAddExtraMmioReads, Platforms) {
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
 
     NEO::LinearStream *commandStream = commandList->getCmdContainer().getCommandStream();
@@ -153,7 +153,7 @@ HWTEST2_F(CommandListXe2AndLaterTests, given64bEventWhenTimestampIsWrittenThenAd
 }
 
 HWTEST2_F(CommandListXe2AndLaterTests, given64bEventWithLsbMaskingWhenTimestampIsWrittenThenAddExtraMmioReads, Platforms) {
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
 
     NEO::LinearStream *commandStream = commandList->getCmdContainer().getCommandStream();
@@ -186,9 +186,9 @@ HWTEST2_F(CommandListXe2AndLaterTests, given64bEventWithLsbMaskingWhenTimestampI
 using CommandListAppendRangesBarrierXe2AndLater = Test<DeviceFixture>;
 
 HWTEST2_F(CommandListAppendRangesBarrierXe2AndLater, givenCallToAppendRangesBarrierThenPipeControlProgrammed, Platforms) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -255,7 +255,7 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.hasRTCalls = false;
 
-    auto commandListCore = std::make_unique<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandListCore = std::make_unique<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandListCore->initialize(device, NEO::EngineGroupType::compute, 0u);
 
     auto result = commandListCore->obtainKernelPreemptionMode(kernel.get());
@@ -270,7 +270,7 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.hasRTCalls = false;
 
-    auto commandListCore = std::make_unique<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandListCore = std::make_unique<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandListCore->initialize(device, NEO::EngineGroupType::compute, 0u);
 
     auto result = commandListCore->obtainKernelPreemptionMode(kernel.get());
@@ -284,7 +284,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCr
     NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
     using WalkerVariant = typename FamilyType::WalkerVariant;
 
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);

@@ -156,10 +156,10 @@ HWTEST2_F(PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeState
 
     [[maybe_unused]] uint32_t numberOfWalkers = 0u;
     [[maybe_unused]] uint32_t fusedEuDispach = 0u;
-    if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
         numberOfWalkers = cfeState->getNumberOfWalkers();
     }
-    if constexpr (TestTraits<gfxCoreFamily>::fusedEuDispatchSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::fusedEuDispatchSupported) {
         fusedEuDispach = cfeState->getFusedEuDispatch();
     }
     uint32_t overDispatchControl = static_cast<uint32_t>(cfeState->getOverDispatchControl());
@@ -171,10 +171,10 @@ HWTEST2_F(PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeState
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, expectedAddress, expectedMaxThreads, emptyProperties);
     uint32_t maximumNumberOfThreads = cfeState->getMaximumNumberOfThreads();
 
-    if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
         EXPECT_EQ(numberOfWalkers, cfeState->getNumberOfWalkers());
     }
-    if constexpr (TestTraits<gfxCoreFamily>::fusedEuDispatchSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::fusedEuDispatchSupported) {
         EXPECT_EQ(fusedEuDispach, cfeState->getFusedEuDispatch());
     }
     EXPECT_NE(expectedMaxThreads, maximumNumberOfThreads);
@@ -209,7 +209,7 @@ HWTEST2_F(PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhenPreambleCfeStateIsP
 
     EXPECT_EQ(expectedValue1, static_cast<uint32_t>(cfeState->getOverDispatchControl()));
     EXPECT_EQ(expectedValue1, cfeState->getLargeGRFThreadAdjustDisable());
-    if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
         EXPECT_EQ(expectedValue2, cfeState->getNumberOfWalkers());
     }
     EXPECT_EQ(expectedValue2, cfeState->getMaximumNumberOfThreads());

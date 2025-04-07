@@ -143,7 +143,7 @@ HWTEST2_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenIntern
     auto cmdQ = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, true, false, returnValue);
     ASSERT_NE(nullptr, cmdQ);
 
-    auto cmdQHw = static_cast<CommandQueueHw<gfxCoreFamily> *>(cmdQ);
+    auto cmdQHw = static_cast<CommandQueueHw<FamilyType::gfxCoreFamily> *>(cmdQ);
     StackVec<char, 4096> buffer(4096);
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
 

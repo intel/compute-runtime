@@ -5029,7 +5029,7 @@ HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyIsCalledWhenCpuCopyIsUsedAndC
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     queue->isCopyOnlyCommandQueue = true;
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);

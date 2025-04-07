@@ -28,7 +28,7 @@ using CommandQueueExecuteCommandListsSimpleTest = Test<DeviceFixture>;
 HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeWhenExecutingCommandListThenSynchronizeIsCalled, MatchAny) {
     ze_command_queue_desc_t desc;
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    auto mockCmdQ = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
     mockCmdQ->initialize(false, false, false);
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
@@ -44,7 +44,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeAndDevi
     ze_command_queue_desc_t desc;
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
-    auto mockCmdQ = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
     mockCmdQ->initialize(false, false, false);
     mockCmdQ->synchronizeReturnValue = ZE_RESULT_ERROR_DEVICE_LOST;
 
@@ -63,7 +63,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeAndDevi
 HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenAsynchronousModeWhenExecutingCommandListThenSynchronizeIsNotCalled, MatchAny) {
     ze_command_queue_desc_t desc;
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    auto mockCmdQ = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
     mockCmdQ->initialize(false, false, false);
     ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {

@@ -832,7 +832,7 @@ HWTEST2_F(ContextMakeMemoryResidentAndMigrationTests,
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 0u);
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
     commandList->indirectAllocationsAllowed = true;

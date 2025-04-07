@@ -68,7 +68,7 @@ class MockDriverHandle : public L0::DriverHandleImp {
 using AppendMemoryCopyTests = Test<AppendMemoryCopyFixture>;
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenMemCopyWasCalled, MatchAny) {
-    MockCommandListForMemFill<gfxCoreFamily> cmdList;
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t pattern[4] = {1, 2, 3, 4};
     void *ptr = reinterpret_cast<void *>(0x1234);
@@ -77,7 +77,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillCalled
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillToNotDeviceMemThenInvalidArgumentReturned, MatchAny) {
-    MockCommandListForMemFill<gfxCoreFamily> cmdList;
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     uint8_t pattern = 1;
     void *ptr = reinterpret_cast<void *>(0x1234);
@@ -88,9 +88,9 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillToNotD
 using MemFillPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBltIsProgrammed, MemFillPlatforms) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
-    MockCommandListForMemFill<gfxCoreFamily> commandList;
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
     MockDriverHandle driverHandleMock;
     NEO::DeviceVector neoDevices;
     neoDevices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
@@ -111,7 +111,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillThenCo
 HWTEST2_F(AppendMemoryCopyTests,
           givenExternalHostPointerAllocationWhenPassedToAppendBlitFillThenProgramDestinationAddressCorrectly,
           MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
 
     L0::Device *device = driverHandle->devices[0];
@@ -125,7 +125,7 @@ HWTEST2_F(AppendMemoryCopyTests,
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(NEO::AllocationType::externalHostPtr, gpuAllocation->getAllocationType());
 
-    MockCommandListForMemFill<gfxCoreFamily> commandList;
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     uint32_t pattern = 1;
@@ -148,10 +148,10 @@ HWTEST2_F(AppendMemoryCopyTests,
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, MatchAny) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -172,10 +172,10 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndHostPointersWhenMemo
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, MatchAny) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -197,10 +197,10 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndHostPointersWhenMemo
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListThenDcFlushIsNotAddedAfterBlitCopy, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uintptr_t srcPtr = 0x5001;
     uintptr_t dstPtr = 0x7001;
@@ -227,9 +227,9 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListThenDcFlushIsNotAddedAf
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryCopyRegionBlitThenTimeStampRegistersAreAdded, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -290,9 +290,9 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemory
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToImageCopyBlitThenTimeStampRegistersAreAdded, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -324,14 +324,14 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToImageC
 
 using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenCopyFromImagBlitThenCommandAddedToStream, ImageSupport) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHWSrc->initialize(device, &zeDesc);
     imageHWDst->initialize(device, &zeDesc);
 
@@ -347,7 +347,7 @@ using AppendMemoryCopyFromContext = AppendMemoryCopyTests;
 
 HWTEST2_F(AppendMemoryCopyFromContext, givenCommandListThenUpOnPerformingAppendMemoryCopyFromContextSuccessIsReturned, MatchAny) {
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -363,7 +363,7 @@ struct IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport {
 };
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTiled1DArrayImagePassedToImageCopyBlitThenTransformedTo2DArrayCopy, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
     auto gmmSrc = std::make_unique<MockGmm>(device->getNEODevice()->getGmmHelper());
@@ -397,7 +397,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTiled1DArrayImagePassed
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenNotTiled1DArrayImagePassedToImageCopyBlitThenNotTransformedTo2DArrayCopy, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
     auto gmmSrc = std::make_unique<MockGmm>(device->getNEODevice()->getGmmHelper());

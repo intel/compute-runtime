@@ -37,7 +37,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsT
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
     csr.createGlobalFenceAllocation();
 
-    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, &csr, &desc);
+    auto commandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, &csr, &desc);
     commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;
@@ -65,7 +65,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsT
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
 
-    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr, &desc);
+    auto commandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;
@@ -96,7 +96,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsF
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
 
-    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr, &desc);
+    auto commandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;

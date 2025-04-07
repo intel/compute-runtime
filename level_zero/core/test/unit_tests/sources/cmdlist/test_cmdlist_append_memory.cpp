@@ -26,7 +26,7 @@ namespace ult {
 using AppendMemoryCopyTests = Test<AppendMemoryCopyFixture>;
 
 HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenTwoNewAllocationAreAddedToHostMapPtr, MatchAny) {
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -37,7 +37,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndHostPointersWhenMemoryCopyRe
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndUnalignedHostPointersWhenMemoryCopyRegion2DCalledThenSrcDstPointersArePageAligned, MatchAny) {
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -50,7 +50,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndUnalignedHostPointersWhenMem
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndUnalignedHostPointersWhenMemoryCopyRegion3DCalledThenSrcDstPointersArePageAligned, MatchAny) {
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -63,7 +63,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndUnalignedHostPointersWhenMem
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndUnalignedHostPointersWhenBlitMemoryCopyRegion2DCalledThenSrcDstNotZeroOffsetsArePassed, MatchAny) {
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1233);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -75,7 +75,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndUnalignedHostPointersWhenBli
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndUnalignedHostPointersWhenBlitMemoryCopyRegion3DCalledThenSrcDstNotZeroOffsetsArePassed, MatchAny) {
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1233);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -87,7 +87,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndUnalignedHostPointersWhenBli
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndAlignedHostPointersWhenBlitMemoryCopyRegion3DCalledThenSrcDstZeroOffsetsArePassed, MatchAny) {
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     void *srcPtr = alignDown(reinterpret_cast<void *>(0x1233), NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
     void *dstPtr = alignDown(reinterpret_cast<void *>(0x2345), NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
@@ -99,10 +99,10 @@ HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndAlignedHostPointersWhenBlitM
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndDestinationPtrOffsetWhenMemoryCopyRegionToSameUsmHostAllocationThenDestinationBlitCopyRegionHasOffset, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -133,10 +133,10 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndDestinationPtrOffsetWhen
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopyRegionToSameUsmHostAllocationThenSourceBlitCopyRegionHasOffset, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -167,10 +167,10 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndSourcePtrOffsetWhenMemor
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndDestinationPtrOffsetWhenMemoryCopyRegionToSameUsmSharedAllocationThenDestinationBlitCopyRegionHasOffset, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -202,10 +202,10 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndDestinationPtrOffsetWhen
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopyRegionToSameUsmSharedAllocationThenSourceBlitCopyRegionHasOffset, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -237,10 +237,10 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndSourcePtrOffsetWhenMemor
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndDestinationPtrOffsetWhenMemoryCopyRegionToSameUsmDeviceAllocationThenDestinationBlitCopyRegionHasOffset, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -271,10 +271,10 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndDestinationPtrOffsetWhen
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopyRegionToSameUsmDeviceAllocationThenSourceBlitCopyRegionHasOffset, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     constexpr size_t allocSize = 4096;
@@ -307,7 +307,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListAndSourcePtrOffsetWhenMemor
 HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAdded, MatchAny) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -337,7 +337,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCop
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->device = device;
     commandList->cmdQImmediate = queue.get();
@@ -360,7 +360,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCop
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->device = device;
     commandList->cmdQImmediate = queue.get();
@@ -378,7 +378,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemo
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->device = device;
     commandList->cmdQImmediate = queue.get();
@@ -410,7 +410,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemo
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->isFlushTaskSubmissionEnabled = true;
     commandList->device = device;
@@ -514,7 +514,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenSyncImmediateCommandListWhenAppendingMemor
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->isFlushTaskSubmissionEnabled = true;
     commandList->device = device;
@@ -607,7 +607,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenSyncModeImmediateCommandListWhenAppendingM
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->device = device;
     commandList->cmdQImmediate = queue.get();
@@ -631,7 +631,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCop
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->device = device;
     commandList->cmdQImmediate = queue.get();
@@ -649,7 +649,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCop
 HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, MatchAny) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -682,11 +682,11 @@ HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndHostPointersWhenMemoryCopyCa
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
-    using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -739,10 +739,10 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenForcingTlbFlushBeforeCo
     DebugManagerStateRestore restorer;
 
     NEO::debugManager.flags.FlushTlbBeforeCopy.set(1);
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -768,10 +768,10 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenForcingTlbFlushBeforeCo
 using SupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
 HWTEST2_F(AppendMemoryCopyTests,
           givenCommandListUsesTimestampPassedToMemoryCopyWhenTwoKernelsAreUsedThenAppendProfilingCalledForSinglePacket, SupportedPlatforms) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -828,10 +828,10 @@ HWTEST2_F(AppendMemoryCopyTests,
 
 HWTEST2_F(AppendMemoryCopyTests,
           givenCommandListUsesTimestampPassedToMemoryCopyWhenThreeKernelsAreUsedThenAppendProfilingCalledForSinglePacket, SupportedPlatforms) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -887,9 +887,9 @@ HWTEST2_F(AppendMemoryCopyTests,
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhenCopyMemoryRegionThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeHpCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
-    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
 
     DebugManagerStateRestore restorer;
 
@@ -899,7 +899,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhe
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     queue->isCopyOnlyCommandQueue = true;
 
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdList.isFlushTaskSubmissionEnabled = true;
@@ -943,7 +943,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhe
     }
 
     if constexpr (IsPVC::isMatched<productFamily>()) {
-        EXPECT_EQ(itors.back(), find<typename GfxFamily::MEM_SET *>(genCmdList.begin(), itors.back()));
+        EXPECT_EQ(itors.back(), find<typename FamilyType::MEM_SET *>(genCmdList.begin(), itors.back()));
     }
     EXPECT_EQ(itors.back(), find<XY_COLOR_BLT *>(genCmdList.begin(), itors.back()));
 
@@ -953,15 +953,14 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhe
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWithDummyBlitWaWhenCopyMemoryRegionThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeHpCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
-    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
 
     DebugManagerStateRestore restorer;
 
     NEO::debugManager.flags.ForceDummyBlitWa.set(1);
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdList.isFlushTaskSubmissionEnabled = true;
 
@@ -1004,7 +1003,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWithDummyBlitWaWhenCopyMemo
     }
 
     if constexpr (IsPVC::isMatched<productFamily>()) {
-        EXPECT_EQ(itors.back(), find<typename GfxFamily::MEM_SET *>(genCmdList.begin(), itors.back()));
+        EXPECT_EQ(itors.back(), find<typename FamilyType::MEM_SET *>(genCmdList.begin(), itors.back()));
     }
     EXPECT_EQ(itors.back(), find<XY_COLOR_BLT *>(genCmdList.begin(), itors.back()));
 
@@ -1022,9 +1021,9 @@ struct AppendMemoryCopyFenceTest : public AppendMemoryCopyTests {
 };
 
 HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAddFence, IsAtLeastXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
-    using MI_MEM_FENCE = typename GfxFamily::MI_MEM_FENCE;
+
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -1038,17 +1037,17 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
 
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
 
-    auto hostVisibleEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDescHostVisible, device));
-    auto regularEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto hostVisibleEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDescHostVisible, device));
+    auto regularEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     ze_command_queue_desc_t desc = {};
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdListRegular;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdListRegular;
     cmdListRegular.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdListRegular.isFlushTaskSubmissionEnabled = true;
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdListRegularInOrder;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdListRegularInOrder;
     cmdListRegularInOrder.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdListRegularInOrder.isFlushTaskSubmissionEnabled = true;
     cmdListRegularInOrder.enableInOrderExecution();
@@ -1056,13 +1055,13 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
     auto queue1 = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
     auto queue2 = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
 
-    MockCommandListImmediateHw<gfxCoreFamily> cmdListImmediate;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdListImmediate;
     cmdListImmediate.isFlushTaskSubmissionEnabled = true;
     cmdListImmediate.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdListImmediate.cmdQImmediate = queue1.get();
     cmdListImmediate.initialize(device, NEO::EngineGroupType::copy, 0u);
 
-    MockCommandListImmediateHw<gfxCoreFamily> cmdListImmediateInOrder;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdListImmediateInOrder;
     cmdListImmediateInOrder.isFlushTaskSubmissionEnabled = true;
     cmdListImmediateInOrder.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdListImmediateInOrder.cmdQImmediate = queue2.get();
@@ -1105,7 +1104,7 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
 
     for (bool inOrderCmdList : {true, false}) {
         for (bool immediateCmdList : {true, false}) {
-            L0::CommandListCoreFamily<gfxCoreFamily> *cmdList = nullptr;
+            L0::CommandListCoreFamily<FamilyType::gfxCoreFamily> *cmdList = nullptr;
 
             if (immediateCmdList) {
                 cmdList = inOrderCmdList ? &cmdListImmediateInOrder : &cmdListImmediate;
@@ -1171,9 +1170,9 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
 }
 
 HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProgrammedWithoutEventThenAddFenceDuringTagUpdate, IsAtLeastXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
-    using MI_MEM_FENCE = typename GfxFamily::MI_MEM_FENCE;
+
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -1187,14 +1186,14 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
 
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
 
-    auto hostVisibleEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDescHostVisible, device));
-    auto regularEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto hostVisibleEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDescHostVisible, device));
+    auto regularEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     ze_command_queue_desc_t desc = {};
-    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
     mockCmdQHw->initialize(true, false, false);
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdList.isFlushTaskSubmissionEnabled = true;
 
@@ -1297,9 +1296,9 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhenCopyMemoryThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeHpCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
-    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
 
     DebugManagerStateRestore restorer;
 
@@ -1309,7 +1308,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhe
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     queue->isCopyOnlyCommandQueue = true;
 
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -1341,7 +1340,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhe
     EXPECT_EQ(bltCmd->getDestinationBaseAddress(), reinterpret_cast<uintptr_t>(dstPtr));
 
     if constexpr (IsPVC::isMatched<productFamily>()) {
-        EXPECT_EQ(genCmdList.end(), find<typename GfxFamily::MEM_SET *>(genCmdList.begin(), genCmdList.end()));
+        EXPECT_EQ(genCmdList.end(), find<typename FamilyType::MEM_SET *>(genCmdList.begin(), genCmdList.end()));
     }
     EXPECT_EQ(genCmdList.end(), find<XY_COLOR_BLT *>(genCmdList.begin(), genCmdList.end()));
 

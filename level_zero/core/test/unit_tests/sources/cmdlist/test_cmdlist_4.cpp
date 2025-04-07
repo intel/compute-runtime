@@ -39,7 +39,7 @@ namespace L0 {
 namespace ult {
 using CommandListCreateTests = Test<CommandListCreateFixture>;
 HWTEST2_F(CommandListCreateTests, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
     ze_result_t returnValue;
@@ -217,8 +217,8 @@ HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyIm
     desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
-    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHWSrc->initialize(device, &desc);
     imageHWDst->initialize(device, &desc);
 
@@ -262,8 +262,8 @@ HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionDisabledForCopyI
     desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
-    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHWSrc->initialize(device, &desc);
     imageHWDst->initialize(device, &desc);
 
@@ -890,7 +890,7 @@ HWTEST2_F(CommandListCreateTests, whenCommandListIsCreatedThenFlagsAreCorrectlyS
     for (auto flag : flags) {
         std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, flag, returnValue, false));
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        auto pCommandListCoreFamily = static_cast<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> *>(commandList.get());
+        auto pCommandListCoreFamily = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(commandList.get());
         EXPECT_EQ(flag, pCommandListCoreFamily->flags);
     }
 }
@@ -899,7 +899,7 @@ using HostPointerManagerCommandListTest = Test<HostPointerManagerFixure>;
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenImportedHostPointerWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,
           MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     auto ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
@@ -916,7 +916,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenImportedHostPointerAndCopyEngineWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation,
           MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
     auto ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
@@ -933,7 +933,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenHostPointerImportedWhenGettingAlignedAllocationThenRetrieveProperOffsetAndAddress,
           MatchAny) {
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     size_t mainOffset = 100;
@@ -973,7 +973,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
 HWTEST2_F(HostPointerManagerCommandListTest,
           givenHostPointerImportedWhenGettingPointerFromAnotherPageThenRetrieveBaseAddressAndProperOffset,
           MatchAny) {
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     size_t pointerSize = MemoryConstants::pageSize;
@@ -1001,7 +1001,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     auto &commandContainer = commandList->getCmdContainer();
 
@@ -1048,7 +1048,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
 
 HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, MatchAny) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
     auto ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
@@ -1361,7 +1361,7 @@ HWTEST2_F(ImmediateCommandListTest, givenImmediateCommandListWhenClosingCommandL
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     returnValue = commandListImmediate.close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

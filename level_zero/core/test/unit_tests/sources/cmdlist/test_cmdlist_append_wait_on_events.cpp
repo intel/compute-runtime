@@ -89,7 +89,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ultCsr->directSubmission.reset(directSubmission);
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    auto result = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(immCommandList.get())->addEventsToCmdList(1, &hEventHandle, nullptr, true, true, true, false, false);
+    auto result = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(immCommandList.get())->addEventsToCmdList(1, &hEventHandle, nullptr, true, true, true, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = immCommandList->getCmdContainer().getCommandStream()->getUsed();
@@ -338,7 +338,7 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     MockCommandQueueExecute queue(device, &mockCommandStreamReceiver, &queueDesc);
 
-    auto cmdList = new MockCommandListImmediateHwWithWaitEventFail<gfxCoreFamily>;
+    auto cmdList = new MockCommandListImmediateHwWithWaitEventFail<FamilyType::gfxCoreFamily>;
     cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->forceWaitEventError = true;
     cmdList->cmdQImmediate = &queue;
@@ -358,7 +358,7 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     queue.forceQueueExecuteError = true;
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    auto cmdList = new MockCommandListImmediateHwWithWaitEventFail<gfxCoreFamily>;
+    auto cmdList = new MockCommandListImmediateHwWithWaitEventFail<FamilyType::gfxCoreFamily>;
     cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->cmdQImmediate = &queue;
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -386,7 +386,7 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     auto signalEvent = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
     ze_event_handle_t hSignalEventHandle = signalEvent->toHandle();
 
-    auto cmdList = new MockCommandListImmediateHwWithWaitEventFail<gfxCoreFamily>;
+    auto cmdList = new MockCommandListImmediateHwWithWaitEventFail<FamilyType::gfxCoreFamily>;
     cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->cmdQImmediate = &queue;
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -409,7 +409,7 @@ class MockAppendRegularCommandlistWithWaitOnEvents : public MockCommandListForAp
 };
 
 HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListAndAppendingRegularCommandlistWithWaitOnEventsAndForceInvalidReturnThenCheckReturnStatus, IsAtLeastXeHpcCore) {
-    MockAppendRegularCommandlistWithWaitOnEvents<gfxCoreFamily> cmdList;
+    MockAppendRegularCommandlistWithWaitOnEvents<FamilyType::gfxCoreFamily> cmdList;
 
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
     ze_event_handle_t hEventHandle = event->toHandle();
@@ -875,7 +875,7 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
 HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOnNotSignaledEventThenWait, MatchAny) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -890,7 +890,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitO
 HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOnAlreadySignaledEventThenDontWait, MatchAny) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);

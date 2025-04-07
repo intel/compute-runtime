@@ -1211,7 +1211,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
         auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
         mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
-        auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+        auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
         ze_image_region_t imgRegion = {1, 1, 1, 1, 1, 1};
         ze_image_desc_t zeDesc = {};
         zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -1354,7 +1354,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
             auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
             mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
-            auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+            auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
             ze_image_region_t imgRegion = {1, 1, 1, 1, 1, 1};
             ze_image_desc_t zeDesc = {};
             zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -1621,7 +1621,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
             auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
             mockBuiltinKernel->setArgRedescribedImageCallBase = false;
 
-            auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+            auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
             ze_image_region_t imgRegion = {1, 1, 1, 1, 1, 1};
             ze_image_desc_t zeDesc = {};
             zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -2816,9 +2816,9 @@ HWTEST_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierWithIncorre
 }
 
 HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenProfilingBeforeCommandForCopyOnlyThenCommandsHaveCorrectEventOffsets, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -2854,9 +2854,9 @@ HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenProfilingBeforeCommand
 }
 
 HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenProfilingAfterCommandForCopyOnlyThenCommandsHaveCorrectEventOffsets, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -2889,7 +2889,7 @@ HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenProfilingAfterCommandF
 }
 
 HWTEST2_F(CommandListCreateTests, givenNullEventWhenAppendEventAfterWalkerThenNothingAddedToStream, MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
     auto usedBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -2983,7 +2983,7 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithPos
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceDummyBlitWa.set(1);
-    MockCommandListCoreFamily<gfxCoreFamily> cmdlist;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdlist;
     cmdlist.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     auto &commandContainer = cmdlist.getCmdContainer();
@@ -3011,7 +3011,7 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithout
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceDummyBlitWa.set(1);
-    MockCommandListCoreFamily<gfxCoreFamily> cmdlist;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdlist;
     cmdlist.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     auto &commandContainer = cmdlist.getCmdContainer();
@@ -3036,7 +3036,7 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitNotRequiredWhenEncodeMiFlushThen
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceDummyBlitWa.set(0);
-    MockCommandListCoreFamily<gfxCoreFamily> cmdlist;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdlist;
     cmdlist.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     auto &commandContainer = cmdlist.getCmdContainer();
@@ -3057,7 +3057,7 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitNotRequiredWhenEncodeMiFlushThen
 }
 
 HWTEST2_F(CommandListCreateTests, givenEmptySvmManagerWhenIsAllocationImportedThenFalseIsReturned, MatchAny) {
-    auto commandListCore = std::make_unique<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandListCore = std::make_unique<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandListCore->initialize(device, NEO::EngineGroupType::compute, 0u);
 
     NEO::SVMAllocsManager *svmManager = nullptr;

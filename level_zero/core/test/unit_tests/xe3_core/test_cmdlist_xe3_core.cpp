@@ -42,7 +42,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3, givenVariousKernelsWhenUpdateStreamP
     cooperativeKernel.module = pMockModule2.get();
     cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -90,7 +90,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3, givenVariousKernelsAndPatchingDisall
     cooperativeKernel.module = pMockModule2.get();
     cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -155,7 +155,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core, givenAppendKernelWhenKernelNotUs
 
     kernel.setGroupSize(1, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -217,7 +217,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
 
     kernel.setGroupSize(1, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -265,7 +265,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
     auto srcAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, srcAllocation);
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -333,7 +333,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
 
     kernel.setGroupSize(1, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -397,7 +397,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
 
     kernel.setGroupSize(1, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -459,7 +459,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
 
     kernel.setGroupSize(1, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 

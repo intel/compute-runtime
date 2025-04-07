@@ -1222,7 +1222,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = false;
@@ -1232,7 +1232,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
     result = pCommandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     launchParams.isCooperative = true;
     result = pCommandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
@@ -1253,7 +1253,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSlmSizeExceedingLocalMem
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1303,7 +1303,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogethe
     this->module->checkIfPrivateMemoryPerDispatchIsNeeded();
     EXPECT_TRUE(this->module->shouldAllocatePrivateMemoryPerDispatch());
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     pCommandList->device = this->module->getDevice();
     auto memoryMgr = static_cast<OsAgnosticMemoryManager *>(pCommandList->device->getNEODevice()->getExecutionEnvironment()->memoryManager.get());
     memoryMgr->turnOnFakingBigAllocations();
@@ -1339,7 +1339,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExc
     this->module->checkIfPrivateMemoryPerDispatchIsNeeded();
     EXPECT_FALSE(this->module->shouldAllocatePrivateMemoryPerDispatch());
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     pCommandList->device = this->module->getDevice();
     auto memoryMgr = static_cast<OsAgnosticMemoryManager *>(pCommandList->device->getNEODevice()->getExecutionEnvironment()->memoryManager.get());
     memoryMgr->turnOnFakingBigAllocations();
@@ -1366,7 +1366,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamProp
     std::unique_ptr<Module> pMockModule = std::make_unique<Mock<Module>>(device, nullptr);
     kernel.module = pMockModule.get();
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1471,7 +1471,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
 
     ze_group_count_t groupCount{16, 1, 1};
 
-    auto commandListWithNonCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandListWithNonCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = commandListWithNonCooperativeKernel->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto sizeBefore = commandListWithNonCooperativeKernel->getCmdContainer().getCommandStream()->getUsed();
@@ -1492,7 +1492,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     },
                walkerVariant);
 
-    auto commandListWithCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandListWithCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     result = commandListWithCooperativeKernel->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     sizeBefore = commandListWithCooperativeKernel->getCmdContainer().getCommandStream()->getUsed();

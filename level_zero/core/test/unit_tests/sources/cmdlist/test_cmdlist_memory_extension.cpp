@@ -390,7 +390,7 @@ HWTEST2_F(CommandListAppendWaitOnMem, given64bValueAndOutEventWhenWaitOnMemory64
 
 HWTEST2_F(CommandListAppendWaitOnMem, givenCommandListWaitOnMemoryCalledWithNullPtrThenAppendWaitOnMemoryReturnsError, MatchAny) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    MockCommandListExtensionHw<gfxCoreFamily> cmdList;
+    MockCommandListExtensionHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     uint32_t waitMemData = 1u;
 
@@ -689,7 +689,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemOnBcsWithSignalEventAnd
 }
 
 HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeAndSystemMemoryPtrThenAlignedPtrUsed, MatchAny) {
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
@@ -821,7 +821,7 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithNoScopeThenPipeCo
 
 HWTEST2_F(CommandListAppendWriteToMem, givenCommandListWriteToMemCalledWithNullPtrThenAppendWriteToMemoryReturnsError, MatchAny) {
     ze_result_t result = ZE_RESULT_SUCCESS;
-    MockCommandListExtensionHw<gfxCoreFamily> cmdList;
+    MockCommandListExtensionHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     zex_write_to_mem_desc_t desc = {};
@@ -891,7 +891,7 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeCont
 }
 
 HWTEST2_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeControlEncodedCorrectlyAlignedPtrUsed, MatchAny) {
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;

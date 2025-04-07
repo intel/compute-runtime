@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -358,7 +358,7 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenMultiTileCommandListWhenAppendingMultiPacketEventThenExpectCorrectNumberOfStoreDataImmAndResetPostSyncAndMultiBarrierCommands, IsAtLeastXeHpCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -366,7 +366,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -441,7 +441,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenCopyCommandListWhenAppendingMultiPacketEventThenExpectCorrectNumberOfMiFlushResetPostSyncCommands, IsAtLeastXeHpCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

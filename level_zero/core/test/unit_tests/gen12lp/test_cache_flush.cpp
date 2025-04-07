@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,9 +23,8 @@ namespace ult {
 using CacheFlushTests = Test<DeviceFixture>;
 
 HWTEST2_F(CacheFlushTests, GivenCommandStreamWithSingleL3RangeAndNonZeroPostSyncAddressWhenFlushGpuCacheIsCalledThenPostSyncOperationIsSetForL3Control, IsDG1) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using L3_CONTROL = typename GfxFamily::L3_CONTROL;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    using L3_CONTROL = typename FamilyType::L3_CONTROL;
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     LinearStream *cmdStream = commandList->commandContainer.getCommandStream();
     uint64_t gpuAddress = 0x1200;
@@ -42,10 +41,10 @@ HWTEST2_F(CacheFlushTests, GivenCommandStreamWithSingleL3RangeAndNonZeroPostSync
     L3RangesVec ranges;
     ranges.push_back(L3Range::fromAddressSizeWithPolicy(
         gpuAddress, size,
-        GfxFamily::L3_FLUSH_ADDRESS_RANGE::
+        FamilyType::L3_FLUSH_ADDRESS_RANGE::
             L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION));
-    NEO::flushGpuCache<GfxFamily>(cmdStream, ranges, postSyncAddress,
-                                  neoDevice->getRootDeviceEnvironment());
+    NEO::flushGpuCache<FamilyType>(cmdStream, ranges, postSyncAddress,
+                                   neoDevice->getRootDeviceEnvironment());
 
     GenCmdList cmdList;
     EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -55,35 +54,33 @@ HWTEST2_F(CacheFlushTests, GivenCommandStreamWithSingleL3RangeAndNonZeroPostSync
 }
 
 HWTEST2_F(CacheFlushTests, GivenCommandStreamWithMultipleL3RangeAndUsePostSyncIsSetToTrueWhenGetSizeNeededToFlushGpuCacheIsCalledThenCorrectSizeIsReturned, IsDG1) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using L3_CONTROL = typename GfxFamily::L3_CONTROL;
+    using L3_CONTROL = typename FamilyType::L3_CONTROL;
     uint64_t gpuAddress = 0x1200;
     size_t size = 0x1000;
 
     L3RangesVec ranges;
     ranges.push_back(L3Range::fromAddressSizeWithPolicy(
         gpuAddress, size,
-        GfxFamily::L3_FLUSH_ADDRESS_RANGE::
+        FamilyType::L3_FLUSH_ADDRESS_RANGE::
             L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION));
     EXPECT_NE(0u, ranges.size());
-    size_t ret = NEO::getSizeNeededToFlushGpuCache<GfxFamily>(ranges, true);
+    size_t ret = NEO::getSizeNeededToFlushGpuCache<FamilyType>(ranges, true);
     size_t expected = ranges.size() * sizeof(L3_CONTROL);
     EXPECT_EQ(ret, expected);
 }
 
 HWTEST2_F(CacheFlushTests, GivenCommandStreamWithMultipleL3RangeAndUsePostSyncIsSetToFalseWhenGetSizeNeededToFlushGpuCacheIsCalledThenCorrectSizeIsReturned, IsDG1) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using L3_CONTROL = typename GfxFamily::L3_CONTROL;
+    using L3_CONTROL = typename FamilyType::L3_CONTROL;
     uint64_t gpuAddress = 0x1200;
     size_t size = 0x1000;
 
     L3RangesVec ranges;
     ranges.push_back(L3Range::fromAddressSizeWithPolicy(
         gpuAddress, size,
-        GfxFamily::L3_FLUSH_ADDRESS_RANGE::
+        FamilyType::L3_FLUSH_ADDRESS_RANGE::
             L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION));
     EXPECT_NE(0u, ranges.size());
-    size_t ret = NEO::getSizeNeededToFlushGpuCache<GfxFamily>(ranges, false);
+    size_t ret = NEO::getSizeNeededToFlushGpuCache<FamilyType>(ranges, false);
     size_t expected = ranges.size() * sizeof(L3_CONTROL);
     EXPECT_EQ(ret, expected);
 }

@@ -15,7 +15,7 @@
 namespace L0 {
 namespace ult {
 struct InOrderIpcTests : public InOrderCmdListFixture {
-    void enableEventSharing(FixtureMockEvent &event) {
+    void enableEventSharing(InOrderFixtureMockEvent &event) {
         event.isSharableCounterBased = true;
 
         if (event.inOrderExecInfo.get()) {
@@ -30,7 +30,7 @@ struct InOrderIpcTests : public InOrderCmdListFixture {
 };
 
 HWTEST2_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError, MatchAny) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto nonTsEvent = createEvents<FamilyType>(1, false);
     auto tsEvent = createEvents<FamilyType>(1, true);
@@ -64,7 +64,7 @@ HWTEST2_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError, 
 }
 
 HWTEST2_F(InOrderIpcTests, givenCbEventWhenCreatingFromApiThenOpenIpcHandle, MatchAny) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
@@ -96,7 +96,7 @@ HWTEST2_F(InOrderIpcTests, givenCbEventWhenCreatingFromApiThenOpenIpcHandle, Mat
 }
 
 HWTEST2_F(InOrderIpcTests, givenIncorrectInternalHandleWhenGetIsCalledThenReturnError, MatchAny) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto pool = createEvents<FamilyType>(1, false);
 
@@ -118,8 +118,8 @@ HWTEST2_F(InOrderIpcTests, givenIncorrectInternalHandleWhenGetIsCalledThenReturn
 }
 
 HWTEST2_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData, MatchAny) {
-    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
-    auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList1 = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto pool = createEvents<FamilyType>(1, false);
 
@@ -156,12 +156,12 @@ HWTEST2_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData
     EXPECT_TRUE(events[0]->inOrderExecInfo->getNumDevicePartitionsToWait() == ipcData.devicePartitions);
     EXPECT_TRUE(events[0]->inOrderExecInfo->isHostStorageDuplicated() ? events[0]->inOrderExecInfo->getNumHostPartitionsToWait() : events[0]->inOrderExecInfo->getNumDevicePartitionsToWait() == ipcData.hostPartitions);
 
-    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList2.get());
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList2.get());
 }
 
 HWTEST2_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData, MatchAny) {
-    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
-    auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList1 = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto pool = createEvents<FamilyType>(1, false);
 
@@ -183,7 +183,7 @@ HWTEST2_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData,
 
     EXPECT_NE(nullptr, newEvent);
 
-    auto newEventMock = static_cast<FixtureMockEvent *>(Event::fromHandle(newEvent));
+    auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
     auto inOrderInfo = newEventMock->inOrderExecInfo.get();
 
     EXPECT_FALSE(inOrderInfo->isRegularCmdList());
@@ -212,11 +212,11 @@ HWTEST2_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData,
 
     zexCounterBasedEventCloseIpcHandle(newEvent);
 
-    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList2.get());
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList2.get());
 }
 
 HWTEST2_F(InOrderIpcTests, givenInvalidInternalHandleWhenOpenCalledThenReturnError, MatchAny) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto pool = createEvents<FamilyType>(1, false);
 
@@ -245,7 +245,7 @@ HWTEST2_F(InOrderIpcTests, givenInvalidInternalHandleWhenOpenCalledThenReturnErr
 }
 
 HWTEST2_F(InOrderIpcTests, givenTbxModeWhenOpenIsCalledThenSetAllocationParams, MatchAny) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
@@ -263,7 +263,7 @@ HWTEST2_F(InOrderIpcTests, givenTbxModeWhenOpenIsCalledThenSetAllocationParams, 
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventOpenIpcHandle(context->toHandle(), zexIpcData, &newEvent));
 
-    auto newEventMock = static_cast<FixtureMockEvent *>(Event::fromHandle(newEvent));
+    auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
 
     EXPECT_TRUE(newEventMock->inOrderExecInfo->getExternalDeviceAllocation()->getAubInfo().writeMemoryOnly);
 
@@ -275,7 +275,7 @@ HWTEST2_F(InOrderIpcTests, givenTbxModeWhenOpenIsCalledThenSetAllocationParams, 
 }
 
 HWTEST2_F(InOrderIpcTests, givenIpcImportedEventWhenSignalingThenReturnError, MatchAny) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto pool = createEvents<FamilyType>(1, false);
 
@@ -296,7 +296,7 @@ HWTEST2_F(InOrderIpcTests, givenIpcImportedEventWhenSignalingThenReturnError, Ma
 }
 
 HWTEST2_F(InOrderIpcTests, givenIncorrectParamsWhenUsingIpcApisThenReturnError, MatchAny) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto pool = createEvents<FamilyType>(1, false);
 

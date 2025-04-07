@@ -65,7 +65,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     device = testDevice.get();
 
-    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     MockEvent event;
@@ -128,7 +128,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     device = testDevice.get();
 
-    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     MockEvent event;
@@ -193,7 +193,7 @@ HWTEST2_F(AppendQueryKernelTimestamps,
 
     device = testDevice.get();
 
-    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     MockEvent event;
@@ -251,7 +251,7 @@ HWTEST2_F(AppendQueryKernelTimestamps,
 
     device = testDevice.get();
 
-    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     MockEvent event;
@@ -353,7 +353,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     MockDeviceHandle mockDevice;
     mockDevice.initialize(device);
 
-    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
 
     commandList.initialize(&mockDevice, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -438,7 +438,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     MockDeviceHandle mockDevice;
     mockDevice.initialize(device);
 
-    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
 
     commandList.initialize(&mockDevice, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -526,7 +526,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetA
     MockDeviceHandle mockDevice;
     mockDevice.initialize(device);
 
-    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
 
     commandList.initialize(&mockDevice, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -598,7 +598,7 @@ using CommandListTimestampEvent = Test<DeviceFixture>;
 
 HWTEST2_F(CommandListTimestampEvent, WhenIsTimestampEventForMultiTileThenCorrectResultIsReturned, MatchAny) {
 
-    auto cmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto cmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
 
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     MockEvent mockEvent;
@@ -860,7 +860,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListAndAlreadyCompletedEventWh
     ze_event_handle_t events[] = {&event, &event2};
     event.isCompleted = Event::State::STATE_SIGNALED;
 
-    static_cast<CommandListCoreFamily<gfxCoreFamily> *>(commandList.get())->addEventsToCmdList(2, events, nullptr, false, false, true, false, false);
+    static_cast<CommandListCoreFamily<FamilyType::gfxCoreFamily> *>(commandList.get())->addEventsToCmdList(2, events, nullptr, false, false, true, false, false);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -931,7 +931,7 @@ HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenC
     EXPECT_NE(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
 
-    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
+    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList.get());
     auto secondaryCmdStream = reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get();
 
     immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize, false);
@@ -963,7 +963,7 @@ HWTEST2_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdList
     EXPECT_NE(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
 
-    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
+    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList.get());
     auto primaryCmdStream = commandList->getCmdContainer().getCommandStream();
 
     // make sure system is current
@@ -1017,7 +1017,7 @@ HWTEST2_F(CommandListCreate, givenSystemAndLocalCommandStreamForImmediateCmdList
     EXPECT_NE(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
 
-    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
+    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList.get());
     auto secondaryCmdStream = reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get();
 
     // make sure local is current
@@ -1068,7 +1068,7 @@ HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhe
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
 
-    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
+    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList.get());
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize, false);
@@ -3062,7 +3062,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     streamProperties.initSupport(device->getNEODevice()->getRootDeviceEnvironment());
 
     ze_command_queue_desc_t desc = {};
-    auto cmdQueueHw = new MockCommandQueueHw<gfxCoreFamily>(device, commandQueue->getCsr(), &desc);
+    auto cmdQueueHw = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, commandQueue->getCsr(), &desc);
     cmdQueueHw->initialize(false, false, false);
 
     auto &cmdQueueStream = cmdQueueHw->commandStream;

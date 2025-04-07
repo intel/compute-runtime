@@ -130,7 +130,7 @@ HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequired
     ASSERT_NE(nullptr, cmdQ);
 
     auto commandQueue = whiteboxCast(cmdQ);
-    auto cmdQHw = static_cast<CommandQueueHw<gfxCoreFamily> *>(cmdQ);
+    auto cmdQHw = static_cast<CommandQueueHw<FamilyType::gfxCoreFamily> *>(cmdQ);
 
     if (cmdQHw->estimateStateBaseAddressCmdSize() == 0) {
         commandQueue->destroy();
@@ -443,7 +443,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
 HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaBufferIsPushedToResidencyContainer, Gen12Plus) {
     ze_command_queue_desc_t queueDesc = {};
 
-    std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
+    std::unique_ptr<MockCommandQueueHw<FamilyType::gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
     commandQueue->initialize(false, false, false);
 
     ze_result_t returnValue;
@@ -471,7 +471,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
 
 HWTEST2_F(L0DebuggerTest, givenDebugerEnabledWhenPrepareAndSubmitBatchBufferThenLeftoverIsZeroed, Gen12Plus) {
     ze_command_queue_desc_t queueDesc = {};
-    std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
+    std::unique_ptr<MockCommandQueueHw<FamilyType::gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
     commandQueue->initialize(false, false, false);
 
     auto &commandStream = commandQueue->commandStream;
@@ -480,7 +480,7 @@ HWTEST2_F(L0DebuggerTest, givenDebugerEnabledWhenPrepareAndSubmitBatchBufferThen
     // fill with random data
     memset(commandStream.getCpuBase(), 0xD, estimatedSize);
 
-    typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext ctx{};
+    typename MockCommandQueueHw<FamilyType::gfxCoreFamily>::CommandListExecutionContext ctx{};
     ctx.isDebugEnabled = true;
 
     commandQueue->prepareAndSubmitBatchBuffer(ctx, linearStream);

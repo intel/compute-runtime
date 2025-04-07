@@ -343,7 +343,7 @@ HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, Is
     auto largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(pCmdQ->getGpgpuCommandStreamReceiver(),
                                                                                        pCmdQ->getCS(0));
     EXPECT_EQ(largeGrfValues.size(), 1u);
-    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         EXPECT_TRUE(largeGrfValues[0]);
     } else {
         EXPECT_FALSE(largeGrfValues[0]);
@@ -382,7 +382,7 @@ HWTEST2_P(LargeGrfTest, givenKernelWithSpillWhenExecutedInLargeGrfThenDontSpillA
     auto largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(pCmdQ->getGpgpuCommandStreamReceiver(),
                                                                                        pCmdQ->getCS(0));
     EXPECT_EQ(largeGrfValues.size(), 1u);
-    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         EXPECT_TRUE(largeGrfValues[0]);
     } else {
         EXPECT_FALSE(largeGrfValues[0]);
@@ -440,7 +440,7 @@ HWTEST2_P(LargeGrfTest, givenMixedLargeGrfAndSmallGrfKernelsWhenExecutedThenResu
     auto largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(pCmdQ->getGpgpuCommandStreamReceiver(),
                                                                                        pCmdQ->getCS(0));
 
-    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         auto allocation = smallGrfSourceBuffer->getGraphicsAllocation(rootDeviceIndex);
         auto &productHelper = pCmdQ->getDevice().getProductHelper();
         if (allocation->isAllocatedInLocalMemoryPool() && productHelper.isGrfNumReportedWithScm()) {

@@ -95,7 +95,7 @@ void testSingleTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpect
 
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
@@ -184,7 +184,7 @@ void testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, 
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
@@ -298,7 +298,7 @@ void testSingleTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpect
 
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
@@ -376,7 +376,7 @@ void testSingleTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, 
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
@@ -535,7 +535,7 @@ void testMultiTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpecte
     using WalkerVariant = typename FamilyType::WalkerVariant;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
@@ -628,7 +628,7 @@ void testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, T
 
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
@@ -757,7 +757,7 @@ void testMultiTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpecte
     using WalkerVariant = typename FamilyType::WalkerVariant;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
@@ -839,7 +839,7 @@ void testMultiTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, T
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
@@ -968,7 +968,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testSingleTileAppendMemoryCopyThreeKernels<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernels<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -992,7 +992,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testSingleTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernel<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -1010,7 +1010,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
 
     input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -1028,7 +1028,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
 
     input.eventPoolFlags = 0;
 
-    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -1052,7 +1052,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -1076,7 +1076,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
     }
 
-    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -1085,7 +1085,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
     input.dstPtr = reinterpret_cast<void *>(0x200002345);
     input.size = 0x100002345;
 
-    testSingleTileAppendMemoryCopySignalScopeEventToSubDevice<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySignalScopeEventToSubDevice<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 using AppendMemoryCopyXeHpAndLaterSinglePacket = Test<AppendMemoryCopyMultiPacketEventFixture<1, 0, 0>>;
@@ -1111,7 +1111,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testSingleTileAppendMemoryCopyThreeKernels<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernels<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1135,7 +1135,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testSingleTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernel<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1159,7 +1159,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
         input.storeDataImmOffset = NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1182,7 +1182,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
         arg.expectStoreDataImm = reminderPostSyncOps;
     }
 
-    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1200,7 +1200,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
 
     input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1218,7 +1218,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
 
     input.eventPoolFlags = 0;
 
-    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1227,7 +1227,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
     input.dstPtr = reinterpret_cast<void *>(0x200002345);
     input.size = 0x100002345;
 
-    testSingleTileAppendMemoryCopySignalScopeEventToSubDevice<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySignalScopeEventToSubDevice<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 using MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket = Test<AppendMemoryCopyMultiPacketEventFixture<0, 0, 1>>;
@@ -1252,7 +1252,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
         }
     }
 
-    testMultiTileAppendMemoryCopyThreeKernels<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernels<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -1276,7 +1276,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testMultiTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernel<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -1294,7 +1294,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
 
     input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -1312,7 +1312,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
 
     input.eventPoolFlags = 0;
 
-    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -1336,7 +1336,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
@@ -1360,7 +1360,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
     }
 
-    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 using MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket = Test<AppendMemoryCopyMultiPacketEventFixture<1, 0, 1>>;
@@ -1385,7 +1385,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
         }
     }
 
-    testMultiTileAppendMemoryCopyThreeKernels<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernels<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1406,7 +1406,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testMultiTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernel<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1430,7 +1430,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1453,7 +1453,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
         arg.expectStoreDataImm = reminderPostSyncOps;
     }
 
-    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1471,7 +1471,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
 
     input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
@@ -1489,7 +1489,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
 
     input.eventPoolFlags = 0;
 
-    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 using AppendMemoryCopyL3CompactEventTest = Test<AppendMemoryCopyMultiPacketEventFixture<0, 1, 0>>;
@@ -1506,7 +1506,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
     input.dstPtr = reinterpret_cast<void *>(0x200002345);
     input.size = 0x100002345;
 
-    testSingleTileAppendMemoryCopyThreeKernels<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernels<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
@@ -1527,7 +1527,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
         input.storeDataImmOffset = NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testSingleTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernel<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
@@ -1551,7 +1551,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
         input.storeDataImmOffset = NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
@@ -1575,7 +1575,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
         arg.expectStoreDataImm = reminderPostSyncOps;
     }
 
-    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
@@ -1599,7 +1599,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
         input.storeDataImmOffset = NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
@@ -1623,7 +1623,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactEventTest,
         arg.expectStoreDataImm = reminderPostSyncOps;
     }
 
-    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 using MultiTileAppendMemoryCopyL3CompactEventTest = Test<AppendMemoryCopyMultiPacketEventFixture<0, 1, 1>>;
@@ -1640,7 +1640,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
     input.dstPtr = reinterpret_cast<void *>(0x200002345);
     input.size = 0x100002345;
 
-    testMultiTileAppendMemoryCopyThreeKernels<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernels<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
@@ -1661,7 +1661,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testMultiTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernel<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
@@ -1685,7 +1685,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
@@ -1709,7 +1709,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
         arg.expectStoreDataImm = reminderPostSyncOps;
     }
 
-    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
@@ -1733,7 +1733,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
         input.storeDataImmOffset = arg.expectedPacketsInUse * NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     }
 
-    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
@@ -1757,7 +1757,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactEventTest,
         arg.expectStoreDataImm = reminderPostSyncOps;
     }
 
-    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 using AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest = Test<AppendMemoryCopyMultiPacketEventFixture<1, 1, 0>>;
@@ -1774,7 +1774,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
     input.dstPtr = reinterpret_cast<void *>(0x200002345);
     input.size = 0x100002345;
 
-    testSingleTileAppendMemoryCopyThreeKernels<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernels<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
@@ -1789,7 +1789,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
     input.dstPtr = reinterpret_cast<void *>(0x20000000);
     input.size = 0x100000000;
 
-    testSingleTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernel<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
@@ -1807,7 +1807,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
 
     input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
@@ -1825,7 +1825,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
 
     input.eventPoolFlags = 0;
 
-    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
@@ -1843,7 +1843,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
 
     input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
@@ -1862,7 +1862,7 @@ HWTEST2_F(AppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
     input.eventPoolFlags = 0;
     input.useFirstEventPacketAddress = true;
 
-    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testSingleTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 using MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest = Test<AppendMemoryCopyMultiPacketEventFixture<1, 1, 1>>;
@@ -1879,7 +1879,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
     input.dstPtr = reinterpret_cast<void *>(0x200002345);
     input.size = 0x100002345;
 
-    testMultiTileAppendMemoryCopyThreeKernels<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernels<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
@@ -1894,7 +1894,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
     input.dstPtr = reinterpret_cast<void *>(0x20000000);
     input.size = 0x100000000;
 
-    testMultiTileAppendMemoryCopySingleKernel<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernel<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
@@ -1912,7 +1912,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
 
     input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
@@ -1930,7 +1930,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
 
     input.eventPoolFlags = 0;
 
-    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
@@ -1948,7 +1948,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
 
     input.eventPoolFlags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
@@ -1967,7 +1967,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyL3CompactAndSingleKernelPacketEventTest,
     input.eventPoolFlags = 0;
     input.useFirstEventPacketAddress = true;
 
-    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<gfxCoreFamily>(input, arg);
+    testMultiTileAppendMemoryCopySingleKernelAndL3Flush<FamilyType::gfxCoreFamily>(input, arg);
 }
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.outOfOrderExecutionAllowed = true;
 
-    uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 10 : 9;
+    uint32_t expectedCallsCount = TestTraits<FamilyType::gfxCoreFamily>::iohInSbaSupported ? 10 : 9;
     if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
         --expectedCallsCount;
     }
@@ -169,7 +169,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhen
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
+    uint32_t expectedCallsCount = TestTraits<FamilyType::gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
     if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
         --expectedCallsCount;
     }
@@ -215,7 +215,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*pDevice->executionEnvironment);
     mockCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
-    uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
+    uint32_t expectedCallsCount = TestTraits<FamilyType::gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
     auto dshPatchIndex = 0u;
     auto gshPatchIndex = 1u;
     auto sshPatchIndex = 2u;
@@ -248,7 +248,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
         EXPECT_EQ(dshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET);
     }
 
-    if constexpr (TestTraits<gfxCoreFamily>::iohInSbaSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::iohInSbaSupported) {
         // IOH
         PatchInfoData iohPatch = mockHelper->patchInfoDataVector[iohPatchIndex];
 

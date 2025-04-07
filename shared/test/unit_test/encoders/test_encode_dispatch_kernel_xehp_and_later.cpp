@@ -579,7 +579,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNot
     EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
 
     streamProperties.stateComputeMode.setPropertiesAll(false, 256, 0u, PreemptionMode::Disabled);
-    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         EXPECT_TRUE(streamProperties.stateComputeMode.isDirty());
     } else {
         EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());

@@ -137,7 +137,7 @@ TEST_F(CommandListCreateNegativeTest, whenDeviceAllocationFailsDuringCommandList
 }
 
 HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenGettingAllocInRangeThenAllocFromMapReturned, MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
@@ -154,7 +154,7 @@ HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenGettingAllocInRangeThen
 }
 
 HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenSizeIsOutOfRangeThenNullPtrReturned, MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
@@ -171,7 +171,7 @@ HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenSizeIsOutOfRangeThenNul
 }
 
 HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenPtrIsOutOfRangeThenNullPtrReturned, MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
@@ -188,7 +188,7 @@ HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenPtrIsOutOfRangeThenNull
 }
 
 HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenGetHostPtrAllocCalledThenCorrectOffsetIsSet, MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
@@ -219,7 +219,7 @@ class DeviceHostPtrFailMock : public MockDeviceImp {
 HWTEST2_F(CommandListCreateTests, givenGetAlignedAllocationCalledWithInvalidPtrThenNullptrReturned, MatchAny) {
     auto failDevice = std::make_unique<DeviceHostPtrFailMock>(device->getNEODevice(), execEnv);
     failDevice->neoDevice = device->getNEODevice();
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(failDevice.get(), NEO::EngineGroupType::copy, 0u);
 
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
@@ -230,7 +230,7 @@ HWTEST2_F(CommandListCreateTests, givenGetAlignedAllocationCalledWithInvalidPtrT
 }
 
 HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenPtrIsInMapThenAllocationReturned, MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
@@ -247,7 +247,7 @@ HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenPtrIsInMapThenAllocatio
 }
 
 HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenPtrIsInMapButWithBiggerSizeThenNullPtrReturned, MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
@@ -264,7 +264,7 @@ HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenPtrIsInMapButWithBigger
 }
 
 HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenPtrLowerThanAnyInMapThenNullPtrReturned, MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
@@ -283,7 +283,7 @@ HWTEST2_F(CommandListCreateTests, givenHostAllocInMapWhenPtrLowerThanAnyInMapThe
 HWTEST2_F(CommandListCreateTests,
           givenCmdListHostPointerUsedWhenGettingAlignedAllocationThenRetrieveProperOffsetAndAddress,
           MatchAny) {
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
@@ -329,7 +329,7 @@ HWTEST2_F(CommandListCreateTests,
         ultCsr->callBaseStopDirectSubmission = false;
     }
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
@@ -1044,8 +1044,8 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromI
     desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
-    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHWSrc->initialize(device, &desc);
     imageHWDst->initialize(device, &desc);
 
@@ -1091,8 +1091,8 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromI
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
 
-    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHWSrc->initialize(device, &desc);
     imageHWDst->initialize(device, &desc);
 
@@ -1138,8 +1138,8 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyFromImageTo
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
 
-    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHWSrc->initialize(device, &desc);
     imageHWDst->initialize(device, &desc);
 
@@ -1408,7 +1408,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenForceFlushTaskEnabledWhenCreatingComman
 }
 
 HWTEST2_F(CommandListCreateTests, whenGettingCommandsToPatchThenCorrectValuesAreReturned, MatchAny) {
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     EXPECT_EQ(&commandList->requiredStreamState, &commandList->getRequiredStreamState());
     EXPECT_EQ(&commandList->finalStreamState, &commandList->getFinalStreamState());
     EXPECT_EQ(&commandList->commandsToPatch, &commandList->getCommandsToPatch());
@@ -1416,7 +1416,7 @@ HWTEST2_F(CommandListCreateTests, whenGettingCommandsToPatchThenCorrectValuesAre
 
 HWTEST2_F(CommandListCreateTests, givenNonEmptyCommandsToPatchWhenClearCommandsToPatchIsCalledThenCommandsAreCorrectlyCleared, MatchAny) {
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
     EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
@@ -1506,7 +1506,7 @@ class MyDeviceMock : public MockDeviceImp {
 HWTEST2_F(CommandListCreateTests, givenHostPtrAllocAllocWhenInternalMemCreatedThenNewAllocAddedToDealocationContainer, MatchAny) {
     auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::internalHostMemory>>(device->getNEODevice(), execEnv);
     myDevice->neoDevice = device->getNEODevice();
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
@@ -1521,7 +1521,7 @@ HWTEST2_F(CommandListCreateTests, givenHostPtrAllocAllocWhenInternalMemCreatedTh
 HWTEST2_F(CommandListCreateTests, givenHostPtrAllocAllocWhenExternalMemCreatedThenNewAllocAddedToHostPtrMap, MatchAny) {
     auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice(), execEnv);
     myDevice->neoDevice = device->getNEODevice();
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
@@ -1541,7 +1541,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenHostPtrAllocAllocAndImmediateCmdListWhe
 
     auto queue = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
 
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     commandList->cmdListType = CommandList::CommandListType::typeImmediate;
 
@@ -1559,7 +1559,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenHostPtrAllocAllocAndImmediateCmdListWhe
 HWTEST2_F(CommandListCreateTests, givenGetAlignedAllocationWhenInternalMemWithinDifferentAllocThenReturnNewAlloc, MatchAny) {
     auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::internalHostMemory>>(device->getNEODevice(), execEnv);
     myDevice->neoDevice = device->getNEODevice();
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
@@ -1573,7 +1573,7 @@ HWTEST2_F(CommandListCreateTests, givenGetAlignedAllocationWhenInternalMemWithin
 HWTEST2_F(CommandListCreateTests, givenGetAlignedAllocationWhenExternalMemWithinDifferentAllocThenReturnPreviouslyAllocatedMem, MatchAny) {
     auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice(), execEnv);
     myDevice->neoDevice = device->getNEODevice();
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 

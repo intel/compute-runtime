@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,18 +25,18 @@ namespace ult {
 
 using CommandListCreateGen12Lp = Test<DeviceFixture>;
 
-template <PRODUCT_FAMILY productFamily>
-struct CommandListAdjustStateComputeMode : public WhiteBox<::L0::CommandListProductFamily<productFamily>> {
-    CommandListAdjustStateComputeMode() : WhiteBox<::L0::CommandListProductFamily<productFamily>>(1) {}
-    using ::L0::CommandListProductFamily<productFamily>::applyMemoryRangesBarrier;
-    using ::L0::CommandListProductFamily<productFamily>::commandContainer;
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct CommandListAdjustStateComputeMode : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+    CommandListAdjustStateComputeMode() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
+    using ::L0::CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier;
+    using ::L0::CommandListCoreFamily<gfxCoreFamily>::commandContainer;
 };
 
 HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierThenCheckWhetherL3ControlIsProgrammed, IsGen12LP) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using L3_CONTROL = typename GfxFamily::L3_CONTROL;
+
+    using L3_CONTROL = typename FamilyType::L3_CONTROL;
     auto &hardwareInfo = this->neoDevice->getHardwareInfo();
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -69,7 +69,7 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenNullptrWaitEventsArrayAndCountGreaterTh
     const char *ranges[pRangeSizes];
     const void **pRanges = reinterpret_cast<const void **>(&ranges[0]);
 
-    auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
+    auto commandList = new CommandListAdjustStateComputeMode<FamilyType::gfxCoreFamily>();
     bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
 
@@ -95,7 +95,7 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenImmediateListAndExecutionSuccessWhenApp
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    auto cmdList = new MockCommandListImmediateHw<gfxCoreFamily>;
+    auto cmdList = new MockCommandListImmediateHw<FamilyType::gfxCoreFamily>;
     cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->cmdQImmediate = queue.get();
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -121,7 +121,7 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenImmediateListAndGpuFailureWhenAppending
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    auto cmdList = new MockCommandListImmediateHw<gfxCoreFamily>;
+    auto cmdList = new MockCommandListImmediateHw<FamilyType::gfxCoreFamily>;
     cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->cmdQImmediate = queue.get();
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -144,7 +144,7 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenHostMemoryNotInSvmManagerWhenAppendingM
     const char *ranges[pRangeSizes];
     const void **pRanges = reinterpret_cast<const void **>(&ranges[0]);
 
-    auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
+    auto commandList = new CommandListAdjustStateComputeMode<FamilyType::gfxCoreFamily>();
     bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
 
@@ -179,7 +179,7 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenHostMemoryInSvmManagerWhenAppendingMemo
 
     const void **pRanges = const_cast<const void **>(&ranges);
 
-    auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
+    auto commandList = new CommandListAdjustStateComputeMode<FamilyType::gfxCoreFamily>();
     bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
 
@@ -242,7 +242,7 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenHostMemoryWhenAppendingMemoryBarrierThe
     ranges = static_cast<void *>(cPRanges);
     const void **pRanges = const_cast<const void **>(&ranges);
 
-    auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
+    auto commandList = new CommandListAdjustStateComputeMode<FamilyType::gfxCoreFamily>();
     bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
 
@@ -287,8 +287,8 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenHostMemoryWhenAppendingMemoryBarrierThe
 }
 
 HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithInvalidAddressSizeThenL3ControlIsNotProgrammed, IsDG1) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using L3_CONTROL = typename GfxFamily::L3_CONTROL;
+
+    using L3_CONTROL = typename FamilyType::L3_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     const size_t pRangeSizes = 4096;
@@ -301,7 +301,7 @@ HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithIn
                                      &ranges);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
+    auto commandList = new CommandListAdjustStateComputeMode<FamilyType::gfxCoreFamily>();
     ASSERT_NE(nullptr, commandList); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
@@ -320,8 +320,8 @@ HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithIn
 }
 
 HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithInvalidAddressThenL3ControlIsNotProgrammed, IsDG1) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using L3_CONTROL = typename GfxFamily::L3_CONTROL;
+
+    using L3_CONTROL = typename FamilyType::L3_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     const size_t pRangeSizes = 4096;
@@ -334,7 +334,7 @@ HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithIn
                                      &ranges);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
+    auto commandList = new CommandListAdjustStateComputeMode<FamilyType::gfxCoreFamily>();
     ASSERT_NE(nullptr, commandList); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);

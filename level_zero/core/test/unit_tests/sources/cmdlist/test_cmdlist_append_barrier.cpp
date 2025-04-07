@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -575,7 +575,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCommandList->isFlushTaskSubmissionEnabled = true;
@@ -673,7 +673,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCommandList->cmdQImmediate = queue.get();

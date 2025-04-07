@@ -42,7 +42,7 @@ HWTEST2_F(PreambleCfeStateXe3AndLater, givenSetDebugFlagWhenPreambleCfeStateIsPr
     auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
 
     EXPECT_EQ(expectedValue1, static_cast<uint32_t>(cfeState->getOverDispatchControl()));
-    if constexpr (TestTraits<gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::numberOfWalkersInCfeStateSupported) {
         EXPECT_EQ(expectedValue2, cfeState->getNumberOfWalkers());
     }
     EXPECT_EQ(expectedValue2, cfeState->getMaximumNumberOfThreads());

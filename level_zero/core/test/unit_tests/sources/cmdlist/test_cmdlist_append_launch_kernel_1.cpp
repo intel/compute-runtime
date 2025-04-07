@@ -1459,7 +1459,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
@@ -1483,7 +1483,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = false;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
@@ -1509,7 +1509,7 @@ struct MockCommandListCoreFamilyWithoutHeapSupport : public WhiteBox<::L0::Comma
 };
 
 HWTEST2_F(CommandListAppendLaunchKernel, whenAppendVfeStateCmdPatchIsCalledAndHeaplessRequiredThenDoNothing, IsHeaplessRequired) {
-    auto commandList = std::make_unique<MockCommandListCoreFamilyWithoutHeapSupport<gfxCoreFamily>>();
+    auto commandList = std::make_unique<MockCommandListCoreFamilyWithoutHeapSupport<FamilyType::gfxCoreFamily>>();
     commandList->appendVfeStateCmdToPatch();
 }
 
@@ -1527,7 +1527,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenC
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 

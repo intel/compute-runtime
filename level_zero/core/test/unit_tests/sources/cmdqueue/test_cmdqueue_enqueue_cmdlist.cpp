@@ -550,7 +550,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     pNeoDevice->resetCommandStreamReceiver(pMockCsr);
 
     MockDeviceImp device{pNeoDevice, pNeoDevice->getExecutionEnvironment()};
-    auto pCommandQueue = new MockCommandQueueHw<gfxCoreFamily>{&device, pMockCsr, &desc};
+    auto pCommandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>{&device, pMockCsr, &desc};
     pCommandQueue->initialize(false, false, false);
 
     Mock<::L0::KernelImp> kernel;
@@ -558,7 +558,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     kernel.module = pMockModule.get();
 
     ze_group_count_t threadGroupDimensions{1, 1, 1};
-    auto pCommandListWithCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto pCommandListWithCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     pCommandListWithCooperativeKernels->initialize(&device, NEO::EngineGroupType::compute, 0u);
 
     CmdListKernelLaunchParams launchParams = {};
@@ -570,7 +570,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, pMockCsr->submitBatchBufferCalled);
 
-    auto pCommandListWithNonCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto pCommandListWithNonCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     pCommandListWithNonCooperativeKernels->initialize(&device, NEO::EngineGroupType::compute, 0u);
 
     launchParams.isCooperative = false;

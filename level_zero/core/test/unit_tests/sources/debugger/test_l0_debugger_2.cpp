@@ -554,7 +554,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledComma
 HWTEST2_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, MatchAny) {
     ze_command_queue_desc_t queueDesc = {};
 
-    std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
+    std::unique_ptr<MockCommandQueueHw<FamilyType::gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
     commandQueue->initialize(false, true, true);
     EXPECT_TRUE(commandQueue->internalUsage);
     ze_result_t returnValue;

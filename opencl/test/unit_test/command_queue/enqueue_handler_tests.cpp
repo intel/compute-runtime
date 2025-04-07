@@ -516,7 +516,7 @@ HWTEST2_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBD
     PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::kernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::indirectObjectHeap};
     mockKernel.mockKernel->getPatchInfoDataList().push_back(patchInfoData);
 
-    uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 8 : 7;
+    uint32_t expectedCallsCount = TestTraits<FamilyType::gfxCoreFamily>::iohInSbaSupported ? 8 : 7;
     if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
         --expectedCallsCount;
     }

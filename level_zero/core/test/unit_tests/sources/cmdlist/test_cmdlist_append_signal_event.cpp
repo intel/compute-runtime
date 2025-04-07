@@ -228,7 +228,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithComputeQueueAnd
 
     ze_result_t returnValue;
 
-    using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<static_cast<GFXCORE_FAMILY>(NEO::HwMapper<productFamily>::gfxFamily)>;
+    using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>;
 
     std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(productFamily,
                                                                                                                             device,
@@ -316,7 +316,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQueueAndApp
 
     ze_result_t returnValue;
 
-    using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<static_cast<GFXCORE_FAMILY>(NEO::HwMapper<productFamily>::gfxFamily)>;
+    using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>;
 
     std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(productFamily,
                                                                                                                             device,
@@ -496,7 +496,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeC
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenMultiTileCommandListWhenAppendingScopeEventSignalThenExpectPartitionedPipeControl, IsAtLeastXeHpCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -634,7 +634,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenMultiTileCommandListWhenAppendingNonScopeEventSignalThenExpectPartitionedStoreDataImm, IsAtLeastXeHpCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
@@ -686,12 +686,12 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenMultiTileCommandListWhenAppendingScopeEventSignalAfterWalkerThenExpectPartitionedPipeControl, IsAtLeastXeHpCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -744,7 +744,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenMultiTileImmediateCommandListWhenAppendingScopeEventSignalAfterWalkerThenExpectPartitionedPipeControl, IsAtLeastXeHpCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -752,7 +752,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     ze_command_queue_desc_t desc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
 
-    auto commandList = std::make_unique<::L0::ult::MockCommandListImmediateHw<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::MockCommandListImmediateHw<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     commandList->cmdQImmediate = queue.get();
     commandList->cmdListType = CommandList::CommandListType::typeImmediate;
@@ -898,7 +898,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenCopyCommandListWhenAppendingTimestampEventPacketThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeHpCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -940,7 +940,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenCopyCommandListWhenAppendingImmediateEventPacketPostWalkerThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeHpCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -984,7 +984,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenCopyCommandListWhenAppendingSignalImmediateEventPacketThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeHpCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

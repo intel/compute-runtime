@@ -34,7 +34,7 @@ namespace ult {
 using CommandListCreate = Test<DeviceFixture>;
 
 HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResettingCommandListThenExpectAllFlagsSetToDefault, MatchAny) {
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -60,7 +60,7 @@ HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResettingComm
 
 HWTEST2_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectValueIsReturned, MatchAny) {
     for (auto testValue : ::testing::Bool()) {
-        MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+        MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
         commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
         commandList.containsCooperativeKernelsFlag = testValue;
         EXPECT_EQ(testValue, commandList.containsCooperativeKernels());
@@ -277,7 +277,7 @@ TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingC
 HWTEST2_F(CommandListCreate, givenSingleTileOnlyPlatformsWhenProgrammingMultiTileBarrierThenNoProgrammingIsExpected, IsGen12LP) {
     auto neoDevice = device->getNEODevice();
 
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -310,7 +310,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchCoopera
 
     ze_group_count_t groupCount{1, 1, 1};
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     CmdListKernelLaunchParams cooperativeParams = {};
@@ -337,7 +337,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchMultipl
     std::unique_ptr<L0::EventPool> eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     std::unique_ptr<L0::Event> event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     const ze_kernel_handle_t launchKernels = kernel->toHandle();
@@ -378,7 +378,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchIndirec
     std::unique_ptr<L0::EventPool> eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     std::unique_ptr<L0::Event> event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     void *alloc = nullptr;
@@ -401,7 +401,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStr
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -426,7 +426,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStr
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
     commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
-    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     }
     if (productHelper.getScmPropertyCoherencyRequiredSupport()) {
@@ -453,7 +453,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -498,7 +498,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertes
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
 
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -536,7 +536,7 @@ HWTEST2_F(CommandListCreate, givenFlushErrorWhenPerformingCpuMemoryCopyThenError
 
     ze_result_t returnValue;
 
-    using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<static_cast<GFXCORE_FAMILY>(NEO::HwMapper<productFamily>::gfxFamily)>;
+    using cmdListImmediateHwType = typename L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>;
 
     std::unique_ptr<cmdListImmediateHwType> commandList0(static_cast<cmdListImmediateHwType *>(CommandList::createImmediate(productFamily,
                                                                                                                             device,
@@ -659,7 +659,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     kernel->patchGlobalOffset();
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->isFlushTaskSubmissionEnabled = true;
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -704,7 +704,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     kernel->patchGlobalOffset();
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->isFlushTaskSubmissionEnabled = true;
     commandList->device = device;
@@ -1900,12 +1900,12 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
 
     commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->updateTaskCount(0u, 0u);
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
-    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(0, false, commonImmediateCommandSize, false);
+    reinterpret_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(0, false, commonImmediateCommandSize, false);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
     auto latestFlushedTaskCount = whiteBoxCmdList->getCsr(false)->peekLatestFlushedTaskCount();
-    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(0, false, commonImmediateCommandSize, false);
+    reinterpret_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(0, false, commonImmediateCommandSize, false);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
     EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->getCsr(false)->peekLatestFlushedTaskCount());
 }
@@ -1927,12 +1927,12 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
 
     commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->updateTaskCount(0u, 0u);
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
-    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false, commonImmediateCommandSize, false);
+    reinterpret_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false, commonImmediateCommandSize, false);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
     auto latestFlushedTaskCount = whiteBoxCmdList->getCsr(false)->peekLatestFlushedTaskCount();
-    reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false, commonImmediateCommandSize, false);
+    reinterpret_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false, commonImmediateCommandSize, false);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
     EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->getCsr(false)->peekLatestFlushedTaskCount());
 }

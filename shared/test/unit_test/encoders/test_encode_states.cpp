@@ -401,7 +401,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetSta
     EXPECT_EQ(sba.getDynamicStateBaseAddress(), pCmd->getDynamicStateBaseAddress());
     EXPECT_EQ(sba.getSurfaceStateBaseAddress(), pCmd->getSurfaceStateBaseAddress());
 
-    if constexpr (TestTraits<gfxCoreFamily>::iohInSbaSupported) {
+    if constexpr (TestTraits<FamilyType::gfxCoreFamily>::iohInSbaSupported) {
         auto ioh = cmdContainer->getIndirectHeap(NEO::HeapType::indirectObject);
 
         EXPECT_EQ(ioh->getHeapGpuBase(), pCmd->getIndirectObjectBaseAddress());

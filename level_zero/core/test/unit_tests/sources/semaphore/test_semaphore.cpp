@@ -66,7 +66,7 @@ HWTEST_F(ExternalSemaphoreTest, DISABLED_givenExternalSemaphoreControllerStartCa
 }
 
 HWTEST2_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendWaitExternalSemaphoresIsCalledThenInvalidArgumentIsReturned, MatchAny) {
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     ze_external_semaphore_wait_params_ext_t waitParams = {};
@@ -76,7 +76,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendWaitExternalSe
 }
 
 HWTEST2_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendSignalExternalSemaphoresIsCalledThenInvalidArgumentIsReturned, MatchAny) {
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     ze_external_semaphore_signal_params_ext_t signalParams = {};
@@ -136,7 +136,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendSignalExtern
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
@@ -167,7 +167,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendWaitOnEventFailsWhenAppendSignalExte
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
@@ -198,7 +198,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendSignalInternalProxyEventFailsWhenApp
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
@@ -229,7 +229,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendSignalExte
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
@@ -265,7 +265,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendSignalExtern
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
@@ -295,7 +295,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendWaitExternal
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
@@ -324,7 +324,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendWaitOnEventFailsWhenAppendWaitExtern
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
@@ -354,7 +354,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendWaitOnInternalProxyEventFailsWhenApp
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
@@ -384,7 +384,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendWaitExtern
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
@@ -419,7 +419,7 @@ HWTEST2_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendWaitExternal
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
@@ -597,7 +597,7 @@ HWTEST2_F(ExternalSemaphoreTest, DISABLED_givenNEOExternalSemaphoreWhenAppendWai
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
-    MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
+    MockCommandListImmediateExtSem<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
