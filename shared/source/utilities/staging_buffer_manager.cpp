@@ -270,7 +270,7 @@ StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *pt
 void StagingBufferManager::copyImageToHost(void *dst, const void *stagingBuffer, size_t size, const ImageMetadata &imageData) const {
     auto sliceSize = imageData.rowSize * imageData.rowsInChunk;
 
-    if (imageData.rowSize < imageData.rowPitch || sliceSize < imageData.slicePitch) {
+    if (imageData.rowSize < imageData.rowPitch || (sliceSize < imageData.slicePitch && imageData.slicesInChunk > 1)) {
         for (auto sliceId = 0u; sliceId < imageData.slicesInChunk; sliceId++) {
             auto sliceOffset = sliceId * imageData.slicePitch;
             for (auto rowId = 0u; rowId < imageData.rowsInChunk; rowId++) {
