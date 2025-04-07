@@ -1181,8 +1181,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                 }
             }
 
-            this->printKernelsPrintfOutput(status == ZE_RESULT_ERROR_DEVICE_LOST);
+            bool hangDetected = status == ZE_RESULT_ERROR_DEVICE_LOST;
+            this->printKernelsPrintfOutput(hangDetected);
             this->checkAssert();
+            {
+                auto cmdQueueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
+                cmdQueueImp->printKernelsPrintfOutput(hangDetected);
+            }
         }
     }
 
