@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_settings_reader.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <fstream>
@@ -18,15 +19,11 @@
 namespace NEO {
 
 TEST(DebugSettingsManager, givenDisabledDebugManagerAndMockEnvVariableWhenCreateThenAllVariablesAreRead) {
-    bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
-    if (!settingsFileExists) {
-        const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
-        std::ofstream file;
-        file.open(SettingsReader::settingsFileName);
-        file << data;
-        file.close();
-    }
-    SettingsReader *reader = SettingsReader::createFileReader();
+    const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
+    writeDataToFile(SettingsReader::settingsFileName, &data, sizeof(data));
+
+    SettingsReader *reader = MockSettingsReader::createFileReader();
+
     EXPECT_NE(nullptr, reader);
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
@@ -40,9 +37,7 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerAndMockEnvVariableWhenCreate
     EXPECT_EQ(1, debugManager.flags.MakeAllBuffersResident.get());
     EXPECT_EQ(1, debugManager.flags.LogApiCalls.get());
 
-    if (!settingsFileExists) {
-        remove(SettingsReader::settingsFileName);
-    }
+    removeVirtualFile(SettingsReader::settingsFileName);
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsAndDebugKeysReadEnabledOnDisabledDebugManagerWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {

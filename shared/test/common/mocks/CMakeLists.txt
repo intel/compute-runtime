@@ -87,6 +87,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_product_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_settings_reader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_submissions_aggregator.h

@@ -17,6 +17,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_settings_reader.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -370,16 +371,11 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVar
 }
 
 TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAreRead) {
-    bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
-    if (!settingsFileExists) {
-        const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
-        std::ofstream file;
-        file.open(SettingsReader::settingsFileName);
-        file << data;
-        file.close();
-    }
+    const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
+    writeDataToFile(SettingsReader::settingsFileName, &data, sizeof(data));
 
-    SettingsReader *reader = SettingsReader::createFileReader();
+    SettingsReader *reader = MockSettingsReader::createFileReader();
+
     EXPECT_NE(nullptr, reader);
 
     FullyEnabledTestDebugManager debugManager;
@@ -389,9 +385,7 @@ TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAre
     EXPECT_EQ(1, debugManager.flags.MakeAllBuffersResident.get());
     EXPECT_EQ(1, debugManager.flags.LogApiCalls.get());
 
-    if (!settingsFileExists) {
-        std::remove(SettingsReader::settingsFileName);
-    }
+    removeVirtualFile(SettingsReader::settingsFileName);
 }
 
 TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCalledThenStringPrintedToFile) {
