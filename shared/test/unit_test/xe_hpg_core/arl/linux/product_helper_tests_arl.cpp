@@ -98,3 +98,8 @@ ARLTEST_F(ArlProductHelperLinux, givenBooleanUncachedWhenCallOverridePatIndexThe
     EXPECT_EQ(0u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
     EXPECT_EQ(3u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::commandBuffer));
 }
+
+ARLTEST_F(ArlProductHelperLinux, givenProductHelperThenCompressionIsForbidden) {
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_TRUE(productHelper->isCompressionForbidden(hwInfo));
+}

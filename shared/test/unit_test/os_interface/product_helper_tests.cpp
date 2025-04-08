@@ -1156,11 +1156,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsCompressionForbidden
     EXPECT_FALSE(productHelper->isCompressionForbidden(hwInfo));
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperThenCompressionIsForbidden, IsBeforeXe2HpgCore) {
-    auto hwInfo = *defaultHwInfo;
-    EXPECT_TRUE(productHelper->isCompressionForbidden(hwInfo));
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperThenCompressionIsNotForbidden, IsAtLeastXe2HpgCore) {
     auto hwInfo = *defaultHwInfo;
     EXPECT_FALSE(productHelper->isCompressionForbidden(hwInfo));

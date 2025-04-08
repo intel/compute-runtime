@@ -14,36 +14,6 @@ using namespace NEO;
 
 using Gen12lpProductHelperWindows = ProductHelperTestWindows;
 
-GEN12LPTEST_F(Gen12lpProductHelperWindows, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
-
-    PLATFORM *testPlatform = &outHwInfo.platform;
-    testPlatform->eDisplayCoreFamily = IGFX_GEN11_CORE;
-    testPlatform->eRenderCoreFamily = IGFX_GEN11_CORE;
-    productHelper->adjustPlatformForProductFamily(&outHwInfo);
-
-    EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eRenderCoreFamily);
-    EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eDisplayCoreFamily);
-}
-
-GEN12LPTEST_F(Gen12lpProductHelperWindows, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
-
-    outHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
-    outHwInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_FALSE(productHelper->isPageTableManagerSupported(outHwInfo));
-
-    outHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    outHwInfo.capabilityTable.ftrRenderCompressedImages = false;
-    EXPECT_TRUE(productHelper->isPageTableManagerSupported(outHwInfo));
-
-    outHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
-    outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(productHelper->isPageTableManagerSupported(outHwInfo));
-
-    outHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    EXPECT_TRUE(productHelper->isPageTableManagerSupported(outHwInfo));
-}
-
 GEN12LPTEST_F(Gen12lpProductHelperWindows, givenGen12LpSkuWhenGettingCapabilityCoherencyFlagThenExpectValidValue) {
     bool coherency = false;
     productHelper->setCapabilityCoherencyFlag(outHwInfo, coherency);
