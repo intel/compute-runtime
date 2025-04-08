@@ -95,6 +95,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::isNewResourceHandleNeeded;
     using BaseClass::lastUllsLightExecTimestamp;
     using BaseClass::miMemFenceRequired;
+    using BaseClass::osContext;
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
     using BaseClass::pciBarrierPtr;
@@ -165,6 +166,27 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
     EXPECT_EQ(drmDirectSubmission.currentTagData.tagValue + 1, tagData.tagValue);
 
     *drmDirectSubmission.tagAddress = 1u;
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenUllsLightWhenSwitchRingBufferNeedsToAllocateNewRingBufferThenAddToResidencyVectorAndRingStop) {
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    drmDirectSubmission.osContext.setDirectSubmissionActive();
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+    EXPECT_TRUE(drm->isDirectSubmissionActive());
+    EXPECT_TRUE(drmDirectSubmission.allocateResources());
+
+    drmDirectSubmission.ringBuffers[1].completionFence = 1u;
+    drmDirectSubmission.ringStart = true;
+    ResidencyContainer residencyContainer{};
+    static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface.get())->mergeWithResidencyContainer(&drmDirectSubmission.osContext, residencyContainer);
+    const auto expectedSize = residencyContainer.size() + 1u;
+
+    EXPECT_NE(0ull, drmDirectSubmission.switchRingBuffers(&residencyContainer));
+
+    EXPECT_EQ(residencyContainer.size(), expectedSize);
+    EXPECT_FALSE(drmDirectSubmission.ringStart);
+
+    drmDirectSubmission.ringBuffers[1].completionFence = 0u;
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingIsCompletedThenProperValueReturned) {

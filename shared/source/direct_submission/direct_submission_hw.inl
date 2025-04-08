@@ -1098,7 +1098,10 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersNeeded(size_t s
 
 template <typename GfxFamily, typename Dispatcher>
 inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers(ResidencyContainer *allocationsForResidency) {
-    GraphicsAllocation *nextRingBuffer = switchRingBuffersAllocations();
+    GraphicsAllocation *nextRingBuffer = switchRingBuffersAllocations(allocationsForResidency);
+
+    this->handleRingRestartForUllsLightResidency(allocationsForResidency);
+
     void *flushPtr = ringCommandStream.getSpace(0);
     uint64_t currentBufferGpuVa = ringCommandStream.getCurrentGpuAddressPosition();
 
@@ -1116,7 +1119,7 @@ inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers(Res
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersAllocations() {
+inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersAllocations(ResidencyContainer *allocationsForResidency) {
     this->previousRingBuffer = this->currentRingBuffer;
     GraphicsAllocation *nextAllocation = nullptr;
     for (uint32_t ringBufferIndex = 0; ringBufferIndex < this->ringBuffers.size(); ringBufferIndex++) {
@@ -1145,6 +1148,8 @@ inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRing
             this->ringBuffers.emplace_back(0ull, nextAllocation);
             auto ret = memoryOperationHandler->makeResidentWithinOsContext(&this->osContext, ArrayRef<GraphicsAllocation *>(&nextAllocation, 1u), false, false, false) == MemoryOperationsStatus::success;
             UNRECOVERABLE_IF(!ret);
+
+            this->handleResidencyContainerForUllsLightNewRingAllocation(allocationsForResidency);
         }
     }
     UNRECOVERABLE_IF(this->currentRingBuffer == this->previousRingBuffer);

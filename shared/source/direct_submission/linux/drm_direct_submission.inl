@@ -228,6 +228,14 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleRingRestartForUllsLightRe
 }
 
 template <typename GfxFamily, typename Dispatcher>
+inline void DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidencyContainerForUllsLightNewRingAllocation(ResidencyContainer *allocationsForResidency) {
+    if (allocationsForResidency) {
+        allocationsForResidency->clear();
+        static_cast<DrmMemoryOperationsHandler *>(this->memoryOperationHandler)->mergeWithResidencyContainer(&this->osContext, *allocationsForResidency);
+    }
+}
+
+template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
     if (this->disableMonitorFence) {
         this->currentTagData.tagValue++;
@@ -247,11 +255,6 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(Residen
         if (updateCompletionFences) {
             this->ringBuffers[this->previousRingBuffer].completionFence = this->currentTagData.tagValue;
         }
-    }
-
-    if (allocationsForResidency) {
-        allocationsForResidency->clear();
-        static_cast<DrmMemoryOperationsHandler *>(this->memoryOperationHandler)->mergeWithResidencyContainer(&this->osContext, *allocationsForResidency);
     }
 }
 

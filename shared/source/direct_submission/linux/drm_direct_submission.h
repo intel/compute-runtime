@@ -30,6 +30,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     bool handleResidency() override;
     void handleRingRestartForUllsLightResidency(const ResidencyContainer *allocationsForResidency) override;
+    void handleResidencyContainerForUllsLightNewRingAllocation(ResidencyContainer *allocationsForResidency) override;
     void handleStopRingBuffer() override;
 
     void ensureRingCompletion() override;
