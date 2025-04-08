@@ -1187,6 +1187,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
             {
                 auto cmdQueueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
                 cmdQueueImp->printKernelsPrintfOutput(hangDetected);
+                cmdQueueImp->checkAssert();
             }
         }
     }

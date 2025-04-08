@@ -527,6 +527,50 @@ TEST_F(CommandQueueWithAssert, GivenAssertKernelExecutedWhenSynchronizingFenceTh
     commandQueue->destroy();
 }
 
+TEST_F(CommandQueueWithAssert, GivenRegularCmdListWithAssertWhenExecutingAndSynchronizeOnImmediateThenPropertyIsSetAndAssertChecked) {
+    ze_command_queue_desc_t desc = {};
+
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::ult::CommandList> commandListImmediate(CommandList::whiteboxCast(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily,
+                                                                                                                      device,
+                                                                                                                      &desc,
+                                                                                                                      false,
+                                                                                                                      NEO::EngineGroupType::compute,
+                                                                                                                      returnValue)));
+    ASSERT_NE(nullptr, commandListImmediate);
+    auto whiteBoxImmediate = whiteboxCast(commandListImmediate.get());
+
+    auto whiteBoxQueue = whiteboxCast(whiteBoxImmediate->cmdQImmediate);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    Mock<Module> module(device, nullptr, ModuleType::user);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ze_group_count_t groupCount{1, 1, 1};
+
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    commandList->close();
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    returnValue = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_TRUE(whiteBoxQueue->cmdListWithAssertExecuted);
+
+    returnValue = commandListImmediate->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
+}
+
 using EventAssertTest = Test<EventFixture<1, 0>>;
 
 TEST_F(EventAssertTest, GivenGpuHangWhenHostSynchronizeIsCalledThenAssertIsChecked) {
