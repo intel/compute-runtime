@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
-#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
@@ -21,7 +21,9 @@
 
 using namespace NEO;
 
-TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFromMultipleThreadsThenSingleBoIsReused) {
+using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFromMultipleThreadsThenSingleBoIsReused) {
     class MockDrm : public Drm {
       public:
         using Drm::setupIoctlHelper;
@@ -75,7 +77,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
     }
 }
 
-TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThenPrimeFdToHandleDoesNotRaceWithClose) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThenPrimeFdToHandleDoesNotRaceWithClose) {
     class MockDrm : public Drm {
       public:
         using Drm::setupIoctlHelper;

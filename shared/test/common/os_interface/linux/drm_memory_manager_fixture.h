@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,17 @@
 
 #pragma once
 
-#include "shared/source/memory_manager/allocation_properties.h"
-#include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
+#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_sip.h"
-#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
+#include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+
+#include "hw_cmds_default.h"
 
 #include <memory>
 
@@ -42,9 +45,104 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     TestedDrmMemoryManager *memoryManager = nullptr;
     MockDevice *device = nullptr;
 
-    void setUp();
-    void setUp(DrmMockCustom *mock, bool localMemoryEnabled);
-    void tearDown();
+    template <typename GfxFamily>
+    void setUpT() {
+        MemoryManagementFixture::setUp();
+
+        executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
+        setUpT<GfxFamily>(DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]).release(), false);
+    } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+
+    template <typename GfxFamily>
+    void setUpT(DrmMockCustom *mock, bool localMemoryEnabled) {
+        ASSERT_NE(nullptr, executionEnvironment);
+        executionEnvironment->incRefInternal();
+        debugManager.flags.DeferOsContextInitialization.set(0);
+        debugManager.flags.SetAmountOfReusableAllocations.set(0);
+
+        environmentWrapper.setCsrType<TestedDrmCommandStreamReceiver<GfxFamily>>();
+        allocationData.rootDeviceIndex = rootDeviceIndex;
+        this->mock = mock;
+        for (auto i = 0u; i < numRootDevices; i++) {
+            auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[i].get();
+            rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
+            UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
+            UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
+
+            rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+            rootDeviceEnvironment->osInterface->setDriverModel(DrmMockCustom::create(*rootDeviceEnvironment));
+            rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i, false);
+            MockRootDeviceEnvironment::resetBuiltins(rootDeviceEnvironment, new MockBuiltins);
+            rootDeviceEnvironment->initGmm();
+        }
+
+        executionEnvironment->calculateMaxOsContextCount();
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get();
+        rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+
+        memoryManager = new (std::nothrow) TestedDrmMemoryManager(localMemoryEnabled, false, false, *executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+        // assert we have memory manager
+        ASSERT_NE(nullptr, memoryManager);
+        if (memoryManager->getgemCloseWorker()) {
+            memoryManager->getgemCloseWorker()->close(true);
+        }
+        device = MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex);
+        mock->reset();
+    }
+
+    template <typename GfxFamily>
+    void tearDownT() {
+        mock->testIoctls();
+        mock->reset();
+
+        int enginesCount = 0;
+
+        for (auto &engineContainer : memoryManager->getRegisteredEngines()) {
+            enginesCount += engineContainer.size();
+        }
+
+        for (auto &engineContainer : memoryManager->secondaryEngines) {
+            enginesCount -= engineContainer.size();
+        }
+
+        mock->ioctlExpected.contextDestroy = enginesCount;
+        mock->ioctlExpected.gemClose = enginesCount;
+        mock->ioctlExpected.gemWait = enginesCount;
+
+        auto csr = static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(device->getDefaultEngine().commandStreamReceiver);
+        if (csr->globalFenceAllocation) {
+            mock->ioctlExpected.gemClose += enginesCount;
+            mock->ioctlExpected.gemWait += enginesCount;
+        }
+        if (csr->getPreemptionAllocation()) {
+            mock->ioctlExpected.gemClose += enginesCount;
+            mock->ioctlExpected.gemWait += enginesCount;
+        }
+
+        auto &compilerProductHelper = device->getCompilerProductHelper();
+        auto isHeapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
+        auto isHeaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(isHeapless);
+        if (isHeaplessStateInit) {
+            if (device->getRTMemoryBackedBuffer() != nullptr) {
+                mock->ioctlExpected.gemClose += 1;
+                mock->ioctlExpected.gemWait += 1;
+            }
+            mock->ioctlExpected.gemClose += 1;
+            mock->ioctlExpected.gemWait += 1;
+        }
+
+        mock->ioctlExpected.gemWait += additionalDestroyDeviceIoctls.gemWait.load();
+        mock->ioctlExpected.gemClose += additionalDestroyDeviceIoctls.gemClose.load();
+        delete device;
+        if (dontTestIoctlInTearDown) {
+            mock->reset();
+        }
+        mock->testIoctls();
+        executionEnvironment->decRefInternal();
+        MemoryManagementFixture::tearDown();
+        SysCalls::mmapVector.clear();
+    }
 
   protected:
     VariableBackup<bool> mockSipBackup{&MockSipData::useMockSip, false};
@@ -59,8 +157,26 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 
 class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
   public:
-    void setUp();
-    void tearDown();
+    template <typename GfxFamily>
+    void setUpT() {
+        backup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
+        ultHwConfig.csrBaseCallCreatePreemption = true;
+
+        MemoryManagementFixture::setUp();
+
+        executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
+
+        executionEnvironment->calculateMaxOsContextCount();
+        auto drmMock = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[1]).release();
+        drmMock->memoryInfo.reset(new MockMemoryInfo{*drmMock});
+        DrmMemoryManagerFixture::setUpT<GfxFamily>(drmMock, true);
+        drmMock->reset();
+    } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+
+    template <typename GfxFamily>
+    void tearDownT() {
+        DrmMemoryManagerFixture::tearDownT<GfxFamily>();
+    }
     std::unique_ptr<VariableBackup<UltHwConfig>> backup;
 };
 

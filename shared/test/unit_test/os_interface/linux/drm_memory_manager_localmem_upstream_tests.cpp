@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,20 +37,23 @@ class DrmMemoryManagerFixtureImpl : public DrmMemoryManagerFixture {
   public:
     DrmMockCustom *mockExp;
 
-    void setUp() {
+    template <typename GfxFamily>
+    void setUpT() {
         backup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
         ultHwConfig.csrBaseCallCreatePreemption = false;
 
         MemoryManagementFixture::setUp();
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         mockExp = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]).release();
-        DrmMemoryManagerFixture::setUp(mockExp, true);
+        DrmMemoryManagerFixture::setUpT<GfxFamily>(mockExp, true);
     }
 
-    void tearDown() {
+    template <typename GfxFamily>
+    void tearDownT() {
         mockExp->testIoctls();
-        DrmMemoryManagerFixture::tearDown();
+        DrmMemoryManagerFixture::tearDownT<GfxFamily>();
     }
+
     std::unique_ptr<VariableBackup<UltHwConfig>> backup;
 };
 
@@ -672,7 +675,7 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithL
 
 using DrmMemoryManagerFailInjectionTest = Test<DrmMemoryManagerFixtureImpl>;
 
-HWTEST2_F(DrmMemoryManagerFailInjectionTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation, NonDefaultIoctlsSupported) {
+HWTEST2_TEMPLATED_F(DrmMemoryManagerFailInjectionTest, givenEnabledLocalMemoryWhenNewFailsThenAllocateInDevicePoolReturnsStatusErrorAndNullallocation, NonDefaultIoctlsSupported) {
     mock->ioctlExpected.total = -1; // don't care
     class MockGfxPartition : public GfxPartition {
       public:
@@ -820,7 +823,7 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopy
 
 using DrmMemoryManagerTestImpl = Test<DrmMemoryManagerFixtureImpl>;
 
-HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryThenCallIoctlGemMapOffsetAndReturnLockedPtr, NonDefaultIoctlsSupported) {
+HWTEST2_TEMPLATED_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryThenCallIoctlGemMapOffsetAndReturnLockedPtr, NonDefaultIoctlsSupported) {
     mockExp->ioctlExpected.gemCreateExt = 1;
     mockExp->ioctlExpected.gemWait = 1;
     mockExp->ioctlExpected.gemClose = 1;
@@ -856,7 +859,7 @@ HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledO
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnMmapThenReturnNullPtr) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnMmapThenReturnNullPtr) {
     mockExp->ioctlExpected.gemMmapOffset = 2;
     this->ioctlResExt = {mockExp->ioctlCnt.total, -1};
     mockExp->ioctlResExt = &ioctlResExt;
@@ -872,7 +875,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     mockExp->ioctlResExt = &mockExp->none;
 }
 
-TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnIoctlMmapFunctionOffsetThenReturnNullPtr) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnIoctlMmapFunctionOffsetThenReturnNullPtr) {
     mockExp->ioctlExpected.gemMmapOffset = 2;
     mockExp->returnIoctlExtraErrorValue = true;
     mockExp->failOnMmapOffset = true;
@@ -888,7 +891,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     mockExp->ioctlResExt = &mockExp->none;
 }
 
-TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButBufferObjectIsNullThenReturnNullPtr) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButBufferObjectIsNullThenReturnNullPtr) {
     DrmAllocation drmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -897,7 +900,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     memoryManager->unlockResource(&drmAllocation);
 }
 
-TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoThenReturnMemoryRegionSize) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoThenReturnMemoryRegionSize) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
@@ -910,7 +913,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCa
     EXPECT_EQ(memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0)), memoryManager.getLocalMemorySize(0u, 0xF));
 }
 
-TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoAndInvalidDeviceBitfieldThenReturnZero) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoAndInvalidDeviceBitfieldThenReturnZero) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
@@ -923,7 +926,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCa
     EXPECT_EQ(0u, memoryManager.getLocalMemorySize(0u, 0u));
 }
 
-TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledButMemoryInfoIsNotAvailableThenSizeZeroIsReturned) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledButMemoryInfoIsNotAvailableThenSizeZeroIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);

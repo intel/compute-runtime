@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
@@ -19,7 +20,7 @@ namespace NEO {
 
 using DrmVaSharingTest = Test<DrmMemoryManagerFixture>;
 
-TEST_F(DrmVaSharingTest, givenDrmMemoryManagerWhenSharedVaSurfaceIsImportedWithDrmPrimeFdToHandleThenDrmPrimeFdCanBeClosed) {
+HWTEST_TEMPLATED_F(DrmVaSharingTest, givenDrmMemoryManagerWhenSharedVaSurfaceIsImportedWithDrmPrimeFdToHandleThenDrmPrimeFdCanBeClosed) {
     mock->ioctlExpected.total = -1;
     device->incRefInternal();
     MockClDevice clDevice{device};
