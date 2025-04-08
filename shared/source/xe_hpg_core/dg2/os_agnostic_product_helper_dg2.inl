@@ -244,4 +244,9 @@ uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
     return (UnifiedSharedMemoryFlags::access);
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwInfo) const {
+    return isCompressionForbiddenCommon(false);
+}
+
 } // namespace NEO

@@ -1,24 +1,20 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/source/gen12lp/hw_info_gen12lp.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
-
-#include "hw_cmds.h"
+#include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 using namespace NEO;
 
-using Gen12lpProductHelperLinux = ProductHelperTestLinux;
+using Gen12lpProductHelper = ProductHelperTest;
 
-GEN12LPTEST_F(Gen12lpProductHelperLinux, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
+GEN12LPTEST_F(Gen12lpProductHelper, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
 
     PLATFORM *testPlatform = &outHwInfo.platform;
     testPlatform->eDisplayCoreFamily = IGFX_GEN11_CORE;
@@ -29,7 +25,7 @@ GEN12LPTEST_F(Gen12lpProductHelperLinux, givenGen12LpProductWhenAdjustPlatformFo
     EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eDisplayCoreFamily);
 }
 
-GEN12LPTEST_F(Gen12lpProductHelperLinux, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
+GEN12LPTEST_F(Gen12lpProductHelper, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
 
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = false;
@@ -46,4 +42,9 @@ GEN12LPTEST_F(Gen12lpProductHelperLinux, givenCompressionFtrEnabledWhenAskingFor
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     outHwInfo.capabilityTable.ftrRenderCompressedImages = true;
     EXPECT_TRUE(productHelper->isPageTableManagerSupported(outHwInfo));
+}
+
+GEN12LPTEST_F(Gen12lpProductHelper, givenProductHelperThenCompressionIsForbidden) {
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_TRUE(productHelper->isCompressionForbidden(hwInfo));
 }
