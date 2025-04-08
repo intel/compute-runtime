@@ -322,7 +322,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintOsContextInitializations, false, "print initia
 DECLARE_DEBUG_VARIABLE(bool, PrintDeviceAndEngineIdOnSubmission, false, "print submissions device and engine IDs to standard output")
 DECLARE_DEBUG_VARIABLE(bool, PrintExecutionBuffer, false, "print execution buffer information to standard output")
 DECLARE_DEBUG_VARIABLE(bool, PrintBOsForSubmit, false, "print all BOs passed to submission")
-DECLARE_DEBUG_VARIABLE(bool, PrintDebugSettings, false, "Dump all debug variables settings to text file. Print to stdout if value is different than default.")
+DECLARE_DEBUG_SCOPED_V(bool, PrintDebugSettings, false, S_RT | S_OCLOC, "Dump all debug variables settings to text file. Print to stdout if value is different than default.")
 DECLARE_DEBUG_VARIABLE(bool, PrintDebugMessages, false, "when enabled, some debug messages will be propagated to console")
 DECLARE_DEBUG_VARIABLE(bool, PrintXeLogs, false, "when enabled, xe logs will be propagated to console")
 DECLARE_DEBUG_VARIABLE(bool, DumpZEBin, false, "Enables dumping zebin (elf) to a binary file (.elf extension)")

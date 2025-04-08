@@ -32,9 +32,5 @@ const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
     return validOclocPrefixTypes;
 }
 
-bool isDebugKeysReadEnabled() {
-    return false;
-}
-
 DebugSettingsManager<globalDebugFunctionalityLevel> debugManager(Ocloc::oclocRegPath);
 } // namespace NEO

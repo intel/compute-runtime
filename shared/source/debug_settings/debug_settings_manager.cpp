@@ -76,6 +76,8 @@ static const char *convPrefixToString(DebugVarPrefix prefix) {
         return "NEO_L0_";
     } else if (prefix == DebugVarPrefix::neoOcl) {
         return "NEO_OCL_";
+    } else if (prefix == DebugVarPrefix::neoOcloc) {
+        return "NEO_OCLOC_";
     } else {
         return "";
     }
