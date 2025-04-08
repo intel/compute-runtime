@@ -76,6 +76,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::storeBinary;
     using OfflineCompiler::updateBuildLog;
     using OfflineCompiler::useGenFile;
+    using OfflineCompiler::useIgcAsFcl;
     using OfflineCompiler::useOptionsSuffix;
 
     MockOfflineCompiler();

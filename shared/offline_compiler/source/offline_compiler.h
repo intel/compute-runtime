@@ -31,7 +31,7 @@ namespace NEO {
 
 class CompilerCache;
 class CompilerProductHelper;
-class OclocFclFacade;
+class OclocFclFacadeBase;
 class OclocIgcFacade;
 
 std::string convertToPascalCase(const std::string &inString);
@@ -198,6 +198,7 @@ All supported acronyms: %s.
 
     MOCKABLE_VIRTUAL void writeOutAllFiles();
     MOCKABLE_VIRTUAL void createDir(const std::string &path);
+    bool useIgcAsFcl();
     void unifyExcludeIrFlags();
     void enforceFormat(std::string &format);
     HardwareInfo hwInfo{};
@@ -260,7 +261,7 @@ All supported acronyms: %s.
     uint64_t hwInfoConfig = 0u;
 
     std::unique_ptr<OclocIgcFacade> igcFacade;
-    std::unique_ptr<OclocFclFacade> fclFacade;
+    std::unique_ptr<OclocFclFacadeBase> fclFacade;
     std::unique_ptr<CompilerCache> cache;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
     std::unique_ptr<ReleaseHelper> releaseHelper;

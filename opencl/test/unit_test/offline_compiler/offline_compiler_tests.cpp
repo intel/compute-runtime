@@ -5649,4 +5649,90 @@ TEST(OclocApiSpecificConfigTests, givenOclocThenDebugKeysAreAllowedOnlyInDebug) 
     EXPECT_FALSE(NEO::isDebugKeysReadEnabled());
 }
 
+TEST_F(OfflineCompilerTests, GivenFclRedirectionEnvSetToForceIgcWhenInitializingOclocThenIgcIsBeingUsedAsFclFacade) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.UseIgcAsFcl.set(1);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-spv_only"};
+
+    char bin[1] = {7};
+    auto oldIgcDebugVars = getIgcDebugVars();
+    auto currIgcDebugVars = oldIgcDebugVars;
+    currIgcDebugVars.binaryToReturn = bin;
+    currIgcDebugVars.binaryToReturnSize = 1;
+    currIgcDebugVars.forceBuildFailure = false;
+    setIgcDebugVars(currIgcDebugVars);
+
+    auto oldFclDebugVars = getFclDebugVars();
+    auto currFclDebugVars = oldFclDebugVars;
+    currFclDebugVars.forceBuildFailure = true;
+    setFclDebugVars(currFclDebugVars);
+
+    std::unique_ptr<OfflineCompiler> pOfflineCompiler(OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get()));
+    ASSERT_NE(nullptr, pOfflineCompiler);
+    auto ret = pOfflineCompiler->build();
+    EXPECT_EQ(OCLOC_SUCCESS, ret);
+    currIgcDebugVars.forceBuildFailure = true;
+    ret = pOfflineCompiler->build();
+    EXPECT_EQ(OCLOC_SUCCESS, ret);
+    setFclDebugVars(oldFclDebugVars);
+    setIgcDebugVars(oldIgcDebugVars);
+}
+
+TEST_F(OfflineCompilerTests, GivenFclRedirectionEnvSetToForceFclWhenInitializingOclocThenFclIsBeingUsedAsFclFacade) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.UseIgcAsFcl.set(2);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-spv_only"};
+
+    char bin[1] = {7};
+    auto oldIgcDebugVars = getIgcDebugVars();
+    auto currIgcDebugVars = oldIgcDebugVars;
+    currIgcDebugVars.forceBuildFailure = true;
+    setIgcDebugVars(currIgcDebugVars);
+
+    auto oldFclDebugVars = getFclDebugVars();
+    auto currFclDebugVars = oldFclDebugVars;
+    currFclDebugVars.binaryToReturn = bin;
+    currFclDebugVars.binaryToReturnSize = 1;
+    currFclDebugVars.forceBuildFailure = false;
+    setFclDebugVars(currFclDebugVars);
+
+    std::unique_ptr<OfflineCompiler> pOfflineCompiler(OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get()));
+    ASSERT_NE(nullptr, pOfflineCompiler);
+    auto ret = pOfflineCompiler->build();
+    EXPECT_EQ(OCLOC_SUCCESS, ret);
+    currFclDebugVars.forceBuildFailure = true;
+    ret = pOfflineCompiler->build();
+    setFclDebugVars(oldFclDebugVars);
+    setIgcDebugVars(oldIgcDebugVars);
+}
+
+TEST_F(OfflineCompilerTests, GivenFclRedirectionDefaultSettingWhenCompilingToIrThenUseCompilerProductHelperDefaults) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(mockOfflineCompiler.compilerProductHelper->useIgcAsFcl(), mockOfflineCompiler.useIgcAsFcl());
+    mockOfflineCompiler.compilerProductHelper.reset();
+    EXPECT_EQ(false, mockOfflineCompiler.useIgcAsFcl());
+}
+
 } // namespace NEO

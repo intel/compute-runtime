@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,6 +122,22 @@ IGC::CodeType::CodeType_t OclocFclFacade::getPreferredIntermediateRepresentation
 
 CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> OclocFclFacade::createConstBuffer(const void *data, size_t size) {
     return CIF::Builtins::CreateConstBuffer(fclMain.get(), data, size);
+}
+
+CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> OclocFclFacade::translate(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error,
+                                                                             CIF::Builtins::BufferSimple *src,
+                                                                             CIF::Builtins::BufferSimple *options,
+                                                                             CIF::Builtins::BufferSimple *internalOptions,
+                                                                             CIF::Builtins::BufferSimple *tracingOptions,
+                                                                             uint32_t tracingOptionsCount) {
+
+    auto fclTranslationCtx = this->createTranslationContext(inType, outType, error);
+
+    if ((nullptr != error->GetMemory<char>()) || (nullptr == fclTranslationCtx)) {
+        return nullptr;
+    }
+
+    return fclTranslationCtx->Translate(src, options, internalOptions, nullptr, 0);
 }
 
 CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> OclocFclFacade::createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType, CIF::Builtins::BufferLatest *error) {
