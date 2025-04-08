@@ -102,9 +102,16 @@ TranslationOutput::ErrorCode CompilerInterface::build(
             intermediateCodeType = getPreferredIntermediateRepresentation(device);
         }
 
-        auto fclTranslationCtx = createFclTranslationCtx(device, srcCodeType, intermediateCodeType);
-        auto fclOutput = translate(fclTranslationCtx.get(), inSrc.get(),
-                                   fclOptions.get(), fclInternalOptions.get());
+        CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> fclOutput;
+        if (this->useIgcAsFcl(&device)) {
+            auto igcTranslationCtx = createIgcTranslationCtx(device, srcCodeType, intermediateCodeType);
+            fclOutput = translate(igcTranslationCtx.get(), inSrc.get(),
+                                  fclOptions.get(), fclInternalOptions.get());
+        } else {
+            auto fclTranslationCtx = createFclTranslationCtx(device, srcCodeType, intermediateCodeType);
+            fclOutput = translate(fclTranslationCtx.get(), inSrc.get(),
+                                  fclOptions.get(), fclInternalOptions.get());
+        }
 
         if (fclOutput == nullptr) {
             return TranslationOutput::ErrorCode::unknownError;
@@ -206,15 +213,26 @@ TranslationOutput::ErrorCode CompilerInterface::compile(
         outType = getPreferredIntermediateRepresentation(device);
     }
 
-    auto *fclMain = fcl.entryPoint.get();
+    CIF::CIFMain *fclMain = nullptr;
+    if (this->useIgcAsFcl(&device)) {
+        fclMain = getIgc(&device)->entryPoint.get();
+    } else {
+        fclMain = fcl.entryPoint.get();
+    }
     auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain, input.src.begin(), input.src.size());
     auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain, input.apiOptions.begin(), input.apiOptions.size());
     auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain, input.internalOptions.begin(), input.internalOptions.size());
 
-    auto fclTranslationCtx = createFclTranslationCtx(device, input.srcType, outType);
-
-    auto fclOutput = translate(fclTranslationCtx.get(), fclSrc.get(),
-                               fclOptions.get(), fclInternalOptions.get());
+    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> fclOutput;
+    if (this->useIgcAsFcl(&device)) {
+        auto igcTranslationCtx = createIgcTranslationCtx(device, input.srcType, outType);
+        fclOutput = translate(igcTranslationCtx.get(), fclSrc.get(),
+                              fclOptions.get(), fclInternalOptions.get());
+    } else {
+        auto fclTranslationCtx = createFclTranslationCtx(device, input.srcType, outType);
+        fclOutput = translate(fclTranslationCtx.get(), fclSrc.get(),
+                              fclOptions.get(), fclInternalOptions.get());
+    }
 
     if (fclOutput == nullptr) {
         return TranslationOutput::ErrorCode::unknownError;
@@ -550,7 +568,11 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getFinalizerDeviceCtx(const Devic
 }
 
 IGC::CodeType::CodeType_t CompilerInterface::getPreferredIntermediateRepresentation(const Device &device) {
-    return getFclDeviceCtx(device)->GetPreferredIntermediateRepresentation();
+    if (useIgcAsFcl(&device)) {
+        return device.getCompilerProductHelper().getPreferredIntermediateRepresentation();
+    } else {
+        return getFclDeviceCtx(device)->GetPreferredIntermediateRepresentation();
+    }
 }
 
 CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
@@ -599,12 +621,32 @@ bool CompilerInterface::disableZebin(std::string &options, std::string &internal
     return addOptionDisableZebin(options, internalOptions);
 }
 
+bool CompilerInterface::isFclAvailable(const Device *device) {
+    return useIgcAsFcl(device) ? isIgcAvailable(device) : static_cast<bool>(fcl.entryPoint);
+}
+
 bool CompilerInterface::isIgcAvailable(const Device *device) {
     return nullptr != getIgc(device);
 }
 
 bool CompilerInterface::isFinalizerAvailable(const Device *device) {
     return nullptr != getFinalizer(device);
+}
+
+bool CompilerInterface::useIgcAsFcl(const Device *device) {
+    if (0 != debugManager.flags.UseIgcAsFcl.get()) {
+        if (1 == debugManager.flags.UseIgcAsFcl.get()) {
+            return true;
+        } else if (2 == debugManager.flags.UseIgcAsFcl.get()) {
+            return false;
+        }
+    }
+
+    if (nullptr == device) {
+        return false;
+    }
+
+    return device->getCompilerProductHelper().useIgcAsFcl();
 }
 
 const CompilerInterface::CompilerLibraryEntry *CompilerInterface::getIgc(const Device *device) {

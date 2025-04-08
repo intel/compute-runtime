@@ -246,6 +246,108 @@ TEST_F(CompilerInterfaceTest, WhenCompilingToIrThenSuccessIsReturned) {
     gEnvironment->fclPopDebugVars();
 }
 
+TEST_F(CompilerInterfaceTest, GivenFclRedirectionEnvSetToForceIgcWhenCompilingToIrThenIgcIsBeingUsed) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.UseIgcAsFcl.set(1);
+
+    char bin[1] = {7};
+    MockCompilerDebugVars igcDebugVars;
+    igcDebugVars.binaryToReturn = bin;
+    igcDebugVars.binaryToReturnSize = 1;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    MockCompilerDebugVars fclDebugVars;
+    fclDebugVars.forceBuildFailure = true;
+    gEnvironment->fclPushDebugVars(fclDebugVars);
+
+    TranslationOutput translationOutput = {};
+    auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
+    gEnvironment->fclPopDebugVars();
+    gEnvironment->igcPopDebugVars();
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    ASSERT_EQ(1U, translationOutput.intermediateRepresentation.size);
+    EXPECT_EQ(7, translationOutput.intermediateRepresentation.mem[0]);
+}
+
+TEST_F(CompilerInterfaceTest, GivenFclRedirectionEnvSetToForceFclWhenCompilingToIrThenFclIsBeingUsed) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.UseIgcAsFcl.set(2);
+
+    char bin[1] = {7};
+    MockCompilerDebugVars igcDebugVars;
+    igcDebugVars.forceBuildFailure = true;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    MockCompilerDebugVars fclDebugVars;
+    fclDebugVars.binaryToReturn = bin;
+    fclDebugVars.binaryToReturnSize = 1;
+    gEnvironment->fclPushDebugVars(fclDebugVars);
+
+    TranslationOutput translationOutput = {};
+    auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
+    gEnvironment->fclPopDebugVars();
+    gEnvironment->igcPopDebugVars();
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    ASSERT_EQ(1U, translationOutput.intermediateRepresentation.size);
+    EXPECT_EQ(7, translationOutput.intermediateRepresentation.mem[0]);
+}
+
+TEST_F(CompilerInterfaceTest, GivenFclRedirectionDefaultSettingWhenCompilingToIrThenUseCompilerProductHelperDefaults) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.UseIgcAsFcl.set(0);
+
+    EXPECT_EQ(this->pDevice->getCompilerProductHelper().useIgcAsFcl(), pCompilerInterface->useIgcAsFcl(this->pDevice));
+}
+
+TEST_F(CompilerInterfaceTest, GivenFclRedirectionEnvSetToForceIgcWhenBuildingDeviceBinaryThenOnlyIgcIsBeingUsed) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.UseIgcAsFcl.set(1);
+
+    char bin[1] = {7};
+    MockCompilerDebugVars igcDebugVars;
+    igcDebugVars.binaryToReturn = bin;
+    igcDebugVars.binaryToReturnSize = 1;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    MockCompilerDebugVars fclDebugVars;
+    fclDebugVars.forceBuildFailure = true;
+    gEnvironment->fclPushDebugVars(fclDebugVars);
+
+    TranslationOutput translationOutput = {};
+    auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    gEnvironment->fclPopDebugVars();
+    gEnvironment->igcPopDebugVars();
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    ASSERT_EQ(1U, translationOutput.intermediateRepresentation.size);
+    EXPECT_EQ(7, translationOutput.intermediateRepresentation.mem[0]);
+}
+
+TEST_F(CompilerInterfaceTest, GivenFclRedirectionEnvSetToForceFclWhenBuildingDeviceBinaryThenFclIsBeingUsedForSourceTranslation) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.UseIgcAsFcl.set(2);
+
+    char fclBin[2] = {3, 5};
+    char igcBin[1] = {7};
+    MockCompilerDebugVars igcDebugVars;
+    igcDebugVars.binaryToReturn = igcBin;
+    igcDebugVars.binaryToReturnSize = 1;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    MockCompilerDebugVars fclDebugVars;
+    fclDebugVars.binaryToReturn = fclBin;
+    fclDebugVars.binaryToReturnSize = 2;
+    gEnvironment->fclPushDebugVars(fclDebugVars);
+
+    TranslationOutput translationOutput = {};
+    auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
+    gEnvironment->fclPopDebugVars();
+    gEnvironment->igcPopDebugVars();
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    ASSERT_EQ(2U, translationOutput.intermediateRepresentation.size);
+    EXPECT_EQ(3, translationOutput.intermediateRepresentation.mem[0]);
+    EXPECT_EQ(5, translationOutput.intermediateRepresentation.mem[1]);
+}
+
 TEST_F(CompilerInterfaceTest, GivenProgramCreatedFromIrWhenCompileIsCalledThenDontRecompile) {
     TranslationOutput translationOutput = {};
     inputArgs.srcType = IGC::CodeType::spirV;
@@ -1021,7 +1123,7 @@ HWTEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestF
 
 TEST_F(CompilerInterfaceTest, GivenCompilerWhenGettingCompilerAvailabilityThenCompilerHasCorrectCapabilities) {
     ASSERT_TRUE(this->pCompilerInterface->defaultIgc.entryPoint && this->pCompilerInterface->fcl.entryPoint);
-    EXPECT_TRUE(this->pCompilerInterface->isFclAvailable());
+    EXPECT_TRUE(this->pCompilerInterface->isFclAvailable(nullptr));
     EXPECT_TRUE(this->pCompilerInterface->isIgcAvailable(nullptr));
     EXPECT_TRUE(this->pCompilerInterface->isCompilerAvailable(nullptr, IGC::CodeType::oclC, IGC::CodeType::oclGenBin));
     EXPECT_TRUE(this->pCompilerInterface->isCompilerAvailable(nullptr, IGC::CodeType::oclC, IGC::CodeType::spirV));
@@ -1034,7 +1136,7 @@ TEST_F(CompilerInterfaceTest, GivenCompilerWhenGettingCompilerAvailabilityThenCo
     EXPECT_TRUE(this->pCompilerInterface->isCompilerAvailable(nullptr, IGC::CodeType::elf, IGC::CodeType::oclGenBin));
 
     auto befIgcImain = std::move(this->pCompilerInterface->defaultIgc.entryPoint);
-    EXPECT_TRUE(this->pCompilerInterface->isFclAvailable());
+    EXPECT_TRUE(this->pCompilerInterface->isFclAvailable(nullptr));
     EXPECT_FALSE(this->pCompilerInterface->isIgcAvailable(nullptr));
     EXPECT_FALSE(this->pCompilerInterface->isCompilerAvailable(nullptr, IGC::CodeType::oclC, IGC::CodeType::oclGenBin));
     EXPECT_TRUE(this->pCompilerInterface->isCompilerAvailable(nullptr, IGC::CodeType::oclC, IGC::CodeType::spirV));
@@ -1048,7 +1150,7 @@ TEST_F(CompilerInterfaceTest, GivenCompilerWhenGettingCompilerAvailabilityThenCo
     this->pCompilerInterface->defaultIgc.entryPoint = std::move(befIgcImain);
 
     auto befFclImain = std::move(this->pCompilerInterface->fcl.entryPoint);
-    EXPECT_FALSE(this->pCompilerInterface->isFclAvailable());
+    EXPECT_FALSE(this->pCompilerInterface->isFclAvailable(nullptr));
     EXPECT_TRUE(this->pCompilerInterface->isIgcAvailable(nullptr));
     EXPECT_FALSE(this->pCompilerInterface->isCompilerAvailable(nullptr, IGC::CodeType::oclC, IGC::CodeType::oclGenBin));
     EXPECT_FALSE(this->pCompilerInterface->isCompilerAvailable(nullptr, IGC::CodeType::oclC, IGC::CodeType::spirV));
@@ -1063,7 +1165,7 @@ TEST_F(CompilerInterfaceTest, GivenCompilerWhenGettingCompilerAvailabilityThenCo
 
     befIgcImain = std::move(this->pCompilerInterface->defaultIgc.entryPoint);
     befFclImain = std::move(this->pCompilerInterface->fcl.entryPoint);
-    EXPECT_FALSE(this->pCompilerInterface->isFclAvailable());
+    EXPECT_FALSE(this->pCompilerInterface->isFclAvailable(nullptr));
     EXPECT_FALSE(this->pCompilerInterface->isIgcAvailable(nullptr));
     EXPECT_FALSE(this->pCompilerInterface->isCompilerAvailable(nullptr, IGC::CodeType::oclC, IGC::CodeType::oclGenBin));
     EXPECT_FALSE(this->pCompilerInterface->isCompilerAvailable(nullptr, IGC::CodeType::oclC, IGC::CodeType::spirV));

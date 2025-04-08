@@ -205,12 +205,10 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createFinalizerTranslationCtx(const Device &device,
                                                                                                       IGC::CodeType::CodeType_t inType,
                                                                                                       IGC::CodeType::CodeType_t outType);
-    bool isFclAvailable() const {
-        return (fcl.entryPoint.get() != nullptr);
-    }
-
+    bool isFclAvailable(const Device *device);
     bool isIgcAvailable(const Device *device);
     bool isFinalizerAvailable(const Device *device);
+    bool useIgcAsFcl(const Device *device);
 
     const CompilerLibraryEntry *getCustomCompilerLibrary(const char *libName);
 
@@ -241,7 +239,7 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
         bool requiresFcl = (IGC::CodeType::oclC == translationSrc);
         bool requiresIgc = (IGC::CodeType::oclC != translationSrc) || ((IGC::CodeType::spirV != translationDst) && (IGC::CodeType::llvmBc != translationDst) && (IGC::CodeType::llvmLl != translationDst));
         bool requiresFinalizer = (finalizerInputType != IGC::CodeType::undefined) && ((translationDst == IGC::CodeType::oclGenBin) || (translationSrc == finalizerInputType));
-        return (isFclAvailable() || (false == requiresFcl)) && (isIgcAvailable(device) || (false == requiresIgc)) && ((false == requiresFinalizer) || isFinalizerAvailable(device));
+        return (isFclAvailable(device) || (false == requiresFcl)) && (isIgcAvailable(device) || (false == requiresIgc)) && ((false == requiresFinalizer) || isFinalizerAvailable(device));
     }
 };
 

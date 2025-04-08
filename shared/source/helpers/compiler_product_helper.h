@@ -12,6 +12,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "igfxfmid.h"
+#include "ocl_igc_interface/code_type.h"
 
 #include <memory>
 
@@ -89,6 +90,8 @@ class CompilerProductHelper {
     virtual bool isForceBindlessRequired(const HardwareInfo &hwInfo) const = 0;
     virtual const char *getCustomIgcLibraryName() const = 0;
     virtual const char *getFinalizerLibraryName() const = 0;
+    virtual bool useIgcAsFcl() const = 0;
+    virtual IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation() const = 0;
 
     virtual ~CompilerProductHelper() = default;
     uint32_t getHwIpVersion(const HardwareInfo &hwInfo) const;
@@ -143,6 +146,8 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isForceBindlessRequired(const HardwareInfo &hwInfo) const override;
     const char *getCustomIgcLibraryName() const override;
     const char *getFinalizerLibraryName() const override;
+    bool useIgcAsFcl() const override;
+    IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation() const override;
 
     ~CompilerProductHelperHw() override = default;
 

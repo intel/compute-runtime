@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ class MockCompilerInterface : public CompilerInterface {
 
     using CompilerInterface::customCompilerLibraries;
     using CompilerInterface::finalizerDeviceContexts;
+    using CompilerInterface::useIgcAsFcl;
 
     bool loadFcl() override {
         if (failLoadFcl) {

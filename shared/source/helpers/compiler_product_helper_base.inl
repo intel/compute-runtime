@@ -320,8 +320,18 @@ const char *CompilerProductHelperHw<gfxProduct>::getCustomIgcLibraryName() const
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::useIgcAsFcl() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 const char *CompilerProductHelperHw<gfxProduct>::getFinalizerLibraryName() const {
     return nullptr;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+IGC::CodeType::CodeType_t CompilerProductHelperHw<gfxProduct>::getPreferredIntermediateRepresentation() const {
+    return IGC::CodeType::spirV;
 }
 
 } // namespace NEO

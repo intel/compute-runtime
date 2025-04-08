@@ -24,7 +24,6 @@ class MockCompilerProductHelper : public CompilerProductHelper {
   public:
     using BaseClass = CompilerProductHelper;
     using BaseClass::getDefaultHwIpVersion;
-
     ADDMETHOD_CONST_NOBASE(isMidThreadPreemptionSupported, bool, false, (const HardwareInfo &hwInfo));
 
     ADDMETHOD_CONST_NOBASE(isForceEmuInt32DivRemSPRequired, bool, false, ());
@@ -65,6 +64,8 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     ADDMETHOD_CONST_NOBASE(getProductConfigFromHwInfo, uint32_t, 0, (const HardwareInfo &hwInfo));
     ADDMETHOD_CONST_NOBASE(getCustomIgcLibraryName, const char *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(getFinalizerLibraryName, const char *, nullptr, ());
+    ADDMETHOD_CONST_NOBASE(useIgcAsFcl, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(getPreferredIntermediateRepresentation, IGC::CodeType::CodeType_t, IGC::CodeType::undefined, ());
 };
 
 } // namespace NEO
