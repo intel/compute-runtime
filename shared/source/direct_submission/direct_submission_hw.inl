@@ -429,6 +429,16 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::makeResourcesResident(DirectSubm
 }
 
 template <typename GfxFamily, typename Dispatcher>
+bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources() {
+    if (this->semaphorePtr != nullptr) {
+        this->tagAddress = reinterpret_cast<volatile TagAddressType *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + offsetof(RingSemaphoreData, tagAllocation));
+    } else {
+        this->tagAddress = nullptr;
+    }
+    return true;
+}
+
+template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
     if (sfenceMode >= DirectSubmissionSfenceMode::beforeSemaphoreOnly) {
         CpuIntrinsics::sfence();
@@ -528,7 +538,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer(bool blocking) {
     Dispatcher::dispatchCacheFlush(ringCommandStream, this->rootDeviceEnvironment, gpuVaForMiFlush);
     if (disableMonitorFence) {
         TagData currentTagData = {};
-        getTagAddressValue(currentTagData);
+        getTagAddressValueForRingSwitch(currentTagData);
         Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
     }
     Dispatcher::dispatchStopCommandBuffer(ringCommandStream);
@@ -615,7 +625,7 @@ template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress) {
     if (disableMonitorFence) {
         TagData currentTagData = {};
-        getTagAddressValue(currentTagData);
+        getTagAddressValueForRingSwitch(currentTagData);
         Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
     }
     Dispatcher::dispatchStartCommandBuffer(ringCommandStream, nextBufferGpuAddress);
@@ -1145,7 +1155,7 @@ inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRing
                                                                          isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
             nextAllocation = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
             this->currentRingBuffer = static_cast<uint32_t>(this->ringBuffers.size());
-            this->ringBuffers.emplace_back(0ull, nextAllocation);
+            this->ringBuffers.emplace_back(0ull, 0ull, nextAllocation);
             auto ret = memoryOperationHandler->makeResidentWithinOsContext(&this->osContext, ArrayRef<GraphicsAllocation *>(&nextAllocation, 1u), false, false, false) == MemoryOperationsStatus::success;
             UNRECOVERABLE_IF(!ret);
 

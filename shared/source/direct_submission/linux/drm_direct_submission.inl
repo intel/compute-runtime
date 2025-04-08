@@ -128,9 +128,9 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
+    DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources();
     this->currentTagData.tagAddress = this->semaphoreGpuVa + offsetof(RingSemaphoreData, tagAllocation);
     this->currentTagData.tagValue = 0u;
-    this->tagAddress = reinterpret_cast<volatile TagAddressType *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + offsetof(RingSemaphoreData, tagAllocation));
     return true;
 }
 
@@ -271,6 +271,10 @@ template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tagData) {
     tagData.tagAddress = this->currentTagData.tagAddress;
     tagData.tagValue = this->currentTagData.tagValue + 1;
+}
+template <typename GfxFamily, typename Dispatcher>
+void DrmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValueForRingSwitch(TagData &tagData) {
+    getTagAddressValue(tagData);
 }
 
 template <typename GfxFamily, typename Dispatcher>

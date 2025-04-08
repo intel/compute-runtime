@@ -111,7 +111,7 @@ class DirectSubmissionHw {
     bool allocateResources();
     MOCKABLE_VIRTUAL void deallocateResources();
     MOCKABLE_VIRTUAL bool makeResourcesResident(DirectSubmissionAllocations &allocations);
-    virtual bool allocateOsResources() = 0;
+    virtual bool allocateOsResources();
     virtual bool submit(uint64_t gpuAddress, size_t size, const ResidencyContainer *allocationsForResidency) = 0;
     virtual bool handleResidency() = 0;
     virtual void handleRingRestartForUllsLightResidency(const ResidencyContainer *allocationsForResidency){};
@@ -130,6 +130,7 @@ class DirectSubmissionHw {
     virtual uint64_t updateTagValue(bool requireMonitorFence) = 0;
     virtual bool dispatchMonitorFenceRequired(bool requireMonitorFence);
     virtual void getTagAddressValue(TagData &tagData) = 0;
+    virtual void getTagAddressValueForRingSwitch(TagData &tagData) = 0;
     void unblockGpu();
     bool submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size, bool needWait, const ResidencyContainer *allocationsForResidency);
     bool copyCommandBufferIntoRing(BatchBuffer &batchBuffer);
@@ -198,11 +199,12 @@ class DirectSubmissionHw {
     virtual void makeGlobalFenceAlwaysResident(){};
     struct RingBufferUse {
         RingBufferUse() = default;
-        RingBufferUse(FlushStamp completionFence, GraphicsAllocation *ringBuffer) : completionFence(completionFence), ringBuffer(ringBuffer){};
+        RingBufferUse(FlushStamp completionFence, FlushStamp completionFenceForSwitch, GraphicsAllocation *ringBuffer) : completionFence(completionFence), completionFenceForSwitch(completionFenceForSwitch), ringBuffer(ringBuffer){};
 
         constexpr static uint32_t initialRingBufferCount = 2u;
 
         FlushStamp completionFence = 0ull;
+        FlushStamp completionFenceForSwitch = 0ull;
         GraphicsAllocation *ringBuffer = nullptr;
     };
     std::vector<RingBufferUse> ringBuffers;
@@ -237,6 +239,7 @@ class DirectSubmissionHw {
     volatile RingSemaphoreData *semaphoreData = nullptr;
     volatile void *workloadModeOneStoreAddress = nullptr;
     uint32_t *pciBarrierPtr = nullptr;
+    volatile TagAddressType *tagAddress;
 
     uint32_t currentQueueWorkCount = 1u;
     uint32_t workloadMode = 0;

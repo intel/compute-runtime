@@ -54,6 +54,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeStartSection;
     using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::getSizeSystemMemoryFenceAddress;
+    using BaseClass::getTagAddressValueForRingSwitch;
     using BaseClass::hwInfo;
     using BaseClass::immWritePostSyncOffset;
     using BaseClass::inputMonitorFenceDispatchRequirement;
@@ -184,6 +185,10 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override {
         this->pagingFenceValueToWait = pagingFenceValue;
     }
+    void getTagAddressValueForRingSwitch(TagData &tagData) override {
+        getTagAddressValueForRingSwitchCalled++;
+        getTagAddressValue(tagData);
+    }
 
     uint64_t updateTagValueReturn = 1ull;
     uint64_t tagAddressSetValue = MemoryConstants::pageSize;
@@ -200,6 +205,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     uint32_t dispatchRelaxedOrderingQueueStallCalled = 0;
     uint32_t dispatchTaskStoreSectionCalled = 0;
     uint32_t ensureRingCompletionCalled = 0;
+    uint32_t getTagAddressValueForRingSwitchCalled = 0;
     uint32_t makeResourcesResidentVectorSize = 0u;
     bool allocateOsResourcesReturn = true;
     bool submitReturn = true;

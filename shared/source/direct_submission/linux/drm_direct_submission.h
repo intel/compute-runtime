@@ -37,6 +37,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     void handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) override;
     uint64_t updateTagValue(bool requireMonitorFence) override;
     void getTagAddressValue(TagData &tagData) override;
+    void getTagAddressValueForRingSwitch(TagData &tagData) override;
     bool isCompleted(uint32_t ringBufferIndex) override;
     bool isCompletionFenceSupported();
     bool isGpuHangDetected(std::chrono::high_resolution_clock::time_point &lastHangCheckTime);
@@ -45,7 +46,6 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     MOCKABLE_VIRTUAL void wait(TaskCountType taskCountToWait);
 
     TagData currentTagData{};
-    volatile TagAddressType *tagAddress;
     TaskCountType completionFenceValue{};
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
 
