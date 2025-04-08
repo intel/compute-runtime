@@ -331,10 +331,11 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
 
         uint16_t tile = 0;
         const bool mediaEngine = isMediaEngine(engine.engine_class);
+        const bool videoEngine = (engine.engine_class == getDrmParamValue(DrmParam::engineClassVideo) || engine.engine_class == getDrmParamValue(DrmParam::engineClassVideoEnhance));
 
         if (containsGtId(gtIdToTileId, engine.gt_id) && !mediaEngine) {
             tile = static_cast<uint16_t>(gtIdToTileId[engine.gt_id]);
-        } else if (containsGtId(mediaGtIdToTileId, engine.gt_id) && mediaEngine) {
+        } else if (containsGtId(mediaGtIdToTileId, engine.gt_id) && (mediaEngine || videoEngine)) {
             tile = static_cast<uint16_t>(mediaGtIdToTileId[engine.gt_id]);
         } else {
             continue;
@@ -350,8 +351,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
                                        engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassRender) ||
                                        engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassCopy);
 
-        const bool isSysmanEngineClass = isSysmanEnabled && (engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassVideo) ||
-                                                             engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassVideoEnhance));
+        const bool isSysmanEngineClass = isSysmanEnabled && videoEngine;
 
         if (isBaseEngineClass || isSysmanEngineClass || mediaEngine) {
             if (enginesPerTile.size() <= tile) {
