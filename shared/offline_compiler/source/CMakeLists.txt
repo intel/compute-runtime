@@ -173,14 +173,14 @@ else()
        ${NEO_SHARED_DIRECTORY}/dll/linux${BRANCH_DIR_SUFFIX}/options_linux.cpp
        ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.inl
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_inc.h
+       ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_helper.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.h
+       ${NEO_SHARED_DIRECTORY}/os_interface/linux/settings_reader_create.cpp
        ${NEO_SHARED_DIRECTORY}/helpers/linux/path.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/linux/directory.cpp
        ${NEO_SHARED_DIRECTORY}/ail/linux/ail_ov_comp_wa_linux.cpp
-       ${NEO_SHARED_DIRECTORY}/os_interface/linux/settings_reader_create.cpp
-       ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
        ${OCLOC_DIRECTORY}/source/linux/ocloc_supported_devices_helper_linux.cpp
        ${OCLOC_DIRECTORY}/source/linux/ocloc_reg_path.cpp
   )

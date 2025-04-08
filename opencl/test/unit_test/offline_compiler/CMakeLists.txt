@@ -128,10 +128,10 @@ if(WIN32)
   )
 else()
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
+       ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_helper.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_thread_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
-       ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/ocloc_supported_devices_helper_linux_tests.cpp
   )
   list(REMOVE_ITEM IGDRCL_SRCS_offline_compiler_tests

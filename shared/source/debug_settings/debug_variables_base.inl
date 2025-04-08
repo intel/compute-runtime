@@ -609,7 +609,7 @@ DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "Wit
 DECLARE_DEBUG_VARIABLE(bool, ReturnRawGpuTimestamps, false, "Driver returns raw GPU timestamps instead of calculated ones.")
 DECLARE_DEBUG_VARIABLE(bool, EnableDeviceBasedTimestamps, true, "Driver returns timestamps in nanoseconds based on device timer.")
 DECLARE_DEBUG_VARIABLE(bool, UseCommandBufferHeaderSizeForWddmQueueSubmission, true, "0: Page size (4096), 1: sizeof(COMMAND_BUFFER_HEADER)")
-DECLARE_DEBUG_VARIABLE(bool, DisableDeepBind, false, "Disable passing RTLD_DEEPBIND flag to all dlopen calls.")
+DECLARE_DEBUG_SCOPED_V(bool, DisableDeepBind, false, S_RT | S_OCLOC, "Disable passing RTLD_DEEPBIND flag to all dlopen calls.")
 DECLARE_DEBUG_VARIABLE(bool, UseUmKmDataTranslator, false, "Use helper library for UMD<->KMD (WDDM) struct layout compatibility")
 DECLARE_DEBUG_VARIABLE(bool, SkipFlushingEventsOnGetStatusCalls, false, "When set to 1, events are not causing internal flush when querying for CL_EVENT_COMMAND_EXECUTION_STATUS")
 DECLARE_DEBUG_VARIABLE(bool, AllowUnrestrictedSize, false, "Allow allocating memory with greater size than MAX_MEM_ALLOC_SIZE")
