@@ -253,6 +253,12 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
                type == AllocationType::globalSurface;
     }
 
+    static bool is2MBPageAllocationType(AllocationType type) {
+        return type == AllocationType::timestampPacketTagBuffer ||
+               type == AllocationType::gpuTimestampDeviceBuffer ||
+               type == AllocationType::profilingTagBuffer;
+    }
+
     static uint32_t getNumHandlesForKmdSharedAllocation(uint32_t numBanks);
 
     void *getReservedAddressPtr() const {

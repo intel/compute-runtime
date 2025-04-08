@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1993,10 +1993,10 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSupportedTypeWhenAllocatingIn
                 const bool prefer57bitAddressing = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExtended) > 0 && !allocData.flags.resource48Bit;
 
                 auto heap = HeapIndex::heapStandard64KB;
-                if (prefer2MBAlignment) {
-                    heap = HeapIndex::heapStandard2MB;
-                } else if (prefer57bitAddressing) {
+                if (prefer57bitAddressing) {
                     heap = HeapIndex::heapExtended;
+                } else if (prefer2MBAlignment) {
+                    heap = HeapIndex::heapStandard2MB;
                 }
 
                 EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(heap)), gpuAddress);

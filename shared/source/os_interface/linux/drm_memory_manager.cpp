@@ -2121,40 +2121,35 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
     std::unique_ptr<Gmm> gmm;
-    size_t sizeAligned = 0;
-    size_t finalAlignment = MemoryConstants::pageSize64k;
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
 
+    size_t baseSize = 0u;
     if (allocationData.type == AllocationType::image) {
         allocationData.imgInfo->useLocalMemory = true;
         gmm = std::make_unique<Gmm>(gmmHelper, *allocationData.imgInfo,
                                     allocationData.storageInfo, allocationData.flags.preferCompressed);
 
-        if (productHelper.is2MBLocalMemAlignmentEnabled() &&
-            allocationData.imgInfo->size >= MemoryConstants::pageSize2M) {
-            finalAlignment = MemoryConstants::pageSize2M;
-        }
-
-        sizeAligned = alignUp(allocationData.imgInfo->size, finalAlignment);
-
+        baseSize = allocationData.imgInfo->size;
+    } else if (allocationData.type == AllocationType::writeCombined) {
+        baseSize = alignUp(allocationData.size + MemoryConstants::pageSize64k, 2 * MemoryConstants::megaByte) + 2 * MemoryConstants::megaByte;
     } else {
-        if (allocationData.type == AllocationType::writeCombined) {
-            sizeAligned = alignUp(allocationData.size + MemoryConstants::pageSize64k, 2 * MemoryConstants::megaByte) + 2 * MemoryConstants::megaByte;
-        } else {
-            sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
-        }
+        baseSize = allocationData.size;
+    }
 
-        if (productHelper.is2MBLocalMemAlignmentEnabled() &&
-            allocationData.size >= MemoryConstants::pageSize2M) {
+    size_t finalAlignment = MemoryConstants::pageSize64k;
+    if (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get()) {
+        finalAlignment = MemoryConstants::pageSize2M;
+    } else if (productHelper.is2MBLocalMemAlignmentEnabled()) {
+        if (baseSize >= MemoryConstants::pageSize2M ||
+            GraphicsAllocation::is2MBPageAllocationType(allocationData.type)) {
             finalAlignment = MemoryConstants::pageSize2M;
         }
+    }
 
-        if (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get()) {
-            finalAlignment = MemoryConstants::pageSize2M;
-        }
+    size_t sizeAligned = alignUp(baseSize, finalAlignment);
 
-        sizeAligned = alignUp(sizeAligned, finalAlignment);
+    if (allocationData.type != AllocationType::image) {
         gmm = this->makeGmmIfSingleHandle(allocationData, sizeAligned);
     }
 

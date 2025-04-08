@@ -7517,6 +7517,44 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenEnabled2MBSizeAlignmentWhe
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, Given2MBLocalMemAlignmentEnabledWhenAllocating2MBPageTypeInDevicePoolThenAllocationIs2MBAligned) {
+    auto mockProductHelper = new MockProductHelper;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    ASSERT_TRUE(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper->is2MBLocalMemAlignmentEnabled());
+
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocType = static_cast<AllocationType>(i);
+
+        if (!GraphicsAllocation::is2MBPageAllocationType(allocType)) {
+            continue;
+        }
+
+        const auto requestedSize = MemoryConstants::pageSize;
+        const auto expectedAlignedSize = alignUp(requestedSize, MemoryConstants::pageSize2M);
+
+        AllocationData allocationData;
+        allocationData.allFlags = 0;
+        allocationData.flags.allocateMemory = true;
+        allocationData.rootDeviceIndex = rootDeviceIndex;
+        allocationData.type = allocType;
+        allocationData.flags.resource48Bit = true;
+        allocationData.size = requestedSize;
+
+        MemoryManager::AllocationStatus allocationStatus;
+        auto memoryManager = createMemoryManager();
+        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::heapStandard2MB));
+        EXPECT_EQ(expectedAlignedSize, allocation->getUnderlyingBufferSize());
+        EXPECT_EQ(expectedAlignedSize, allocation->getReservedAddressSize());
+        EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(allocation->getGpuAddress()));
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+}
+
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForBufferThenLocalMemoryAllocationIsReturnedFromStandard64KbHeap) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
