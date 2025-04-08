@@ -336,7 +336,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsPr
     EXPECT_TRUE(ret);
     EXPECT_EQ(0u, directSubmission.currentRingBuffer);
 
-    GraphicsAllocation *nextRing = directSubmission.switchRingBuffersAllocations();
+    GraphicsAllocation *nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
     EXPECT_EQ(1u, directSubmission.currentRingBuffer);
 }
@@ -348,11 +348,11 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsSe
     EXPECT_TRUE(ret);
     EXPECT_EQ(0u, directSubmission.currentRingBuffer);
 
-    GraphicsAllocation *nextRing = directSubmission.switchRingBuffersAllocations();
+    GraphicsAllocation *nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
     EXPECT_EQ(1u, directSubmission.currentRingBuffer);
 
-    nextRing = directSubmission.switchRingBuffersAllocations();
+    nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
     EXPECT_EQ(0u, directSubmission.currentRingBuffer);
 }
@@ -368,46 +368,46 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionCurrentRingBuffersInUseWhenS
     EXPECT_EQ(0u, directSubmission.currentRingBuffer);
     EXPECT_EQ(2u, directSubmission.ringBuffers.size());
 
-    auto nextRing = directSubmission.switchRingBuffersAllocations();
+    auto nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(3u, directSubmission.ringBuffers.size());
     EXPECT_EQ(directSubmission.ringBuffers[2].ringBuffer, nextRing);
     EXPECT_EQ(2u, directSubmission.currentRingBuffer);
 
-    nextRing = directSubmission.switchRingBuffersAllocations();
+    nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(4u, directSubmission.ringBuffers.size());
     EXPECT_EQ(directSubmission.ringBuffers[3].ringBuffer, nextRing);
     EXPECT_EQ(3u, directSubmission.currentRingBuffer);
 
     directSubmission.isCompletedReturn = true;
 
-    nextRing = directSubmission.switchRingBuffersAllocations();
+    nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(4u, directSubmission.ringBuffers.size());
     EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
     EXPECT_EQ(0u, directSubmission.currentRingBuffer);
 
-    nextRing = directSubmission.switchRingBuffersAllocations();
+    nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(4u, directSubmission.ringBuffers.size());
     EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
     EXPECT_EQ(1u, directSubmission.currentRingBuffer);
 
-    nextRing = directSubmission.switchRingBuffersAllocations();
+    nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(4u, directSubmission.ringBuffers.size());
     EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
     EXPECT_EQ(0u, directSubmission.currentRingBuffer);
 
-    nextRing = directSubmission.switchRingBuffersAllocations();
+    nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(4u, directSubmission.ringBuffers.size());
     EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
     EXPECT_EQ(1u, directSubmission.currentRingBuffer);
 
-    nextRing = directSubmission.switchRingBuffersAllocations();
+    nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(4u, directSubmission.ringBuffers.size());
     EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
     EXPECT_EQ(0u, directSubmission.currentRingBuffer);
 
     directSubmission.isCompletedReturn = false;
 
-    nextRing = directSubmission.switchRingBuffersAllocations();
+    nextRing = directSubmission.switchRingBuffersAllocations(nullptr);
     EXPECT_EQ(5u, directSubmission.ringBuffers.size());
     EXPECT_EQ(directSubmission.ringBuffers[4].ringBuffer, nextRing);
     EXPECT_EQ(4u, directSubmission.currentRingBuffer);
