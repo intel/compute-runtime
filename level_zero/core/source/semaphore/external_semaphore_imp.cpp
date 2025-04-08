@@ -171,8 +171,8 @@ void ExternalSemaphoreController::processProxyEvents() {
             }
             if (externalSemaphoreImp->neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled) {
                 event->hostSignal(false);
-                event->destroy();
                 it = std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t, SemaphoreOperation>>::reverse_iterator(this->proxyEvents.erase((++it).base()));
+                this->processedProxyEvents.push_back(event);
             } else {
                 ++it;
             }

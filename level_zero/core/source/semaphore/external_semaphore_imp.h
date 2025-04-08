@@ -74,6 +74,10 @@ class ExternalSemaphoreController : NEO::NonCopyableAndNonMovableClass {
             event->destroy();
         }
 
+        for (auto event : processedProxyEvents) {
+            event->destroy();
+        }
+
         for (auto &eventPools : eventPoolsMap) {
             for (auto &eventPool : eventPools.second) {
                 eventPool->destroy();
@@ -91,6 +95,7 @@ class ExternalSemaphoreController : NEO::NonCopyableAndNonMovableClass {
     std::unordered_map<ze_device_handle_t, size_t> eventsCreatedFromLatestPoolMap;
     const size_t maxEventCountInPool = 20u;
     std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t, SemaphoreOperation>> proxyEvents;
+    std::vector<Event *> processedProxyEvents;
     bool continueRunning = true;
 
   private:
