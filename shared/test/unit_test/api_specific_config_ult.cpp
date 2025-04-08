@@ -21,6 +21,7 @@ bool globalStatelessOcl = false;
 bool isStatelessCompressionSupportedForUlts = true;
 bool isDeviceUsmPoolingEnabledForUlts = true;
 
+const StackVec<DebugVarPrefix, 4> *validUltPrefixTypesOverride = nullptr;
 StackVec<const char *, 4> validUltL0Prefixes = {"NEO_L0_", "NEO_", ""};
 StackVec<NEO::DebugVarPrefix, 4> validUltL0PrefixTypes = {DebugVarPrefix::neoL0, DebugVarPrefix::neo, DebugVarPrefix::none};
 StackVec<const char *, 4> validUltOclPrefixes = {"NEO_OCL_", "NEO_", ""};
@@ -94,6 +95,9 @@ const StackVec<const char *, 4> &ApiSpecificConfig::getPrefixStrings() {
 }
 
 const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
+    if (validUltPrefixTypesOverride) {
+        return *validUltPrefixTypesOverride;
+    }
     if (apiTypeForUlts == ApiSpecificConfig::L0) {
         return validUltL0PrefixTypes;
     } else {

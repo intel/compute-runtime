@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,12 @@ TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDef
     compareSuccessful = (defaultValue == reader->getSetting(#variableName, defaultValue)); \
     EXPECT_TRUE(compareSuccessful) << #variableName;                                       \
     debugVariableCount++;
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "shared/source/debug_settings/release_variables.inl"
 
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
     size_t mapCount = reader->getStringSettingsCount();

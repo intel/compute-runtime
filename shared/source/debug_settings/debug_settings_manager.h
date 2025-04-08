@@ -17,6 +17,7 @@
 #include <memory>
 #include <sstream>
 #include <string_view>
+#include <type_traits>
 
 enum class DebugFunctionalityLevel {
     none,   // Debug functionality disabled
@@ -68,12 +69,27 @@ enum class DebugVarPrefix : uint8_t {
     none = 1,
     neo = 2,
     neoL0 = 3,
-    neoOcl = 4
+    neoOcl = 4,
+    neoOcloc = 5
 };
+
+using DVarsScopeMask = std::underlying_type_t<DebugVarPrefix>;
+constexpr auto getDebugVarScopeMaskFor(DebugVarPrefix v) {
+    return static_cast<DVarsScopeMask>(1U) << static_cast<DVarsScopeMask>(v);
+}
+
+template <DebugVarPrefix... vs>
+constexpr auto getDebugVarScopeMaskFor() {
+    return (0 | ... | getDebugVarScopeMaskFor(vs));
+}
+
+// compatibility with "old" behavior (prior to introducing scope masks)
+constexpr inline DVarsScopeMask compatibilityMask = getDebugVarScopeMaskFor<DebugVarPrefix::neoL0, DebugVarPrefix::neoOcl>();
 
 template <typename T>
 struct DebugVarBase {
     DebugVarBase(const T &defaultValue) : value(defaultValue), defaultValue(defaultValue) {}
+    DebugVarBase(const T &defaultValue, DVarsScopeMask scopeMask) : value(defaultValue), defaultValue(defaultValue), scopeMask(scopeMask) {}
     T get() const {
         return value;
     }
@@ -94,11 +110,15 @@ struct DebugVarBase {
     DebugVarPrefix getPrefixType() const {
         return prefixType;
     }
+    DVarsScopeMask getScopeMask() const {
+        return scopeMask;
+    }
 
   private:
     T value;
     T defaultValue;
     DebugVarPrefix prefixType = DebugVarPrefix::none;
+    DVarsScopeMask scopeMask = compatibilityMask;
 };
 
 struct DebugVariables {                                 // NOLINT(clang-analyzer-optin.performance.Padding)
@@ -114,8 +134,22 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
 
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     DebugVarBase<dataType> variableName{defaultValue};
+#define S_NONE getDebugVarScopeMaskFor(DebugVarPrefix::none)
+#define S_NEO getDebugVarScopeMaskFor(DebugVarPrefix::neo)
+#define S_OCL getDebugVarScopeMaskFor(DebugVarPrefix::neoOcl)
+#define S_L0 getDebugVarScopeMaskFor(DebugVarPrefix::neoL0)
+#define S_RT (S_NEO | S_OCL | S_L0 | S_NONE)
+#define S_OCLOC getDebugVarScopeMaskFor(DebugVarPrefix::neoOcloc)
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, scope, description) \
+    DebugVarBase<dataType> variableName{defaultValue, scope};
 #include "debug_variables.inl"
 #include "release_variables.inl"
+#undef S_OCLOC
+#undef S_RT
+#undef S_L0
+#undef S_OCL
+#undef S_NEO
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 };
 
@@ -169,6 +203,7 @@ class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
     }
 
   protected:
+    DVarsScopeMask scope = 0;
     std::unique_ptr<SettingsReader> readerImpl;
     bool isLoopAtDriverInitEnabled() const {
         auto loopingEnabled = flags.LoopAtDriverInit.get();

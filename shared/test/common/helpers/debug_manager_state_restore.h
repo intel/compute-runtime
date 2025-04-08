@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,12 @@ class DebugManagerStateRestore {
         debugManager.injectFcn = injectFcnSnapshot;
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) shrink(debugManager.flags.variableName.getRef());
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "shared/source/debug_settings/release_variables.inl"
 
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
     }
     DebugVariables debugVarSnapshot;

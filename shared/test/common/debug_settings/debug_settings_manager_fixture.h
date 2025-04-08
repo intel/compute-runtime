@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,18 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/utilities/directory.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <map>
 
 using namespace NEO;
 
 #undef DECLARE_DEBUG_VARIABLE
+
+namespace NEO {
+extern std::unique_ptr<SettingsReader> mockSettingsReader;
+extern const StackVec<DebugVarPrefix, 4> *validUltPrefixTypesOverride;
+} // namespace NEO
 
 class TestDebugFlagsChecker {
   public:

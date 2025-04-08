@@ -58,9 +58,12 @@ TEST(DebugSettingsManager, WhenDebugManagerIsDisabledThenDebugFunctionalityIsNot
         bool isEqual = TestDebugFlagsChecker::isEqual(debugManager.flags.variableName.get(), static_cast<dataType>(defaultValue)); \
         EXPECT_TRUE(isEqual);                                                                                                      \
     }
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "shared/source/debug_settings/release_variables.inl"
 
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 }
 
@@ -150,8 +153,10 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNoPrefixWhenCalling
         DebugVarPrefix type;                                                                                     \
         EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue, type)); \
     }
-
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
@@ -189,8 +194,10 @@ TEST(DebugSettingsManager, DISABLED_givenPrintDebugSettingsEnabledWithNeoPrefixW
         DebugVarPrefix type;                                                                                     \
         EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue, type)); \
     }
-
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
@@ -228,8 +235,10 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithLevelZeroPrefixWhen
         DebugVarPrefix type;                                                                                     \
         EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue, type)); \
     }
-
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
@@ -267,8 +276,10 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithOclPrefixWhenCallin
         DebugVarPrefix type;                                                                                     \
         EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue, type)); \
     }
-
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
@@ -306,8 +317,10 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithMixedPrefixWhenCall
         DebugVarPrefix type;                                                                                     \
         EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue, type)); \
     }
-
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
@@ -516,4 +529,44 @@ TEST(DebugSettingsManager, GivenHardwareOrHardwareWithAubCsrTypeAndTbxFaultsEnab
 
     NEO::debugManager.flags.SetCommandStreamReceiver.set(3);
     EXPECT_FALSE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+}
+
+TEST(DebugSettingsManager, whenDebugVariableDoesntMatchScopeThenIgnoreIt) {
+    struct MockSettingFileReader : SettingsFileReader {
+        MockSettingFileReader() : SettingsFileReader("") {
+            settingStringMap["ForceOCLVersion"] = "1";
+            settingStringMap["NEO_ForceOCLVersion"] = "1";
+            settingStringMap["NEO_OCL_ForceOCLVersion"] = "1";
+            settingStringMap["NEO_L0_ForceOCLVersion"] = "1";
+            settingStringMap["ZE_AFFINITY_MASK"] = "1";
+        }
+    };
+
+    VariableBackup<decltype(mockSettingsReader)> backupReader(&mockSettingsReader, {});
+    VariableBackup backupPrefixes(&validUltPrefixTypesOverride);
+
+    {
+        mockSettingsReader = std::make_unique<MockSettingFileReader>();
+        FullyEnabledTestDebugManager debugManager;
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_EQ(1, debugManager.flags.ForceOCLVersion.get());
+        EXPECT_STREQ("1", debugManager.flags.ZE_AFFINITY_MASK.get().c_str());
+    }
+
+    {
+        mockSettingsReader = std::make_unique<MockSettingFileReader>();
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        FullyEnabledTestDebugManager debugManager;
+        EXPECT_EQ(0, debugManager.flags.ForceOCLVersion.get());
+        EXPECT_STREQ("1", debugManager.flags.ZE_AFFINITY_MASK.get().c_str());
+    }
+
+    {
+        mockSettingsReader = std::make_unique<MockSettingFileReader>();
+        StackVec<DebugVarPrefix, 4> prefixes = {};
+        validUltPrefixTypesOverride = &prefixes;
+        FullyEnabledTestDebugManager debugManager;
+        EXPECT_EQ(0, debugManager.flags.ForceOCLVersion.get());
+        EXPECT_STREQ("default", debugManager.flags.ZE_AFFINITY_MASK.get().c_str());
+    }
 }

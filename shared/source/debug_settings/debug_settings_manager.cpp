@@ -26,6 +26,9 @@
 
 namespace NEO {
 
+#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
+    DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+
 template <typename T>
 static std::string toString(const T &arg) {
     if constexpr (std::is_convertible_v<std::string, T>) {
@@ -39,6 +42,9 @@ template <DebugFunctionalityLevel debugLevel>
 DebugSettingsManager<debugLevel>::DebugSettingsManager(const char *registryPath) {
     readerImpl = SettingsReaderCreator::create(std::string(registryPath));
     ApiSpecificConfig::initPrefixes();
+    for (auto prefixType : ApiSpecificConfig::getPrefixTypes()) {
+        this->scope |= getDebugVarScopeMaskFor(prefixType);
+    }
     injectSettingsFromReader();
     dumpFlags();
     translateDebugSettings(flags);
@@ -145,8 +151,10 @@ void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
         DebugVarPrefix type;                                                                 \
         constexpr auto keyName = getNonReleaseKeyName(#variableName);                        \
         dataType tempData = readerImpl->getSetting(keyName, flags.variableName.get(), type); \
-        flags.variableName.setPrefixType(type);                                              \
-        flags.variableName.set(tempData);                                                    \
+        if (0 != (this->scope & flags.variableName.getScopeMask())) {                        \
+            flags.variableName.setPrefixType(type);                                          \
+            flags.variableName.set(tempData);                                                \
+        }                                                                                    \
     }
 
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
@@ -158,12 +166,14 @@ void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
     {                                                                                              \
         DebugVarPrefix type;                                                                       \
         dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get(), type); \
-        flags.variableName.setPrefixType(type);                                                    \
-        flags.variableName.set(tempData);                                                          \
+        if (0 != (this->scope & flags.variableName.getScopeMask())) {                              \
+            flags.variableName.setPrefixType(type);                                                \
+            flags.variableName.set(tempData);                                                      \
+        }                                                                                          \
     }
 #include "release_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
-}
+} // namespace NEO
 
 void logDebugString(std::string_view debugString) {
     NEO::fileLoggerInstance().logDebugString(true, debugString);
