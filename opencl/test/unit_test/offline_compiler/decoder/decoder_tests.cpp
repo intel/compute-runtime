@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
@@ -493,7 +494,6 @@ TEST(DecoderTests, GivenProperStructWhenReadingStructFieldsThenFieldsVectorGetsP
 
 TEST(DecoderTests, GivenProperPatchListFileWhenParsingTokensThenFileIsParsedCorrectly) {
     MockDecoder decoder;
-    decoder.pathToPatch = clFiles;
     decoder.parseTokens();
 
     EXPECT_EQ(static_cast<uint32_t>(28), (decoder.programHeader.size));
@@ -532,31 +532,12 @@ TEST(DecoderTests, GivenProperPatchListFileWhenParsingTokensThenFileIsParsedCorr
     EXPECT_EQ(static_cast<uint8_t>(4), (decoder.kernelHeader.fields[8].size));
     EXPECT_EQ("KernelUnpaddedSize", (decoder.kernelHeader.fields[8].name));
 
-    EXPECT_EQ(static_cast<uint8_t>(4), (decoder.patchTokens[2]->size));
-    EXPECT_EQ("PATCH_TOKEN_STATE_SIP", (decoder.patchTokens[2]->name));
-    EXPECT_EQ(static_cast<uint8_t>(4), (decoder.patchTokens[2]->fields[0].size));
-    EXPECT_EQ("SystemKernelOffset", (decoder.patchTokens[2]->fields[0].name));
-
-    EXPECT_EQ(static_cast<uint8_t>(12), decoder.patchTokens[5]->size);
-    EXPECT_EQ("PATCH_TOKEN_SAMPLER_STATE_ARRAY", decoder.patchTokens[5]->name);
-    EXPECT_EQ(static_cast<uint8_t>(4), (decoder.patchTokens[5]->fields[0].size));
-    EXPECT_EQ("Offset", (decoder.patchTokens[5]->fields[0].name));
-    EXPECT_EQ(static_cast<uint8_t>(4), (decoder.patchTokens[5]->fields[1].size));
-    EXPECT_EQ("Count", (decoder.patchTokens[5]->fields[1].name));
-    EXPECT_EQ(static_cast<uint8_t>(4), (decoder.patchTokens[5]->fields[2].size));
-    EXPECT_EQ("BorderColorOffset", (decoder.patchTokens[5]->fields[2].name));
-
     EXPECT_EQ(static_cast<uint8_t>(8), decoder.patchTokens[42]->size);
     EXPECT_EQ("PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO", decoder.patchTokens[42]->name);
     EXPECT_EQ(static_cast<uint8_t>(4), (decoder.patchTokens[42]->fields[0].size));
     EXPECT_EQ("ConstantBufferIndex", (decoder.patchTokens[42]->fields[0].name));
     EXPECT_EQ(static_cast<uint8_t>(4), (decoder.patchTokens[42]->fields[1].size));
     EXPECT_EQ("InlineDataSize", (decoder.patchTokens[42]->fields[1].name));
-
-    EXPECT_EQ(static_cast<uint8_t>(4), decoder.patchTokens[19]->size);
-    EXPECT_EQ("PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD", decoder.patchTokens[19]->name);
-    EXPECT_EQ(static_cast<uint8_t>(4), (decoder.patchTokens[19]->fields[0].size));
-    EXPECT_EQ("InterfaceDescriptorDataOffset", (decoder.patchTokens[19]->fields[0].name));
 }
 
 TEST(DecoderTests, WhenPathToPatchTokensNotProvidedThenUseDefaults) {
@@ -618,7 +599,6 @@ TEST(DecoderTests, GivenValidBinaryWithoutPatchTokensWhenProcessingBinaryThenBin
 
     std::stringstream ptmFile;
     MockDecoder decoder;
-    decoder.pathToPatch = clFiles;
     decoder.pathToDump = "non_existing_folder/";
     decoder.parseTokens();
 
@@ -645,9 +625,10 @@ TEST(DecoderTests, givenBinaryWithKernelBinaryHeaderWhenAtLeastOneOfTheKernelSiz
 
     std::stringstream ptmFile;
     MockDecoder decoder{false};
-    decoder.pathToPatch = clFiles;
+    decoder.mockArgHelper->messagePrinter.setSuppressMessages(true);
     decoder.pathToDump = "non_existing_folder/";
     decoder.parseTokens();
+    decoder.mockArgHelper->messagePrinter.setSuppressMessages(false);
 
     std::string binaryString = binarySS.str();
     std::vector<unsigned char> binary(binaryString.begin(), binaryString.end());
@@ -696,7 +677,6 @@ TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPa
     std::vector<char> binary(binaryString.begin(), binaryString.end());
     std::stringstream ptmFile;
     MockDecoder decoder;
-    decoder.pathToPatch = clFiles;
     decoder.pathToDump = "non_existing_folder/";
     decoder.parseTokens();
 
@@ -704,7 +684,7 @@ TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPa
     int retVal = decoder.processBinary(ptr, binary.size(), ptmFile);
     EXPECT_EQ(0, retVal);
 
-    std::string expectedOutput = "ProgramBinaryHeader:\n\t4 Magic 1229870147\n\t4 Version 0\n\t4 Device 0\n\t4 GPUPointerSizeInBytes 0\n\t4 NumberOfKernels 1\n\t4 SteppingId 0\n\t4 PatchListSize 30\nPATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO:\n\t4 Token 42\n\t4 Size 16\n\t4 ConstantBufferIndex 0\n\t4 InlineDataSize 14\n\tHex 0 1 2 3 4 5 6 7 8 9 a b c d\nKernel #0\nKernelBinaryHeader:\n\t4 CheckSum 4294967295\n\t8 ShaderHashCode 18446744073709551615\n\t4 KernelNameSize 14\n\t4 PatchListSize 12\n\t4 KernelHeapSize 0\n\t4 GeneralStateHeapSize 0\n\t4 DynamicStateHeapSize 0\n\t4 SurfaceStateHeapSize 0\n\t4 KernelUnpaddedSize 0\n\tKernelName ExampleKernel\nPATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD:\n\t4 Token 19\n\t4 Size 12\n\t4 InterfaceDescriptorDataOffset 0\n";
+    std::string expectedOutput = "ProgramBinaryHeader:\n\t4 Magic 1229870147\n\t4 Version 0\n\t4 Device 0\n\t4 GPUPointerSizeInBytes 0\n\t4 NumberOfKernels 1\n\t4 SteppingId 0\n\t4 PatchListSize 30\nPATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO:\n\t4 Token 42\n\t4 Size 16\n\t4 ConstantBufferIndex 0\n\t4 InlineDataSize 14\n\tHex 0 1 2 3 4 5 6 7 8 9 a b c d\nKernel #0\nKernelBinaryHeader:\n\t4 CheckSum 4294967295\n\t8 ShaderHashCode 18446744073709551615\n\t4 KernelNameSize 14\n\t4 PatchListSize 12\n\t4 KernelHeapSize 0\n\t4 GeneralStateHeapSize 0\n\t4 DynamicStateHeapSize 0\n\t4 SurfaceStateHeapSize 0\n\t4 KernelUnpaddedSize 0\n\tKernelName ExampleKernel\nUnidentified PatchToken:\n\t4 Token 19\n\t4 Size 12\n\tHex 0 0 0 0\n";
     EXPECT_EQ(expectedOutput, ptmFile.str());
     EXPECT_TRUE(decoder.getMockIga()->disasmWasCalled);
     EXPECT_FALSE(decoder.getMockIga()->asmWasCalled);

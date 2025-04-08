@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,10 @@
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/test/common/helpers/stdout_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_elf.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -107,6 +110,7 @@ kernels:
 };
 
 TEST(ZebinManipulatorTests, GivenValidZebinWhenItIsDisassembledAndAssembledBackThenItIsSameBinary) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
     MockZebin<NEO::Elf::EI_CLASS_32> mockZebin32;
     MockZebin<NEO::Elf::EI_CLASS_64> mockZebin64;
     for (const auto zebin : {&mockZebin32.storage, &mockZebin64.storage}) {
@@ -210,9 +214,10 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenInvalidInputWhenValidatingInputT
                                      "asm/disasm",
                                      "-unknown_arg"};
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
-    const auto output{testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
     EXPECT_EQ("Unknown argument -unknown_arg\n", output);
@@ -224,9 +229,10 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenMissingFileWhenValidatingInputTh
                                      "-dump",
                                      "./dump/"};
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
-    const auto output{testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
     EXPECT_EQ("Error: Missing -file argument\n", output);
@@ -238,9 +244,10 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenMissingSecondPartOfTheArgumentWh
                                      "-arg"};
     for (const auto halfArg : {"-file", "-device", "-dump"}) {
         args[2] = halfArg;
-        testing::internal::CaptureStdout();
+        StdoutCapture capture;
+        capture.captureStdout();
         auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
-        const auto output{testing::internal::GetCapturedStdout()};
+        const auto output{capture.getCapturedStdout()};
 
         EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
         const auto expectedOutput = "Unknown argument " + std::string(halfArg) + "\n";
@@ -253,9 +260,11 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenValidArgsButDumpNotSpecifiedWhen
                                      "asm/disasm",
                                      "-file",
                                      "binary.bin"};
-    testing::internal::CaptureStdout();
+
+    StdoutCapture capture;
+    capture.captureStdout();
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
-    const auto output{testing::internal::GetCapturedStdout()};
+    const auto output{capture.getCapturedStdout()};
 
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_EQ("Warning: Path to dump -dump not specified. Using \"./dump/\" as dump folder.\n", output);
@@ -567,6 +576,8 @@ TEST_F(ZebinEncoderTests, GivenInvalidIntelGTNotesSectionWhenGetIntelGTNotesThen
 }
 
 TEST_F(ZebinEncoderTests, GivenInvalidSymtabFileWhenAppendSymtabThenErrorIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
     MockElfEncoder elfEncoder;
     NEO::Zebin::Manipulator::SectionInfo sectionInfo;
     sectionInfo.name = ".symtab";
@@ -578,6 +589,8 @@ TEST_F(ZebinEncoderTests, GivenInvalidSymtabFileWhenAppendSymtabThenErrorIsRetur
 }
 
 TEST_F(ZebinEncoderTests, GivenInvalidRelFileWhenAppendRelThenErrorIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
     MockElfEncoder elfEncoder;
     NEO::Zebin::Manipulator::SectionInfo sectionInfo;
     sectionInfo.name = ".rel.text";
@@ -589,6 +602,8 @@ TEST_F(ZebinEncoderTests, GivenInvalidRelFileWhenAppendRelThenErrorIsReturned) {
 }
 
 TEST_F(ZebinEncoderTests, GivenInvalidRelaFileWhenAppendRelaThenErrorIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
     MockElfEncoder elfEncoder;
     NEO::Zebin::Manipulator::SectionInfo sectionInfo;
     sectionInfo.name = ".rela.text";

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/decoder/iga_wrapper.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -34,14 +35,11 @@ void addSlash(std::string &path) {
 }
 
 std::vector<char> readBinaryFile(const std::string &fileName) {
-    std::ifstream file(fileName, std::ios_base::binary);
-    if (file.good()) {
-        size_t length;
-        file.seekg(0, file.end);
-        length = static_cast<size_t>(file.tellg());
-        file.seekg(0, file.beg);
-        std::vector<char> binary(length);
-        file.read(binary.data(), length);
+    size_t length;
+    std::unique_ptr<char[]> data = loadDataFromFile(fileName.c_str(), length);
+
+    if (data) {
+        std::vector<char> binary(data.get(), data.get() + length);
         return binary;
     } else {
         printf("Error! Couldn't open %s\n", fileName.c_str());
@@ -68,8 +66,13 @@ void istreamToVectorOfStrings(std::istream &input, std::vector<std::string> &lin
 }
 
 void readFileToVectorOfStrings(std::vector<std::string> &lines, const std::string &fileName, bool replaceTabs) {
-    std::ifstream file(fileName);
-    istreamToVectorOfStrings(file, lines, replaceTabs);
+    size_t fileSize = 0;
+    std::unique_ptr<char[]> fileData = loadDataFromFile(fileName.c_str(), fileSize);
+
+    if (fileData && fileSize > 0) {
+        std::istringstream inputStream(std::string(fileData.get(), fileSize));
+        istreamToVectorOfStrings(inputStream, lines, replaceTabs);
+    }
 }
 
 size_t findPos(const std::vector<std::string> &lines, const std::string &whatToFind) {

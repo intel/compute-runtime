@@ -14,18 +14,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
+
 namespace NEO {
 namespace IoFunctions {
 using fopenFuncPtr = FILE *(*)(const char *, const char *);
 using vfprintfFuncPtr = int (*)(FILE *, char const *const formatStr, va_list arg);
 using fcloseFuncPtr = int (*)(FILE *);
 using getenvFuncPtr = decltype(&getenv);
-using fseekFuncPtr = decltype(&fseek);
-using ftellFuncPtr = decltype(&ftell);
+using fseekFuncPtr = int (*)(FILE *, long int, int);
+using ftellFuncPtr = long int (*)(FILE *);
 using rewindFuncPtr = decltype(&rewind);
-using freadFuncPtr = decltype(&fread);
+using freadFuncPtr = size_t (*)(void *, size_t, size_t, FILE *);
 using fwriteFuncPtr = decltype(&fwrite);
 using fflushFuncPtr = decltype(&fflush);
+using mkdirFuncPtr = int (*)(const char *);
 
 extern fopenFuncPtr fopenPtr;
 extern vfprintfFuncPtr vfprintfPtr;
@@ -37,6 +44,7 @@ extern rewindFuncPtr rewindPtr;
 extern freadFuncPtr freadPtr;
 extern fwriteFuncPtr fwritePtr;
 extern fflushFuncPtr fflushPtr;
+extern mkdirFuncPtr mkdirPtr;
 
 inline int fprintf(FILE *fileDesc, char const *const formatStr, ...) {
     va_list args;
@@ -63,6 +71,16 @@ inline char *getEnvironmentVariable(const char *name) {
 
     return nullptr;
 }
+
+#ifdef _WIN32
+inline int makedir(const char *dirName) {
+    return _mkdir(dirName);
+}
+#else
+inline int makedir(const char *dirName) {
+    return mkdir(dirName, 0777);
+}
+#endif
 
 } // namespace IoFunctions
 } // namespace NEO

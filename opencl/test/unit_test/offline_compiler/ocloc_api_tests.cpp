@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,11 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/string.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/mock_file_io.h"
+#include "shared/test/common/helpers/stdout_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 
 #include "environment.h"
@@ -29,6 +33,7 @@
 
 #include <algorithm>
 #include <array>
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 
@@ -43,8 +48,52 @@ void mockedAbortOclocExecution(int errorCode) {
 TEST(OclocApiTests, WhenOclocVersionIsCalledThenCurrentOclocVersionIsReturned) {
     EXPECT_EQ(ocloc_version_t::OCLOC_VERSION_CURRENT, oclocVersion());
 }
+class OclocApiTest : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        std::string spvFile = std::string("copybuffer") + "_" + gEnvironment->devicePrefix + ".spv";
+        std::string binFile = std::string("copybuffer") + "_" + gEnvironment->devicePrefix + ".bin";
+        std::string dbgFile = std::string("copybuffer") + "_" + gEnvironment->devicePrefix + ".dbg";
+        std::vector<unsigned char> mockByteArray = {0x01, 0x02, 0x03, 0x04};
+        writeDataToFile(spvFile.c_str(), mockByteArray.data(), mockByteArray.size());
+        writeDataToFile(binFile.c_str(), mockByteArray.data(), mockByteArray.size());
+        writeDataToFile(dbgFile.c_str(), mockByteArray.data(), mockByteArray.size());
+        writeDataToFile(clCopybufferFilename.c_str(), kernelSources.data(), mockByteArray.size());
+    }
 
-TEST(OclocApiTests, WhenGoodArgsAreGivenThenSuccessIsReturned) {
+    const std::string clCopybufferFilename = "some_kernel.cl";
+    std::string kernelSources = "example_kernel(){}";
+};
+TEST_F(OclocApiTest, WhenGoodArgsAreGivenThenSuccessIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "copybuffer.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+    VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> mockFseek(&NEO::IoFunctions::fseekPtr, [](FILE *stream, long int offset, int origin) -> int { return 0; });
+    VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtell(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int {
+        std::string kernelSources = "example_kernel(){}";
+        std::stringstream fileStream(kernelSources);
+        fileStream.seekg(0, std::ios::end);
+        return static_cast<long int>(fileStream.tellg());
+    });
+    VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        std::string kernelSources = "example_kernel(){}";
+        std::stringstream fileStream(kernelSources);
+        size_t totalBytes = size * count;
+        fileStream.read(static_cast<char *>(ptr), totalBytes);
+        return static_cast<size_t>(fileStream.gcount() / size);
+    });
+
     std::string clFileName(clFiles + "copybuffer.cl");
     const char *argv[] = {
         "ocloc",
@@ -54,19 +103,49 @@ TEST(OclocApiTests, WhenGoodArgsAreGivenThenSuccessIsReturned) {
         gEnvironment->devicePrefix.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
     EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device "s + argv[4]));
     EXPECT_NE(std::string::npos, output.find("Build succeeded.\n"));
 }
 
-TEST(OclocApiTests, GivenQuietModeAndValidArgumentsWhenRunningOclocThenSuccessIsReturnedAndBuildSucceededMessageIsNotPrinted) {
+TEST_F(OclocApiTest, GivenQuietModeAndValidArgumentsWhenRunningOclocThenSuccessIsReturnedAndBuildSucceededMessageIsNotPrinted) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "copybuffer.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+    VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> mockFseek(&NEO::IoFunctions::fseekPtr, [](FILE *stream, long int offset, int origin) -> int { return 0; });
+    VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtell(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int {
+        std::string kernelSources = "example_kernel(){}";
+        std::stringstream fileStream(kernelSources);
+        fileStream.seekg(0, std::ios::end);
+        return static_cast<long int>(fileStream.tellg());
+    });
+    VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        std::string kernelSources = "example_kernel(){}";
+        std::stringstream fileStream(kernelSources);
+        size_t totalBytes = size * count;
+        fileStream.read(static_cast<char *>(ptr), totalBytes);
+        return static_cast<size_t>(fileStream.gcount() / size);
+    });
+
     std::string clFileName(clFiles + "copybuffer.cl");
     const char *argv[] = {
         "ocloc",
@@ -77,12 +156,13 @@ TEST(OclocApiTests, GivenQuietModeAndValidArgumentsWhenRunningOclocThenSuccessIs
         gEnvironment->devicePrefix.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device "s + argv[4]));
@@ -187,12 +267,13 @@ TEST(OclocApiTests, GivenNoQueryWhenQueryingThenErrorIsReturned) {
         "ocloc",
         "query"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
     EXPECT_STREQ("Error: Invalid command line. Expected ocloc query <argument>. See ocloc query --help\nCommand was: ocloc query\n", output.c_str());
@@ -204,12 +285,13 @@ TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
         "query",
         "unknown_query"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
     EXPECT_STREQ("Error: Invalid command line.\nUnknown argument unknown_query\nCommand was: ocloc query unknown_query\n", output.c_str());
@@ -220,12 +302,13 @@ TEST(OclocApiTests, givenNoAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {
         "ocloc",
         "ids"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
     EXPECT_STREQ("Error: Invalid command line. Expected ocloc ids <acronym>.\nCommand was: ocloc ids\n", output.c_str());
@@ -237,18 +320,47 @@ TEST(OclocApiTests, givenUnknownAcronymWhenIdsCommandIsInvokeThenErrorIsReported
         "ids",
         "unk"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
     EXPECT_STREQ("Error: Invalid command line. Unknown acronym unk.\nCommand was: ocloc ids unk\n", output.c_str());
 }
 
-TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
+TEST_F(OclocApiTest, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "copybuffer.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+    VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> mockFseek(&NEO::IoFunctions::fseekPtr, [](FILE *stream, long int offset, int origin) -> int { return 0; });
+    VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtell(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int {
+        std::string kernelSource = "example_kernel(){}";
+        std::stringstream fileStream(kernelSource);
+        fileStream.seekg(0, std::ios::end);
+        return static_cast<long int>(fileStream.tellg());
+    });
+    VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        std::string kernelSource = "example_kernel(){}";
+        std::stringstream fileStream(kernelSource);
+        size_t totalBytes = size * count;
+        fileStream.read(static_cast<char *>(ptr), totalBytes);
+        return static_cast<size_t>(fileStream.gcount() / size);
+    });
     std::string clFileName(clFiles + "copybuffer.cl");
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
     auto allSupportedDeviceConfigs = argHelper->productConfigHelper->getDeviceAotInfo();
@@ -275,18 +387,34 @@ TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
         family.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
     EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file " + clFileName + " -device " + family));
 }
 
 TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+
     const char *argv[] = {
         "ocloc",
         "-q",
@@ -296,18 +424,34 @@ TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {
         gEnvironment->devicePrefix.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_FILE);
     EXPECT_NE(std::string::npos, output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device "s + argv[5]));
 }
 
 TEST(OclocApiTests, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrintedThenBothAreInQuotes) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+
     const char *argv[] = {
         "ocloc",
         "-q",
@@ -318,12 +462,13 @@ TEST(OclocApiTests, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrintedThenB
         "-options", "-D DEBUG -cl-kernel-arg-info", "-internal_options", "-internalOption1 -internal-option-2"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_NE(retVal, OCLOC_SUCCESS);
     EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device " +
                             gEnvironment->devicePrefix +
@@ -334,6 +479,21 @@ TEST(OclocApiTests, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrintedThenB
 }
 
 TEST(OclocApiTests, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotesAreCorrect) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+
     const char *argv[] = {
         "ocloc",
         "-q",
@@ -344,12 +504,13 @@ TEST(OclocApiTests, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotes
         "-options", "-options", "-internal_options", "-internalOption"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_NE(retVal, OCLOC_SUCCESS);
     EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device " +
                             gEnvironment->devicePrefix +
@@ -359,7 +520,22 @@ TEST(OclocApiTests, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotes
     EXPECT_EQ(quotesCount, 4u);
 }
 
-TEST(OclocApiTests, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPackedAsElf) {
+TEST_F(OclocApiTest, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPackedAsElf) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+
     auto prevFclDebugVars = NEO::getFclDebugVars();
     auto debugVars = prevFclDebugVars;
     std::string receivedInput;
@@ -460,17 +636,19 @@ TEST(OclocApiTests, GivenHelpParameterWhenDecodingThenHelpMsgIsPrintedAndSuccess
         "--help"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_FALSE(output.empty());
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
 }
 
 TEST(OclocApiTests, GivenNonExistingFileWhenDecodingThenAbortIsCalled) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
     VariableBackup oclocAbortBackup{&abortOclocExecution, &mockedAbortOclocExecution};
 
     const char *argv[] = {
@@ -482,12 +660,13 @@ TEST(OclocApiTests, GivenNonExistingFileWhenDecodingThenAbortIsCalled) {
         "test_files/created"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     const auto retVal = oclocInvoke(argc, argv,
                                     0, nullptr, nullptr, nullptr,
                                     0, nullptr, nullptr, nullptr,
                                     nullptr, nullptr, nullptr, nullptr);
-    const auto output = testing::internal::GetCapturedStdout();
+    const auto output = capture.getCapturedStdout();
 
     EXPECT_NE(std::string::npos, output.find("mockedAbortOclocExecution() called with error code = 1"));
     EXPECT_EQ(-1, retVal);
@@ -500,18 +679,48 @@ TEST(OclocApiTests, GivenMissingFileNameWhenDecodingThenErrorIsReturned) {
         "-file"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     const auto retVal = oclocInvoke(argc, argv,
                                     0, nullptr, nullptr, nullptr,
                                     0, nullptr, nullptr, nullptr,
                                     nullptr, nullptr, nullptr, nullptr);
-    const auto output = testing::internal::GetCapturedStdout();
+    const auto output = capture.getCapturedStdout();
 
     EXPECT_NE(std::string::npos, output.find("Unknown argument -file\n"));
     EXPECT_EQ(-1, retVal);
 }
 
-TEST(OclocApiTests, GivenOnlySpirVWithMultipleDevicesWhenCompilingThenFirstDeviceIsSelected) {
+TEST_F(OclocApiTest, GivenOnlySpirVWithMultipleDevicesWhenCompilingThenFirstDeviceIsSelected) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "copybuffer.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+    VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> mockFseek(&NEO::IoFunctions::fseekPtr, [](FILE *stream, long int offset, int origin) -> int { return 0; });
+    VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtell(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int {
+        std::string kernelSource = "example_kernel(){}";
+        std::stringstream fileStream(kernelSource);
+        fileStream.seekg(0, std::ios::end);
+        return static_cast<long int>(fileStream.tellg());
+    });
+    VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        std::string kernelSource = "example_kernel(){}";
+        std::stringstream fileStream(kernelSource);
+        size_t totalBytes = size * count;
+        fileStream.read(static_cast<char *>(ptr), totalBytes);
+        return static_cast<size_t>(fileStream.gcount() / size);
+    });
+
     std::string clFileName(clFiles + "copybuffer.cl");
     AOT::FAMILY productFamily = AOT::UNKNOWN_FAMILY;
     std::string familyAcronym("");
@@ -555,12 +764,13 @@ TEST(OclocApiTests, GivenOnlySpirVWithMultipleDevicesWhenCompilingThenFirstDevic
         }
     }
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
     EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -device " + firstDeviceAcronym + " -spv_only"));
@@ -584,41 +794,88 @@ TEST(OclocApiTests, GivenHelpParameterWhenCompilingThenHelpMsgIsPrintedAndSucces
 }
 
 TEST(OclocApiTests, GivenHelpParameterWhenEncodingThenHelpMsgIsPrintedAndSuccessIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+
     const char *argv[] = {
         "ocloc",
         "asm",
         "--help"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_FALSE(output.empty());
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
 }
 
 TEST(OclocApiTests, GivenMissingDumpFileNameWhenEncodingThenErrorIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+
     const char *argv[] = {
         "ocloc",
         "asm",
         "-dump"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     const auto retVal = oclocInvoke(argc, argv,
                                     0, nullptr, nullptr, nullptr,
                                     0, nullptr, nullptr, nullptr,
                                     nullptr, nullptr, nullptr, nullptr);
-    const auto output = testing::internal::GetCapturedStdout();
+    const auto output = capture.getCapturedStdout();
 
     EXPECT_NE(std::string::npos, output.find("Unknown argument -dump\n"));
     EXPECT_EQ(-1, retVal);
 }
 
 TEST(OclocApiTests, GivenValidArgumentsAndMissingPtmFileWhenEncodingThenErrorIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+
     const char *argv[] = {
         "ocloc",
         "asm",
@@ -628,12 +885,13 @@ TEST(OclocApiTests, GivenValidArgumentsAndMissingPtmFileWhenEncodingThenErrorIsR
         "test_files/binary_gen.bin"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     const auto retVal = oclocInvoke(argc, argv,
                                     0, nullptr, nullptr, nullptr,
                                     0, nullptr, nullptr, nullptr,
                                     nullptr, nullptr, nullptr, nullptr);
-    const auto output = testing::internal::GetCapturedStdout();
+    const auto output = capture.getCapturedStdout();
 
     EXPECT_NE(std::string::npos, output.find("Error! Couldn't find PTM.txt"));
     EXPECT_EQ(-1, retVal);
@@ -646,18 +904,34 @@ TEST(OclocApiTests, GiveMultiCommandHelpArgumentsWhenInvokingOclocThenHelpIsPrin
         "--help"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     const auto retVal = oclocInvoke(argc, argv,
                                     0, nullptr, nullptr, nullptr,
                                     0, nullptr, nullptr, nullptr,
                                     nullptr, nullptr, nullptr, nullptr);
-    const auto output = testing::internal::GetCapturedStdout();
+    const auto output = capture.getCapturedStdout();
     EXPECT_FALSE(output.empty());
 
     EXPECT_EQ(-1, retVal);
 }
 
 TEST(OclocApiTests, GivenNonexistentFileWhenValidateIsInvokedThenErrorIsPrinted) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "some_kernel.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+
     const char *argv[] = {
         "ocloc",
         "validate",
@@ -665,13 +939,14 @@ TEST(OclocApiTests, GivenNonexistentFileWhenValidateIsInvokedThenErrorIsPrinted)
         "some_special_nonexistent_file.gen"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
 
-    const auto output = testing::internal::GetCapturedStdout();
+    const auto output = capture.getCapturedStdout();
     EXPECT_EQ(-1, retVal);
 
     const std::string expectedErrorMessage{"Error : Input file missing : some_special_nonexistent_file.gen\nCommand was: ocloc validate -file some_special_nonexistent_file.gen\n"};
@@ -683,13 +958,14 @@ TEST(OclocApiTests, GivenCommandWithoutArgsWhenOclocIsInvokedThenHelpIsPrinted) 
         "ocloc"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
 
-    const auto output = testing::internal::GetCapturedStdout();
+    const auto output = capture.getCapturedStdout();
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_FALSE(output.empty());
 }
@@ -703,13 +979,14 @@ TEST(OclocApiTests, GivenHelpArgumentWhenOclocIsInvokedThenHelpIsPrinted) {
 
         unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-        testing::internal::CaptureStdout();
+        StdoutCapture capture;
+        capture.captureStdout();
         int retVal = oclocInvoke(argc, argv,
                                  0, nullptr, nullptr, nullptr,
                                  0, nullptr, nullptr, nullptr,
                                  nullptr, nullptr, nullptr, nullptr);
 
-        const auto output = testing::internal::GetCapturedStdout();
+        const auto output = capture.getCapturedStdout();
         EXPECT_EQ(OCLOC_SUCCESS, retVal);
         EXPECT_FALSE(output.empty());
     }
@@ -722,12 +999,13 @@ TEST(OclocApiTests, GivenHelpParameterWhenLinkingThenHelpMsgIsPrintedAndSuccessI
         "--help"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_FALSE(output.empty());
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
 }
@@ -739,12 +1017,13 @@ TEST(OclocApiTests, GivenInvalidParameterWhenLinkingThenErrorIsReturned) {
         "--dummy_param"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
 
     const std::string expectedInitError{"Invalid option (arg 2): --dummy_param\n"};
@@ -758,12 +1037,13 @@ TEST(OclocApiTests, GivenInvalidCommandLineWhenConcatenatingThenErrorIsReturned)
         "ocloc",
         "concat"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
     const std::string emptyCommandLineError = "No files to concatenate were provided.\n";
     const std::string expectedErrorMessage = emptyCommandLineError + NEO::OclocConcat::helpMessage.str() + "Command was: ocloc concat\n";
@@ -808,12 +1088,13 @@ TEST(OclocApiTests, GivenValidCommandLineAndFatBinariesWhenConcatenatingThenNewF
         "-out",
         "catFatBinary.ar"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              2, sourcesData, sourcesLen, sourcesName,
                              0, nullptr, nullptr, nullptr,
                              &numOutputs, &outputData, &outputLen, &outputName);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
     EXPECT_TRUE(output.empty());
 
@@ -851,7 +1132,36 @@ TEST(OclocApiTests, GivenValidCommandLineAndFatBinariesWhenConcatenatingThenNewF
     oclocFreeOutput(&numOutputs, &outputData, &outputLen, &outputName);
 }
 
-TEST(OclocApiTests, GivenVerboseModeWhenCompilingThenPrintCommandLine) {
+TEST_F(OclocApiTest, GivenVerboseModeWhenCompilingThenPrintCommandLine) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        std::filesystem::path filePath = filename;
+        std::string fileNameWithExtension = filePath.filename().string();
+
+        std::vector<std::string> expectedtedFiles = {
+            "copybuffer.cl"};
+
+        auto itr = std::find(expectedtedFiles.begin(), expectedtedFiles.end(), std::string(fileNameWithExtension));
+        if (itr != expectedtedFiles.end()) {
+            return reinterpret_cast<FILE *>(0x40);
+        }
+        return NULL;
+    });
+    VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFclose(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return 0; });
+    VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> mockFseek(&NEO::IoFunctions::fseekPtr, [](FILE *stream, long int offset, int origin) -> int { return 0; });
+    VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtell(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int {
+        std::string kernelSource = "example_kernel(){}";
+        std::stringstream fileStream(kernelSource);
+        fileStream.seekg(0, std::ios::end);
+        return static_cast<long int>(fileStream.tellg());
+    });
+    VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFread(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+        std::string kernelSource = "example_kernel(){}";
+        std::stringstream fileStream(kernelSource);
+        size_t totalBytes = size * count;
+        fileStream.read(static_cast<char *>(ptr), totalBytes);
+        return static_cast<size_t>(fileStream.gcount() / size);
+    });
+
     std::string clFileName(clFiles + "copybuffer.cl");
     const char *argv[] = {
         "ocloc",
@@ -862,12 +1172,13 @@ TEST(OclocApiTests, GivenVerboseModeWhenCompilingThenPrintCommandLine) {
         "-v"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StdoutCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
     EXPECT_NE(std::string::npos, output.find("Command was: ocloc -file "s + clFileName.c_str() + " -device "s + argv[4] + " -v")) << output;
@@ -919,14 +1230,15 @@ struct OclocFallbackTests : ::testing::Test {
                                       &numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
             return retVal;
         } else {
-            testing::internal::CaptureStdout();
+            StdoutCapture capture;
+            capture.captureStdout();
             testing::internal::CaptureStderr();
 
             auto retVal = oclocInvoke(argc, argv,
                                       0, nullptr, nullptr, nullptr,
                                       0, nullptr, nullptr, nullptr,
                                       nullptr, nullptr, nullptr, nullptr);
-            capturedStdout = testing::internal::GetCapturedStdout();
+            capturedStdout = capture.getCapturedStdout();
             capturedStderr = testing::internal::GetCapturedStderr();
             return retVal;
         }
@@ -950,6 +1262,7 @@ struct OclocFallbackTests : ::testing::Test {
 };
 
 TEST_F(OclocFallbackTests, GivenNoFormerOclocNameWhenInvalidDeviceErrorIsReturnedThenDontFallback) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
 
     Ocloc::oclocFormerLibName = "";
 
@@ -966,6 +1279,7 @@ TEST_F(OclocFallbackTests, GivenNoFormerOclocNameWhenInvalidDeviceErrorIsReturne
 }
 
 TEST_F(OclocFallbackTests, GivenInvalidFormerOclocNameWhenInvalidDeviceErrorIsReturnedThenFallbackButWithoutLoadingLib) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
 
     Ocloc::oclocFormerLibName = "invalidName";
 
@@ -1012,6 +1326,7 @@ int mockOclocInvoke(unsigned int numArgs, const char *argv[],
 }
 
 TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsSuccessThenSuccessIsPropagatedAndCommandLineIsNotPrinted) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
 
     Ocloc::oclocFormerLibName = "oclocFormer";
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
@@ -1032,6 +1347,7 @@ TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsSucces
 }
 
 TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsErrorThenErrorIsPropagated) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
 
     Ocloc::oclocFormerLibName = "oclocFormer";
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
@@ -1063,6 +1379,8 @@ TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsErrorT
 }
 
 TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsOutputsThenOutputIsPropagated) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
     for (auto &expectedRetVal : {ocloc_error_t::OCLOC_SUCCESS,
                                  ocloc_error_t::OCLOC_OUT_OF_HOST_MEMORY,
                                  ocloc_error_t::OCLOC_BUILD_PROGRAM_FAILURE,

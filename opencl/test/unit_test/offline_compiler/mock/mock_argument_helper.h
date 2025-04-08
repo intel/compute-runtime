@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,18 +69,30 @@ class MockOclocArgHelper : public OclocArgHelper {
         return std::vector<char>(file.begin(), file.end());
     }
 
+    std::string getLog() {
+        return messagePrinter.getLog().str();
+    }
+
   protected:
     bool fileExists(const std::string &filename) const override {
         if (filesMap.find(filename) != filesMap.end()) {
             return true;
         }
 
-        return OclocArgHelper::fileExists(filename);
+        return OclocArgHelper::sourceFileExists(filename);
     }
 
     std::unique_ptr<char[]> loadDataFromFile(const std::string &filename, size_t &retSize) override {
         if (callBaseLoadDataFromFile) {
             return OclocArgHelper::loadDataFromFile(filename, retSize);
+        }
+
+        if (Source *s = findSourceFile(filename)) {
+            auto size = s->length;
+            std::unique_ptr<char[]> ret(new char[size]());
+            memcpy_s(ret.get(), size, s->data, s->length);
+            retSize = s->length;
+            return ret;
         }
 
         if (shouldLoadDataFromFileReturnZeroSize) {
@@ -90,17 +102,15 @@ class MockOclocArgHelper : public OclocArgHelper {
 
         if (!fileExists(filename)) {
             return OclocArgHelper::loadDataFromFile(filename, retSize);
+        } else {
+            const auto &file = filesMap[filename];
+            std::unique_ptr<char[]> result{new char[file.size() + 1]};
+            std::copy(file.begin(), file.end(), result.get());
+            result[file.size()] = '\0';
+            retSize = file.size() + 1;
+
+            return result;
         }
-
-        const auto &file = filesMap[filename];
-
-        std::unique_ptr<char[]> result{new char[file.size() + 1]};
-        std::copy(file.begin(), file.end(), result.get());
-        result[file.size()] = '\0';
-
-        retSize = file.size() + 1;
-
-        return result;
     }
 
     void saveOutput(const std::string &filename, const void *pData, const size_t &dataSize) override {

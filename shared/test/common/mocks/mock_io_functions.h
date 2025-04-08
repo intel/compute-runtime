@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,6 +105,10 @@ inline int mockFflush(FILE *stream) {
     if (stream == stdout || stream == stderr)
         return fflush(stream);
 
+    return 0;
+}
+
+inline int mockMkdir(const char *filename) {
     return 0;
 }
 

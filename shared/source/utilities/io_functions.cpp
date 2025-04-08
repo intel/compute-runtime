@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,5 +19,7 @@ rewindFuncPtr rewindPtr = &rewind;
 freadFuncPtr freadPtr = &fread;
 fwriteFuncPtr fwritePtr = &fwrite;
 fflushFuncPtr fflushPtr = &fflush;
+mkdirFuncPtr mkdirPtr = &makedir;
+
 } // namespace IoFunctions
 } // namespace NEO

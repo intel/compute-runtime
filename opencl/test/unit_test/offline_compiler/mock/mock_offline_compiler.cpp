@@ -15,7 +15,7 @@ namespace NEO {
 
 MockOfflineCompiler::MockOfflineCompiler() : OfflineCompiler() {
     uniqueHelper = std::make_unique<MockOclocArgHelper>(filesMap);
-    uniqueHelper->setAllCallBase(true);
+    uniqueHelper->setAllCallBase(false);
     argHelper = uniqueHelper.get();
 
     auto uniqueFclFacadeMock = std::make_unique<MockOclocFclFacade>(argHelper);

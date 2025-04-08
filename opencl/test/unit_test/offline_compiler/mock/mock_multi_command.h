@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,8 +32,9 @@ class MockMultiCommand : public MultiCommand {
     using MultiCommand::splitLineInSeparateArgs;
 
     MockMultiCommand() : MultiCommand{} {
+        filesMap[clCopybufferFilename] = kernelSources;
         uniqueHelper = std::make_unique<MockOclocArgHelper>(filesMap);
-        uniqueHelper->setAllCallBase(true);
+        uniqueHelper->setAllCallBase(false);
         argHelper = uniqueHelper.get();
     }
 
@@ -53,6 +54,8 @@ class MockMultiCommand : public MultiCommand {
     std::unique_ptr<MockOclocArgHelper> uniqueHelper{};
     int singleBuildCalledCount{0};
     bool callBaseSingleBuild{true};
+    const std::string clCopybufferFilename = "some_kernel.cl";
+    std::string kernelSources = "example_kernel(){}";
 };
 
 } // namespace NEO

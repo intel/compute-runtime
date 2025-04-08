@@ -31,6 +31,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/utilities/io_functions.h"
 
 #include "offline_compiler_ext.h"
 #include "platforms.h"
@@ -43,11 +44,9 @@
 
 #ifdef _WIN32
 #include <direct.h>
-#define MakeDirectory _mkdir
 #define GetCurrentWorkingDirectory _getcwd
 #else
 #include <sys/stat.h>
-#define MakeDirectory(dir) mkdir(dir, 0777)
 #define GetCurrentWorkingDirectory getcwd
 #endif
 
@@ -1646,7 +1645,7 @@ void OfflineCompiler::writeOutAllFiles() {
 }
 
 void OfflineCompiler::createDir(const std::string &path) {
-    MakeDirectory(path.c_str());
+    IoFunctions::mkdirPtr(path.c_str());
 }
 
 bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::string &file, OclocArgHelper *helper) {
