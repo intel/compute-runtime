@@ -149,6 +149,7 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
 #undef S_L0
 #undef S_OCL
 #undef S_NEO
+#undef S_NONE
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 };

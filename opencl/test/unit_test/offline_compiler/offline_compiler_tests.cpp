@@ -15,8 +15,10 @@
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/debug_settings/debug_variables_helper.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
@@ -5631,4 +5633,20 @@ __kernel void CopyBuffer(__global unsigned int *src, __global unsigned int *dst)
                              "-invalid_ocloc_option") != std::string::npos);
     EXPECT_FALSE(output.find("Building with ocloc options:") != std::string::npos);
 }
+
+TEST(OclocApiSpecificConfigTests, givenOclocApiConfigThenOnlyOclocPrefixIsAllowed) {
+    NEO::ApiSpecificConfig config;
+    auto prefixStrings = config.getPrefixStrings();
+    ASSERT_EQ(1U, prefixStrings.size());
+    EXPECT_STREQ("NEO_OCLOC_", prefixStrings[0]);
+
+    auto prefixStringTypes = config.getPrefixTypes();
+    ASSERT_EQ(1U, prefixStringTypes.size());
+    EXPECT_EQ(DebugVarPrefix::neoOcloc, prefixStringTypes[0]);
+}
+
+TEST(OclocApiSpecificConfigTests, givenOclocThenDebugKeysAreAllowedOnlyInDebug) {
+    EXPECT_FALSE(NEO::isDebugKeysReadEnabled());
+}
+
 } // namespace NEO

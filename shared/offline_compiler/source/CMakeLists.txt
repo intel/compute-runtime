@@ -123,6 +123,10 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/offline_compiler.cpp
     ${OCLOC_DIRECTORY}/source/offline_compiler.h
     ${OCLOC_DIRECTORY}/source/offline_compiler_helper.cpp
+    ${NEO_SOURCE_DIR}/shared/source/debug_settings/debug_settings_manager.cpp
+    ${NEO_SOURCE_DIR}/shared/source/utilities/debug_settings_reader.cpp
+    ${NEO_SOURCE_DIR}/shared/source/utilities/debug_file_reader.cpp
+    ${NEO_SOURCE_DIR}/shared/source/os_interface/debug_env_reader.cpp
     ${OCLOC_DIRECTORY}/source/offline_compiler_options.cpp
     ${OCLOC_DIRECTORY}/source/offline_linker.cpp
     ${OCLOC_DIRECTORY}/source/offline_linker.h
@@ -157,7 +161,9 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/windows/directory.cpp
        ${NEO_SHARED_DIRECTORY}/ail/windows${BRANCH_DIR_SUFFIX}/ail_ov_comp_wa_windows.cpp
+       ${NEO_SHARED_DIRECTORY}/os_interface/windows/debug_registry_reader.cpp
        ${OCLOC_DIRECTORY}/source/windows/ocloc_supported_devices_helper_windows.cpp
+       ${OCLOC_DIRECTORY}/source/windows/ocloc_reg_path.cpp
   )
 else()
   list(APPEND CLOC_LIB_SRCS_LIB
@@ -173,8 +179,10 @@ else()
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/linux/directory.cpp
        ${NEO_SHARED_DIRECTORY}/ail/linux/ail_ov_comp_wa_linux.cpp
+       ${NEO_SHARED_DIRECTORY}/os_interface/linux/settings_reader_create.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
        ${OCLOC_DIRECTORY}/source/linux/ocloc_supported_devices_helper_linux.cpp
+       ${OCLOC_DIRECTORY}/source/linux/ocloc_reg_path.cpp
   )
 endif()
 
@@ -338,7 +346,9 @@ set(CLOC_LIB_SRCS
     ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/file_io_load.cpp
 )
-add_library(${OCLOC_NAME}_lib SHARED ${CLOC_LIB_SRCS})
+add_library(${OCLOC_NAME}_lib SHARED ${CLOC_LIB_SRCS}
+            ${NEO_SOURCE_DIR}/shared/source/utilities/debug_settings_reader_creator.cpp
+)
 add_subdirectories()
 
 create_project_source_tree(${OCLOC_NAME}_lib)
