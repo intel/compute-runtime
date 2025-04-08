@@ -189,12 +189,13 @@ void ExternalSemaphoreController::processProxyEvents() {
 }
 
 void ExternalSemaphoreController::runController() {
-    while (this->continueRunning) {
+    while (true) {
         std::unique_lock<std::mutex> lock(this->semControllerMutex);
         this->semControllerCv.wait(lock, [this] { return (!this->proxyEvents.empty() || !this->continueRunning); });
 
         if (!this->continueRunning) {
             lock.unlock();
+            break;
         } else {
             this->processProxyEvents();
 
