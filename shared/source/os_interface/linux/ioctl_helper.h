@@ -194,6 +194,11 @@ class IoctlHelper {
     virtual void setupIpVersion();
     virtual bool isImmediateVmBindRequired() const { return false; }
 
+    virtual void configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
+                                  std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) = 0;
+
+    void writeCcsMode(const std::string &gtFile, uint32_t ccsMode,
+                      std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec);
     uint32_t getFlagsForPrimeHandleToFd() const;
     virtual std::unique_ptr<MemoryInfo> createMemoryInfo() = 0;
     virtual size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const = 0;
@@ -269,6 +274,8 @@ class IoctlHelperI915 : public IoctlHelper {
     std::string getFileForMaxGpuFrequency() const override;
     std::string getFileForMaxGpuFrequencyOfSubDevice(int tileId) const override;
     std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const override;
+    void configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
+                          std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) override;
     bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
     bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
     uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) override;

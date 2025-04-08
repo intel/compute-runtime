@@ -16,12 +16,14 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/utilities/directory.h"
 
 #include <fcntl.h>
 #include <sstream>
@@ -450,6 +452,27 @@ std::string IoctlHelperI915::getFileForMaxGpuFrequencyOfSubDevice(int tileId) co
 
 std::string IoctlHelperI915::getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const {
     return "/gt/gt" + std::to_string(tileId) + "/mem_RP0_freq_mhz";
+}
+
+void IoctlHelperI915::configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
+                                       std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) {
+
+    // On i915 path to ccs_mode is /sys/class/drm/card0/gt/gt*/
+    for (const auto &file : files) {
+        if (file.find(expectedFilePrefix.c_str()) == std::string::npos) {
+            continue;
+        }
+
+        std::string gtPath = file + "/gt";
+        auto gtFiles = Directory::getFiles(gtPath.c_str());
+        auto expectedGtFilePrefix = gtPath + "/gt";
+        for (const auto &gtFile : gtFiles) {
+            if (gtFile.find(expectedGtFilePrefix.c_str()) == std::string::npos) {
+                continue;
+            }
+            writeCcsMode(gtFile, ccsMode, deviceCcsModeVec);
+        }
+    }
 }
 
 bool IoctlHelperI915::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {

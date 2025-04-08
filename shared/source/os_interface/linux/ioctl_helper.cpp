@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
@@ -53,6 +54,37 @@ void IoctlHelper::setupIpVersion() {
 uint32_t IoctlHelper::getFlagsForPrimeHandleToFd() const {
     return DRM_CLOEXEC | DRM_RDWR;
 }
+
+void IoctlHelper::writeCcsMode(const std::string &gtFile, uint32_t ccsMode,
+                               std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) {
+
+    std::string ccsFile = gtFile + "/ccs_mode";
+    auto fd = FileDescriptor(ccsFile.c_str(), O_RDWR);
+    if (fd < 0) {
+        if ((errno == -EACCES) || (errno == -EPERM)) {
+            fprintf(stderr, "No read and write permissions for %s, System administrator needs to grant permissions to allow modification of this file from user space\n", ccsFile.c_str());
+            fprintf(stdout, "No read and write permissions for %s, System administrator needs to grant permissions to allow modification of this file from user space\n", ccsFile.c_str());
+        }
+        return;
+    }
+
+    uint32_t ccsValue = 0;
+    ssize_t ret = SysCalls::read(fd, &ccsValue, sizeof(uint32_t));
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr, "read() on %s failed errno = %d | ret = %d \n",
+                       ccsFile.c_str(), errno, ret);
+
+    if ((ret < 0) || (ccsValue == ccsMode)) {
+        return;
+    }
+
+    do {
+        ret = SysCalls::write(fd, &ccsMode, sizeof(uint32_t));
+    } while (ret == -1 && errno == -EBUSY);
+
+    if (ret > 0) {
+        deviceCcsModeVec.emplace_back(ccsFile, ccsValue);
+    }
+};
 
 unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {

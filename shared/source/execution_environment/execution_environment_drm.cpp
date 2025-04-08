@@ -9,7 +9,10 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/file_descriptor.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/directory.h"
 
 #include <fcntl.h>
@@ -40,45 +43,11 @@ void ExecutionEnvironment::configureCcsMode() {
     const std::string drmPath = "/sys/class/drm";
     const std::string expectedFilePrefix = drmPath + "/card";
     auto files = Directory::getFiles(drmPath.c_str());
-    for (const auto &file : files) {
-        if (file.find(expectedFilePrefix.c_str()) == std::string::npos) {
-            continue;
-        }
-
-        std::string gtPath = file + "/gt";
-        auto gtFiles = Directory::getFiles(gtPath.c_str());
-        auto expectedGtFilePrefix = gtPath + "/gt";
-        for (const auto &gtFile : gtFiles) {
-            if (gtFile.find(expectedGtFilePrefix.c_str()) == std::string::npos) {
-                continue;
-            }
-            std::string ccsFile = gtFile + "/ccs_mode";
-            auto fd = FileDescriptor(ccsFile.c_str(), O_RDWR);
-            if (fd < 0) {
-                if ((errno == -EACCES) || (errno == -EPERM)) {
-                    fprintf(stderr, "No read and write permissions for %s, System administrator needs to grant permissions to allow modification of this file from user space\n", ccsFile.c_str());
-                    fprintf(stdout, "No read and write permissions for %s, System administrator needs to grant permissions to allow modification of this file from user space\n", ccsFile.c_str());
-                }
-                continue;
-            }
-
-            uint32_t ccsValue = 0;
-            ssize_t ret = SysCalls::read(fd, &ccsValue, sizeof(uint32_t));
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr, "read() on %s failed errno = %d | ret = %d \n",
-                               ccsFile.c_str(), errno, ret);
-
-            if ((ret < 0) || (ccsValue == ccsMode)) {
-                continue;
-            }
-
-            do {
-                ret = SysCalls::write(fd, &ccsMode, sizeof(uint32_t));
-            } while (ret == -1 && errno == -EBUSY);
-
-            if (ret > 0) {
-                deviceCcsModeVec.emplace_back(ccsFile, ccsValue);
-            }
-        }
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        auto drm = rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<NEO::Drm>();
+        auto ioctlHelper = drm->getIoctlHelper();
+        auto files = Directory::getFiles(drmPath.c_str());
+        ioctlHelper->configureCcsMode(files, expectedFilePrefix, ccsMode, deviceCcsModeVec);
     }
 }
 

@@ -108,6 +108,8 @@ class IoctlHelperXe : public IoctlHelper {
     std::string getFileForMaxGpuFrequency() const override;
     std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const override;
     std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const override;
+    void configureCcsMode(std::vector<std::string> &files, const std::string expectedPrefix, uint32_t ccsMode,
+                          std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
     bool isWaitBeforeBindRequired(bool bind) const override;
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;

@@ -42,6 +42,7 @@ struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
 
 struct MockExecutionEnvironment : ExecutionEnvironment {
     using ExecutionEnvironment::adjustCcsCountImpl;
+    using ExecutionEnvironment::configureCcsMode;
     using ExecutionEnvironment::directSubmissionController;
     using ExecutionEnvironment::memoryManager;
     using ExecutionEnvironment::rootDeviceEnvironments;

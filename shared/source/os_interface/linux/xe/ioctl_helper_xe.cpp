@@ -23,11 +23,13 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/xe/xedrm.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/utilities/directory.h"
 
 #include <algorithm>
 #include <iostream>
@@ -1579,6 +1581,27 @@ std::string IoctlHelperXe::getFileForMaxGpuFrequencyOfSubDevice(int tileId) cons
 
 std::string IoctlHelperXe::getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const {
     return getDirectoryWithFrequencyFiles(tileId, tileIdToGtId[tileId]) + "/rp0_freq";
+}
+
+void IoctlHelperXe::configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
+                                     std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) {
+
+    // On Xe, path is /sys/class/drm/card0/device/tile*/gt*/ccs_mode
+    for (const auto &file : files) {
+        if (file.find(expectedFilePrefix.c_str()) == std::string::npos) {
+            continue;
+        }
+
+        std::string tilePath = file + "/device/tile";
+        auto tileFiles = Directory::getFiles(tilePath.c_str());
+        for (const auto &tileFile : tileFiles) {
+            std::string gtPath = tileFile + "/gt";
+            auto gtFiles = Directory::getFiles(gtPath.c_str());
+            for (const auto &gtFile : gtFiles) {
+                writeCcsMode(gtFile, ccsMode, deviceCcsModeVec);
+            }
+        }
+    }
 }
 
 bool IoctlHelperXe::getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) {
