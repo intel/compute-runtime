@@ -155,6 +155,37 @@ int32_t PmuInterfaceImp::getConfigAfterFormat(const std::string_view &formatDir,
     return 0;
 }
 
+int32_t PmuInterfaceImp::getPmuConfigs(const std::string_view &sysmanDeviceDir, uint64_t engineClass, uint64_t engineInstance, uint64_t gtId, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) {
+
+    // The PMU configs are first fetched by reading the corresponding values from the event file in /sys/devices/xe_<bdf>/events/ directory and then bitwise ORed with the values obtained by
+    // shifting the parameters gt, engineClass and engineInstance with the shift value fetched from the corresponding file in /sys/devices/xe_<bdf>/format/ directory.
+
+    const std::string activeTicksEventFile = std::string(sysmanDeviceDir) + "/events/engine-active-ticks";
+    auto ret = getConfigFromEventFile(activeTicksEventFile, activeTicksConfig);
+    if (ret < 0) {
+        return ret;
+    }
+
+    const std::string totalTicksEventFile = std::string(sysmanDeviceDir) + "/events/engine-total-ticks";
+    ret = getConfigFromEventFile(totalTicksEventFile, totalTicksConfig);
+    if (ret < 0) {
+        return ret;
+    }
+
+    const std::string formatDir = std::string(sysmanDeviceDir) + "/format/";
+    ret = getConfigAfterFormat(formatDir, activeTicksConfig, engineClass, engineInstance, gtId);
+    if (ret < 0) {
+        return ret;
+    }
+
+    ret = getConfigAfterFormat(formatDir, totalTicksConfig, engineClass, engineInstance, gtId);
+    if (ret < 0) {
+        return ret;
+    }
+
+    return 0;
+}
+
 PmuInterfaceImp::PmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) {
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
 }

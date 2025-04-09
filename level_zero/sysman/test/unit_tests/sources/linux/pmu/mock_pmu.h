@@ -23,6 +23,8 @@ constexpr uint64_t mockEvent1Val = 100u;
 constexpr uint64_t mockEvent2Val = 150u;
 class MockPmuInterfaceImpForSysman : public L0::Sysman::PmuInterfaceImp {
   public:
+    using L0::Sysman::PmuInterfaceImp::getConfigAfterFormat;
+    using L0::Sysman::PmuInterfaceImp::getConfigFromEventFile;
     using L0::Sysman::PmuInterfaceImp::getErrorNo;
     using L0::Sysman::PmuInterfaceImp::perfEventOpen;
     using L0::Sysman::PmuInterfaceImp::pSysmanKmdInterface;

@@ -112,36 +112,14 @@ ze_result_t SysmanKmdInterfaceXe::getEngineActivityFdList(zes_engine_group_t eng
         return result;
     }
 
-    const std::string activeTicksEventFile = std::string(sysDevicesDir) + sysmanDeviceDirName + "/events/engine-active-ticks";
+    const std::string sysmanDeviceDir = std::string(sysDevicesDir) + sysmanDeviceDirName;
     uint64_t activeTicksConfig = UINT64_MAX;
-    auto ret = pPmuInterface->getConfigFromEventFile(activeTicksEventFile, activeTicksConfig);
-    if (ret < 0) {
-        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get config for the active ticks from event file and returning error:0x%x\n", __FUNCTION__, result);
-        return result;
-    }
-
-    const std::string totalTicksEventFile = std::string(sysDevicesDir) + "/" + sysmanDeviceDirName + "/events/engine-total-ticks";
     uint64_t totalTicksConfig = UINT64_MAX;
-    ret = pPmuInterface->getConfigFromEventFile(totalTicksEventFile, totalTicksConfig);
-    if (ret < 0) {
-        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get config for the total ticks from event file and returning error:0x%x\n", __FUNCTION__, result);
-        return result;
-    }
 
-    const std::string formatDir = std::string(sysDevicesDir) + sysmanDeviceDirName + "/format/";
-    ret = pPmuInterface->getConfigAfterFormat(formatDir, activeTicksConfig, engineClass->second, engineInstance, gtId);
+    auto ret = pPmuInterface->getPmuConfigs(sysmanDeviceDir, engineClass->second, engineInstance, gtId, activeTicksConfig, totalTicksConfig);
     if (ret < 0) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get config for the active ticks after format and returning error:0x%x\n", __FUNCTION__, result);
-        return result;
-    }
-
-    ret = pPmuInterface->getConfigAfterFormat(formatDir, totalTicksConfig, engineClass->second, engineInstance, gtId);
-    if (ret < 0) {
-        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get config for the total ticks after format and returning error:0x%x\n", __FUNCTION__, result);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs and returning error:0x%x\n", __FUNCTION__, result);
         return result;
     }
 

@@ -15,6 +15,8 @@ namespace ult {
 
 class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
   public:
+    using PmuInterfaceImp::getConfigAfterFormat;
+    using PmuInterfaceImp::getConfigFromEventFile;
     using PmuInterfaceImp::perfEventOpen;
     using PmuInterfaceImp::pSysmanKmdInterface;
     int64_t mockPmuFd = -1;
