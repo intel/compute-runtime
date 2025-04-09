@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 
 #include "opencl/test/unit_test/offline_compiler/environment.h"
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
@@ -272,9 +273,9 @@ TEST(DecoderTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenError
         constexpr auto suppressMessages{false};
         MockDecoder decoder{suppressMessages};
 
-        ::testing::internal::CaptureStdout();
+        decoder.mockArgHelper->messagePrinter.setSuppressMessages(true);
         const auto result = decoder.validateInput(args);
-        const auto output{::testing::internal::GetCapturedStdout()};
+        const auto output{decoder.mockArgHelper->getLog()};
 
         EXPECT_EQ(-1, result);
 
@@ -293,9 +294,9 @@ TEST(DecoderTests, givenUnknownDeviceNameWhenValidateInputThenCorrectWarningIsRe
     constexpr auto suppressMessages{false};
     MockDecoder decoder{suppressMessages};
 
-    ::testing::internal::CaptureStdout();
+    decoder.mockArgHelper->messagePrinter.setSuppressMessages(true);
     const auto result = decoder.validateInput(args);
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{decoder.mockArgHelper->getLog()};
     EXPECT_EQ(result, 0);
 
     const std::string expectedWarningMessage{"Warning : missing or invalid -device parameter - results may be inaccurate\n"};
@@ -315,9 +316,9 @@ TEST(DecoderTests, givenDeprecatedDeviceNamesWhenValidateInputThenCorrectWarning
             "-device",
             acronym.str()};
 
-        ::testing::internal::CaptureStdout();
+        decoder.mockArgHelper->messagePrinter.setSuppressMessages(true);
         const auto result = decoder.validateInput(args);
-        const auto output{::testing::internal::GetCapturedStdout()};
+        const auto output{decoder.mockArgHelper->getLog()};
 
         EXPECT_EQ(result, 0);
 
@@ -348,9 +349,9 @@ TEST(DecoderTests, givenProductNamesThatExistsForIgaWhenValidateInputThenSuccess
                     "-device",
                     acronym.str()};
 
-                ::testing::internal::CaptureStdout();
+                decoder.mockArgHelper->messagePrinter.setSuppressMessages(true);
                 const auto result = decoder.validateInput(args);
-                const auto output{::testing::internal::GetCapturedStdout()};
+                const auto output{decoder.mockArgHelper->getLog()};
 
                 EXPECT_EQ(result, 0);
                 EXPECT_TRUE(output.empty());
@@ -415,9 +416,9 @@ TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenRetur
         "-patch",
         "test_files/patch"};
 
-    ::testing::internal::CaptureStdout();
+    decoder.mockArgHelper->messagePrinter.setSuppressMessages(true);
     const auto result = decoder.validateInput(args);
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{decoder.mockArgHelper->getLog()};
 
     EXPECT_EQ(0, result);
 
@@ -444,9 +445,9 @@ TEST(DecoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValid
 
     decoder.mockArgHelper->hasOutput = true;
 
-    ::testing::internal::CaptureStdout();
+    decoder.mockArgHelper->messagePrinter.setSuppressMessages(true);
     const auto result = decoder.validateInput(args);
-    const auto output{::testing::internal::GetCapturedStdout()};
+    const auto output{decoder.mockArgHelper->getLog()};
     EXPECT_EQ(0, result);
     EXPECT_TRUE(output.empty()) << output;
     decoder.mockArgHelper->hasOutput = false;
@@ -493,6 +494,8 @@ TEST(DecoderTests, GivenProperStructWhenReadingStructFieldsThenFieldsVectorGetsP
 }
 
 TEST(DecoderTests, GivenProperPatchListFileWhenParsingTokensThenFileIsParsedCorrectly) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
     MockDecoder decoder;
     decoder.parseTokens();
 
@@ -588,6 +591,8 @@ TEST(DecoderTests, GivenValidBinaryWhenReadingPatchTokensFromBinaryThenBinaryIsR
 }
 
 TEST(DecoderTests, GivenValidBinaryWithoutPatchTokensWhenProcessingBinaryThenBinaryIsReadCorrectly) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
     auto programHeader = createProgramBinaryHeader(1, 0);
     std::string kernelName("ExampleKernel");
     auto kernelHeader = createKernelBinaryHeaderCommon(static_cast<uint32_t>(kernelName.size() + 1), 0);
@@ -613,6 +618,8 @@ TEST(DecoderTests, GivenValidBinaryWithoutPatchTokensWhenProcessingBinaryThenBin
 }
 
 TEST(DecoderTests, givenBinaryWithKernelBinaryHeaderWhenAtLeastOneOfTheKernelSizesExceedSectionSizeThenAbort) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
     VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
     std::string kernelName("ExampleKernel");
     auto kernelHeader = createKernelBinaryHeaderCommon(static_cast<uint32_t>(kernelName.size() + 1), 0);
@@ -641,6 +648,8 @@ TEST(DecoderTests, givenBinaryWithKernelBinaryHeaderWhenAtLeastOneOfTheKernelSiz
 }
 
 TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPatchTokensAreReadCorrectly) {
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return NULL; });
+
     std::stringstream binarySS;
 
     // ProgramBinaryHeader

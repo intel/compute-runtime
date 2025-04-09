@@ -751,13 +751,19 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWhenFatBinary
         GTEST_SKIP();
     }
 
+    auto acronymFrom = enabledProductsAcronyms.at(0);
+    auto acronymTo = enabledProductsAcronyms.at(2);
+
+    auto prodFromIt = std::find(enabledProductsAcronyms.begin(), enabledProductsAcronyms.end(), acronymFrom);
+    auto prodToIt = std::find(enabledProductsAcronyms.begin(), enabledProductsAcronyms.end(), acronymTo);
+    if (prodFromIt > prodToIt) {
+        std::swap(prodFromIt, prodToIt);
+    }
+
     std::vector<ConstStringRef> expected{};
-    expected.insert(expected.end(), enabledProductsAcronyms.begin(), enabledProductsAcronyms.begin() + 4);
+    expected.insert(expected.end(), prodFromIt, ++prodToIt);
 
-    std::string acronymFrom = enabledProductsAcronyms.front().str();
-    std::string acronymsTo = (enabledProductsAcronyms.begin() + 3)->str();
-
-    std::string acronymsTarget = acronymFrom + ":" + acronymsTo;
+    std::string acronymsTarget = acronymFrom.str() + ":" + acronymTo.str();
     auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(got, expected);
 
@@ -1032,14 +1038,15 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWithoutDashe
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToProductWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
-    if (enabledProductsAcronyms.size() < 3) {
+    if (enabledProductsAcronyms.size() < 2) {
         GTEST_SKIP();
     }
+    auto acronymTo = enabledProductsAcronyms.at(1);
 
     std::vector<ConstStringRef> expected{};
-    expected.insert(expected.end(), enabledProductsAcronyms.begin(), enabledProductsAcronyms.begin() + 4);
+    expected.insert(expected.end(), enabledProductsAcronyms.begin(), enabledProductsAcronyms.begin() + 2);
 
-    std::string acronymsTarget = ":" + (enabledProductsAcronyms.begin() + 3)->str();
+    std::string acronymsTarget = ":" + acronymTo.str();
     auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(got, expected);
 

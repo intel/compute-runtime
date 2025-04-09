@@ -1,11 +1,14 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "iga_wrapper_tests.h"
+
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_os_library.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_iga_dll_guard.h"
 #include "opencl/test/unit_test/offline_compiler/stdout_capturer.h"
@@ -15,6 +18,9 @@
 namespace NEO {
 
 TEST_F(IgaWrapperTest, GivenInvalidPathToIgaLibraryWhenDisassemblingGenIsaThenFalseIsReturnedAndErrorMessageIsPrinted) {
+    MockOsLibrary::loadLibraryNewObject = nullptr;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
+
     MockIgaDllGuard mockIgaDllGuard{"some_invalid_path_to_library"};
     mockIgaDllGuard.enable();
 
@@ -178,6 +184,9 @@ TEST_F(IgaWrapperTest, GivenContextCreationSuccessAndDisassemblationSuccessAndWa
 }
 
 TEST_F(IgaWrapperTest, GivenInvalidPathToIgaLibraryWhenAssemblingGenIsaThenFalseIsReturnedAndErrorMessageIsPrinted) {
+    MockOsLibrary::loadLibraryNewObject = nullptr;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
+
     MockIgaDllGuard mockIgaDllGuard{"some_invalid_path_to_library"};
     mockIgaDllGuard.enable();
 
