@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -296,6 +296,14 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
 
     gfxBase = alignUp(gfxBase, maxStandardHeapGranularity);
     uint64_t maxStandardHeapSize = alignDown((gfxTop - gfxBase) / numStandardHeaps, maxStandardHeapGranularity);
+    uint64_t maxStandard64HeapSize = maxStandardHeapSize;
+    uint64_t maxStandard2MBHeapSize = maxStandardHeapSize;
+
+    if (gpuAddressSpace == maxNBitValue(57)) {
+        maxStandardHeapSize *= 2;
+        maxStandard64HeapSize /= 2;
+        maxStandard2MBHeapSize /= 2;
+    }
 
     auto gfxStandardSize = maxStandardHeapSize;
     heapInit(HeapIndex::heapStandard, gfxBase, gfxStandardSize);
@@ -304,14 +312,14 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
     gfxBase += maxStandardHeapSize;
 
     // Split HEAP_STANDARD64K among root devices
-    auto gfxStandard64KBSize = alignDown(maxStandardHeapSize / numRootDevices, GfxPartition::heapGranularity);
+    auto gfxStandard64KBSize = alignDown(maxStandard64HeapSize / numRootDevices, GfxPartition::heapGranularity);
     heapInitWithAllocationAlignment(HeapIndex::heapStandard64KB, gfxBase + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize, MemoryConstants::pageSize64k);
     DEBUG_BREAK_IF(!isAligned<GfxPartition::heapGranularity>(getHeapBase(HeapIndex::heapStandard64KB)));
 
-    gfxBase += maxStandardHeapSize;
+    gfxBase += maxStandard64HeapSize;
 
     // Split HEAP_STANDARD2MB among root devices
-    auto gfxStandard2MBSize = alignDown(maxStandardHeapSize / numRootDevices, GfxPartition::heapGranularity2MB);
+    auto gfxStandard2MBSize = alignDown(maxStandard2MBHeapSize / numRootDevices, GfxPartition::heapGranularity2MB);
     heapInitWithAllocationAlignment(HeapIndex::heapStandard2MB, gfxBase + rootDeviceIndex * gfxStandard2MBSize, gfxStandard2MBSize, 2 * MemoryConstants::megaByte);
     DEBUG_BREAK_IF(!isAligned<GfxPartition::heapGranularity2MB>(getHeapBase(HeapIndex::heapStandard2MB)));
 
