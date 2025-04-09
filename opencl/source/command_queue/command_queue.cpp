@@ -998,6 +998,8 @@ bool CommandQueue::isTextureCacheFlushNeeded(uint32_t commandType) const {
     case CL_COMMAND_COPY_IMAGE:
     case CL_COMMAND_WRITE_IMAGE:
     case CL_COMMAND_FILL_IMAGE:
+    case CL_COMMAND_READ_IMAGE:
+    case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
         return getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled();
     default:
         return false;

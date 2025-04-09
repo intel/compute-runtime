@@ -449,10 +449,10 @@ HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsTextureCacheFlushNeededThenRe
     MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
     auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(CL_COMMAND_COPY_BUFFER_RECT));
-
+    std::set<cl_command_type> typesToFlush = {CL_COMMAND_COPY_IMAGE, CL_COMMAND_WRITE_IMAGE, CL_COMMAND_FILL_IMAGE,
+                                              CL_COMMAND_READ_IMAGE, CL_COMMAND_COPY_IMAGE_TO_BUFFER};
     for (auto i = CL_COMMAND_NDRANGE_KERNEL; i < CL_COMMAND_SVM_MIGRATE_MEM; i++) {
-        if (i == CL_COMMAND_COPY_IMAGE || i == CL_COMMAND_WRITE_IMAGE || i == CL_COMMAND_FILL_IMAGE) {
+        if (typesToFlush.find(i) != typesToFlush.end()) {
             commandStreamReceiver.directSubmissionAvailable = true;
             EXPECT_TRUE(cmdQ.isTextureCacheFlushNeeded(i));
             commandStreamReceiver.directSubmissionAvailable = false;
