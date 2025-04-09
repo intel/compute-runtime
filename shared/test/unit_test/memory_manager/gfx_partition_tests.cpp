@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -557,6 +557,12 @@ struct GfxPartitionOn57bTest : public ::testing::Test {
 
         gfxBase = alignUp(gfxBase, maxStandardHeapGranularity);
         uint64_t maxStandardHeapSize = alignDown((gfxTop - gfxBase) / numStandardHeaps, maxStandardHeapGranularity);
+        uint64_t maxStandard64HeapSize = maxStandardHeapSize;
+
+        if (expectHeapExtendedInitialized) {
+            maxStandardHeapSize *= 2;
+            maxStandard64HeapSize /= 2;
+        }
 
         EXPECT_EQ(gfxBase, gfxPartition->getHeapBase(HeapIndex::heapStandard));
         EXPECT_EQ(gfxBase + maxStandardHeapSize - 1, gfxPartition->getHeapLimit(HeapIndex::heapStandard));
@@ -564,7 +570,7 @@ struct GfxPartitionOn57bTest : public ::testing::Test {
         gfxBase += maxStandardHeapSize;
 
         EXPECT_EQ(gfxBase, gfxPartition->getHeapBase(HeapIndex::heapStandard64KB));
-        EXPECT_EQ(gfxBase + maxStandardHeapSize - 1, gfxPartition->getHeapLimit(HeapIndex::heapStandard64KB));
+        EXPECT_EQ(gfxBase + maxStandard64HeapSize - 1, gfxPartition->getHeapLimit(HeapIndex::heapStandard64KB));
 
         if (expectHeapExtendedInitialized) {
             EXPECT_TRUE(gfxPartition->heapInitialized(HeapIndex::heapExtended));
@@ -830,6 +836,23 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     mockOsMemory->returnInvalidAddressAlways = true;
 
     EXPECT_FALSE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+}
+
+TEST_F(GfxPartitionOn57bTest, whenInitGfxPartitionThenDoubleHeapStandardAtTheCostOfStandard64AndStandard2MB) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto gpuAddressSpace = 57;
+    uint64_t gfxTop = maxNBitValue(gpuAddressSpace) + 1;
+    OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
+    std::vector<std::unique_ptr<MockGfxPartition>> gfxPartitions;
+    gfxPartitions.push_back(std::make_unique<MockGfxPartition>(reservedCpuAddressRange));
+    gfxPartitions[0]->osMemory.reset(new MockOsMemory);
+    EXPECT_TRUE(gfxPartitions[0]->init(maxNBitValue(gpuAddressSpace), 0, 0, 1, false, 0u, gfxTop));
+
+    EXPECT_EQ(gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard), 4 * gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard64KB));
+    EXPECT_EQ(gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard), 4 * gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard2MB));
 }
 
 TEST_F(GfxPartitionOn57bTest, given48bitGpuAddressSpaceAnd57bitCpuAddressWidthWhenInitializingMultipleGfxPartitionsThenReserveSpaceForSvmHeapOnlyOnce) {
