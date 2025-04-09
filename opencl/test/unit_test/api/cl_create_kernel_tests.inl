@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ using ClCreateKernelTests = ApiTests;
 namespace ULT {
 
 TEST_F(ClCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThenKernelIsCreatedAndSuccessIsReturned) {
+    USE_REAL_FILE_SYSTEM();
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
@@ -75,6 +76,7 @@ TEST_F(ClCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThen
 }
 
 TEST_F(ClCreateKernelTests, GivenInvalidKernelNameWhenCreatingNewKernelThenInvalidKernelNameErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;

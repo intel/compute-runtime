@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ TEST_F(ClReleaseKernelTests, GivenNullKernelWhenReleasingKernelThenClInvalidKern
 }
 
 TEST_F(ClReleaseKernelTests, GivenRetainedKernelWhenReleasingKernelThenKernelIsCorrectlyReleased) {
+    USE_REAL_FILE_SYSTEM();
     cl_kernel kernel = nullptr;
     cl_program program = nullptr;
     cl_int binaryStatus = CL_SUCCESS;

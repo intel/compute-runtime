@@ -70,6 +70,8 @@ class BuiltInTests
     }
 
     void SetUp() override {
+        USE_REAL_FILE_SYSTEM();
+
         debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::builtin));
         ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
@@ -233,6 +235,7 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTransla
 }
 
 TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
+    USE_REAL_FILE_SYSTEM();
     for (auto supportsImages : ::testing::Bool()) {
         allBuiltIns.clear();
         size_t size = 0;
@@ -271,6 +274,7 @@ TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
+    USE_REAL_FILE_SYSTEM();
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
 
     MockBuffer *srcPtr = new MockBuffer();
@@ -338,6 +342,7 @@ TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreate
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
+    USE_REAL_FILE_SYSTEM();
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
 
     MockBuffer *srcPtr = new MockBuffer();
@@ -560,6 +565,7 @@ HWTEST2_P(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispat
 }
 
 TEST_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5) {
+    USE_REAL_FILE_SYSTEM();
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
@@ -591,6 +597,7 @@ HWTEST2_P(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInst
 }
 
 TEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesFromBaseKernel) {
+    USE_REAL_FILE_SYSTEM();
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     size_t newSize = mockAuxBuiltInOp.convertToAuxKernel.size() + 3;
     mockAuxBuiltInOp.resizeKernelInstances(newSize);
@@ -832,6 +839,7 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToBufferWhenDispatchInfoIsCreatedThenSizeIsAlignedToCachLineSize) {
+    USE_REAL_FILE_SYSTEM();
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
 
     AlignedBuffer src;
@@ -1198,6 +1206,7 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToImageHeaplessIsUsedThe
 }
 
 HWTEST_F(BuiltInTests, WhenBuilderCopyImageToImageIsUsedThenParamsAreCorrect) {
+    USE_REAL_FILE_SYSTEM();
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     std ::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
@@ -1250,7 +1259,7 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderFillImageHeaplessIsUsedThenParams
 
 HWTEST_F(BuiltInTests, WhenBuilderFillImageIsUsedThenParamsAreCorrect) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-
+    USE_REAL_FILE_SYSTEM();
     MockBuffer fillColor;
     std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
@@ -1346,6 +1355,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
 }
 
 TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
+    USE_REAL_FILE_SYSTEM();
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
 
     AlignedBuffer src;
@@ -1375,6 +1385,7 @@ TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedTh
 }
 
 TEST_F(BuiltInTests, GivenReadBufferAlignedWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
+    USE_REAL_FILE_SYSTEM();
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
 
     AlignedBuffer srcMemObj;
@@ -1414,6 +1425,7 @@ TEST_F(BuiltInTests, GivenReadBufferAlignedWhenDispatchInfoIsCreatedThenParamsAr
 }
 
 TEST_F(BuiltInTests, GivenWriteBufferAlignedWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
+    USE_REAL_FILE_SYSTEM();
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
 
     auto size = 10 * MemoryConstants::cacheLineSize;
@@ -1449,6 +1461,7 @@ TEST_F(BuiltInTests, GivenWriteBufferAlignedWhenDispatchInfoIsCreatedThenParamsA
 }
 
 TEST_F(BuiltInTests, WhenGettingBuilderInfoTwiceThenPointerIsSame) {
+    USE_REAL_FILE_SYSTEM();
     BuiltinDispatchInfoBuilder &builder1 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
     BuiltinDispatchInfoBuilder &builder2 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
 
@@ -1456,6 +1469,7 @@ TEST_F(BuiltInTests, WhenGettingBuilderInfoTwiceThenPointerIsSame) {
 }
 
 HWTEST_F(BuiltInTests, GivenBuiltInOperationWhenGettingBuilderThenCorrectBuiltInBuilderIsReturned) {
+    USE_REAL_FILE_SYSTEM();
 
     auto clExecutionEnvironment = static_cast<ClExecutionEnvironment *>(pClDevice->getExecutionEnvironment());
     bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
@@ -1916,6 +1930,7 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCo
 using BuiltInOwnershipWrapperTests = BuiltInTests;
 
 TEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnlockOnDestruction) {
+    USE_REAL_FILE_SYSTEM();
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     MockContext context(pClDevice);
     {
@@ -1931,6 +1946,7 @@ TEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnloc
 }
 
 TEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingThenLockOnlyWhenRequested) {
+    USE_REAL_FILE_SYSTEM();
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
     MockContext context(pClDevice);
     {
@@ -1947,6 +1963,7 @@ TEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingT
 }
 
 TEST_F(BuiltInOwnershipWrapperTests, givenLockWithAcquiredOwnershipWhenTakeOwnershipCalledThenAbort) {
+    USE_REAL_FILE_SYSTEM();
     MockAuxBuilInOp mockAuxBuiltInOp1(*pBuiltIns, *pClDevice);
     MockAuxBuilInOp mockAuxBuiltInOp2(*pBuiltIns, *pClDevice);
     MockContext context(pClDevice);

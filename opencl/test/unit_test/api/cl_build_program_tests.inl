@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ struct ClBuildProgramTests : public ApiTests {
 namespace ULT {
 
 TEST_F(ClBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
+    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -366,6 +367,7 @@ TEST_F(ClBuildProgramTests, GivenNullAsInputWhenCreatingProgramThenInvalidProgra
 }
 
 TEST_F(ClBuildProgramTests, GivenInvalidCallbackInputWhenBuildProgramThenInvalidValueErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
     size_t binarySize = 0;
@@ -449,6 +451,7 @@ TEST_F(ClBuildProgramTests, GivenValidCallbackInputWhenBuildProgramThenCallbackI
 }
 
 TEST_F(ClBuildProgramTests, givenProgramWhenBuildingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -523,7 +526,7 @@ TEST_F(ClBuildProgramTests, givenProgramWhenBuildingForInvalidDevicesInputThenIn
 }
 
 TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelWhenBuildingThenInvalidOperationErrorIsReturned) {
-
+    USE_REAL_FILE_SYSTEM();
     MockSpecializedContext context;
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
@@ -595,7 +598,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelWhenBuildingThe
 }
 
 TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelsWhenBuildingThenInvalidOperationErrorIsReturned) {
-
+    USE_REAL_FILE_SYSTEM();
     MockSpecializedContext context;
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
@@ -674,6 +677,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelsWhenBuildingTh
 }
 
 TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWhenCreatingKernelThenProgramAndKernelDevicesMatchAndSuccessIsReturned) {
+    USE_REAL_FILE_SYSTEM();
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
@@ -729,6 +733,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
 }
 
 TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWithCreatedKernelWhenBuildingProgramForSecondDeviceThenInvalidOperationReturned) {
+    USE_REAL_FILE_SYSTEM();
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
@@ -801,6 +806,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
 }
 
 TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForMultipleDevicesSeparatelyWithCreatedKernelThenProgramAndKernelDevicesMatch) {
+    USE_REAL_FILE_SYSTEM();
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;

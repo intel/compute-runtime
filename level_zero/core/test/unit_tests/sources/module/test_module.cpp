@@ -724,6 +724,7 @@ struct DerivedModuleImp : public L0::ModuleImp {
 };
 
 HWTEST_F(ModuleTest, whenMultipleModulesCreatedThenModulesShareIsaAllocation) {
+    USE_REAL_FILE_SYSTEM();
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(1);
     uint8_t binary[10];
@@ -3623,6 +3624,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetToWbWhenGetInternalOptions
 }
 
 HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebinElfDumped) {
+    USE_REAL_FILE_SYSTEM();
     DebugManagerStateRestore restorer;
     debugManager.flags.DumpZEBin.set(1);
 

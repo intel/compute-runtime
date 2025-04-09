@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ namespace ULT {
 using ClLinkProgramTests = ApiTests;
 
 TEST_F(ClLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturned) {
+    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -82,6 +83,7 @@ TEST_F(ClLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturn
 }
 
 TEST_F(ClLinkProgramTests, GivenCreateLibraryOptionWhenLinkingProgramThenSuccessIsReturned) {
+    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -249,6 +251,7 @@ TEST_F(ClLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
 }
 
 TEST_F(ClLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidValueErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -307,6 +310,7 @@ TEST_F(ClLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidVa
 }
 
 TEST_F(ClLinkProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsInvoked) {
+    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -370,6 +374,7 @@ TEST_F(ClLinkProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsI
 }
 
 TEST_F(ClLinkProgramTests, givenMultiDeviceProgramWhenLinkingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ class ClCompilerInterfaceTest : public ClDeviceFixture,
                                 public ::testing::Test {
   public:
     void SetUp() override {
+        USE_REAL_FILE_SYSTEM();
         ClDeviceFixture::setUp();
 
         // create the compiler interface
@@ -59,6 +60,7 @@ class ClCompilerInterfaceTest : public ClDeviceFixture,
 };
 
 TEST_F(ClCompilerInterfaceTest, WhenBuildIsInvokedThenFclReceivesListOfExtensionsInInternalOptions) {
+    USE_REAL_FILE_SYSTEM();
     CompilerCacheConfig config = {};
     config.enabled = false;
     auto tempCompilerCache = std::make_unique<CompilerCache>(config);
@@ -76,6 +78,7 @@ TEST_F(ClCompilerInterfaceTest, WhenBuildIsInvokedThenFclReceivesListOfExtension
 }
 
 TEST_F(ClCompilerInterfaceTest, WhenCompileIsInvokedThenFclReceivesListOfExtensionsInInternalOptions) {
+    USE_REAL_FILE_SYSTEM();
     std::string receivedInternalOptions;
 
     MockCompilerDebugVars fclDebugVars;

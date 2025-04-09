@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/local_work_size.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -853,6 +854,7 @@ TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEn
 }
 
 HWTEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueKernelIsCalledWithWorkDim3ThenContextProvidesProperHint) {
+    USE_REAL_FILE_SYSTEM();
     size_t preferredWorkGroupSize[3];
     auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getClDevice(0)->getSharedDeviceInfo().maxWorkGroupSize);
     if (debugManager.flags.EnableComputeWorkSizeND.get()) {

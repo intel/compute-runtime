@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
@@ -55,6 +56,7 @@ class ProgramDataTestBase : public testing::Test,
     void buildAndDecodeProgramPatchList();
 
     void SetUp() override {
+        USE_REAL_FILE_SYSTEM();
         PlatformFixture::setUp();
         pClDevice = pPlatform->getClDevice(0);
         rootDeviceIndex = pClDevice->getRootDeviceIndex();

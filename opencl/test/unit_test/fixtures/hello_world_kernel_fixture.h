@@ -32,6 +32,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     using ProgramFixture::setUp;
 
     void setUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr) {
+        USE_REAL_FILE_SYSTEM();
         setUp(pDevice, kernelFilenameStr, kernelNameStr, nullptr);
     }
     void setUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr, const char *options) {

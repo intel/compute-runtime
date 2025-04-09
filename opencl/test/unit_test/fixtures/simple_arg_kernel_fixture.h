@@ -87,6 +87,7 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
 
   protected:
     void setUp(ClDevice *device, Context *context) {
+        USE_REAL_FILE_SYSTEM();
         ProgramFixture::setUp();
 
         createProgramFromBinary(

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,8 @@ using ClCreateProgramWithILKHRTests = ApiTests;
 namespace ULT {
 
 TEST_F(ClCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgramWithBinaryThenProgramIsCreatedAndSuccessIsReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
     size_t binarySize = 0;
@@ -67,6 +69,8 @@ TEST_F(ClCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgram
 }
 
 TEST_F(ClCreateProgramWithBinaryTests, GivenInvalidInputWhenCreatingProgramWithBinaryThenInvalidValueErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
     size_t binarySize = 0;
@@ -128,6 +132,8 @@ TEST_F(ClCreateProgramWithBinaryTests, GivenInvalidInputWhenCreatingProgramWithB
 }
 
 TEST_F(ClCreateProgramWithBinaryTests, GivenDeviceNotAssociatedWithContextWhenCreatingProgramWithBinaryThenInvalidDeviceErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
     size_t binarySize = 0;
@@ -229,6 +235,8 @@ TEST_F(ClCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramW
 }
 
 TEST_F(ClCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBuildIsCalledThenReturnSuccess) {
+    USE_REAL_FILE_SYSTEM();
+
     const uint32_t spirv[16] = {0x03022307};
     cl_int err = CL_INVALID_VALUE;
     cl_program program = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);

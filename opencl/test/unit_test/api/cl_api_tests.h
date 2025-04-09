@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -29,6 +30,7 @@ template <uint32_t rootDeviceIndex = 1u>
 struct ApiFixture {
 
     void setUp() {
+        USE_REAL_FILE_SYSTEM();
         debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         debugManager.flags.EnableCpuCacheForResources.set(true);
         debugManager.flags.ContextGroupSize.set(0);

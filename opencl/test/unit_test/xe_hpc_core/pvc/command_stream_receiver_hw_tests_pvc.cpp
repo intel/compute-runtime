@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -223,6 +224,7 @@ using PvcMultiRootDeviceCommandStreamReceiverBufferTests = MultiRootDeviceFixtur
 HWTEST_EXCLUDE_PRODUCT(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToEnqueueWithSubmissionThenCsIsWaitingForEventsFromPreviousDevices, IGFX_PVC);
 
 PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMultiRootDeviceEnvironmentOnPvcWhenTheyArePassedToEnqueueWithSubmissionThenCsIsWaitingForEventsFromPreviousDevices) {
+    USE_REAL_FILE_SYSTEM();
     REQUIRE_SVM_OR_SKIP(device1);
     REQUIRE_SVM_OR_SKIP(device2);
 

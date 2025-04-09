@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ struct OOQTaskTypedTestsMt : public HelloWorldTest<OOQFixtureFactory> {
 typedef OOQTaskTypedTestsMt<EnqueueKernelHelper<>> OOQTaskTestsMt;
 
 TEST_F(OOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTaskCountIsIncrementedAndTaskLevelIsUnchanged) {
+    USE_REAL_FILE_SYSTEM();
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);

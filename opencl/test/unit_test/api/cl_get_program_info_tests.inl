@@ -43,6 +43,8 @@ void verifyDevices(cl_program pProgram, size_t expectedNumDevices, cl_device_id 
 }
 
 TEST_F(ClGetProgramInfoTests, GivenSourceWhenBuildingProgramThenGetProgramInfoReturnsCorrectInfo) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -172,6 +174,8 @@ TEST_F(ClGetProgramInfoTests, GivenIlWhenBuildingProgramThenGetProgramInfoReturn
 }
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDevicesThenCorrectDevicesAreReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     MockUnrestrictiveContextMultiGPU context;
 
     auto numDevicesForProgram = 2u;
@@ -227,6 +231,8 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDe
 }
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingBinariesThenCorrectBinariesAreReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     MockUnrestrictiveContextMultiGPU context;
 
     auto numDevicesForProgram = 2u;
@@ -369,6 +375,8 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithILWhenGettingDevice
 }
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhenGettingDevicesThenCorrectDevicesAreReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     MockUnrestrictiveContextMultiGPU context;
 
     auto expectedNumDevices = context.getNumDevices();
@@ -406,6 +414,8 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhe
 }
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhenGettingDevicesThenCorrectBinariesAreReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     MockUnrestrictiveContextMultiGPU context;
 
     auto expectedNumDevices = context.getNumDevices();

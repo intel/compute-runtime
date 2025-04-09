@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 
@@ -31,6 +32,7 @@ class ProgramFromSourceTest : public ContextFixture,
 
   protected:
     void SetUp() override {
+        USE_REAL_FILE_SYSTEM();
         sourceFileName = "CopyBuffer_simd16.cl";
         binaryFileName = "CopyBuffer_simd16";
         kernelName = "CopyBuffer";

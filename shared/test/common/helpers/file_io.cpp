@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/stdio.h"
+#include "shared/source/utilities/io_functions.h"
 
 #include <cstring>
 #include <map>
@@ -42,9 +43,9 @@ bool fileExists(const std::string &fileName) {
         return true;
     }
 
-    fopen_s(&pFile, fileName.c_str(), "rb");
+    pFile = NEO::IoFunctions::fopenPtr(fileName.c_str(), "rb");
     if (pFile) {
-        fclose(pFile);
+        NEO::IoFunctions::fclosePtr(pFile);
     }
     return pFile != nullptr;
 }

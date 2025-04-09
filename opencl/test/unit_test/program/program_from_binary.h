@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/helpers/file_io.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
@@ -32,6 +33,7 @@ struct ProgramFromBinaryFixture : public ClDeviceFixture,
         ProgramFromBinaryFixture::setUp("CopyBuffer_simd32", "CopyBuffer");
     }
     void setUp(const char *binaryFileName, const char *kernelName) {
+        USE_REAL_FILE_SYSTEM();
         this->binaryFileName = binaryFileName;
         this->kernelName = kernelName;
         ClDeviceFixture::setUp();
@@ -74,6 +76,7 @@ class ProgramSimpleFixture : public ClDeviceFixture,
 
   public:
     void setUp() {
+        USE_REAL_FILE_SYSTEM();
         ClDeviceFixture::setUp();
 
         cl_device_id device = pClDevice;

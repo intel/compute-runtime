@@ -1193,6 +1193,7 @@ TEST(DrmQueryTest, GivenRpsMaxFreqFilesExistWhenFrequenciesAreQueriedThenValidVa
 }
 
 TEST(DrmQueryTest, GivenRpsMaxFreqFileDoesntExistWhenFrequencyIsQueriedThenFallbackToLegacyInterface) {
+    USE_REAL_FILE_SYSTEM();
     int expectedMaxFrequency = 2000;
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

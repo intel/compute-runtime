@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,7 @@ TEST_F(ClCloneKernelTests, GivenNullKernelWhenCloningKernelThenInvalidKernelErro
 }
 
 TEST_F(ClCloneKernelTests, GivenValidKernelWhenCloningKernelThenSuccessIsReturned) {
+    USE_REAL_FILE_SYSTEM();
     cl_kernel pSourceKernel = nullptr;
     cl_kernel pClonedKernel = nullptr;
     cl_program pProgram = nullptr;

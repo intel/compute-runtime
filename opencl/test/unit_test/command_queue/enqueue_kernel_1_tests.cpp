@@ -91,6 +91,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
 }
 
 TEST(EnqueueMultiDeviceKernelTest, givenMultiDeviceKernelWhenSetArgDeviceUSMThenOnlyOneKernelIsPatched) {
+    USE_REAL_FILE_SYSTEM();
     REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     auto deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
     auto device0 = deviceFactory->rootDevices[0];

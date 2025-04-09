@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ using ClGetKernelArgInfoTests = ApiTests;
 namespace ULT {
 
 TEST_F(ClGetKernelArgInfoTests, GivenValidParamsWhenGettingKernelArgInfoThenSuccessAndCorrectSizeAreReturned) {
+    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;

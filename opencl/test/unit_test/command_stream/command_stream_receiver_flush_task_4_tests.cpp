@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -30,6 +31,7 @@ using namespace NEO;
 using MultiRootDeviceCommandStreamReceiverBufferTests = MultiRootDeviceFixture;
 
 HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToEnqueueWithSubmissionThenCsIsWaitingForEventsFromPreviousDevices) {
+    USE_REAL_FILE_SYSTEM();
     REQUIRE_SVM_OR_SKIP(device1);
     REQUIRE_SVM_OR_SKIP(device2);
 

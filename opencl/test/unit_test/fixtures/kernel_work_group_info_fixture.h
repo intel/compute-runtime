@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ struct ClGetKernelWorkGroupInfoTest : public ApiFixture<>,
     typedef ApiFixture BaseClass;
 
     void SetUp() override {
+        USE_REAL_FILE_SYSTEM();
         BaseClass::setUp();
 
         std::unique_ptr<char[]> pSource = nullptr;

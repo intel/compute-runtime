@@ -346,6 +346,8 @@ TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementation
 }
 
 TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVariablesAreRead) {
+    USE_REAL_FILE_SYSTEM();
+
     bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
     if (!settingsFileExists) {
         const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
@@ -375,7 +377,6 @@ TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAre
     writeDataToFile(SettingsReader::settingsFileName, &data, sizeof(data));
 
     SettingsReader *reader = MockSettingsReader::createFileReader();
-
     EXPECT_NE(nullptr, reader);
 
     FullyEnabledTestDebugManager debugManager;
@@ -389,6 +390,7 @@ TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAre
 }
 
 TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCalledThenStringPrintedToFile) {
+    USE_REAL_FILE_SYSTEM();
     if (!NEO::fileLoggerInstance().enabled()) {
         GTEST_SKIP();
     }
@@ -415,6 +417,7 @@ TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCall
 }
 
 TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCalledThenStringIsNotPrintedToFile) {
+    USE_REAL_FILE_SYSTEM();
     if (!NEO::debugManager.disabled()) {
         GTEST_SKIP();
     }
@@ -435,6 +438,7 @@ TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCal
 }
 
 TEST(DebugSettingsManager, GivenLogsEnabledWhenLogCacheOperationCalledThenStringPrintedToFile) {
+    USE_REAL_FILE_SYSTEM();
     if (!NEO::usmReusePerfLoggerInstance().enabled()) {
         GTEST_SKIP();
     }

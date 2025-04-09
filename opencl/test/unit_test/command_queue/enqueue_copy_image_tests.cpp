@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen_common/reg_configs_common.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -227,6 +228,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyImageTest, WhenCopyingImageThenMediaVf
 using MipMapCopyImageTest = EnqueueCopyImageMipMapTest;
 
 HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet) {
+    USE_REAL_FILE_SYSTEM();
     bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
 
     bool useHeapless = false;

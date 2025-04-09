@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,8 @@ using ClCompileProgramTests = ApiTests;
 namespace ULT {
 
 TEST_F(ClCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenSuccessIsReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -64,19 +66,21 @@ TEST_F(ClCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenS
 }
 
 TEST_F(ClCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramThenSuccessIsReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     cl_program pHeader = nullptr;
 
     auto copyBufferWithHeader = R"===(
 #include "simple_header.h"
 __kernel void CopyBuffer(){}
-	    )===";
+            )===";
 
     auto copyBufferWithHeaderSize = sizeof(copyBufferWithHeader);
 
     auto header = R"===(
 extenr __kernel void AddBuffer();
-	    )===";
+            )===";
 
     auto headerSize = sizeof(header);
     auto headerName = "simple_header.h";
@@ -135,6 +139,8 @@ TEST_F(ClCompileProgramTests, GivenNullProgramWhenCompilingProgramThenInvalidPro
 }
 
 TEST_F(ClCompileProgramTests, GivenInvalidCallbackInputWhenCompileProgramThenInvalidValueErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -177,6 +183,8 @@ TEST_F(ClCompileProgramTests, GivenInvalidCallbackInputWhenCompileProgramThenInv
 }
 
 TEST_F(ClCompileProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsInvoked) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     size_t sourceSize = 0;
     std::string testFile;
@@ -223,6 +231,8 @@ TEST_F(ClCompileProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallback
 }
 
 TEST(clCompileProgramTest, givenProgramWhenCompilingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -317,6 +327,7 @@ TEST(clCompileProgramTest, givenProgramWhenCompilingForInvalidDevicesInputThenIn
 }
 
 TEST(clCompileProgramTest, givenMultiDeviceProgramWithCreatedKernelWhenCompilingThenInvalidOperationErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
 
     MockSpecializedContext context;
     cl_program pProgram = nullptr;
@@ -395,6 +406,7 @@ TEST(clCompileProgramTest, givenMultiDeviceProgramWithCreatedKernelWhenCompiling
 }
 
 TEST(clCompileProgramTest, givenMultiDeviceProgramWithCreatedKernelsWhenCompilingThenInvalidOperationErrorIsReturned) {
+    USE_REAL_FILE_SYSTEM();
 
     MockSpecializedContext context;
     cl_program pProgram = nullptr;

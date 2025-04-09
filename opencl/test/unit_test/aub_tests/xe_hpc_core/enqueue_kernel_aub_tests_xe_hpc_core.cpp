@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ extern const HardwareInfo *defaultHwInfo;
 using AUBSimpleKernelStatelessTest = Test<KernelAUBFixture<SimpleKernelStatelessFixture>>;
 
 HWTEST_F(AUBSimpleKernelStatelessTest, givenPrefetchEnabledWhenEnqueuedKernelThenDataIsCorrect) {
+    USE_REAL_FILE_SYSTEM();
     DebugManagerStateRestore restore;
     debugManager.flags.EnableMemoryPrefetch.set(1);
 

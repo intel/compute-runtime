@@ -109,6 +109,8 @@ void AUBFixtureL0::tearDown() {
 }
 
 ze_module_handle_t AUBFixtureL0::createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags, bool useSharedFile) {
+    USE_REAL_FILE_SYSTEM();
+
     ze_module_handle_t moduleHandle;
     std::string testFile;
     if (useSharedFile) {

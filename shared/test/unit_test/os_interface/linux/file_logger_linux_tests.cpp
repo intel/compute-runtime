@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,10 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -89,9 +90,10 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     flags.LogAllocationMemoryPool.set(true);
     flags.LogAllocationStdout.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -140,7 +142,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     EXPECT_TRUE(output.find("Handle: 4") != std::string::npos);
     EXPECT_TRUE(output.find("\n") != std::string::npos);
 
-    logFileCreated = fileExists(fileLogger.getLogFileName());
+    logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 }
 
@@ -149,9 +151,10 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
 
@@ -185,9 +188,10 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(false);
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,8 @@ namespace ULT {
 void verifyDevices(cl_program pProgram, size_t expectedNumDevices, cl_device_id *expectedDevices);
 
 TEST_F(ClGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -97,6 +99,8 @@ TEST_F(ClGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledT
 }
 
 TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingForSpecificDevicesThenOnlySpecificDevicesAndTheirSubDevicesReportBuildStatus) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -174,6 +178,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingForSpecificD
 }
 
 TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
+    USE_REAL_FILE_SYSTEM();
+
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -284,6 +290,8 @@ TEST_F(ClGetProgramBuildInfoTests, givenInvalidDeviceInputWhenGetProgramBuildInf
 }
 
 TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingForSpecificDevicesThenOnlySpecificDevicesReportBuildStatus) {
+    USE_REAL_FILE_SYSTEM();
+
     MockProgram *pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -370,6 +378,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingForSpecificDev
 }
 
 TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
+    USE_REAL_FILE_SYSTEM();
+
     MockProgram *pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -457,6 +467,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingWithoutInputDe
 }
 
 TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDevicesThenOnlySpecificDevicesAndTheirSubDevicesReportBuildStatus) {
+    USE_REAL_FILE_SYSTEM();
+
     MockProgram *pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
@@ -539,6 +551,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDe
 }
 
 TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
+    USE_REAL_FILE_SYSTEM();
+
     MockProgram *pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
     size_t sourceSize = 0;
