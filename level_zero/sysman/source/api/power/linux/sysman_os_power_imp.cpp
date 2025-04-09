@@ -77,18 +77,21 @@ ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPope
 }
 
 ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
+    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
     if (isTelemetrySupportAvailable) {
-        return pSysmanProductHelper->getPowerEnergyCounter(pEnergy, pLinuxSysmanImp, powerDomain, subdeviceId);
+        result = pSysmanProductHelper->getPowerEnergyCounter(pEnergy, pLinuxSysmanImp, powerDomain, subdeviceId);
     }
 
-    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    result = pSysfsAccess->read(energyCounterNodeFile, pEnergy->energy);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), energyCounterNodeFile.c_str(), getErrorCode(result));
-        return result;
+        if ((result = pSysfsAccess->read(energyCounterNodeFile, pEnergy->energy)) != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), energyCounterNodeFile.c_str(), getErrorCode(result));
+            return result;
+        }
     }
 
     pEnergy->timestamp = SysmanDevice::getSysmanTimestamp();
+
     return result;
 }
 
