@@ -557,7 +557,23 @@ static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetM
       {"GDDR4_CH1_GT_64B_WR_REQ_UPPER", 281},
       {"GDDR4_CH1_GT_64B_WR_REQ_LOWER", 280},
       {"GDDR5_CH1_GT_64B_WR_REQ_UPPER", 321},
-      {"GDDR5_CH1_GT_64B_WR_REQ_LOWER", 320}}}};
+      {"GDDR5_CH1_GT_64B_WR_REQ_LOWER", 320}}},
+    {0x1e2f8301, // BMG G31 PUNIT rev 2
+     {{"XTAL_CLK_FREQUENCY", 1},
+      {"ACCUM_PACKAGE_ENERGY", 12},
+      {"ACCUM_PSYS_ENERGY", 13},
+      {"VRAM_BANDWIDTH", 14},
+      {"XTAL_COUNT", 128},
+      {"VCCGT_ENERGY_ACCUMULATOR", 407},
+      {"VCCDDR_ENERGY_ACCUMULATOR", 410}}},
+    {0x1e2f8302, // BMG G31 PUNIT rev 3
+     {{"XTAL_CLK_FREQUENCY", 1},
+      {"ACCUM_PACKAGE_ENERGY", 12},
+      {"ACCUM_PSYS_ENERGY", 13},
+      {"VRAM_BANDWIDTH", 14},
+      {"XTAL_COUNT", 128},
+      {"VCCGT_ENERGY_ACCUMULATOR", 407},
+      {"VCCDDR_ENERGY_ACCUMULATOR", 410}}}};
 
 ze_result_t getGpuMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {
     uint32_t gpuMaxTemperature = 0;
