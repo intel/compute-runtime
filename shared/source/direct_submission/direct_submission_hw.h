@@ -191,6 +191,10 @@ class DirectSubmissionHw {
     void dispatchDiagnosticModeSection();
     size_t getDiagnosticModeSection();
     void setImmWritePostSyncOffset();
+    virtual void dispatchStopRingBufferSection(){};
+    virtual size_t dispatchStopRingBufferSectionSize() {
+        return 0;
+    };
 
     virtual bool isCompleted(uint32_t ringBufferIndex) = 0;
 

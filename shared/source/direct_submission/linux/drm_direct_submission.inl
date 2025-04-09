@@ -243,6 +243,18 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
+void DrmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSection() {
+    TagData currentTagData = {};
+    getTagAddressValue(currentTagData);
+    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+size_t DrmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSectionSize() {
+    return Dispatcher::getSizeMonitorFence(this->rootDeviceEnvironment);
+}
+
+template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
     if (this->disableMonitorFence) {
         this->currentTagData.tagValue++;

@@ -35,6 +35,8 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     void ensureRingCompletion() override;
     void handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) override;
+    void dispatchStopRingBufferSection() override;
+    size_t dispatchStopRingBufferSectionSize() override;
     uint64_t updateTagValue(bool requireMonitorFence) override;
     void getTagAddressValue(TagData &tagData) override;
     void getTagAddressValueForRingSwitch(TagData &tagData) override;

@@ -454,55 +454,6 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStopWhenStopRingIsCalledThen
     EXPECT_EQ(oldQueueCount + 1, directSubmission.semaphoreData->queueWorkCount);
 }
 
-HWTEST_F(DirectSubmissionTest,
-         givenDirectSubmissionDisableMonitorFenceWhenStopRingIsCalledThenExpectStopCommandAndMonitorFenceDispatched) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using Dispatcher = RenderDispatcher<FamilyType>;
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    regularDirectSubmission.disableMonitorFence = false;
-    size_t regularSizeEnd = regularDirectSubmission.getSizeEnd(false);
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-
-    bool ret = directSubmission.allocateResources();
-    directSubmission.ringStart = true;
-
-    EXPECT_TRUE(ret);
-
-    size_t tagUpdateSize = Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment);
-
-    size_t disabledSizeEnd = directSubmission.getSizeEnd(false);
-    EXPECT_EQ(disabledSizeEnd, regularSizeEnd + tagUpdateSize);
-
-    directSubmission.tagValueSetValue = 0x4343123ull;
-    directSubmission.tagAddressSetValue = 0xBEEF00000ull;
-    directSubmission.stopRingBuffer(false);
-    size_t expectedDispatchSize = disabledSizeEnd;
-    EXPECT_LE(directSubmission.ringCommandStream.getUsed(), expectedDispatchSize);
-    EXPECT_GE(directSubmission.ringCommandStream.getUsed() + MemoryConstants::cacheLineSize, expectedDispatchSize);
-
-    HardwareParse hwParse;
-    hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
-    hwParse.findHardwareCommands<FamilyType>();
-    MI_BATCH_BUFFER_END *bbEnd = hwParse.getCommand<MI_BATCH_BUFFER_END>();
-    EXPECT_NE(nullptr, bbEnd);
-
-    bool foundFenceUpdate = false;
-    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        uint64_t data = pipeControl->getImmediateData();
-        if ((directSubmission.tagAddressSetValue == NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl)) &&
-            (directSubmission.tagValueSetValue == data)) {
-            foundFenceUpdate = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(foundFenceUpdate);
-}
-
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSemaphoreThenExpectCorrectSizeUsed) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 

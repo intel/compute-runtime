@@ -45,6 +45,8 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     bool isCompleted(uint32_t ringBufferIndex) override;
     MOCKABLE_VIRTUAL void updateMonitorFenceValueForResidencyList(ResidencyContainer *allocationsForResidency);
     void makeGlobalFenceAlwaysResident() override;
+    void dispatchStopRingBufferSection() override;
+    size_t dispatchStopRingBufferSectionSize() override;
 
     TagData ringBufferEndCompletionTagData{};
     OsContextWin *osContextWin;

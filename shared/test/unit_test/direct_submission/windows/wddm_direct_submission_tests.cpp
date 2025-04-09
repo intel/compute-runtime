@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
@@ -1219,5 +1220,82 @@ TEST(DirectSubmissionControllerWindowsTest, givenDirectSubmissionControllerWhenC
     EXPECT_EQ(1u, SysCalls::timeEndPeriodCalled);
     EXPECT_EQ(1u, SysCalls::timeBeginPeriodLastValue);
     EXPECT_EQ(1u, SysCalls::timeEndPeriodLastValue);
+}
+
+HWTEST_F(WddmDirectSubmissionTest,
+         givenDirectSubmissionDisableMonitorFenceWhenStopRingIsCalledThenExpectStopCommandAndMonitorFenceDispatched) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> regularDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    regularDirectSubmission.disableMonitorFence = false;
+    size_t regularSizeEnd = regularDirectSubmission.getSizeEnd(false);
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    directSubmission.setTagAddressValue = true;
+    bool ret = directSubmission.allocateResources();
+    directSubmission.ringStart = true;
+
+    EXPECT_TRUE(ret);
+
+    size_t tagUpdateSize = 2 * Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment);
+
+    size_t disabledSizeEnd = directSubmission.getSizeEnd(false);
+    EXPECT_EQ(disabledSizeEnd, regularSizeEnd + tagUpdateSize);
+
+    directSubmission.tagValueSetValue = 0x4343123ull;
+    directSubmission.tagAddressSetValue = 0xBEEF00000ull;
+    directSubmission.stopRingBuffer(false);
+    size_t expectedDispatchSize = disabledSizeEnd;
+    EXPECT_LE(directSubmission.ringCommandStream.getUsed(), expectedDispatchSize);
+    EXPECT_GE(directSubmission.ringCommandStream.getUsed() + MemoryConstants::cacheLineSize, expectedDispatchSize);
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    MI_BATCH_BUFFER_END *bbEnd = hwParse.getCommand<MI_BATCH_BUFFER_END>();
+    EXPECT_NE(nullptr, bbEnd);
+
+    bool foundFenceUpdate = false;
+    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        uint64_t data = pipeControl->getImmediateData();
+        if ((directSubmission.tagAddressSetValue == NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl)) &&
+            (directSubmission.tagValueSetValue == data)) {
+            foundFenceUpdate = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(foundFenceUpdate);
+}
+
+HWTEST2_F(WddmDirectSubmissionTest, givenRelaxedOrderingSchedulerRequiredWhenAskingForCmdsSizeThenReturnCorrectValue, IsAtLeastXeHpcCore) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    MockWddmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
+
+    size_t expectedBaseSemaphoreSectionSize = directSubmission.getSizePrefetchMitigation();
+    if (directSubmission.isDisablePrefetcherRequired) {
+        expectedBaseSemaphoreSectionSize += 2 * directSubmission.getSizeDisablePrefetcher();
+    }
+
+    directSubmission.relaxedOrderingEnabled = true;
+    if (directSubmission.miMemFenceRequired) {
+        expectedBaseSemaphoreSectionSize += MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(device->getRootDeviceEnvironment());
+    }
+
+    EXPECT_EQ(expectedBaseSemaphoreSectionSize + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::totalSize, directSubmission.getSizeSemaphoreSection(true));
+    EXPECT_EQ(expectedBaseSemaphoreSectionSize + EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), directSubmission.getSizeSemaphoreSection(false));
+
+    size_t expectedBaseEndSize = Dispatcher::getSizeStopCommandBuffer() +
+                                 Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
+                                 (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
+                                 MemoryConstants::cacheLineSize;
+    if (directSubmission.disableMonitorFence) {
+        expectedBaseEndSize += 2 * Dispatcher::getSizeMonitorFence(device->getRootDeviceEnvironment());
+    }
+    EXPECT_EQ(expectedBaseEndSize + directSubmission.getSizeDispatchRelaxedOrderingQueueStall(), directSubmission.getSizeEnd(true));
+    EXPECT_EQ(expectedBaseEndSize, directSubmission.getSizeEnd(false));
 }
 } // namespace NEO

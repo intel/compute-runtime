@@ -2730,34 +2730,6 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndWit
     }
 }
 
-HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenRelaxedOrderingSchedulerRequiredWhenAskingForCmdsSizeThenReturnCorrectValue, IsAtLeastXeHpcCore) {
-    using Dispatcher = RenderDispatcher<FamilyType>;
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-
-    size_t expectedBaseSemaphoreSectionSize = directSubmission.getSizePrefetchMitigation();
-    if (directSubmission.isDisablePrefetcherRequired) {
-        expectedBaseSemaphoreSectionSize += 2 * directSubmission.getSizeDisablePrefetcher();
-    }
-
-    if (directSubmission.miMemFenceRequired) {
-        expectedBaseSemaphoreSectionSize += MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(pDevice->getRootDeviceEnvironment());
-    }
-
-    EXPECT_EQ(expectedBaseSemaphoreSectionSize + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::totalSize, directSubmission.getSizeSemaphoreSection(true));
-    EXPECT_EQ(expectedBaseSemaphoreSectionSize + EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), directSubmission.getSizeSemaphoreSection(false));
-
-    size_t expectedBaseEndSize = Dispatcher::getSizeStopCommandBuffer() +
-                                 Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
-                                 (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
-                                 MemoryConstants::cacheLineSize;
-    if (directSubmission.disableMonitorFence) {
-        expectedBaseEndSize += Dispatcher::getSizeMonitorFence(pDevice->getRootDeviceEnvironment());
-    }
-
-    EXPECT_EQ(expectedBaseEndSize + directSubmission.getSizeDispatchRelaxedOrderingQueueStall(), directSubmission.getSizeEnd(true));
-    EXPECT_EQ(expectedBaseEndSize, directSubmission.getSizeEnd(false));
-}
-
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenSchedulerRequiredWhenDispatchingReturnPtrsThenAddOffset, IsAtLeastXeHpcCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 

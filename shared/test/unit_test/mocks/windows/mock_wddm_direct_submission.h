@@ -22,8 +22,12 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::detectGpuHang;
     using BaseClass::disableMonitorFence;
     using BaseClass::dispatchMonitorFenceRequired;
+    using BaseClass::getSizeDisablePrefetcher;
     using BaseClass::getSizeDispatch;
+    using BaseClass::getSizeDispatchRelaxedOrderingQueueStall;
+    using BaseClass::getSizeEnd;
     using BaseClass::getSizeNewResourceHandler;
+    using BaseClass::getSizePrefetchMitigation;
     using BaseClass::getSizeSemaphoreSection;
     using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::getSizeSystemMemoryFenceAddress;
@@ -36,17 +40,20 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::handleSwitchRingBuffers;
     using BaseClass::inputMonitorFenceDispatchRequirement;
     using BaseClass::isCompleted;
+    using BaseClass::isDisablePrefetcherRequired;
     using BaseClass::isNewResourceHandleNeeded;
     using BaseClass::lastSubmittedThrottle;
     using BaseClass::maxRingBufferCount;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContextWin;
     using BaseClass::previousRingBuffer;
+    using BaseClass::relaxedOrderingEnabled;
     using BaseClass::ringBufferEndCompletionTagData;
     using BaseClass::ringBuffers;
     using BaseClass::ringCommandStream;
     using BaseClass::ringFence;
     using BaseClass::ringStart;
+    using BaseClass::rootDeviceEnvironment;
     using BaseClass::semaphoreData;
     using BaseClass::semaphoreGpuVa;
     using BaseClass::semaphorePtr;
@@ -72,7 +79,18 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
         ringBufferForCompletionFence = completionBufferIndex;
         BaseClass::updateTagValueImplForSwitchRingBuffer(completionBufferIndex);
     }
+    void getTagAddressValue(TagData &tagData) override {
+        if (setTagAddressValue) {
+            tagData.tagAddress = tagAddressSetValue;
+            tagData.tagValue = tagValueSetValue;
+        } else {
+            BaseClass::getTagAddressValue(tagData);
+        }
+    }
     uint32_t updateMonitorFenceValueForResidencyListCalled = 0u;
     uint32_t ringBufferForCompletionFence = 0u;
+    bool setTagAddressValue = false;
+    uint64_t tagAddressSetValue = MemoryConstants::pageSize;
+    uint64_t tagValueSetValue = 1ull;
 };
 } // namespace NEO

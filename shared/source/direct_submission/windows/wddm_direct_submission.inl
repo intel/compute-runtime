@@ -128,6 +128,7 @@ template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
     if (this->disableMonitorFence) {
         updateTagValueImplForSwitchRingBuffer(this->currentRingBuffer);
+        updateTagValueImpl(this->currentRingBuffer);
     }
 }
 
@@ -198,6 +199,19 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValueForRingSwitc
     tagData.tagValue = this->ringBufferEndCompletionTagData.tagValue + 1;
 }
 
+template <typename GfxFamily, typename Dispatcher>
+void WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSection() {
+    TagData currentTagData = {};
+    getTagAddressValueForRingSwitch(currentTagData);
+    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
+    getTagAddressValue(currentTagData);
+    Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+size_t WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSectionSize() {
+    return 2 * Dispatcher::getSizeMonitorFence(this->rootDeviceEnvironment);
+}
 template <typename GfxFamily, typename Dispatcher>
 inline bool WddmDirectSubmission<GfxFamily, Dispatcher>::isCompleted(uint32_t ringBufferIndex) {
     auto taskCount = this->ringBuffers[ringBufferIndex].completionFenceForSwitch;
