@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,11 @@ void DeferredDeleter::stop() {
         doWorkInBackground = false;
         lock.unlock();
         condition.notify_one();
-        // Wait for the working job to exit
-        worker->join();
+        worker->detach();
+        // Wait for the working job to exit main loop
+        while (!exitedMainLoop) {
+            std::this_thread::yield();
+        }
         // Delete working thread
         worker.reset();
     }
@@ -76,6 +79,7 @@ void DeferredDeleter::ensureThread() {
     if (worker != nullptr) {
         return;
     }
+    exitedMainLoop = false;
     worker = Thread::createFunc(run, reinterpret_cast<void *>(this));
 }
 
@@ -103,6 +107,7 @@ void *DeferredDeleter::run(void *arg) {
         lock.lock();
         // Check whether working thread should be stopped
     } while (!self->shouldStop());
+    self->exitedMainLoop = true;
     lock.unlock();
     return nullptr;
 }

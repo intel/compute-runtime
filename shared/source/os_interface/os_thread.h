@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ class Thread {
   public:
     static decltype(&Thread::create) createFunc;
     virtual void join() = 0;
+    virtual void detach() = 0;
     virtual ~Thread() = default;
     virtual void yield() = 0;
 };

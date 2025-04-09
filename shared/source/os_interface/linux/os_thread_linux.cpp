@@ -24,6 +24,10 @@ void ThreadLinux::join() {
     pthread_join(threadId, nullptr);
 }
 
+void ThreadLinux::detach() {
+    pthread_detach(threadId);
+}
+
 void ThreadLinux::yield() {
     sched_yield();
 }

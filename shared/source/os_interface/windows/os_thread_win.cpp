@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,12 @@ void ThreadWin::join() {
     thread->join();
 }
 
+void ThreadWin::detach() {
+    thread->detach();
+}
+
 void ThreadWin::yield() {
     std::this_thread::yield();
 }
+
 } // namespace NEO
