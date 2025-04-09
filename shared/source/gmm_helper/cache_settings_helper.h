@@ -19,7 +19,7 @@ class ProductHelper;
 struct RootDeviceEnvironment;
 
 struct CacheSettingsHelper {
-    static GMM_RESOURCE_USAGE_TYPE_ENUM getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper);
+    static GMM_RESOURCE_USAGE_TYPE_ENUM getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo);
     static GMM_RESOURCE_USAGE_TYPE_ENUM getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const ProductHelper &productHelper);
 
     static constexpr bool isUncachedType(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType) {
@@ -32,7 +32,7 @@ struct CacheSettingsHelper {
     static bool preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment);
 
   protected:
-    static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper);
+    static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo *hwInfo);
     static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType, const ProductHelper &productHelper);
 };
 } // namespace NEO

@@ -74,7 +74,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
 
     auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
 
-    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::internalHeap, debugManager.flags.DisableCachingForHeaps.get(), productHelper);
+    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::internalHeap, debugManager.flags.DisableCachingForHeaps.get(), productHelper, args.gmmHelper->getHardwareInfo());
     auto heapMocsValue = args.gmmHelper->getMOCS(heapResourceUsage);
 
     args.stateBaseAddressCmd->setSurfaceStateMemoryObjectControlState(heapMocsValue);
