@@ -83,7 +83,6 @@ enum class SysfsName {
     sysfsNamePackageEnergyCounterNode,
     sysfsNamePackageDefaultPowerLimit,
     sysfsNamePackageCriticalPowerLimit,
-    sysfsNameCardEnergyCounterNode,
     sysfsNameStandbyModeControl,
     sysfsNameMemoryAddressRange,
     sysfsNameMaxMemoryFrequency,
@@ -312,7 +311,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isBoostFrequencyAvailable() const override { return false; }
     bool isTdpFrequencyAvailable() const override { return false; }
     bool isPhysicalMemorySizeSupported() const override { return true; }
-    std::vector<zes_power_domain_t> getPowerDomains() const override;
+    std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
 
     // Wedged state is not supported in XE.
     void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override{};
