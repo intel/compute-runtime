@@ -581,6 +581,67 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     device->getDriverHandle()->getSvmAllocsManager()->freeSVMAlloc(deviceAlloc);
 }
 
+HWTEST_F(CommandQueueIndirectAllocations,
+         givenDeviceThatSupportsSubmittingIndirectAllocationsAsPackWhenIndirectAccessIsUsedWhenExecutingRegularOnImmediateThenWholePackIsMadeResidentWithRegularCommandList) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
+
+    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(productFamily,
+                                                                                       device,
+                                                                                       &desc,
+                                                                                       false,
+                                                                                       NEO::EngineGroupType::compute,
+                                                                                       returnValue));
+    ASSERT_NE(nullptr, commandListImmediate);
+
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily,
+                                                                            device,
+                                                                            NEO::EngineGroupType::compute,
+                                                                            0u,
+                                                                            returnValue, false));
+    ASSERT_NE(nullptr, commandListRegular);
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &deviceAlloc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAlloc);
+
+    createKernel();
+    kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->kernelHasIndirectAccess = true;
+    EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
+
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->overrideAllocateAsPackReturn = 1u;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    result = commandListRegular->appendLaunchKernel(kernel->toHandle(),
+                                                    groupCount,
+                                                    nullptr, 0, nullptr,
+                                                    launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    commandListRegular->close();
+
+    auto cmdListHandle = commandListRegular->toHandle();
+    result = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(gpuAlloc->isResident(csr.getOsContext().getContextId()));
+    EXPECT_EQ(GraphicsAllocation::objectAlwaysResident, gpuAlloc->getResidencyTaskCount(csr.getOsContext().getContextId()));
+
+    device->getDriverHandle()->getSvmAllocsManager()->freeSVMAlloc(deviceAlloc);
+}
+
 HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskWithIndirectAllocsAsPackDisabledThenLaunchKernelWorks) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);

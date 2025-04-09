@@ -144,6 +144,11 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
         return returnCode;
     }
 
+    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override {
+        handleIndirectAllocationResidencyCalledTimes++;
+        BaseClass::handleIndirectAllocationResidency(unifiedMemoryControls, lockForIndirect, performMigration);
+    }
+
     NEO::GraphicsAllocation *recordedGlobalStatelessAllocation = nullptr;
     NEO::ScratchSpaceController *recordedScratchController = nullptr;
     uint32_t synchronizedCalled = 0;
@@ -151,6 +156,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     ze_result_t synchronizeReturnValue{ZE_RESULT_SUCCESS};
     std::optional<NEO::WaitStatus> reserveLinearStreamSizeReturnValue{};
     std::optional<NEO::SubmissionStatus> submitBatchBufferReturnValue{};
+    uint32_t handleIndirectAllocationResidencyCalledTimes = 0;
     bool recordedLockScratchController = false;
 };
 

@@ -646,6 +646,79 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     commandQueue->destroy();
 }
 
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetOnRegularCmdListWhenPrefetchApiIsCalledOnUnifiedSharedMemoryAndRegularExecutedOnImmediateThenCallMigrateAllocationsToGpuOnce, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseKmdMigration.set(1);
+
+    neoDevice->deviceBitfield = 0b1000;
+
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+    memoryManager->prefetchManager.reset(new MockPrefetchManager());
+
+    createKernel();
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {};
+
+    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false)->toHandle();
+    auto commandList = CommandList::fromHandle(commandListHandle);
+    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(productFamily,
+                                                                                       device,
+                                                                                       &queueDesc,
+                                                                                       false,
+                                                                                       NEO::EngineGroupType::compute,
+                                                                                       returnValue));
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    result = commandList->appendMemoryPrefetch(ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto prefetchManager = static_cast<MockPrefetchManager *>(memoryManager->prefetchManager.get());
+    EXPECT_EQ(1u, commandList->getPrefetchContext().allocations.size());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    commandList->close();
+
+    result = commandListImmediate->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(memoryManager->setMemPrefetchCalled);
+    EXPECT_EQ(3u, memoryManager->memPrefetchSubDeviceIds[0]);
+
+    EXPECT_TRUE(prefetchManager->migrateAllocationsToGpuCalled);
+    EXPECT_EQ(1u, prefetchManager->migrateAllocationsToGpuCalledCount);
+    EXPECT_EQ(1u, commandList->getPrefetchContext().allocations.size());
+
+    commandList->reset();
+    EXPECT_TRUE(prefetchManager->removeAllocationsCalled);
+    EXPECT_EQ(0u, commandList->getPrefetchContext().allocations.size());
+
+    context->freeMem(ptr);
+    commandList->destroy();
+}
+
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledForUnifiedSharedMemoryOnCmdListCopyOnlyThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);

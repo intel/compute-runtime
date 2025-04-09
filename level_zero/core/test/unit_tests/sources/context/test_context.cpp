@@ -957,6 +957,70 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 }
 
 HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
+         GivenImmediateCommandListWhenExecutingRegularCommandListsHavingSharedAllocationWithMigrationOnImmediateThenMemoryFromMakeResidentIsMovedToGpuOnce) {
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
+    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
+
+    ze_result_t res = context->makeMemoryResident(device, ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    EXPECT_EQ(previousSize + 1, currentSize);
+
+    const ze_command_queue_desc_t desc = {};
+    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
+
+    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(productFamily,
+                                                                                       device,
+                                                                                       &desc,
+                                                                                       false,
+                                                                                       NEO::EngineGroupType::compute,
+                                                                                       result));
+    ASSERT_NE(nullptr, commandListImmediate);
+
+    void *dstBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4090u, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily,
+                                                                            device,
+                                                                            NEO::EngineGroupType::compute,
+                                                                            0u,
+                                                                            result, false));
+
+    int one = 1;
+    result = commandListRegular->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
+                                                  nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    commandListRegular->close();
+
+    auto cmdListHandle = commandListRegular->toHandle();
+    result = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 1u);
+    EXPECT_EQ(mockPageFaultManager->migratedAddress, ptr);
+
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::success;
+    res = context->evictMemory(device, ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    context->freeMem(ptr);
+    context->freeMem(dstBuffer);
+}
+
+HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
          whenExecutingImmediateCommandListsHavingHostAllocationWithMigrationThenMemoryFromMakeResidentIsMovedToGpu) {
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
     size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();

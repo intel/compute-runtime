@@ -451,6 +451,8 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     auto csr = cmdQImp->getCsr();
     auto lockCSR = outerLock != nullptr ? std::move(*outerLock) : csr->obtainUniqueOwnership();
 
+    std::unique_lock<std::mutex> lockForIndirect;
+
     if (appendOperation != NEO::AppendOperations::cmdList) {
         if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
             auto svmAllocMgr = this->device->getDriverHandle()->getSvmAllocsManager();
@@ -458,35 +460,34 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         }
 
         cmdQ->registerCsrClient();
-    }
 
-    std::unique_lock<std::mutex> lockForIndirect;
-    if (this->hasIndirectAllocationsAllowed()) {
-        cmdQ->handleIndirectAllocationResidency(this->getUnifiedMemoryControls(), lockForIndirect, performMigration);
-    }
-
-    if (performMigration) {
-        auto deviceImp = static_cast<DeviceImp *>(this->device);
-        auto pageFaultManager = deviceImp->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-        if (pageFaultManager == nullptr) {
-            performMigration = false;
+        if (this->hasIndirectAllocationsAllowed()) {
+            cmdQ->handleIndirectAllocationResidency(this->getUnifiedMemoryControls(), lockForIndirect, performMigration);
         }
-    }
 
-    cmdQ->makeResidentAndMigrate(performMigration, this->commandContainer.getResidencyContainer());
+        if (performMigration) {
+            auto deviceImp = static_cast<DeviceImp *>(this->device);
+            auto pageFaultManager = deviceImp->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+            if (pageFaultManager == nullptr) {
+                performMigration = false;
+            }
+        }
 
-    static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false);
+        cmdQ->makeResidentAndMigrate(performMigration, this->commandContainer.getResidencyContainer());
 
-    if (performMigration) {
-        this->migrateSharedAllocations();
-    }
+        if (performMigration) {
+            this->migrateSharedAllocations();
+        }
 
-    if (this->performMemoryPrefetch) {
-        auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
-        prefetchManager->migrateAllocationsToGpu(this->getPrefetchContext(),
-                                                 *this->device->getDriverHandle()->getSvmAllocsManager(),
-                                                 *this->device->getNEODevice(),
-                                                 *csr);
+        if (this->performMemoryPrefetch) {
+            auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
+            prefetchManager->migrateAllocationsToGpu(this->getPrefetchContext(),
+                                                     *this->device->getDriverHandle()->getSvmAllocsManager(),
+                                                     *this->device->getNEODevice(),
+                                                     *csr);
+        }
+
+        static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false);
     }
 
     NEO::CompletionStamp completionStamp;
