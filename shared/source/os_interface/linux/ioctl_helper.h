@@ -46,6 +46,7 @@ struct MemoryRegion {
     MemoryClassInstance region;
     uint64_t probedSize;
     uint64_t unallocatedSize;
+    uint64_t cpuVisibleSize;
     std::bitset<4> tilesMask;
 };
 

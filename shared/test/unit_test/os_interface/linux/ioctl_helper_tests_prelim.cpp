@@ -194,9 +194,11 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenRetur
     expectedMemRegions[0].region.memoryClass = prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_SYSTEM;
     expectedMemRegions[0].region.memoryInstance = 0;
     expectedMemRegions[0].probedSize = 1024;
+    expectedMemRegions[0].cpuVisibleSize = 1024;
     expectedMemRegions[1].region.memoryClass = prelim_drm_i915_gem_memory_class::PRELIM_I915_MEMORY_CLASS_DEVICE;
     expectedMemRegions[1].region.memoryInstance = 0;
     expectedMemRegions[1].probedSize = 1024;
+    expectedMemRegions[1].cpuVisibleSize = 256;
 
     auto regionInfo = getRegionInfo(expectedMemRegions);
 
@@ -207,6 +209,7 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenRetur
         EXPECT_EQ(expectedMemRegions[i].region.memoryInstance, memRegions[i].region.memoryInstance);
         EXPECT_EQ(expectedMemRegions[i].probedSize, memRegions[i].probedSize);
         EXPECT_EQ(expectedMemRegions[i].unallocatedSize, memRegions[i].unallocatedSize);
+        EXPECT_EQ(expectedMemRegions[i].cpuVisibleSize, memRegions[i].cpuVisibleSize);
     }
 }
 

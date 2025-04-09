@@ -27,6 +27,7 @@
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -139,6 +140,33 @@ TEST(DrmTest, GivenValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThe
     uint32_t clkRate = 0;
     EXPECT_TRUE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
     EXPECT_EQ(clkRate, 800u);
+}
+
+struct MockIoctlHelperForSmallBar : public IoctlHelperUpstream {
+    using IoctlHelperUpstream::IoctlHelperUpstream;
+
+    std::unique_ptr<MemoryInfo> createMemoryInfo() {
+        auto memoryInfo{new MockMemoryInfo{drm}};
+        memoryInfo->smallBarDetected = true;
+        return std::unique_ptr<MemoryInfo>{memoryInfo};
+    }
+};
+
+TEST(DrmTest, givenSmallBarDetectedInMemoryInfoWhenSetupHardwareInfoCalledThenErrorMessagePrinted) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.setPciPath("0000:ab:cd.e");
+
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
+
+    auto mockIoctlHelper = std::make_unique<MockIoctlHelperForSmallBar>(drm);
+    drm.ioctlHelper.reset(mockIoctlHelper.release());
+
+    ::testing::internal::CaptureStderr();
+    EXPECT_EQ(-1, drm.setupHardwareInfo(&device, false));
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_STREQ("WARNING: Small BAR detected for device 0000:ab:cd.e\n", output.c_str());
 }
 
 TEST(DrmTest, GivenMemoryInfoWithLocalMemoryRegionsWhenGetDeviceMemoryPhysicalSizeInBytesIsCalledThenCorrectSizeReturned) {

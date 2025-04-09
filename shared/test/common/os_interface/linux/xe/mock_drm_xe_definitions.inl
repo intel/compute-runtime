@@ -285,25 +285,28 @@ void DrmMockXe::initInstance() {
     auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(this->queryMemUsage);
     xeQueryMemUsage->num_mem_regions = 3;
     xeQueryMemUsage->mem_regions[0] = {
-        DRM_XE_MEM_REGION_CLASS_VRAM,  // class
-        1,                             // instance
-        MemoryConstants::pageSize,     // min page size
-        2 * MemoryConstants::gigaByte, // total size
-        MemoryConstants::megaByte      // used size
+        .mem_class = DRM_XE_MEM_REGION_CLASS_VRAM,
+        .instance = 1,
+        .min_page_size = MemoryConstants::pageSize,
+        .total_size = 2 * MemoryConstants::gigaByte,
+        .used = MemoryConstants::megaByte,
+        .cpu_visible_size = 2 * MemoryConstants::gigaByte,
     };
     xeQueryMemUsage->mem_regions[1] = {
-        DRM_XE_MEM_REGION_CLASS_SYSMEM, // class
-        0,                              // instance
-        MemoryConstants::pageSize,      // min page size
-        MemoryConstants::gigaByte,      // total size
-        MemoryConstants::kiloByte       // used size
+        .mem_class = DRM_XE_MEM_REGION_CLASS_SYSMEM,
+        .instance = 0,
+        .min_page_size = MemoryConstants::pageSize,
+        .total_size = MemoryConstants::gigaByte,
+        .used = MemoryConstants::kiloByte,
+        .cpu_visible_size = MemoryConstants::gigaByte,
     };
     xeQueryMemUsage->mem_regions[2] = {
-        DRM_XE_MEM_REGION_CLASS_VRAM,  // class
-        2,                             // instance
-        MemoryConstants::pageSize,     // min page size
-        4 * MemoryConstants::gigaByte, // total size
-        MemoryConstants::gigaByte      // used size
+        .mem_class = DRM_XE_MEM_REGION_CLASS_VRAM,
+        .instance = 2,
+        .min_page_size = MemoryConstants::pageSize,
+        .total_size = 4 * MemoryConstants::gigaByte,
+        .used = MemoryConstants::gigaByte,
+        .cpu_visible_size = 4 * MemoryConstants::gigaByte,
     };
 
     this->queryGtList.resize(1 + (6 * 12)); // 1 qword for num gts and 12 qwords per gt

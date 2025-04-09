@@ -135,10 +135,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThe
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
 
     xeIoctlHelper->initialize();
     drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
-    ASSERT_NE(nullptr, xeIoctlHelper);
 
     uint64_t size = 1234;
     uint32_t memoryBanks = 3u;
@@ -166,10 +166,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZero
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
 
     xeIoctlHelper->initialize();
     drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
-    ASSERT_NE(nullptr, xeIoctlHelper);
 
     uint64_t size = 1234;
     uint32_t memoryBanks = 0u;
@@ -197,10 +197,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenP
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
 
     xeIoctlHelper->initialize();
     drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
-    ASSERT_NE(nullptr, xeIoctlHelper);
 
     uint64_t size = 1234;
     uint32_t memoryBanks = 3u;
@@ -227,10 +227,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateWithRegionsAndCo
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
 
     xeIoctlHelper->initialize();
     drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
-    ASSERT_NE(nullptr, xeIoctlHelper);
 
     bool isCoherent = true;
     uint64_t size = 1234;
@@ -246,10 +246,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateWithOnlySystemRe
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
 
     xeIoctlHelper->initialize();
     drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
-    ASSERT_NE(nullptr, xeIoctlHelper);
 
     bool isCoherent = true;
     uint64_t size = 1234;
@@ -257,6 +257,65 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateWithOnlySystemRe
 
     EXPECT_EQ(testValueGemCreate, xeIoctlHelper->createGem(size, memoryBanks, isCoherent));
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WB, drm->createParamsCpuCaching);
+}
+
+TEST_F(IoctlHelperXeTest, givenLmemRegionsCpuVisibleSizeEqualToProbedSizeWhenMemoryInfoCreatedThenSmallBarIsNotDetected) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    xeIoctlHelper->initialize();
+    drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
+    EXPECT_FALSE(drm->memoryInfo->isSmallBarDetected());
+}
+
+TEST_F(IoctlHelperXeTest, givenLmemRegionCpuVisibleSizeSmallerThanProbedSizeWhenMemoryInfoCreatedThenSmallBarIsDetected) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(drm->queryMemUsage);
+    auto &smallBarRegion = xeQueryMemUsage->mem_regions[0];
+    EXPECT_EQ(smallBarRegion.mem_class, DRM_XE_MEM_REGION_CLASS_VRAM);
+    smallBarRegion.cpu_visible_size = smallBarRegion.total_size - 1U;
+
+    xeIoctlHelper->initialize();
+    drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
+    EXPECT_TRUE(drm->memoryInfo->isSmallBarDetected());
+}
+
+TEST_F(IoctlHelperXeTest, givenLmemRegionCpuVisibleSizeBeingZeroWhenMemoryInfoCreatedThenSmallBarIsNotDetected) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(drm->queryMemUsage);
+    auto &smallBarRegion = xeQueryMemUsage->mem_regions[2];
+    EXPECT_EQ(smallBarRegion.mem_class, DRM_XE_MEM_REGION_CLASS_VRAM);
+    smallBarRegion.cpu_visible_size = 0U;
+
+    xeIoctlHelper->initialize();
+    drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
+    EXPECT_FALSE(drm->memoryInfo->isSmallBarDetected());
+}
+
+TEST_F(IoctlHelperXeTest, givenSysmemRegionCpuVisibleSizeSmallerThanProbedWhenMemoryInfoCreatedThenSmallBarIsDetected) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(drm->queryMemUsage);
+    auto &sysmemRegion = xeQueryMemUsage->mem_regions[1];
+    EXPECT_EQ(sysmemRegion.mem_class, DRM_XE_MEM_REGION_CLASS_SYSMEM);
+    sysmemRegion.cpu_visible_size = sysmemRegion.total_size - 1U;
+
+    xeIoctlHelper->initialize();
+    drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
+    EXPECT_FALSE(drm->memoryInfo->isSmallBarDetected());
 }
 
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallSetGemTilingThenAlwaysTrue) {
@@ -1844,10 +1903,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenGetCpuCachingModeCalledThenCorre
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
 
     xeIoctlHelper->initialize();
     drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
-    ASSERT_NE(nullptr, xeIoctlHelper);
 
     EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false, false), DRM_XE_GEM_CPU_CACHING_WC);
     EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false, true), DRM_XE_GEM_CPU_CACHING_WC);
@@ -1951,10 +2010,10 @@ TEST_F(IoctlHelperXeTest, whenCallingGetResetStatsThenSuccessIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
 
     xeIoctlHelper->initialize();
     drm->memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
-    ASSERT_NE(nullptr, xeIoctlHelper);
 
     ResetStats resetStats{};
     resetStats.contextId = 0;

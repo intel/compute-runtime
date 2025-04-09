@@ -373,13 +373,15 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
 }
 
 inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_mem_region &xeMemRegion, std::bitset<4> tilesMask) {
-    MemoryRegion memoryRegion{};
-    memoryRegion.region.memoryInstance = xeMemRegion.instance;
-    memoryRegion.region.memoryClass = xeMemRegion.mem_class;
-    memoryRegion.probedSize = xeMemRegion.total_size;
-    memoryRegion.unallocatedSize = xeMemRegion.total_size - xeMemRegion.used;
-    memoryRegion.tilesMask = tilesMask;
-    return memoryRegion;
+    return {
+        .region{
+            .memoryClass = xeMemRegion.mem_class,
+            .memoryInstance = xeMemRegion.instance},
+        .probedSize = xeMemRegion.total_size,
+        .unallocatedSize = xeMemRegion.total_size - xeMemRegion.used,
+        .cpuVisibleSize = xeMemRegion.cpu_visible_size,
+        .tilesMask = tilesMask,
+    };
 }
 
 std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {

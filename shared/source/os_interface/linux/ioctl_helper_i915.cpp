@@ -26,6 +26,7 @@
 #include "shared/source/utilities/directory.h"
 
 #include <fcntl.h>
+#include <span>
 #include <sstream>
 
 namespace NEO {
@@ -183,11 +184,13 @@ std::vector<EngineCapabilities> IoctlHelperI915::translateToEngineCaps(const std
 }
 
 std::vector<MemoryRegion> IoctlHelperI915::translateToMemoryRegions(const std::vector<uint64_t> &regionInfo) {
+
     auto *data = reinterpret_cast<const drm_i915_query_memory_regions *>(regionInfo.data());
     auto memRegions = std::vector<MemoryRegion>(data->num_regions);
     for (uint32_t i = 0; i < data->num_regions; i++) {
         memRegions[i].probedSize = data->regions[i].probed_size;
         memRegions[i].unallocatedSize = data->regions[i].unallocated_size;
+        memRegions[i].cpuVisibleSize = data->regions[i].probed_cpu_visible_size;
         memRegions[i].region.memoryClass = data->regions[i].region.memory_class;
         memRegions[i].region.memoryInstance = data->regions[i].region.memory_instance;
     }
