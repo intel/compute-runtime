@@ -93,6 +93,11 @@ void L0GfxCoreHelperHw<Family>::stallIpDataMapDelete(std::map<uint64_t, void *> 
 
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) {
+    constexpr int ipStallSamplingOffset = 3;                      // Offset to read the first Stall Sampling report after IP Address.
+    constexpr int ipStallSamplingReportShift = 5;                 // Shift in bits required to read the stall sampling report data due to the IP address [0-28] bits to access the next report category data.
+    constexpr int stallSamplingReportCategoryMask = 0xff;         // Mask for Stall Sampling Report Category.
+    constexpr int stallSamplingReportSubSliceAndFlagsOffset = 48; // Offset to access Stall Sampling Report Sub Slice and flags.
+
     const uint8_t *tempAddr = pRawIpData;
     uint64_t ip = 0ULL;
     memcpy_s(reinterpret_cast<uint8_t *>(&ip), sizeof(ip), tempAddr, sizeof(ip));
