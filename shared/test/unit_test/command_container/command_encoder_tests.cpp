@@ -700,8 +700,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammi
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenSetupPostSyncMocsThenNothingHappen) {
     MockExecutionEnvironment executionEnvironment{};
-    uint32_t mocs;
-    EXPECT_NO_THROW(mocs = EncodePostSync<FamilyType>::getPostSyncMocs(*executionEnvironment.rootDeviceEnvironments[0], false));
+    uint32_t mocs = EncodePostSync<FamilyType>::getPostSyncMocs(*executionEnvironment.rootDeviceEnvironments[0], false);
     EXPECT_EQ(0u, mocs);
 }
 
