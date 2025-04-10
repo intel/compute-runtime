@@ -100,6 +100,9 @@ struct IpSamplingMetricGroupBase : public MetricGroupImp {
     ze_result_t destroy() override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+
+    static bool isMultiDeviceCaptureData(const size_t rawDataSize, const uint8_t *pRawData);
+    IpSamplingMetricSourceImp &getMetricSource() { return static_cast<IpSamplingMetricSourceImp &>(metricSource); }
 };
 
 struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
@@ -127,20 +130,18 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
         zet_metric_streamer_handle_t *phMetricStreamer) override;
     static std::unique_ptr<IpSamplingMetricGroupImp> create(IpSamplingMetricSourceImp &metricSource,
                                                             std::vector<IpSamplingMetricImp> &ipSamplingMetrics);
-    IpSamplingMetricSourceImp &getMetricSource() { return static_cast<IpSamplingMetricSourceImp &>(metricSource); }
-    ze_result_t getCalculatedMetricCount(const uint8_t *pMultiMetricData, const size_t rawDataSize, uint32_t &metricValueCount, const uint32_t setIndex);
     ze_result_t getCalculatedMetricValues(const zet_metric_group_calculation_type_t type, const size_t rawDataSize, const uint8_t *pMultiMetricData,
                                           uint32_t &metricValueCount,
                                           zet_typed_value_t *pCalculatedData, const uint32_t setIndex);
+    ze_result_t getCalculatedMetricCount(const uint8_t *pRawData, const size_t rawDataSize, uint32_t &metricValueCount);
+    ze_result_t getCalculatedMetricCount(const uint8_t *pMultiMetricData, const size_t rawDataSize, uint32_t &metricValueCount, const uint32_t setIndex);
 
   private:
     std::vector<std::unique_ptr<IpSamplingMetricImp>> metrics = {};
     zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-    ze_result_t getCalculatedMetricCount(const uint8_t *pRawData, const size_t rawDataSize, uint32_t &metricValueCount);
     ze_result_t getCalculatedMetricValues(const zet_metric_group_calculation_type_t type, const size_t rawDataSize, const uint8_t *pRawData,
                                           uint32_t &metricValueCount,
                                           zet_typed_value_t *pCalculatedData);
-    bool isMultiDeviceCaptureData(const size_t rawDataSize, const uint8_t *pRawData);
 };
 
 struct MultiDeviceIpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {

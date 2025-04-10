@@ -93,7 +93,7 @@ void IpSamplingMetricSourceImp::cacheMetricGroup() {
     metricProperties.tierNumber = 4;
     metricProperties.resultType = ZET_VALUE_TYPE_UINT64;
 
-    // Preparing properties for IP seperately because of unique values
+    // Preparing properties for IP separately because of unique values
     strcpy_s(metricProperties.name, ZET_MAX_METRIC_NAME, "IP");
     strcpy_s(metricProperties.description, ZET_MAX_METRIC_DESCRIPTION, "IP address");
     metricProperties.metricType = ZET_METRIC_TYPE_IP;
@@ -140,6 +140,7 @@ ze_result_t IpSamplingMetricSourceImp::metricGroupGet(uint32_t *pCount, zet_metr
 }
 
 ze_result_t IpSamplingMetricSourceImp::appendMetricMemoryBarrier(CommandList &commandList) {
+    METRICS_LOG_ERR("%s", "Memory barrier not supported for IP Sampling");
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -147,6 +148,7 @@ ze_result_t IpSamplingMetricSourceImp::activateMetricGroupsPreferDeferred(uint32
                                                                           zet_metric_group_handle_t *phMetricGroups) {
     auto status = activationTracker->activateMetricGroupsDeferred(count, phMetricGroups);
     if (!status) {
+        METRICS_LOG_ERR("%s", "Metric group activation failed");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     return ZE_RESULT_SUCCESS;
@@ -252,7 +254,6 @@ ze_result_t IpSamplingMetricSourceImp::calcOperationCreate(MetricDeviceContext &
 
     // All metrics in Ip sampling allow calculation
     *pCount = 0;
-    *phExcludedMetrics = nullptr;
 
     bool isMultiDevice = (metricDeviceContext.isImplicitScalingCapable()) ? true : false;
     status = IpSamplingMetricCalcOpImp::create(*this, pCalculateDesc, isMultiDevice, phCalculateOperation);
@@ -305,7 +306,7 @@ ze_result_t IpSamplingMetricGroupImp::metricGet(uint32_t *pCount, zet_metric_han
     return ZE_RESULT_SUCCESS;
 }
 
-bool IpSamplingMetricGroupImp::isMultiDeviceCaptureData(const size_t rawDataSize, const uint8_t *pRawData) {
+bool IpSamplingMetricGroupBase::isMultiDeviceCaptureData(const size_t rawDataSize, const uint8_t *pRawData) {
     if (rawDataSize >= sizeof(IpSamplingMetricDataHeader)) {
         const auto header = reinterpret_cast<const IpSamplingMetricDataHeader *>(pRawData);
         return header->magic == IpSamplingMetricDataHeader::magicValue;
@@ -319,8 +320,8 @@ ze_result_t IpSamplingMetricGroupImp::calculateMetricValues(const zet_metric_gro
     const bool calculateCountOnly = *pMetricValueCount == 0;
 
     if (isMultiDeviceCaptureData(rawDataSize, pRawData)) {
-        METRICS_LOG_INFO("%s", "The call is not supported for multiple devices");
-        METRICS_LOG_INFO("%s", "Please use zetMetricGroupCalculateMultipleMetricValuesExp instead");
+        METRICS_LOG_ERR("%s", "The call is not supported for multiple devices");
+        METRICS_LOG_ERR("%s", "Please use zetMetricGroupCalculateMultipleMetricValuesExp instead");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -404,6 +405,8 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricCount(const uint8_t *pR
     constexpr uint32_t rawReportSize = IpSamplingMetricGroupBase::rawReportSize;
 
     if ((rawDataSize % rawReportSize) != 0) {
+        METRICS_LOG_ERR("%s", "Invalid input raw data size");
+        metricValueCount = 0;
         return ZE_RESULT_ERROR_INVALID_SIZE;
     }
 
@@ -494,6 +497,7 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricValues(const zet_metric
 
     // MAX_METRIC_VALUES is not supported yet.
     if (type != ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES) {
+        METRICS_LOG_ERR("%s", "IP sampling only supports ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES");
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -502,6 +506,8 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricValues(const zet_metric
     const uint32_t rawReportSize = IpSamplingMetricGroupBase::rawReportSize;
 
     if ((rawDataSize % rawReportSize) != 0) {
+        METRICS_LOG_ERR("%s", "Invalid input raw data size");
+        metricValueCount = 0;
         return ZE_RESULT_ERROR_INVALID_SIZE;
     }
 

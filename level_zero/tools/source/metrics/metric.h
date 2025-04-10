@@ -36,8 +36,6 @@ static_assert(IsCompliantWithDdiHandlesExt<_zet_metric_query_handle_t>);
 struct _zet_metric_programmable_exp_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_zet_metric_programmable_exp_handle_t>);
 
-struct _zet_intel_metric_calculate_operation_exp_handle_t {};
-
 namespace L0 {
 
 struct METRICS_LOG_BITMASK {                    // NOLINT(readability-identifier-naming)
@@ -428,16 +426,20 @@ struct HomogeneousMultiDeviceMetricCreated : public MultiDeviceMetricImp {
 struct MetricCalcOp : _zet_intel_metric_calculate_operation_exp_handle_t {
     virtual ~MetricCalcOp() = default;
     MetricCalcOp() {}
-    virtual ze_result_t destroy() = 0;
-    virtual ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
     static MetricCalcOp *fromHandle(zet_intel_metric_calculate_operation_exp_handle_t handle) {
         return static_cast<MetricCalcOp *>(handle);
     }
     inline zet_intel_metric_calculate_operation_exp_handle_t toHandle() { return this; }
-    virtual ze_result_t metricCalculateMultipleValues(size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
+
+    virtual ze_result_t destroy() = 0;
+    virtual ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
+    virtual ze_result_t metricCalculateMultipleValues(const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
                                                       uint32_t *pSetCount, uint32_t *pMetricsReportCountPerSet,
                                                       uint32_t *pTotalMetricReportCount,
                                                       zet_intel_metric_result_exp_t *pMetricResults) = 0;
+    virtual ze_result_t metricCalculateValues(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,
+                                              uint32_t *pTotalMetricReportCount,
+                                              zet_intel_metric_result_exp_t *pMetricResults) = 0;
 };
 
 struct MetricCalcOpImp : public MetricCalcOp {
@@ -508,6 +510,21 @@ ze_result_t metricCalculateOperationDestroy(zet_intel_metric_calculate_operation
 
 ze_result_t metricCalculateGetReportFormat(zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
                                            uint32_t *pCount, zet_metric_handle_t *phMetrics);
+
+ze_result_t metricCalculateValues(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,
+                                  zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+                                  uint32_t *pTotalMetricReportsCount, zet_intel_metric_result_exp_t *pMetricResults);
+
+ze_result_t metricCalculateMultipleValues(const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
+                                          zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+                                          uint32_t *pSetCount, uint32_t *pMetricsReportCountPerSet,
+                                          uint32_t *pTotalMetricReportCount, zet_intel_metric_result_exp_t *pMetricResults);
+
+ze_result_t metricDecodeCalculateMultipleValues(zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
+                                                const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
+                                                zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+                                                uint32_t *pSetCount, uint32_t *pMetricReportCountPerSet,
+                                                uint32_t *pTotalMetricReportCount, zet_intel_metric_result_exp_t *pMetricResults);
 
 ze_result_t metricsEnable(zet_device_handle_t hDevice);
 

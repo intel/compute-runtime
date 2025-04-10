@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,6 +79,19 @@ ze_result_t metricTracerDecode(
     uint32_t *pMetricEntriesCountPerSet,
     uint32_t *pMetricEntriesCount,
     zet_metric_entry_exp_t *pMetricEntries) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t metricDecodeCalculateMultipleValues(
+    zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
+    const size_t rawDataSize,
+    size_t *offset,
+    const uint8_t *pRawData,
+    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+    uint32_t *pSetCount,
+    uint32_t *pMetricReportCountPerSet,
+    uint32_t *pTotalMetricReportCount,
+    zet_intel_metric_result_exp_t *pMetricResults) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

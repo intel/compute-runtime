@@ -79,7 +79,7 @@ class MetricIpSamplingFixture : public DeviceFixture,
     std::vector<MockMetricIpSamplingOsInterface *> osInterfaceVector = {};
 };
 
-class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingMultiDevFixture {
+class MetricIpSamplingCalculateBaseFixture {
   public:
     void addHeader(uint8_t *rawDataOut, size_t rawDataOutSize, uint8_t *rawDataIn, size_t rawDataInSize, uint32_t setIndex) {
 
@@ -90,19 +90,26 @@ class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingMultiDevF
             header->magic = IpSamplingMetricDataHeader::magicValue;
             header->rawDataSize = static_cast<uint32_t>(rawDataInSize);
             header->setIndex = setIndex;
-            memcpy_s(rawDataOut + sizeof(IpSamplingMetricDataHeader), rawDataOutSize, rawDataIn, rawDataInSize);
+            memcpy_s(rawDataOut + sizeof(IpSamplingMetricDataHeader), rawDataOutSize - sizeof(IpSamplingMetricDataHeader),
+                     rawDataIn, rawDataInSize);
         }
     }
 
     std::vector<MockStallRawIpData> rawDataVector = {{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},
-                                                     {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},
                                                      {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1001, 0x000},
-                                                     {10, 90, 80, 70, 60, 50, 40, 30, 20, 10, 1000, 0x3}};
+                                                     {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},
+                                                     {10, 90, 80, 70, 60, 50, 40, 30, 20, 10, 1000, 0x3},
+                                                     {100, 190, 180, 170, 160, 150, 140, 130, 120, 110, 1000, 0x3},
+                                                     {100, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1000, 0x3}};
+
+    std::vector<std::string> expectedMetricNamesInReport = {"IP", "Active", "ControlStall", "PipeStall",
+                                                            "SendStall", "DistStall", "SbidStall", "SyncStall",
+                                                            "InstrFetchStall", "OtherStall"};
 
     size_t rawDataVectorSize = sizeof(rawDataVector[0]) * rawDataVector.size();
     std::vector<zet_typed_value_t> expectedMetricValues = {
         {ZET_VALUE_TYPE_UINT64, {1}},
-        {ZET_VALUE_TYPE_UINT64, {11}},
+        {ZET_VALUE_TYPE_UINT64, {11}}, // 1st raw report + 3rd raw report
         {ZET_VALUE_TYPE_UINT64, {11}},
         {ZET_VALUE_TYPE_UINT64, {11}},
         {ZET_VALUE_TYPE_UINT64, {11}},
@@ -112,6 +119,7 @@ class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingMultiDevF
         {ZET_VALUE_TYPE_UINT64, {11}},
         {ZET_VALUE_TYPE_UINT64, {11}},
         {ZET_VALUE_TYPE_UINT64, {10}},
+        {ZET_VALUE_TYPE_UINT64, {110}}, // 2nd raw report + 4th raw report
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}},
@@ -120,7 +128,74 @@ class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingMultiDevF
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}},
-        {ZET_VALUE_TYPE_UINT64, {110}}};
+        {ZET_VALUE_TYPE_UINT64, {100}},
+        {ZET_VALUE_TYPE_UINT64, {210}}, // 5th raw report + 6th raw report
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}}};
+
+    std::vector<zet_typed_value_t> interruptedExpectedMetricValues12 = {
+        {ZET_VALUE_TYPE_UINT64, {1}},
+        {ZET_VALUE_TYPE_UINT64, {2}},
+        {ZET_VALUE_TYPE_UINT64, {4}},
+        {ZET_VALUE_TYPE_UINT64, {5}},
+        {ZET_VALUE_TYPE_UINT64, {6}},
+        {ZET_VALUE_TYPE_UINT64, {7}},
+        {ZET_VALUE_TYPE_UINT64, {8}},
+        {ZET_VALUE_TYPE_UINT64, {9}},
+        {ZET_VALUE_TYPE_UINT64, {10}},
+        {ZET_VALUE_TYPE_UINT64, {3}}, // L0GfxCoreHelperHw arranges "OtherStall" to the end
+        {ZET_VALUE_TYPE_UINT64, {10}},
+        {ZET_VALUE_TYPE_UINT64, {20}},
+        {ZET_VALUE_TYPE_UINT64, {40}},
+        {ZET_VALUE_TYPE_UINT64, {50}},
+        {ZET_VALUE_TYPE_UINT64, {60}},
+        {ZET_VALUE_TYPE_UINT64, {70}},
+        {ZET_VALUE_TYPE_UINT64, {80}},
+        {ZET_VALUE_TYPE_UINT64, {90}},
+        {ZET_VALUE_TYPE_UINT64, {100}},
+        {ZET_VALUE_TYPE_UINT64, {30}} // L0GfxCoreHelperHw arranges "OtherStall" to the end
+    };
+
+    std::vector<zet_typed_value_t> interruptedExpectedMetricValues3 = {
+        {ZET_VALUE_TYPE_UINT64, {1}},
+        {ZET_VALUE_TYPE_UINT64, {9}},
+        {ZET_VALUE_TYPE_UINT64, {7}},
+        {ZET_VALUE_TYPE_UINT64, {6}},
+        {ZET_VALUE_TYPE_UINT64, {5}},
+        {ZET_VALUE_TYPE_UINT64, {4}},
+        {ZET_VALUE_TYPE_UINT64, {3}},
+        {ZET_VALUE_TYPE_UINT64, {2}},
+        {ZET_VALUE_TYPE_UINT64, {1}},
+        {ZET_VALUE_TYPE_UINT64, {8}} // L0GfxCoreHelperHw arranges "OtherStall" to the end
+    };
+
+    std::vector<zet_typed_value_t> interruptedExpectedMetricValues456 = {
+        {ZET_VALUE_TYPE_UINT64, {10}}, // 4rd raw report
+        {ZET_VALUE_TYPE_UINT64, {90}},
+        {ZET_VALUE_TYPE_UINT64, {70}},
+        {ZET_VALUE_TYPE_UINT64, {60}},
+        {ZET_VALUE_TYPE_UINT64, {50}},
+        {ZET_VALUE_TYPE_UINT64, {40}},
+        {ZET_VALUE_TYPE_UINT64, {30}},
+        {ZET_VALUE_TYPE_UINT64, {20}},
+        {ZET_VALUE_TYPE_UINT64, {10}},
+        {ZET_VALUE_TYPE_UINT64, {80}}, // L0GfxCoreHelperHw arranges "OtherStall" to the end
+        {ZET_VALUE_TYPE_UINT64, {100}},
+        {ZET_VALUE_TYPE_UINT64, {210}}, // 5th raw report + th raw report
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}},
+        {ZET_VALUE_TYPE_UINT64, {210}}};
 
     std::vector<MockStallRawIpData> rawDataVectorOverflow = {{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},
                                                              {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},
@@ -149,6 +224,11 @@ class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingMultiDevF
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}}};
+};
+
+struct MetricIpSamplingCalculateSingleDevFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingFixture {
+};
+struct MetricIpSamplingCalculateMultiDevFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingMultiDevFixture {
 };
 
 } // namespace ult

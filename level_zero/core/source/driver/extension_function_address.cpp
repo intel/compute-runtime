@@ -64,6 +64,8 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zetIntelCommandListAppendMarkerExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelDeviceEnableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelDeviceDisableMetricsExp);
+
+    // Metrics
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerCreateExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerDestroyExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerEnableExp);
@@ -73,6 +75,12 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricDecoderDestroyExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricDecoderGetDecodableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerDecodeExp);
+    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculateOperationCreateExp);
+    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculateOperationDestroyExp);
+    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculateGetReportFormatExp);
+    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricDecodeCalculateMultipleValuesExp);
+    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculateMultipleValuesExp);
+    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculateValuesExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
 
