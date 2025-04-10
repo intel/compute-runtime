@@ -112,7 +112,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                            csr->isProgramActivePartitionConfigRequired(),
                                            performMigration,
                                            csr->getSipSentFlag()};
-
+    ctx.outerLockForIndirect = outerLockForIndirect;
     ctx.globalInit |= ctx.isDebugEnabled &&
                       !this->commandQueueDebugCmdsProgrammed &&
                       device->getL0Debugger();
@@ -300,7 +300,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     std::unique_lock<std::mutex> lockForIndirect;
     if (ctx.hasIndirectAccess) {
-        handleIndirectAllocationResidency(ctx.unifiedMemoryControls, lockForIndirect, ctx.isMigrationRequested);
+        std::unique_lock<std::mutex> &currentLock = ctx.outerLockForIndirect != nullptr ? *ctx.outerLockForIndirect : lockForIndirect;
+        handleIndirectAllocationResidency(ctx.unifiedMemoryControls, currentLock, ctx.isMigrationRequested);
     }
 
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx);

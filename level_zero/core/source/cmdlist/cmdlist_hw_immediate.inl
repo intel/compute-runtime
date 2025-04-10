@@ -491,6 +491,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
 
         static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false);
     } else {
+        lockForIndirect = std::move(*outerLockForIndirect);
         cmdQImp->makeResidentForResidencyContainer(this->commandContainer.getResidencyContainer());
     }
 
@@ -1773,6 +1774,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
 
     auto queueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
     auto mainAppendLock = queueImp->getCsr()->obtainUniqueOwnership();
+    std::unique_lock<std::mutex> mainLockForIndirect;
 
     if (this->dispatchCmdListBatchBufferAsPrimary) {
         // check if wait event preamble or implicit synchronization is present and force bb start jump in queue, even when no preamble is required there
@@ -1784,7 +1786,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                                                    nullptr,
                                                    true,
                                                    this->commandContainer.getCommandStream(),
-                                                   nullptr);
+                                                   &mainLockForIndirect);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -1817,7 +1819,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                           hSignalEvent,
                           requireTaskCountUpdate,
                           &mainAppendLock,
-                          nullptr);
+                          &mainLockForIndirect);
 }
 
 } // namespace L0
