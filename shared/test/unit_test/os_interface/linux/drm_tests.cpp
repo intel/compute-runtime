@@ -1449,7 +1449,7 @@ class MockIoctlHelperResetStats : public MockIoctlHelper {
     ResetStatsFault resetStatsFaultReturnValue{};
 };
 
-TEST(DrmTest, GivenResetStatsWithValidFaultAndDebuggingEnabledWhenIsGpuHangIsCalledThenProcessNotTerminated) {
+TEST(DrmTest, GivenResetStatsWithValidFaultAndContextNotBannedAndDebuggingEnabledWhenIsGpuHangIsCalledThenProcessNotTerminated) {
     DebugManagerStateRestore restore;
     debugManager.flags.DisableScratchPages.set(true);
 
@@ -1475,7 +1475,7 @@ TEST(DrmTest, GivenResetStatsWithValidFaultAndDebuggingEnabledWhenIsGpuHangIsCal
     resetStatsFaultExpected.type = 2;
     resetStatsFaultExpected.level = 3;
 
-    ioctlHelper->statusReturnValue = 2u;
+    ioctlHelper->statusReturnValue = 0u;
     ioctlHelper->resetStatsFaultReturnValue = resetStatsFaultExpected;
 
     drm.ioctlHelper = std::move(ioctlHelper);
