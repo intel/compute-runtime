@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,7 @@ HWTEST_F(L0BindlessAub, DISABLED_GivenBindlessKernelWhenExecutedThenOutputIsCorr
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(cmdListHandle, kernel, &dispatchTraits, nullptr, 0, nullptr));
     commandList->close();
 
-    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
+    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
     expectMemory<FamilyType>(reinterpret_cast<void *>(driverHandle->svmAllocsManager->getSVMAlloc(bufferDst)->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()),

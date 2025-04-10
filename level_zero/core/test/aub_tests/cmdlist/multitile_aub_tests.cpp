@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ HWTEST_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecu
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(cmdListHandle, kernel.get(), &groupCount, nullptr, 0, nullptr));
     commandList->close();
 
-    cmdQ->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
+    cmdQ->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
     cmdQ->synchronize(std::numeric_limits<uint32_t>::max());
 
     auto csr = getSimulatedCsr<FamilyType>(0, 0);

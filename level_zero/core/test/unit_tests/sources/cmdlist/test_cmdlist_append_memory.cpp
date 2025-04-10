@@ -1248,7 +1248,7 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
         offset = cmdStream->getUsed();
         cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, copyParams);
         cmdList.close();
-        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
 
         EXPECT_TRUE(verify(false));
     }
@@ -1259,7 +1259,7 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
         offset = cmdStream->getUsed();
         cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, regularEvent->toHandle(), 0, nullptr, copyParams);
         cmdList.close();
-        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
 
         EXPECT_TRUE(verify(true));
     }
@@ -1270,7 +1270,7 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
         offset = cmdStream->getUsed();
         cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, nullptr, 0, nullptr, copyParams);
         cmdList.close();
-        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
 
         EXPECT_TRUE(verify(true));
     }
@@ -1286,7 +1286,7 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
         EXPECT_FALSE(cmdList.taskCountUpdateFenceRequired);
 
         cmdList.close();
-        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
 
         EXPECT_TRUE(verify(false));
     }

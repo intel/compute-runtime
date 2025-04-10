@@ -573,7 +573,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInterruptableEventsWhenEx
 
     EXPECT_NE(firstQueue->getCsr(), secondQueue->getCsr());
 
-    firstQueue->executeCommandLists(1, &cmdlistHandle, nullptr, false, nullptr);
+    firstQueue->executeCommandLists(1, &cmdlistHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(1u, events[0]->csrs.size());
     EXPECT_EQ(firstQueue->getCsr(), events[0]->csrs[0]);
     EXPECT_EQ(1u, events[1]->csrs.size());
@@ -581,7 +581,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInterruptableEventsWhenEx
     EXPECT_EQ(1u, events[2]->csrs.size());
     EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, events[2]->csrs[0]);
 
-    secondQueue->executeCommandLists(1, &cmdlistHandle, nullptr, false, nullptr);
+    secondQueue->executeCommandLists(1, &cmdlistHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(1u, events[0]->csrs.size());
     EXPECT_EQ(secondQueue->getCsr(), events[0]->csrs[0]);
     EXPECT_EQ(1u, events[1]->csrs.size());
@@ -2808,7 +2808,8 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
 
         ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
                                    NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
-                                   MutexLock *outerLock) override {
+                                   MutexLock *outerLock,
+                                   std::unique_lock<std::mutex> *outerLockForIndirect) override {
             flushData.push_back(this->cmdListCurrentStartOffset);
 
             this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
@@ -2941,7 +2942,8 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
 
         ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
                                    NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
-                                   MutexLock *outerLock) override {
+                                   MutexLock *outerLock,
+                                   std::unique_lock<std::mutex> *outerLockForIndirect) override {
             auto hostAddr = reinterpret_cast<uint32_t *>(usedEvent->getCompletionFieldHostAddress());
             eventCompletionData.push_back(*hostAddr);
 
@@ -3008,7 +3010,8 @@ HWTEST2_F(InOrderCmdListTests, givenRegularNonTimestampEventWhenSkipItsConverted
 
         ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
                                    NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
-                                   MutexLock *outerLock) override {
+                                   MutexLock *outerLock,
+                                   std::unique_lock<std::mutex> *outerLockForIndirect) override {
             flushCounter++;
 
             this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
@@ -3061,7 +3064,8 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
 
         ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
                                    NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
-                                   MutexLock *outerLock) override {
+                                   MutexLock *outerLock,
+                                   std::unique_lock<std::mutex> *outerLockForIndirect) override {
             flushCount++;
 
             return ZE_RESULT_SUCCESS;
@@ -3876,19 +3880,19 @@ HWTEST_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFrom
 
     // 1 Execute call
     offset = cmdStream->getUsed();
-    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr);
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, nullptr);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
     verifySemaphore(expectedCounterValue);
 
     // 2 Execute calls
     offset = cmdStream->getUsed();
-    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr);
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, nullptr);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
     verifySemaphore(expectedCounterValue + expectedCounterAppendValue);
 
     // 3 Execute calls
     offset = cmdStream->getUsed();
-    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr);
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, nullptr);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
     verifySemaphore(expectedCounterValue + (expectedCounterAppendValue * 2));
 }
@@ -5998,8 +6002,8 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAnd
     mockCmdQHw->initialize(false, false, false);
 
     auto cmdListHandle = cmdList->toHandle();
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
     EXPECT_EQ(4u, counterValue);

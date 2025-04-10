@@ -55,7 +55,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
     virtual ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
                                             ze_fence_handle_t hFence, bool performMigration,
-                                            NEO::LinearStream *parentImmediateCommandlistLinearStream) = 0;
+                                            NEO::LinearStream *parentImmediateCommandlistLinearStream,
+                                            std::unique_lock<std::mutex> *outerLockForIndirect) = 0;
     virtual ze_result_t synchronize(uint64_t timeout) = 0;
     virtual ze_result_t getOrdinal(uint32_t *pOrdinal) = 0;
     virtual ze_result_t getIndex(uint32_t *pIndex) = 0;

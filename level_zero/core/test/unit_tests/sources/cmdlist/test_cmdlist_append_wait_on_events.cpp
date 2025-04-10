@@ -286,10 +286,12 @@ class MockCommandListImmediateHwWithWaitEventFail : public WhiteBox<::L0::Comman
 
     ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, NEO::AppendOperations appendOperation,
                                                          bool copyOffloadSubmission, bool requireTaskCountUpdate,
-                                                         MutexLock *outerLock) override {
+                                                         MutexLock *outerLock,
+                                                         std::unique_lock<std::mutex> *outerLockForIndirect) override {
         ++executeCommandListImmediateWithFlushTaskCalledCount;
         if (callBaseExecute) {
-            return BaseClass::executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, copyOffloadSubmission, requireTaskCountUpdate, outerLock);
+            return BaseClass::executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, copyOffloadSubmission, requireTaskCountUpdate,
+                                                                       outerLock, outerLockForIndirect);
         }
         return executeCommandListImmediateWithFlushTaskReturnValue;
     }
@@ -316,7 +318,8 @@ class MockCommandQueueExecute : public Mock<CommandQueue> {
         ze_command_list_handle_t *phCommandLists,
         ze_fence_handle_t hFence,
         bool performMigration,
-        NEO::LinearStream *parentImmediateCommandlistLinearStream) override {
+        NEO::LinearStream *parentImmediateCommandlistLinearStream,
+        std::unique_lock<std::mutex> *outerLockForIndirect) override {
         if (forceQueueExecuteError) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }

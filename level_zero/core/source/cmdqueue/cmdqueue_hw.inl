@@ -63,7 +63,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     ze_command_list_handle_t *phCommandLists,
     ze_fence_handle_t hFence,
     bool performMigration,
-    NEO::LinearStream *parentImmediateCommandlistLinearStream) {
+    NEO::LinearStream *parentImmediateCommandlistLinearStream,
+    std::unique_lock<std::mutex> *outerLockForIndirect) {
 
     auto ret = ZE_RESULT_SUCCESS;
 

@@ -27,7 +27,8 @@ struct CommandQueueHw : public CommandQueueImp {
     ze_result_t executeCommandLists(uint32_t numCommandLists,
                                     ze_command_list_handle_t *phCommandLists,
                                     ze_fence_handle_t hFence, bool performMigration,
-                                    NEO::LinearStream *parentImmediateCommandlistLinearStream) override;
+                                    NEO::LinearStream *parentImmediateCommandlistLinearStream,
+                                    std::unique_lock<std::mutex> *outerLockForIndirect) override;
 
     void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed, NEO::StreamProperties *streamProperties);
     size_t estimateStateBaseAddressCmdSize();
@@ -83,6 +84,7 @@ struct CommandQueueHw : public CommandQueueImp {
         void *currentPatchForChainedBbStart = nullptr;
         NEO::ScratchSpaceController *scratchSpaceController = nullptr;
         NEO::GraphicsAllocation *globalStatelessAllocation = nullptr;
+        std::unique_lock<std::mutex> *outerLockForIndirect = nullptr;
 
         NEO::PreemptionMode preemptionMode{};
         NEO::PreemptionMode statePreemption{};

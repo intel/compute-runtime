@@ -3809,7 +3809,8 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
             ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
                                             ze_fence_handle_t hFence, bool performMigration,
-                                            NEO::LinearStream *parentImmediateCommandlistLinearStream)
+                                            NEO::LinearStream *parentImmediateCommandlistLinearStream,
+                                            std::unique_lock<std::mutex> *outerLockForIndirect)
                 override { return ZE_RESULT_ERROR_UNKNOWN; }
         };
 
@@ -3868,7 +3869,8 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFa
             ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
                                             ze_fence_handle_t hFence, bool performMigration,
-                                            NEO::LinearStream *parentImmediateCommandlistLinearStream)
+                                            NEO::LinearStream *parentImmediateCommandlistLinearStream,
+                                            std::unique_lock<std::mutex> *outerLockForIndirect)
                 override { return ZE_RESULT_ERROR_UNKNOWN; }
         };
 
@@ -3928,7 +3930,8 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthNonZeroAndDevic
             ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
                                             ze_fence_handle_t hFence, bool performMigration,
-                                            NEO::LinearStream *parentImmediateCommandlistLinearStream) override {
+                                            NEO::LinearStream *parentImmediateCommandlistLinearStream,
+                                            std::unique_lock<std::mutex> *outerLockForIndirect) override {
                 return ZE_RESULT_SUCCESS;
             }
         };

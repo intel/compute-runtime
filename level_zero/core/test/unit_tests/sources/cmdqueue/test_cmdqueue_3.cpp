@@ -314,7 +314,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
 
     auto globalFence = csr.getGlobalFenceAllocation();
     if (globalFence) {
@@ -364,7 +364,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecuti
     auto commandListHandle = commandList->toHandle();
     auto workPartitionAllocation = csr.getWorkPartitionAllocation();
     csr.expectedGa = workPartitionAllocation;
-    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(2u, csr.activePartitionsConfig);
@@ -454,7 +454,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
 
     EXPECT_FALSE(gpuAlloc->isResident(csr.getOsContext().getContextId()));
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(gpuAlloc->isResident(csr.getOsContext().getContextId()));
@@ -519,7 +519,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->overrideAllocateAsPackReturn = 1u;
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(gpuAlloc->isResident(csr.getOsContext().getContextId()));
@@ -1057,7 +1057,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 
         calculatedSize = estimateAllCommmandLists<FamilyType::gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, true);
         EXPECT_EQ(1 * singleFrontEndCmdSize, calculatedSize);
-        commandQueue->executeCommandLists(4, commandLists, nullptr, false, nullptr);
+        commandQueue->executeCommandLists(4, commandLists, nullptr, false, nullptr, nullptr);
     }
     int32_t expectedComputeDispatchAllWalkerEnable = fePropertiesSupport.computeDispatchAllWalker ? 0 : -1;
     expectedSingleFrontEndSizeNumber = fePropertiesSupport.computeDispatchAllWalker ? 1 : 0;
@@ -1071,7 +1071,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 
         calculatedSize = estimateAllCommmandLists<FamilyType::gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, true);
         EXPECT_EQ((expectedSingleFrontEndSizeNumber + 1) * singleFrontEndCmdSize, calculatedSize);
-        commandQueue->executeCommandLists(3, commandLists, nullptr, false, nullptr);
+        commandQueue->executeCommandLists(3, commandLists, nullptr, false, nullptr, nullptr);
     }
     EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
     {
@@ -1093,7 +1093,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 
         calculatedSize = estimateAllCommmandLists<FamilyType::gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, true);
         EXPECT_EQ(1 * singleFrontEndCmdSize, calculatedSize);
-        commandQueue->executeCommandLists(1, commandLists, nullptr, false, nullptr);
+        commandQueue->executeCommandLists(1, commandLists, nullptr, false, nullptr, nullptr);
     }
     expectedComputeDispatchAllWalkerEnable = fePropertiesSupport.computeDispatchAllWalker ? 1 : -1;
     EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
@@ -1106,7 +1106,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
 
         calculatedSize = estimateAllCommmandLists<FamilyType::gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, true);
         EXPECT_EQ(1 * singleFrontEndCmdSize, calculatedSize);
-        commandQueue->executeCommandLists(1, commandLists, nullptr, false, nullptr);
+        commandQueue->executeCommandLists(1, commandLists, nullptr, false, nullptr, nullptr);
     }
     expectedComputeDispatchAllWalkerEnable = fePropertiesSupport.computeDispatchAllWalker ? 0 : -1;
     EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
@@ -1138,7 +1138,7 @@ HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteC
     EXPECT_EQ(-1, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
 
     ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
-    commandQueue->executeCommandLists(1, commandLists, nullptr, false, nullptr);
+    commandQueue->executeCommandLists(1, commandLists, nullptr, false, nullptr, nullptr);
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
     productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
@@ -1197,24 +1197,24 @@ HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandLi
 
     int32_t expectedCurrentState = dispatchAllWalkerSupport ? 0 : -1;
 
-    commandQueue1->executeCommandLists(1, commandListsA, nullptr, false, nullptr);
+    commandQueue1->executeCommandLists(1, commandListsA, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(expectedCurrentState, currentStreamValue);
 
-    commandQueue2->executeCommandLists(1, commandListsA, nullptr, false, nullptr);
+    commandQueue2->executeCommandLists(1, commandListsA, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(expectedCurrentState, currentStreamValue);
 
-    commandQueue2->executeCommandLists(1, commandListsB, nullptr, false, nullptr);
+    commandQueue2->executeCommandLists(1, commandListsB, nullptr, false, nullptr, nullptr);
     expectedCurrentState = expectedCurrentState != -1 ? 1 : -1;
     EXPECT_EQ(expectedCurrentState, currentStreamValue);
 
-    commandQueue1->executeCommandLists(1, commandListsB, nullptr, false, nullptr);
+    commandQueue1->executeCommandLists(1, commandListsB, nullptr, false, nullptr, nullptr);
     EXPECT_EQ(expectedCurrentState, currentStreamValue);
 
-    commandQueue2->executeCommandLists(1, commandListsA, nullptr, false, nullptr);
+    commandQueue2->executeCommandLists(1, commandListsA, nullptr, false, nullptr, nullptr);
     expectedCurrentState = expectedCurrentState != -1 ? 0 : -1;
     EXPECT_EQ(expectedCurrentState, currentStreamValue);
 
-    commandQueue1->executeCommandLists(1, commandListsB, nullptr, false, nullptr);
+    commandQueue1->executeCommandLists(1, commandListsB, nullptr, false, nullptr, nullptr);
     expectedCurrentState = expectedCurrentState != -1 ? 1 : -1;
     EXPECT_EQ(expectedCurrentState, currentStreamValue);
 
@@ -1332,7 +1332,7 @@ HWTEST2_F(DeferredFirstSubmissionCmdQueueTests, givenDebugFlagSetWhenSubmittingT
     EXPECT_EQ(0u, commandQueue1->getCsr()->peekTaskCount());
     EXPECT_EQ(0u, commandQueue2->getCsr()->peekTaskCount());
 
-    commandQueue2->executeCommandLists(1, &commandListHandle2, nullptr, false, nullptr);
+    commandQueue2->executeCommandLists(1, &commandListHandle2, nullptr, false, nullptr, nullptr);
 
     EXPECT_NE(0u, primaryCsr->peekTaskCount());
     EXPECT_EQ(1u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
