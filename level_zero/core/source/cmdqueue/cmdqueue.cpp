@@ -385,4 +385,11 @@ QueueProperties CommandQueue::extractQueueProperties(const ze_command_queue_desc
     return queueProperties;
 }
 
+void CommandQueueImp::makeResidentForResidencyContainer(const NEO::ResidencyContainer &residencyContainer) {
+    for (auto alloc : residencyContainer) {
+        alloc->prepareHostPtrForResidency(csr);
+        csr->makeResident(*alloc);
+    }
+}
+
 } // namespace L0

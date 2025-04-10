@@ -488,6 +488,8 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         }
 
         static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false);
+    } else {
+        cmdQImp->makeResidentForResidencyContainer(this->commandContainer.getResidencyContainer());
     }
 
     NEO::CompletionStamp completionStamp;

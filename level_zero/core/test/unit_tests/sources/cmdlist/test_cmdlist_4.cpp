@@ -1821,5 +1821,39 @@ HWTEST_F(ImmediateCommandListTest,
     EXPECT_EQ(1u, kernel->printPrintfOutputCalledTimes);
 }
 
+HWTEST_F(ImmediateCommandListTest,
+         givenImmediateCmdListWhenAppendingRegularCmdListThenInternalResidencyContainerProcessed) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event.get());
+
+    auto eventAllocation = event->getAllocation(device);
+    auto cmdBufferAllocation = commandListImmediate->getCmdContainer().getCommandStream()->getGraphicsAllocation();
+
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.storeMakeResidentAllocations = true;
+
+    returnValue = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandListHandle = commandList->toHandle();
+    auto eventHandle = event->toHandle();
+    returnValue = commandListImmediate->appendCommandLists(1, &commandListHandle, eventHandle, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_TRUE(ultCsr.isMadeResident(eventAllocation));
+    EXPECT_TRUE(ultCsr.isMadeResident(cmdBufferAllocation));
+}
+
 } // namespace ult
 } // namespace L0
