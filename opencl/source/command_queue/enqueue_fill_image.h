@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,8 +30,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    auto builtInType = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::fillImage3d>(this->heaplessModeEnabled);
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType, this->getClDevice());
+    auto builtInTypeImage3d = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::fillImage3d>(this->heaplessModeEnabled);
+    auto builtInTypeImage1dBuffer = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::fillImage1dBuffer>(this->heaplessModeEnabled);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER
+            ? builtInTypeImage1dBuffer
+            : builtInTypeImage3d,
+        this->getClDevice());
+
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface dstImgSurf(image);

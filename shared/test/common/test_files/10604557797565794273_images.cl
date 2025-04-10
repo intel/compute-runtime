@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -220,7 +220,7 @@ __kernel void FillBufferSSHOffset(
     pDst[dstIndex] = pSrc[srcIndex];
 }
 
-//////////////////////////////////////////////////////////////////////////////
+
 __kernel void CopyBufferRectBytes2d(
     __global const char* src,
     __global char* dst,
@@ -239,7 +239,29 @@ __kernel void CopyBufferRectBytes2d(
     *( dst + LDstOffset )  = *( src + LSrcOffset ); 
 
 }
-//////////////////////////////////////////////////////////////////////////////
+
+__kernel void CopyBufferRectBytesMiddle2d(
+    const __global uint* src,
+    __global uint* dst,
+    uint4 SrcOrigin,
+    uint4 DstOrigin,
+    uint2 SrcPitch,
+    uint2 DstPitch )
+
+{
+    int x = get_global_id(0);
+    int y = get_global_id(1);
+
+    uint LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x );
+    uint LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x );
+
+    src += LSrcOffset >> 2;
+    dst += LDstOffset >> 2;
+    
+    uint4 loaded = vload4(x,src);
+    vstore4(loaded,x,dst);
+}
+
 __kernel void CopyBufferRectBytes3d(
     __global const char* src, 
     __global char* dst, 
@@ -258,6 +280,29 @@ __kernel void CopyBufferRectBytes3d(
  
     *( dst + LDstOffset )  = *( src + LSrcOffset );  
  
+}
+
+__kernel void CopyBufferRectBytesMiddle3d(
+    const __global uint* src,
+    __global uint* dst,
+    uint4 SrcOrigin,
+    uint4 DstOrigin,
+    uint2 SrcPitch,
+    uint2 DstPitch )
+
+{
+    int x = get_global_id(0); 
+    int y = get_global_id(1); 
+    int z = get_global_id(2); 
+ 
+    uint LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
+    uint LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
+
+    src += LSrcOffset >> 2;
+    dst += LDstOffset >> 2;
+    
+    uint4 loaded = vload4(x,src);
+    vstore4(loaded,x,dst);
 }
 
 void SetDstData(__global ulong* dst, uint currentOffset, ulong contextStart, ulong globalStart, ulong contextEnd, ulong globalEnd, uint useOnlyGlobalTimestamps) {
@@ -514,6 +559,31 @@ __kernel void CopyBufferToImage3d4Bytes(__global uchar *src,
     write_imageui(output, dstCoord, c);
 }
 
+__kernel void CopyBufferToImage3d3To4Bytes(__global uchar *src,
+                                        __write_only image3d_t output,
+                                        int srcOffset,
+                                        int4 dstOffset,
+                                        uint2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint4 c = (uint4)(0, 0, 0, 1);
+
+   
+    uint upper2 = 0;
+    uint upper  = *((__global uchar*)(src + LOffset + x * 3 + 2));
+    uint lower2 = *((__global uchar*)(src + LOffset + x * 3 + 1));
+    uint lower  = *((__global uchar*)(src + LOffset + x * 3));
+    uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.x = combined;
+	
+    write_imageui(output, dstCoord, c);
+}
+
 __kernel void CopyBufferToImage3d8Bytes(__global uchar *src,
                                         __write_only image3d_t output,
                                         int srcOffset,
@@ -545,6 +615,37 @@ __kernel void CopyBufferToImage3d8Bytes(__global uchar *src,
     else{
         c = *((__global uint2*)(src + LOffset + x * 8));
     }
+
+    write_imageui(output, dstCoord, (uint4)(c.x, c.y, 0, 1));
+}
+
+__kernel void CopyBufferToImage3d6To8Bytes(__global uchar *src,
+                                        __write_only image3d_t output,
+                                        int srcOffset,
+                                        int4 dstOffset,
+                                        uint2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint2 c = (uint2)(0, 0);//*((__global uint2*)(src + LOffset + x * 8));
+    
+	
+    uint upper2 = *((__global uchar*)(src + LOffset + x * 6 + 3));
+    uint upper  = *((__global uchar*)(src + LOffset + x * 6 + 2));
+    uint lower2 = *((__global uchar*)(src + LOffset + x * 6 + 1));
+    uint lower  = *((__global uchar*)(src + LOffset + x * 6));
+    uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.x = combined;
+	
+    upper2 = upper = 0;
+    lower2 = *((__global uchar*)(src + LOffset + x * 6 + 5));
+    lower  = *((__global uchar*)(src + LOffset + x * 6 + 4));
+    combined = ((uint)upper2 << 24) | ((uint)upper << 16) | ((uint)lower2 << 8) | lower;
+    c.y = combined;
 
     write_imageui(output, dstCoord, (uint4)(c.x, c.y, 0, 1));
 }
@@ -635,6 +736,27 @@ __kernel void CopyImage3dToBuffer2Bytes(__read_only image3d_t input,
     }
 }
 
+__kernel void CopyImage3dToBuffer3Bytes(__read_only image3d_t input,
+                                        __global uchar *dst,
+                                        int4 srcOffset,
+                                        int dstOffset,
+                                        uint2 Pitch) {
+										
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
+    uint DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint4 c = read_imageui(input, srcCoord);
+    
+    *((__global uchar*)(dst + DstOffset + x * 3 + 2)) = convert_uchar_sat(c.z & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 3 + 1)) = convert_uchar_sat(c.y & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 3)) = convert_uchar_sat(c.x & 0xff);	
+}
+
+
 __kernel void CopyImage3dToBuffer4Bytes(__read_only image3d_t input,
                                         __global uchar *dst,
                                         int4 srcOffset,
@@ -658,6 +780,47 @@ __kernel void CopyImage3dToBuffer4Bytes(__read_only image3d_t input,
     else{
         *((__global uint*)(dst + DstOffset + x * 4)) = c.x;
     }
+}
+
+__kernel void CopyImage3dToBuffer4To3Bytes(__read_only image3d_t input,
+                                        __global uchar *dst,
+                                        int4 srcOffset,
+                                        int dstOffset,
+                                        uint2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
+    uint DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint4 c = read_imageui(input, srcCoord);
+	
+    *((__global uchar*)(dst + DstOffset + x * 3 + 2)) = convert_uchar_sat((c.x >> 16 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 3 + 1)) = convert_uchar_sat((c.x >> 8 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 3)) = convert_uchar_sat(c.x & 0xff);
+}
+
+__kernel void CopyImage3dToBuffer6Bytes(__read_only image3d_t input,
+                                        __global uchar *dst,
+                                        int4 srcOffset,
+                                        int dstOffset,
+                                        uint2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+    
+    const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
+    uint DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);    
+
+    uint4 c = read_imageui(input, srcCoord);   	
+
+    *((__global uchar*)(dst + DstOffset + x * 6 + 1)) = convert_uchar_sat((c.x >> 8 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 6)) = convert_uchar_sat(c.x & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 6 + 3)) = convert_uchar_sat((c.y >> 8 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 6 + 2)) = convert_uchar_sat(c.y & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 6 + 5)) = convert_uchar_sat((c.z >> 8 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 6 + 4)) = convert_uchar_sat(c.z & 0xff);    									
 }
 
 __kernel void CopyImage3dToBuffer8Bytes(__read_only image3d_t input,
@@ -688,6 +851,29 @@ __kernel void CopyImage3dToBuffer8Bytes(__read_only image3d_t input,
         uint2 d = (uint2)(c.x,c.y);
         *((__global uint2*)(dst + DstOffset + x * 8)) = d;
     }
+}
+
+__kernel void CopyImage3dToBuffer8To6Bytes(__read_only image3d_t input,
+                                        __global uchar *dst,
+                                        int4 srcOffset,
+                                        int dstOffset,
+                                        uint2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
+    uint DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint4 c = read_imageui(input, srcCoord);
+
+    *((__global uchar*)(dst + DstOffset + x * 6 + 3)) = convert_uchar_sat((c.x >> 24 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 6 + 2)) = convert_uchar_sat((c.x >> 16 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 6 + 1)) = convert_uchar_sat((c.x >> 8 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 6)) = convert_uchar_sat(c.x & 0xff);
+
+    *((__global uchar*)(dst + DstOffset + x * 6 + 5)) = convert_uchar_sat((c.y >> 8 ) & 0xff);
+    *((__global uchar*)(dst + DstOffset + x * 6 + 4)) = convert_uchar_sat(c.y & 0xff);
 }
 
 __kernel void CopyImage3dToBuffer16Bytes(__read_only image3d_t input,

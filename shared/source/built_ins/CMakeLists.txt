@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -40,6 +40,7 @@ set(NEO_CORE_SRCS_BUILT_IN_KERNELS
     ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image1d.builtin_kernel
     ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image2d.builtin_kernel
     ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image3d.builtin_kernel
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernels/fill_image1d_buffer.builtin_kernel
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_SRCS_BUILT_IN_KERNELS ${NEO_CORE_SRCS_BUILT_IN_KERNELS})

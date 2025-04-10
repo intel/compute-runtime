@@ -31,6 +31,7 @@ set(GENERATED_BUILTINS_IMAGES
     "fill_image1d"
     "fill_image2d"
     "fill_image3d"
+    "fill_image1d_buffer"
 )
 
 set(GENERATED_BUILTINS_IMAGES_STATELESS

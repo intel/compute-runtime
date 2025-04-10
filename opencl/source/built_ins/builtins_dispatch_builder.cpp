@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1012,6 +1012,28 @@ class BuiltInOp<EBuiltInOps::fillImage3dHeapless> : public BuiltInOp<EBuiltInOps
     }
 };
 
+template <>
+class BuiltInOp<EBuiltInOps::fillImage1dBuffer> : public BuiltInOp<EBuiltInOps::fillImage3d> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltInOp<EBuiltInOps::fillImage3d>(kernelsLib, device, false) {
+        populate(EBuiltInOps::fillImage1dBuffer,
+                 "",
+                 "FillImage1dBuffer", kernel);
+    }
+};
+
+template <>
+class BuiltInOp<EBuiltInOps::fillImage1dBufferHeapless> : public BuiltInOp<EBuiltInOps::fillImage3d> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltInOp<EBuiltInOps::fillImage3d>(kernelsLib, device, false) {
+        populate(EBuiltInOps::fillImage1dBufferHeapless,
+                 "",
+                 "FillImage1dBuffer", kernel);
+    }
+};
+
 BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {
     uint32_t operationId = static_cast<uint32_t>(operation);
     auto &builtins = *device.getDevice().getBuiltIns();
@@ -1077,6 +1099,12 @@ BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuil
         break;
     case EBuiltInOps::auxTranslation:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::auxTranslation>>(builtins, device); });
+        break;
+    case EBuiltInOps::fillImage1dBuffer:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillImage1dBuffer>>(builtins, device); });
+        break;
+    case EBuiltInOps::fillImage1dBufferHeapless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillImage1dBufferHeapless>>(builtins, device); });
         break;
     default:
         UNRECOVERABLE_IF("getBuiltinDispatchInfoBuilder failed");

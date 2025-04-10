@@ -55,7 +55,7 @@ HWTEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatfor
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo.ipVersion.value += 0xdead;
-    const std::array<uint32_t, 11> builtinTypes{EBuiltInOps::copyBufferToBuffer,
+    const std::array<uint32_t, 12> builtinTypes{EBuiltInOps::copyBufferToBuffer,
                                                 EBuiltInOps::copyBufferRect,
                                                 EBuiltInOps::fillBuffer,
                                                 EBuiltInOps::copyBufferToImage3d,
@@ -65,7 +65,8 @@ HWTEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatfor
                                                 EBuiltInOps::copyImageToImage3d,
                                                 EBuiltInOps::fillImage1d,
                                                 EBuiltInOps::fillImage2d,
-                                                EBuiltInOps::fillImage3d};
+                                                EBuiltInOps::fillImage3d,
+                                                EBuiltInOps::fillImage1dBuffer};
 
     for (auto &builtinType : builtinTypes) {
         auto binaryBuiltinResource = builtinsLib->getBuiltinResource(builtinType, BuiltinCode::ECodeType::binary, *pDevice);
@@ -154,7 +155,9 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltin
         {EBuiltInOps::fillImage2dHeapless, "fill_image2d.builtin_kernel"},
         {EBuiltInOps::fillImage3d, "fill_image3d.builtin_kernel"},
         {EBuiltInOps::fillImage3dHeapless, "fill_image3d.builtin_kernel"},
-        {EBuiltInOps::queryKernelTimestamps, "copy_kernel_timestamps.builtin_kernel"}};
+        {EBuiltInOps::queryKernelTimestamps, "copy_kernel_timestamps.builtin_kernel"},
+        {EBuiltInOps::fillImage1dBuffer, "fill_image1d_buffer.builtin_kernel"},
+        {EBuiltInOps::fillImage1dBufferHeapless, "fill_image1d_buffer.builtin_kernel"}};
 
     for (const auto &[type, name] : testCases) {
         std::string builtinResourceName = createBuiltinResourceName(type, ".bin");

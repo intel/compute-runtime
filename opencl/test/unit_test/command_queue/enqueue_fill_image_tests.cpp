@@ -216,6 +216,42 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImageThenSurfaceStateIsCorrect) {
     EXPECT_EQ(image->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
 }
 
+HWTEST_F(EnqueueFillImageTest, WhenFillingImage1dBufferThenCorrectBuitInIsSelected) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+
+    std::unique_ptr<Image> image1dBuffer;
+    image1dBuffer.reset(Image1dBufferHelper<>::create(context));
+    VariableBackup<Image *> imageBackup(&image, image1dBuffer.get());
+
+    mockCmdQ->storeMultiDispatchInfo = true;
+    enqueueFillImage<FamilyType>();
+
+    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "FillImage1dBuffer");
+}
+
+HWTEST_F(EnqueueFillImageTest, givenHeaplessWhenFillingImage1dBufferThenCorrectBuitInIsSelected) {
+    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
+    if (!heaplessAllowed) {
+        GTEST_SKIP();
+    }
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+
+    std::unique_ptr<Image> image1dBuffer;
+    image1dBuffer.reset(Image1dBufferHelper<>::create(context));
+    VariableBackup<Image *> imageBackup(&image, image1dBuffer.get());
+
+    mockCmdQ->storeMultiDispatchInfo = true;
+    mockCmdQ->heaplessModeEnabled = true;
+    enqueueFillImage<FamilyType>();
+
+    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "FillImage1dBuffer");
+}
+
 HWTEST2_F(EnqueueFillImageTest, WhenFillingImageThenNumberOfPipelineSelectsIsOne, IsAtMostXeHpcCore) {
     enqueueFillImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();

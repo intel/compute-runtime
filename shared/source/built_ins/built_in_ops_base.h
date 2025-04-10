@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,8 @@ inline constexpr Type fillImage2dHeapless{25};
 inline constexpr Type fillImage3d{26};
 inline constexpr Type fillImage3dHeapless{27};
 inline constexpr Type queryKernelTimestamps{28};
+inline constexpr Type fillImage1dBuffer{29};
+inline constexpr Type fillImage1dBufferHeapless{30};
 
 constexpr bool isStateless(Type type) {
     constexpr std::array<Type, 10> statelessBuiltins{{copyBufferToBufferStateless, copyBufferRectStateless, fillBufferStateless, copyBufferToImage3dStateless,
@@ -59,7 +61,7 @@ constexpr bool isStateless(Type type) {
 constexpr bool isHeapless(Type type) {
     constexpr Type statelessBuiltins[] = {copyBufferToBufferStatelessHeapless, copyBufferRectStatelessHeapless, fillBufferStatelessHeapless,
                                           copyBufferToImage3dHeapless, copyImage3dToBufferHeapless, copyImageToImage1dHeapless, copyImageToImage2dHeapless, copyImageToImage3dHeapless,
-                                          fillImage1dHeapless, fillImage2dHeapless, fillImage3dHeapless};
+                                          fillImage1dHeapless, fillImage2dHeapless, fillImage3dHeapless, fillImage1dBufferHeapless};
 
     for (auto builtinType : statelessBuiltins) {
         if (type == builtinType) {
@@ -141,8 +143,9 @@ DEFINE_ADJUST_BUILTIN_TYPE_IMAGE(copyImageToImage3d);
 DEFINE_ADJUST_BUILTIN_TYPE_IMAGE(fillImage1d);
 DEFINE_ADJUST_BUILTIN_TYPE_IMAGE(fillImage2d);
 DEFINE_ADJUST_BUILTIN_TYPE_IMAGE(fillImage3d);
+DEFINE_ADJUST_BUILTIN_TYPE_IMAGE(fillImage1dBuffer);
 
-inline constexpr Type maxBaseValue{28};
+inline constexpr Type maxBaseValue{fillImage1dBufferHeapless};
 inline constexpr Type count{64};
 } // namespace EBuiltInOps
 } // namespace NEO

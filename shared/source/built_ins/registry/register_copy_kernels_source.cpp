@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -194,11 +194,20 @@ static RegisterEmbeddedResource registerAuxTranslationSrc(
 
 static RegisterEmbeddedResource registerCopyKernelTimestampsSrc(
     createBuiltinResourceName(
-        EBuiltInOps::fillImage3d,
+        EBuiltInOps::queryKernelTimestamps,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
         .c_str(),
     std::string(
 #include "shared/source/built_ins/kernels/copy_kernel_timestamps.builtin_kernel"
+        ));
+
+static RegisterEmbeddedResource registerFillImage1dBufferSrc(
+    createBuiltinResourceName(
+        EBuiltInOps::fillImage1dBuffer,
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+        .c_str(),
+    std::string(
+#include "shared/source/built_ins/kernels/fill_image1d_buffer.builtin_kernel"
         ));
 
 } // namespace NEO

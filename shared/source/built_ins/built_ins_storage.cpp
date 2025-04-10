@@ -73,6 +73,9 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
         return "fill_image3d.builtin_kernel";
     case EBuiltInOps::queryKernelTimestamps:
         return "copy_kernel_timestamps.builtin_kernel";
+    case EBuiltInOps::fillImage1dBuffer:
+    case EBuiltInOps::fillImage1dBufferHeapless:
+        return "fill_image1d_buffer.builtin_kernel";
     };
 }
 
