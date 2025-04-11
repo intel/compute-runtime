@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ uint32_t GmmHelper::getMOCS(uint32_t type) const {
         type = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
 
-    if (this->deferMOCSToPatIndex()) {
+    if (this->rootDeviceEnvironment.getProductHelper().deferMOCSToPatIndex()) {
         return 0u;
     }
 

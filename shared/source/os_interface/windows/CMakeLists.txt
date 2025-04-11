@@ -20,7 +20,6 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h
     ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_windows.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_drm_stub.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h

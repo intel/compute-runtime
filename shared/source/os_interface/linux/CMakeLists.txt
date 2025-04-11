@@ -46,7 +46,6 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_drm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_descriptor.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_linux.cpp

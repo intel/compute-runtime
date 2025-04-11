@@ -1096,7 +1096,7 @@ TEST(GmmHelperTest, givenNewCoherencyModelWhenGetMocsThenDeferToPat) {
 
     MockExecutionEnvironment executionEnvironment{};
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
-    if (!gmmHelper->deferMOCSToPatIndex()) {
+    if (!executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().deferMOCSToPatIndex()) {
         GTEST_SKIP();
     }
 
