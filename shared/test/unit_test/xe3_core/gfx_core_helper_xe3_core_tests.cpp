@@ -846,6 +846,26 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenGfxCoreHelperWhenFlagSetAndCallGe
     EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 1u);
 }
 
+XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenGfxCoreHelperWhenUsmCompressionSupportedCalledThenReturnTrue) {
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+
+    defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
+    EXPECT_FALSE(gfxCoreHelper.usmCompressionSupported(*defaultHwInfo));
+
+    defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
+    EXPECT_TRUE(gfxCoreHelper.usmCompressionSupported(*defaultHwInfo));
+
+    debugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    EXPECT_FALSE(gfxCoreHelper.usmCompressionSupported(*defaultHwInfo));
+
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
+    EXPECT_TRUE(gfxCoreHelper.usmCompressionSupported(*defaultHwInfo));
+}
+
 using ProductHelperTestXe3 = ::testing::Test;
 
 XE3_CORETEST_F(ProductHelperTestXe3, when64bAddressingIsEnabledForRTThenResourcesAreNot48b) {

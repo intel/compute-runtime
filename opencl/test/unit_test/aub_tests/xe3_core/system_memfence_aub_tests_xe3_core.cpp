@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -133,8 +134,8 @@ class SystemMemFenceWithBlitterXe3Core : public MulticontextOclAubFixture,
         if (!productHelper.obtainBlitterPreference(*defaultHwInfo.get())) {
             GTEST_SKIP();
         }
-
-        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, true);
+        auto releaseHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
+        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, releaseHelper->getFtrXe2Compression());
     }
     void TearDown() override {
         MulticontextOclAubFixture::tearDown();

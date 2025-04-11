@@ -264,15 +264,6 @@ uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupSize(const uint32_t grfCount
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
-    if (NEO::debugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
-        return !!NEO::debugManager.flags.RenderCompressedBuffersEnabled.get();
-    }
-
-    return hwInfo.capabilityTable.ftrRenderCompressedBuffers;
-}
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe2HPG);
 }

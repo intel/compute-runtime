@@ -82,4 +82,13 @@ void MemorySynchronizationCommands<Family>::encodeAdditionalTimestampOffsets(Lin
     EncodeStoreMMIO<Family>::encode(commandStream, RegisterOffsets::globalTimestampUn, globalAddress + sizeof(uint32_t), false, nullptr, isBcs);
 }
 
+template <>
+bool GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
+    if (NEO::debugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
+        return !!NEO::debugManager.flags.RenderCompressedBuffersEnabled.get();
+    }
+
+    return hwInfo.capabilityTable.ftrRenderCompressedBuffers;
+}
+
 } // namespace NEO
