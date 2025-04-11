@@ -150,6 +150,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     OSInterface *getOSInterface() const;
     ExecutionEnvironment &peekExecutionEnvironment() const { return executionEnvironment; }
     GmmHelper *peekGmmHelper() const;
+    DeviceBitfield peekDeviceBitfield() const { return deviceBitfield; }
 
     MOCKABLE_VIRTUAL void setTagAllocation(GraphicsAllocation *allocation);
     GraphicsAllocation *getTagAllocation() const {
