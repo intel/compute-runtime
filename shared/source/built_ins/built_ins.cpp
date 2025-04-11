@@ -22,7 +22,6 @@
 #include "shared/source/os_interface/os_context.h"
 
 #include <cstdint>
-
 namespace NEO {
 
 BuiltIns::BuiltIns() {
@@ -49,7 +48,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
         if (NEO::debugManager.flags.DumpSipHeaderFile.get() != "unk") {
             std::string name = NEO::debugManager.flags.DumpSipHeaderFile.get() + "_header.bin";
-            writeDataToFile(name.c_str(), stateSaveAreaHeader.data(), stateSaveAreaHeader.size());
+            writeDataToFile(name.c_str(), std::string_view(stateSaveAreaHeader.data(), stateSaveAreaHeader.size()));
         }
 
         const auto allocType = AllocationType::kernelIsaInternal;

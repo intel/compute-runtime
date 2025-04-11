@@ -22,15 +22,13 @@ extern std::map<std::string, std::stringstream> virtualFileList;
 
 size_t writeDataToFile(
     const char *filename,
-    const void *pData,
-    size_t dataSize) {
+    std::string_view data) {
 
-    DEBUG_BREAK_IF(nullptr == pData);
     DEBUG_BREAK_IF(nullptr == filename);
 
-    NEO::virtualFileList[filename] << std::string(static_cast<const char *>(pData), dataSize);
+    NEO::virtualFileList[filename] << data;
 
-    return dataSize;
+    return data.size();
 }
 
 bool fileExists(const std::string &fileName) {

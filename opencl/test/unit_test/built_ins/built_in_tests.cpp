@@ -267,8 +267,7 @@ TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
 #define GENERATE_NEW_HASH_FOR_BUILT_INS 0
 #if GENERATE_NEW_HASH_FOR_BUILT_INS
         std::cout << "writing builtins to file: " << hashName << std::endl;
-        const char *pData = allBuiltIns.c_str();
-        writeDataToFile(hashName.c_str(), pData, allBuiltIns.length());
+        writeDataToFile(hashName.c_str(), allBuiltIns);
 #endif
     }
 }

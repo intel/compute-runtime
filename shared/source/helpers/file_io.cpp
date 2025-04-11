@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,17 +16,15 @@
 
 size_t writeDataToFile(
     const char *filename,
-    const void *pData,
-    size_t dataSize) {
+    std::string_view data) {
     FILE *fp = nullptr;
     size_t nsize = 0;
 
-    DEBUG_BREAK_IF(nullptr == pData);
     DEBUG_BREAK_IF(nullptr == filename);
 
     fopen_s(&fp, filename, "wb");
     if (fp) {
-        nsize = fwrite(pData, sizeof(unsigned char), dataSize, fp);
+        nsize = fwrite(data.data(), sizeof(unsigned char), data.size(), fp);
         fclose(fp);
     }
 

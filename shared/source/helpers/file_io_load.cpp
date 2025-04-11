@@ -58,5 +58,5 @@ void dumpFileIncrement(const char *data, size_t dataSize, const std::string &fil
         filenameWithExt = filename + "_" + std::to_string(suffix) + extension;
         suffix++;
     }
-    writeDataToFile(filenameWithExt.c_str(), data, dataSize);
+    writeDataToFile(filenameWithExt.c_str(), std::string_view(data, dataSize));
 }

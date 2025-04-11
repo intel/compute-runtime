@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <string_view>
 
 std::unique_ptr<char[]> loadDataFromFile(
     const char *filename,
@@ -21,8 +22,7 @@ std::unique_ptr<char[]> loadDataFromFile(
 
 size_t writeDataToFile(
     const char *filename,
-    const void *pData,
-    size_t dataSize);
+    std::string_view data);
 
 bool fileExists(const std::string &fileName);
 bool fileExistsHasSize(const std::string &fileName);

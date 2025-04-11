@@ -27,10 +27,13 @@ class OclocTest : public ::testing::Test {
         std::string spvFile = std::string("copybuffer") + "_" + gEnvironment->devicePrefix + ".spv";
         std::string binFile = std::string("copybuffer") + "_" + gEnvironment->devicePrefix + ".bin";
         std::string dbgFile = std::string("copybuffer") + "_" + gEnvironment->devicePrefix + ".dbg";
-        std::vector<unsigned char> mockByteArray = {0x01, 0x02, 0x03, 0x04};
-        writeDataToFile(spvFile.c_str(), mockByteArray.data(), mockByteArray.size());
-        writeDataToFile(binFile.c_str(), mockByteArray.data(), mockByteArray.size());
-        writeDataToFile(dbgFile.c_str(), mockByteArray.data(), mockByteArray.size());
+
+        constexpr unsigned char mockByteArray[] = {0x01, 0x02, 0x03, 0x04};
+        std::string_view byteArrayView(reinterpret_cast<const char *>(mockByteArray), sizeof(mockByteArray));
+
+        writeDataToFile(spvFile.c_str(), byteArrayView);
+        writeDataToFile(binFile.c_str(), byteArrayView);
+        writeDataToFile(dbgFile.c_str(), byteArrayView);
     }
 
   protected:
