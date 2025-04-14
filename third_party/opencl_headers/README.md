@@ -123,6 +123,11 @@ LICENSE                 Source license for the OpenCL API headers
 CL/                     Unified OpenCL API headers tree
 ```
 
+## Packaging
+
+For packaging instructions, see [RELEASE.md](https://github.com/KhronosGroup/OpenCL-SDK/blob/main/docs/RELEASE.md)
+in the OpenCL SDK repository.
+
 ## License
 
 See [LICENSE](LICENSE).

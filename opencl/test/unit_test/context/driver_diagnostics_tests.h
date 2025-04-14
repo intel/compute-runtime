@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ struct DriverDiagnosticsTest : public PlatformFixture,
 };
 
 struct VerboseLevelTest : public DriverDiagnosticsTest,
-                          public ::testing::WithParamInterface<unsigned int> {
+                          public ::testing::WithParamInterface<uint64_t> {
 
     void SetUp() override {
         DriverDiagnosticsTest::SetUp();
@@ -57,7 +57,7 @@ struct VerboseLevelTest : public DriverDiagnosticsTest,
     void TearDown() override {
         DriverDiagnosticsTest::TearDown();
     }
-    std::vector<unsigned int> validLevels{
+    std::vector<uint64_t> validLevels{
         CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL,
         CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL,
         CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL,

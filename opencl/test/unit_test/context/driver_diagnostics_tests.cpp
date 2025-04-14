@@ -38,14 +38,14 @@ void CL_CALLBACK callbackFunction(const char *providedHint, const void *flags, s
     strcpy_s((char *)userData + offset, DriverDiagnostics::maxHintStringSize, providedHint);
 }
 
-cl_diagnostics_verbose_level diagnosticsVerboseLevels[] = {
+cl_diagnostic_verbose_level_intel diagnosticsVerboseLevels[] = {
     CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL,
     CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL,
     CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL};
 
 TEST_P(VerboseLevelTest, GivenVerboseLevelWhenProvidedHintLevelIsSameOrAllThenCallbackFunctionTakesProvidedHint) {
     cl_device_id deviceID = devices[0];
-    cl_diagnostics_verbose_level diagnosticsLevel = GetParam();
+    cl_diagnostic_verbose_level_intel diagnosticsLevel = GetParam();
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, (cl_context_properties)diagnosticsLevel, 0};
     retVal = CL_SUCCESS;
 
@@ -67,7 +67,7 @@ TEST_P(VerboseLevelTest, GivenVerboseLevelWhenProvidedHintLevelIsSameOrAllThenCa
 
 TEST_P(VerboseLevelTest, GivenVerboseLevelAllWhenAnyHintIsProvidedThenCallbackFunctionTakesProvidedHint) {
     cl_device_id deviceID = devices[0];
-    cl_diagnostics_verbose_level providedHintLevel = GetParam();
+    cl_diagnostic_verbose_level_intel providedHintLevel = GetParam();
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
     retVal = CL_SUCCESS;
 

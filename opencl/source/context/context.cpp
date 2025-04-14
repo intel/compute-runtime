@@ -249,7 +249,7 @@ bool Context::createImpl(const cl_context_properties *properties,
         driverDiagnosticsUsed = debugManager.flags.PrintDriverDiagnostics.get();
     }
     if (driverDiagnosticsUsed >= 0) {
-        driverDiagnostics.reset(new DriverDiagnostics((cl_diagnostics_verbose_level)driverDiagnosticsUsed));
+        driverDiagnostics = std::make_unique<DriverDiagnostics>(static_cast<cl_diagnostic_verbose_level_intel>(driverDiagnosticsUsed));
     }
 
     this->numProperties = numProperties;
