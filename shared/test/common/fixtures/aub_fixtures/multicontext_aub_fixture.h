@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 namespace NEO {
 class Device;
 class MockDevice;
+class SVMAllocsManager;
 
 struct MulticontextAubFixture {
     enum class EnabledCommandStreamers {
@@ -37,6 +38,8 @@ struct MulticontextAubFixture {
     void tearDown() {}
 
     virtual CommandStreamReceiver *getGpgpuCsr(uint32_t tile, uint32_t engine) = 0;
+
+    bool isMemoryCompressed(CommandStreamReceiver *csr, void *gfxAddress);
 
     template <typename FamilyType>
     CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr(uint32_t tile, uint32_t engine) {
@@ -59,6 +62,8 @@ struct MulticontextAubFixture {
     template <typename FamilyType>
     void expectMemory(void *gfxAddress, const void *srcAddress, size_t length, uint32_t tile, uint32_t engine) {
         CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>(tile, engine);
+        // expectMemory should not be used for compressed memory
+        ASSERT_FALSE(isMemoryCompressed(csrSimulated, gfxAddress));
 
         if (testMode == TestMode::aubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
@@ -108,6 +113,7 @@ struct MulticontextAubFixture {
     void adjustPlatformOverride(HardwareInfo &localHwInfo, bool &setupCalled);
     DebugManagerStateRestore restore;
 
+    SVMAllocsManager *svmAllocsManager = nullptr;
     const uint32_t rootDeviceIndex = 0u;
     uint32_t numberOfEnabledTiles = 0;
     bool isCcs1Supported = false;

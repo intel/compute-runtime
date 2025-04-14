@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,6 +48,7 @@ void MulticontextOclAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStre
         }
         context.reset(MockContext::create<MockContext>(nullptr, clDeviceVector, nullptr, nullptr, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
+        this->svmAllocsManager = context->getSVMAllocsManager();
     }
 
     commandQueues.resize(numberOfTiles);

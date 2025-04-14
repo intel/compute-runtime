@@ -156,7 +156,9 @@ XE3_CORETEST_F(SystemMemFenceWithBlitterXe3Core, givenSystemMemFenceWhenGenerate
     retVal = clEnqueueMemcpyINTEL(commandQueues[0][0].get(), true, deviceMemAlloc, buffer.data(), bufferSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    expectMemory<FamilyType>(deviceMemAlloc, buffer.data(), bufferSize, 0, 0);
+    if (!tileDevices[0]->getDevice().getReleaseHelper()->getFtrXe2Compression()) {
+        expectMemory<FamilyType>(deviceMemAlloc, buffer.data(), bufferSize, 0, 0);
+    }
 
     auto hostMemAlloc = clHostMemAllocINTEL(context.get(), nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);

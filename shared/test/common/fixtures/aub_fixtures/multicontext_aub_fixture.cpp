@@ -11,6 +11,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -151,6 +152,19 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
     adjustPlatformOverride(localHwInfo, setupCalled);
 
     ASSERT_TRUE(setupCalled);
+}
+
+bool MulticontextAubFixture::isMemoryCompressed(CommandStreamReceiver *csr, void *gfxAddress) {
+    auto releaseHelper = csr->getReleaseHelper();
+    if (!releaseHelper || !releaseHelper->getFtrXe2Compression()) {
+        return false;
+    }
+    auto svmAllocs = svmAllocsManager->getSVMAlloc(gfxAddress);
+    if (!svmAllocs) {
+        return false;
+    }
+    auto alloc = svmAllocs->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    return alloc->isCompressionEnabled();
 }
 
 } // namespace NEO

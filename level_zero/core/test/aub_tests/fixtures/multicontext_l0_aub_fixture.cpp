@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,4 +59,5 @@ void MulticontextL0AubFixture::createDevices(const HardwareInfo &hwInfo, uint32_
     for (uint32_t i = 0; i < numTiles; i++) {
         subDevices.push_back(L0::Device::fromHandle(subDevicesH[i]));
     }
+    this->svmAllocsManager = driverHandle->getSvmAllocsManager();
 }
