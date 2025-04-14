@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,7 +88,7 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenVariousEngineTypesWhenEncodeSbaThenA
     ASSERT_EQ(CommandContainer::ErrorCode::success, ret);
 
     auto gmmHelper = cmdContainer.getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    uint32_t statelessMocsIndex = (gmmHelper->getL3EnabledMOCS() >> 1);
 
     {
         STATE_BASE_ADDRESS sba;

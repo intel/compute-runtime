@@ -265,13 +265,13 @@ uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool 
         }
 
         if (l1enabled) {
-            return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+            return gmmHelper.getL1EnabledMOCS() >> 1;
         } else {
-            return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+            return gmmHelper.getL3EnabledMOCS() >> 1;
         }
     }
 
-    return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    return gmmHelper.getUncachedMOCS() >> 1;
 }
 
 template <>

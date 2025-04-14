@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,8 +76,8 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, GivenAtLeast
     auto bufferUncacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable2 = clUniquePtr(castToObject<Buffer>(bufferUncacheable2));
 
-    auto mocsCacheable = pClDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    auto mocsUncacheable = pClDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto mocsCacheable = pClDevice->getGmmHelper()->getL3EnabledMOCS();
+    auto mocsUncacheable = pClDevice->getGmmHelper()->getUncachedMOCS();
 
     retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &bufferCacheable1);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -153,8 +153,8 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, givenBuffers
     auto bufferUncacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable2 = clUniquePtr(castToObject<Buffer>(bufferUncacheable2));
 
-    auto mocsCacheable = pClDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    auto mocsUncacheable = pClDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto mocsCacheable = pClDevice->getGmmHelper()->getL3EnabledMOCS();
+    auto mocsUncacheable = pClDevice->getGmmHelper()->getUncachedMOCS();
 
     retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &bufferCacheable1);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -227,8 +227,8 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, givenBuffers
     auto bufferUncacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable2 = clUniquePtr(castToObject<Buffer>(bufferUncacheable2));
 
-    auto mocsCacheable = pClDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    auto mocsUncacheable = pClDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto mocsCacheable = pClDevice->getGmmHelper()->getL3EnabledMOCS();
+    auto mocsUncacheable = pClDevice->getGmmHelper()->getUncachedMOCS();
 
     retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &bufferCacheable1);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -301,8 +301,8 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, WhenUnsettin
     auto bufferUncacheable = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable = clUniquePtr(castToObject<Buffer>(bufferUncacheable));
 
-    auto mocsCacheable = pClDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    auto mocsUncacheable = pClDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto mocsCacheable = pClDevice->getGmmHelper()->getL3EnabledMOCS();
+    auto mocsUncacheable = pClDevice->getGmmHelper()->getUncachedMOCS();
 
     retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &bufferCacheable1);
     EXPECT_EQ(CL_SUCCESS, retVal);

@@ -21,8 +21,13 @@ class GmmHelper {
 
     const HardwareInfo *getHardwareInfo();
     uint32_t getMOCS(uint32_t type) const;
+    uint32_t getL1EnabledMOCS() const;
+    uint32_t getL3EnabledMOCS() const;
+    uint32_t getUncachedMOCS() const;
+    void initMocsDefaults();
+
     static void applyMocsEncryptionBit(uint32_t &index);
-    void forceAllResourcesUncached() { allResourcesUncached = true; };
+    void forceAllResourcesUncached();
 
     static constexpr uint64_t maxPossiblePitch = (1ull << 31);
 
@@ -40,9 +45,12 @@ class GmmHelper {
     static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(const RootDeviceEnvironment &);
 
   protected:
-    uint32_t addressWidth;
     const RootDeviceEnvironment &rootDeviceEnvironment;
     std::unique_ptr<GmmClientContext> gmmClientContext;
+    uint32_t addressWidth = 0;
+    uint32_t mocsL1Enabled = 0;
+    uint32_t mocsL3Enabled = 0;
+    uint32_t mocsUncached = 0;
     bool allResourcesUncached = false;
 };
 } // namespace NEO

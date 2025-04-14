@@ -3887,7 +3887,7 @@ HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsC
         ptrOffset(kernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful));
     auto actualMocs = surfaceState->getMemoryObjectControlState();
-    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getL1EnabledMOCS();
 
     EXPECT_EQ(expectedMocs, actualMocs);
 

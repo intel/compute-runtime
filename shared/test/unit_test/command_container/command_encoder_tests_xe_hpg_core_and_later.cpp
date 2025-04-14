@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ HWTEST2_F(CommandEncoderXeHpgCorePlusTests, givenSpecifiedL1CacheControlWhenAppe
     args.outMemory = &rssCmd;
     args.graphicsAddress = allocation->getGpuAddress();
     args.size = allocation->getUnderlyingBufferSize();
-    args.mocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    args.mocs = pDevice->getGmmHelper()->getL3EnabledMOCS();
     args.numAvailableDevices = pDevice->getNumGenericSubDevices();
     args.allocation = allocation;
     args.gmmHelper = pDevice->getGmmHelper();

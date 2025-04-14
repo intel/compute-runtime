@@ -120,7 +120,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForVillB
 HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForVillBufferThenDebugMocksValueIsSet, IsPVC) {
     using MEM_SET = typename FamilyType::MEM_SET;
     DebugManagerStateRestore dbgRestore;
-    uint32_t mockValue = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) + 1;
+    uint32_t mockValue = pDevice->getGmmHelper()->getL3EnabledMOCS() + 1;
     debugManager.flags.OverrideBlitterMocs.set(mockValue);
 
     uint32_t pattern = 1;

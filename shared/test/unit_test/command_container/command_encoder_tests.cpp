@@ -719,7 +719,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
         EXPECT_NO_THROW(walkerCmd.getPostSync().setMocs(mocs));
 
         auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
-        auto expectedMocs = dcFlush ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+        auto expectedMocs = dcFlush ? gmmHelper->getUncachedMOCS() : gmmHelper->getL3EnabledMOCS();
 
         EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
     }

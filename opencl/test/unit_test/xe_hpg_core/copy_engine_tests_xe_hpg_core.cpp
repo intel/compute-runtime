@@ -76,7 +76,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
     EXPECT_NE(nullptr, bltCmd);
 
-    auto mocs = clDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto mocs = clDevice->getRootDeviceEnvironment().getGmmHelper()->getUncachedMOCS();
 
     EXPECT_EQ(mocs, bltCmd->getDestinationMOCS());
     EXPECT_EQ(mocs, bltCmd->getSourceMOCS());

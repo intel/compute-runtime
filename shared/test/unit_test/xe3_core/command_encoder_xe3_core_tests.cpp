@@ -174,7 +174,7 @@ XE3_CORETEST_F(CommandEncodeStatesXe3Test, givenHeapSharingEnabledWhenRetrieving
     cmdContainer->setHeapDirty(NEO::HeapType::surfaceState);
 
     auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    uint32_t statelessMocsIndex = (gmmHelper->getL3EnabledMOCS() >> 1);
 
     STATE_BASE_ADDRESS sba;
     EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(cmdContainer.get(), sba, statelessMocsIndex);

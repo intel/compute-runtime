@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,8 +25,8 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenVariousCachesRequestsThenProperMocs
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getRootDeviceEnvironment().getGmmHelper();
-    auto expectedMocsForL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
-    auto expectedMocsForL3on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+    auto expectedMocsForL3off = gmmHelper->getUncachedMOCS() >> 1;
+    auto expectedMocsForL3on = gmmHelper->getL3EnabledMOCS() >> 1;
 
     auto mocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, false, true);
     EXPECT_EQ(expectedMocsForL3off, mocsIndex);

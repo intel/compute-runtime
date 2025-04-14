@@ -374,7 +374,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetSta
     cmdContainer->setHeapDirty(NEO::HeapType::surfaceState);
 
     auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    uint32_t statelessMocsIndex = (gmmHelper->getL3EnabledMOCS() >> 1);
 
     STATE_BASE_ADDRESS sba;
 
@@ -415,7 +415,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenSetStateBaseAddressCa
 
     STATE_BASE_ADDRESS sba;
     auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    uint32_t statelessMocsIndex = (gmmHelper->getL3EnabledMOCS() >> 1);
 
     EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(cmdContainer.get(), sba, statelessMocsIndex);
 
@@ -470,7 +470,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotIniti
     cmdContainer->setHeapDirty(NEO::HeapType::surfaceState);
 
     auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    uint32_t statelessMocsIndex = (gmmHelper->getL3EnabledMOCS() >> 1);
 
     STATE_BASE_ADDRESS sba;
     EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(cmdContainer.get(), sba, statelessMocsIndex);
@@ -503,7 +503,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetTh
 
     cmdContainer->setHeapDirty(NEO::HeapType::surfaceState);
     auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    uint32_t statelessMocsIndex = (gmmHelper->getL3EnabledMOCS() >> 1);
 
     StateBaseAddressProperties sbaProperties;
     sbaProperties.initSupport(pDevice->getRootDeviceEnvironment());

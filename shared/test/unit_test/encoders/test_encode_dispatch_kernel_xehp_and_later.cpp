@@ -432,9 +432,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAddressWhenEncod
     ASSERT_NE(itor, commands.end());
     auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment())) {
-        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), cmd->getPostSync().getMocs());
+        EXPECT_EQ(pDevice->getGmmHelper()->getUncachedMOCS(), cmd->getPostSync().getMocs());
     } else {
-        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), cmd->getPostSync().getMocs());
+        EXPECT_EQ(pDevice->getGmmHelper()->getL3EnabledMOCS(), cmd->getPostSync().getMocs());
     }
 }
 

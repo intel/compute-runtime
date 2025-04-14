@@ -1228,12 +1228,12 @@ TEST(GmmHelperTest, givenNewCoherencyModelWhenGetMocsThenDeferToPat) {
         GTEST_SKIP();
     }
 
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(0u, gmmHelper->getUncachedMOCS());
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(0u, gmmHelper->getL1EnabledMOCS());
+    EXPECT_EQ(0u, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
 
     GmmHelper::createGmmContextWrapperFunc = createGmmContextSave;
@@ -1249,24 +1249,24 @@ TEST(GmmHelperTest, givenGmmHelperAndL3CacheDisabledForDebugThenCorrectMOCSIsRet
     }
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
-    auto uncachedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto uncachedMocs = gmmHelper->getUncachedMOCS();
 
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getUncachedMOCS());
     EXPECT_EQ(2u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     EXPECT_EQ(4u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     EXPECT_EQ(4u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(8u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(16u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(8u, gmmHelper->getL1EnabledMOCS());
+    EXPECT_EQ(16u, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(32u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
 
     gmmHelper->forceAllResourcesUncached();
 
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getUncachedMOCS());
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getL1EnabledMOCS());
+    EXPECT_EQ(uncachedMocs, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
     GmmHelper::createGmmContextWrapperFunc = createGmmContextSave;
 }
@@ -1281,25 +1281,26 @@ TEST(GmmHelperTest, givenGmmHelperAndForceAllResourcesUncachedDebugVariableSetTh
     }
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
-    auto uncachedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto uncachedMocs = gmmHelper->getUncachedMOCS();
 
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getUncachedMOCS());
     EXPECT_EQ(2u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     EXPECT_EQ(4u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     EXPECT_EQ(4u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(8u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(16u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(8u, gmmHelper->getL1EnabledMOCS());
+    EXPECT_EQ(16u, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(32u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
 
     DebugManagerStateRestore restore;
     debugManager.flags.ForceAllResourcesUncached.set(true);
+    gmmHelper->initMocsDefaults();
 
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getUncachedMOCS());
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(uncachedMocs, gmmHelper->getL1EnabledMOCS());
+    EXPECT_EQ(uncachedMocs, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
     GmmHelper::createGmmContextWrapperFunc = createGmmContextSave;
 }

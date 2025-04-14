@@ -1513,7 +1513,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, BufferSetSurfaceTests, givenBufferSetSurfaceThatM
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), mocs);
+    EXPECT_EQ(gmmHelper->getL3EnabledMOCS(), mocs);
 
     alignedFree(ptr);
 }
@@ -1532,7 +1532,7 @@ HWTEST_F(BufferSetSurfaceTests, givenDebugVariableToDisableCachingForStatefulBuf
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
+    EXPECT_EQ(gmmHelper->getUncachedMOCS(), mocs);
 
     alignedFree(ptr);
     debugManager.flags.DisableCachingForStatefulBufferAccess.set(false);
@@ -1552,7 +1552,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsUnalignedToC
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
+    EXPECT_EQ(gmmHelper->getUncachedMOCS(), mocs);
 
     alignedFree(ptr);
 }
@@ -1571,7 +1571,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemorySizeIsUnalignedTo
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
+    EXPECT_EQ(gmmHelper->getUncachedMOCS(), mocs);
 
     alignedFree(ptr);
 }
@@ -1590,7 +1590,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryIsUnalignedToCach
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), mocs);
+    EXPECT_EQ(gmmHelper->getL3EnabledMOCS(), mocs);
 
     alignedFree(ptr);
 }
@@ -1750,7 +1750,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisable
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
+    EXPECT_EQ(gmmHelper->getUncachedMOCS(), mocs);
     EXPECT_EQ(128u, surfaceState.getWidth());
     EXPECT_EQ(4u, surfaceState.getHeight());
 }
@@ -1778,8 +1778,8 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedButIsAReadOnlyArgumen
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
-    auto expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    auto expectedMocs2 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    auto expectedMocs = gmmHelper->getL3EnabledMOCS();
+    auto expectedMocs2 = gmmHelper->getL1EnabledMOCS();
     EXPECT_TRUE(expectedMocs == mocs || expectedMocs2 == mocs);
 }
 
@@ -1801,7 +1801,7 @@ HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableReadOnlyBufferThenChoseOclB
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 
-    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    const auto expectedMocs = device->getGmmHelper()->getL3EnabledMOCS();
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 
@@ -1826,7 +1826,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, BufferSetSurfaceTests, givenAlignedCacheableNonRe
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 
-    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    const auto expectedMocs = device->getGmmHelper()->getL3EnabledMOCS();
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 
@@ -1912,7 +1912,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedWhenSurfaceStateIsBei
 
     Buffer::setSurfaceState(device.get(), &surfaceState, false, false, 5, svmPtr, 0, nullptr, 0, 0, false);
 
-    EXPECT_EQ(device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), surfaceState.getMemoryObjectControlState());
+    EXPECT_EQ(device->getGmmHelper()->getUncachedMOCS(), surfaceState.getMemoryObjectControlState());
 }
 
 using BufferHwFromDeviceTests = BufferTests;
@@ -2128,8 +2128,8 @@ HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteIm
     ASSERT_NE(surfaceStateAddress, nullptr);
     auto surfaceState = *reinterpret_cast<RENDER_SURFACE_STATE *>(surfaceStateAddress);
 
-    auto expect = ctx.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    auto expect2 = ctx.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    auto expect = ctx.getDevice(0)->getGmmHelper()->getL3EnabledMOCS();
+    auto expect2 = ctx.getDevice(0)->getGmmHelper()->getL1EnabledMOCS();
 
     EXPECT_NE(0u, surfaceState.getMemoryObjectControlState());
     EXPECT_TRUE(expect == surfaceState.getMemoryObjectControlState() || expect2 == surfaceState.getMemoryObjectControlState());
@@ -2154,8 +2154,8 @@ HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteBu
 
     clEnqueueWriteBufferRect(&cmdQ, buffer, false, origin, origin, region, 0, 0, 0, 0, hostPtr, 0, nullptr, nullptr);
 
-    auto expect = ctx.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    auto expect2 = ctx.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    auto expect = ctx.getDevice(0)->getGmmHelper()->getL3EnabledMOCS();
+    auto expect2 = ctx.getDevice(0)->getGmmHelper()->getL1EnabledMOCS();
 
     EXPECT_NE(0u, surfaceState->getMemoryObjectControlState());
     EXPECT_TRUE(expect == surfaceState->getMemoryObjectControlState() || expect2 == surfaceState->getMemoryObjectControlState());

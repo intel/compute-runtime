@@ -539,14 +539,14 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     addr += offset;
     EXPECT_EQ(addr, state->getSurfaceBaseAddress());
     EXPECT_EQ(type, state->getSurfaceType());
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), state->getMemoryObjectControlState());
+    EXPECT_EQ(gmmHelper->getL3EnabledMOCS(), state->getMemoryObjectControlState());
 
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
     size = 0x1003;
     length.length = static_cast<uint32_t>(alignUp(size, 4) - 1);
     bool isReadOnly = false;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true, false);
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), state->getMemoryObjectControlState());
+    EXPECT_EQ(gmmHelper->getUncachedMOCS(), state->getMemoryObjectControlState());
     EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
     EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
     EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
@@ -556,7 +556,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     addr = 0x2001;
     length.length = static_cast<uint32_t>(size - 1);
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true, false);
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), state->getMemoryObjectControlState());
+    EXPECT_EQ(gmmHelper->getUncachedMOCS(), state->getMemoryObjectControlState());
     EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
     EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
     EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
@@ -567,7 +567,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     length.length = static_cast<uint32_t>(alignUp(size, 4) - 1);
     isReadOnly = true;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, nullptr, isReadOnly, type, true, false);
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), state->getMemoryObjectControlState());
+    EXPECT_EQ(gmmHelper->getL3EnabledMOCS(), state->getMemoryObjectControlState());
     EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
     EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
     EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
@@ -940,9 +940,9 @@ TEST_F(GfxCoreHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGe
 HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, givenVariousCachesRequestThenCorrectMocsIndexesAreReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getGmmHelper();
-    auto expectedMocsForL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
-    auto expectedMocsForL3on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
-    auto expectedMocsForL3andL1on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+    auto expectedMocsForL3off = gmmHelper->getUncachedMOCS() >> 1;
+    auto expectedMocsForL3on = gmmHelper->getL3EnabledMOCS() >> 1;
+    auto expectedMocsForL3andL1on = gmmHelper->getL1EnabledMOCS() >> 1;
 
     auto mocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, false, true);
     EXPECT_EQ(expectedMocsForL3off, mocsIndex);

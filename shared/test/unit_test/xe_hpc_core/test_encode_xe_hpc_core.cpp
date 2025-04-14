@@ -484,7 +484,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndU
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
     auto gmmHelper = cmdContainer->getDevice()->getGmmHelper();
     EXPECT_EQ(cmdSba->getStatelessDataPortAccessMemoryObjectControlState(),
-              (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED)));
+              (gmmHelper->getUncachedMOCS()));
 }
 
 using XeHpcSbaTest = SbaTest;

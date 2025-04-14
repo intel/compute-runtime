@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -26,6 +27,7 @@
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -862,6 +864,7 @@ int main(int argc, char **argv) {
     initializeTestedDevice();
 
     Os::dxcoreDllName = "";
+    GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
 
     int sigOut = setAlarm(enableAlarm);
     if (sigOut != 0)

@@ -309,7 +309,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             STATE_BASE_ADDRESS sbaCmd;
             auto gmmHelper = container.getDevice()->getGmmHelper();
             uint32_t statelessMocsIndex =
-                args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+                args.requiresUncachedMocs ? (gmmHelper->getUncachedMOCS() >> 1) : (gmmHelper->getL3EnabledMOCS() >> 1);
             auto l1CachePolicy = container.l1CachePolicyDataRef()->getL1CacheValue(false);
             auto l1CachePolicyDebuggerActive = container.l1CachePolicyDataRef()->getL1CacheValue(true);
 
@@ -526,9 +526,9 @@ inline uint32_t EncodePostSync<Family>::getPostSyncMocs(const RootDeviceEnvironm
     }
 
     if (dcFlush) {
-        return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+        return gmmHelper->getUncachedMOCS();
     } else {
-        return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+        return gmmHelper->getL3EnabledMOCS();
     }
 }
 
@@ -790,13 +790,13 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
         setConstCachePolicy = true;
     }
 
-    if (surfaceState->getMemoryObjectControlState() == args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) &&
+    if (surfaceState->getMemoryObjectControlState() == args.gmmHelper->getL3EnabledMOCS() &&
         debugManager.flags.ForceL1Caching.get() != 0) {
         setConstCachePolicy = true;
     }
 
     if (setConstCachePolicy == true) {
-        surfaceState->setMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
+        surfaceState->setMemoryObjectControlState(args.gmmHelper->getL1EnabledMOCS());
     }
 
     encodeExtraCacheSettings(surfaceState, args);

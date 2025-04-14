@@ -464,7 +464,7 @@ XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenCleanHeapsAndSlmNotChangedAn
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
     auto gmmHelper = cmdContainer->getDevice()->getGmmHelper();
     EXPECT_EQ(cmdSba->getStatelessDataPortAccessMemoryObjectControlState(),
-              (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED)));
+              (gmmHelper->getUncachedMOCS()));
 }
 
 XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenDebugFlagSetWhenAdjustIsCalledThenUpdateRequiredScratchSizeField) {

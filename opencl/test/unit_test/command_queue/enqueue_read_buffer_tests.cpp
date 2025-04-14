@@ -336,8 +336,8 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBuf
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto gmmHelper = pDevice->getGmmHelper();
-    auto mocsIndexL3on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
-    auto mocsIndexL1on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+    auto mocsIndexL3on = gmmHelper->getL3EnabledMOCS() >> 1;
+    auto mocsIndexL1on = gmmHelper->getL1EnabledMOCS() >> 1;
 
     EXPECT_TRUE(mocsIndexL3on == csr.latestSentStatelessMocsConfig || mocsIndexL1on == csr.latestSentStatelessMocsConfig);
 }
@@ -364,9 +364,9 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto gmmHelper = pDevice->getGmmHelper();
-    auto mocsIndexL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
-    auto mocsIndexL3on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
-    auto mocsIndexL1on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+    auto mocsIndexL3off = gmmHelper->getUncachedMOCS() >> 1;
+    auto mocsIndexL3on = gmmHelper->getL3EnabledMOCS() >> 1;
+    auto mocsIndexL1on = gmmHelper->getL1EnabledMOCS() >> 1;
 
     EXPECT_EQ(mocsIndexL3off, csr.latestSentStatelessMocsConfig);
 
@@ -410,7 +410,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndSizeWhenBlockedRead
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto gmmHelper = pDevice->getGmmHelper();
-    auto mocsIndexL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    auto mocsIndexL3off = gmmHelper->getUncachedMOCS() >> 1;
 
     EXPECT_EQ(mocsIndexL3off, csr.latestSentStatelessMocsConfig);
     clReleaseEvent(userEvent);

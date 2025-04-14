@@ -1054,7 +1054,7 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenOverriddenMocksValueWhenAppendBlitCommandsB
     bltCmd->setDestinationX2CoordinateRight(1);
     bltCmd->setDestinationY2CoordinateBottom(1);
 
-    uint32_t mockValue = context->getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    uint32_t mockValue = context->getDevice(0)->getGmmHelper()->getL3EnabledMOCS();
     uint32_t newValue = mockValue + 1;
     debugManager.flags.OverrideBlitterMocs.set(newValue);
 

@@ -33,6 +33,12 @@ const RootDeviceEnvironment &GmmHelper::getRootDeviceEnvironment() const {
     return rootDeviceEnvironment;
 }
 
+void GmmHelper::initMocsDefaults() {
+    mocsL1Enabled = getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    mocsL3Enabled = getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    mocsUncached = getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+}
+
 uint32_t GmmHelper::getMOCS(uint32_t type) const {
     if (allResourcesUncached || (debugManager.flags.ForceAllResourcesUncached.get() == true)) {
         type = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
@@ -47,10 +53,27 @@ uint32_t GmmHelper::getMOCS(uint32_t type) const {
     return static_cast<uint32_t>(mocs.DwordValue);
 }
 
+uint32_t GmmHelper::getL1EnabledMOCS() const {
+    return mocsL1Enabled;
+}
+
+uint32_t GmmHelper::getL3EnabledMOCS() const {
+    return mocsL3Enabled;
+}
+
+uint32_t GmmHelper::getUncachedMOCS() const {
+    return mocsUncached;
+}
+
 void GmmHelper::applyMocsEncryptionBit(uint32_t &index) {
     if (debugManager.flags.ForceStatelessMocsEncryptionBit.get() == 1) {
         index |= 1;
     }
+}
+
+void GmmHelper::forceAllResourcesUncached() {
+    allResourcesUncached = true;
+    initMocsDefaults();
 }
 
 GmmHelper::GmmHelper(const RootDeviceEnvironment &rootDeviceEnvironmentArg) : rootDeviceEnvironment(rootDeviceEnvironmentArg) {
@@ -60,6 +83,8 @@ GmmHelper::GmmHelper(const RootDeviceEnvironment &rootDeviceEnvironmentArg) : ro
 
     gmmClientContext = GmmHelper::createGmmContextWrapperFunc(rootDeviceEnvironment);
     UNRECOVERABLE_IF(!gmmClientContext);
+
+    initMocsDefaults();
 }
 
 uint64_t GmmHelper::canonize(uint64_t address) const {

@@ -249,7 +249,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushC
     hwParserCsr.findHardwareCommands<FamilyType>();
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto expectedMocsForStateless = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    auto expectedMocsForStateless = gmmHelper->getL1EnabledMOCS();
     auto expectedMocsForHeap = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
 
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getSurfaceStateMemoryObjectControlState());
@@ -298,7 +298,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenL3ToL
     hwParserCsr.findHardwareCommands<FamilyType>();
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto expectedMocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    auto expectedMocs = pDevice->getGmmHelper()->getL1EnabledMOCS();
 
     EXPECT_EQ(expectedMocs, stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlState());
 }
@@ -317,7 +317,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenForce
     hwParserCsr.findHardwareCommands<FamilyType>();
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto expectedMocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto expectedMocs = pDevice->getGmmHelper()->getL3EnabledMOCS();
 
     EXPECT_EQ(expectedMocs, stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlState());
 }

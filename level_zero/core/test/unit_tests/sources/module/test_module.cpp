@@ -681,7 +681,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
     EXPECT_EQ(devicePtr, reinterpret_cast<void *>(surfaceStateAddress->getSurfaceBaseAddress()));
 
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
-    uint32_t expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    uint32_t expectedMocs = gmmHelper->getUncachedMOCS();
 
     EXPECT_EQ(expectedMocs, surfaceStateAddress->getMemoryObjectControlState());
 

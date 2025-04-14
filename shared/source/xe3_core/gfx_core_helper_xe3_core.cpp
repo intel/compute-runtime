@@ -84,9 +84,9 @@ uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
 template <>
 uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
-        return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+        return gmmHelper.getL3EnabledMOCS() >> 1;
     }
-    return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    return gmmHelper.getUncachedMOCS() >> 1;
 }
 
 template <>

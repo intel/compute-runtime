@@ -130,7 +130,7 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchin
 
     auto gmmHelper = device->getGmmHelper();
 
-    auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getRootDeviceEnvironment()) ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getRootDeviceEnvironment()) ? gmmHelper->getUncachedMOCS() : gmmHelper->getL3EnabledMOCS();
 
     auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
     EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walker->getPostSync().getOperation());
@@ -208,7 +208,7 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnque
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
     auto gmmHelper = device->getGmmHelper();
-    auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getRootDeviceEnvironment()) ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getRootDeviceEnvironment()) ? gmmHelper->getUncachedMOCS() : gmmHelper->getL3EnabledMOCS();
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
 

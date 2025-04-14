@@ -125,7 +125,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
         blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
     }
 
-    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getL3EnabledMOCS();
     if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
         mocs = static_cast<uint32_t>(debugManager.flags.OverrideBlitterMocs.get());
     }
@@ -204,7 +204,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
         blitCmd.setCopyType(MEM_COPY::COPY_TYPE::COPY_TYPE_LINEAR_COPY);
     }
 
-    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getL3EnabledMOCS();
     if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
         mocs = static_cast<uint32_t>(debugManager.flags.OverrideBlitterMocs.get());
     }

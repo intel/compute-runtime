@@ -304,7 +304,7 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
 
-    const auto mocsNoCache = device->getNEODevice()->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    const auto mocsNoCache = device->getNEODevice()->getGmmHelper()->getUncachedMOCS();
     const auto actualMocs = debugSurfaceState->getMemoryObjectControlState();
 
     EXPECT_EQ(actualMocs, mocsNoCache);
@@ -1001,7 +1001,7 @@ HWTEST2_F(L0DebuggerGlobalStatelessTest,
     ASSERT_NE(debugSurface, nullptr);
     ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
 
-    const auto mocsNoCache = device->getNEODevice()->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    const auto mocsNoCache = device->getNEODevice()->getGmmHelper()->getUncachedMOCS();
     const auto actualMocs = debugSurfaceState->getMemoryObjectControlState();
 
     EXPECT_EQ(actualMocs, mocsNoCache);

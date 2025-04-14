@@ -1614,7 +1614,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenDispatching
     EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
     EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
                                                              directSubmission.deferredTasksListAllocation->getGpuAddress(), directSubmission.semaphoreGpuVa, 123,
-                                                             pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER)));
+                                                             pDevice->getRootDeviceEnvironment().getGmmHelper()->getL3EnabledMOCS()));
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNewNumberOfClientsWhenDispatchingWorkThenIncraseQueueSize, IsAtLeastXeHpcCore) {
@@ -1628,7 +1628,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNewNumberOfClientsWhenDispa
     EXPECT_EQ(RelaxedOrderingHelper::queueSizeMultiplier, directSubmission.currentRelaxedOrderingQueueSize);
     EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
                                                              directSubmission.deferredTasksListAllocation->getGpuAddress(), directSubmission.semaphoreGpuVa, RelaxedOrderingHelper::queueSizeMultiplier,
-                                                             pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER)));
+                                                             pDevice->getRootDeviceEnvironment().getGmmHelper()->getL3EnabledMOCS()));
 
     const uint64_t expectedQueueSizeValueVa = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress() +
                                               RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::drainRequestSectionStart +
@@ -1708,7 +1708,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenDispatchStat
         EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
         EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
                                                                  directSubmission.deferredTasksListAllocation->getGpuAddress(), directSubmission.semaphoreGpuVa, RelaxedOrderingHelper::queueSizeMultiplier,
-                                                                 pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER)));
+                                                                 pDevice->getRootDeviceEnvironment().getGmmHelper()->getL3EnabledMOCS()));
     }
 
     {
@@ -1861,7 +1861,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
     EXPECT_EQ(8u, miMathCmd->DW0.BitField.DwordLength);
 
     if constexpr (FamilyType::isUsingMiMathMocs) {
-        EXPECT_EQ(miMathCmd->DW0.BitField.MemoryObjectControlState, pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+        EXPECT_EQ(miMathCmd->DW0.BitField.MemoryObjectControlState, pDevice->getRootDeviceEnvironment().getGmmHelper()->getL3EnabledMOCS());
     }
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);

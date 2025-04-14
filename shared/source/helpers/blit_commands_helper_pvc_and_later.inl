@@ -16,7 +16,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitPropert
     using MEM_SET = typename Family::MEM_SET;
     auto blitCmd = Family::cmdInitMemSet;
 
-    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto mocs = rootDeviceEnvironment.getGmmHelper()->getL3EnabledMOCS();
     if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
         mocs = static_cast<uint32_t>(debugManager.flags.OverrideBlitterMocs.get());
     }

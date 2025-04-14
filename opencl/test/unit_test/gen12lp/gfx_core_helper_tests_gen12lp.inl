@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -307,8 +307,8 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, whenRequestingMocsThenProperMocsIndicesA
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getGmmHelper();
 
-    const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
-    const auto mocsL3 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+    const auto mocsNoCache = gmmHelper->getUncachedMOCS() >> 1;
+    const auto mocsL3 = gmmHelper->getL3EnabledMOCS() >> 1;
 
     EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, false));
     EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, true));
@@ -323,9 +323,9 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenL1ForceEnabledWhenRequestingMocsThe
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getGmmHelper();
 
-    const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
-    const auto mocsL3 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
-    const auto mocsL1 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+    const auto mocsNoCache = gmmHelper->getUncachedMOCS() >> 1;
+    const auto mocsL3 = gmmHelper->getL3EnabledMOCS() >> 1;
+    const auto mocsL1 = gmmHelper->getL1EnabledMOCS() >> 1;
 
     EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, false));
     EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, true));
@@ -340,8 +340,8 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenL1ForceDisabledWhenRequestingMocsTh
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getGmmHelper();
 
-    const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
-    const auto mocsL3 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+    const auto mocsNoCache = gmmHelper->getUncachedMOCS() >> 1;
+    const auto mocsL3 = gmmHelper->getL3EnabledMOCS() >> 1;
 
     EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, false));
     EXPECT_EQ(mocsNoCache, gfxCoreHelper.getMocsIndex(*gmmHelper, false, true));

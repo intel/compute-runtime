@@ -898,9 +898,9 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument, uint
 
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
     if (!disableL3Cache && !isMemObjUncacheableForSurfaceState() && (alignedMemObj || readOnlyMemObj || !isMemObjZeroCopy())) {
-        return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+        return gmmHelper->getL3EnabledMOCS();
     } else {
-        return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+        return gmmHelper->getUncachedMOCS();
     }
 }
 

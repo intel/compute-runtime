@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,8 +141,8 @@ HWTEST_F(BufferSetArgTest, givenSetKernelArgOnReadOnlyBufferThatIsMisalingedWhen
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(), pKernelInfo->argAsPtr(0).bindful));
     auto mocs = surfaceState->getMemoryObjectControlState();
     auto gmmHelper = pDevice->getGmmHelper();
-    auto expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    auto expectedMocs2 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    auto expectedMocs = gmmHelper->getL3EnabledMOCS();
+    auto expectedMocs2 = gmmHelper->getL1EnabledMOCS();
     EXPECT_TRUE(expectedMocs == mocs || expectedMocs2 == mocs);
 }
 

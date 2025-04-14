@@ -478,7 +478,7 @@ void EncodeSurfaceState<Family>::encodeBuffer(EncodeSurfaceStateArgs &args) {
     }
 
     if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
-        surfaceState->setMemoryObjectControlState(args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+        surfaceState->setMemoryObjectControlState(args.gmmHelper->getUncachedMOCS());
     }
 
     EncodeSurfaceState<Family>::encodeExtraBufferParams(args);
