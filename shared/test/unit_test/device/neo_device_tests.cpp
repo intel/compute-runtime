@@ -1341,7 +1341,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDebugFlagSetWhenAskingForComputeU
 }
 
 HWTEST2_F(DeviceTests, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue, IsXeHpgCore) {
-    EXPECT_EQ(64u, defaultHwInfo->capabilityTable.slmSize);
+    EXPECT_EQ(64u, defaultHwInfo->capabilityTable.maxProgrammableSlmSize);
 }
 
 TEST_F(DeviceTests, whenCheckingPreferredPlatformNameThenNullIsReturned) {

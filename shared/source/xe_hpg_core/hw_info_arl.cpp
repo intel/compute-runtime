@@ -44,7 +44,7 @@ const RuntimeCapabilityTable ARL::capabilityTable{
     30,                                                        // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Arl,             // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
-    64,                                                        // slmSize
+    64,                                                        // maxProgrammableSlmSize
     sizeof(ARL::GRF),                                          // grfSize
     36u,                                                       // timestampValidBits
     32u,                                                       // kernelTimestampValidBits

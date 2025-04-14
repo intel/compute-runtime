@@ -154,7 +154,7 @@ void Device::initializeCaps() {
     deviceInfo.computeUnitsUsedForScratch = gfxCoreHelper.getComputeUnitsUsedForScratch(this->getRootDeviceEnvironment());
     deviceInfo.maxFrontEndThreads = gfxCoreHelper.getMaxThreadsForVfe(hwInfo);
 
-    deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * MemoryConstants::kiloByte;
+    deviceInfo.localMemSize = hwInfo.capabilityTable.maxProgrammableSlmSize * MemoryConstants::kiloByte;
 
     deviceInfo.imageSupport = hwInfo.capabilityTable.supportsImages;
     deviceInfo.image2DMaxWidth = 16384;

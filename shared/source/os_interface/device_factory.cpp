@@ -126,7 +126,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
         }
         if (debugManager.flags.OverrideSlmSize.get() != -1) {
-            hardwareInfo->capabilityTable.slmSize = debugManager.flags.OverrideSlmSize.get();
+            hardwareInfo->capabilityTable.maxProgrammableSlmSize = debugManager.flags.OverrideSlmSize.get();
             hardwareInfo->gtSystemInfo.SLMSizeInKb = debugManager.flags.OverrideSlmSize.get();
         }
         if (debugManager.flags.OverrideRegionCount.get() != -1) {
@@ -185,7 +185,7 @@ static bool initHwDeviceIdResources(ExecutionEnvironment &executionEnvironment,
     }
     if (debugManager.flags.OverrideSlmSize.get() != -1) {
         auto hardwareInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
-        hardwareInfo->capabilityTable.slmSize = debugManager.flags.OverrideSlmSize.get();
+        hardwareInfo->capabilityTable.maxProgrammableSlmSize = debugManager.flags.OverrideSlmSize.get();
         hardwareInfo->gtSystemInfo.SLMSizeInKb = debugManager.flags.OverrideSlmSize.get();
     }
     if (debugManager.flags.OverrideRegionCount.get() != -1) {

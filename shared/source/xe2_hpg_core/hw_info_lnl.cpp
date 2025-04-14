@@ -47,7 +47,7 @@ const RuntimeCapabilityTable LNL::capabilityTable{
     30,                                                        // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Lnl,             // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
-    128,                                                       // slmSize
+    128,                                                       // maxProgrammableSlmSize
     sizeof(LNL::GRF),                                          // grfSize
     64,                                                        // timestampValidBits
     64,                                                        // kernelTimestampValidBits

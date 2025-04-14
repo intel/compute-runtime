@@ -47,7 +47,7 @@ const RuntimeCapabilityTable PTL::capabilityTable{
     30,                                                        // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Ptl,             // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
-    128,                                                       // slmSize
+    128,                                                       // maxProgrammableSlmSize
     sizeof(PTL::GRF),                                          // grfSize
     64,                                                        // timestampValidBits
     64,                                                        // kernelTimestampValidBits

@@ -45,7 +45,7 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     30,                                                        // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Mtl,             // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
-    64,                                                        // slmSize
+    64,                                                        // maxProgrammableSlmSize
     sizeof(MTL::GRF),                                          // grfSize
     36u,                                                       // timestampValidBits
     32u,                                                       // kernelTimestampValidBits

@@ -46,7 +46,7 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     30,                                            // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Dg1, // aubDeviceId
     1,                                             // extraQuantityThreadsPerEU
-    64,                                            // slmSize
+    64,                                            // maxProgrammableSlmSize
     sizeof(DG1::GRF),                              // grfSize
     36u,                                           // timestampValidBits
     32u,                                           // kernelTimestampValidBits

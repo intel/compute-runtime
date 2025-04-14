@@ -45,7 +45,7 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScra
 }
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue) {
-    EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
+    EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.maxProgrammableSlmSize);
 }
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckBlitterOperationsSupportThenReturnFalse) {

@@ -46,7 +46,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     30,                                              // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Tgllp, // aubDeviceId
     1,                                               // extraQuantityThreadsPerEU
-    64,                                              // slmSize
+    64,                                              // maxProgrammableSlmSize
     sizeof(TGLLP::GRF),                              // grfSize
     36u,                                             // timestampValidBits
     32u,                                             // kernelTimestampValidBits

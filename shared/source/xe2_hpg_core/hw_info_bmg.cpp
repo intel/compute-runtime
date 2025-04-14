@@ -49,7 +49,7 @@ const RuntimeCapabilityTable BMG::capabilityTable{
     30,                                                       // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Bmg,            // aubDeviceId
     0,                                                        // extraQuantityThreadsPerEU
-    128,                                                      // slmSize
+    128,                                                      // maxProgrammableSlmSize
     sizeof(BMG::GRF),                                         // grfSize
     64,                                                       // timestampValidBits
     64,                                                       // kernelTimestampValidBits

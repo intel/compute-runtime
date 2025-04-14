@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -256,7 +256,7 @@ TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironments
     bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
 
     EXPECT_TRUE(success);
-    EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.slmSize);
+    EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.maxProgrammableSlmSize);
     EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.SLMSizeInKb);
 }
 
@@ -267,7 +267,7 @@ TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironments
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
 
     EXPECT_TRUE(success);
-    EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.slmSize);
+    EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.maxProgrammableSlmSize);
     EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.SLMSizeInKb);
 }
 

@@ -50,7 +50,7 @@ struct KernelHelperMaxWorkGroupsFixture : public DeviceFixture {
     uint32_t getMaxWorkGroupCount() {
         auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
         hwInfo->gtSystemInfo.DualSubSliceCount = dssCount;
-        hwInfo->capabilityTable.slmSize = (availableSlm / MemoryConstants::kiloByte) / dssCount;
+        hwInfo->capabilityTable.maxProgrammableSlmSize = (availableSlm / MemoryConstants::kiloByte) / dssCount;
 
         if (numSubdevices > 1) {
             forceSingleTileQuery = false;

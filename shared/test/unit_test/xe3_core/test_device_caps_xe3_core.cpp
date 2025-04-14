@@ -26,7 +26,7 @@ XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreProductWhenCheckingCapabilitiesThe
 
     EXPECT_EQ(1024u, pDevice->getDeviceInfo().maxWorkGroupSize);
 
-    EXPECT_EQ(128u, pDevice->getHardwareInfo().capabilityTable.slmSize);
+    EXPECT_EQ(128u, pDevice->getHardwareInfo().capabilityTable.maxProgrammableSlmSize);
 
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.kernelTimestampValidBits);
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.timestampValidBits);

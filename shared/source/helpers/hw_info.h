@@ -33,7 +33,7 @@ struct RuntimeCapabilityTable {
     unsigned int clVersionSupport;
     uint32_t aubDeviceId;
     uint32_t extraQuantityThreadsPerEU;
-    uint32_t slmSize;
+    uint32_t maxProgrammableSlmSize;
     uint32_t grfSize;
     uint32_t timestampValidBits;
     uint32_t kernelTimestampValidBits;
@@ -93,7 +93,7 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.clVersionSupport == rhs.clVersionSupport);
     result &= (lhs.aubDeviceId == rhs.aubDeviceId);
     result &= (lhs.extraQuantityThreadsPerEU == rhs.extraQuantityThreadsPerEU);
-    result &= (lhs.slmSize == rhs.slmSize);
+    result &= (lhs.maxProgrammableSlmSize == rhs.maxProgrammableSlmSize);
     result &= (lhs.grfSize == rhs.grfSize);
     result &= (lhs.timestampValidBits == rhs.timestampValidBits);
     result &= (lhs.kernelTimestampValidBits == rhs.kernelTimestampValidBits);

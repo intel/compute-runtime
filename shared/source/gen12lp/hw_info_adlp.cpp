@@ -46,7 +46,7 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     30,                                             // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Adlp, // aubDeviceId
     1,                                              // extraQuantityThreadsPerEU
-    64,                                             // slmSize
+    64,                                             // maxProgrammableSlmSize
     sizeof(ADLP::GRF),                              // grfSize
     36u,                                            // timestampValidBits
     32u,                                            // kernelTimestampValidBits

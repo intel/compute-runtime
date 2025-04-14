@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ void KernelImpSuggestMaxCooperativeGroupCountFixture::setUp() {
     if (dssCount == 0) {
         dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
     }
-    availableSlm = dssCount * MemoryConstants::kiloByte * hardwareInfo.capabilityTable.slmSize;
+    availableSlm = dssCount * MemoryConstants::kiloByte * hardwareInfo.capabilityTable.maxProgrammableSlmSize;
     maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
 
     kernelInfo.kernelDescriptor->kernelAttributes.simdSize = simd;
