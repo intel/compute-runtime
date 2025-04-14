@@ -15,7 +15,7 @@
 #include <thread>
 namespace NEO {
 
-UnifiedMemoryReuseCleaner::UnifiedMemoryReuseCleaner() {
+UnifiedMemoryReuseCleaner::UnifiedMemoryReuseCleaner(bool trimAllAllocations) : trimAllAllocations(trimAllAllocations) {
 }
 
 UnifiedMemoryReuseCleaner::~UnifiedMemoryReuseCleaner() {
@@ -75,7 +75,7 @@ void UnifiedMemoryReuseCleaner::trimOldInCaches() {
                 }
             }
         }
-        svmAllocCache->trimOldAllocs(trimTimePoint, shouldLimitReuse);
+        svmAllocCache->trimOldAllocs(trimTimePoint, shouldLimitReuse || this->trimAllAllocations);
     }
 }
 

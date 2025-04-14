@@ -23,7 +23,7 @@ class UnifiedMemoryReuseCleaner : NEO::NonCopyableAndNonMovableClass {
     static constexpr auto sleepTime = std::chrono::milliseconds(15u);
     static constexpr auto maxHoldTime = std::chrono::seconds(10u);
     static constexpr auto limitedHoldTime = std::chrono::seconds(2u);
-    UnifiedMemoryReuseCleaner();
+    UnifiedMemoryReuseCleaner(bool trimAllAllocations);
     virtual ~UnifiedMemoryReuseCleaner();
 
     MOCKABLE_VIRTUAL void startThread();
@@ -45,6 +45,8 @@ class UnifiedMemoryReuseCleaner : NEO::NonCopyableAndNonMovableClass {
 
     std::atomic_bool runCleaning = false;
     std::atomic_bool keepCleaning = true;
+
+    bool trimAllAllocations = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<UnifiedMemoryReuseCleaner>);

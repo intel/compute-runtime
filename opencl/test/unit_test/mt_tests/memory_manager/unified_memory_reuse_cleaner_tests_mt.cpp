@@ -10,7 +10,7 @@
 namespace NEO {
 
 TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWhenSleepExpiredThenTrimOldInCachesIsCalled) {
-    MockUnifiedMemoryReuseCleaner cleaner;
+    MockUnifiedMemoryReuseCleaner cleaner(false);
     cleaner.callBaseStartThread = true;
     cleaner.callBaseTrimOldInCaches = false;
     EXPECT_EQ(nullptr, cleaner.unifiedMemoryReuseCleanerThread);
@@ -33,7 +33,7 @@ TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWhenSleepEx
 }
 
 TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWithNotStartedCleaningWhenShuttingDownThenNoHang) {
-    MockUnifiedMemoryReuseCleaner cleaner;
+    MockUnifiedMemoryReuseCleaner cleaner(false);
     cleaner.callBaseStartThread = true;
     cleaner.callBaseTrimOldInCaches = false;
     cleaner.startThread();

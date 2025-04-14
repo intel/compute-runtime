@@ -13,6 +13,7 @@ struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
     using UnifiedMemoryReuseCleaner::keepCleaning;
     using UnifiedMemoryReuseCleaner::runCleaning;
     using UnifiedMemoryReuseCleaner::svmAllocationCaches;
+    using UnifiedMemoryReuseCleaner::UnifiedMemoryReuseCleaner;
     using UnifiedMemoryReuseCleaner::unifiedMemoryReuseCleanerThread;
 
     void trimOldInCaches() override {
