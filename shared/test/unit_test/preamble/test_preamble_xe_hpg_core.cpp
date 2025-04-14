@@ -1,16 +1,13 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/gen_common/reg_configs_common.h"
+#include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/preamble.h"
-#include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"

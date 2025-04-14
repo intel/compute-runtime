@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"

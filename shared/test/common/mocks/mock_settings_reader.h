@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/mock_file_io.h"
 
 #include <fstream>
+#include <sstream>
 #include <vector>
 
 namespace NEO {

@@ -7,6 +7,7 @@
 
 #include "shared/test/common/fixtures/command_stream_receiver_fixture.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"

@@ -6,8 +6,6 @@
  */
 
 #pragma once
-
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -41,9 +39,7 @@ struct MockSubDevice : public SubDevice {
         EXPECT_EQ(nullptr, this->getDebugSurface());
     }
 
-    std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
-        return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
-    }
+    std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override;
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
     bool failOnCreateEngine = false;
@@ -153,9 +149,7 @@ class MockDevice : public RootDevice {
         return Device::create<MockSubDevice>(executionEnvironment, subDeviceIndex, *this);
     }
 
-    std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
-        return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
-    }
+    std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override;
 
     bool verifyAdapterLuid() override;
 

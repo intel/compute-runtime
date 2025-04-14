@@ -9,6 +9,7 @@
 
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -24,8 +25,6 @@
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/memory_properties_helpers.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -44,9 +43,6 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/utilities/logger_neo_only.h"
-
-#include <algorithm>
-#include <iostream>
 
 namespace NEO {
 uint32_t MemoryManager::maxOsContextCount = 0u;

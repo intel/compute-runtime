@@ -9,7 +9,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 
-#include <cstddef>
 #include <cstdint>
 #include <limits>
 

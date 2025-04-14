@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,10 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/utilities/logger.h"
 
-#include <algorithm>
 #include <functional>
+#include <new>
+#include <type_traits>
+#include <utility>
 
 #ifdef _MSC_VER
 #define ALIGNAS(x) __declspec(align(x))

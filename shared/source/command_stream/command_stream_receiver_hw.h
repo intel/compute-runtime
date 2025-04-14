@@ -7,11 +7,14 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/dirty_state_helpers.h"
+#include "shared/source/helpers/pipeline_select_args.h"
+
 namespace NEO {
 class TagNodeBase;
 template <typename GfxFamily>

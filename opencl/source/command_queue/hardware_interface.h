@@ -14,6 +14,7 @@
 namespace NEO {
 
 class CommandQueue;
+class CsrDependencies;
 class DispatchInfo;
 class Event;
 class IndirectHeap;

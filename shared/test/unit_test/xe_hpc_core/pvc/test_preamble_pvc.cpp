@@ -1,16 +1,14 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/os_interface/device_factory.h"
+#include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 using namespace NEO;
 

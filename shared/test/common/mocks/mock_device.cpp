@@ -11,7 +11,6 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -19,7 +18,6 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/tests_configuration.h"
 
 using namespace NEO;
 
@@ -202,6 +200,14 @@ EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage
         return nullptr;
     }
     return RootDevice::getSecondaryEngineCsr(engineTypeUsage, allocateInterrupt);
+}
+
+std::unique_ptr<CommandStreamReceiver> MockDevice::createCommandStreamReceiver() const {
+    return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
+}
+
+std::unique_ptr<CommandStreamReceiver> MockSubDevice::createCommandStreamReceiver() const {
+    return std::unique_ptr<CommandStreamReceiver>(createCommandStreamReceiverFunc(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
 }
 
 bool MockSubDevice::createEngine(EngineTypeUsage engineTypeUsage) {

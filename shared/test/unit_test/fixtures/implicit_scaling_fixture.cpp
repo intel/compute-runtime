@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/fixtures/implicit_scaling_fixture.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/os_interface.h"

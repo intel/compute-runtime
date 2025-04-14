@@ -10,6 +10,8 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 
+#include <chrono>
+
 namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>

@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/linear_stream.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 
 #include <cstdint>

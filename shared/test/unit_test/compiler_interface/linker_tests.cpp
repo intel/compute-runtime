@@ -5,14 +5,13 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/program/program_initialization.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -24,14 +23,12 @@
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "RelocationInfo.h"
 #include "gtest/gtest.h"
 
-#include <array>
 #include <string>
 
 TEST(SegmentTypeTests, givenSegmentTypeWhenAsStringIsCalledThenProperRepresentationIsReturned) {

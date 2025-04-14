@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -35,6 +36,10 @@ ExecutionEnvironment *MockClDevice::prepareExecutionEnvironment(const HardwareIn
     }
     executionEnvironment->calculateMaxOsContextCount();
     return executionEnvironment;
+}
+
+std::unique_ptr<CommandStreamReceiver> MockClDevice::createCommandStreamReceiver() const {
+    return device.createCommandStreamReceiver();
 }
 
 bool MockClDevice::areOcl21FeaturesSupported() const {

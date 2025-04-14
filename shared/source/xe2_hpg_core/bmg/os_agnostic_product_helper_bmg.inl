@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/memory_manager/allocation_type.h"
 
 #include "aubstream/product_family.h"
 

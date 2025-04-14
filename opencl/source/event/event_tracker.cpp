@@ -10,6 +10,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/helpers/cl_helper.h"
 
+#include <chrono>
 #include <fstream>
 
 namespace NEO {

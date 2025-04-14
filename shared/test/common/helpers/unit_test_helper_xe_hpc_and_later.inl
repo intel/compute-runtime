@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 namespace NEO {

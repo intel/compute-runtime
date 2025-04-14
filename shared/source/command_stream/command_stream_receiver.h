@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/memory_compression_state.h"
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/helpers/blit_properties_container.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/common_types.h"
@@ -17,22 +17,26 @@
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/kernel/kernel_execution_type.h"
 #include "shared/source/utilities/spinlock.h"
 
-#include "aubstream/allocation_params.h"
-
 #include <atomic>
-#include <cstddef>
+#include <chrono>
 #include <cstdint>
 #include <functional>
 
-namespace NEO {
+namespace aub_stream {
+struct AllocationParams;
+} // namespace aub_stream
 
+namespace NEO {
 enum class AllocationType;
 enum class DebugPauseState : uint32_t;
 struct BatchBuffer;
+struct DispatchBcsFlags;
+struct DispatchFlags;
 struct HardwareInfo;
+struct ImmediateDispatchFlags;
 struct WaitParams;
 class SubmissionAggregator;
 class FlushStampTracker;
@@ -57,6 +61,7 @@ class HwPerfCounter;
 class HwTimeStamps;
 class GmmHelper;
 class TagAllocatorBase;
+class TimestampPacketContainer;
 class KmdNotifyHelper;
 class GfxCoreHelper;
 class ProductHelper;
@@ -91,6 +96,9 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     using MutexType = std::recursive_mutex;
     using TimeType = std::chrono::high_resolution_clock::time_point;
+
+    CommandStreamReceiver() = delete;
+
     CommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                           uint32_t rootDeviceIndex,
                           const DeviceBitfield deviceBitfield);
@@ -652,12 +660,12 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
     uint32_t lastSentL3Config = 0;
-    uint32_t latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
-    uint64_t lastSentSliceCount = QueueSliceCount::defaultSliceCount;
+    uint32_t latestSentStatelessMocsConfig;
+    uint64_t lastSentSliceCount;
 
     uint32_t requiredScratchSlot0Size = 0;
     uint32_t requiredScratchSlot1Size = 0;
-    uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::notSet;
+    uint32_t lastAdditionalKernelExecInfo;
     KernelExecutionType lastKernelExecutionType = KernelExecutionType::defaultType;
     MemoryCompressionState lastMemoryCompressionState = MemoryCompressionState::notApplicable;
     uint32_t activePartitions = 1;

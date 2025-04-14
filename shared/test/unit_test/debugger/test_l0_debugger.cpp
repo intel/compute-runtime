@@ -6,10 +6,9 @@
  */
 
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/gen_common/reg_configs_common.h"
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/preamble.h"
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -19,7 +18,6 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/test_macros/hw_test.h"
