@@ -14,11 +14,6 @@ class IoctlHelperXePrelim : public IoctlHelperXe {
   public:
     using IoctlHelperXe::IoctlHelperXe;
 
-    bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
-
-    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
-    std::string getIoctlString(DrmIoctl ioctlRequest) const override;
-
   protected:
     virtual bool isPrimaryContext(const OsContextLinux &osContext, uint32_t deviceIndex);
     virtual uint32_t getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex);
