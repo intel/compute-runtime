@@ -542,6 +542,7 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
         success = true;
     } else {
         DEBUG_BREAK_IF(cantTrimFurther);
+        DEBUG_BREAK_IF(makeResident.NumAllocations != 0u && makeResident.NumAllocations != count);
         perfLogResidencyTrimRequired(residencyLogger.get(), makeResident.NumBytesToTrim);
         if (numberOfBytesToTrim != nullptr) {
             *numberOfBytesToTrim = makeResident.NumBytesToTrim;
