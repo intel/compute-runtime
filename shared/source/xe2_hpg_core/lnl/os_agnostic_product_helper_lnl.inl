@@ -53,49 +53,6 @@ bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
 }
 
 template <>
-TimeoutParams ProductHelperHw<gfxProduct>::getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const {
-    TimeoutParams params{};
-    if (acLineConnected) {
-        switch (queueThrottle) {
-        case NEO::LOW:
-            params.maxTimeout = std::chrono::microseconds{500};
-            params.timeout = std::chrono::microseconds{500};
-            break;
-        case NEO::MEDIUM:
-            params.maxTimeout = std::chrono::microseconds{4'500};
-            params.timeout = std::chrono::microseconds{4'500};
-            break;
-        case NEO::HIGH:
-            params.maxTimeout = std::chrono::microseconds{DirectSubmissionController::defaultTimeout};
-            params.timeout = std::chrono::microseconds{DirectSubmissionController::defaultTimeout};
-            break;
-        default:
-            break;
-        }
-    } else {
-        switch (queueThrottle) {
-        case NEO::LOW:
-            params.maxTimeout = std::chrono::microseconds{500};
-            params.timeout = std::chrono::microseconds{500};
-            break;
-        case NEO::MEDIUM:
-            params.maxTimeout = std::chrono::microseconds{2'000};
-            params.timeout = std::chrono::microseconds{2'000};
-            break;
-        case NEO::HIGH:
-            params.maxTimeout = std::chrono::microseconds{3'000};
-            params.timeout = std::chrono::microseconds{3'000};
-            break;
-        default:
-            break;
-        }
-    }
-    params.timeoutDivisor = 1;
-    params.directSubmissionEnabled = true;
-    return params;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
     return true;
 }

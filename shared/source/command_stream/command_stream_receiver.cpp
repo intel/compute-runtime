@@ -646,7 +646,6 @@ void CommandStreamReceiver::downloadAllocation(GraphicsAllocation &gfxAllocation
 void CommandStreamReceiver::startControllingDirectSubmissions() {
     auto controller = this->executionEnvironment.directSubmissionController.get();
     if (controller) {
-        controller->setTimeoutParamsForPlatform(this->getProductHelper());
         controller->startControlling();
     }
 }

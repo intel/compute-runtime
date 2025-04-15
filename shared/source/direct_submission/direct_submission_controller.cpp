@@ -48,41 +48,6 @@ void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver 
     csr->getProductHelper().overrideDirectSubmissionTimeouts(this->timeout, this->maxTimeout);
 }
 
-void DirectSubmissionController::setTimeoutParamsForPlatform(const ProductHelper &helper) {
-    adjustTimeoutOnThrottleAndAcLineStatus = helper.isAdjustDirectSubmissionTimeoutOnThrottleAndAcLineStatusEnabled();
-
-    if (debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.get() != -1) {
-        adjustTimeoutOnThrottleAndAcLineStatus = debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.get();
-    }
-
-    if (adjustTimeoutOnThrottleAndAcLineStatus) {
-        for (auto throttle : {QueueThrottle::LOW, QueueThrottle::MEDIUM, QueueThrottle::HIGH}) {
-            for (auto acLineStatus : {false, true}) {
-                auto key = this->getTimeoutParamsMapKey(throttle, acLineStatus);
-                auto timeoutParam = std::make_pair(key, helper.getDirectSubmissionControllerTimeoutParams(acLineStatus, throttle));
-                this->timeoutParamsMap.insert(timeoutParam);
-            }
-        }
-    }
-}
-
-void DirectSubmissionController::applyTimeoutForAcLineStatusAndThrottle(bool acLineConnected) {
-    const auto &timeoutParams = this->timeoutParamsMap[this->getTimeoutParamsMapKey(this->lowestThrottleSubmitted, acLineConnected)];
-    this->timeout = timeoutParams.timeout;
-    this->maxTimeout = timeoutParams.maxTimeout;
-    this->timeoutDivisor = timeoutParams.timeoutDivisor;
-}
-
-void DirectSubmissionController::updateLastSubmittedThrottle(QueueThrottle throttle) {
-    if (throttle < this->lowestThrottleSubmitted) {
-        this->lowestThrottleSubmitted = throttle;
-    }
-}
-
-size_t DirectSubmissionController::getTimeoutParamsMapKey(QueueThrottle throttle, bool acLineStatus) {
-    return (static_cast<size_t>(throttle) << 1) + acLineStatus;
-}
-
 void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceiver *csr) {
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
     directSubmissions.erase(csr);
@@ -165,16 +130,11 @@ void DirectSubmissionController::checkNewSubmissions() {
                 csr->stopDirectSubmission(false, false);
                 state.isStopped = true;
                 shouldRecalculateTimeout = true;
-                this->lowestThrottleSubmitted = QueueThrottle::HIGH;
             }
             state.taskCount = csr->peekTaskCount();
         } else {
             state.isStopped = false;
             state.taskCount = taskCount;
-            if (this->adjustTimeoutOnThrottleAndAcLineStatus) {
-                this->updateLastSubmittedThrottle(csr->getLastDirectSubmissionThrottle());
-                this->applyTimeoutForAcLineStatusAndThrottle(csr->getAcLineConnected(true));
-            }
         }
     }
     if (shouldRecalculateTimeout) {
