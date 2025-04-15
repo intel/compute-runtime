@@ -767,6 +767,7 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
             case AllocationType::internalHostMemory:
             case AllocationType::mapAllocation:
             case AllocationType::ringBuffer:
+            case AllocationType::semaphoreBuffer:
             case AllocationType::svmCpu:
             case AllocationType::svmZeroCopy:
             case AllocationType::tagBuffer:
@@ -895,6 +896,7 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
                 break;
             case AllocationType::fillPattern:
             case AllocationType::ringBuffer:
+            case AllocationType::semaphoreBuffer:
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
                 break;
             default:
@@ -919,6 +921,7 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
             case AllocationType::internalHostMemory:
             case AllocationType::mapAllocation:
             case AllocationType::ringBuffer:
+            case AllocationType::semaphoreBuffer:
             case AllocationType::svmCpu:
             case AllocationType::svmZeroCopy:
             case AllocationType::tagBuffer:
