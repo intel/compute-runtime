@@ -106,3 +106,9 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenEncodeAdditionalT
     EXPECT_EQ(storeRegMem->getRegisterAddress(), RegisterOffsets::globalTimestampUn);
     EXPECT_EQ(storeRegMem->getMemoryAddress(), sndAddress + sizeof(uint32_t));
 }
+
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenIsCacheFlushPriorImageReadRequiredThenTrueIsReturned, IsAtLeastXe2HpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isCacheFlushPriorImageReadRequired());
+}

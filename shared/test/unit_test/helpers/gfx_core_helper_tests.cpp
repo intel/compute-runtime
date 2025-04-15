@@ -1932,3 +1932,8 @@ HWTEST_F(GfxCoreHelperTest, givenDebugFlagForceUseOnlyGlobalTimestampsSetWhenCal
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_TRUE(gfxCoreHelper.useOnlyGlobalTimestamps());
 }
+
+HWTEST2_F(GfxCoreHelperTest, whenIsCacheFlushPriorImageReadRequiredCalledThenFalseIsReturned, IsBeforeXe2HpgCore) {
+    auto &helper = getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(helper.isCacheFlushPriorImageReadRequired());
+}

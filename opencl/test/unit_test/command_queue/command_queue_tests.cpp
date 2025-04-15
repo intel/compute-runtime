@@ -451,17 +451,24 @@ HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsTextureCacheFlushNeededThenRe
 
     std::set<cl_command_type> typesToFlush = {CL_COMMAND_COPY_IMAGE, CL_COMMAND_WRITE_IMAGE, CL_COMMAND_FILL_IMAGE,
                                               CL_COMMAND_READ_IMAGE, CL_COMMAND_COPY_IMAGE_TO_BUFFER};
-    for (auto i = CL_COMMAND_NDRANGE_KERNEL; i < CL_COMMAND_SVM_MIGRATE_MEM; i++) {
-        if (typesToFlush.find(i) != typesToFlush.end()) {
+    for (auto operation = CL_COMMAND_NDRANGE_KERNEL; operation < CL_COMMAND_SVM_MIGRATE_MEM; operation++) {
+        if (typesToFlush.find(operation) != typesToFlush.end()) {
             commandStreamReceiver.directSubmissionAvailable = true;
-            EXPECT_TRUE(cmdQ.isTextureCacheFlushNeeded(i));
+
+            if (operation == CL_COMMAND_READ_IMAGE || operation == CL_COMMAND_COPY_IMAGE_TO_BUFFER) {
+                auto isCacheFlushPriorImageReadRequired = mockDevice->getGfxCoreHelper().isCacheFlushPriorImageReadRequired();
+                EXPECT_EQ(isCacheFlushPriorImageReadRequired, cmdQ.isTextureCacheFlushNeeded(operation));
+            } else {
+                EXPECT_TRUE(cmdQ.isTextureCacheFlushNeeded(operation));
+            }
+
             commandStreamReceiver.directSubmissionAvailable = false;
-            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(i));
+            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(operation));
         } else {
             commandStreamReceiver.directSubmissionAvailable = true;
-            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(i));
+            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(operation));
             commandStreamReceiver.directSubmissionAvailable = false;
-            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(i));
+            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(operation));
         }
     }
 }

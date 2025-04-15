@@ -203,6 +203,8 @@ class GfxCoreHelper {
     virtual bool getSipBinaryFromExternalLib() const = 0;
     virtual uint32_t getImplicitArgsVersion() const = 0;
 
+    virtual bool isCacheFlushPriorImageReadRequired() const = 0;
+
     virtual ~GfxCoreHelper() = default;
 
   protected:
@@ -449,6 +451,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getImplicitArgsVersion() const override;
 
     bool getSipBinaryFromExternalLib() const override;
+
+    bool isCacheFlushPriorImageReadRequired() const override;
 
     ~GfxCoreHelperHw() override = default;
 

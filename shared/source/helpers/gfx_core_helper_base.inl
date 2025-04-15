@@ -848,4 +848,9 @@ uint32_t GfxCoreHelperHw<Family>::getImplicitArgsVersion() const {
     return 0;
 }
 
+template <typename Family>
+bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
+    return false;
+}
+
 } // namespace NEO

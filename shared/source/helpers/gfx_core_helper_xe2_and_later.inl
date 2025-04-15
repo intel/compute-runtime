@@ -91,4 +91,9 @@ bool GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &h
     return hwInfo.capabilityTable.ftrRenderCompressedBuffers;
 }
 
+template <>
+bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
+    return true;
+}
+
 } // namespace NEO
