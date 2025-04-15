@@ -28,7 +28,6 @@ void destroyContextExt(ContextExt *ctxExt);
 
 struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     ContextImp(DriverHandle *driverHandle);
-    ContextImp(const ContextImp &) = delete;
     ~ContextImp() override;
     ze_result_t destroy() override;
     ze_result_t getStatus() override;
