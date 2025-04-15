@@ -696,7 +696,7 @@ XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenIsBlitterForImage
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForGlobalFenceSupportThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isGlobalFenceInCommandStreamRequired(*defaultHwInfo));
+    EXPECT_EQ(productHelper.isGlobalFenceInCommandStreamRequired(*defaultHwInfo), !defaultHwInfo->capabilityTable.isIntegratedDevice);
 }
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCallDeferMOCSToPatThenTrueIsReturned) {

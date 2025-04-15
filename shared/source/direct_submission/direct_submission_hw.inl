@@ -69,11 +69,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         detectGpuHang = !!debugManager.flags.DirectSubmissionDetectGpuHang.get();
     }
 
-    if (hwInfo->capabilityTable.isIntegratedDevice) {
-        miMemFenceRequired = false;
-    } else {
-        miMemFenceRequired = productHelper.isGlobalFenceInDirectSubmissionRequired(*hwInfo);
-    }
+    miMemFenceRequired = productHelper.isGlobalFenceInDirectSubmissionRequired(*hwInfo);
 
     if (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() != -1) {
         miMemFenceRequired = debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get();
