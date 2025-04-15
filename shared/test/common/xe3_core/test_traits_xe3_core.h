@@ -20,7 +20,6 @@ struct TestTraits<IGFX_XE3_CORE> {
     static constexpr bool programOnlyChangedFieldsInComputeStateMode = true;
     static constexpr bool iohInSbaSupported = false;
     static constexpr bool auxTranslationSupported = false;
-    static constexpr bool deviceEnqueueSupport = false;
     static constexpr bool fusedEuDispatchSupported = false;
     static constexpr bool numberOfWalkersInCfeStateSupported = false;
     static constexpr bool forceGpuNonCoherent = false;
