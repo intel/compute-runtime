@@ -145,7 +145,7 @@ TEST(DrmTest, GivenValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThe
 struct MockIoctlHelperForSmallBar : public IoctlHelperUpstream {
     using IoctlHelperUpstream::IoctlHelperUpstream;
 
-    std::unique_ptr<MemoryInfo> createMemoryInfo() {
+    std::unique_ptr<MemoryInfo> createMemoryInfo() override {
         auto memoryInfo{new MockMemoryInfo{drm}};
         memoryInfo->smallBarDetected = true;
         return std::unique_ptr<MemoryInfo>{memoryInfo};
