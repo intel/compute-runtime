@@ -400,15 +400,15 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV3HeaderCorrectPrope
 
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWhenV3HeaderHeaplessThenCorrectPropertiesReturned) {
 
-    setUpV3HeaderHeapless();
+    setUpV3HeaderWithoutHeapless();
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(18u, count);
+    EXPECT_EQ(17u, count);
 
     std::vector<zet_debug_regset_properties_t> regsetProps(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
 
-    EXPECT_EQ(18u, count);
+    EXPECT_EQ(17u, count);
 
     auto validateRegsetProps = [](const zet_debug_regset_properties_t &regsetProps,
                                   zet_debug_regset_type_intel_gpu_t type, zet_debug_regset_flags_t flags,
@@ -439,8 +439,7 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWhenV3HeaderHeaplessThen
     validateRegsetProps(regsetProps[13], ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 64, 8);
     validateRegsetProps(regsetProps[14], ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, 1, 32, 4);
     validateRegsetProps(regsetProps[15], ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, 2, 64, 8);
-    validateRegsetProps(regsetProps[16], ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, 2, 64, 8);
-    validateRegsetProps(regsetProps[17], ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 64, 8);
+    validateRegsetProps(regsetProps[16], ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 64, 8);
 }
 
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledCorrectPropertiesReturned) {
