@@ -223,28 +223,18 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
 
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, ctx.firstCommandList);
     this->programLastCommandListReturnBbStart(*streamForDispatch, ctx);
-    this->assignCsrTaskCountToFenceIfAvailable(hFence);
-    this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
 
-    auto submitResult = NEO::SubmissionStatus::failed;
-    if (parentImmediateCommandlistLinearStream) {
-        submitResult = NEO::SubmissionStatus::success;
-    } else {
-        submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
-    }
+    if (!ctx.containsParentImmediateStream) {
+        this->assignCsrTaskCountToFenceIfAvailable(hFence);
+        this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
 
-    this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
-    if (!parentImmediateCommandlistLinearStream) {
+        auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
+        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
+
         this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
-    }
 
-    auto completionResult = ZE_RESULT_SUCCESS;
-    if (!parentImmediateCommandlistLinearStream) {
-        completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
-    }
-    retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
-
-    if (!parentImmediateCommandlistLinearStream) {
+        auto completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
+        retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
         this->csr->getResidencyAllocations().clear();
     }
     return retVal;
@@ -451,30 +441,20 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, ctx.firstCommandList);
 
     this->programLastCommandListReturnBbStart(*streamForDispatch, ctx);
-    this->assignCsrTaskCountToFenceIfAvailable(hFence);
-    this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
-
-    auto submitResult = NEO::SubmissionStatus::failed;
-    if (parentImmediateCommandlistLinearStream) {
-        submitResult = NEO::SubmissionStatus::success;
-    } else {
-        submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
-    }
 
     this->csr->setPreemptionMode(ctx.statePreemption);
-    this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
 
-    if (!parentImmediateCommandlistLinearStream) {
+    if (!ctx.containsParentImmediateStream) {
+        this->assignCsrTaskCountToFenceIfAvailable(hFence);
+        this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
+
+        auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
+        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
+
         this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
-    }
 
-    auto completionResult = ZE_RESULT_SUCCESS;
-    if (!parentImmediateCommandlistLinearStream) {
-        completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
-    }
-    retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
-
-    if (!parentImmediateCommandlistLinearStream) {
+        auto completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
+        retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
         this->csr->getResidencyAllocations().clear();
     }
 
@@ -539,34 +519,21 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
 
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, ctx.firstCommandList);
 
-    this->assignCsrTaskCountToFenceIfAvailable(hFence);
-
     this->programLastCommandListReturnBbStart(*streamForDispatch, ctx);
-
-    this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, fenceRequired, *streamForDispatch);
 
     this->makeCsrTagAllocationResident();
 
-    auto submitResult = NEO::SubmissionStatus::failed;
-    if (parentImmediateCommandlistLinearStream) {
-        submitResult = NEO::SubmissionStatus::success;
-    } else {
-        submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
-    }
+    if (!ctx.containsParentImmediateStream) {
+        this->assignCsrTaskCountToFenceIfAvailable(hFence);
+        this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, fenceRequired, *streamForDispatch);
 
-    this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
+        auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
+        this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
 
-    if (!parentImmediateCommandlistLinearStream) {
         this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
-    }
 
-    auto completionResult = ZE_RESULT_SUCCESS;
-    if (!parentImmediateCommandlistLinearStream) {
-        completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
-    }
-    retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
-
-    if (!parentImmediateCommandlistLinearStream) {
+        auto completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
+        retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
         this->csr->getResidencyAllocations().clear();
     }
 
