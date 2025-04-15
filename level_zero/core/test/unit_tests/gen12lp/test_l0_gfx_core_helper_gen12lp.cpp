@@ -76,5 +76,39 @@ GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGettingSupportedRTASFo
     EXPECT_EQ(ZE_RTAS_FORMAT_EXP_INVALID, l0GfxCoreHelper.getSupportedRTASFormat());
 }
 
+GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGetIpSamplingMetricCountIsCalledThenProperValueIsReturned) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingMetricCount());
+}
+
+GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGetStallSamplingReportMetricsThenEmptyListIsReturned) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::vector<std::pair<const char *, const char *>> expectedStallSamplingReportList = {};
+    EXPECT_EQ(expectedStallSamplingReportList, l0GfxCoreHelper.getStallSamplingReportMetrics());
+}
+
+GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapUpdateIsCalledThenFalseIsReturned) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::map<uint64_t, void *> stallSumIpDataMap;
+    EXPECT_FALSE(l0GfxCoreHelper.stallIpDataMapUpdate(stallSumIpDataMap, nullptr));
+}
+
+GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapDeleteIsCalledThenMapisUnchanged) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::map<uint64_t, void *> stallSumIpDataMap;
+    size_t mapSizeBefore = stallSumIpDataMap.size();
+    l0GfxCoreHelper.stallIpDataMapDelete(stallSumIpDataMap);
+    EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
+}
+
+GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallSumIpDataToTypedValuesIsCalledThenNoChangeToDataValues) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    uint64_t ip = 0ull;
+    void *sumIpData = nullptr;
+    std::vector<zet_typed_value_t> ipDataValues;
+    l0GfxCoreHelper.stallSumIpDataToTypedValues(ip, sumIpData, ipDataValues);
+    EXPECT_EQ(0u, ipDataValues.size());
+}
+
 } // namespace ult
 } // namespace L0

@@ -714,6 +714,14 @@ struct IsWithinGfxCore {
     }
 };
 
+template <GFXCORE_FAMILY gfxCoreFamilyMin, GFXCORE_FAMILY gfxCoreFamilyMax>
+struct IsNotWithinGfxCore {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() < gfxCoreFamilyMin && NEO::ToGfxCoreFamily<productFamily>::get() > gfxCoreFamilyMax;
+    }
+};
+
 template <GFXCORE_FAMILY... args>
 struct IsAnyGfxCores {
     template <PRODUCT_FAMILY productFamily>

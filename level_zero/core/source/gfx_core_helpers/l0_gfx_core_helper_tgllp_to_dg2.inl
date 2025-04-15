@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,6 +115,33 @@ bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::synchronizedDispatchSupported() const {
     return false;
+}
+
+template <typename Family>
+uint32_t L0GfxCoreHelperHw<Family>::getIpSamplingMetricCount() {
+    return 0;
+}
+
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) {
+    return;
+}
+
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) {
+    return false;
+}
+
+// Order of ipDataValues must match stallSamplingReportList
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) {
+    return;
+}
+
+template <typename Family>
+std::vector<std::pair<const char *, const char *>> L0GfxCoreHelperHw<Family>::getStallSamplingReportMetrics() const {
+    std::vector<std::pair<const char *, const char *>> stallSamplingReportList = {};
+    return stallSamplingReportList;
 }
 
 } // namespace L0

@@ -79,5 +79,39 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingCmdlistUpdateCa
     EXPECT_EQ(62u, l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities());
 }
 
+XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGetIpSamplingMetricCountIsCalledThenProperValueIsReturned) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingMetricCount());
+}
+
+XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGetStallSamplingReportMetricsThenEmptyListIsReturned) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::vector<std::pair<const char *, const char *>> expectedStallSamplingReportList = {};
+    EXPECT_EQ(expectedStallSamplingReportList, l0GfxCoreHelper.getStallSamplingReportMetrics());
+}
+
+XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallIpDataMapUpdateIsCalledThenFalseIsReturned) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::map<uint64_t, void *> stallSumIpDataMap;
+    EXPECT_FALSE(l0GfxCoreHelper.stallIpDataMapUpdate(stallSumIpDataMap, nullptr));
+}
+
+XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallIpDataMapDeleteIsCalledThenMapisUnchanged) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::map<uint64_t, void *> stallSumIpDataMap;
+    size_t mapSizeBefore = stallSumIpDataMap.size();
+    l0GfxCoreHelper.stallIpDataMapDelete(stallSumIpDataMap);
+    EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
+}
+
+XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallSumIpDataToTypedValuesIsCalledThenNoChangeToDataValues) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    uint64_t ip = 0ull;
+    void *sumIpData = nullptr;
+    std::vector<zet_typed_value_t> ipDataValues;
+    l0GfxCoreHelper.stallSumIpDataToTypedValues(ip, sumIpData, ipDataValues);
+    EXPECT_EQ(0u, ipDataValues.size());
+}
+
 } // namespace ult
 } // namespace L0

@@ -18,8 +18,7 @@ namespace L0 {
 namespace ult {
 class MockMetricIpSamplingOsInterface;
 
-using EustallSupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_PVC>;
-using IsGen9ToPVC = IsWithinProducts<IGFX_SKYLAKE, IGFX_PVC>;
+using EustallSupportedPlatforms = IsProduct<IGFX_PVC>;
 
 class MockStallRawIpData {
   public:
