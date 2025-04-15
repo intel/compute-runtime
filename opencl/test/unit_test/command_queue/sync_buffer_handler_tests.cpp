@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,7 +114,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     MockCommandQueue *commandQueue;
 };
 
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurrentKernelWhenEnqueuingKernelThenSyncBufferIsUsed) {
+HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurrentKernelWhenEnqueuingKernelThenSyncBufferIsUsed, HasDispatchAllSupport) {
     patchAllocateSyncBuffer();
 
     enqueueNDCount();
@@ -142,7 +142,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurr
     EXPECT_EQ(2u * minimalSyncBufferSize, syncBufferHandler->usedBufferSize);
 }
 
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithoutAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsNotCreated) {
+HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithoutAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsNotCreated, HasDispatchAllSupport) {
     auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, getSyncBufferHandler());
@@ -157,7 +157,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenDefaultKernelUsingSyncBufferWhenE
     EXPECT_EQ(nullptr, getSyncBufferHandler());
 }
 
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsCreated) {
+HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsCreated, HasDispatchAllSupport) {
     patchAllocateSyncBuffer();
     auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -180,7 +180,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenTooHighWorkgroupCountWhenEnqueuin
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSyncBufferFullWhenEnqueuingKernelThenNewBufferIsAllocated) {
+HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenSyncBufferFullWhenEnqueuingKernelThenNewBufferIsAllocated, HasDispatchAllSupport) {
     patchAllocateSyncBuffer();
     enqueueNDCount();
     auto syncBufferHandler = getSyncBufferHandler();
