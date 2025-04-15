@@ -20,7 +20,7 @@ constexpr auto gfxProduct = IGFX_PTL;
 namespace NEO {
 template <>
 uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
-    return AOT::PTL_H_A0;
+    return AOT::PTL_H_B0;
 }
 
 static EnableCompilerProductHelper<gfxProduct> enableCompilerProductHelperPTL;

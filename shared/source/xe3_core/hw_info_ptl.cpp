@@ -27,7 +27,7 @@ const PLATFORM PTL::platform = {
     IGFX_XE3_CORE,
     PLATFORM_NONE, // default init
     0,             // usDeviceID
-    0,             // usRevId. 0 sets the stepping to A0
+    4,             // usRevId. 0 sets the stepping to A0
     0,             // usDeviceID_PCH
     0,             // usRevId_PCH
     GTTYPE_UNDEFINED};

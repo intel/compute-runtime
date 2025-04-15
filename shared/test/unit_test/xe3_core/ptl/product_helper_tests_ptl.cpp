@@ -30,7 +30,7 @@ PTLTEST_F(PtlProductHelper, whenGettingPreferredAllocationMethodThenAllocateByKm
 }
 
 PTLTEST_F(PtlProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionThenCorrectValueIsSet) {
-    EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::PTL_H_A0);
+    EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::PTL_H_B0);
 }
 
 HWTEST_EXCLUDE_PRODUCT(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned, IGFX_PTL);
