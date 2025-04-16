@@ -1050,6 +1050,13 @@ DecodeError decodeZeInfoKernelPayloadArguments(KernelDescriptor &dst, Yaml::Yaml
                     bindfulImageAccess = true;
                 }
             }
+
+            if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::argTImage>()) {
+                if (dst.payloadMappings.explicitArgs[arg.argIndex].getTraits().getAccessQualifier() == NEO::KernelArgMetadata::AccessQualifier::AccessWriteOnly ||
+                    dst.payloadMappings.explicitArgs[arg.argIndex].getTraits().getAccessQualifier() == NEO::KernelArgMetadata::AccessQualifier::AccessReadWrite) {
+                    dst.kernelAttributes.hasImageWriteArg = true;
+                }
+            }
         }
 
         const auto implicitArgsVec = dst.getImplicitArgBindlessCandidatesVec();

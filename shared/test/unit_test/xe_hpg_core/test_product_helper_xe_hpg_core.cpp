@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,4 +18,8 @@ using XeHpgProductHelper = ProductHelperTest;
 
 XE_HPG_CORETEST_F(XeHpgProductHelper, givenProductHelperWhenIsSystolicModeConfigurabledThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isSystolicModeConfigurable(pInHwInfo));
+}
+
+XE_HPG_CORETEST_F(XeHpgProductHelper, givenProductHelperWhenQueryIsPostImageWriteFlushRequiredThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isPostImageWriteFlushRequired());
 }

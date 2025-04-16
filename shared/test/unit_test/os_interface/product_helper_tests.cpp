@@ -1164,3 +1164,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperThenCompressionIsNotForbidden, Is
     auto hwInfo = *defaultHwInfo;
     EXPECT_FALSE(productHelper->isCompressionForbidden(hwInfo));
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenQueryIsPostImageWriteFlushRequiredThenFalseReturned) {
+    EXPECT_FALSE(productHelper->isPostImageWriteFlushRequired());
+}

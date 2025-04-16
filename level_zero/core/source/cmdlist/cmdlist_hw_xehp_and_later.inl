@@ -67,6 +67,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         NEO::PipeControlArgs args;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
+
     NEO::Device *neoDevice = device->getNEODevice();
     const auto deviceHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
 
@@ -458,6 +459,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
+    bool textureFlushRequired = this->device->getProductHelper().isPostImageWriteFlushRequired() &&
+                                this->isImmediateType() &&
+                                kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg;
+
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
@@ -465,11 +470,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     if (compactEvent && (compactEvent->isCounterBased() && !this->asMutable())) {
                         auto pcCmdPtr = this->commandContainer.getCommandStream()->getSpace(0u);
                         inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
-                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, true);
+                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, true, textureFlushRequired);
                         addCmdForPatching(nullptr, pcCmdPtr, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::pipeControl);
+                        textureFlushRequired = false;
                     } else {
                         appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
-                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, false);
+                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, false, false);
                     }
                 } else {
                     this->latestOperationHasOptimizedCbEvent = true;
@@ -482,6 +488,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     } else {
         launchParams.skipInOrderNonWalkerSignaling = false;
+    }
+
+    if (textureFlushRequired) {
+        NEO::PipeControlArgs args;
+        args.textureCacheInvalidationEnable = true;
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
 
     if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing && !neoDevice->getBindlessHeapsHelper() && this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
