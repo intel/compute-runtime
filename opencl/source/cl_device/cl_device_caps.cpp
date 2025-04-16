@@ -34,7 +34,7 @@ namespace NEO {
 static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "1.2 ";
-const char *latestConformanceVersionPassed = "v2024-02-27-00";
+const char *latestConformanceVersionPassed = "v2025-04-14-00";
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
 static std::string driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
