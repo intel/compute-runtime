@@ -15,7 +15,6 @@ class Thread {
   public:
     static decltype(&Thread::create) createFunc;
     virtual void join() = 0;
-    virtual void detach() = 0;
     virtual ~Thread() = default;
     virtual void yield() = 0;
 };

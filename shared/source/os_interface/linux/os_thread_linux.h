@@ -16,7 +16,6 @@ class ThreadLinux : public Thread {
   public:
     ThreadLinux(pthread_t threadId);
     void join() override;
-    void detach() override;
     void yield() override;
     ~ThreadLinux() override = default;
 

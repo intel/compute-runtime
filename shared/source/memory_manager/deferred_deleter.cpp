@@ -27,11 +27,8 @@ void DeferredDeleter::stop() {
         doWorkInBackground = false;
         lock.unlock();
         condition.notify_one();
-        worker->detach();
-        // Wait for the working job to exit main loop
-        while (!exitedMainLoop) {
-            std::this_thread::yield();
-        }
+        // Wait for the working job to exit
+        worker->join();
         // Delete working thread
         worker.reset();
     }
@@ -79,7 +76,6 @@ void DeferredDeleter::ensureThread() {
     if (worker != nullptr) {
         return;
     }
-    exitedMainLoop = false;
     worker = Thread::createFunc(run, reinterpret_cast<void *>(this));
 }
 
@@ -107,7 +103,6 @@ void *DeferredDeleter::run(void *arg) {
         lock.lock();
         // Check whether working thread should be stopped
     } while (!self->shouldStop());
-    self->exitedMainLoop = true;
     lock.unlock();
     return nullptr;
 }
