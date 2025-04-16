@@ -46,8 +46,8 @@ void TranslationOutput::makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *s
 
 CompilerInterface::CompilerInterface()
     : cache() {
-    if (debugManager.flags.FinalizerInputType.get() != 0) {
-        this->finalizerInputType = debugManager.flags.FinalizerInputType.get();
+    if (debugManager.flags.FinalizerInputType.get() != "unk") {
+        this->finalizerInputType = IGC::CodeType::CodeTypeCoder::Enc(debugManager.flags.FinalizerInputType.get().c_str());
     }
 }
 CompilerInterface::~CompilerInterface() = default;
