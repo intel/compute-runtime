@@ -40,6 +40,7 @@ class DeferredDeleter : NEO::NonCopyableAndNonMovableClass {
 
     static void *run(void *);
 
+    std::atomic<bool> exitedMainLoop = false;
     std::atomic<bool> doWorkInBackground = false;
     std::atomic<int> elementsToRelease = 0;
     std::atomic<int> hostptrsToRelease = 0;

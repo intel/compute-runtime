@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/deferrable_allocation_deletion.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -36,6 +37,7 @@ struct DeferredDeleterPublic : DeferredDeleter {
 
 struct DeferrableAllocationDeletionTest : ::testing::Test {
     void SetUp() override {
+        MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
         executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1u);
         executionEnvironment->incRefInternal();
         memoryManager = new MockMemoryManager(*executionEnvironment);
