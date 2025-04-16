@@ -100,7 +100,16 @@ void runPrintfKernel(const ze_module_handle_t &module, const ze_kernel_handle_t 
     SUCCESS_OR_TERMINATE(commandHandler.synchronize());
 }
 
+void cleanUp(ze_context_handle_t context, ze_module_handle_t module, ze_kernel_handle_t *kernels, uint32_t kernelsCount) {
+    for (uint32_t i = 0; i < kernelsCount; i++) {
+        SUCCESS_OR_TERMINATE(zeKernelDestroy(kernels[i]));
+    }
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+}
+
 int main(int argc, char *argv[]) {
+    constexpr uint32_t kernelsCount = 4;
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     const char *fileName = "zello_printf_output.txt";
     bool validatePrintfOutput = true;
@@ -117,8 +126,12 @@ int main(int argc, char *argv[]) {
 
     ze_module_handle_t module = nullptr;
     createModule(context, device, module);
+    ze_kernel_handle_t kernels[kernelsCount] = {};
+    for (uint32_t i = 0; i < kernelsCount; i++) {
+        createKernel(module, kernels[i], kernelNames[i]);
+    }
 
-    std::array<std::string, 4> expectedStrings = {
+    std::array<std::string, kernelsCount> expectedStrings = {
         "byte = 127\nshort = 32767\nint = 2147483647\nlong = 9223372036854775807",
         "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n"
         "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n",
@@ -126,9 +139,13 @@ int main(int argc, char *argv[]) {
         "string with tab(\\t) new line(\\n):\nusing tab \tand new line \nin this string"};
 
     PrintfExecutionMode executionModes[] = {PrintfExecutionMode::commandQueue, PrintfExecutionMode::immSyncCmdList};
+    std::string executionModeNames[] = {"Asynchronous Command Queue", "Synchronous Immediate Command List"};
 
     for (auto mode : executionModes) {
-        for (uint32_t i = 0; i < 4; i++) {
+        std::cout << "**** Executing mode: " << executionModeNames[static_cast<uint32_t>(mode)] << std::endl;
+        for (uint32_t i = 0; i < kernelsCount; i++) {
+
+            std::cout << "*** Executing kernel: " << kernelNames[i] << std::endl;
 
             if (validatePrintfOutput) {
                 // duplicate stdout descriptor
@@ -140,10 +157,7 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            ze_kernel_handle_t kernel = nullptr;
-            createKernel(module, kernel, kernelNames[i]);
-
-            runPrintfKernel(module, kernel, context, device, i, mode);
+            runPrintfKernel(module, kernels[i], context, device, i, mode);
 
             if (validatePrintfOutput) {
                 printfValidated = false;
@@ -182,18 +196,15 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
-
             if (validatePrintfOutput && !printfValidated) {
-                SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+                cleanUp(context, module, kernels, kernelsCount);
                 std::cerr << "\nZello Printf FAILED " << std::endl;
                 return -1;
             }
         }
     }
 
-    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+    cleanUp(context, module, kernels, kernelsCount);
     std::cout << "\nZello Printf PASSED " << std::endl;
 
     return 0;
