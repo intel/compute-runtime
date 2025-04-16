@@ -3154,7 +3154,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSy
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     immCmdList->inOrderAtomicSignalingEnabled = false;
-    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false);
+    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));

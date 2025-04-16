@@ -1499,6 +1499,51 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteArgAndPlatformRequiresFlushWhenLaunchingKernelThenPipeControlWithTextureCacheInvalidationIsAdded, MatchAny) {
+    if (!device->getProductHelper().isPostImageWriteFlushRequired()) {
+        GTEST_SKIP();
+    }
+
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto kernel = std::make_unique<Mock<KernelImp>>();
+    kernel->module = module.get();
+    kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateHw<gfxCoreFamily> commandList;
+    commandList.isFlushTaskSubmissionEnabled = false;
+    commandList.cmdListType = CommandList::CommandListType::typeImmediate;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto usedSpaceBefore = commandList.getCmdContainer().getCommandStream()->getUsed();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+
+    CmdListKernelLaunchParams launchParams = {};
+    returnValue = commandList.appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(1u, commandList.executeCommandListImmediateCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto usedSpaceAfter = commandList.getCmdContainer().getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itorPC.size());
+
+    PIPE_CONTROL *cmd = genCmdCast<PIPE_CONTROL *>(*itorPC[itorPC.size() - 1]);
+    EXPECT_TRUE(cmd->getTextureCacheInvalidationEnable());
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, MatchAny) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);

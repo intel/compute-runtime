@@ -2672,6 +2672,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
                 address |= pcCmd->getAddress();
                 EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, address);
                 EXPECT_EQ(2u, pcCmd->getImmediateData());
+
+                const bool textureFlushRequired = device->getProductHelper().isPostImageWriteFlushRequired() &&
+                                                  kernel->kernelImmData->getKernelInfo()->kernelDescriptor.kernelAttributes.hasImageWriteArg;
+                EXPECT_EQ(textureFlushRequired, pcCmd->getTextureCacheInvalidationEnable());
             } else {
                 if (!immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
                     EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
@@ -5699,7 +5703,7 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalIn
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     immCmdList->inOrderAtomicSignalingEnabled = false;
-    immCmdList->appendSignalInOrderDependencyCounter(eventObj.get(), false, false);
+    immCmdList->appendSignalInOrderDependencyCounter(eventObj.get(), false, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));

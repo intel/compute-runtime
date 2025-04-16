@@ -7072,6 +7072,75 @@ kernels:
     ASSERT_EQ(192u, kernelDescriptor->generatedSsh.size());
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithReadOnlyAccessWhenPopulatingKernelDescriptorThenHasImageWriteArgIsFalse) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 32
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          24
+          size:            8
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       image
+          access_type:     readonly
+          image_type:      image_2d
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_FALSE(kernelDescriptor->kernelAttributes.hasImageWriteArg);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithWriteOnlyAccessWhenPopulatingKernelDescriptorThenHasImageWriteArgIsTrue) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 32
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          32
+          size:            8
+          arg_index:       1
+          addrmode:        bindless
+          addrspace:       image
+          access_type:     writeonly
+          image_type:      image_2d
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.hasImageWriteArg);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenImageArgWithReadWriteAccessWhenPopulatingKernelDescriptorThenHasImageWriteArgIsTrue) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 32
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          24
+          size:            8
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       image
+          access_type:     readwrite
+          image_type:      image_2d
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.hasImageWriteArg);
+}
+
 TEST(PopulateInlineSamplers, GivenInvalidSamplerIndexThenPopulateInlineSamplersFails) {
     NEO::KernelDescriptor kd;
     std::string errors, warnings;

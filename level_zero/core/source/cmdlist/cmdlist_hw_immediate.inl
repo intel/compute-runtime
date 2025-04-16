@@ -602,7 +602,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignal
     }
 
     CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(event, nullptr, nonWalkerSignalingHasRelaxedOrdering, false, CommandToPatch::Invalid);
-    CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(event, false, false);
+    CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(event, false, false, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1305,7 +1305,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushInOrderCounterSignal(bool waitOnInOrderCounterRequired) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
     if (waitOnInOrderCounterRequired && !this->isHeaplessModeEnabled() && this->latestOperationHasOptimizedCbEvent) {
-        this->appendSignalInOrderDependencyCounter(nullptr, false, true);
+        this->appendSignalInOrderDependencyCounter(nullptr, false, true, false);
         this->inOrderExecInfo->addCounterValue(this->getInOrderIncrementValue());
         this->handleInOrderCounterOverflow(false);
         ret = flushImmediate(ret, false, true, false, NEO::AppendOperations::nonKernel, false, nullptr, false, nullptr);
@@ -1785,6 +1785,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                                                                                   copyEngineExecution);
         CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(signalEvent,
                                                                                    copyOffloadOperation,
+                                                                                   false,
                                                                                    false);
     }
 

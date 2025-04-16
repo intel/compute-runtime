@@ -20,4 +20,9 @@ uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const H
     return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isPostImageWriteFlushRequired() const {
+    return true;
+}
+
 } // namespace NEO
