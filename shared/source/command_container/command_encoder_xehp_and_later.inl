@@ -304,7 +304,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             args.requiresUncachedMocs) {
 
             PipeControlArgs syncArgs;
-            syncArgs.dcFlushEnable = args.dcFlushEnable;
+            syncArgs.dcFlushEnable = args.postSyncArgs.dcFlushEnable;
             MemorySynchronizationCommands<Family>::addSingleBarrier(*container.getCommandStream(), syncArgs);
             STATE_BASE_ADDRESS sbaCmd;
             auto gmmHelper = container.getDevice()->getGmmHelper();
@@ -370,11 +370,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                    requiredWorkgroupOrder,
                                                    rootDeviceEnvironment);
 
-    auto postSyncArgs = EncodePostSync<Family>::createPostSyncArgs(args);
-    if (args.inOrderExecInfo) {
-        EncodePostSync<Family>::setupPostSyncForInOrderExec(walkerCmd, postSyncArgs);
-    } else if (args.eventAddress) {
-        EncodePostSync<Family>::setupPostSyncForRegularEvent(walkerCmd, postSyncArgs);
+    if (args.postSyncArgs.inOrderExecInfo) {
+        EncodePostSync<Family>::setupPostSyncForInOrderExec(walkerCmd, args.postSyncArgs);
+    } else if (args.postSyncArgs.eventAddress) {
+        EncodePostSync<Family>::setupPostSyncForRegularEvent(walkerCmd, args.postSyncArgs);
     } else {
         EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(walkerCmd);
     }
@@ -416,7 +415,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         .requiredDispatchWalkOrder = args.requiredDispatchWalkOrder,
         .localRegionSize = args.localRegionSize,
         .maxFrontEndThreads = args.device->getDeviceInfo().maxFrontEndThreads,
-        .requiredSystemFence = args.requiresSystemMemoryFence(),
+        .requiredSystemFence = args.postSyncArgs.requiresSystemMemoryFence(),
         .hasSample = kernelDescriptor.kernelAttributes.flags.hasSample,
         .l0DebuggerEnabled = args.device->getL0Debugger() != nullptr};
 
@@ -442,7 +441,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             args.maxWgCountPerTile,                                                                  // maxWgCountPerTile
             !(container.getFlushTaskUsedForImmediate() || container.isUsingPrimaryBuffer()),         // useSecondaryBatchBuffer
             !args.isKernelDispatchedFromImmediateCmdList,                                            // apiSelfCleanup
-            args.dcFlushEnable,                                                                      // dcFlush
+            args.postSyncArgs.dcFlushEnable,                                                         // dcFlush
             EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(args.isCooperative), // forceExecutionOnSingleTile
             args.makeCommandView,                                                                    // blockDispatchToCommandBuffer
             isRequiredDispatchWorkGroupOrder};                                                       // isRequiredDispatchWorkGroupOrder

@@ -96,10 +96,6 @@ template <typename CommandType>
 void EncodePostSync<Family>::encodeL3Flush(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
 template <typename Family>
-template <typename CommandType>
-void EncodePostSync<Family>::setCommandLevelInterrupt(CommandType &cmd, bool interrupt) {}
-
-template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::setWalkerRegionSettings(WalkerType &walkerCmd, const NEO::Device &device, uint32_t partitionCount, uint32_t workgroupSize, uint32_t threadGroupCount, uint32_t maxWgCountPerTile, bool requiredDispatchWalkOrder) {}
 

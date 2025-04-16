@@ -704,6 +704,59 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenSetu
     EXPECT_EQ(0u, mocs);
 }
 
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenCallingAdjustTimestampPacketThenNothingHappen) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    MockExecutionEnvironment executionEnvironment{};
+    DefaultWalkerType walkerCmd{};
+    DefaultWalkerType walkerOnStart{};
+
+    EncodePostSyncArgs args = {.isTimestampEvent = true};
+    EncodePostSync<FamilyType>::template adjustTimestampPacket<DefaultWalkerType>(walkerCmd, args);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
+}
+
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenCallingEncodeL3FlushThenNothingHappen) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    MockExecutionEnvironment executionEnvironment{};
+    DefaultWalkerType walkerCmd{};
+    DefaultWalkerType walkerOnStart{};
+
+    EncodePostSyncArgs args = {.isFlushL3ForExternalAllocationRequired = true};
+    EncodePostSync<FamilyType>::template encodeL3Flush<DefaultWalkerType>(walkerCmd, args);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
+
+    args = {.isFlushL3ForHostUsmRequired = true};
+    EncodePostSync<FamilyType>::template encodeL3Flush<DefaultWalkerType>(walkerCmd, args);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
+}
+
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenCallingSetupPostSyncForRegularEventThenNothingHappen) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    MockExecutionEnvironment executionEnvironment{};
+    DefaultWalkerType walkerCmd{};
+    DefaultWalkerType walkerOnStart{};
+
+    EncodePostSyncArgs args = {.eventAddress = 0x1234};
+    EncodePostSync<FamilyType>::template setupPostSyncForRegularEvent<DefaultWalkerType>(walkerCmd, args);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
+}
+
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenCallingSetupPostSyncForInOrderExecThenNothingHappen) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    MockExecutionEnvironment executionEnvironment{};
+    MockDevice mockDevice;
+    DefaultWalkerType walkerCmd{};
+    DefaultWalkerType walkerOnStart{};
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    auto deviceNode = deviceTagAllocator.getTag();
+
+    InOrderExecInfo inOrderExecInfo(deviceNode, nullptr, mockDevice, 2, true, true);
+    EncodePostSyncArgs args = {.inOrderExecInfo = &inOrderExecInfo};
+    EncodePostSync<FamilyType>::template setupPostSyncForInOrderExec<DefaultWalkerType>(walkerCmd, args);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(DefaultWalkerType))); // no change
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSetupPostSyncMocsThenCorrect) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 

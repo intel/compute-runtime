@@ -1173,23 +1173,4 @@ void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container
                                                   container.getDevice()->getRootDeviceEnvironment());
 }
 
-template <typename Family>
-EncodePostSyncArgs EncodePostSync<Family>::createPostSyncArgs(const EncodeDispatchKernelArgs &args) {
-    return EncodePostSyncArgs{
-        .eventAddress = args.eventAddress,
-        .postSyncImmValue = args.postSyncImmValue,
-        .inOrderCounterValue = args.inOrderCounterValue,
-        .inOrderIncrementGpuAddress = args.inOrderIncrementGpuAddress,
-        .inOrderIncrementValue = args.inOrderIncrementValue,
-        .device = args.device,
-        .inOrderExecInfo = args.inOrderExecInfo,
-        .isTimestampEvent = args.isTimestampEvent,
-        .isHostScopeSignalEvent = args.isHostScopeSignalEvent,
-        .isKernelUsingSystemAllocation = args.isKernelUsingSystemAllocation,
-        .dcFlushEnable = args.dcFlushEnable,
-        .interruptEvent = args.interruptEvent,
-        .isFlushL3ForExternalAllocationRequired = args.isFlushL3AfterPostSyncForExternalAllocationRequired,
-        .isFlushL3ForHostUsmRequired = args.isFlushL3AfterPostSyncForHostUsmRequired};
-}
-
 } // namespace NEO
