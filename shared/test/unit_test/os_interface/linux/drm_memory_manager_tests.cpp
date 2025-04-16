@@ -5819,7 +5819,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSyste
             setVmSharedSystemMemAdviseCalled++;
             return true;
         }
-        u_int32_t setVmSharedSystemMemAdviseCalled = 0;
+        uint32_t setVmSharedSystemMemAdviseCalled = 0;
     };
 
     auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
