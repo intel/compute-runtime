@@ -203,6 +203,11 @@ class OpaqueElementAllocator final {
         }
     }
 
+    OpaqueElementAllocator(OpaqueElementAllocator &&) = default;
+    OpaqueElementAllocator &operator=(OpaqueElementAllocator &&) = default;
+    OpaqueElementAllocator(const OpaqueElementAllocator &) = delete;
+    OpaqueElementAllocator &operator=(const OpaqueElementAllocator &) = delete;
+
     AllocationT allocate() {
         for (auto &chunk : chunks) {
             auto *va = chunk.allocate();
