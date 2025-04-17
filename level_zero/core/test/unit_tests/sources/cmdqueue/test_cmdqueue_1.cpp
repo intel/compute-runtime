@@ -934,7 +934,7 @@ TEST_F(DeviceCreateCommandQueueTest,
     commandQueue->destroy();
 }
 
-TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCsrWhenCreateCommandQueueIsCalledThenAbortIsThrown) {
+TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCsrWhenCreateCommandQueueIsCalledThenErrorReturned) {
     // remove low priority EngineControl objects for negative testing
     neoDevice->allEngines.erase(std::remove_if(
         neoDevice->allEngines.begin(),
@@ -948,7 +948,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCs
 
     ze_command_queue_handle_t commandQueueHandle = {};
 
-    EXPECT_THROW(device->createCommandQueue(&desc, &commandQueueHandle), std::exception);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, device->createCommandQueue(&desc, &commandQueueHandle));
 }
 
 struct MultiDeviceCreateCommandQueueFixture : MultiDeviceFixture {

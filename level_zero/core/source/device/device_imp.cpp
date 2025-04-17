@@ -1845,11 +1845,13 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
         contextPriority = NEO::EngineUsage::lowPriority;
     }
 
+    auto selectedDevice = this;
     if (ordinal < numEngineGroups) {
 
         if (contextPriority == NEO::EngineUsage::lowPriority) {
-            getCsrForLowPriority(csr, copyOnly);
-            return ZE_RESULT_SUCCESS;
+            auto result = getCsrForLowPriority(csr, copyOnly);
+            DEBUG_BREAK_IF(result != ZE_RESULT_SUCCESS);
+            return result;
         }
 
         auto &engines = engineGroups[ordinal].engines;
@@ -1858,22 +1860,30 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
         }
         *csr = engines[index].commandStreamReceiver;
 
-        if (copyOnly && contextPriority == NEO::EngineUsage::highPriority) {
-            getCsrForHighPriority(csr, copyOnly);
-        }
-
     } else {
         auto subDeviceOrdinal = ordinal - numEngineGroups;
         if (index >= this->subDeviceCopyEngineGroups[subDeviceOrdinal].engines.size()) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         *csr = this->subDeviceCopyEngineGroups[subDeviceOrdinal].engines[index].commandStreamReceiver;
+        selectedDevice = static_cast<DeviceImp *>(this->subDevices[subDeviceOrdinal]);
+    }
+
+    if (copyOnly) {
+
+        if (contextPriority == NEO::EngineUsage::highPriority) {
+            selectedDevice->getCsrForHighPriority(csr, copyOnly);
+        } else if (contextPriority == NEO::EngineUsage::lowPriority) {
+            if (selectedDevice->getCsrForLowPriority(csr, copyOnly) == ZE_RESULT_SUCCESS) {
+                return ZE_RESULT_SUCCESS;
+            }
+        }
     }
 
     auto &osContext = (*csr)->getOsContext();
 
     if (secondaryContextsEnabled) {
-        tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, csr, allocateInterrupt);
+        selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, csr, allocateInterrupt);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -1904,8 +1914,6 @@ ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr, bo
     }
 
     // if the code falls through, we have no low priority context created by neoDevice.
-
-    UNRECOVERABLE_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 ze_result_t DeviceImp::getCsrForHighPriority(NEO::CommandStreamReceiver **csr, bool copyOnly) {
