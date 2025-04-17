@@ -415,7 +415,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         .requiredDispatchWalkOrder = args.requiredDispatchWalkOrder,
         .localRegionSize = args.localRegionSize,
         .maxFrontEndThreads = args.device->getDeviceInfo().maxFrontEndThreads,
-        .requiredSystemFence = args.postSyncArgs.requiresSystemMemoryFence() && args.device->getGfxCoreHelper().isFenceAllocationRequired(hwInfo),
+        .requiredSystemFence = args.postSyncArgs.requiresSystemMemoryFence(),
         .hasSample = kernelDescriptor.kernelAttributes.flags.hasSample,
         .l0DebuggerEnabled = args.device->getL0Debugger() != nullptr};
 
@@ -1173,7 +1173,7 @@ void EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(InterfaceDescriptor
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs) {
-    auto programGlobalFenceAsPostSyncOperationInComputeWalker = !rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice && walkerArgs.requiredSystemFence;
+    auto programGlobalFenceAsPostSyncOperationInComputeWalker = rootDeviceEnvironment.getProductHelper().isGlobalFenceInPostSyncRequired(*rootDeviceEnvironment.getHardwareInfo()) && walkerArgs.requiredSystemFence;
     int32_t overrideProgramSystemMemoryFence = debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();
     if (overrideProgramSystemMemoryFence != -1) {
         programGlobalFenceAsPostSyncOperationInComputeWalker = !!overrideProgramSystemMemoryFence;

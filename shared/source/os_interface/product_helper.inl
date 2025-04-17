@@ -532,6 +532,11 @@ bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const Har
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const {
+    return !hwInfo.capabilityTable.isIntegratedDevice;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
     return ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(hwInfo);
 };

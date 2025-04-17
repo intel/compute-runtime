@@ -216,14 +216,13 @@ HWTEST2_F(CommandEncoderTest, givenPredicateBitSetWhenProgrammingBbStartThenSetC
 
 HWTEST_F(CommandEncoderTest, givenEncodePostSyncArgsWhenCallingRequiresSystemMemoryFenceThenCorrectValuesAreReturned) {
     EncodePostSyncArgs args{};
-    bool integrated = pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice;
     for (bool hostScopeSignalEvent : {true, false}) {
         for (bool kernelUsingSystemAllocation : {true, false}) {
             args.device = pDevice;
             args.isHostScopeSignalEvent = hostScopeSignalEvent;
             args.isKernelUsingSystemAllocation = kernelUsingSystemAllocation;
 
-            if (hostScopeSignalEvent && kernelUsingSystemAllocation && !integrated) {
+            if (hostScopeSignalEvent && kernelUsingSystemAllocation && pDevice->getProductHelper().isGlobalFenceInPostSyncRequired(pDevice->getHardwareInfo())) {
                 EXPECT_TRUE(args.requiresSystemMemoryFence());
             } else {
                 EXPECT_FALSE(args.requiresSystemMemoryFence());

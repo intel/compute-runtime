@@ -24,6 +24,11 @@ bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const Har
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return true;
 }

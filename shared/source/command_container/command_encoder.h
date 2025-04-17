@@ -66,7 +66,7 @@ struct EncodePostSyncArgs {
     bool isFlushL3ForHostUsmRequired = false;
 
     bool requiresSystemMemoryFence() const {
-        return (isHostScopeSignalEvent && isKernelUsingSystemAllocation && !device->getHardwareInfo().capabilityTable.isIntegratedDevice);
+        return (isHostScopeSignalEvent && isKernelUsingSystemAllocation && this->device->getProductHelper().isGlobalFenceInPostSyncRequired(this->device->getHardwareInfo()));
     }
 };
 

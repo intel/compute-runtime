@@ -87,6 +87,7 @@ class ProductHelperHw : public ProductHelper {
     bool isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const override;
     bool isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;
+    bool isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const override;
     bool isTimestampWaitSupportedForQueues(bool heaplessEnabled) const override;
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
