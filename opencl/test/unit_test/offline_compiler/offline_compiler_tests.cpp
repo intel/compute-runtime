@@ -5678,9 +5678,12 @@ TEST_F(OfflineCompilerTests, GivenFclRedirectionEnvSetToForceIgcWhenInitializing
     ASSERT_NE(nullptr, pOfflineCompiler);
     auto ret = pOfflineCompiler->build();
     EXPECT_EQ(OCLOC_SUCCESS, ret);
+
     currIgcDebugVars.forceBuildFailure = true;
+    setIgcDebugVars(currIgcDebugVars);
     ret = pOfflineCompiler->build();
-    EXPECT_EQ(OCLOC_SUCCESS, ret);
+    EXPECT_NE(OCLOC_SUCCESS, ret);
+
     setFclDebugVars(oldFclDebugVars);
     setIgcDebugVars(oldIgcDebugVars);
 }
@@ -5714,8 +5717,12 @@ TEST_F(OfflineCompilerTests, GivenFclRedirectionEnvSetToForceFclWhenInitializing
     ASSERT_NE(nullptr, pOfflineCompiler);
     auto ret = pOfflineCompiler->build();
     EXPECT_EQ(OCLOC_SUCCESS, ret);
+
     currFclDebugVars.forceBuildFailure = true;
+    setFclDebugVars(currFclDebugVars);
     ret = pOfflineCompiler->build();
+    EXPECT_NE(OCLOC_SUCCESS, ret);
+
     setFclDebugVars(oldFclDebugVars);
     setIgcDebugVars(oldIgcDebugVars);
 }
