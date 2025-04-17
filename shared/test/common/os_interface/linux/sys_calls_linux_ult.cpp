@@ -66,6 +66,8 @@ int flockCalled = 0;
 int opendirCalled = 0;
 int readdirCalled = 0;
 int closedirCalled = 0;
+int pidfdopenCalled = 0;
+int pidfdgetfdCalled = 0;
 int fsyncCalled = 0;
 int fsyncArgPassed = 0;
 int fsyncRetVal = 0;
@@ -112,6 +114,8 @@ DIR *(*sysCallsOpendir)(const char *name) = nullptr;
 struct dirent *(*sysCallsReaddir)(DIR *dir) = nullptr;
 int (*sysCallsClosedir)(DIR *dir) = nullptr;
 int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize) = nullptr;
+int (*sysCallsPidfdOpen)(pid_t pid, unsigned int flags) = nullptr;
+int (*sysCallsPidfdGetfd)(int pidfd, int fd, unsigned int flags) = nullptr;
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
 long sysconfReturn = 1ull << 30;
@@ -533,6 +537,22 @@ int mkfifo(const char *pathname, mode_t mode) {
         return -1;
     }
     mkfifoPathNamePassed = pathname;
+    return 0;
+}
+
+int pidfdopen(pid_t pid, unsigned int flags) {
+    pidfdopenCalled++;
+    if (sysCallsPidfdOpen != nullptr) {
+        return sysCallsPidfdOpen(pid, flags);
+    }
+    return 0;
+}
+
+int pidfdgetfd(int pid, int targetfd, unsigned int flags) {
+    pidfdgetfdCalled++;
+    if (sysCallsPidfdGetfd != nullptr) {
+        return sysCallsPidfdGetfd(pid, targetfd, flags);
+    }
     return 0;
 }
 
