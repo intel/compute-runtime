@@ -395,8 +395,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAllocationWhenDi
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.postSyncArgs.eventAddress = eventAddress;
-    dispatchArgs.postSyncArgs.isTimestampEvent = true;
+    dispatchArgs.eventAddress = eventAddress;
+    dispatchArgs.isTimestampEvent = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -418,9 +418,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAddressWhenEncod
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.postSyncArgs.eventAddress = eventAddress;
-    dispatchArgs.postSyncArgs.isTimestampEvent = true;
-    dispatchArgs.postSyncArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment());
+    dispatchArgs.eventAddress = eventAddress;
+    dispatchArgs.isTimestampEvent = true;
+    dispatchArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment());
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -1208,7 +1208,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
     dispatchArgs.isInternal = isInternal;
     dispatchArgs.partitionCount = 2;
-    dispatchArgs.postSyncArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment());
+    dispatchArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment());
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -1244,7 +1244,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     args.emitPipeControlStall = true;
     args.partitionCount = dispatchArgs.partitionCount;
     args.emitSelfCleanup = true;
-    args.dcFlushEnable = dispatchArgs.postSyncArgs.dcFlushEnable;
+    args.dcFlushEnable = dispatchArgs.dcFlushEnable;
 
     auto cleanupSectionOffset = WalkerPartition::computeControlSectionOffset<FamilyType, DefaultWalkerType>(args);
     uint64_t expectedCleanupGpuVa = cmdContainer->getCommandStream()->getGraphicsAllocation()->getGpuAddress() +
@@ -1389,8 +1389,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenNonTimestampEventWhen
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.postSyncArgs.eventAddress = eventAddress;
-    dispatchArgs.postSyncArgs.isTimestampEvent = true;
+    dispatchArgs.eventAddress = eventAddress;
+    dispatchArgs.isTimestampEvent = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -1522,7 +1522,7 @@ struct CommandEncodeStatesImplicitScalingPrimaryBufferFixture : public CommandEn
         bool requiresUncachedMocs = false;
         uint64_t eventAddress = 0xFF112233000;
         EncodeDispatchKernelArgs dispatchArgs = BaseClass::createDefaultDispatchKernelArgs(BaseClass::pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-        dispatchArgs.postSyncArgs.eventAddress = eventAddress;
+        dispatchArgs.eventAddress = eventAddress;
         dispatchArgs.partitionCount = 2;
 
         EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*BaseClass::cmdContainer.get(), dispatchArgs);

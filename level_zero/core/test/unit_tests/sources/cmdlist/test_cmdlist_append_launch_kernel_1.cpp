@@ -208,7 +208,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     const uint32_t threadGroupDimensions[3] = {1, 1, 1};
 
     auto dispatchKernelArgs = CommandEncodeStatesFixture::createDefaultDispatchKernelArgs(device->getNEODevice(), kernel.get(), threadGroupDimensions, false);
-    dispatchKernelArgs.postSyncArgs.dcFlushEnable = commandList->getDcFlushRequired(true);
+    dispatchKernelArgs.dcFlushEnable = commandList->getDcFlushRequired(true);
 
     NEO::EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(commandContainer, dispatchKernelArgs);
 

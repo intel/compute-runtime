@@ -33,8 +33,8 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCA
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.postSyncArgs.eventAddress = eventAddress;
-    dispatchArgs.postSyncArgs.isTimestampEvent = true;
+    dispatchArgs.eventAddress = eventAddress;
+    dispatchArgs.isTimestampEvent = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -58,8 +58,8 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenDebugVariableToForceL1FlushWh
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.postSyncArgs.eventAddress = eventAddress;
-    dispatchArgs.postSyncArgs.isTimestampEvent = true;
+    dispatchArgs.eventAddress = eventAddress;
+    dispatchArgs.isTimestampEvent = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -82,9 +82,9 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeThenMoc
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.postSyncArgs.eventAddress = eventAddress;
-    dispatchArgs.postSyncArgs.isTimestampEvent = true;
-    dispatchArgs.postSyncArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment());
+    dispatchArgs.eventAddress = eventAddress;
+    dispatchArgs.isTimestampEvent = true;
+    dispatchArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment());
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 

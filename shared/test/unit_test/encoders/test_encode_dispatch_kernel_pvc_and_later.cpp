@@ -126,8 +126,8 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenDebugVariableWhenPostSyncIsPr
 
     auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), nullptr, *pDevice, 1, false);
 
-    dispatchArgs.postSyncArgs.inOrderExecInfo = inOrderExecInfo.get();
-    auto &postSyncArgs = dispatchArgs.postSyncArgs;
+    dispatchArgs.inOrderExecInfo = inOrderExecInfo.get();
+    auto postSyncArgs = EncodePostSync<FamilyType>::createPostSyncArgs(dispatchArgs);
     EncodePostSync<FamilyType>::template setupPostSyncForInOrderExec<DefaultWalkerType>(walkerCmd, postSyncArgs);
 
     auto &postSyncData = walkerCmd.getPostSync();

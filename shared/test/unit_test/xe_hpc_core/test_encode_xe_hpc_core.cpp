@@ -374,7 +374,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.postSyncArgs.isKernelUsingSystemAllocation = true;
+    dispatchArgs.isKernelUsingSystemAllocation = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -410,7 +410,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenEven
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.postSyncArgs.isHostScopeSignalEvent = true;
+    dispatchArgs.isHostScopeSignalEvent = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -445,8 +445,8 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
     dispatchInterface->getCrossThreadDataSizeResult = 0;
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
-    dispatchArgs.postSyncArgs.isKernelUsingSystemAllocation = true;
-    dispatchArgs.postSyncArgs.isHostScopeSignalEvent = true;
+    dispatchArgs.isKernelUsingSystemAllocation = true;
+    dispatchArgs.isHostScopeSignalEvent = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
