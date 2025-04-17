@@ -96,20 +96,6 @@ using HasOclocZebinFormatEnforced = IsAnyProducts<IGFX_TIGERLAKE_LP,
                                                   IGFX_ALDERLAKE_P,
                                                   IGFX_ALDERLAKE_N>;
 
-struct HasDispatchAllSupport {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return IsPVC::isMatched<productFamily>() || IsAtLeastBmg::isMatched<productFamily>();
-    }
-};
-
-struct DoesNotHaveDispatchAllSupport {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return !IsPVC::isMatched<productFamily>() && IsAtMostArl::isMatched<productFamily>();
-    }
-};
-
 struct IsXeLpg {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {

@@ -114,7 +114,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     MockCommandQueue *commandQueue;
 };
 
-HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurrentKernelWhenEnqueuingKernelThenSyncBufferIsUsed, HasDispatchAllSupport) {
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurrentKernelWhenEnqueuingKernelThenSyncBufferIsUsed) {
     patchAllocateSyncBuffer();
 
     enqueueNDCount();
@@ -142,7 +142,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurr
     EXPECT_EQ(2u * minimalSyncBufferSize, syncBufferHandler->usedBufferSize);
 }
 
-HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithoutAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsNotCreated, HasDispatchAllSupport) {
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithoutAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsNotCreated) {
     auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, getSyncBufferHandler());
@@ -157,7 +157,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenDefaultKernelUsingSyncBufferWhenE
     EXPECT_EQ(nullptr, getSyncBufferHandler());
 }
 
-HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsCreated, HasDispatchAllSupport) {
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsCreated) {
     patchAllocateSyncBuffer();
     auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -180,7 +180,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenTooHighWorkgroupCountWhenEnqueuin
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenSyncBufferFullWhenEnqueuingKernelThenNewBufferIsAllocated, HasDispatchAllSupport) {
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenSyncBufferFullWhenEnqueuingKernelThenNewBufferIsAllocated) {
     patchAllocateSyncBuffer();
     enqueueNDCount();
     auto syncBufferHandler = getSyncBufferHandler();
