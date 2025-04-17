@@ -27,7 +27,7 @@
 
 #include "CL/cl_gl.h"
 #include "config.h"
-#include "third_party/uapi/upstream/drm/drm_fourcc.h"
+#include "drm_fourcc.h"
 #include <GL/gl.h>
 
 namespace NEO {
