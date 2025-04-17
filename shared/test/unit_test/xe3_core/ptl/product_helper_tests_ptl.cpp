@@ -89,3 +89,7 @@ PTLTEST_F(PtlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideC
         }
     }
 }
+
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenCallIsStagingBuffersEnabledThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
+}
