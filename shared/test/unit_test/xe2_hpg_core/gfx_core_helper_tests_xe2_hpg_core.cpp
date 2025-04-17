@@ -679,9 +679,9 @@ XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallUseGem
     EXPECT_TRUE(productHelper.useGemCreateExtInAllocateMemoryByKMD());
 }
 
-XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenAskingForGlobalFenceSupportThenReturnFalse) {
+XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenAskingForGlobalFenceSupportThenReturnTrue) {
     const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_FALSE(productHelper.isGlobalFenceInCommandStreamRequired(*defaultHwInfo));
+    EXPECT_EQ(productHelper.isGlobalFenceInCommandStreamRequired(*defaultHwInfo), !defaultHwInfo->capabilityTable.isIntegratedDevice);
 }
 
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenAskingForCooperativeEngineSupportThenReturnTrue) {
