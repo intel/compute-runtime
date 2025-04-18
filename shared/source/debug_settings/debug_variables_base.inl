@@ -315,6 +315,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceIndirectDetectionForCMKernels, -1, "-1: def
 DECLARE_DEBUG_VARIABLE(int32_t, PipelinedEuThreadArbitration, -1, "-1: default. 1: Use Walker field, 0: Use StateComputeMode command to program pipelinedEuThreadArbitration")
 DECLARE_DEBUG_VARIABLE(bool, ForceUseOnlyGlobalTimestamps, 0, "0- default disabled, 1: enable use only global timestamp")
 DECLARE_DEBUG_VARIABLE(int32_t, GetSipBinaryFromExternalLib, -1, "-1: default, 0: disabled, 1: enabled. If enabled, then retrieve Sip from external library")
+DECLARE_DEBUG_VARIABLE(int32_t, EnablePidFdOrSocketsForIpc, -1, "-1: default, 0: disabled (default), 1: enabled. If enabled, L0 IPC handles are opaque and pidfd or sockets are used for IPC exchange")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
