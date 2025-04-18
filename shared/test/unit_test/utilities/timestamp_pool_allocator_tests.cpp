@@ -132,7 +132,7 @@ TEST_F(TimestampPoolAllocatorTest, whenCheckingIsEnabledWithDifferentSettingsThe
         debugManager.flags.EnableTimestampPoolAllocator.set(-1);
         mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
 
-        EXPECT_TRUE(timestampAllocator.isEnabled());
+        EXPECT_FALSE(timestampAllocator.isEnabled());
     }
 }
 

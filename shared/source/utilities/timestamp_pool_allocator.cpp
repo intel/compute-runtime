@@ -62,7 +62,7 @@ bool TimestampPoolAllocator::isEnabled() const {
         return NEO::debugManager.flags.EnableTimestampPoolAllocator.get();
     }
 
-    return device->getProductHelper().is2MBLocalMemAlignmentEnabled();
+    return false;
 }
 
 SharedTimestampAllocation *TimestampPoolAllocator::requestGraphicsAllocationForTimestamp(size_t size) {
