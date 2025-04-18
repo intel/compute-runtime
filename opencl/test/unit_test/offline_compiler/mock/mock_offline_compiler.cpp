@@ -80,11 +80,12 @@ void MockOfflineCompiler::clearLog() {
     argHelper = uniqueHelper.get();
 }
 
-void MockOfflineCompiler::createDir(const std::string &path) {
+int MockOfflineCompiler::createDir(const std::string &path) {
     if (interceptCreatedDirs) {
         createdDirs.push_back(path);
+        return OCLOC_SUCCESS;
     } else {
-        OfflineCompiler::createDir(path);
+        return OfflineCompiler::createDir(path);
     }
 }
 

@@ -197,7 +197,7 @@ All supported acronyms: %s.
     }
 
     MOCKABLE_VIRTUAL void writeOutAllFiles();
-    MOCKABLE_VIRTUAL void createDir(const std::string &path);
+    MOCKABLE_VIRTUAL int createDir(const std::string &path);
     bool useIgcAsFcl();
     void unifyExcludeIrFlags();
     void enforceFormat(std::string &format);

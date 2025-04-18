@@ -99,7 +99,7 @@ class MockOfflineCompiler : public OfflineCompiler {
 
     void clearLog();
 
-    void createDir(const std::string &path) override;
+    int createDir(const std::string &path) override;
 
     std::map<std::string, std::string> filesMap{};
     int buildToIrBinaryStatus = 0;

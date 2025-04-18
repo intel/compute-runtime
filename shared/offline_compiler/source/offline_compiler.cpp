@@ -973,7 +973,11 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             cacheConfig.cacheDir = cacheDir;
         }
         cache = std::make_unique<CompilerCache>(cacheConfig);
-        createDir(cacheConfig.cacheDir);
+        retVal = createDir(cacheConfig.cacheDir);
+        if (retVal != OCLOC_SUCCESS) {
+            argHelper->printf("Error: Failed to create directory '%s'.\n", cacheConfig.cacheDir.c_str());
+            return retVal;
+        }
     }
 
     return retVal;
@@ -1573,7 +1577,10 @@ void OfflineCompiler::writeOutAllFiles() {
         } while (pos != std::string::npos && !tmp.empty());
 
         while (!dirList.empty()) {
-            createDir(dirList.back());
+            int retVal = createDir(dirList.back());
+            if (retVal != OCLOC_SUCCESS) {
+                argHelper->printf("Error: Failed to create directory '%s'.\n", dirList.back().c_str());
+            }
             dirList.pop_back();
         }
     }
@@ -1645,8 +1652,12 @@ void OfflineCompiler::writeOutAllFiles() {
     }
 }
 
-void OfflineCompiler::createDir(const std::string &path) {
-    IoFunctions::mkdirPtr(path.c_str());
+int OfflineCompiler::createDir(const std::string &path) {
+    auto result = IoFunctions::mkdirPtr(path.c_str());
+    if (result != 0) {
+        return OCLOC_INVALID_FILE;
+    }
+    return OCLOC_SUCCESS;
 }
 
 bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::string &file, OclocArgHelper *helper) {

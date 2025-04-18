@@ -5742,4 +5742,11 @@ TEST_F(OfflineCompilerTests, GivenFclRedirectionDefaultSettingWhenCompilingToIrT
     EXPECT_EQ(false, mockOfflineCompiler.useIgcAsFcl());
 }
 
+TEST(OfflineCompilerTest, GivenNonExistentPathWhenCreatingDirectoryThenReturnInvalidFile) {
+    MockOfflineCompiler mockOfflineCompiler{};
+    auto ret = mockOfflineCompiler.createDir("/nonexistent/path/dirName");
+
+    EXPECT_EQ(ret, OCLOC_INVALID_FILE);
+}
+
 } // namespace NEO
