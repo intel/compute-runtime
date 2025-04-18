@@ -94,7 +94,7 @@ HWTEST_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThenE
 
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
 
-    zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
     ze_event_desc_t eventDesc = {};
     eventDesc.pNext = &syncModeDesc;
 
@@ -1102,7 +1102,7 @@ HWTEST_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCa
     auto ultCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(device1->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr1->storeMakeResidentAllocations = true;
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
     ze_event_handle_t eventH = nullptr;
 
@@ -5363,12 +5363,12 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEvent2ThenRet
     *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
-    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES};
     externalSyncAllocProperties.completionValue = counterValue;
     externalSyncAllocProperties.deviceAddress = gpuAddress;
     externalSyncAllocProperties.hostAddress = hostAddress;
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
     counterBasedDesc.pNext = &externalSyncAllocProperties;
     ze_event_handle_t handle = nullptr;
@@ -5428,12 +5428,12 @@ HWTEST_F(InOrderCmdListTests, givenUsmDeviceAllocationWhenCreatingCbEventFromExt
     auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
     auto deviceAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
 
-    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES};
     externalSyncAllocProperties.completionValue = 2;
     externalSyncAllocProperties.deviceAddress = deviceAddress;
     externalSyncAllocProperties.hostAddress = hostAddress;
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
     counterBasedDesc.pNext = &externalSyncAllocProperties;
 
@@ -5461,12 +5461,12 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t) * 2));
 
-    zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
     externalStorageAllocProperties.completionValue = counterValue;
     externalStorageAllocProperties.deviceAddress = nullptr;
     externalStorageAllocProperties.incrementValue = incValue;
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
     counterBasedDesc.pNext = &externalStorageAllocProperties;
     ze_event_handle_t handle = nullptr;
@@ -5761,7 +5761,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInO
 }
 
 HWTEST_F(InOrderCmdListTests, givenTimestmapEnabledWhenCreatingStandaloneCbEventThenSetCorrectPacketSize) {
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;
 
     ze_event_handle_t handle = nullptr;
@@ -5840,7 +5840,7 @@ HWTEST_F(InOrderCmdListTests, givenMitigateHostVisibleSignalWhenCallingSynchroni
 HWTEST_F(InOrderCmdListTests, givenCounterBasedTimestampHostVisibleSignalWhenCallingSynchronizeOnCbEventThenFlushDcIfSupported) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
     counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
@@ -5871,7 +5871,7 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedTimestampHostVisibleSignalWhenCal
 }
 
 HWTEST_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterruptIdThenAssign) {
-    zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
     syncModeDesc.externalInterruptId = 123;
 
     syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;

@@ -32,7 +32,7 @@ typedef enum _ze_intel_device_module_dp_exp_flag_t {
 } ze_intel_device_module_dp_exp_flag_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-#define ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES (ze_structure_type_t)0x00030013
+#define ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES (ze_structure_type_ext_t)0x00030013
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Device Module dot product properties queried using
 ///        ::zeDeviceGetModuleProperties
@@ -42,10 +42,10 @@ typedef enum _ze_intel_device_module_dp_exp_flag_t {
 ///       `pNext` member of ::ze_device_module_properties_t.
 /// @brief Device module dot product properties
 typedef struct _ze_intel_device_module_dp_exp_properties_t {
-    ze_structure_type_t stype = ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES; ///< [in] type of this structure
-    void *pNext;                                                                    ///< [in,out][optional] must be null or a pointer to an extension-specific
-                                                                                    ///< structure (i.e. contains sType and pNext).
-    ze_intel_device_module_dp_exp_flags_t flags;                                    ///< [out] 0 (none) or a valid combination of ::ze_intel_device_module_dp_flag_t
+    ze_structure_type_ext_t stype = ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES; ///< [in] type of this structure
+    void *pNext;                                                                        ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                                                                        ///< structure (i.e. contains sType and pNext).
+    ze_intel_device_module_dp_exp_flags_t flags;                                        ///< [out] 0 (none) or a valid combination of ::ze_intel_device_module_dp_flag_t
 } ze_intel_device_module_dp_exp_properties_t;
 ```
 

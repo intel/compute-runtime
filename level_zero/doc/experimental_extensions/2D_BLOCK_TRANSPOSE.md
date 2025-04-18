@@ -45,11 +45,11 @@ typedef enum _ze_intel_device_block_array_exp_flag_t {
 ///     - This structure may be passed to ::zeDeviceGetProperties, via
 ///       `pNext` member of ::ze_device_properties_t.
 /// @brief Device 2D block array properties
-#define ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES (ze_structure_type_t)0x00030007
+#define ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES (ze_structure_type_ext_t)0x00030007
 
 typedef struct _ze_intel_device_block_array_exp_properties_t {
-    ze_structure_type_t stype = ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES; ///< [in] type of this structure
-    void *pNext;                                                            ///< [in,out][optional] must be null or a pointer to an extension-specific
+    ze_structure_type_ext_t stype = ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES; ///< [in] type of this structure
+    void *pNext;                                                                ///< [in,out][optional] must be null or a pointer to an extension-specific
                                                                             ///< structure (i.e. contains sType and pNext).
     ze_intel_device_block_array_exp_flags_t flags;                          ///< [out] 0 (none) or a valid combination of ::ze_intel_device_block_array_exp_flag_t
 } ze_intel_device_block_array_exp_properties_t;

@@ -56,10 +56,10 @@ typedef enum _ze_intel_device_module_dp_exp_flag_t {
 ///       `pNext` member of ::ze_device_module_properties_t.
 /// @brief Device module dot product properties
 typedef struct _ze_intel_device_module_dp_exp_properties_t {
-    ze_structure_type_t stype = ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES; ///< [in] type of this structure
-    void *pNext;                                                                    ///< [in,out][optional] must be null or a pointer to an extension-specific
-                                                                                    ///< structure (i.e. contains sType and pNext).
-    ze_intel_device_module_dp_exp_flags_t flags;                                    ///< [out] 0 (none) or a valid combination of ::ze_intel_device_module_dp_flag_t
+    ze_structure_type_ext_t stype = ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES; ///< [in] type of this structure
+    void *pNext;                                                                        ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                                                                        ///< structure (i.e. contains sType and pNext).
+    ze_intel_device_module_dp_exp_flags_t flags;                                        ///< [out] 0 (none) or a valid combination of ::ze_intel_device_module_dp_flag_t
 } ze_intel_device_module_dp_exp_properties_t;
 
 #ifndef ZE_INTEL_COMMAND_LIST_MEMORY_SYNC
@@ -86,7 +86,7 @@ typedef enum _ze_intel_command_list_memory_sync_exp_version_t {
 ///     - Implementation must support ::ZE_intel_experimental_command_list_memory_sync extension
 ///     - May be passed to ze_device_properties_t through pNext.
 typedef struct _ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t {
-    ze_structure_type_t stype;                   ///< [in] type of this structure
+    ze_structure_type_ext_t stype;               ///< [in] type of this structure
     const void *pNext;                           ///< [in][optional] must be null or a pointer to an extension-specific
                                                  ///< structure (i.e. contains stype and pNext).
     uint32_t cmdListWaitOnMemoryDataSizeInBytes; /// <out> Defines supported data size for zexCommandListAppendWaitOnMemory[64] API
@@ -123,7 +123,7 @@ typedef enum _zex_intel_event_sync_mode_exp_flag_t {
 ///     - Implementation must support ::ZEX_intel_experimental_event_sync_mode extension
 ///     - May be passed to ze_event_desc_t through pNext.
 typedef struct _zex_intel_event_sync_mode_exp_desc_t {
-    ze_structure_type_t stype;                           ///< [in] type of this structure
+    ze_structure_type_ext_t stype;                       ///< [in] type of this structure
     const void *pNext;                                   ///< [in][optional] must be null or a pointer to an extension-specific
                                                          ///< structure (i.e. contains stype and pNext).
     zex_intel_event_sync_mode_exp_flags_t syncModeFlags; /// <in> valid combination of ::ze_intel_event_sync_mode_exp_flag_t
@@ -139,12 +139,12 @@ typedef struct _zex_intel_queue_allocate_msix_hint_exp_desc_t zex_intel_queue_al
 /// passed as pNext member of ::ze_command_queue_desc_t.
 
 typedef struct _zex_intel_queue_allocate_msix_hint_exp_desc_t {
-    ze_structure_type_t stype; ///< [in] type of this structure
-    const void *pNext;         ///< [in][optional] must be null or a pointer to an extension-specific
-                               ///< structure (i.e. contains stype and pNext).
-    ze_bool_t uniqueMsix;      ///< [in] If set, try to allocate unique msix for command queue.
-                               ///< If not set, driver will follow default behaviour. It may share msix for signaling completion with other queues.
-                               ///< Number of unique msixes may be limited. On unsuccessful allocation, queue or immediate cmd list creation API fallbacks to default behaviour.
+    ze_structure_type_ext_t stype; ///< [in] type of this structure
+    const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific
+                                   ///< structure (i.e. contains stype and pNext).
+    ze_bool_t uniqueMsix;          ///< [in] If set, try to allocate unique msix for command queue.
+                                   ///< If not set, driver will follow default behaviour. It may share msix for signaling completion with other queues.
+                                   ///< Number of unique msixes may be limited. On unsuccessful allocation, queue or immediate cmd list creation API fallbacks to default behaviour.
 
 } zex_intel_queue_allocate_msix_hint_exp_desc_t;
 
@@ -153,12 +153,12 @@ typedef struct _zex_intel_queue_allocate_msix_hint_exp_desc_t {
 /// passed as pNext member of ::ze_command_queue_desc_t.
 
 typedef struct _zex_intel_queue_copy_operations_offload_hint_exp_desc_t {
-    ze_structure_type_t stype;    ///< [in] type of this structure
-    const void *pNext;            ///< [in][optional] must be null or a pointer to an extension-specific
-                                  ///< structure (i.e. contains stype and pNext).
-    ze_bool_t copyOffloadEnabled; ///< [in] If set, try to offload copy operations to different engines. Applicable only for compute queues.
-                                  ///< This is only a hint. Driver may ignore it per append call, based on platform capabilities or internal heuristics.
-                                  ///< If not set, driver will follow default behaviour. Copy operations will be submitted to same engine as compute operations.
+    ze_structure_type_ext_t stype; ///< [in] type of this structure
+    const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific
+                                   ///< structure (i.e. contains stype and pNext).
+    ze_bool_t copyOffloadEnabled;  ///< [in] If set, try to offload copy operations to different engines. Applicable only for compute queues.
+                                   ///< This is only a hint. Driver may ignore it per append call, based on platform capabilities or internal heuristics.
+                                   ///< If not set, driver will follow default behaviour. Copy operations will be submitted to same engine as compute operations.
 
 } zex_intel_queue_copy_operations_offload_hint_exp_desc_t;
 
@@ -213,10 +213,10 @@ typedef enum _ze_intel_device_block_array_exp_flag_t {
 /// @brief Device 2D block array properties
 
 typedef struct _ze_intel_device_block_array_exp_properties_t {
-    ze_structure_type_t stype = ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES; ///< [in] type of this structure
-    void *pNext;                                                            ///< [in,out][optional] must be null or a pointer to an extension-specific
-                                                                            ///< structure (i.e. contains sType and pNext).
-    ze_intel_device_block_array_exp_flags_t flags;                          ///< [out] 0 (none) or a valid combination of ::ze_intel_device_block_array_exp_flag_t
+    ze_structure_type_ext_t stype = ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES; ///< [in] type of this structure
+    void *pNext;                                                                ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                                                                ///< structure (i.e. contains sType and pNext).
+    ze_intel_device_block_array_exp_flags_t flags;                              ///< [out] 0 (none) or a valid combination of ::ze_intel_device_block_array_exp_flag_t
 } ze_intel_device_block_array_exp_properties_t;
 
 ///////////////////////////////////////////////////////////////////////////////

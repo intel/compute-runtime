@@ -6162,7 +6162,7 @@ TEST_F(DeviceTest, GivenValidDeviceWhenQueryingKernelTimestampsProptertiesThenCo
 
 TEST_F(DeviceTest, givenDeviceWhenQueryingCmdListMemWaitOnMemDataSizeThenReturnValueFromHelper) {
     ze_device_properties_t devProps;
-    ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t sizeProps = {ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t sizeProps = {ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC};
 
     devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
     devProps.pNext = &sizeProps;
@@ -6175,7 +6175,7 @@ TEST_F(DeviceTest, givenDeviceWhenQueryingCmdListMemWaitOnMemDataSizeThenReturnV
 
 TEST_F(DeviceTest, givenDeviceWhenQueryingMediaPropertiesThenReturnZero) {
     ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    ze_intel_device_media_exp_properties_t mediaProps = {ZE_STRUCTURE_TYPE_INTEL_DEVICE_MEDIA_EXP_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    ze_intel_device_media_exp_properties_t mediaProps = {ZE_STRUCTURE_TYPE_INTEL_DEVICE_MEDIA_EXP_PROPERTIES};
     mediaProps.numDecoderCores = 123;
     mediaProps.numEncoderCores = 456;
 
@@ -6395,7 +6395,7 @@ TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreFalseThenFlagsIndi
     Mock2DTransposeDevice<false, false> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
     deviceProps.pNext = &blockArrayProps;
 
     auto success = L0::Device::fromHandle(static_cast<ze_device_handle_t>(&deviceImp))->getProperties(&deviceProps);
@@ -6410,7 +6410,7 @@ TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreFalseThenFlagsIndic
     Mock2DTransposeDevice<true, false> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
     deviceProps.pNext = &blockArrayProps;
 
     auto success = L0::Device::fromHandle(static_cast<ze_device_handle_t>(&deviceImp))->getProperties(&deviceProps);
@@ -6425,7 +6425,7 @@ TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreTrueThenFlagsIndic
     Mock2DTransposeDevice<false, true> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
     deviceProps.pNext = &blockArrayProps;
 
     auto success = L0::Device::fromHandle(static_cast<ze_device_handle_t>(&deviceImp))->getProperties(&deviceProps);
@@ -6440,7 +6440,7 @@ TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreTrueThenFlagsIndica
     Mock2DTransposeDevice<true, true> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
     deviceProps.pNext = &blockArrayProps;
 
     auto success = L0::Device::fromHandle(static_cast<ze_device_handle_t>(&deviceImp))->getProperties(&deviceProps);

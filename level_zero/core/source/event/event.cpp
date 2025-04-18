@@ -722,7 +722,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
     auto extendedDesc = reinterpret_cast<const ze_base_desc_t *>(eventDescriptor.extensions);
 
     while (extendedDesc) {
-        if (extendedDesc->stype == ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC) {
+        if (static_cast<uint32_t>(extendedDesc->stype) == ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC) {
             auto eventSyncModeDesc = reinterpret_cast<const zex_intel_event_sync_mode_exp_desc_t *>(extendedDesc);
 
             interruptMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
@@ -733,7 +733,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
                 setExternalInterruptId(eventSyncModeDesc->externalInterruptId);
                 UNRECOVERABLE_IF(eventSyncModeDesc->externalInterruptId > 0 && eventDescriptor.eventPoolAllocation);
             }
-        } else if (extendedDesc->stype == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES) {
+        } else if (static_cast<uint32_t>(extendedDesc->stype) == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES) {
             auto externalSyncAllocProperties = reinterpret_cast<const zex_counter_based_event_external_sync_alloc_properties_t *>(extendedDesc);
 
             if (!externalSyncAllocProperties->deviceAddress || !externalSyncAllocProperties->hostAddress) {
@@ -750,7 +750,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
             auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), deviceAlloc, castToUint64(externalSyncAllocProperties->deviceAddress),
                                                                                       hostAlloc, externalSyncAllocProperties->hostAddress, externalSyncAllocProperties->completionValue, 1, 1);
             updateInOrderExecState(inOrderExecInfo, externalSyncAllocProperties->completionValue, 0);
-        } else if (extendedDesc->stype == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES) {
+        } else if (static_cast<uint32_t>(extendedDesc->stype) == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES) {
             auto externalStorageProperties = reinterpret_cast<const zex_counter_based_event_external_storage_properties_t *>(extendedDesc);
 
             auto deviceAlloc = getExternalCounterAllocationFromAddress(externalStorageProperties->deviceAddress);

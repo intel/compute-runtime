@@ -66,7 +66,7 @@ HWTEST2_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError, 
 HWTEST2_F(InOrderIpcTests, givenCbEventWhenCreatingFromApiThenOpenIpcHandle, MatchAny) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
     ze_event_handle_t ipcEvent = nullptr;
     ze_event_handle_t nonIpcEvent = nullptr;

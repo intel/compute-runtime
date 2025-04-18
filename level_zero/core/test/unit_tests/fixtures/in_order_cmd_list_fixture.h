@@ -89,12 +89,12 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
 
     DestroyableZeUniquePtr<InOrderFixtureMockEvent> createExternalSyncStorageEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress) {
         ze_event_handle_t outEvent = nullptr;
-        zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+        zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
         externalStorageAllocProperties.completionValue = counterValue;
         externalStorageAllocProperties.deviceAddress = deviceAddress;
         externalStorageAllocProperties.incrementValue = incrementValue;
 
-        zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+        zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
         counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
         counterBasedDesc.pNext = &externalStorageAllocProperties;
 
