@@ -34,7 +34,7 @@ struct DebugApiFixture : public DeviceFixture {
     void setUpV3Header() {
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
     }
-    void setUpV3HeaderWithoutHeapless() {
+    void setUpV3HeaderHeapless() {
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
         auto pStateSaveArea = reinterpret_cast<NEO::StateSaveAreaHeader *>(mockBuiltins->stateSaveAreaHeader.data());
         pStateSaveArea->regHeaderV3.sip_flags = 0;
