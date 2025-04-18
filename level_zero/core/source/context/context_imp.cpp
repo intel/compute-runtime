@@ -1355,7 +1355,7 @@ ze_result_t ContextImp::mapVirtualMem(const void *ptr,
         virtualMemoryReservation->mappedAllocations.insert(std::pair<void *, NEO::MemoryMappedRange *>(const_cast<void *>(ptr), mappedRange));
         this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
         NEO::MemoryOperationsHandler *memoryOperationsIface = allocationNode->device->getRootDeviceEnvironment().memoryOperationsInterface.get();
-        auto success = memoryOperationsIface->makeResident(allocationNode->device, ArrayRef<NEO::GraphicsAllocation *>(&allocationNode->allocation, 1), false, false);
+        auto success = memoryOperationsIface->makeResident(allocationNode->device, ArrayRef<NEO::GraphicsAllocation *>(&allocationNode->allocation, 1), false, true);
         ze_result_t res = changeMemoryOperationStatusToL0ResultType(success);
         return res;
     } else {
