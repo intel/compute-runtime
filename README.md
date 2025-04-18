@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2018-2023 Intel Corporation
+Copyright (C) 2018-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -52,6 +52,9 @@ _Release cadence changed from weekly to monthly late 2022_
 * We publish and document a monthly release from the tip of that branch. 
 * During subsequent weeks of a given month, we continue to cherry-pick fixes to that branch and may publish a hotfix release. 
 * Quality level of the driver (per platform) will be provided in the Release Notes.
+* Once a monthly release is posted on compute-runtime GitHub, it may propagate to secondary release channels and/or be repackaged / rebuilt for convenience (e.g., [intel-graphics](https://launchpad.net/~kobuk-team/+archive/ubuntu/intel-graphics)). Users should choose package origin (GitHub/PPA) that is most convenient for them.
+* A secondary channel must not release a version that was not released on GitHub prior.
+ 
 
 ## Installation Options
 
