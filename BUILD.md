@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2020-2021 Intel Corporation
+Copyright (C) 2020-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -73,6 +73,16 @@ NEO Driver has build options to enable support for EU Debugging with XeKMD. Kern
 To build NEO with support for this feature follow above steps with these additional cmake options added to step 6.
 
 ` -DNEO_ENABLE_XE_EU_DEBUG_SUPPORT=1  -DNEO_USE_XE_EU_DEBUG_EXP_UPSTREAM=1`
+
+## Optional - Building NEO with support for Gen8, Gen9 and Gen11 devices
+
+Starting from release [24.35.30872.22](https://github.com/intel/compute-runtime/releases/tag/24.35.30872.22) regular packages support Gen12 and later devices.
+
+Gen8, Gen9 and Gen11 devices related code is available on [releases/24.35](https://github.com/intel/compute-runtime/tree/releases/24.35) branch. It is no longer available on master branch.
+
+To build NEO with support for Gen8, Gen9 and Gen11 devices follow above steps with these additional cmake options added to step 6.
+
+` -DNEO_LEGACY_PLATFORMS_SUPPORT=1  -DNEO_CURRENT_PLATFORMS_SUPPORT=0`
 
 
 ___(*) Other names and brands may be claimed as property of others.___

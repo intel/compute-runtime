@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2014 Intel Corporation
+Copyright (C) 2024-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -32,3 +32,7 @@ Support for Gen8, Gen9 and Gen11 devices will be delivered via packages with _le
 No new features will be added to legacy packages.
 
 In case of critical fixes we plan to deliver them through a new release from [24.35 release branch](https://github.com/intel/compute-runtime/tree/releases/24.35).
+
+## Build instructions
+
+To build legacy1 packages follow instructions [here](BUILD.md#optional---building-neo-with-support-for-gen8-gen9-and-gen11-devices).
