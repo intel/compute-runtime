@@ -1579,7 +1579,7 @@ HWTEST_F(ProductHelperCommonTest, givenProductHelperWhenCallingIsCalculationForD
     auto &gfxCoreHelper = getHelper<ProductHelper>();
     EXPECT_FALSE(gfxCoreHelper.isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo));
 }
-HWTEST_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustMaxWorkGroupCountIsCalledThenSmallerValueIsReturned) {
+HWTEST2_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustMaxWorkGroupCountIsCalledThenSmallerValueIsReturned, IsAtLeastBmg) {
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
@@ -1626,6 +1626,24 @@ HWTEST_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustM
             }
         }
     }
+}
+
+HWTEST2_F(GfxCoreHelperTest, GivenGfxHelperWhenAdjustMaxWorkGroupSizeCalledThenOneReturned, DoesNotHaveDispatchAllSupport) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto engineGroupType = EngineGroupType::compute;
+    EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment));
+}
+
+HWTEST2_F(GfxCoreHelperTest, GivenGfxHelperWhenForceTheoreticalMaxWorkGroupCountThenAdjustMaxWorkGroupSizeReturnNotOne, DoesNotHaveDispatchAllSupport) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.ForceTheoreticalMaxWorkGroupCount.set(true);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto engineGroupType = EngineGroupType::compute;
+    EXPECT_NE(1u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeThenAlwaysReturnDeviceDefault) {

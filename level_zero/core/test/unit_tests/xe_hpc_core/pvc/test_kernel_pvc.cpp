@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,10 +13,6 @@
 #include "level_zero/core/test/unit_tests/fixtures/kernel_max_cooperative_groups_count_fixture.h"
 namespace L0 {
 namespace ult {
-
-HWTEST_EXCLUDE_PRODUCT(KernelImpSuggestMaxCooperativeGroupCountTests, GivenUsedSlmSizeWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToUsedSlmSize, IGFX_PVC);
-HWTEST_EXCLUDE_PRODUCT(KernelImpSuggestMaxCooperativeGroupCountTests, GivenBarriersWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToBarriersCount, IGFX_PVC);
-HWTEST_EXCLUDE_PRODUCT(KernelImpSuggestMaxCooperativeGroupCountTests, GivenNoBarriersOrSlmUsedWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithSimd, IGFX_PVC);
 
 using KernelImpSuggestMaxCooperativeGroupCountTestsPvc = Test<L0::ult::KernelImpSuggestMaxCooperativeGroupCountFixture>;
 
