@@ -33,7 +33,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     DeviceBitfield getDeviceBitfield() const { return deviceBitfield; }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     const aub_stream::EngineType &getEngineType() const { return engineType; }
-    EngineUsage getEngineUsage() { return engineUsage; }
+    EngineUsage getEngineUsage() const { return engineUsage; }
     void overrideEngineUsage(EngineUsage usage) { engineUsage = usage; }
 
     bool isRegular() const { return engineUsage == EngineUsage::regular; }
