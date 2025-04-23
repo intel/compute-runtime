@@ -774,15 +774,8 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         input->fragmentsStorage.fragmentCount > 0) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
-        if (input->getResourceHandle() != 0) {
-            [[maybe_unused]] auto status = tryDeferDeletions(nullptr, 0, input->getResourceHandle(), gfxAllocation->getRootDeviceIndex(), gfxAllocation->getAllocationType());
-            DEBUG_BREAK_IF(!status);
-        } else {
-            for (auto handle : input->getHandles()) {
-                [[maybe_unused]] auto status = tryDeferDeletions(&handle, 1, 0, gfxAllocation->getRootDeviceIndex(), gfxAllocation->getAllocationType());
-                DEBUG_BREAK_IF(!status);
-            }
-        }
+        [[maybe_unused]] auto status = tryDeferDeletions(input->getHandles().data(), static_cast<uint32_t>(input->getHandles().size()), input->getResourceHandle(), gfxAllocation->getRootDeviceIndex(), gfxAllocation->getAllocationType());
+        DEBUG_BREAK_IF(!status);
 
         alignedFreeWrapper(input->getDriverAllocatedCpuPtr());
     }
