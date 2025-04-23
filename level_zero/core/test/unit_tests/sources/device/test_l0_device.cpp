@@ -1655,7 +1655,7 @@ TEST_F(DeviceTest, whenGetDevicePropertiesCalledThenCorrectDevicePropertyEccFlag
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
     device->getProperties(&deviceProps);
-    auto expected = (this->neoDevice->getDeviceInfo().errorCorrectionSupport) ? ZE_DEVICE_PROPERTY_FLAG_ECC : static_cast<ze_device_property_flag_t>(0u); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    uint32_t expected = (this->neoDevice->getDeviceInfo().errorCorrectionSupport) ? static_cast<uint32_t>(ZE_DEVICE_PROPERTY_FLAG_ECC) : 0u;
     EXPECT_EQ(expected, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ECC);
 }
 
