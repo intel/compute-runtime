@@ -276,9 +276,10 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndPmuFails
 
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockErrorNumber = EMFILE;
     pPmuInterface->mockPerfEventOpenReadFail = true;
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndPmuOpenFailsDueToFileTableOverFlowWhenGetEngineActivityFdListIsCalledThenErrorIsReturned) {
@@ -287,9 +288,10 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndPmuOpenF
 
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockErrorNumber = ENFILE;
     pPmuInterface->mockPerfEventOpenReadFail = true;
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 } // namespace ult

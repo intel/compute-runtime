@@ -104,7 +104,12 @@ std::string SysmanKmdInterfaceI915Prelim::getEnergyCounterNodeFile(zes_power_dom
     return filePath;
 }
 
-ze_result_t SysmanKmdInterfaceI915Prelim::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t gtId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
+ze_result_t SysmanKmdInterfaceI915Prelim::getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
+                                                                               uint32_t engineInstance,
+                                                                               uint32_t gtId,
+                                                                               PmuInterface *const &pPmuInterface,
+                                                                               std::vector<std::pair<int64_t, int64_t>> &fdList,
+                                                                               std::pair<uint64_t, uint64_t> &configPair) {
     uint64_t config = UINT64_MAX;
     switch (engineGroup) {
     case ZES_ENGINE_GROUP_ALL:
@@ -127,14 +132,15 @@ ze_result_t SysmanKmdInterfaceI915Prelim::getEngineActivityFdList(zes_engine_gro
     }
 
     int64_t fd[2];
-    fd[0] = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    auto i915EngineClass = engineGroupToEngineClass.find(engineGroup);
+    configPair = std::make_pair(config, PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance));
+    fd[0] = pPmuInterface->pmuInterfaceOpen(configPair.first, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
     if (fd[0] < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
         return checkErrorNumberAndReturnStatus();
     }
 
-    auto i915EngineClass = engineGroupToEngineClass.find(engineGroup);
-    fd[1] = pPmuInterface->pmuInterfaceOpen(PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    fd[1] = pPmuInterface->pmuInterfaceOpen(configPair.second, static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
     if (fd[1] < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
         close(static_cast<int>(fd[0]));

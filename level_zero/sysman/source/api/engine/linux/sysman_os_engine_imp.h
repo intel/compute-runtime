@@ -19,6 +19,7 @@ namespace Sysman {
 
 class SysmanKmdInterface;
 class PmuInterface;
+class LinuxSysmanImp;
 struct Device;
 class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -29,6 +30,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getProperties(zes_engine_properties_t &properties) override;
     bool isEngineModuleSupported() override;
     static zes_engine_group_t getGroupFromEngineType(zes_engine_group_t type);
+    void getConfigPair(std::pair<uint64_t, uint64_t> &configPair) override;
     LinuxEngineImp() = default;
     LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubDevice);
     ~LinuxEngineImp() override;
@@ -36,6 +38,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
 
   protected:
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
+    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     zes_engine_group_t engineGroup = ZES_ENGINE_GROUP_ALL;
     uint32_t engineInstance = 0;
     PmuInterface *pPmuInterface = nullptr;
@@ -47,6 +50,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
   private:
     void init();
     std::vector<std::pair<int64_t, int64_t>> fdList{};
+    std::pair<uint64_t, uint64_t> pmuConfigPair{};
     ze_result_t initStatus = ZE_RESULT_SUCCESS;
 };
 

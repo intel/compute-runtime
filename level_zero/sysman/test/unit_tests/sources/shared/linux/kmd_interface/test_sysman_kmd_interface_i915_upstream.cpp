@@ -190,11 +190,12 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenGroupEngineTypeAndSysmanKmdInterfac
 
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_COMPUTE_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_COPY_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_RENDER_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    std::pair<uint64_t, uint64_t> configPair = {};
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COPY_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_RENDER_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSingleEngineTypeAndSysmanKmdInterfaceInstanceWhenGetEngineActivityFdListIsCalledThenValidFdAndSuccessIsReturned) {
@@ -205,7 +206,8 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSingleEngineTypeAndSysmanKmdInterfa
     pPmuInterface->mockPmuFd = 10;
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_SUCCESS);
+    std::pair<uint64_t, uint64_t> configPair = {};
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_SUCCESS);
     EXPECT_EQ(fdList[0].first, pPmuInterface->mockPmuFd);
     EXPECT_EQ(fdList[0].second, -1);
 }
@@ -216,9 +218,10 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceAndPmuFai
 
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockErrorNumber = EMFILE;
     pPmuInterface->mockPerfEventOpenReadFail = true;
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceAndPmuOpenFailsDueToFileTableOverFlowWhenGetEngineActivityFdListIsCalledThenErrorIsReturned) {
@@ -227,9 +230,10 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceAndPmuOpe
 
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockErrorNumber = ENFILE;
     pPmuInterface->mockPerfEventOpenReadFail = true;
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceAndIsIntegratedDeviceWhenGetEventsIsCalledThenValidEventTypeIsReturned) {

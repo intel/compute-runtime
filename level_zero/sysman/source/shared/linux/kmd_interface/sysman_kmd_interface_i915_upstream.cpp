@@ -97,11 +97,17 @@ std::string SysmanKmdInterfaceI915Upstream::getEnergyCounterNodeFile(zes_power_d
     return filePath;
 }
 
-ze_result_t SysmanKmdInterfaceI915Upstream::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t gtId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
+ze_result_t SysmanKmdInterfaceI915Upstream::getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
+                                                                                 uint32_t engineInstance,
+                                                                                 uint32_t gtId,
+                                                                                 PmuInterface *const &pPmuInterface,
+                                                                                 std::vector<std::pair<int64_t, int64_t>> &fdList,
+                                                                                 std::pair<uint64_t, uint64_t> &configPair) {
     uint64_t config = UINT64_MAX;
     auto engineClass = engineGroupToEngineClass.find(engineGroup);
     config = I915_PMU_ENGINE_BUSY(engineClass->second, engineInstance);
-    auto fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
+    configPair = std::make_pair(config, UINT64_MAX);
+    auto fd = pPmuInterface->pmuInterfaceOpen(configPair.first, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
     if (fd < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
         return checkErrorNumberAndReturnStatus();

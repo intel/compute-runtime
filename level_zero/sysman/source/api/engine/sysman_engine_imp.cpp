@@ -26,6 +26,7 @@ ze_result_t EngineImp::engineGetProperties(zes_engine_properties_t *pProperties)
 void EngineImp::init() {
     if (pOsEngine->isEngineModuleSupported()) {
         pOsEngine->getProperties(engineProperties);
+        pOsEngine->getConfigPair(this->configPair);
         this->initSuccess = true;
     }
 }

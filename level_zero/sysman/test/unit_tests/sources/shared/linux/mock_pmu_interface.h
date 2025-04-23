@@ -22,10 +22,13 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
     int64_t mockPmuFd = -1;
     uint64_t mockTimestamp = 0;
     uint64_t mockActiveTime = 0;
+    uint64_t mockActiveTicksConfig = 1;
+    uint64_t mockTotalTicksConfig = 2;
     int32_t mockErrorNumber = -ENOSPC;
     int32_t mockPerfEventOpenFailAtCount = 1;
     int32_t mockPmuReadFailureReturnValue = 0;
     bool mockPerfEventOpenReadFail = false;
+    uint32_t mockPmuConfigCallCount = 0;
     std::vector<int32_t> mockEventConfigReturnValue = {};
     std::vector<int32_t> mockFormatConfigReturnValue = {};
 
@@ -67,6 +70,14 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         if (!mockFormatConfigReturnValue.empty()) {
             returnValue = mockFormatConfigReturnValue.front();
             mockFormatConfigReturnValue.erase(mockFormatConfigReturnValue.begin());
+            return returnValue;
+        }
+
+        if (mockPmuConfigCallCount++ < 1) {
+            config = mockActiveTicksConfig;
+        } else {
+            config = mockTotalTicksConfig;
+            mockPmuConfigCallCount = 0;
         }
         return returnValue;
     }

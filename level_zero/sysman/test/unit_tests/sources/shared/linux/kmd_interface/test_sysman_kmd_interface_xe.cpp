@@ -200,41 +200,46 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGetEnergyCounterNodeFil
 TEST_F(SysmanFixtureDeviceXe, GivenGroupEngineTypeAndSysmanKmdInterfaceWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    std::pair<uint64_t, uint64_t> configPair = {};
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndGettingConfigFromEventFileFailsForEngineActiveTicksWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
 
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockEventConfigReturnValue.push_back(-1);
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndGettingConfigFromEventFileFailsForEngineTotalTicksWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
 
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockEventConfigReturnValue.push_back(0);
     pPmuInterface->mockEventConfigReturnValue.push_back(-1);
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndGettingConfigAfterFormatFailsForEngineActiveTicksWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
 
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockFormatConfigReturnValue.push_back(-1);
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndGettingConfigAfterFormatFailsForEngineTotalTicksWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
 
     std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockFormatConfigReturnValue.push_back(0);
     pPmuInterface->mockFormatConfigReturnValue.push_back(-1);
-    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 } // namespace ult

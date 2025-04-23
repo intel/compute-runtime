@@ -95,7 +95,7 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
 }
 
 void LinuxEngineImp::init() {
-    initStatus = pSysmanKmdInterface->getEngineActivityFdList(engineGroup, engineInstance, gtId, pPmuInterface, fdList);
+    initStatus = pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(engineGroup, engineInstance, gtId, pPmuInterface, fdList, pmuConfigPair);
 }
 
 bool LinuxEngineImp::isEngineModuleSupported() {
@@ -105,8 +105,13 @@ bool LinuxEngineImp::isEngineModuleSupported() {
     return true;
 }
 
+void LinuxEngineImp::getConfigPair(std::pair<uint64_t, uint64_t> &configPair) {
+    configPair = pmuConfigPair;
+    return;
+}
+
 LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubDevice) : engineGroup(type), engineInstance(engineInstance), gtId(gtId), onSubDevice(onSubDevice) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getSysmanDeviceImp();
     pPmuInterface = pLinuxSysmanImp->getPmuInterface();

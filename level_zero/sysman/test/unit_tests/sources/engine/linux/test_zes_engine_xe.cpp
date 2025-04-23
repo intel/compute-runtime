@@ -96,6 +96,17 @@ TEST_F(ZesEngineFixtureXe, GivenComponentCountZeroWhenCallingZesDeviceEnumEngine
     EXPECT_EQ(count, mockEngineHandleCount);
 }
 
+TEST_F(ZesEngineFixtureXe, GivenValidEngineHandleWhenFetchingConfigPairThenProperValuesAreReturned) {
+    auto handles = getEngineHandles(mockEngineHandleCount);
+    EXPECT_EQ(mockEngineHandleCount, handles.size());
+
+    for (auto handle : handles) {
+        L0::Sysman::Engine *pEngine = L0::Sysman::Engine::fromHandle(handle);
+        EXPECT_EQ(pEngine->configPair.first, pPmuInterface->mockActiveTicksConfig);
+        EXPECT_EQ(pEngine->configPair.second, pPmuInterface->mockTotalTicksConfig);
+    }
+}
+
 TEST_F(ZesEngineFixtureXe, GivenValidEngineHandleWhenCallingZesEngineGetActivityThenCallSuccedsAndValidValuesAreReturned) {
 
     zes_engine_stats_t stats = {};
