@@ -2932,6 +2932,29 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShared
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
+TEST_F(WddmMemoryManagerTest, whenOpenSharedHandleThenRegisterAllocationSize) {
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
+    auto size = 4096u;
+    void *pSysMem = reinterpret_cast<void *>(0x1000);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
+    setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
+
+    auto usedSystemMemorySize = memoryManager->getUsedSystemMemorySize();
+    AllocationProperties properties(0, false, size, AllocationType::sharedBuffer, false, false, 0);
+
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+
+    ASSERT_NE(nullptr, gpuAllocation);
+    EXPECT_EQ(size, gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(usedSystemMemorySize + size, memoryManager->getUsedSystemMemorySize());
+
+    memoryManager->freeGraphicsMemory(gpuAllocation);
+}
+
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemoryWithSetAllocattionPropertisWithAllocationTypeBufferCompressedIsCalledThenIsRendeCompressedTrueAndGpuMappingIsSetWithGoodAddressRange) {
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;

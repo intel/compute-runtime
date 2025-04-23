@@ -646,6 +646,7 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
     } else {
         status = mapPhysicalDeviceMemoryToVirtualMemory(allocation.get(), reinterpret_cast<uint64_t>(mapPointer), size);
     }
+    this->registerSysMemAlloc(allocation.get());
     DEBUG_BREAK_IF(!status);
     if (!status) {
         freeGraphicsMemoryImpl(allocation.release());
