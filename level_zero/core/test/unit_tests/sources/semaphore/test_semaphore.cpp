@@ -450,12 +450,14 @@ HWTEST2_F(ExternalSemaphoreTest, givenExternalSemaphoreControllerWhenAllocatePro
     ze_event_handle_t proxyEvent1 = {};
     ze_event_handle_t proxyEvent2 = {};
 
-    ze_result_t result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent1, ExternalSemaphoreController::SemaphoreOperation::Wait);
+    ze_result_t result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent1);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent1), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore1->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
     EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 1u);
 
-    result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent2, ExternalSemaphoreController::SemaphoreOperation::Wait);
+    result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent2);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent2), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore2->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
     EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 2u);
 }
 
@@ -475,14 +477,16 @@ HWTEST2_F(ExternalSemaphoreTest, givenMaxEventsInPoolCreatedWhenAllocateProxyEve
     ze_event_handle_t proxyEvent1 = {};
     ze_event_handle_t proxyEvent2 = {};
 
-    ze_result_t result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent1, ExternalSemaphoreController::SemaphoreOperation::Wait);
+    ze_result_t result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent1);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent1), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore1->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
     EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 1u);
     EXPECT_EQ(driverHandleImp->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 1u);
 
     driverHandleImp->externalSemaphoreController->eventsCreatedFromLatestPoolMap[l0Device->toHandle()] = 20;
-    result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent2, ExternalSemaphoreController::SemaphoreOperation::Wait);
+    result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(l0Device->toHandle(), context->toHandle(), &proxyEvent2);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(proxyEvent2), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore2->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Wait));
     EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 2u);
     EXPECT_EQ(driverHandleImp->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 2u);
 }

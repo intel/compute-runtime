@@ -118,9 +118,7 @@ std::unique_ptr<ExternalSemaphoreController> ExternalSemaphoreController::create
     return std::make_unique<ExternalSemaphoreController>();
 }
 
-ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_external_semaphore_ext_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent, ExternalSemaphoreController::SemaphoreOperation operation) {
-    std::lock_guard<std::mutex> lock(this->semControllerMutex);
-
+ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_device_handle_t hDevice, ze_context_handle_t hContext, ze_event_handle_t *phEvent) {
     if (this->eventPoolsMap.find(hDevice) == this->eventPoolsMap.end()) {
         this->eventPoolsMap[hDevice] = std::vector<EventPool *>();
         this->eventsCreatedFromLatestPoolMap[hDevice] = 0u;
@@ -150,8 +148,6 @@ ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_external_semaphor
 
     ze_event_handle_t hEvent{};
     pool->createEvent(&desc, &hEvent);
-
-    this->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hExtSemaphore)), fenceValue, operation));
 
     *phEvent = hEvent;
 

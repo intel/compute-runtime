@@ -296,7 +296,7 @@ struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFam
     bool failingSignalEvent = false;
 };
 
-HWTEST2_F(WddmExternalSemaphoreMTTest, DISABLED_givenInternalProxyEventFailsToAppendWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned, MatchAny) {
+HWTEST2_F(WddmExternalSemaphoreMTTest, givenInternalProxyEventFailsToAppendWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned, MatchAny) {
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
