@@ -13,6 +13,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 
@@ -109,6 +110,10 @@ void Drm::overrideBindSupport(bool &useVmBind) {
     if (debugManager.flags.UseVmBind.get() != -1) {
         useVmBind = debugManager.flags.UseVmBind.get();
     }
+}
+
+bool DrmMemoryManager::isGemCloseWorkerSupported() {
+    return true;
 }
 
 } // namespace NEO

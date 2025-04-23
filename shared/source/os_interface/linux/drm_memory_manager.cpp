@@ -123,7 +123,7 @@ void DrmMemoryManager::initialize(GemCloseWorkerMode mode) {
         mode = debugManager.flags.EnableGemCloseWorker.get() ? GemCloseWorkerMode::gemCloseWorkerActive : GemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
-    if (mode != GemCloseWorkerMode::gemCloseWorkerInactive) {
+    if (mode != GemCloseWorkerMode::gemCloseWorkerInactive && DrmMemoryManager::isGemCloseWorkerSupported()) {
         gemCloseWorker.reset(new DrmGemCloseWorker(*this));
     }
 

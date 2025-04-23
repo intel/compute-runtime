@@ -6,6 +6,9 @@
  */
 
 #pragma once
+
+#include <stdint.h>
+
 namespace NEO {
 
 class ExecutionEnvironment;
@@ -18,6 +21,7 @@ struct UltHwConfig {
     bool useMockedPrepareDeviceEnvironmentsFunc = true;
     bool forceOsAgnosticMemoryManager = true;
     bool useinitBuiltinsAsyncEnabled = false;
+    bool useGemCloseWorker = false;
     bool useWaitForTimestamps = false;
     bool useBlitSplit = false;
     bool useFirstSubmissionInitDevice = false;
@@ -32,6 +36,8 @@ struct UltHwConfig {
 
     bool csrBaseCallCreatePreemption = true;
     bool csrCreatePreemptionReturnValue = true;
+
+    uint8_t padding[7] = {};
 };
 
 extern UltHwConfig ultHwConfig;

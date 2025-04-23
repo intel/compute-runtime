@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/test//common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -75,6 +76,10 @@ void Drm::overrideBindSupport(bool &useVmBind) {
     if (debugManager.flags.UseVmBind.get() == 1) {
         useVmBind = true;
     }
+}
+
+bool DrmMemoryManager::isGemCloseWorkerSupported() {
+    return ultHwConfig.useGemCloseWorker;
 }
 
 } // namespace NEO

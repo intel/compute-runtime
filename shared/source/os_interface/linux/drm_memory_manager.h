@@ -68,6 +68,7 @@ class DrmMemoryManager : public MemoryManager {
         return validateHostPtrMemory;
     }
 
+    static bool isGemCloseWorkerSupported();
     DrmGemCloseWorker *peekGemCloseWorker() const { return this->gemCloseWorker.get(); }
     bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) override;
     bool copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) override;

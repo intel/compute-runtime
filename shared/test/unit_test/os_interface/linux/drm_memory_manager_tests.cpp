@@ -1116,11 +1116,15 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNullptrWhenUnreferenceIsCalledThen
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerModeInactiveThenGemCloseWorkerIsNotCreated) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
     DrmMemoryManager drmMemoryManger(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment);
     EXPECT_EQ(nullptr, drmMemoryManger.peekGemCloseWorker());
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerActiveThenGemCloseWorkerIsCreated) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
     DrmMemoryManager drmMemoryManger(GemCloseWorkerMode::gemCloseWorkerActive, false, false, *executionEnvironment);
     EXPECT_NE(nullptr, drmMemoryManger.peekGemCloseWorker());
 }
@@ -3013,6 +3017,8 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManage
 }
 
 TEST_F(DrmMemoryManagerBasic, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncDeleterEnabledIsTrue) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
     DrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
@@ -3020,6 +3026,8 @@ TEST_F(DrmMemoryManagerBasic, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncD
 }
 
 TEST_F(DrmMemoryManagerBasic, givenDisabledGemCloseWorkerWhenMemoryManagerIsCreatedThenNoGemCloseWorker) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
     DebugManagerStateRestore dbgStateRestore;
     debugManager.flags.EnableGemCloseWorker.set(0u);
 
@@ -3029,6 +3037,8 @@ TEST_F(DrmMemoryManagerBasic, givenDisabledGemCloseWorkerWhenMemoryManagerIsCrea
 }
 
 TEST_F(DrmMemoryManagerBasic, givenEnabledGemCloseWorkerWhenMemoryManagerIsCreatedThenGemCloseWorker) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
     DebugManagerStateRestore dbgStateRestore;
     debugManager.flags.EnableGemCloseWorker.set(1u);
 
@@ -3038,12 +3048,16 @@ TEST_F(DrmMemoryManagerBasic, givenEnabledGemCloseWorkerWhenMemoryManagerIsCreat
 }
 
 TEST_F(DrmMemoryManagerBasic, givenDefaultGemCloseWorkerWhenMemoryManagerIsCreatedThenGemCloseWorker) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
     MemoryManagerCreate<DrmMemoryManager> memoryManager(false, false, GemCloseWorkerMode::gemCloseWorkerActive, false, false, executionEnvironment);
 
     EXPECT_NE(memoryManager.peekGemCloseWorker(), nullptr);
 }
 
 TEST_F(DrmMemoryManagerBasic, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
     DebugManagerStateRestore dbgStateRestore;
     debugManager.flags.EnableDeferredDeleter.set(true);
     DrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
@@ -3053,6 +3067,8 @@ TEST_F(DrmMemoryManagerBasic, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCre
 }
 
 TEST_F(DrmMemoryManagerBasic, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
     DebugManagerStateRestore dbgStateRestore;
     debugManager.flags.EnableDeferredDeleter.set(false);
     DrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
@@ -3062,6 +3078,8 @@ TEST_F(DrmMemoryManagerBasic, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCr
 }
 
 TEST_F(DrmMemoryManagerBasic, givenWorkerToCloseWhenCommonCleanupIsCalledThenClosingIsBlocking) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useGemCloseWorker = true;
     MockDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
     memoryManager.gemCloseWorker.reset(new MockDrmGemCloseWorker(memoryManager));
     auto pWorker = static_cast<MockDrmGemCloseWorker *>(memoryManager.gemCloseWorker.get());
