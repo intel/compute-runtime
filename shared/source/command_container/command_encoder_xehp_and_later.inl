@@ -345,8 +345,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
     }
 
-    uint8_t *inlineData = reinterpret_cast<uint8_t *>(walkerCmd.getInlineDataPointer());
-    EncodeDispatchKernel<Family>::programInlineDataHeapless<heaplessModeEnabled>(inlineData, args, container, offsetThreadData, scratchAddressForImmediatePatching);
+    uint8_t *inlineDataPtr = reinterpret_cast<uint8_t *>(walkerCmd.getInlineDataPointer());
+    EncodeDispatchKernel<Family>::programInlineDataHeapless<heaplessModeEnabled>(inlineDataPtr, args, container, offsetThreadData, scratchAddressForImmediatePatching);
 
     if constexpr (heaplessModeEnabled == false) {
         if (!args.makeCommandView) {

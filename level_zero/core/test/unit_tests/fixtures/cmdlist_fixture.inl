@@ -1910,5 +1910,43 @@ void CommandListScratchPatchFixtureInit::testExternalScratchPatching() {
     EXPECT_EQ(fullScratchAddress, scratchInlineValue);
 }
 
+template <typename FamilyType>
+void CommandListScratchPatchFixtureInit::testScratchUndefinedNoPatching() {
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = ZE_RESULT_SUCCESS;
+
+    struct TestParam {
+        uint8_t pointerSize;
+        InlineDataOffset offset;
+    };
+
+    std::vector<TestParam> testParams = {
+        {undefined<uint8_t>, 0u},
+        {8u, undefined<InlineDataOffset>}};
+
+    for (const auto &testParam : testParams) {
+        mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = testParam.pointerSize;
+        mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.offset = testParam.offset;
+
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        const auto &cmdsToPatch = commandList->getCommandsToPatch();
+        bool foundScratchPatchCmd = false;
+
+        for (const auto &cmdToPatch : cmdsToPatch) {
+            if (cmdToPatch.type == CommandToPatch::CommandType::ComputeWalkerInlineDataScratch) {
+                foundScratchPatchCmd = true;
+                break;
+            }
+        }
+        EXPECT_FALSE(foundScratchPatchCmd);
+
+        result = commandList->reset();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+}
+
 } // namespace ult
 } // namespace L0

@@ -424,14 +424,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
     launchParams.outWalker = dispatchKernelArgs.outWalkerPtr;
 
-    if (this->heaplessModeEnabled && this->scratchAddressPatchingEnabled && kernelNeedsScratchSpace) {
+    auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
+    if (this->heaplessModeEnabled && this->scratchAddressPatchingEnabled && kernelNeedsScratchSpace && NEO::isDefined(scratchPointerAddress.pointerSize) && NEO::isValidOffset(scratchPointerAddress.offset)) {
         CommandToPatch scratchInlineData;
         scratchInlineData.pDestination = dispatchKernelArgs.outWalkerPtr;
         scratchInlineData.pCommand = nullptr;
         scratchInlineData.type = CommandToPatch::CommandType::ComputeWalkerInlineDataScratch;
-        scratchInlineData.offset = NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) +
-                                   kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset;
-        scratchInlineData.patchSize = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize;
+        scratchInlineData.offset = NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) + scratchPointerAddress.offset;
+        scratchInlineData.patchSize = scratchPointerAddress.pointerSize;
         auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         if (ssh != nullptr) {
             scratchInlineData.baseAddress = ssh->getGpuBase();

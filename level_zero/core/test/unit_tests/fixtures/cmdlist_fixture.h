@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -404,6 +404,9 @@ struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixtu
 
     template <typename FamilyType>
     void testExternalScratchPatching();
+
+    template <typename FamilyType>
+    void testScratchUndefinedNoPatching();
 
     int32_t fixtureGlobalStatelessMode = 0;
     uint32_t scratchInlineOffset = 8;

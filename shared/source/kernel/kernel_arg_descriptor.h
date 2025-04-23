@@ -24,14 +24,23 @@ template <typename T>
 static constexpr T undefined = std::numeric_limits<T>::max();
 
 template <typename T>
-bool isUndefinedOffset(T offset) {
-    static_assert(!std::is_pointer_v<T>);
+constexpr bool isUndefined(T value) {
+    return value == undefined<T>;
+}
 
+template <typename T>
+constexpr bool isDefined(T value) {
+    return value != undefined<T>;
+}
+
+template <typename T>
+    requires(!std::is_pointer_v<T>)
+constexpr bool isUndefinedOffset(T offset) {
     return undefined<T> == offset;
 }
 
 template <typename T>
-bool isValidOffset(T offset) {
+constexpr bool isValidOffset(T offset) {
     return false == isUndefinedOffset<T>(offset);
 }
 
@@ -52,8 +61,8 @@ struct ArgDescPointer final {
 };
 
 struct ArgDescInlineDataPointer {
-    InlineDataOffset offset = 0u;
-    uint8_t pointerSize = 0u;
+    InlineDataOffset offset = undefined<InlineDataOffset>;
+    uint8_t pointerSize = undefined<uint8_t>;
 };
 
 enum class NEOImageType : uint8_t {
