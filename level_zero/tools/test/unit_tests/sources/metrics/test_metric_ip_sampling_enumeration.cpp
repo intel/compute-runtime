@@ -395,7 +395,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenQuery
         ASSERT_NE(metricGroups[0], nullptr);
 
         zet_metric_group_type_exp_t metricGroupType{};
-        metricGroupType.stype = static_cast<zet_structure_type_t>(ZET_INTEL_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP + 1); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+        metricGroupType.stype = ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES;
         metricGroupType.pNext = nullptr;
         metricGroupType.type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_FORCE_UINT32;
 

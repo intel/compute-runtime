@@ -189,7 +189,7 @@ ze_result_t OaMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_gr
     while (pNext) {
         auto extendedProperties = reinterpret_cast<zet_base_properties_t *>(pNext);
 
-        if (extendedProperties->stype == ZET_INTEL_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP) {
+        if (static_cast<uint32_t>(extendedProperties->stype) == ZET_INTEL_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP) {
 
             getMetricGroupSourceIdProperty(extendedProperties);
             retVal = ZE_RESULT_SUCCESS;
@@ -211,7 +211,7 @@ ze_result_t OaMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_gr
             zet_metric_group_type_exp_t *groupType = reinterpret_cast<zet_metric_group_type_exp_t *>(extendedProperties);
             groupType->type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER;
             retVal = ZE_RESULT_SUCCESS;
-        } else if (extendedProperties->stype == ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATE_EXP_PROPERTIES) {
+        } else if (static_cast<uint32_t>(extendedProperties->stype) == ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATE_EXP_PROPERTIES) {
             auto calcProperties = reinterpret_cast<zet_intel_metric_group_calculate_properties_exp_t *>(extendedProperties);
             if (pBaseProperties->samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED) {
                 calcProperties->isTimeFilterSupported = true;
