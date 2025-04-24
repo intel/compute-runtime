@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,7 @@ class MemObjAsyncDestructionTest : public MemObjDestructionTest<> {
     DebugManagerStateRestore restorer;
 };
 
-class MemObjMulitAllocationAsyncDestructionTest : public MemObjDestructionTest<true> {
+class MemObjMultiAllocationAsyncDestructionTest : public MemObjDestructionTest<true> {
   public:
     void SetUp() override {
         debugManager.flags.EnableAsyncDestroyAllocations.set(true);
@@ -188,7 +188,7 @@ TEST_P(MemObjAsyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyn
     }
 }
 
-HWTEST_F(MemObjMulitAllocationAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabledThatHasMultiGraphicsAllocationWhenItIsDestroyedThenDestructorWaitsOnTaskCount) {
+HWTEST_F(MemObjMultiAllocationAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabledThatHasMultiGraphicsAllocationWhenItIsDestroyedThenDestructorWaitsOnTaskCount) {
     auto rootDeviceIndex = device->getRootDeviceIndex();
     auto mockCsr0 = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
     auto mockCsr1 = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
