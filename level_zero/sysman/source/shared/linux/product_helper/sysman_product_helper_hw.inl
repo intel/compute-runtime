@@ -362,5 +362,15 @@ bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isAggregationOfSingleEnginesSupported() {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGroupEngineBusynessFromSingleEngines(LinuxSysmanImp *pLinuxSysmanImp, zes_engine_stats_t *pStats, zes_engine_group_t &engineGroup) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace Sysman
 } // namespace L0

@@ -110,6 +110,10 @@ ze_result_t SysmanKmdInterfaceXe::getEngineActivityFdListAndConfigPair(zes_engin
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
+    if (isGroupEngineHandle(engineGroup)) {
+        return result;
+    }
+
     auto engineClass = engineGroupToEngineClass.find(engineGroup);
     if (engineClass == engineGroupToEngineClass.end()) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

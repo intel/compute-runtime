@@ -32,6 +32,7 @@ class Engine : _zes_engine_handle_t {
     inline zes_engine_handle_t toHandle() { return this; }
     bool initSuccess = false;
     std::pair<uint64_t, uint64_t> configPair{};
+    std::vector<int64_t> fdList{};
 };
 
 struct EngineHandleContext {

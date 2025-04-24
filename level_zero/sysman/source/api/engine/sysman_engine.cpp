@@ -43,9 +43,12 @@ void EngineHandleContext::init(uint32_t subDeviceCount) {
         const auto isSubDevice = subDeviceCount > 0;
         createHandle(itr->first, itr->second.first, itr->second.second, isSubDevice);
     }
+
+    OsEngine::initGroupEngineHandleGroupFd(pOsSysman);
 }
 
 void EngineHandleContext::releaseEngines() {
+    OsEngine::closeFdsForGroupEngineHandles(pOsSysman);
     handleList.clear();
 }
 

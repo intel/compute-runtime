@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/pmt_util.h"
 
+#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 
@@ -916,6 +917,53 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
     return true;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isAggregationOfSingleEnginesSupported() {
+    return true;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGroupEngineBusynessFromSingleEngines(LinuxSysmanImp *pLinuxSysmanImp, zes_engine_stats_t *pStats, zes_engine_group_t &engineGroup) {
+
+    auto pSysmanDeviceImp = pLinuxSysmanImp->getSysmanDeviceImp();
+    auto pPmuInterface = pLinuxSysmanImp->getPmuInterface();
+    std::vector<int64_t> fdList{};
+    for (auto &engine : pSysmanDeviceImp->pEngineHandleContext->handleList) {
+        zes_engine_properties_t engineProperties = {};
+        engine->engineGetProperties(&engineProperties);
+
+        if (engineGroup == engineProperties.type) {
+            fdList = engine->fdList;
+            break;
+        }
+    }
+
+    if (fdList.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    uint64_t dataCount = fdList.size();
+    std::vector<uint64_t> readData(dataCount + 2, 0);
+
+    auto ret = pPmuInterface->pmuRead(static_cast<int>(fdList[0]), readData.data(), sizeof(uint64_t) * (dataCount + 2));
+    if (ret < 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    uint64_t activeTime = 0u;
+    uint64_t timeStamp = 0u;
+
+    for (uint32_t i = 0u; i < dataCount; i++) {
+        i % 2 ? timeStamp += (readData[2 + i] ? readData[2 + i] : SysmanDevice::getSysmanTimestamp()) : activeTime += readData[2 + i];
+    }
+
+    uint64_t engineCount = fdList.size() / 2;
+    pStats->activeTime = activeTime / engineCount;
+    pStats->timestamp = timeStamp / engineCount;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

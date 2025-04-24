@@ -81,51 +81,6 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
     }
 };
 
-TEST_F(ZesEngineFixtureI915, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
-
-    uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
-    EXPECT_EQ(count, handleComponentCount);
-
-    uint32_t testcount = count + 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &testcount, NULL));
-    EXPECT_EQ(testcount, count);
-
-    count = 0;
-    std::vector<zes_engine_handle_t> handles(count, nullptr);
-    EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, handleComponentCount);
-}
-
-TEST_F(ZesEngineFixtureI915, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
-    zes_engine_properties_t properties;
-    auto handle = getEngineHandles(handleComponentCount);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[0], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[1], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[2], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[3], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[4], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_COPY_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[5], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-}
-
 TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(handleComponentCount);

@@ -47,12 +47,17 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
     }
 
     int32_t pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) override {
+
         if (mockPmuReadFailureReturnValue == -1) {
             return mockPmuReadFailureReturnValue;
         }
 
-        data[2] = mockActiveTime;
-        data[3] = mockTimestamp;
+        uint64_t dataCount = sizeOfdata / sizeof(uint64_t);
+
+        for (uint32_t i = 2; i < dataCount; i++) {
+            i % 2 ? data[i] = mockTimestamp : data[i] = mockActiveTime;
+        }
+
         return 0;
     }
 

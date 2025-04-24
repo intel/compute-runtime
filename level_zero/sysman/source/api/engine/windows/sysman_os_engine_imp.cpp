@@ -144,5 +144,13 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     return status;
 }
 
+void OsEngine::initGroupEngineHandleGroupFd(OsSysman *pOsSysman) {
+    return;
+}
+
+void OsEngine::closeFdsForGroupEngineHandles(OsSysman *pOsSysman) {
+    return;
+}
+
 } // namespace Sysman
 } // namespace L0

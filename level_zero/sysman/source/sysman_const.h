@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,6 +95,10 @@ const std::map<std::string_view, zes_engine_type_flag_t> sysfsEngineMapToLevel0E
     {"bcs", ZES_ENGINE_TYPE_FLAG_DMA},
     {"vcs", ZES_ENGINE_TYPE_FLAG_MEDIA},
     {"vecs", ZES_ENGINE_TYPE_FLAG_OTHER}};
+
+inline constexpr bool isGroupEngineHandle(zes_engine_group_t engineGroup) {
+    return (engineGroup == ZES_ENGINE_GROUP_ALL || engineGroup == ZES_ENGINE_GROUP_MEDIA_ALL || engineGroup == ZES_ENGINE_GROUP_COMPUTE_ALL || engineGroup == ZES_ENGINE_GROUP_RENDER_ALL || engineGroup == ZES_ENGINE_GROUP_COPY_ALL);
+}
 
 } // namespace Sysman
 } // namespace L0

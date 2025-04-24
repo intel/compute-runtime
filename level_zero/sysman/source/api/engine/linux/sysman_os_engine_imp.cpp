@@ -13,6 +13,7 @@
 
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_hw_device_id_linux.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
@@ -52,6 +53,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     NEO::Drm *pDrm = pLinuxSysmanImp->getDrm();
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
 
     bool status = false;
     {
@@ -74,9 +76,9 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
         for (auto l0EngineEntryInMap = engineGroupRange.first; l0EngineEntryInMap != engineGroupRange.second; l0EngineEntryInMap++) {
             auto l0EngineType = l0EngineEntryInMap->second;
             engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(itr->second.engineInstance), gtId}});
-            if (pSysmanKmdInterface->isGroupEngineInterfaceAvailable()) {
+            if (pSysmanKmdInterface->isGroupEngineInterfaceAvailable() || pSysmanProductHelper->isAggregationOfSingleEnginesSupported()) {
                 engineGroupInstance.insert({LinuxEngineImp::getGroupFromEngineType(l0EngineType), {0u, gtId}});
-                engineGroupInstance.insert({ZES_ENGINE_GROUP_ALL, {0u, gtId}});
+                engineGroupInstance.insert({ZES_ENGINE_GROUP_ALL, {0u, pDrm->getIoctlHelper()->getTileIdFromGtId(gtId)}});
             }
         }
     }
@@ -84,7 +86,15 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
 }
 
 ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
-    return pSysmanKmdInterface->readBusynessFromGroupFd(pPmuInterface, fdList[0], pStats);
+
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    if (!fdList.empty()) {
+        return pSysmanKmdInterface->readBusynessFromGroupFd(pPmuInterface, fdList[0], pStats);
+    } else if (pSysmanProductHelper->isAggregationOfSingleEnginesSupported()) {
+        return pSysmanProductHelper->getGroupEngineBusynessFromSingleEngines(pLinuxSysmanImp, pStats, engineGroup);
+    } else {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 }
 
 ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
@@ -125,6 +135,123 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uin
 std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubDevice) {
     std::unique_ptr<LinuxEngineImp> pLinuxEngineImp = std::make_unique<LinuxEngineImp>(pOsSysman, type, engineInstance, gtId, onSubDevice);
     return pLinuxEngineImp;
+}
+
+static int32_t getFdList(PmuInterface *const &pPmuInterface, std::vector<uint64_t> &engineConfigs, std::vector<int64_t> &fdList) {
+
+    for (auto &engineConfig : engineConfigs) {
+        int64_t fd = -1;
+        if (fdList.empty()) {
+            fd = pPmuInterface->pmuInterfaceOpen(engineConfig, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+            if (fd < 0) {
+                return -1;
+            }
+        } else {
+            fd = pPmuInterface->pmuInterfaceOpen(engineConfig, static_cast<int>(fdList[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+            if (fd < 0) {
+                return -1;
+            }
+        }
+        fdList.push_back(fd);
+    }
+
+    return 0;
+}
+
+static void closeFds(std::vector<int64_t> &fdList) {
+
+    if (!fdList.empty()) {
+        for (auto &fd : fdList) {
+            DEBUG_BREAK_IF(fd < 0);
+            close(static_cast<int>(fd));
+        }
+        fdList.clear();
+    }
+}
+
+void OsEngine::initGroupEngineHandleGroupFd(OsSysman *pOsSysman) {
+
+    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+
+    if (!pSysmanProductHelper->isAggregationOfSingleEnginesSupported()) {
+        return;
+    }
+
+    auto pPmuInterface = pLinuxSysmanImp->getPmuInterface();
+    auto pSysmanDeviceImp = pLinuxSysmanImp->getSysmanDeviceImp();
+
+    std::vector<uint64_t> mediaEngineConfigs{};
+    std::vector<uint64_t> computeEngineConfigs{};
+    std::vector<uint64_t> copyEngineConfigs{};
+    std::vector<uint64_t> renderEngineConfigs{};
+    std::vector<uint64_t> allEnginesConfigs{};
+
+    for (auto &engine : pSysmanDeviceImp->pEngineHandleContext->handleList) {
+
+        zes_engine_properties_t engineProperties = {};
+        engine->engineGetProperties(&engineProperties);
+
+        if (engineProperties.type == ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE || engineProperties.type == ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE || engineProperties.type == ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE) {
+            mediaEngineConfigs.push_back(engine->configPair.first);
+            mediaEngineConfigs.push_back(engine->configPair.second);
+        } else if (engineProperties.type == ZES_ENGINE_GROUP_COMPUTE_SINGLE) {
+            computeEngineConfigs.push_back(engine->configPair.first);
+            computeEngineConfigs.push_back(engine->configPair.second);
+        } else if (engineProperties.type == ZES_ENGINE_GROUP_COPY_SINGLE) {
+            copyEngineConfigs.push_back(engine->configPair.first);
+            copyEngineConfigs.push_back(engine->configPair.second);
+        } else if (engineProperties.type == ZES_ENGINE_GROUP_RENDER_SINGLE) {
+            renderEngineConfigs.push_back(engine->configPair.first);
+            renderEngineConfigs.push_back(engine->configPair.second);
+        }
+    }
+
+    uint64_t allEngineGroupsSize = mediaEngineConfigs.size() + computeEngineConfigs.size() + copyEngineConfigs.size() + renderEngineConfigs.size();
+    allEnginesConfigs.reserve(allEngineGroupsSize);
+
+    allEnginesConfigs.insert(allEnginesConfigs.end(), mediaEngineConfigs.begin(), mediaEngineConfigs.end());
+    allEnginesConfigs.insert(allEnginesConfigs.end(), computeEngineConfigs.begin(), computeEngineConfigs.end());
+    allEnginesConfigs.insert(allEnginesConfigs.end(), copyEngineConfigs.begin(), copyEngineConfigs.end());
+    allEnginesConfigs.insert(allEnginesConfigs.end(), renderEngineConfigs.begin(), renderEngineConfigs.end());
+
+    std::vector<std::unique_ptr<L0::Sysman::Engine>>::iterator it = pSysmanDeviceImp->pEngineHandleContext->handleList.begin();
+    while (it != pSysmanDeviceImp->pEngineHandleContext->handleList.end()) {
+
+        int32_t ret = 0;
+        zes_engine_properties_t engineProperties = {};
+        (*it)->engineGetProperties(&engineProperties);
+
+        if (engineProperties.type == ZES_ENGINE_GROUP_MEDIA_ALL) {
+            ret = getFdList(pPmuInterface, mediaEngineConfigs, (*it)->fdList);
+        } else if (engineProperties.type == ZES_ENGINE_GROUP_COMPUTE_ALL) {
+            ret = getFdList(pPmuInterface, computeEngineConfigs, (*it)->fdList);
+        } else if (engineProperties.type == ZES_ENGINE_GROUP_COPY_ALL) {
+            ret = getFdList(pPmuInterface, copyEngineConfigs, (*it)->fdList);
+        } else if (engineProperties.type == ZES_ENGINE_GROUP_RENDER_ALL) {
+            ret = getFdList(pPmuInterface, renderEngineConfigs, (*it)->fdList);
+        } else if (engineProperties.type == ZES_ENGINE_GROUP_ALL) {
+            ret = getFdList(pPmuInterface, allEnginesConfigs, (*it)->fdList);
+        }
+
+        if (ret < 0) {
+            closeFds((*it)->fdList);
+            it = pSysmanDeviceImp->pEngineHandleContext->handleList.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    return;
+}
+
+void OsEngine::closeFdsForGroupEngineHandles(OsSysman *pOsSysman) {
+    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    auto pSysmanDeviceImp = pLinuxSysmanImp->getSysmanDeviceImp();
+
+    for (auto &engine : pSysmanDeviceImp->pEngineHandleContext->handleList) {
+        closeFds(engine->fdList);
+    }
 }
 
 } // namespace Sysman
