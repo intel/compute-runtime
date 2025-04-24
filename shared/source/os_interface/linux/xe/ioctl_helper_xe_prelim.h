@@ -17,6 +17,7 @@ class IoctlHelperXePrelim : public IoctlHelperXe {
   protected:
     virtual bool isPrimaryContext(const OsContextLinux &osContext, uint32_t deviceIndex);
     virtual uint32_t getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex);
+    virtual uint64_t getPrimaryContextProperties() const;
     void setContextProperties(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut) override;
     bool isMediaGt(uint16_t gtType) const override;
 };

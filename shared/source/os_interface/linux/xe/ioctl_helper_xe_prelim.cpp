@@ -25,4 +25,8 @@ void IoctlHelperXePrelim::setContextProperties(const OsContextLinux &osContext, 
     IoctlHelperXe::setContextProperties(osContext, deviceIndex, extProperties, extIndexInOut);
 }
 
+uint64_t IoctlHelperXePrelim::getPrimaryContextProperties() const {
+    return 0;
+}
+
 } // namespace NEO
