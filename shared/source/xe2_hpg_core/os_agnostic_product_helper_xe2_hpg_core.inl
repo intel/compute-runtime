@@ -51,4 +51,8 @@ bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
+    return true;
+}
 } // namespace NEO

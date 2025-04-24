@@ -49,9 +49,4 @@ bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwI
     return isCompressionForbiddenCommon(false);
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
-    return true;
-}
-
 } // namespace NEO
