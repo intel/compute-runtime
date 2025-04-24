@@ -360,6 +360,12 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
     uint32_t numDevices = 0;
     if (exposeSubDevices) {
         for (auto &device : this->devices) {
+
+            if (device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->isExposeSingleDeviceMode()) {
+                numDevices += 1;
+                continue;
+            }
+
             auto deviceImpl = static_cast<DeviceImp *>(device);
             numDevices += (deviceImpl->numSubDevices > 0 ? deviceImpl->numSubDevices : 1u);
         }
@@ -377,8 +383,18 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
 
     uint32_t i = 0;
     for (auto device : devices) {
+
         auto deviceImpl = static_cast<DeviceImp *>(device);
         if (deviceImpl->numSubDevices > 0 && exposeSubDevices) {
+
+            if (device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->isExposeSingleDeviceMode()) {
+                phDevices[i++] = device;
+                if (i == *pCount) {
+                    return ZE_RESULT_SUCCESS;
+                }
+                continue;
+            }
+
             for (auto subdevice : deviceImpl->subDevices) {
                 phDevices[i++] = subdevice;
                 if (i == *pCount) {

@@ -385,21 +385,23 @@ void DeviceImp::populateSubDeviceCopyEngineGroups() {
         return;
     }
 
-    NEO::Device *activeSubDevice = nullptr;
     for (auto &subDevice : activeDevice->getSubDevices()) {
         if (subDevice) {
-            activeSubDevice = subDevice;
-            break;
-        }
-    }
-    UNRECOVERABLE_IF(!activeSubDevice);
 
-    auto &subDeviceEngineGroups = activeSubDevice->getRegularEngineGroups();
-    uint32_t numSubDeviceEngineGroups = static_cast<uint32_t>(subDeviceEngineGroups.size());
+            NEO::Device *activeSubDevice = subDevice;
 
-    for (uint32_t subDeviceQueueGroupsIter = 0; subDeviceQueueGroupsIter < numSubDeviceEngineGroups; subDeviceQueueGroupsIter++) {
-        if (NEO::EngineHelper::isCopyOnlyEngineType(subDeviceEngineGroups[subDeviceQueueGroupsIter].engineGroupType)) {
-            subDeviceCopyEngineGroups.push_back(subDeviceEngineGroups[subDeviceQueueGroupsIter]);
+            auto &subDeviceEngineGroups = activeSubDevice->getRegularEngineGroups();
+            uint32_t numSubDeviceEngineGroups = static_cast<uint32_t>(subDeviceEngineGroups.size());
+
+            for (uint32_t subDeviceQueueGroupsIter = 0; subDeviceQueueGroupsIter < numSubDeviceEngineGroups; subDeviceQueueGroupsIter++) {
+                if (NEO::EngineHelper::isCopyOnlyEngineType(subDeviceEngineGroups[subDeviceQueueGroupsIter].engineGroupType)) {
+                    subDeviceCopyEngineGroups.push_back(subDeviceEngineGroups[subDeviceQueueGroupsIter]);
+                }
+            }
+
+            if (!activeDevice->getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
+                break;
+            }
         }
     }
 }
@@ -1202,7 +1204,8 @@ ze_result_t DeviceImp::getGlobalTimestampsUsingOsInterface(uint64_t *hostTimesta
 
 ze_result_t DeviceImp::getSubDevices(uint32_t *pCount, ze_device_handle_t *phSubdevices) {
     // Given FLAT device Hierarchy mode, then a count of 0 is returned since no traversal is allowed.
-    if (this->neoDevice->getExecutionEnvironment()->getDeviceHierarchyMode() == NEO::DeviceHierarchyMode::flat) {
+    if (this->neoDevice->getExecutionEnvironment()->getDeviceHierarchyMode() == NEO::DeviceHierarchyMode::flat ||
+        this->neoDevice->getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
         *pCount = 0;
         return ZE_RESULT_SUCCESS;
     }
@@ -1593,7 +1596,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         device->pciMaxSpeed.width = pciSpeedInfo.width;
     }
 
-    if (device->getNEODevice()->getAllEngines()[0].commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::hardware) {
+    bool isHwMode = device->getNEODevice()->getAllEngines().size() ? device->getNEODevice()->getAllEngines()[0].commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::hardware : device->getNEODevice()->getRootDevice()->getAllEngines()[0].commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::hardware;
+    if (isHwMode) {
         device->createSysmanHandle(isSubDevice);
     }
     device->resourcesReleased = false;

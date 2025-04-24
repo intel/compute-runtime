@@ -1168,3 +1168,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperThenCompressionIsNotForbidden, Is
 HWTEST_F(ProductHelperTest, givenProductHelperWhenQueryIsPostImageWriteFlushRequiredThenFalseReturned) {
     EXPECT_FALSE(productHelper->isPostImageWriteFlushRequired());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenIsExposingSubdevicesAllowedThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isExposingSubdevicesAllowed());
+}

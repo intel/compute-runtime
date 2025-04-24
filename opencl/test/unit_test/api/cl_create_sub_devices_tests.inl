@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -150,6 +150,54 @@ TEST_F(ClCreateSubDevicesTests, GivenValidInputAndFlatHierarchyWhenCreatingSubDe
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0, device->getSubDevice(0)->getRefApiCount());
     EXPECT_EQ(0, device->getSubDevice(1)->getRefApiCount());
+}
+
+TEST_F(ClCreateSubDevicesTests, GivenExposeSingleDeviceModeWhenCreatingSubDevicesThenErrorIsReturned) {
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    mockDeviceCreateSingleDeviceBackup = false;
+
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0);
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment->rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setExposeSingleDeviceMode(true);
+    }
+
+    device = std::make_unique<MockClDevice>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+    outDevicesCount = 2;
+
+    EXPECT_EQ(0, device->getSubDevice(0)->getRefApiCount());
+    EXPECT_EQ(0, device->getSubDevice(1)->getRefApiCount());
+
+    auto retVal = clCreateSubDevices(device.get(), properties, outDevicesCount, outDevices, nullptr);
+    EXPECT_EQ(CL_DEVICE_PARTITION_FAILED, retVal);
+
+    cl_uint numDevices = 0;
+    retVal = clCreateSubDevices(device.get(), properties, 0, nullptr, &numDevices);
+    EXPECT_EQ(CL_DEVICE_PARTITION_FAILED, retVal);
+}
+
+TEST_F(ClCreateSubDevicesTests, GivenExposeSingleDeviceModeAndFlatHierarchyWhenCreatingSubDevicesThenErrorIsReturned) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    mockDeviceCreateSingleDeviceBackup = false;
+
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0);
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment->rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setExposeSingleDeviceMode(true);
+    }
+
+    device = std::make_unique<MockClDevice>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+    outDevicesCount = 2;
+
+    EXPECT_EQ(0, device->getSubDevice(0)->getRefApiCount());
+    EXPECT_EQ(0, device->getSubDevice(1)->getRefApiCount());
+
+    auto retVal = clCreateSubDevices(device.get(), properties, outDevicesCount, outDevices, nullptr);
+    EXPECT_EQ(CL_DEVICE_PARTITION_FAILED, retVal);
+
+    cl_uint numDevices = 0;
+    retVal = clCreateSubDevices(device.get(), properties, 0, nullptr, &numDevices);
+    EXPECT_EQ(CL_DEVICE_PARTITION_FAILED, retVal);
 }
 
 struct ClCreateSubDevicesDeviceInfoTests : ClCreateSubDevicesTests {

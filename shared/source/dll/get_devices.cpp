@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "hw_cmds_default.h"
 
@@ -40,6 +41,12 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::
             if (unsupportedDeviceDetected) {
                 executionEnvironment.rootDeviceEnvironments.erase(executionEnvironment.rootDeviceEnvironments.begin() + i);
             } else {
+                if (!executionEnvironment.rootDeviceEnvironments[i]->getProductHelper().isExposingSubdevicesAllowed()) {
+                    executionEnvironment.rootDeviceEnvironments[i]->setExposeSingleDeviceMode(true);
+                }
+                if (debugManager.flags.ExposeSingleDevice.get() != -1) {
+                    executionEnvironment.rootDeviceEnvironments[i]->setExposeSingleDeviceMode(!!debugManager.flags.ExposeSingleDevice.get());
+                }
                 i++;
             }
         }

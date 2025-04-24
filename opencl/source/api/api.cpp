@@ -329,6 +329,10 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
             break;
         }
         auto subDevicesCount = pInDevice->getNumSubDevices();
+
+        if (pInDevice->getDevice().getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
+            subDevicesCount = 0;
+        }
         if (subDevicesCount <= 1) {
             retVal = CL_DEVICE_PARTITION_FAILED;
             break;

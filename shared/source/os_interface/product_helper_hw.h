@@ -207,6 +207,7 @@ class ProductHelperHw : public ProductHelper {
     bool isSvmHeapReservationSupported() const override;
     void setRenderCompressedFlags(HardwareInfo &hwInfo) const override;
     bool isCompressionForbidden(const HardwareInfo &hwInfo) const override;
+    bool isExposingSubdevicesAllowed() const override;
 
     ~ProductHelperHw() override = default;
 

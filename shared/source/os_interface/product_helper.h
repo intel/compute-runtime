@@ -269,6 +269,7 @@ class ProductHelper {
     virtual bool isSvmHeapReservationSupported() const = 0;
     virtual void setRenderCompressedFlags(HardwareInfo &hwInfo) const = 0;
     virtual bool isCompressionForbidden(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isExposingSubdevicesAllowed() const = 0;
 
     virtual ~ProductHelper() = default;
 

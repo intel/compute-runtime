@@ -79,6 +79,9 @@ bool UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &execution
             executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         }
         executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+        if (debugManager.flags.ExposeSingleDevice.get() != -1) {
+            executionEnvironment.rootDeviceEnvironments[i]->setExposeSingleDeviceMode(!!debugManager.flags.ExposeSingleDevice.get());
+        }
     }
     executionEnvironment.parseAffinityMask();
     auto retVal = executionEnvironment.rootDeviceEnvironments.size();

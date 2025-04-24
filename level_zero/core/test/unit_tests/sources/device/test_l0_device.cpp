@@ -6145,6 +6145,277 @@ TEST(DeviceReturnCompositeHierarchyTest, GivenCompositeHierarchyIsSetThenGetRoot
     multiDeviceFixture.tearDown();
 }
 
+TEST(SingleDeviceModeTest, GivenFlatHierarchyIsSetWhenGettingDevicesThenOnlySingleRootDeviceIsExposed) {
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ExposeSingleDevice.set(1);
+    NEO::debugManager.flags.EnableImplicitScaling.set(1);
+
+    MultiDeviceFixtureFlatHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(count, multiDeviceFixture.numRootDevices);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, 0u);
+
+        EXPECT_EQ(Device::fromHandle(hDevice)->getNEODevice(), static_cast<DeviceImp *>(Device::fromHandle(hDevice))->getActiveDevice());
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(SingleDeviceModeTest, GivenCombinedHierarchyIsSetWhenGettingDevicesThenOnlySingleRootDeviceIsExposed) {
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ExposeSingleDevice.set(1);
+    NEO::debugManager.flags.EnableImplicitScaling.set(1);
+
+    MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(count, multiDeviceFixture.numRootDevices);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, 0u);
+
+        EXPECT_EQ(Device::fromHandle(hDevice)->getNEODevice(), static_cast<DeviceImp *>(Device::fromHandle(hDevice))->getActiveDevice());
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(SingleDeviceModeTest, GivenCompositeHierarchyIsSetWhenGettingDevicesThenOnlySingleRootDeviceIsExposed) {
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ExposeSingleDevice.set(1);
+    NEO::debugManager.flags.EnableImplicitScaling.set(1);
+
+    MultiDeviceFixtureCompositeHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(count, multiDeviceFixture.numRootDevices);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, 0u);
+
+        EXPECT_EQ(Device::fromHandle(hDevice)->getNEODevice(), static_cast<DeviceImp *>(Device::fromHandle(hDevice))->getActiveDevice());
+    }
+
+    multiDeviceFixture.tearDown();
+}
+
+TEST(SingleDeviceModeTest, GivenCompositeHierarchyWithAffinityMaskWhenGettingDevicesThenRootDeviceContainAllSubdevices) {
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ExposeSingleDevice.set(1);
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0.0,1.1,2.0,3.0");
+    NEO::debugManager.flags.EnableImplicitScaling.set(1);
+
+    MultiDeviceFixtureCompositeHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+
+    uint32_t count = 0;
+    std::vector<ze_device_handle_t> hDevices;
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(count, multiDeviceFixture.numRootDevices);
+
+    hDevices.resize(count);
+    EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+    for (auto &hDevice : hDevices) {
+
+        uint32_t subDeviceCount = 0;
+        EXPECT_EQ(Device::fromHandle(hDevice)->getSubDevices(&subDeviceCount, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(subDeviceCount, 0u);
+
+        EXPECT_EQ(2u, Device::fromHandle(hDevice)->getNEODevice()->getNumSubDevices());
+
+        EXPECT_EQ(Device::fromHandle(hDevice)->getNEODevice(), static_cast<DeviceImp *>(Device::fromHandle(hDevice))->getActiveDevice());
+    }
+
+    multiDeviceFixture.tearDown();
+}
+using SingleDeviceModeTests = ::testing::Test;
+HWTEST_F(SingleDeviceModeTests, givenContextGroupSupportedWhenGettingCsrsThenSecondaryContextsCreatedInRootDeviceForCCSAndInSubdevicesForBCS) {
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+
+        const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
+            auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+            EngineInstancesContainer engines;
+
+            uint32_t numCcs = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+            if (hwInfo.featureTable.flags.ftrCCSNode) {
+                for (uint32_t i = 0; i < numCcs; i++) {
+                    auto engineType = static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS);
+                    engines.push_back({engineType, EngineUsage::regular});
+                }
+
+                engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::lowPriority});
+            }
+
+            for (uint32_t i = 1; i < hwInfo.featureTable.ftrBcsInfo.size(); i++) {
+                auto engineType = EngineHelpers::getBcsEngineAtIdx(i);
+
+                if (hwInfo.featureTable.ftrBcsInfo.test(i)) {
+
+                    engines.push_back({engineType, EngineUsage::regular});
+                }
+            }
+
+            return engines;
+        }
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
+            if (engineType == aub_stream::ENGINE_RCS) {
+                return EngineGroupType::renderCompute;
+            }
+            if (engineType >= aub_stream::ENGINE_CCS && engineType < (aub_stream::ENGINE_CCS + hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled)) {
+                return EngineGroupType::compute;
+            }
+
+            if (engineType == aub_stream::ENGINE_BCS1) {
+                return EngineGroupType::copy;
+            }
+            UNRECOVERABLE_IF(true);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableImplicitScaling.set(1);
+
+    const uint32_t rootDeviceIndex = 0u;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.featureTable.ftrBcsInfo = 0b10;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < mockExecutionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->setExposeSingleDeviceMode(true);
+    }
+    mockExecutionEnvironment.incRefInternal();
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
+
+    {
+        auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, &mockExecutionEnvironment, rootDeviceIndex);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoMockDevice));
+        auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+
+        auto device = driverHandle->devices[0];
+
+        uint32_t count = 0;
+        device->getCommandQueueGroupProperties(&count, nullptr);
+        ze_command_queue_group_properties_t queueGroupProperties[10] = {};
+        count = std::min(count, 10u);
+        device->getCommandQueueGroupProperties(&count, queueGroupProperties);
+
+        auto ordinal = std::numeric_limits<uint32_t>::max();
+        auto ordinalCopy = std::numeric_limits<uint32_t>::max();
+
+        for (uint32_t i = 0; i < count; i++) {
+            if ((ordinal == std::numeric_limits<uint32_t>::max()) &&
+                (queueGroupProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE)) {
+                ordinal = i;
+            }
+            if ((ordinalCopy == std::numeric_limits<uint32_t>::max()) &&
+                !(queueGroupProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) &&
+                (queueGroupProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY)) {
+                ordinalCopy = i;
+            }
+        }
+        ASSERT_NE(std::numeric_limits<uint32_t>::max(), ordinal);
+        ASSERT_NE(std::numeric_limits<uint32_t>::max(), ordinalCopy);
+
+        uint32_t index = 0;
+        CommandStreamReceiver *csr = nullptr;
+        auto result = device->getCsrForOrdinalAndIndex(&csr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, csr);
+
+        auto &secondaryEngines = neoMockDevice->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(index)];
+
+        ASSERT_EQ(8u, secondaryEngines.engines.size());
+
+        auto highPriorityIndex = secondaryEngines.regularEnginesTotal;
+        ASSERT_LT(highPriorityIndex, static_cast<uint32_t>(secondaryEngines.engines.size()));
+
+        EXPECT_TRUE(secondaryEngines.engines[highPriorityIndex].osContext->isHighPriority());
+
+        EXPECT_TRUE(csr->getOsContext().isPartOfContextGroup());
+        EXPECT_NE(nullptr, secondaryEngines.engines[highPriorityIndex].osContext->getPrimaryContext());
+
+        index = 100;
+        result = device->getCsrForOrdinalAndIndex(&csr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+        index = 0;
+        ordinal = 100;
+        result = device->getCsrForOrdinalAndIndex(&csr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+        NEO::CommandStreamReceiver *bcsEngine = nullptr, *bcsEngine2 = nullptr;
+        EXPECT_EQ(nullptr, neoMockDevice->getHpCopyEngine());
+
+        result = device->getCsrForOrdinalAndIndex(&bcsEngine, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, bcsEngine);
+        EXPECT_TRUE(bcsEngine->getOsContext().isHighPriority());
+        EXPECT_EQ(1u, bcsEngine->getOsContext().getDeviceBitfield().count());
+
+        result = device->getCsrForOrdinalAndIndex(&bcsEngine2, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_EQ(bcsEngine2, bcsEngine->getPrimaryCsr());
+        EXPECT_TRUE(bcsEngine2->getOsContext().getIsPrimaryEngine());
+        EXPECT_EQ(1u, bcsEngine2->getOsContext().getDeviceBitfield().count());
+        EXPECT_TRUE(bcsEngine2->getOsContext().getDeviceBitfield().test(0));
+
+        bcsEngine2 = nullptr;
+        result = device->getCsrForOrdinalAndIndex(&bcsEngine2, ordinalCopy + 1, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(bcsEngine2, bcsEngine->getPrimaryCsr());
+        EXPECT_TRUE(bcsEngine2->getOsContext().getIsPrimaryEngine());
+        EXPECT_TRUE(bcsEngine2->getOsContext().getDeviceBitfield().test(1));
+    }
+}
+
 TEST_F(DeviceTest, GivenValidDeviceWhenQueryingKernelTimestampsProptertiesThenCorrectPropertiesIsReturned) {
     ze_device_properties_t devProps;
     ze_event_query_kernel_timestamps_ext_properties_t tsProps;

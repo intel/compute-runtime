@@ -101,6 +101,13 @@ struct RootDeviceEnvironment : NonCopyableClass {
     GraphicsAllocation *getDummyAllocation() const;
     void releaseDummyAllocation();
 
+    void setExposeSingleDeviceMode(bool singleDeviceMode) {
+        exposeSingleDevice = singleDeviceMode;
+    }
+    bool isExposeSingleDeviceMode() const {
+        return exposeSingleDevice;
+    }
+
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::count)];
     std::unique_ptr<GmmHelper> gmmHelper;
     std::unique_ptr<OSInterface> osInterface;
@@ -133,6 +140,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
 
     bool limitedNumberOfCcs = false;
     bool isWddmOnLinuxEnable = false;
+    bool exposeSingleDevice = false;
     std::once_flag isDummyAllocationInitialized;
     std::unique_ptr<AllocationProperties> dummyBlitProperties;
 

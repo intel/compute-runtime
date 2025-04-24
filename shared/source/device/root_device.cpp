@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
@@ -61,6 +62,9 @@ void RootDevice::createBindlessHeapsHelper() {
 
 bool RootDevice::createEngines() {
     if (hasGenericSubDevices) {
+        if (getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
+            return createSingleDeviceEngines();
+        }
         initializeRootCommandStreamReceiver();
     } else {
         return Device::createEngines();
@@ -70,20 +74,36 @@ bool RootDevice::createEngines() {
 }
 
 void RootDevice::initializeRootCommandStreamReceiver() {
-    std::unique_ptr<CommandStreamReceiver> rootCommandStreamReceiver(createCommandStream(*executionEnvironment, rootDeviceIndex, getDeviceBitfield()));
-
     auto &hwInfo = getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(hwInfo);
+    EngineTypeUsage engineTypeUsage = {defaultEngineType, EngineUsage::regular};
+
+    createRootDeviceEngine(engineTypeUsage, getDeviceBitfield());
+}
+
+bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceBitfield deviceBitfield) {
+    std::unique_ptr<CommandStreamReceiver> rootCommandStreamReceiver(createCommandStream(*executionEnvironment, rootDeviceIndex, deviceBitfield));
+
+    auto &hwInfo = getHardwareInfo();
+    auto engineType = engineTypeUsage.first;
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
-    EngineDescriptor engineDescriptor(EngineTypeUsage{defaultEngineType, EngineUsage::regular}, getDeviceBitfield(), preemptionMode, true);
+    EngineDescriptor engineDescriptor(EngineTypeUsage{engineType, EngineUsage::regular}, deviceBitfield, preemptionMode, deviceBitfield.count() > 1);
 
     auto &gfxCoreHelper = getGfxCoreHelper();
-    bool isPrimaryEngine = EngineHelpers::isCcs(defaultEngineType);
+    bool isPrimaryEngine = EngineHelpers::isCcs(engineType);
+    DEBUG_BREAK_IF(EngineHelpers::isBcs(engineType));
+
+    isPrimaryEngine &= engineTypeUsage.second == EngineUsage::regular;
+
     if (debugManager.flags.SecondaryContextEngineTypeMask.get() != -1) {
-        isPrimaryEngine &= (static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(defaultEngineType))) != 0;
+        isPrimaryEngine &= (static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0;
     }
-    const bool useContextGroup = isPrimaryEngine && gfxCoreHelper.areSecondaryContextsSupported();
+    bool useContextGroup = isPrimaryEngine && gfxCoreHelper.areSecondaryContextsSupported();
+
+    if ((static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) == 0) {
+        useContextGroup = false;
+    }
 
     auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(), engineDescriptor);
 
@@ -92,10 +112,12 @@ void RootDevice::initializeRootCommandStreamReceiver() {
 
     rootCommandStreamReceiver->setupContext(*osContext);
     rootCommandStreamReceiver->initializeResources(false, preemptionMode);
-    rootCsrCreated = true;
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
-    rootCommandStreamReceiver->createWorkPartitionAllocation(*this);
+    if (EngineHelpers::isComputeEngine(engineType)) {
+        rootCsrCreated = true;
+        rootCommandStreamReceiver->createWorkPartitionAllocation(*this);
+    }
     commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
 
     EngineControl engine{commandStreamReceivers.back().get(), osContext};
@@ -103,18 +125,46 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     addEngineToEngineGroup(engine);
 
     if (useContextGroup) {
+        bool hpEngineAvailable = engineTypeUsage.second == EngineUsage::highPriority;
         auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
+
         EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engine.getEngineType(), engine.getEngineUsage(), hwInfo);
-        auto highPriorityContextCount = gfxCoreHelper.getContextGroupHpContextsCount(engineGroupType, false);
+        auto highPriorityContextCount = gfxCoreHelper.getContextGroupHpContextsCount(engineGroupType, hpEngineAvailable);
 
         if (debugManager.flags.OverrideNumHighPriorityContexts.get() != -1) {
             highPriorityContextCount = static_cast<uint32_t>(debugManager.flags.OverrideNumHighPriorityContexts.get());
         }
-        UNRECOVERABLE_IF(secondaryEngines.find(defaultEngineType) != secondaryEngines.end());
-        auto &secondaryEnginesForType = secondaryEngines[defaultEngineType];
+
+        if (getRootDeviceEnvironment().osInterface && getRootDeviceEnvironment().osInterface->getAggregatedProcessCount() > 1) {
+            const auto numProcesses = getRootDeviceEnvironment().osInterface->getAggregatedProcessCount();
+
+            contextCount = std::max(contextCount / numProcesses, 2u);
+            highPriorityContextCount = std::max(contextCount / 2, 1u);
+        }
+
+        UNRECOVERABLE_IF(secondaryEngines.find(engineType) != secondaryEngines.end());
+        auto &secondaryEnginesForType = secondaryEngines[engineType];
 
         createSecondaryContexts(engine, secondaryEnginesForType, contextCount, contextCount - highPriorityContextCount, highPriorityContextCount);
     }
+    return true;
+}
+
+bool RootDevice::createSingleDeviceEngines() {
+
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(getRootDeviceEnvironment());
+
+    for (auto &engine : gpgpuEngines) {
+
+        if (EngineHelpers::isComputeEngine(engine.first)) {
+            if (!createRootDeviceEngine(engine, getDeviceBitfield())) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 } // namespace NEO

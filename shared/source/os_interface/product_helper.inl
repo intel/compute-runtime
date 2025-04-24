@@ -1111,4 +1111,9 @@ bool ProductHelperHw<gfxProduct>::isCompressionForbiddenCommon(bool defaultValue
     }
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isExposingSubdevicesAllowed() const {
+    return true;
+}
+
 } // namespace NEO

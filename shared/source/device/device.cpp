@@ -93,7 +93,11 @@ bool Device::genericSubDevicesAllowed() {
     auto deviceMask = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->deviceAffinityMask.getGenericSubDevicesMask();
     uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(&getHardwareInfo());
     deviceBitfield = maxNBitValue(subDeviceCount);
-    deviceBitfield &= deviceMask;
+
+    if (!executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->isExposeSingleDeviceMode()) {
+        deviceBitfield &= deviceMask;
+    }
+
     numSubDevices = static_cast<uint32_t>(deviceBitfield.count());
     if (numSubDevices == 1 && (executionEnvironment->getDeviceHierarchyMode() != DeviceHierarchyMode::combined || subDeviceCount == 1)) {
         numSubDevices = 0;
@@ -248,9 +252,12 @@ bool Device::shouldLimitAllocationsReuse() const {
 }
 
 bool Device::initDeviceFully() {
-    for (auto &subdevice : this->subdevices) {
-        if (subdevice && !subdevice->initDeviceFully()) {
-            return false;
+
+    if (!getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
+        for (auto &subdevice : this->subdevices) {
+            if (subdevice && !subdevice->initDeviceFully()) {
+                return false;
+            }
         }
     }
 
@@ -320,6 +327,11 @@ bool Device::createEngines() {
     auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(getRootDeviceEnvironment());
 
     for (auto &engine : gpgpuEngines) {
+
+        if (isSubDevice() && getRootDeviceEnvironment().isExposeSingleDeviceMode() && EngineHelpers::isComputeEngine(engine.first)) {
+            continue;
+        }
+
         if (!createEngine(engine)) {
             return false;
         }
@@ -595,7 +607,7 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
     commandStreamReceiver->setupContext(*osContext);
     commandStreamReceiver->setPrimaryCsr(primaryCsr);
 
-    DEBUG_BREAK_IF(getDeviceBitfield().count() > 1 && !osContext->isRootDevice());
+    DEBUG_BREAK_IF(osContext->getDeviceBitfield().count() > 1 && !osContext->isRootDevice());
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
 

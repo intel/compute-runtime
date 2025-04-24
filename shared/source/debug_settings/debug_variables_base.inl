@@ -584,6 +584,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ProgramWalkerPartitionSelfCleanup, -1, "-1: defa
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramStallCommandForSelfCleanup, -1, "-1: default (disabled), 0: Do not add extra PIPE_CONTROL for each self cleanup x-tile sync, 1: Add extra PIPE_CONTROL for each self cleanup x-tile sync")
 DECLARE_DEBUG_VARIABLE(int32_t, WparidRegisterProgramming, -1, "-1: default (enabled), 0: do not program wparid register, 1: programming wparid register")
 DECLARE_DEBUG_VARIABLE(int32_t, UsePipeControlAfterPartitionedWalker, -1, "-1: default (enabled), 0: do not add PipeControl, 1: add PipeControl")
+DECLARE_DEBUG_VARIABLE(int32_t, ExposeSingleDevice, -1, "-1: default, 0: disabled, 1: only root device will be exposed")
 
 /*EXPERIMENTAL TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionCount, 0, "Experimental implementation: Set number of COMPUTE_WALKERs for a given Partition Type, 0 - do not set the feature.")
