@@ -174,7 +174,7 @@ uint64_t OsContextLinux::getOfflineDumpContextId(uint32_t deviceIndex) const {
 OsContextLinux::~OsContextLinux() {
     if (contextInitialized) {
         for (auto drmContextId : drmContextIds) {
-            drm.getIoctlHelper()->destroyDrmContext(drm, *this, drmContextId);
+            drm.destroyDrmContext(drmContextId);
         }
     }
     drmContextIds.clear();
