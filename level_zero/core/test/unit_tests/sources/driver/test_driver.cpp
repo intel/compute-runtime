@@ -1632,5 +1632,24 @@ TEST(MultiDriverHandleTest, givenMultiplesDifferentDevicesWhenGetDriverHandleThe
     globalDriverHandles->clear();
 }
 
+using DriverExtensionsTest = Test<DeviceFixture>;
+TEST_F(DriverExtensionsTest, givenSupportedExtensionsWhenCheckIfImageMemoryPropertiesExpIsSupportedThenCorrectResultsAreReturned) {
+    uint32_t count = 0;
+    ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
+    EXPECT_NE(0u, count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    std::vector<ze_driver_extension_properties_t> extensionProperties;
+    extensionProperties.resize(count);
+
+    res = driverHandle->getExtensionProperties(&count, extensionProperties.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) { return (strcmp(extension.name, ZE_IMAGE_MEMORY_PROPERTIES_EXP_NAME) == 0); });
+    EXPECT_NE(it, extensionProperties.end());
+    uint32_t expectedVersion = ZE_MAKE_VERSION(1, 0);
+    EXPECT_EQ(expectedVersion, (*it).version);
+}
+
 } // namespace ult
 } // namespace L0
