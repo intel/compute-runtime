@@ -5,8 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/context/context.h"
 
@@ -24,23 +23,19 @@ TEST_F(ClReleaseKernelTests, GivenNullKernelWhenReleasingKernelThenClInvalidKern
 }
 
 TEST_F(ClReleaseKernelTests, GivenRetainedKernelWhenReleasingKernelThenKernelIsCorrectlyReleased) {
-    USE_REAL_FILE_SYSTEM();
     cl_kernel kernel = nullptr;
     cl_program program = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
 
-    auto binary = loadDataFromFile(testFile.c_str(), binarySize);
-
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, binary);
-
-    unsigned const char *binaries[1] = {reinterpret_cast<const unsigned char *>(binary.get())};
-    program = clCreateProgramWithBinary(pContext, 1, &testedClDevice, &binarySize, binaries, &binaryStatus, &retVal);
-
-    binary.reset();
+    program = clCreateProgramWithBinary(
+        pContext,
+        1,
+        &testedClDevice,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
+        &binaryStatus,
+        &retVal);
 
     EXPECT_NE(nullptr, program);
     ASSERT_EQ(CL_SUCCESS, retVal);

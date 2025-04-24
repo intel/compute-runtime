@@ -7,9 +7,7 @@
 
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device/device.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/context/context.h"
 
@@ -22,29 +20,15 @@ using ClGetKernelInfoTests = ApiTests;
 namespace ULT {
 
 TEST_F(ClGetKernelInfoTests, GivenValidParamsWhenGettingKernelInfoThenSuccessIsReturned) {
-    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    zebin.setAsMockCompilerReturnedBinary();
 
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);

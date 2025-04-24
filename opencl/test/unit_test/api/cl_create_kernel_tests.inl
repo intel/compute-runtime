@@ -5,9 +5,8 @@
  *
  */
 
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -21,31 +20,19 @@ using ClCreateKernelTests = ApiTests;
 namespace ULT {
 
 TEST_F(ClCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThenKernelIsCreatedAndSuccessIsReturned) {
-    USE_REAL_FILE_SYSTEM();
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
 
-    auto pBinary = loadDataFromFile(
-        testFile.c_str(),
-        binarySize);
-
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
         &testedClDevice,
-        &binarySize,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStatus,
         &retVal);
-
-    pBinary.reset();
 
     EXPECT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -76,32 +63,19 @@ TEST_F(ClCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThen
 }
 
 TEST_F(ClCreateKernelTests, GivenInvalidKernelNameWhenCreatingNewKernelThenInvalidKernelNameErrorIsReturned) {
-    USE_REAL_FILE_SYSTEM();
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
 
-    auto pBinary = loadDataFromFile(
-        testFile.c_str(),
-        binarySize);
-
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
-
-    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
     pProgram = clCreateProgramWithBinary(
         pContext,
         1,
         &testedClDevice,
-        &binarySize,
-        binaries,
+        zebin.binarySizes.data(),
+        zebin.binaries.data(),
         &binaryStatus,
         &retVal);
-
-    pBinary.reset();
 
     EXPECT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);

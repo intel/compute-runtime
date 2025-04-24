@@ -99,6 +99,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_usm_memory_reuse_cleaner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_usm_memory_pool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_controller.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_zebin_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.h
 )

@@ -94,6 +94,9 @@ struct ApiFixture {
     MockClDevice *pDevice = nullptr;
     ClExecutionEnvironment *executionEnvironment = nullptr;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironmentBackup;
+    inline static const char *sampleKernel = "example_kernel(){}";
+    inline static size_t sampleKernelSize = std::strlen(sampleKernel) + 1;
+    inline static const char *sampleKernelSrcs[1] = {sampleKernel};
 };
 
 struct ApiTests : public ApiFixture<>,

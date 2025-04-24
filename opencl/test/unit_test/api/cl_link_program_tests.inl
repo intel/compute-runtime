@@ -7,9 +7,8 @@
 
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/context/context.h"
 
@@ -22,26 +21,15 @@ namespace ULT {
 using ClLinkProgramTests = ApiTests;
 
 TEST_F(ClLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturned) {
-    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    zebin.setAsMockCompilerReturnedBinary();
 
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -83,26 +71,15 @@ TEST_F(ClLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturn
 }
 
 TEST_F(ClLinkProgramTests, GivenCreateLibraryOptionWhenLinkingProgramThenSuccessIsReturned) {
-    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    zebin.setAsMockCompilerReturnedBinary();
 
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -251,26 +228,15 @@ TEST_F(ClLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
 }
 
 TEST_F(ClLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidValueErrorIsReturned) {
-    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    zebin.setAsMockCompilerReturnedBinary();
 
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -310,26 +276,15 @@ TEST_F(ClLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidVa
 }
 
 TEST_F(ClLinkProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsInvoked) {
-    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    zebin.setAsMockCompilerReturnedBinary();
 
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -374,26 +329,15 @@ TEST_F(ClLinkProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsI
 }
 
 TEST_F(ClLinkProgramTests, givenMultiDeviceProgramWhenLinkingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
-    USE_REAL_FILE_SYSTEM();
     cl_program pProgram = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    zebin.setAsMockCompilerReturnedBinary();
 
-    testFile.append(clFiles);
-    testFile.append("copybuffer.cl");
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
