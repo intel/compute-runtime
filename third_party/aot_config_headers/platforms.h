@@ -5,9 +5,9 @@
  *
  */
 
-#include <cstdint>
 #include <map>
 #include <string>
+#include <cstdint>
 #include <vector>
 
 #pragma once
@@ -181,7 +181,7 @@ inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_PTL
     {"ptl-h", PTL_H_B0},
-    {"ptl-u", PTL_U_A1},
+    {"ptl-u", PTL_U_A0},
 #endif
 };
 
@@ -243,6 +243,9 @@ inline const std::map<std::string, PRODUCT_CONFIG> genericIdAcronyms = {
 #ifdef SUPPORT_AOT_BMG
     {"bmg", BMG_G21_A0},
 #endif
+#ifdef SUPPORT_AOT_PTL
+    {"ptl", PTL_H_B0},
+#endif
 };
 
 inline const std::map<PRODUCT_CONFIG, std::vector<PRODUCT_CONFIG>> compatibilityMapping = {
@@ -251,5 +254,6 @@ inline const std::map<PRODUCT_CONFIG, std::vector<PRODUCT_CONFIG>> compatibility
     {BMG_G21_A0, {LNL_B0}},
     {BMG_G21_A1_RESERVED, {BMG_G21_A0, LNL_B0}},
     {BMG_G21_B0_RESERVED, {BMG_G21_A0, LNL_B0}},
+    {PTL_H_B0, {PTL_U_A0}},
 };
 } // namespace AOT
