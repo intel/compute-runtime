@@ -106,6 +106,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndComplet
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
 
+    auto *testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    *const_cast<bool *>(&testCsr->vmBindAvailable) = true;
+
     TestedBufferObject bo(rootDeviceIndex, mock, 128);
     MockDrmAllocation cmdBuffer(rootDeviceIndex, AllocationType::commandBuffer, MemoryPool::system4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
@@ -123,7 +126,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndComplet
     csr->makeResident(*csr->getTagAllocation());
 
     uint64_t expectedCompletionGpuAddress = csr->getTagAllocation()->getGpuAddress() + TagAllocationLayout::completionFenceOffset;
-    auto *testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testCsr->latestSentTaskCount = 2;
 
     int ret = testCsr->exec(batchBuffer, 1, 2, 0);

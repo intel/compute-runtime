@@ -76,5 +76,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     int32_t kmdWaitTimeout = -1;
 
     bool useUserFenceWait = true;
+    const bool vmBindAvailable = false;
 };
 } // namespace NEO

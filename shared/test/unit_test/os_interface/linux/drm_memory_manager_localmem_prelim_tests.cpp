@@ -3125,7 +3125,6 @@ struct DrmCommandStreamEnhancedPrelimTest : public DrmCommandStreamEnhancedTempl
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedPrelimTest, givenUseVmBindSetWhenFlushThenAllocIsBoundAndNotPassedToExec) {
-
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     const auto execObjectRequirements = [allocation = this->allocation](const auto &execObject) {

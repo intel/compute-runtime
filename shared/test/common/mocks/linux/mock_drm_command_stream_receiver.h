@@ -23,6 +23,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using BaseClass::execObjectsStorage;
     using BaseClass::residency;
     using BaseClass::useUserFenceWait;
+    using BaseClass::vmBindAvailable;
     using CommandStreamReceiver::activePartitions;
     using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;

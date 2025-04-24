@@ -805,15 +805,13 @@ struct MockDrmDirectSubmissionToTestDtor : public DrmDirectSubmission<GfxFamily,
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenCheckingIsKmdWaitOnTaskCountAllowedThenTrueIsReturned) {
-    mock->isVmBindAvailableCall.callParent = false;
-    mock->isVmBindAvailableCall.returnValue = true;
+    *const_cast<bool *>(&static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->vmBindAvailable) = true;
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_TRUE(csr->isKmdWaitOnTaskCountAllowed());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionAndDisabledBindWhenCheckingIsKmdWaitOnTaskCountAllowedThenFalseIsReturned) {
-    mock->isVmBindAvailableCall.callParent = false;
-    mock->isVmBindAvailableCall.returnValue = false;
+    *const_cast<bool *>(&static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->vmBindAvailable) = false;
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_FALSE(csr->isKmdWaitOnTaskCountAllowed());
 }
@@ -976,6 +974,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
     uint8_t bbStart[64];
     batchBuffer.endCmdPtr = &bbStart[0];
     static_cast<DrmMockCustom *>(static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->drm)->isVmBindAvailableCall.callParent = false;
+    *const_cast<bool *>(&static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->vmBindAvailable) = true;
 
     auto flushStamp = csr->obtainCurrentFlushStamp();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
