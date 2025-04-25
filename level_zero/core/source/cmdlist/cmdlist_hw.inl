@@ -419,8 +419,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     if (launchParams.isCooperative && this->implicitSynchronizedDispatchForCooperativeKernelsAllowed) {
         enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::full);
     }
-
-    appendSynchronizedDispatchInitializationSection();
+    if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
+        appendSynchronizedDispatchInitializationSection();
+    }
 
     Event *event = nullptr;
     if (hEvent) {
@@ -441,7 +442,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event) && !(event && event->isCounterBased() && event->isUsingContextEndOffset()), false);
     }
 
-    appendSynchronizedDispatchCleanupSection();
+    if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
+        appendSynchronizedDispatchCleanupSection();
+    }
 
     addToMappedEventList(event);
     if (NEO::debugManager.flags.EnableSWTags.get()) {
