@@ -224,7 +224,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool isSuitableUSMSharedAlloc(NEO::SvmAllocationData *alloc);
     ze_result_t performCpuMemcpy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void *obtainLockedPtrFromDevice(NEO::SvmAllocationData *alloc, void *ptr, bool &lockingFailed);
-    bool waitForEventsFromHost();
     TransferType getTransferType(const CpuMemCopyInfo &cpuMemCopyInfo);
     size_t getTransferThreshold(TransferType transferType);
     bool isBarrierRequired();

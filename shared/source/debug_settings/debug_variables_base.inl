@@ -398,7 +398,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, MinHwThreadsUnoccupied, 0, "If not zero then max
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushEveryEnqueueCount, -1, "If greater than 0, driver performs implicit flush every N submissions.")
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushForNewResource, -1, "-1: platform specific, 0: force disable, 1: force enable")
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushForIdleGpu, -1, "-1: platform specific, 0: force disable, 1: force enable")
-DECLARE_DEBUG_VARIABLE(int32_t, EventWaitOnHost, -1, "Wait for events on host instead of program semaphores for them, works for append kernel launch with immediate command list, -1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCacheFlushAfterWalkerForAllQueues, -1, "Enable cache flush after walker even if queue doesn't require it")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideUseKmdWaitFunction, -1, "-1: default (L0: disabled), 0: disabled, 1: enabled. It uses only busy loop to wait or busy loop with KMD wait function, when KMD fallback is enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ResolveDependenciesViaPipeControls, -1, "-1: default , 0: disabled, 1: enabled. If enabled, instead of programming semaphores, dependencies are resolved using task levels")

@@ -291,7 +291,6 @@ struct CommandList : _ze_command_list_handle_t {
     bool storeExternalPtrAsTemporary() const {
         return isImmediateType() && (this->isFlushTaskSubmissionEnabled || isCopyOnly(false));
     }
-    bool isWaitForEventsFromHostEnabled();
 
     enum class CommandListType : uint32_t {
         typeRegular = 0u,

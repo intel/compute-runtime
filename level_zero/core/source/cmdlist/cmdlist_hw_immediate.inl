@@ -541,11 +541,6 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::waitForEventsFromHost() {
-    return this->isWaitForEventsFromHostEnabled();
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const {
     return (!relaxedOrderingDispatch && (numWaitEvents > 0 || this->hasInOrderDependencies()));
 }
@@ -568,14 +563,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
 
     checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
-    bool hostWait = waitForEventsFromHost();
-    if (hostWait) {
-        this->synchronizeEventList(numWaitEvents, phWaitEvents);
-        if (hostWait) {
-            numWaitEvents = 0u;
-            phWaitEvents = nullptr;
-        }
-    }
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernelHandle, threadGroupDimensions,
                                                                         hSignalEvent, numWaitEvents, phWaitEvents,
