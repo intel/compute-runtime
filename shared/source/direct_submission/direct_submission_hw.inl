@@ -437,7 +437,11 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources() {
 template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
     if (sfenceMode >= DirectSubmissionSfenceMode::beforeSemaphoreOnly) {
-        CpuIntrinsics::sfence();
+        if (!this->miMemFenceRequired && !this->pciBarrierPtr && !this->hwInfo->capabilityTable.isIntegratedDevice) {
+            CpuIntrinsics::mfence();
+        } else {
+            CpuIntrinsics::sfence();
+        }
     }
 
     if (this->pciBarrierPtr) {

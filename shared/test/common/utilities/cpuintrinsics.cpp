@@ -20,6 +20,7 @@ std::atomic<uintptr_t> lastClFlushedPtr(0u);
 std::atomic<uint32_t> clFlushCounter(0u);
 std::atomic<uint32_t> pauseCounter(0u);
 std::atomic<uint32_t> sfenceCounter(0u);
+std::atomic<uint32_t> mfenceCounter(0u);
 
 std::atomic<uint64_t> lastUmwaitCounter(0u);
 std::atomic<unsigned int> lastUmwaitControl(0u);
@@ -56,6 +57,10 @@ void clFlushOpt(void *ptr) {
 
 void sfence() {
     CpuIntrinsicsTests::sfenceCounter++;
+}
+
+void mfence() {
+    CpuIntrinsicsTests::mfenceCounter++;
 }
 
 void pause() {

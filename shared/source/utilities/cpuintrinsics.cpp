@@ -45,6 +45,10 @@ void sfence() {
     _mm_sfence();
 }
 
+void mfence() {
+    _mm_mfence();
+}
+
 void pause() {
     _mm_pause();
 }

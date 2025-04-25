@@ -37,6 +37,7 @@
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> sfenceCounter;
+extern std::atomic<uint32_t> mfenceCounter;
 } // namespace CpuIntrinsicsTests
 
 using DirectSubmissionTest = Test<DirectSubmissionFixture>;
@@ -1079,13 +1080,20 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWor
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
         EXPECT_TRUE(directSubmission.initialize(true));
 
-        auto initialCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
+        auto initialSfenceCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
+        auto initialMfenceCounterValue = CpuIntrinsicsTests::mfenceCounter.load();
 
         EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
 
-        uint32_t expectedCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
+        uint32_t expectedSfenceCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
+        uint32_t expectedMfenceCount = 0u;
+        if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice && !pDevice->getProductHelper().isGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo()) && expectedSfenceCount > 0u) {
+            --expectedSfenceCount;
+            ++expectedMfenceCount;
+        }
 
-        EXPECT_EQ(initialCounterValue + expectedCount, CpuIntrinsicsTests::sfenceCounter);
+        EXPECT_EQ(initialSfenceCounterValue + expectedSfenceCount, CpuIntrinsicsTests::sfenceCounter);
+        EXPECT_EQ(initialMfenceCounterValue + expectedMfenceCount, CpuIntrinsicsTests::mfenceCounter);
     }
 }
 
@@ -1102,13 +1110,20 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbu
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
         EXPECT_TRUE(directSubmission.initialize(true));
 
-        auto initialCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
+        auto initialSfenceCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
+        auto initialMfenceCounterValue = CpuIntrinsicsTests::mfenceCounter.load();
 
         EXPECT_TRUE(directSubmission.stopRingBuffer(false));
 
-        uint32_t expectedCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
+        uint32_t expectedSfenceCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
+        uint32_t expectedMfenceCount = 0u;
+        if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice && !directSubmission.pciBarrierPtr && !pDevice->getProductHelper().isGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo()) && expectedSfenceCount > 0u) {
+            --expectedSfenceCount;
+            ++expectedMfenceCount;
+        }
 
-        EXPECT_EQ(initialCounterValue + expectedCount, CpuIntrinsicsTests::sfenceCounter);
+        EXPECT_EQ(initialSfenceCounterValue + expectedSfenceCount, CpuIntrinsicsTests::sfenceCounter);
+        EXPECT_EQ(initialMfenceCounterValue + expectedMfenceCount, CpuIntrinsicsTests::mfenceCounter);
     }
 }
 
