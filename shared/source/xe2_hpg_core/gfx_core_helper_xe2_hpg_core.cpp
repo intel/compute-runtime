@@ -214,10 +214,13 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
         }
 
         if (properties.allocationType == AllocationType::commandBuffer ||
-            properties.allocationType == AllocationType::ringBuffer ||
-            properties.allocationType == AllocationType::semaphoreBuffer) {
+            properties.allocationType == AllocationType::ringBuffer) {
             allocationData.flags.useSystemMemory = false;
             allocationData.flags.requiresCpuAccess = true;
+        }
+
+        if (properties.allocationType == AllocationType::semaphoreBuffer) {
+            allocationData.flags.useSystemMemory = true;
         }
     }
 }

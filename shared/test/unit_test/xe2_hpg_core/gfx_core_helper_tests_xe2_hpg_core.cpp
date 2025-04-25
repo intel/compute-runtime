@@ -778,9 +778,11 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenAllocDataWhenSetExtraAlloc
 
         if (defaultHwInfo->featureTable.flags.ftrLocalMemory) {
             if (allocProperties.allocationType == AllocationType::commandBuffer ||
-                allocProperties.allocationType == AllocationType::ringBuffer ||
-                allocProperties.allocationType == AllocationType::semaphoreBuffer) {
+                allocProperties.allocationType == AllocationType::ringBuffer) {
                 EXPECT_FALSE(allocData.flags.useSystemMemory);
+                EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+            } else if (allocProperties.allocationType == AllocationType::semaphoreBuffer) {
+                EXPECT_TRUE(allocData.flags.useSystemMemory);
                 EXPECT_TRUE(allocData.flags.requiresCpuAccess);
             } else {
                 EXPECT_FALSE(allocData.flags.useSystemMemory);
