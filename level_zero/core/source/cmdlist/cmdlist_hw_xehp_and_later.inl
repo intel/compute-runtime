@@ -352,9 +352,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                             inOrderIncrementGpuAddress = eventForInOrderExec->getInOrderExecInfo()->getBaseDeviceAddress();
                             inOrderIncrementValue = eventForInOrderExec->getInOrderIncrementValue();
                         }
-                        if (!isTimestampEvent) {
-                            eventAddress = 0;
-                        }
                     }
                 }
             }
