@@ -703,7 +703,7 @@ TEST_F(MemoryObtainFdTest,
 }
 
 TEST_F(MemoryExportImportImplicitScalingTest,
-       whenCallingOpenIpcHandlesWithIpcHandleThenDeviceAllocationIsReturned) {
+       whenCallingOpenIpcHandlesWithIpcHandleThenReturnsSuccess) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
