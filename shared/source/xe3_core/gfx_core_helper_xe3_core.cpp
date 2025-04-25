@@ -115,7 +115,9 @@ aub_stream::MMIOList GfxCoreHelperHw<Family>::getExtraMmioList(const HardwareInf
 
 template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = !productHelper.isGlobalFenceInCommandStreamRequired(hwInfo) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
@@ -132,7 +134,9 @@ template <>
 void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MI_MEM_FENCE = typename Family::MI_MEM_FENCE;
     using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = !productHelper.isGlobalFenceInCommandStreamRequired(hwInfo) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
