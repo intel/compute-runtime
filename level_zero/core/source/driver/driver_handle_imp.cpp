@@ -300,7 +300,15 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
     }
     this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
     this->initHostUsmAllocPool();
-
+    for (auto &device : this->devices) {
+        this->initDeviceUsmAllocPool(*device->getNEODevice());
+        if (auto deviceUsmAllocPool = device->getNEODevice()->getUsmMemAllocPool()) {
+            deviceUsmAllocPool->ensureInitialized(this->svmAllocsManager);
+        }
+        if (auto deviceUsmAllocPoolsManager = device->getNEODevice()->getUsmMemAllocPoolsManager()) {
+            deviceUsmAllocPoolsManager->ensureInitialized(this->svmAllocsManager);
+        }
+    }
     this->numDevices = static_cast<uint32_t>(this->devices.size());
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
@@ -349,6 +357,23 @@ void DriverHandleImp::initHostUsmAllocPool() {
         NEO::SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
                                                                         rootDeviceIndices, deviceBitfields);
         usmHostMemAllocPool.initialize(svmAllocsManager, memoryProperties, poolSize, 0u, 1 * MemoryConstants::megaByte);
+    }
+}
+
+void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device) {
+    const uint64_t minServicedSize = 0u;
+    const uint64_t maxServicedSize = 1 * MemoryConstants::megaByte;
+    bool enabled = NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() && device.getProductHelper().isDeviceUsmPoolAllocatorSupported();
+    uint64_t poolSize = 2 * MemoryConstants::megaByte;
+
+    if (NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
+        enabled = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
+        poolSize = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
+    }
+
+    if (enabled) {
+        device.resetUsmAllocationPool(new NEO::UsmMemAllocPool(rootDeviceIndices, deviceBitfields, &device, InternalMemoryType::deviceUnifiedMemory,
+                                                               poolSize, minServicedSize, maxServicedSize));
     }
 }
 

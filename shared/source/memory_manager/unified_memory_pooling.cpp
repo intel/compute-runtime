@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,20 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, void *ptr, 
     return true;
 }
 
+bool UsmMemAllocPool::ensureInitialized(SVMAllocsManager *svmMemoryManager) {
+    if (isInitialized()) {
+        return true;
+    }
+    std::unique_lock<std::mutex> lock(mtx);
+    if (isInitialized()) {
+        return true;
+    }
+    DEBUG_BREAK_IF(0u == poolSize || 0u == maxServicedSize || 0u == rootDeviceIndices.size() || deviceBitFields.empty());
+    SVMAllocsManager::UnifiedMemoryProperties poolMemoryProperties(poolMemoryType, poolAlignment, rootDeviceIndices, deviceBitFields);
+    poolMemoryProperties.device = device;
+    return initialize(svmMemoryManager, poolMemoryProperties, poolSize, minServicedSize, maxServicedSize);
+}
+
 bool UsmMemAllocPool::isInitialized() const {
     return this->pool;
 }
@@ -52,7 +66,8 @@ size_t UsmMemAllocPool::getPoolSize() const {
 
 void UsmMemAllocPool::cleanup() {
     if (isInitialized()) {
-        this->svmMemoryManager->freeSVMAlloc(this->pool, true);
+        [[maybe_unused]] const auto status = this->svmMemoryManager->freeSVMAlloc(this->pool, true);
+        DEBUG_BREAK_IF(false == status);
         this->svmMemoryManager = nullptr;
         this->pool = nullptr;
         this->poolEnd = nullptr;
@@ -62,7 +77,7 @@ void UsmMemAllocPool::cleanup() {
 }
 
 bool UsmMemAllocPool::alignmentIsAllowed(size_t alignment) {
-    return alignment % chunkAlignment == 0;
+    return alignment % chunkAlignment == 0 && alignment <= poolAlignment;
 }
 
 bool UsmMemAllocPool::sizeIsAllowed(size_t size) {

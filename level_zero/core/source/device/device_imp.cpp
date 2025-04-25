@@ -1625,6 +1625,8 @@ void DeviceImp::releaseResources() {
 
     getNEODevice()->getMemoryManager()->freeGraphicsMemory(syncDispatchTokenAllocation);
 
+    getNEODevice()->cleanupUsmAllocationPool();
+
     this->bcsSplit.releaseResources();
 
     if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get()) {

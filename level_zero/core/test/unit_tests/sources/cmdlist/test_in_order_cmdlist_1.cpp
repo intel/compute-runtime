@@ -5488,8 +5488,9 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
     EXPECT_EQ(counterValue, inOrderExecInfo->getCounterValue());
     EXPECT_EQ(castToUint64(externalStorageAllocProperties.deviceAddress), inOrderExecInfo->getBaseDeviceAddress());
     EXPECT_NE(nullptr, inOrderExecInfo->getDeviceCounterAllocation());
-
-    auto lockedPtr = reinterpret_cast<uint64_t *>(ptrOffset(inOrderExecInfo->getDeviceCounterAllocation()->getLockedPtr(), sizeof(uint64_t)));
+    SvmAllocationData *deviceAlloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(devAddress));
+    auto offset = ptrDiff(devAddress, deviceAlloc->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
+    auto lockedPtr = reinterpret_cast<uint64_t *>(ptrOffset(inOrderExecInfo->getDeviceCounterAllocation()->getLockedPtr(), sizeof(uint64_t) + offset));
 
     EXPECT_EQ(inOrderExecInfo->getBaseHostAddress(), lockedPtr);
     EXPECT_EQ(inOrderExecInfo->getExternalHostAllocation(), inOrderExecInfo->getDeviceCounterAllocation());

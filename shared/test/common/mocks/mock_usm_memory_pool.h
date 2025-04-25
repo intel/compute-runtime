@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,15 @@ class MockUsmMemAllocPool : public UsmMemAllocPool {
     using UsmMemAllocPool::poolEnd;
     using UsmMemAllocPool::poolMemoryType;
     using UsmMemAllocPool::poolSize;
+
+    void cleanup() override {
+        ++cleanupCalled;
+        if (callBaseCleanup) {
+            UsmMemAllocPool::cleanup();
+        }
+    }
+    uint32_t cleanupCalled = 0u;
+    bool callBaseCleanup = true;
 };
 
 class MockUsmMemAllocPoolsManager : public UsmMemAllocPoolsManager {

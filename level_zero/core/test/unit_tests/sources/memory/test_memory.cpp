@@ -324,6 +324,11 @@ TEST_F(MemoryExportImportImplicitScalingTest,
 using MemoryTest = Test<DeviceFixture>;
 
 struct CompressionMemoryTest : public MemoryTest {
+    void SetUp() override {
+        debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        MemoryTest::SetUp();
+    }
     GraphicsAllocation *allocDeviceMem(size_t size) {
         ptr = nullptr;
         ze_result_t result = context->allocDeviceMem(device->toHandle(),
@@ -1331,11 +1336,16 @@ TEST_F(MemoryTest, givenProductWithNon48bForRTWhenAllocatingSharedMemoryAsRayTra
 TEST_F(MemoryTest, givenProductWith48bForRTWhenAllocatingDeviceMemoryAsRayTracingAllocationAddressIsIn48Bits) {
     size_t size = 10;
     size_t alignment = 1u;
-    void *ptr = reinterpret_cast<void *>(0x1234);
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
+    // do warmup alloc to make sure usm device pool is allocated before validation in mem mgr
+    {
+        void *ptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    }
+    void *ptr = reinterpret_cast<void *>(0x1234);
     ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
-
     rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
     deviceDesc.pNext = &rtDesc;
 
@@ -1515,6 +1525,13 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryThenAlignmentIsPassedCorrectlyAndMe
 
     auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
 
+    // do warmup alloc to make sure usm device pool is allocated before validation in mem mgr
+    {
+        void *ptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    }
+
     size_t alignment = 8 * MemoryConstants::megaByte;
     do {
         alignment >>= 1;
@@ -1665,7 +1682,6 @@ struct SVMAllocsManagerFreeExtMock : public NEO::SVMAllocsManager {
 
 struct FreeExtTests : public ::testing::Test {
     void SetUp() override {
-
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -2010,6 +2026,13 @@ TEST_F(FreeExtTests,
 
 TEST_F(FreeExtTests,
        whenAllocMemFailsWithDeferredFreeAllocationThenMemoryFreedAndRetrySucceeds) {
+    // does not make sense for usm pooling, disable for test
+    driverHandle->usmHostMemAllocPool.cleanup();
+    if (auto deviceUsmPool = neoDevice->getUsmMemAllocPool()) {
+        deviceUsmPool->cleanup();
+        neoDevice->usmMemAllocPool.reset(nullptr);
+    }
+
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2242,7 +2265,8 @@ struct ContextRelaxedSizeMock : public ContextImp {
 
 struct MemoryRelaxedSizeTests : public ::testing::Test {
     void SetUp() override {
-
+        // disable usm device pooling, used svm manager mock does not make svmData
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -2274,6 +2298,7 @@ struct MemoryRelaxedSizeTests : public ::testing::Test {
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     std::unique_ptr<ContextRelaxedSizeMock> context;
+    DebugManagerStateRestore restorer;
 };
 
 TEST_F(MemoryRelaxedSizeTests,
@@ -3729,6 +3754,11 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     }
 
     void TearDown() override {
+        // cleanup pool before restoring svm manager
+        for (auto device : driverHandle->devices) {
+            device->getNEODevice()->cleanupUsmAllocationPool();
+            device->getNEODevice()->resetUsmAllocationPool(nullptr);
+        }
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
         driverHandle->setMemoryManager(prevMemoryManager);
@@ -3858,6 +3888,12 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
+    // disable device usm pooling - allocation will not be pooled but pool will be initialized
+    for (auto device : driverHandle->devices) {
+        device->getNEODevice()->cleanupUsmAllocationPool();
+        device->getNEODevice()->resetUsmAllocationPool(nullptr);
+    }
+
     size_t size = 1024;
     size_t alignment = 1u;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -3898,6 +3934,12 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
     auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+
+    // disable device usm pooling - allocation will not be pooled but pool will be initialized
+    for (auto device : driverHandle->devices) {
+        device->getNEODevice()->cleanupUsmAllocationPool();
+        device->getNEODevice()->resetUsmAllocationPool(nullptr);
+    }
 
     size_t size = 1024;
     size_t alignment = 1u;
@@ -5567,6 +5609,11 @@ struct MemAllocMultiSubDeviceTests : public ::testing::Test {
     }
 
     void TearDown() override {
+        // cleanup pool before restoring svm manager
+        for (auto device : driverHandle->devices) {
+            device->getNEODevice()->cleanupUsmAllocationPool();
+            device->getNEODevice()->resetUsmAllocationPool(nullptr);
+        }
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }

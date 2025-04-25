@@ -124,6 +124,7 @@ struct DriverHandleImp : public DriverHandle {
     std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
     void initHostUsmAllocPool();
+    void initDeviceUsmAllocPool(NEO::Device &device);
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
 

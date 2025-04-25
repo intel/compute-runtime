@@ -206,9 +206,14 @@ bool Device::initializeCommonResources() {
         allocateDebugSurface(debugSurfaceSize);
     }
 
-    if (ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
-        getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
-        NEO::debugManager.flags.ExperimentalUSMAllocationReuseVersion.get() == 2) {
+    bool usmPoolManagerEnabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
+                                 getProductHelper().isDeviceUsmPoolAllocatorSupported();
+
+    if (NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
+        usmPoolManagerEnabled = NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
+    }
+
+    if (usmPoolManagerEnabled && NEO::debugManager.flags.ExperimentalUSMAllocationReuseVersion.get() == 2) {
 
         RootDeviceIndicesContainer rootDeviceIndices;
         rootDeviceIndices.pushUnique(getRootDeviceIndex());
@@ -249,6 +254,16 @@ bool Device::shouldLimitAllocationsReuse() const {
         return getMemoryManager()->shouldLimitAllocationsReuse();
     }
     return getMemoryManager()->getUsedLocalMemorySize(getRootDeviceIndex()) >= this->usmReuseInfo.getLimitAllocationsReuseThreshold();
+}
+
+void Device::resetUsmAllocationPool(UsmMemAllocPool *usmMemAllocPool) {
+    this->usmMemAllocPool.reset(usmMemAllocPool);
+}
+
+void Device::cleanupUsmAllocationPool() {
+    if (usmMemAllocPool) {
+        usmMemAllocPool->cleanup();
+    }
 }
 
 bool Device::initDeviceFully() {

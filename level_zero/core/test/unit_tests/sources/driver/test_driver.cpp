@@ -198,6 +198,7 @@ TEST_F(DriverVersionTest, givenExternalAllocatorWhenCallingGetExtensionPropertie
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseBindlessMode.set(1);
     NEO::debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
 
     auto hwInfo = *NEO::defaultHwInfo;
     NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);

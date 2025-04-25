@@ -38,10 +38,10 @@
 #include "shared/test/common/mocks/mock_os_interface.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
+#include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
-
 using namespace NEO;
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 namespace NEO {
@@ -2330,6 +2330,20 @@ TEST_F(DeviceTests, givenNewUsmPoolingEnabledWhenDeviceInitializedThenUsmMemAllo
         auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();
         EXPECT_EQ(nullptr, usmMemAllocPoolsManager);
     }
+    {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.ExperimentalUSMAllocationReuseVersion.set(2);
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(1);
+        auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+        auto mockProductHelper = new MockProductHelper;
+        executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
+        mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
+        UltDeviceFactory deviceFactory{1, 1, *executionEnvironment};
+        auto device = deviceFactory.rootDevices[0];
+        auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();
+        ASSERT_NE(nullptr, usmMemAllocPoolsManager);
+        EXPECT_FALSE(usmMemAllocPoolsManager->isInitialized());
+    }
 }
 TEST(DeviceWithoutAILTest, givenNoAILWhenCreateDeviceThenDeviceIsCreated) {
     DebugManagerStateRestore dbgRestorer;
@@ -2375,6 +2389,21 @@ TEST(Device, givenDeviceWhenGettingMicrosecondResolutionThenCorrectValueReturned
     uint32_t expectedMicrosecondResolution = 123;
     device->microsecondResolution = expectedMicrosecondResolution;
     EXPECT_EQ(device->getMicrosecondResolution(), expectedMicrosecondResolution);
+}
+
+TEST(Device, givenDeviceWhenCallingUsmAllocationPoolMethodsThenCorrectValueReturned) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    EXPECT_EQ(nullptr, device->getUsmMemAllocPool());
+    device->cleanupUsmAllocationPool();
+
+    MockUsmMemAllocPool *usmAllocPool = new MockUsmMemAllocPool;
+    device->resetUsmAllocationPool(usmAllocPool);
+    EXPECT_EQ(usmAllocPool, device->getUsmMemAllocPool());
+    usmAllocPool->callBaseCleanup = false;
+    EXPECT_EQ(0u, usmAllocPool->cleanupCalled);
+    device->cleanupUsmAllocationPool();
+    EXPECT_EQ(1u, usmAllocPool->cleanupCalled);
 }
 
 TEST(GroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVectorPerEachProductFamilySortedOverGpuTypeAndProductFamily) {

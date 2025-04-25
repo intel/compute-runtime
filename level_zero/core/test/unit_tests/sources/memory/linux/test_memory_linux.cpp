@@ -171,6 +171,7 @@ struct MemoryExportImportObtainFdTest : public ::testing::Test {
     void SetUp() override {
         DebugManagerStateRestore restorer;
         debugManager.flags.EnableImplicitScaling.set(1);
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0); // not compatible with MemoryManagerIpcImplicitScalingObtainFdMock
 
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
@@ -604,7 +605,7 @@ struct DriverHandleObtaindFdMock : public L0::DriverHandleImp {
 struct MemoryObtainFdTest : public ::testing::Test {
     void SetUp() override {
         DebugManagerStateRestore restorer;
-
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0); // not compatible with MemoryManagerIpcObtainFdMock
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();

@@ -42,6 +42,7 @@ class SipExternalLib;
 class SubDevice;
 class SyncBufferHandler;
 class UsmMemAllocPoolsManager;
+class UsmMemAllocPool;
 enum class EngineGroupType : uint32_t;
 struct PhysicalDevicePciBusInfo;
 
@@ -208,6 +209,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     UsmMemAllocPoolsManager *getUsmMemAllocPoolsManager() {
         return deviceUsmMemAllocPoolsManager.get();
     }
+    UsmMemAllocPool *getUsmMemAllocPool() {
+        return usmMemAllocPool.get();
+    }
     MOCKABLE_VIRTUAL void stopDirectSubmissionAndWaitForCompletion();
     bool isAnyDirectSubmissionEnabled() const;
     bool isAnyDirectSubmissionLightEnabled() const;
@@ -252,6 +256,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     }
 
     UsmReuseInfo usmReuseInfo;
+
+    void resetUsmAllocationPool(UsmMemAllocPool *usmMemAllocPool);
+    void cleanupUsmAllocationPool();
 
   protected:
     Device() = delete;
@@ -331,6 +338,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     ISAPoolAllocator isaPoolAllocator;
     TimestampPoolAllocator deviceTimestampPoolAllocator;
     std::unique_ptr<UsmMemAllocPoolsManager> deviceUsmMemAllocPoolsManager;
+    std::unique_ptr<UsmMemAllocPool> usmMemAllocPool;
 
     std::atomic_uint32_t bufferPoolCount = 0u;
     uint32_t maxBufferPoolCount = 0u;

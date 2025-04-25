@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,11 +26,26 @@ class UsmMemAllocPool {
     using AllocationsInfoStorage = BaseSortedPointerWithValueVector<AllocationInfo>;
 
     UsmMemAllocPool() = default;
+    UsmMemAllocPool(const RootDeviceIndicesContainer &rootDeviceIndices,
+                    const std::map<uint32_t, NEO::DeviceBitfield> &deviceBitFields,
+                    Device *device,
+                    InternalMemoryType poolMemoryType,
+                    size_t poolSize,
+                    size_t minServicedSize,
+                    size_t maxServicedSize) : rootDeviceIndices(rootDeviceIndices),
+                                              deviceBitFields(deviceBitFields),
+                                              device(device),
+                                              poolMemoryType(poolMemoryType),
+                                              poolSize(poolSize),
+                                              minServicedSize(minServicedSize),
+                                              maxServicedSize(maxServicedSize){};
+    virtual ~UsmMemAllocPool() = default;
     bool initialize(SVMAllocsManager *svmMemoryManager, const UnifiedMemoryProperties &memoryProperties, size_t poolSize, size_t minServicedSize, size_t maxServicedSize);
     bool initialize(SVMAllocsManager *svmMemoryManager, void *ptr, SvmAllocationData *svmData, size_t minServicedSize, size_t maxServicedSize);
+    bool ensureInitialized(SVMAllocsManager *svmMemoryManager);
     bool isInitialized() const;
     size_t getPoolSize() const;
-    void cleanup();
+    MOCKABLE_VIRTUAL void cleanup();
     static bool alignmentIsAllowed(size_t alignment);
     static bool flagsAreAllowed(const UnifiedMemoryProperties &memoryProperties);
     static double getPercentOfFreeMemoryForRecycling(InternalMemoryType memoryType);
@@ -45,16 +60,20 @@ class UsmMemAllocPool {
     size_t getOffsetInPool(const void *ptr) const;
 
     static constexpr auto chunkAlignment = 512u;
+    static constexpr auto poolAlignment = MemoryConstants::pageSize2M;
 
   protected:
-    size_t poolSize{};
     std::unique_ptr<HeapAllocator> chunkAllocator;
     void *pool{};
     void *poolEnd{};
     SVMAllocsManager *svmMemoryManager{};
     AllocationsInfoStorage allocations;
     std::mutex mtx;
+    RootDeviceIndicesContainer rootDeviceIndices;
+    std::map<uint32_t, NEO::DeviceBitfield> deviceBitFields;
+    Device *device;
     InternalMemoryType poolMemoryType;
+    size_t poolSize{};
     size_t minServicedSize;
     size_t maxServicedSize;
 };

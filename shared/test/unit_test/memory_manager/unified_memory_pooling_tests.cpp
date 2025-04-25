@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,7 @@ TEST_F(UnifiedMemoryPoolingStaticTest, givenUsmAllocPoolWhenCallingStaticMethods
     EXPECT_TRUE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::chunkAlignment));
     EXPECT_TRUE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::chunkAlignment * 2));
     EXPECT_FALSE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::chunkAlignment / 2));
+    EXPECT_FALSE(UsmMemAllocPool::alignmentIsAllowed(UsmMemAllocPool::poolAlignment + UsmMemAllocPool::chunkAlignment));
 
     const RootDeviceIndicesContainer rootDeviceIndices;
     const std::map<uint32_t, DeviceBitfield> deviceBitfields;
@@ -53,10 +54,28 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingIsInitializedThenRe
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M, rootDeviceIndices, deviceBitfields);
-    unifiedMemoryProperties.device = device;
 
     EXPECT_TRUE(usmMemAllocPool.initialize(svmManager.get(), unifiedMemoryProperties, 1 * MemoryConstants::megaByte, 0u, 1 * MemoryConstants::megaByte));
     EXPECT_TRUE(usmMemAllocPool.isInitialized());
+
+    usmMemAllocPool.cleanup();
+    EXPECT_FALSE(usmMemAllocPool.isInitialized());
+    EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(reinterpret_cast<void *>(0x1), true));
+}
+
+TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingEnsureInitializedThenReturnCorrectValue) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+
+    UsmMemAllocPool usmMemAllocPool(rootDeviceIndices, deviceBitfields, device, InternalMemoryType::deviceUnifiedMemory, 1 * MemoryConstants::megaByte, 0u, 1 * MemoryConstants::megaByte);
+    EXPECT_FALSE(usmMemAllocPool.isInitialized());
+
+    EXPECT_TRUE(usmMemAllocPool.ensureInitialized(svmManager.get()));
+
+    EXPECT_TRUE(usmMemAllocPool.isInitialized());
+
+    EXPECT_TRUE(usmMemAllocPool.ensureInitialized(svmManager.get()));
 
     usmMemAllocPool.cleanup();
     EXPECT_FALSE(usmMemAllocPool.isInitialized());
