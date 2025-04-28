@@ -228,6 +228,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     // PMT will return energy counter in Q20 format(fixed point representation) where first 20 bits(from LSB) represent decimal part
     // and remaining integral part which is converted into joule by division with 1048576(2^20) and then converted into microjoules
     pEnergy->energy = (energyCounter / fixedPointToJoule) * convertJouleToMicroJoule;
+    pEnergy->timestamp = SysmanDevice::getSysmanTimestamp();
 
     return ZE_RESULT_SUCCESS;
 }

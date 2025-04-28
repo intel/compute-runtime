@@ -564,7 +564,7 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenHwMonDoesNotExistAndTelemDataNotAvaila
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandlesWithTelemetrySupportNotAvailableButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode) {
     zes_power_energy_counter_t energyCounter = {};
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
-    pLinuxPowerImp->isTelemetrySupportAvailable = true;
+    pLinuxPowerImp->isTelemetrySupportAvailable = false;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
     EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
 }
@@ -586,14 +586,6 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenSettingPowerEnergy
     for (auto handle : handles) {
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetEnergyThreshold(handle, threshold));
     }
-}
-
-TEST_F(SysmanDevicePowerFixtureXe, GivenKmdInterfaceWhenGettingSysFsFilenamesForPowerForXeVersionThenProperPathsAreReturned) {
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getSysmanProductHelper());
-    EXPECT_STREQ("energy1_input", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageEnergyCounterNode, 0, false).c_str());
-    EXPECT_STREQ("power1_rated_max", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageDefaultPowerLimit, 0, false).c_str());
-    EXPECT_STREQ("power1_max", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimit, 0, false).c_str());
-    EXPECT_STREQ("power1_max_interval", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimitInterval, 0, false).c_str());
 }
 
 } // namespace ult

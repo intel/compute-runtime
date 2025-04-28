@@ -19,8 +19,7 @@ constexpr uint32_t powerHandleComponentCount = 1u;
 
 static int mockReadLinkSuccess(const char *path, char *buf, size_t bufsize) {
     std::map<std::string, std::string> fileNameLinkMap = {
-        {sysfsPathTelem1, realPathTelem1},
-    };
+        {sysfsPathTelem1, realPathTelem1}};
     auto it = fileNameLinkMap.find(std::string(path));
     if (it != fileNameLinkMap.end()) {
         std::memcpy(buf, it->second.c_str(), it->second.size());
@@ -43,7 +42,7 @@ static int mockOpenSuccess(const char *pathname, int flags) {
         returnValue = 5;
     } else if ((strPathName == telem1TelemFileName) || (strPathName == telem2TelemFileName) || (strPathName == telem3TelemFileName)) {
         returnValue = 6;
-    } else if (strPathName.find(energyCounterNode) != std::string::npos) {
+    } else if (strPathName.find(packageEnergyCounterNode) != std::string::npos) {
         returnValue = 7;
     }
     return returnValue;
@@ -160,8 +159,8 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0x4f9302";
+        constexpr uint64_t telem1Offset = 0;
+        constexpr std::string_view validGuid = "0x4f9302";
         if (fd == 4) {
             memcpy(buf, &telem1Offset, count);
         } else if (fd == 5) {
@@ -178,13 +177,12 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetryOffsetReadFailsAndSysfsNodeReadAlsoFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetrySupportAvailableAndTelemetryOffsetReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        std::string invalidGuid = "0x4f9302";
         if (fd == 4) {
             count = -1;
         }
@@ -204,8 +202,8 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string invalidGuid = "0xABCDEFG";
+        constexpr uint64_t telem1Offset = 0;
+        constexpr std::string_view invalidGuid = "0xABCDEFG";
         if (fd == 4) {
             memcpy(buf, &telem1Offset, count);
         } else if (fd == 5) {
@@ -228,8 +226,8 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySuppo
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0x4f9302";
+        constexpr uint64_t telem1Offset = 0;
+        constexpr std::string_view validGuid = "0x4f9302";
 
         if (fd == 4) {
             memcpy(buf, &telem1Offset, count);
@@ -256,6 +254,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySuppo
         EXPECT_EQ(ZES_POWER_DOMAIN_PACKAGE, extProperties.domain);
 
         zes_power_energy_counter_t energyCounter = {};
+        uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
 
         // Calculate output energyCounter value
@@ -263,10 +262,11 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySuppo
         uint64_t outputEnergyCounter = static_cast<uint64_t>((setEnergyCounter / fixedPointToJoule) * convertJouleToMicroJoule);
 
         EXPECT_EQ(energyCounter.energy, outputEnergyCounter);
+        EXPECT_GE(energyCounter.timestamp, timeStampInitial);
     }
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidSubdevicePowerHandleForPackagePackageDomainWithTelemetrySupportNotAvailableAndSysfsNodeReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsPVC) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidSubdevicePowerHandleForPackageDomainWithTelemetrySupportNotAvailableAndSysfsNodeReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsPVC) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkFailure);
     pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     zes_power_energy_counter_t energyCounter = {};
@@ -495,6 +495,50 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenWritingToSustai
 
 using SysmanProductHelperPowerMultiDeviceTest = SysmanDevicePowerMultiDeviceFixture;
 constexpr uint32_t powerHandleComponentCountMultiDevice = 3u;
+
+HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenValidPowerHandlesWithTelemetrySupportAvailableButNoTelemDataWhenGettingPowerEnergyCounterThenEnergyCounterIsRetrievedThroughSysfsNode, IsPVC) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        constexpr uint64_t telem1Offset = 0;
+        constexpr std::string_view validGuid = "0xb15a0edd";
+        if (fd == 4) {
+            memcpy(buf, &telem1Offset, count);
+        } else if (fd == 5) {
+            memcpy(buf, validGuid.data(), count);
+        }
+        return count;
+    });
+
+    auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+
+        properties.pNext = &extProperties;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_EQ(ZES_POWER_DOMAIN_PACKAGE, extProperties.domain);
+
+        zes_power_energy_counter_t energyCounter = {};
+        const uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
+
+        if (!properties.onSubdevice) {
+            EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+        } else if (properties.subdeviceId == 0u) {
+            EXPECT_EQ(energyCounter.energy, expectedEnergyCounterTile0);
+        } else if (properties.subdeviceId == 1u) {
+            EXPECT_EQ(energyCounter.energy, expectedEnergyCounterTile1);
+        }
+
+        EXPECT_GE(energyCounter.timestamp, timeStampInitial);
+    }
+}
 
 HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenSetPowerLimitsWhenGettingPowerLimitsThenLimitsSetEarlierAreRetrieved, IsXeHpOrXeHpcOrXeHpgCore) {
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);

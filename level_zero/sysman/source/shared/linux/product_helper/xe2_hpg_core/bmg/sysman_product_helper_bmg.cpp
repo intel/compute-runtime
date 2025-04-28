@@ -17,11 +17,29 @@ constexpr static auto gfxProduct = IGFX_BMG;
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 
+// XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number.
+// This vector defines the predefined value for each integer represented by the index of the vector.
+static const std::vector<double> indexToXtalClockFrequecyMap = {24, 19.2, 38.4, 25};
+
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
     {"0x1e2f8200", // BMG PUNIT rev 1
-     {{"VRAM_BANDWIDTH", 56}}},
+     {{"XTAL_CLK_FREQUENCY", 4},
+      {"VRAM_BANDWIDTH", 56},
+      {"XTAL_COUNT", 1024},
+      {"VCCGT_ENERGY_ACCUMULATOR", 1628},
+      {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
+    {"0x1e2f8201", // BMG PUNIT rev 2
+     {{"XTAL_CLK_FREQUENCY", 4},
+      {"ACCUM_PACKAGE_ENERGY", 48},
+      {"ACCUM_PSYS_ENERGY", 52},
+      {"VRAM_BANDWIDTH", 56},
+      {"XTAL_COUNT", 1024},
+      {"VCCGT_ENERGY_ACCUMULATOR", 1628},
+      {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
     {"0x5e2f8210", // BMG OOBMSM Rev 15
-     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 164},
+     {{"PACKAGE_ENERGY_STATUS_SKU_0_0_0_PCU", 136},
+      {"PLATFORM_ENERGY_STATUS", 140},
+      {"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 164},
       {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", 168},
       {"reg_PCIESS_rx_bytecount_lsb", 280},
       {"reg_PCIESS_rx_bytecount_msb", 276},
@@ -275,7 +293,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"GDDR5_CH1_GT_64B_WR_REQ_UPPER", 1280},
       {"GDDR5_CH1_GT_64B_WR_REQ_LOWER", 1284}}},
     {"0x5e2f8211", // BMG OOBMSM Rev 16
-     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 164},
+     {{"PACKAGE_ENERGY_STATUS_SKU_0_0_0_PCU", 136},
+      {"PLATFORM_ENERGY_STATUS", 140},
+      {"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 164},
       {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", 168},
       {"reg_PCIESS_rx_bytecount_lsb", 280},
       {"reg_PCIESS_rx_bytecount_msb", 284},
@@ -962,6 +982,95 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGroupEngineBusynessFromSingleE
     uint64_t engineCount = fdList.size() / 2;
     pStats->activeTime = activeTime / engineCount;
     pStats->timestamp = timeStamp / engineCount;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subdeviceId) {
+
+    const std::unordered_map<zes_power_domain_t, std::vector<std::string>> powerDomainToKeyMap = {
+        {ZES_POWER_DOMAIN_PACKAGE, {"ACCUM_PACKAGE_ENERGY", "PACKAGE_ENERGY_STATUS_SKU_0_0_0_PCU"}},
+        {ZES_POWER_DOMAIN_CARD, {"ACCUM_PSYS_ENERGY", "PLATFORM_ENERGY_STATUS"}},
+        {ZES_POWER_DOMAIN_MEMORY, {"VCCDDR_ENERGY_ACCUMULATOR"}},
+        {ZES_POWER_DOMAIN_GPU, {"VCCGT_ENERGY_ACCUMULATOR"}}};
+
+    auto powerDomainToKeyMapIter = powerDomainToKeyMap.find(powerDomain);
+    if (powerDomainToKeyMapIter == powerDomainToKeyMap.end()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<uint32_t, std::string> telemNodes = {};
+    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
+    if (telemNodes.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap = {};
+    std::unordered_map<std::string, std::string> keyTelemInfoMap = {};
+
+    // Iterate through all the TelemNodes to find both OOBMSM and PUNIT guids along with their keyOffsetMap
+    for (const auto &telemNode : telemNodes) {
+        std::string telemNodeDir = telemNode.second;
+
+        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+            continue;
+        }
+
+        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
+        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
+            continue;
+        }
+
+        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
+        for (auto it = tempKeyOffsetMap.begin(); it != tempKeyOffsetMap.end(); it++) {
+            keyOffsetMap[it->first] = it->second;
+            keyTelemInfoMap[it->first] = telemNodeDir;
+        }
+    }
+
+    if (keyOffsetMap.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    // Energy Counter calculation
+    uint32_t energyCounter = 0;
+    bool isReadValueSuccess = false;
+    for (const auto &key : powerDomainToKeyMapIter->second) {
+        if (PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter)) {
+            isReadValueSuccess = true;
+            break;
+        }
+    }
+
+    if (!isReadValueSuccess) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    // Energy counter is in U(18.14) format. Need to convert it into uint64_t and then in MicroJoule
+    const uint32_t energyIntegerPart = static_cast<uint32_t>(energyCounter >> 14);
+    const uint32_t energyDecimalBits = static_cast<uint32_t>((energyCounter & 0x3FFF));
+    const double energyDecimalPart = static_cast<double>(energyDecimalBits) / (1 << 14);
+    const double energyInJoules = static_cast<double>(energyIntegerPart + energyDecimalPart);
+    pEnergy->energy = static_cast<uint64_t>((energyInJoules * convertJouleToMicroJoule));
+
+    // Timestamp calcuation
+    uint64_t timestamp64 = 0;
+    std::string key = "XTAL_COUNT";
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestamp64)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint32_t frequency = 0;
+    key = "XTAL_CLK_FREQUENCY";
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, frequency)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    double timestamp = timestamp64 / indexToXtalClockFrequecyMap[frequency & 0x2];
+    pEnergy->timestamp = static_cast<uint64_t>(timestamp);
 
     return ZE_RESULT_SUCCESS;
 }
