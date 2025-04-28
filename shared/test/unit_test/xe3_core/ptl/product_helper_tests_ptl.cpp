@@ -89,3 +89,7 @@ PTLTEST_F(PtlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideC
         }
     }
 }
+
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenCallIsCachingOnCpuAvailableThenFalseIsReturned) {
+    EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
+}
