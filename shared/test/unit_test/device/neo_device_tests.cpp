@@ -2017,7 +2017,7 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenReso
 
         EXPECT_NE(nullptr, secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
 
-        if (gfxCoreHelper.isFenceAllocationRequired(hwInfo)) {
+        if (gfxCoreHelper.isFenceAllocationRequired(hwInfo, device->getRootDeviceEnvironment().getHelper<ProductHelper>())) {
             EXPECT_NE(nullptr, secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
         }
         if (device->getPreemptionMode() == PreemptionMode::MidThread) {

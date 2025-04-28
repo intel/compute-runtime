@@ -884,9 +884,10 @@ bool CommandStreamReceiver::createWorkPartitionAllocation(const Device &device) 
 }
 
 bool CommandStreamReceiver::createGlobalFenceAllocation() {
-    auto &gfxCoreHelper = getGfxCoreHelper();
-    auto &hwInfo = peekHwInfo();
-    if (!gfxCoreHelper.isFenceAllocationRequired(hwInfo)) {
+    const auto &gfxCoreHelper = this->getGfxCoreHelper();
+    const auto &hwInfo = this->peekHwInfo();
+    const auto &productHelper = this->getProductHelper();
+    if (!gfxCoreHelper.isFenceAllocationRequired(hwInfo, productHelper)) {
         return true;
     }
 

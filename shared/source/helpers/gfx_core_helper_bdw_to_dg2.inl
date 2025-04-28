@@ -9,7 +9,7 @@
 
 namespace NEO {
 template <typename Family>
-bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
     return false;
 }
 

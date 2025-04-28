@@ -11,7 +11,7 @@
 namespace NEO {
 
 template <typename Family>
-bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
     if ((debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 1) ||
         (debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 1) ||
         (debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 1) ||

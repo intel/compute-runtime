@@ -63,7 +63,7 @@ class GfxCoreHelper {
     virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const = 0;
-    virtual bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isFenceAllocationRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool hvAlign4Required() const = 0;
     virtual bool isBufferSizeSuitableForCompression(const size_t size) const = 0;
@@ -280,7 +280,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const override;
 
-    bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const override;
+    bool isFenceAllocationRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const override;
 
     bool makeResidentBeforeLockNeeded(bool precondition) const override;
 

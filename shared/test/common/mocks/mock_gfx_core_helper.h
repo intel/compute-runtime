@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace NEO {
 template <typename GfxFamily>
 class MockGfxCoreHelperHw : public GfxCoreHelperHw<GfxFamily> {
   public:
-    bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const override {
+    bool isFenceAllocationRequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const override {
         return true;
     }
     void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const override {
