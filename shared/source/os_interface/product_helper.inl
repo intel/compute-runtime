@@ -435,6 +435,11 @@ bool ProductHelperHw<gfxProduct>::areSecondaryContextsSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isPrimaryContextsAggregationSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     bool dcFlushAllowed = GfxProduct::isDcFlushAllowed && !this->mitigateDcFlush();

@@ -70,6 +70,7 @@ class ProductHelperHw : public ProductHelper {
     bool isDisableScratchPagesSupported() const override;
     bool isDisableScratchPagesRequiredForDebugger() const override;
     bool areSecondaryContextsSupported() const override;
+    bool isPrimaryContextsAggregationSupported() const override;
     bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;
     bool isDcFlushAllowed() const override;
     bool isDcFlushMitigated() const override;

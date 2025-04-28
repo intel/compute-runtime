@@ -1172,3 +1172,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenQueryIsPostImageWriteFlushRequ
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsExposingSubdevicesAllowedThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isExposingSubdevicesAllowed());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingIsPrimaryContextsAggregationSupportedThenReturnCorrectValue) {
+    EXPECT_FALSE(productHelper->isPrimaryContextsAggregationSupported());
+}
