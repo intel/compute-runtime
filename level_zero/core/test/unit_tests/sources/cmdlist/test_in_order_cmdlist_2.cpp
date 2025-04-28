@@ -1759,15 +1759,6 @@ struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListFixture 
     }
 };
 
-HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetWhenCreatingEventThenDontCreateTimestampNode, MatchAny) {
-    NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.set(0);
-    auto eventPool = createEvents<FamilyType>(1, true);
-    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
-    EXPECT_TRUE(events[0]->inOrderTimestampNode.empty());
-    EXPECT_NE(nullptr, events[0]->eventPoolAllocation);
-}
-
 HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenSignalScopeEventWhenSignalEventIsCalledThenProgramPipeControl, MatchAny) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto eventPool = createEvents<FamilyType>(2, false);

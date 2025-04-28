@@ -4316,7 +4316,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             }
         }
 
-        if (signalEvent->isUsingContextEndOffset() && Event::standaloneInOrderTimestampAllocationEnabled()) {
+        if (signalEvent->isUsingContextEndOffset()) {
             auto tag = device->getInOrderTimestampAllocator()->getTag();
 
             this->commandContainer.addToResidencyContainer(tag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex()));

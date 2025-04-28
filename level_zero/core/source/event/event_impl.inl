@@ -135,7 +135,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         .ipcPool = eventPool->isIpcPoolFlagSet(),
     };
 
-    if (eventPool->getCounterBasedFlags() != 0 && standaloneInOrderTimestampAllocationEnabled()) {
+    if (eventPool->getCounterBasedFlags() != 0) {
         eventDescriptor.eventPoolAllocation = nullptr;
     }
 

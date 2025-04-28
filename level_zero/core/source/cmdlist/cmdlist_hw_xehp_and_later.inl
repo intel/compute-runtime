@@ -332,7 +332,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (inOrderExecSignalRequired) {
             if (!compactEvent || this->asMutable() || !compactEvent->isCounterBased() || compactEvent->isUsingContextEndOffset()) {
                 if (inOrderNonWalkerSignalling) {
-                    if (!eventForInOrderExec->getAllocation(this->device) && Event::standaloneInOrderTimestampAllocationEnabled()) {
+                    if (!eventForInOrderExec->getAllocation(this->device)) {
                         eventForInOrderExec->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag(), this->partitionCount);
                     }
                     if (this->asMutable() || !eventForInOrderExec->isCounterBased()) {

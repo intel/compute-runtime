@@ -133,8 +133,6 @@ struct Event : _ze_event_handle_t {
         implicitlyDisabled
     };
 
-    static bool standaloneInOrderTimestampAllocationEnabled();
-
     template <typename TagSizeT>
     static Event *create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device);
 

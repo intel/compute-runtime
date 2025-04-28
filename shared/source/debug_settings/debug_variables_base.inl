@@ -300,7 +300,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceSynchronizedDispatchMode, -1, "-1: default,
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSipClass, -1, "-1: default, otherwise based on values from enum class SipClassType (init, builtins, rawBinaryFromFile, hexadecimalHeaderFile, externalLib)")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceScratchAndMTPBufferSizeMode, -1, "-1: default, 0: Full, 1: Min. BMG+: Reduce required memory for scratch and MTP buffers on CCS context")
 DECLARE_DEBUG_VARIABLE(int32_t, CFEStackIDControl, -1, "Set Stack ID Control in CFE_STATE on Xe2+, -1 - do not set")
-DECLARE_DEBUG_VARIABLE(int32_t, StandaloneInOrderTimestampAllocationEnabled, -1, "-1: default, 0: disabled, 1: enabled. If enabled, use internal allocations, instead of Event pool for timestamps")
 DECLARE_DEBUG_VARIABLE(int32_t, ClearStandaloneInOrderTimestampAllocation, -1, "-1: default, 0: disabled, 1: enabled. If clear allocation before sending to GPU")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampPoolAllocator, -1, "-1: default, 0: disabled, 1: enabled. If enabled, timestamp allocations are pooled and reused across multiple event pools")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceComputeWalkerPostSyncFlushWithWrite, -1, "-1: ignore. >=0: Force PostSync cache flush and override postSync immediate write address to given value")
