@@ -219,8 +219,12 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToTrueWhenCrea
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(1);
 
-    if (heaplessStateInit || pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+    if (heaplessStateInit) {
         GTEST_SKIP();
+    }
+
+    if (!pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation()) {
+        pDevice->getDefaultEngine().commandStreamReceiver->createGlobalFenceAllocation();
     }
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
@@ -232,6 +236,8 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToTrueWhenCrea
 
     EXPECT_EQ(directSubmission.systemMemoryFenceAddressSet, directSubmission.globalFenceAllocation != nullptr);
     EXPECT_TRUE(directSubmission.miMemFenceRequired);
+
+    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver)->cleanupResources();
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,

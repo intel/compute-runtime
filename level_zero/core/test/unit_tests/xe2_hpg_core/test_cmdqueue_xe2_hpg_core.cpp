@@ -21,41 +21,6 @@ namespace ult {
 
 using CommandQueueCommandsXe2HpgCore = Test<DeviceFixture>;
 
-HWTEST2_F(CommandQueueCommandsXe2HpgCore, givenCommandQueueWhenExecutingCommandListsThenStateSystemMemFenceAddressCmdIsGenerated, IsXe2HpgCore) {
-    if (neoDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP();
-    }
-
-    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
-    ze_command_queue_desc_t desc = {};
-    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-
-    auto commandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, csr, &desc);
-    commandQueue->initialize(false, false, false);
-
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
-    auto commandListHandle = commandList->toHandle();
-    commandList->close();
-
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
-
-    auto globalFence = csr->getGlobalFenceAllocation();
-
-    auto used = commandQueue->commandStream.getUsed();
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, commandQueue->commandStream.getCpuBase(), used));
-
-    auto itor = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itor);
-
-    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itor);
-    EXPECT_EQ(globalFence->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
-
-    commandQueue->destroy();
-}
-
 HWTEST2_F(CommandQueueCommandsXe2HpgCore, givenCommandQueueWhenExecutingCommandListsForTheSecondTimeThenStateSystemMemFenceAddressCmdIsNotGenerated, IsXe2HpgCore) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     ze_command_queue_desc_t desc = {};

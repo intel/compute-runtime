@@ -24,7 +24,9 @@ bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwIn
         (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0)) {
         return false;
     }
-    return !hwInfo.capabilityTable.isIntegratedDevice;
+    return productHelper.isGlobalFenceInCommandStreamRequired(hwInfo) ||
+           productHelper.isGlobalFenceInDirectSubmissionRequired(hwInfo) ||
+           productHelper.isGlobalFenceInPostSyncRequired(hwInfo);
 }
 
 template <typename Family>
