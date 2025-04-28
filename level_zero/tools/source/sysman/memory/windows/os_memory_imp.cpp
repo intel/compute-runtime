@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,13 @@
 
 #include "level_zero/tools/source/sysman/memory/windows/os_memory_imp.h"
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
+
+#include <Windows.h>
 
 template <typename I>
 std::string intToHex(I w, size_t hexLength = sizeof(I) << 1) {
@@ -47,6 +50,8 @@ bool WddmMemoryImp::isMemoryModuleSupported() {
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
+    bool isIntegratedDevice = pDevice->getHwInfo().capabilityTable.isIntegratedDevice;
+
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::MemoryComponent;
     request.requestId = KmdSysman::Requests::Memory::NumMemoryDomains;
@@ -56,6 +61,10 @@ bool WddmMemoryImp::isMemoryModuleSupported() {
     }
 
     memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+
+    if (!value && isIntegratedDevice) {
+        return true;
+    }
 
     return (value > 0);
 }
@@ -68,6 +77,21 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
 
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subdeviceId;
+    pProperties->type = ZES_MEM_TYPE_FORCE_UINT32;
+    pProperties->physicalSize = 0;
+    pProperties->numChannels = -1;
+    pProperties->busWidth = -1;
+    pProperties->location = ZES_MEM_LOC_FORCE_UINT32;
+
+    bool isIntegratedDevice = pDevice->getHwInfo().capabilityTable.isIntegratedDevice;
+    if (isIntegratedDevice) {
+        pProperties->location = ZES_MEM_LOC_SYSTEM;
+        ULONGLONG installedMemoryKb = 0;
+        if (GetPhysicallyInstalledSystemMemory(&installedMemoryKb)) {
+            pProperties->physicalSize = installedMemoryKb * 1024;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::MemoryComponent;
@@ -93,7 +117,6 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
         return status;
     }
 
-    pProperties->type = ZES_MEM_TYPE_FORCE_UINT32;
     if (vResponses[0].returnCode == KmdSysman::Success) {
         memcpy_s(&retValu32, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
         switch (retValu32) {
@@ -139,32 +162,25 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
         }
     }
 
-    pProperties->physicalSize = 0;
     if (vResponses[1].returnCode == KmdSysman::Success) {
         memcpy_s(&retValu64, sizeof(uint64_t), vResponses[1].dataBuffer, sizeof(uint64_t));
         pProperties->physicalSize = retValu64;
     }
 
-    pProperties->numChannels = -1;
     if (vResponses[2].returnCode == KmdSysman::Success) {
         memcpy_s(&retValu32, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
         pProperties->numChannels = retValu32;
     }
 
-    pProperties->location = ZES_MEM_LOC_FORCE_UINT32;
     if (vResponses[3].returnCode == KmdSysman::Success) {
         memcpy_s(&retValu32, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
         pProperties->location = static_cast<zes_mem_loc_t>(retValu32);
     }
 
-    pProperties->busWidth = -1;
     if (vResponses[4].returnCode == KmdSysman::Success) {
         memcpy_s(&retValu32, sizeof(uint32_t), vResponses[4].dataBuffer, sizeof(uint32_t));
         pProperties->busWidth = retValu32;
     }
-
-    pProperties->subdeviceId = 0;
-    pProperties->onSubdevice = false;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -229,14 +245,21 @@ ze_result_t WddmMemoryImp::getState(zes_mem_state_t *pState) {
     request.componentId = KmdSysman::Component::MemoryComponent;
     request.requestId = KmdSysman::Requests::Memory::CurrentTotalAllocableMem;
 
+    bool isIntegratedDevice = pDevice->getHwInfo().capabilityTable.isIntegratedDevice;
+
     status = pKmdSysManager->requestSingle(request, response);
 
-    if (status != ZE_RESULT_SUCCESS) {
+    if (status != ZE_RESULT_SUCCESS && !isIntegratedDevice) {
         return status;
     }
 
     memcpy_s(&retValu64, sizeof(uint64_t), response.dataBuffer, sizeof(uint64_t));
-    pState->size = retValu64;
+
+    if (isIntegratedDevice && pKmdSysManager->GetWddmAccess()) {
+        pState->size = pKmdSysManager->GetWddmAccess()->getSystemSharedMemory();
+    } else {
+        pState->size = retValu64;
+    }
 
     if (!pdhInitialized) {
         if (pdhOpenQuery && pdhOpenQuery(NULL, NULL, &gpuQuery) == ERROR_SUCCESS) {
@@ -245,14 +268,19 @@ ze_result_t WddmMemoryImp::getState(zes_mem_state_t *pState) {
     }
 
     if (!pdhCounterAdded && pdhAddEnglishCounterW && pKmdSysManager->GetWddmAccess()) {
-        std::wstring counterStr = constructCounterStr(L"GPU Adapter Memory", L"Dedicated Usage", pKmdSysManager->GetWddmAccess()->getAdapterLuid(), 0);
-        pdhCounterAdded = (pdhAddEnglishCounterW(gpuQuery, counterStr.c_str(), NULL, &dedicatedUsage) == ERROR_SUCCESS);
+        if (isIntegratedDevice) {
+            std::wstring counterStr = constructCounterStr(L"GPU Adapter Memory", L"Shared Usage", pKmdSysManager->GetWddmAccess()->getAdapterLuid(), 0);
+            pdhCounterAdded = (pdhAddEnglishCounterW(gpuQuery, counterStr.c_str(), NULL, &usage) == ERROR_SUCCESS);
+        } else {
+            std::wstring counterStr = constructCounterStr(L"GPU Adapter Memory", L"Dedicated Usage", pKmdSysManager->GetWddmAccess()->getAdapterLuid(), 0);
+            pdhCounterAdded = (pdhAddEnglishCounterW(gpuQuery, counterStr.c_str(), NULL, &usage) == ERROR_SUCCESS);
+        }
     }
 
     if (pdhCounterAdded && pdhCollectQueryData && pdhGetFormattedCounterValue) {
         PDH_FMT_COUNTERVALUE counterVal;
         pdhCollectQueryData(gpuQuery);
-        pdhGetFormattedCounterValue(dedicatedUsage, PDH_FMT_LARGE, NULL, &counterVal);
+        pdhGetFormattedCounterValue(usage, PDH_FMT_LARGE, NULL, &counterVal);
         retValu64 = counterVal.largeValue;
         pState->free = pState->size - retValu64;
     }
