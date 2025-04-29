@@ -14,7 +14,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
-#include "shared/source/os_interface/linux/xe/xedrm.h"
+#include "shared/source/os_interface/linux/xe/xedrm_prelim.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
