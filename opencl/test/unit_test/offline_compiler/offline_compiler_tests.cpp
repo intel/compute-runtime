@@ -5742,9 +5742,43 @@ TEST_F(OfflineCompilerTests, GivenFclRedirectionDefaultSettingWhenCompilingToIrT
     EXPECT_EQ(false, mockOfflineCompiler.useIgcAsFcl());
 }
 
+TEST(OfflineCompilerTest, GivenValidPathWhenCreatingDirectoryThenDirIsCreated) {
+    VariableBackup<decltype(IoFunctions::mkdirPtr)> mockCreateDir(&IoFunctions::mkdirPtr, [](const char *path) -> int {
+        return 0;
+    });
+
+    MockOfflineCompiler mockOfflineCompiler;
+    auto ret = mockOfflineCompiler.createDir("/valid/path/dirNames");
+
+    EXPECT_EQ(ret, OCLOC_SUCCESS);
+}
+
 TEST(OfflineCompilerTest, GivenNonExistentPathWhenCreatingDirectoryThenReturnInvalidFile) {
     MockOfflineCompiler mockOfflineCompiler{};
     auto ret = mockOfflineCompiler.createDir("/nonexistent/path/dirName");
+
+    EXPECT_EQ(ret, OCLOC_INVALID_FILE);
+}
+
+TEST(OfflineCompilerTest, GivenExistingPathWhenCreatingDirectoryThenReturnSuccess) {
+    VariableBackup<decltype(IoFunctions::mkdirPtr)> mockCreateDir(&IoFunctions::mkdirPtr, [](const char *path) -> int {
+        errno = EEXIST;
+        return -1;
+    });
+
+    MockOfflineCompiler mockOfflineCompiler;
+    auto ret = mockOfflineCompiler.createDir("/existing/path/dirName");
+    EXPECT_EQ(ret, OCLOC_SUCCESS);
+}
+
+TEST(OfflineCompilerTest, GivenPathWithPermissionDeniedWhenCreatingDirectoryThenReturnInvalidFile) {
+    VariableBackup<decltype(IoFunctions::mkdirPtr)> mockCreateDir(&IoFunctions::mkdirPtr, [](const char *path) -> int {
+        errno = EACCES;
+        return -1;
+    });
+
+    MockOfflineCompiler mockOfflineCompiler;
+    auto ret = mockOfflineCompiler.createDir("/path/with/permission/denied");
 
     EXPECT_EQ(ret, OCLOC_INVALID_FILE);
 }
