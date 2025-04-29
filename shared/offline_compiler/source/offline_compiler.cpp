@@ -1655,7 +1655,12 @@ void OfflineCompiler::writeOutAllFiles() {
 int OfflineCompiler::createDir(const std::string &path) {
     auto result = IoFunctions::mkdirPtr(path.c_str());
     if (result != 0) {
-        return OCLOC_INVALID_FILE;
+        if (errno == EEXIST) {
+            // Directory already exists, not an error
+            return OCLOC_SUCCESS;
+        } else {
+            return OCLOC_INVALID_FILE;
+        }
     }
     return OCLOC_SUCCESS;
 }
