@@ -351,7 +351,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return DebugSessionImp::readThreadScratchRegisters(thread, start, count, pRegisterValues);
     }
 
-    ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override { return ZE_RESULT_SUCCESS; }
+    void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override {}
     void resumeAccidentallyStoppedThreads(const std::vector<EuThread::ThreadId> &threadIds) override {
         resumeAccidentallyStoppedCalled++;
         return DebugSessionImp::resumeAccidentallyStoppedThreads(threadIds);

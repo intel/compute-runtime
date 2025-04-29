@@ -180,7 +180,7 @@ struct DebugSessionImp : DebugSession {
     int64_t interruptTimeout = 2000;
     std::unordered_map<uint64_t, AttentionEventFields> attentionEventContext{};
     std::chrono::milliseconds lastFifoReadTime = std::chrono::milliseconds(0);
-    virtual ze_result_t updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) = 0;
+    virtual void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) = 0;
 
     std::chrono::high_resolution_clock::time_point interruptTime;
     std::atomic<bool> interruptSent = false;

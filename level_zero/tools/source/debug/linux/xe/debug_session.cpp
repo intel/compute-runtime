@@ -749,7 +749,7 @@ void DebugSessionLinuxXe::handleAttentionEvent(NEO::EuDebugEventEuAttention *att
     attentionEventFields.contextHandle = attention->execQueueHandle;
     attentionEventFields.lrcHandle = attention->lrcHandle;
 
-    updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, 0, threadsWithAttention);
+    return updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, 0, threadsWithAttention);
 }
 
 int DebugSessionLinuxXe::threadControlInterruptAll() {

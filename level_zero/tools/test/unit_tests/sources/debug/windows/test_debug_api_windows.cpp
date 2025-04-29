@@ -33,7 +33,6 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::allModules;
     using DebugSessionWindows::allThreads;
     using DebugSessionWindows::asyncThread;
-    using DebugSessionWindows::attentionEventContext;
     using DebugSessionWindows::calculateThreadSlotOffset;
     using DebugSessionWindows::closeAsyncThread;
     using DebugSessionWindows::debugArea;
@@ -2020,44 +2019,6 @@ TEST_F(DebugApiWindowsTest, GivenResumeImpCalledThenBitmaskIsCorrect) {
     auto bitmask = mockWddm->euControlBitmask.get();
     EXPECT_EQ(1u, bitmask[0]);
     EXPECT_EQ(0u, bitmask[4]);
-}
-
-TEST_F(DebugApiWindowsTest, givenSyncHostEventReceivedThenEventIsHandledAndAttentionEventContextUpdated) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
-    session->wddm = mockWddm;
-
-    session->allContexts = {};
-    session->allContexts.insert(0x01);
-    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-    if (l0GfxCoreHelper.threadResumeRequiresUnlock()) {
-        mockWddm->numEvents = 1;
-        mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_SYNC_HOST;
-        mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.SyncHostDataParams.hContextHandle = 0x12345;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
-        EXPECT_EQ(1u, session->attentionEventContext.size());
-    }
-}
-
-TEST_F(DebugApiWindowsTest, givenErrorCasesWhenHandlingSyncHostThenErrorIsReturned) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
-    session->wddm = mockWddm;
-
-    session->allContexts = {};
-
-    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-    if (l0GfxCoreHelper.threadResumeRequiresUnlock()) {
-        mockWddm->numEvents = 1;
-        mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_SYNC_HOST;
-        mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer.SyncHostDataParams.hContextHandle = 0x12345;
-
-        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, session->readAndHandleEvent(100));
-    }
 }
 
 } // namespace ult
