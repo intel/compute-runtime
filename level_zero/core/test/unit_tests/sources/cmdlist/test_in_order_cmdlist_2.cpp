@@ -43,8 +43,63 @@ struct CopyOffloadInOrderTests : public InOrderCmdListFixture {
 
     uint32_t copyData1 = 0;
     uint32_t copyData2 = 0;
+    const CopyOffloadMode nonDualStreamMode = CopyOffloadModes::dualStream + 1;
     std::unique_ptr<VariableBackup<NEO::HardwareInfo>> backupHwInfo;
 };
+
+HWTEST_F(CopyOffloadInOrderTests, givenCopyOffloadWhenAskingForOperationModeThenReturnCorrectValue) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    EXPECT_NE(CopyOffloadModes::disabled, immCmdList->copyOffloadMode);
+
+    EXPECT_TRUE(immCmdList->isCopyOffloadEnabled());
+    EXPECT_EQ(immCmdList->copyOffloadMode, immCmdList->getCopyOffloadModeForOperation(true));
+    EXPECT_EQ(CopyOffloadModes::disabled, immCmdList->getCopyOffloadModeForOperation(false));
+
+    if (immCmdList->copyOffloadMode == CopyOffloadModes::dualStream) {
+        EXPECT_EQ(immCmdList->cmdQImmediateCopyOffload, immCmdList->getCmdQImmediate(immCmdList->copyOffloadMode));
+    } else {
+        EXPECT_EQ(immCmdList->cmdQImmediate, immCmdList->getCmdQImmediate(immCmdList->copyOffloadMode));
+    }
+
+    immCmdList->copyOffloadMode = CopyOffloadModes::disabled;
+    EXPECT_FALSE(immCmdList->isCopyOffloadEnabled());
+    EXPECT_EQ(CopyOffloadModes::disabled, immCmdList->getCopyOffloadModeForOperation(true));
+    EXPECT_EQ(CopyOffloadModes::disabled, immCmdList->getCopyOffloadModeForOperation(false));
+
+    immCmdList->copyOffloadMode = nonDualStreamMode;
+    EXPECT_TRUE(immCmdList->isCopyOffloadEnabled());
+    EXPECT_EQ(nonDualStreamMode, immCmdList->getCopyOffloadModeForOperation(true));
+    EXPECT_EQ(CopyOffloadModes::disabled, immCmdList->getCopyOffloadModeForOperation(false));
+    EXPECT_EQ(immCmdList->cmdQImmediate, immCmdList->getCmdQImmediate(immCmdList->copyOffloadMode));
+}
+
+HWTEST_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenOverrideOffloadMode) {
+    debugManager.flags.OverrideCopyOffloadMode.set(1234);
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    EXPECT_NE(0x1234u, immCmdList->copyOffloadMode);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenUseDefaultQueue, IsAtLeastXeHpCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+
+    EXPECT_TRUE(immCmdList->isCopyOffloadEnabled());
+    EXPECT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload);
+
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto taskCount = csr->taskCount.load();
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, eventHandle, 0, nullptr, copyParams);
+    EXPECT_EQ(taskCount + 1, csr->taskCount.load());
+
+    EXPECT_FALSE(immCmdList->latestFlushIsDualCopyOffload);
+    EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
+}
 
 HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeHpCore) {
     NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
@@ -63,11 +118,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
 
         if (dcFlushRequired) {
-            EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else {
-
-            EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
 
             auto queue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
@@ -88,10 +142,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
 
         if (dcFlushRequired) {
-            EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else {
-            EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
 
             auto queue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
@@ -112,7 +166,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
         EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
 
         zeCommandListDestroy(cmdListHandle);
@@ -125,7 +179,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
         EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
 
         zeCommandListDestroy(cmdListHandle);
@@ -138,7 +192,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
         EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
 
         zeCommandListDestroy(cmdListHandle);
@@ -167,10 +221,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
 
         if (dcFlushRequired) {
-            EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
         } else {
-            EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
         }
 
@@ -182,7 +236,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
         EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
 
         zeCommandListDestroy(cmdListHandle);

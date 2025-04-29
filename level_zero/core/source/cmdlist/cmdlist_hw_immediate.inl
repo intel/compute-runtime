@@ -426,7 +426,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
                                                                                                     bool copyOffloadSubmission, bool requireTaskCountUpdate,
                                                                                                     MutexLock *outerLock,
                                                                                                     std::unique_lock<std::mutex> *outerLockForIndirect) {
-    return executeCommandListImmediateWithFlushTaskImpl(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, requireTaskCountUpdate, getCmdQImmediate(copyOffloadSubmission), outerLock, outerLockForIndirect);
+    const auto copyOffloadModeForOperation = getCopyOffloadModeForOperation(copyOffloadSubmission);
+    return executeCommandListImmediateWithFlushTaskImpl(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, requireTaskCountUpdate, getCmdQImmediate(copyOffloadModeForOperation), outerLock, outerLockForIndirect);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1125,13 +1126,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     bool mainStorageCleanupNeeded = !mainInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
     bool copyOffloadStorageCleanupNeeded = false;
 
-    if (isCopyOffloadEnabled()) {
+    const bool dualStreamCopyOffload = (getCopyOffloadModeForOperation(isCopyOffloadEnabled()) == CopyOffloadModes::dualStream);
+
+    if (dualStreamCopyOffload) {
         copyOffloadTaskCount = this->cmdQImmediateCopyOffload->getTaskCount();
         copyOffloadCsr = getCsr(true);
         copyOffloadInternalAllocStorage = copyOffloadCsr->getInternalAllocationStorage();
         copyOffloadStorageCleanupNeeded = !copyOffloadInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
 
-        if (this->latestFlushIsCopyOffload) {
+        if (this->latestFlushIsDualCopyOffload) {
             waitQueue = this->cmdQImmediateCopyOffload;
         }
     }
@@ -1165,7 +1168,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
         if (this->isTbxMode && (status == ZE_RESULT_SUCCESS)) {
             mainQueueCsr->downloadAllocations(true);
-            if (isCopyOffloadEnabled()) {
+            if (dualStreamCopyOffload) {
                 copyOffloadCsr->downloadAllocations(true);
             }
         }
@@ -1173,7 +1176,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
         if (handlePostWaitOperations) {
             if (status == ZE_RESULT_SUCCESS) {
                 this->cmdQImmediate->unregisterCsrClient();
-                if (isCopyOffloadEnabled()) {
+                if (dualStreamCopyOffload) {
                     this->cmdQImmediateCopyOffload->unregisterCsrClient();
                 }
 
@@ -1211,8 +1214,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-CommandQueue *CommandListCoreFamilyImmediate<gfxCoreFamily>::getCmdQImmediate(bool copyOffloadOperation) const {
-    return copyOffloadOperation ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
+CommandQueue *CommandListCoreFamilyImmediate<gfxCoreFamily>::getCmdQImmediate(CopyOffloadMode copyOffloadMode) const {
+    return (copyOffloadMode == CopyOffloadModes::dualStream) ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1234,8 +1237,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
                                                                           std::unique_lock<std::mutex> *outerLockForIndirect) {
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
-    auto queue = getCmdQImmediate(copyOffloadSubmission);
-    this->latestFlushIsCopyOffload = copyOffloadSubmission;
+    const auto copyOffloadModeForOperation = getCopyOffloadModeForOperation(copyOffloadSubmission);
+    auto queue = getCmdQImmediate(copyOffloadModeForOperation);
+    this->latestFlushIsDualCopyOffload = (copyOffloadModeForOperation == CopyOffloadModes::dualStream);
 
     if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
         static_cast<CommandQueueImp *>(queue)->getCsr()->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
@@ -1257,7 +1261,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 
     if (signalEvent) {
         signalEvent->setCsr(static_cast<CommandQueueImp *>(queue)->getCsr(), isInOrderExecutionEnabled());
-        this->latestFlushIsHostVisible |= signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST) && !copyOffloadSubmission;
+        this->latestFlushIsHostVisible |= signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST) && !this->latestFlushIsDualCopyOffload;
     }
 
     return inputRet;
@@ -1609,6 +1613,8 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAssert() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) {
+    const auto copyOffloadModeForOperation = getCopyOffloadModeForOperation(copyOffload);
+
     auto csr = getCsr(copyOffload);
     if (!csr->directSubmissionRelaxedOrderingEnabled()) {
         return false;
@@ -1619,7 +1625,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAll
     if (NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.get() != 0) {
         uint32_t relaxedOrderingCounterThreshold = csr->getDirectSubmissionRelaxedOrderingQueueDepth();
 
-        auto queueTaskCount = getCmdQImmediate(copyOffload)->getTaskCount();
+        auto queueTaskCount = getCmdQImmediate(copyOffloadModeForOperation)->getTaskCount();
         auto csrTaskCount = csr->peekTaskCount();
 
         bool skipTaskCountCheck = (csrTaskCount - queueTaskCount == 1) && csr->isLatestFlushIsTaskCountUpdateOnly();

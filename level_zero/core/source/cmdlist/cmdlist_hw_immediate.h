@@ -49,6 +49,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::BaseClass;
     using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::executeCommandListImmediate;
+    using BaseClass::getCopyOffloadModeForOperation;
     using BaseClass::getCsr;
     using BaseClass::isCopyOffloadEnabled;
     using BaseClass::isCopyOnly;
@@ -241,7 +242,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
     void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override;
     void handleInOrderNonWalkerSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result);
-    CommandQueue *getCmdQImmediate(bool copyOffloadOperation) const;
+    CommandQueue *getCmdQImmediate(CopyOffloadMode copyOffloadMode) const;
     NEO::LinearStream *getOptionalEpilogueCmdStream(NEO::LinearStream *taskCmdStream, NEO::AppendOperations appendOperation);
 
     MOCKABLE_VIRTUAL void checkAssert();
@@ -249,7 +250,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     uint64_t relaxedOrderingCounter = 0;
     std::atomic<bool> dependenciesPresent{false};
     bool latestFlushIsHostVisible = false;
-    bool latestFlushIsCopyOffload = false;
+    bool latestFlushIsDualCopyOffload = false;
     bool keepRelaxedOrderingEnabled = false;
 };
 

@@ -315,6 +315,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PipelinedEuThreadArbitration, -1, "-1: default. 
 DECLARE_DEBUG_VARIABLE(bool, ForceUseOnlyGlobalTimestamps, 0, "0- default disabled, 1: enable use only global timestamp")
 DECLARE_DEBUG_VARIABLE(int32_t, GetSipBinaryFromExternalLib, -1, "-1: default, 0: disabled, 1: enabled. If enabled, then retrieve Sip from external library")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePidFdOrSocketsForIpc, -1, "-1: default, 0: disabled (default), 1: enabled. If enabled, L0 IPC handles are opaque and pidfd or sockets are used for IPC exchange")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideCopyOffloadMode, -1, "-1: default, 0: disabled, >=1: if enabled, override to any value from CopyOffloadModes enum")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

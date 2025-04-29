@@ -273,6 +273,16 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 }
 
 void CommandListImp::enableCopyOperationOffload(uint32_t productFamily, Device *device, const ze_command_queue_desc_t *desc) {
+    this->copyOffloadMode = CopyOffloadModes::dualStream;
+
+    if (NEO::debugManager.flags.OverrideCopyOffloadMode.get() != -1) {
+        this->copyOffloadMode = static_cast<CopyOffloadMode>(NEO::debugManager.flags.OverrideCopyOffloadMode.get());
+    }
+
+    if (this->copyOffloadMode != CopyOffloadModes::dualStream) {
+        return;
+    }
+
     NEO::CommandStreamReceiver *copyCsr = nullptr;
     uint32_t ordinal = static_cast<DeviceImp *>(device)->getCopyEngineOrdinal();
 
@@ -289,7 +299,6 @@ void CommandListImp::enableCopyOperationOffload(uint32_t productFamily, Device *
     UNRECOVERABLE_IF(!offloadCommandQueue);
 
     this->cmdQImmediateCopyOffload = offloadCommandQueue;
-    this->copyOperationOffloadEnabled = true;
 }
 
 void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties) {

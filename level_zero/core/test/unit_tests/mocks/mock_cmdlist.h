@@ -61,8 +61,8 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
+    using BaseClass::copyOffloadMode;
     using BaseClass::copyOperationFenceSupported;
-    using BaseClass::copyOperationOffloadEnabled;
     using BaseClass::currentBindingTablePoolBaseAddress;
     using BaseClass::currentDynamicStateBaseAddress;
     using BaseClass::currentIndirectObjectBaseAddress;
@@ -199,8 +199,8 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::commandsToPatch;
     using BaseClass::compactL3FlushEvent;
     using BaseClass::compactL3FlushEventPacket;
+    using BaseClass::copyOffloadMode;
     using BaseClass::copyOperationFenceSupported;
-    using BaseClass::copyOperationOffloadEnabled;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
     using BaseClass::disablePatching;
@@ -229,6 +229,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isQwordInOrderCounter;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
+    using BaseClass::latestFlushIsDualCopyOffload;
     using BaseClass::latestFlushIsHostVisible;
     using BaseClass::latestOperationHasOptimizedCbEvent;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
@@ -292,7 +293,7 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::commandListPreemptionMode;
     using BaseClass::commandsToPatch;
     using BaseClass::compactL3FlushEventPacket;
-    using BaseClass::copyOperationOffloadEnabled;
+    using BaseClass::copyOffloadMode;
     using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::currentBindingTablePoolBaseAddress;
     using BaseClass::currentDynamicStateBaseAddress;

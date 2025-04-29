@@ -277,7 +277,8 @@ struct CommandList : _ze_command_list_handle_t {
     bool isCopyOnly(bool copyOffloadOperation) const {
         return NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) || (copyOffloadOperation && this->isCopyOffloadEnabled());
     }
-    bool isCopyOffloadEnabled() const { return copyOperationOffloadEnabled; }
+    bool isCopyOffloadEnabled() const { return copyOffloadMode != CopyOffloadModes::disabled; }
+    CopyOffloadMode getCopyOffloadModeForOperation(bool offloadAllowed) const { return offloadAllowed ? copyOffloadMode : CopyOffloadModes::disabled; }
 
     bool isInternal() const {
         return internalUsage;
@@ -482,6 +483,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::optional<uint32_t> ordinal = std::nullopt;
 
     CommandListType cmdListType = CommandListType::typeRegular;
+    CopyOffloadMode copyOffloadMode = CopyOffloadModes::disabled;
     uint32_t partitionCount = 1;
     uint32_t defaultMocsIndex = 0;
     int32_t defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent;
@@ -522,7 +524,6 @@ struct CommandList : _ze_command_list_handle_t {
     bool requiresDcFlushForDcMitigation = false;
     bool statelessBuiltinsEnabled = false;
     bool localDispatchSupport = false;
-    bool copyOperationOffloadEnabled = false;
     bool l3FlushAfterPostSyncRequired = false;
     bool closedCmdList = false;
 };

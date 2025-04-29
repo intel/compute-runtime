@@ -2258,7 +2258,7 @@ HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhe
     ultCsr->directSubmission.reset(directSubmission);
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-    auto queue = immCmdList->getCmdQImmediate(false);
+    auto queue = immCmdList->getCmdQImmediate(CopyOffloadModes::disabled);
     EXPECT_EQ(0u, queue->getTaskCount());
     EXPECT_EQ(0u, immCmdList->relaxedOrderingCounter);
 
@@ -2291,7 +2291,7 @@ HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhe
     };
 
     auto immCmdList0 = createImmCmdList<FamilyType::gfxCoreFamily>();
-    auto queue0 = immCmdList0->getCmdQImmediate(false);
+    auto queue0 = immCmdList0->getCmdQImmediate(CopyOffloadModes::disabled);
     EXPECT_EQ(0u, queue0->getTaskCount());
     EXPECT_EQ(0u, immCmdList0->relaxedOrderingCounter);
 
@@ -2306,7 +2306,7 @@ HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhe
     verifyFlags(false, immCmdList0, 3);
 
     auto immCmdList1 = createImmCmdList<FamilyType::gfxCoreFamily>();
-    auto queue1 = immCmdList1->getCmdQImmediate(false);
+    auto queue1 = immCmdList1->getCmdQImmediate(CopyOffloadModes::disabled);
     EXPECT_EQ(0u, queue1->getTaskCount());
     EXPECT_EQ(0u, immCmdList1->relaxedOrderingCounter);
 
@@ -2371,7 +2371,7 @@ HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWit
     EXPECT_EQ(1u, ultCsr->peekTaskCount());
 
     auto immCmdList0 = createImmCmdList<FamilyType::gfxCoreFamily>();
-    auto queue0 = immCmdList0->getCmdQImmediate(false);
+    auto queue0 = immCmdList0->getCmdQImmediate(CopyOffloadModes::disabled);
     EXPECT_EQ(0u, queue0->getTaskCount());
     EXPECT_EQ(0u, immCmdList0->relaxedOrderingCounter);
 
