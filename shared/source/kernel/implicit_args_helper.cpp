@@ -21,7 +21,7 @@
 namespace NEO {
 namespace ImplicitArgsHelper {
 std::array<uint8_t, 3> getDimensionOrderForLocalIds(const uint8_t *workgroupDimensionsOrder, std::optional<std::pair<bool, uint32_t>> hwGenerationOfLocalIdsParams) {
-    auto localIdsGeneratedByRuntime = !hwGenerationOfLocalIdsParams.has_value() || hwGenerationOfLocalIdsParams.value().first;
+    auto localIdsGeneratedByRuntime = !(hwGenerationOfLocalIdsParams.has_value() && hwGenerationOfLocalIdsParams.value().first);
 
     if (localIdsGeneratedByRuntime) {
         UNRECOVERABLE_IF(!workgroupDimensionsOrder);
