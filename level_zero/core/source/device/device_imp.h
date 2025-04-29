@@ -180,6 +180,7 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     uint32_t queryDeviceNodeMask();
     NEO::EngineGroupType getInternalEngineGroupType();
     uint32_t getCopyEngineOrdinal() const;
+    std::optional<uint32_t> tryGetCopyEngineOrdinal() const;
 
   protected:
     ze_result_t getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);

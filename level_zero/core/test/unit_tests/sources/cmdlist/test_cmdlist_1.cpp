@@ -92,6 +92,43 @@ TEST_F(ContextCommandListCreate, givenInvalidDescWhenCreatingCommandListImmediat
     EXPECT_EQ(CommandList::fromHandle(hCommandList), nullptr);
 }
 
+struct DefautlDescriptorWithBlitterTest : Test<DeviceFixture> {
+
+    void SetUp() override {
+        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+        hwInfo.capabilityTable.blitterOperationsSupported = true;
+        hwInfo.featureTable.ftrBcsInfo.set(0);
+        DeviceFixture::setUpImpl(&hwInfo);
+    }
+};
+
+struct DefautlDescriptorWithoutBlitterTest : Test<DeviceFixture> {
+
+    void SetUp() override {
+        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+        hwInfo.capabilityTable.blitterOperationsSupported = false;
+        DeviceFixture::setUpImpl(&hwInfo);
+    }
+};
+
+TEST_F(DefautlDescriptorWithoutBlitterTest, givenDeviceWithoutBlitterSupportWhenCreatingCommandListImmediateWithoutDescriptorThenInOrderAsyncCmdListWithoutCopyOffloadIsCreated) {
+    ze_command_list_handle_t hCommandList = {};
+    ze_result_t result = context->createCommandListImmediate(device, nullptr, &hCommandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandList = CommandList::whiteboxCast(L0::CommandList::fromHandle(hCommandList));
+    uint32_t ordinal = std::numeric_limits<uint32_t>::max();
+    EXPECT_EQ(commandList->getOrdinal(&ordinal), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(ordinal, 0u);
+    uint32_t index = std::numeric_limits<uint32_t>::max();
+    EXPECT_EQ(commandList->getImmediateIndex(&index), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(index, 0u);
+    EXPECT_TRUE(commandList->isInOrderExecutionEnabled());
+    EXPECT_FALSE(commandList->isSyncModeQueue);
+    EXPECT_FALSE(commandList->isCopyOffloadEnabled());
+    commandList->destroy();
+}
+
 TEST_F(CommandListCreateTests, whenCommandListIsCreatedWithInvalidProductFamilyThenFailureIsReturned) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(PRODUCT_FAMILY::IGFX_MAX_PRODUCT, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));

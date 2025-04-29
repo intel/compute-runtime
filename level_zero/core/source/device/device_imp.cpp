@@ -49,6 +49,7 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/helpers/default_descriptors.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/module/module.h"
@@ -288,11 +289,17 @@ ze_result_t DeviceImp::createInternalCommandList(const ze_command_list_desc_t *d
 
 ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t *desc,
                                                   ze_command_list_handle_t *phCommandList) {
-    if (!this->isQueueGroupOrdinalValid(desc->ordinal)) {
+
+    ze_command_queue_desc_t commandQueueDesc = DefaultDescriptors::commandQueueDesc;
+
+    if (desc) {
+        commandQueueDesc = *desc;
+    }
+
+    if (!this->isQueueGroupOrdinalValid(commandQueueDesc.ordinal)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    ze_command_queue_desc_t commandQueueDesc = *desc;
     adjustCommandQueueDesc(commandQueueDesc.ordinal, commandQueueDesc.index);
 
     NEO::EngineGroupType engineGroupType = getEngineGroupTypeForOrdinal(commandQueueDesc.ordinal);
@@ -301,7 +308,7 @@ ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     *phCommandList = CommandList::createImmediate(productFamily, this, &commandQueueDesc, false, engineGroupType, returnValue);
     if (returnValue == ZE_RESULT_SUCCESS) {
-        CommandList::fromHandle(*phCommandList)->setOrdinal(desc->ordinal);
+        CommandList::fromHandle(*phCommandList)->setOrdinal(commandQueueDesc.ordinal);
     }
 
     return returnValue;
@@ -431,6 +438,12 @@ uint32_t DeviceImp::getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCo
 }
 
 uint32_t DeviceImp::getCopyEngineOrdinal() const {
+    auto retVal = tryGetCopyEngineOrdinal();
+    UNRECOVERABLE_IF(!retVal.has_value());
+    return retVal.value();
+}
+
+std::optional<uint32_t> DeviceImp::tryGetCopyEngineOrdinal() const {
     auto &engineGroups = neoDevice->getRegularEngineGroups();
     uint32_t i = 0;
     for (; i < static_cast<uint32_t>(engineGroups.size()); i++) {
@@ -439,9 +452,10 @@ uint32_t DeviceImp::getCopyEngineOrdinal() const {
         }
     }
 
-    UNRECOVERABLE_IF(this->subDeviceCopyEngineGroups.size() == 0);
-
-    return i;
+    if (this->subDeviceCopyEngineGroups.size() != 0) {
+        return i;
+    }
+    return std::nullopt;
 }
 
 ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
