@@ -53,7 +53,7 @@ PTLTEST_F(PtlOfflineCompilerTests, givenPtlUDeviceIdValueWhenInitHwInfoThenCorre
         capture.captureStdout();
         mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
         std::string output = capture.getCapturedStdout();
-        expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: ptl-u-a0\n";
+        expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: ptl-u\n";
 
         EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
         EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usDeviceID, deviceID);
