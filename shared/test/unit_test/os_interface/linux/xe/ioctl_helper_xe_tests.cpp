@@ -19,10 +19,6 @@
 #include "shared/test/common/os_interface/linux/xe/xe_config_fixture.h"
 #include "shared/test/common/test_macros/test.h"
 
-#ifndef DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR
-#define DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR (1 << 2)
-#endif
-
 using namespace NEO;
 
 using IoctlHelperXeTest = Test<XeConfigFixture>;
@@ -2551,8 +2547,8 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmPrefetchThenVmBindIs
     EXPECT_EQ(1u, drm->vmBindInputs.size());
 
     EXPECT_EQ(drm->vmBindInputs[0].vm_id, vmId);
-    EXPECT_EQ(drm->vmBindInputs[0].bind.addr, start);
-    EXPECT_EQ(drm->vmBindInputs[0].bind.range, length);
+    EXPECT_EQ(drm->vmBindInputs[0].bind.addr, alignDown(start, MemoryConstants::pageSize));
+    EXPECT_EQ(drm->vmBindInputs[0].bind.range, alignSizeWholePage(reinterpret_cast<void *>(start), length));
     EXPECT_EQ(drm->vmBindInputs[0].bind.prefetch_mem_region_instance, targetMemoryRegion.memoryInstance);
 }
 
@@ -2582,8 +2578,8 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmPrefetchOnSecondTile
     EXPECT_EQ(1u, drm->vmBindInputs.size());
 
     EXPECT_EQ(drm->vmBindInputs[0].vm_id, vmId);
-    EXPECT_EQ(drm->vmBindInputs[0].bind.addr, start);
-    EXPECT_EQ(drm->vmBindInputs[0].bind.range, length);
+    EXPECT_EQ(drm->vmBindInputs[0].bind.addr, alignDown(start, MemoryConstants::pageSize));
+    EXPECT_EQ(drm->vmBindInputs[0].bind.range, alignSizeWholePage(reinterpret_cast<void *>(start), length));
     EXPECT_EQ(drm->vmBindInputs[0].bind.prefetch_mem_region_instance, targetMemoryRegion.memoryInstance);
 }
 
@@ -2712,7 +2708,7 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionConfigFlagHasGpuAddrMirror
                 if (deviceQuery->data) {
                     struct drm_xe_query_config *config = reinterpret_cast<struct drm_xe_query_config *>(deviceQuery->data);
                     config->num_params = DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID + 1;
-                    config->info[DRM_XE_QUERY_CONFIG_FLAGS] = DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+                    config->info[DRM_XE_QUERY_CONFIG_FLAGS] = DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR;
                 } else {
                     deviceQuery->size = (DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID + 1) * sizeof(uint64_t);
                 }
@@ -2764,7 +2760,7 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionAndSharedSystemUsmSupportD
                 if (deviceQuery->data) {
                     struct drm_xe_query_config *config = reinterpret_cast<struct drm_xe_query_config *>(deviceQuery->data);
                     config->num_params = DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID + 1;
-                    config->info[DRM_XE_QUERY_CONFIG_FLAGS] = DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
+                    config->info[DRM_XE_QUERY_CONFIG_FLAGS] = DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR;
                 } else {
                     deviceQuery->size = (DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID + 1) * sizeof(uint64_t);
                 }

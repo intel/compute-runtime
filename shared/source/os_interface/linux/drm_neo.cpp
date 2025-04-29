@@ -50,16 +50,14 @@
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/io_functions.h"
 
+#include "xe_drm.h"
+
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
 #include <map>
 #include <sstream>
-
-#ifndef DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR
-#define DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR (1 << 5)
-#endif
 
 namespace NEO {
 
@@ -1670,7 +1668,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
         if (isSharedSystemAllocEnabled()) {
             VmBindParams vmBind{};
             vmBind.vmId = static_cast<uint32_t>(ctl.vmId);
-            vmBind.flags = DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR;
+            vmBind.flags = DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
             vmBind.length = (0x1ull << ((NEO::CpuInfo::getInstance().getVirtualAddressSize()) - 1));
             vmBind.sharedSystemUsmEnabled = true;
             vmBind.sharedSystemUsmBind = true;

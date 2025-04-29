@@ -39,13 +39,6 @@
 #define STRINGIFY_ME(X) return #X
 #define RETURN_ME(X) return X
 
-#ifndef DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR
-#define DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR (1 << 5)
-#endif
-
-#ifndef DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR
-#define DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR (1 << 2)
-#endif
 namespace NEO {
 
 const char *IoctlHelperXe::xeGetClassName(int className) const {
@@ -167,7 +160,7 @@ bool IoctlHelperXe::queryDeviceIdAndRevision(Drm &drm) {
     hwInfo->platform.usDeviceID = config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
     hwInfo->platform.usRevId = static_cast<int>((config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
 
-    if ((debugManager.flags.EnableRecoverablePageFaults.get() != 0) && (debugManager.flags.EnableSharedSystemUsmSupport.get() != 0) && (config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR)) {
+    if ((debugManager.flags.EnableRecoverablePageFaults.get() != 0) && (debugManager.flags.EnableSharedSystemUsmSupport.get() != 0) && (config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR)) {
         drm.setSharedSystemAllocEnable(true);
         drm.setPageFaultSupported(true);
     }
@@ -860,13 +853,13 @@ bool IoctlHelperXe::setVmBoAdviseForChunking(int32_t handle, uint64_t start, uin
 }
 
 bool IoctlHelperXe::setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) {
-    xeLog(" -> IoctlHelperXe::%s s=0x%llx l=0x%llx vmid=0x%x\n", __FUNCTION__, start, length, vmId);
+    xeLog(" -> IoctlHelperXe::%s s=0x%llx l=0x%llx align_s=0x%llx align_l=0x%llx vmid=0x%x\n", __FUNCTION__, start, length, alignDown(start, MemoryConstants::pageSize), alignSizeWholePage(reinterpret_cast<void *>(start), length), vmId);
     drm_xe_vm_bind bind = {};
     bind.vm_id = vmId;
     bind.num_binds = 1;
 
-    bind.bind.range = length;
-    bind.bind.addr = start;
+    bind.bind.range = alignSizeWholePage(reinterpret_cast<void *>(start), length);
+    bind.bind.addr = alignDown(start, MemoryConstants::pageSize);
     bind.bind.op = DRM_XE_VM_BIND_OP_PREFETCH;
 
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
@@ -1456,7 +1449,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         if (vmBindParams.sharedSystemUsmEnabled) {
             // Use of MAP on unbind required for restoring the address space to the system allocator
             bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
-            bind.bind.flags |= DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR;
+            bind.bind.flags |= DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
         } else {
             bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
             if (userptr) {
