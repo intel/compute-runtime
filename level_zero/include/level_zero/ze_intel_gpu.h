@@ -295,6 +295,27 @@ ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(ze_driver_handle_t hDri
 ///     - Context handle associated with default driver
 ze_context_handle_t ZE_APICALL zerDriverGetDefaultContext();
 
+/// @brief Get Device Identifier
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///     - Returned identifier is a 32-bit unsigned integer that is unique to the driver.
+///     - The identifier can be used then in zerIdentifierTranslateToDeviceHandle to get the device handle.
+/// @returns
+///     - 32-bit unsigned integer identifier
+uint32_t ZE_APICALL zerDeviceTranslateToIdentifier(ze_device_handle_t hDevice); ///< [in] handle of the device
+
+/// @brief Translate Device Identifier to Device Handle from default Driver
+///
+/// @details
+///    - The application may call this function from simultaneous threads.
+///    - The implementation of this function should be lock-free.
+///    - Returned device is associated to default driver handle.
+/// @returns
+///     - device handle associated with the identifier
+ze_device_handle_t ZE_APICALL zerIdentifierTranslateToDeviceHandle(uint32_t identifier); ///< [in] integer identifier of the device
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

@@ -42,6 +42,7 @@
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/extension_function_address.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
@@ -6143,6 +6144,62 @@ TEST(DeviceReturnCompositeHierarchyTest, GivenCompositeHierarchyIsSetThenGetRoot
     }
 
     multiDeviceFixture.tearDown();
+}
+
+template <NEO::DeviceHierarchyMode hierarchyMode>
+struct MultiDeviceTest : public Test<MultiDeviceFixture> {
+    void SetUp() override {
+        this->deviceHierarchyMode = hierarchyMode;
+        NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,2,3");
+        Test<MultiDeviceFixture>::SetUp();
+        L0::globalDriverHandles->push_back(driverHandle->toHandle());
+        L0::globalDriverHandles->push_back(nullptr);
+    }
+    void TearDown() override {
+        L0::globalDriverHandles->clear();
+        Test<MultiDeviceFixture>::TearDown();
+    }
+    void whenGettingDeviceIdentifiersThenMonoticallyIncreasingIdentifiersAreReturned() {
+        uint32_t count = 0;
+        std::vector<ze_device_handle_t> hDevices;
+        EXPECT_EQ(driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
+
+        EXPECT_EQ(3u, count);
+
+        hDevices.resize(count);
+        EXPECT_EQ(driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);
+
+        uint32_t expectedIdentifier = 0u;
+        for (auto &hDevice : hDevices) {
+
+            EXPECT_EQ(expectedIdentifier, Device::fromHandle(hDevice)->getIdentifier());
+            EXPECT_EQ(expectedIdentifier, zerDeviceTranslateToIdentifier(hDevice));
+
+            EXPECT_EQ(hDevice, zerIdentifierTranslateToDeviceHandle(expectedIdentifier));
+
+            expectedIdentifier++;
+        }
+        EXPECT_EQ(nullptr, zerIdentifierTranslateToDeviceHandle(expectedIdentifier));
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using MultiDeviceCompositeTest = MultiDeviceTest<NEO::DeviceHierarchyMode::composite>;
+
+TEST_F(MultiDeviceCompositeTest, whenGettingDeviceIdentifiersThenMonoticallyIncreasingIdentifiersAreReturned) {
+    whenGettingDeviceIdentifiersThenMonoticallyIncreasingIdentifiersAreReturned();
+}
+
+using MultiDeviceCombinedTest = MultiDeviceTest<NEO::DeviceHierarchyMode::combined>;
+
+TEST_F(MultiDeviceCombinedTest, whenGettingDeviceIdentifiersThenMonoticallyIncreasingIdentifiersAreReturned) {
+    whenGettingDeviceIdentifiersThenMonoticallyIncreasingIdentifiersAreReturned();
+}
+using MultiDeviceFlatTest = MultiDeviceTest<NEO::DeviceHierarchyMode::flat>;
+
+TEST_F(MultiDeviceFlatTest, whenGettingDeviceIdentifiersThenMonoticallyIncreasingIdentifiersAreReturned) {
+    whenGettingDeviceIdentifiersThenMonoticallyIncreasingIdentifiersAreReturned();
 }
 
 TEST(SingleDeviceModeTest, GivenFlatHierarchyIsSetWhenGettingDevicesThenOnlySingleRootDeviceIsExposed) {

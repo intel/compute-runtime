@@ -923,6 +923,32 @@ TEST_F(DriverHandleTest,
 }
 
 TEST_F(DriverHandleTest,
+       whenTranslatingNullptrDeviceHandleToIdentifierThenErrorIsPropagated) {
+    auto identifier = zerDeviceTranslateToIdentifier(nullptr);
+
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), identifier);
+
+    const char *expectedError = "Invalid device handle";
+    const char *errorDescription = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetLastErrorDescription(driverHandle->toHandle(), &errorDescription));
+
+    EXPECT_EQ(0, strcmp(expectedError, errorDescription)) << errorDescription;
+}
+
+TEST_F(DriverHandleTest,
+       whenTranslatingIncorrectIdentifierToDeviceHandleThenErrorIsPropagated) {
+
+    uint32_t invalidIdentifier = std::numeric_limits<uint32_t>::max();
+    EXPECT_EQ(nullptr, zerIdentifierTranslateToDeviceHandle(invalidIdentifier));
+
+    const char *expectedError = "Invalid device identifier";
+
+    const char *errorDescription = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetLastErrorDescription(driverHandle->toHandle(), &errorDescription));
+    EXPECT_EQ(0, strcmp(expectedError, errorDescription)) << errorDescription;
+}
+
+TEST_F(DriverHandleTest,
        givenInitializedDriverWhenZeDriverGetIsCalledWithGreaterThanZeroCountAndNullDriverHandleThenInvalidNullPointerIsReturned) {
     uint32_t count = 0;
     ze_result_t result = zeDriverGet(&count, nullptr);
@@ -1181,6 +1207,10 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = L0::zexDriverGetHostPointerBaseAddress;
     decltype(&zeDriverGetDefaultContext) expectedZeDriverGetDefaultContext = zeDriverGetDefaultContext;
     decltype(&zerDriverGetDefaultContext) expectedZerDriverGetDefaultContext = zerDriverGetDefaultContext;
+
+    decltype(&zerDeviceTranslateToIdentifier) expectedZerDeviceTranslateToIdentifier = zerDeviceTranslateToIdentifier;
+    decltype(&zerIdentifierTranslateToDeviceHandle) expectedZerIdentifierTranslateToDeviceHandle = zerIdentifierTranslateToDeviceHandle;
+
     decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = L0::zexKernelGetBaseAddress;
     decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = zeIntelGetDriverVersionString;
     decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = L0::zeIntelMediaCommunicationCreate;
@@ -1209,6 +1239,12 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerDriverGetDefaultContext", &funPtr));
     EXPECT_EQ(expectedZerDriverGetDefaultContext, reinterpret_cast<decltype(&zerDriverGetDefaultContext)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerDeviceTranslateToIdentifier", &funPtr));
+    EXPECT_EQ(expectedZerDeviceTranslateToIdentifier, reinterpret_cast<decltype(&zerDeviceTranslateToIdentifier)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerIdentifierTranslateToDeviceHandle", &funPtr));
+    EXPECT_EQ(expectedZerIdentifierTranslateToDeviceHandle, reinterpret_cast<decltype(&zerIdentifierTranslateToDeviceHandle)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexKernelGetBaseAddress", &funPtr));
     EXPECT_EQ(expectedKernelGetBaseAddress, reinterpret_cast<decltype(&zexKernelGetBaseAddress)>(funPtr));

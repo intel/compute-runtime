@@ -328,7 +328,15 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         }
     }
 
-    createContext(&DefaultDescriptors::contextDesc, 0u, nullptr, &defaultContext);
+    uint32_t numDevicesToExpose = 0u;
+    this->getDevice(&numDevicesToExpose, nullptr);
+    this->devicesToExpose.resize(numDevicesToExpose);
+    this->getDevice(&numDevicesToExpose, this->devicesToExpose.data());
+    uint32_t deviceIdentifier = 0u;
+    for (auto &deviceToExpose : this->devicesToExpose) {
+        Device::fromHandle(deviceToExpose)->setIdentifier(deviceIdentifier++);
+    }
+    createContext(&DefaultDescriptors::contextDesc, numDevicesToExpose, this->devicesToExpose.data(), &defaultContext);
 
     return ZE_RESULT_SUCCESS;
 }

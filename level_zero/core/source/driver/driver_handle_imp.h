@@ -132,6 +132,7 @@ struct DriverHandleImp : public DriverHandle {
     std::map<void *, NEO::GraphicsAllocation *> sharedMakeResidentAllocations;
 
     std::vector<Device *> devices;
+    std::vector<ze_device_handle_t> devicesToExpose;
     std::vector<FabricVertex *> fabricVertices;
     std::vector<FabricEdge *> fabricEdges;
     std::vector<FabricEdge *> fabricIndirectEdges;

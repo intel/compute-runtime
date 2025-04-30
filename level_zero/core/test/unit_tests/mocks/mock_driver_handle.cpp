@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,10 @@ ze_result_t Mock<DriverHandle>::getDevice(uint32_t *pCount, ze_device_handle_t *
     if (phDevices == nullptr) // User is expected to allocate space
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 
-    phDevices[0] = this->devices.front();
+    auto numDevices = std::min(pCount ? *pCount : 1u, static_cast<uint32_t>(this->devices.size()));
+    for (auto i = 0u; i < numDevices; i++) {
+        phDevices[i] = this->devices[i];
+    }
 
     return ZE_RESULT_SUCCESS;
 }

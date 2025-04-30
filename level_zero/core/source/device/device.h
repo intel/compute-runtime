@@ -155,6 +155,8 @@ struct Device : _ze_device_handle_t {
     NEO::GraphicsAllocation *getSyncDispatchTokenAllocation() const { return syncDispatchTokenAllocation; }
     uint32_t getNextSyncDispatchQueueId();
     void ensureSyncDispatchTokenAllocation();
+    void setIdentifier(uint32_t id) { identifier = id; }
+    uint32_t getIdentifier() const { return identifier; }
 
   protected:
     NEO::Device *neoDevice = nullptr;
@@ -165,6 +167,7 @@ struct Device : _ze_device_handle_t {
     std::mutex inOrderAllocatorMutex;
     std::mutex syncDispatchTokenMutex;
     std::atomic<uint32_t> syncDispatchQueueIdAllocator = 0;
+    uint32_t identifier = 0;
     bool implicitScalingCapable = false;
 };
 
