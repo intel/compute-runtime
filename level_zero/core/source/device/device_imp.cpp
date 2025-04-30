@@ -67,10 +67,6 @@
 #include <algorithm>
 #include <array>
 
-namespace NEO {
-bool releaseFP64Override();
-} // namespace NEO
-
 namespace L0 {
 
 DeviceImp::DeviceImp() : bcsSplit(*this){};
