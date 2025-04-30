@@ -416,6 +416,14 @@ struct CommandList : _ze_command_list_handle_t {
         return statelessBuiltinsEnabled;
     }
 
+    void setNeedsTextureCacheFlushOnBarrier(bool value) {
+        needsTextureCacheFlushOnBarrier = value;
+    }
+
+    bool isTextureCacheFlushOnBarrierNeeded() const {
+        return needsTextureCacheFlushOnBarrier;
+    }
+
     void registerCsrDcFlushForDcMitigation(NEO::CommandStreamReceiver &csr);
 
     NEO::EngineGroupType getEngineGroupType() const {
@@ -525,6 +533,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool statelessBuiltinsEnabled = false;
     bool localDispatchSupport = false;
     bool l3FlushAfterPostSyncRequired = false;
+    bool needsTextureCacheFlushOnBarrier = false;
     bool closedCmdList = false;
 };
 

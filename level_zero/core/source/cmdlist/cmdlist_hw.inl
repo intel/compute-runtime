@@ -153,6 +153,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
     latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     taskCountUpdateFenceRequired = false;
+    needsTextureCacheFlushOnBarrier = false;
     closedCmdList = false;
 
     this->inOrderPatchCmds.clear();

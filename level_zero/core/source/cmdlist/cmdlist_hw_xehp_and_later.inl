@@ -459,9 +459,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    bool textureFlushRequired = this->device->getProductHelper().isPostImageWriteFlushRequired() &&
-                                this->isImmediateType() &&
-                                kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg;
+    bool textureFlushRequired = false;
+    if (this->device->getProductHelper().isPostImageWriteFlushRequired() &&
+        kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg) {
+        if (this->isImmediateType()) {
+            textureFlushRequired = true;
+        } else if (!this->inOrderExecInfo) {
+            this->setNeedsTextureCacheFlushOnBarrier(true);
+        }
+    }
 
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
@@ -605,6 +611,12 @@ NEO::PipeControlArgs CommandListCoreFamily<gfxCoreFamily>::createBarrierFlags() 
     NEO::PipeControlArgs args;
     args.hdcPipelineFlush = true;
     args.unTypedDataPortCacheFlush = true;
+
+    if (this->isTextureCacheFlushOnBarrierNeeded()) {
+        args.textureCacheInvalidationEnable = true;
+        this->setNeedsTextureCacheFlushOnBarrier(false);
+    }
+
     return args;
 }
 
