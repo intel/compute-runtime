@@ -131,8 +131,8 @@ DriverDispatch::DriverDispatch() {
     this->coreDevice.pfnSetCacheAdviceExt = L0::zeDeviceSetCacheAdviceExt;
     this->coreDevice.pfnPciGetPropertiesExt = L0::zeDevicePciGetPropertiesExt;
     this->coreDevice.pfnGetRootDevice = L0::zeDeviceGetRootDevice;
-    this->coreDevice.pfnImportExternalSemaphoreExt = nullptr;
-    this->coreDevice.pfnReleaseExternalSemaphoreExt = nullptr;
+    this->coreDevice.pfnImportExternalSemaphoreExt = L0::zeDeviceImportExternalSemaphoreExt;
+    this->coreDevice.pfnReleaseExternalSemaphoreExt = L0::zeDeviceReleaseExternalSemaphoreExt;
     this->coreDeviceExp.pfnGetFabricVertexExp = L0::zeDeviceGetFabricVertexExp;
     this->coreContext.pfnCreate = L0::zeContextCreate;
     this->coreContext.pfnDestroy = L0::zeContextDestroy;
@@ -183,9 +183,9 @@ DriverDispatch::DriverDispatch() {
     this->coreCommandList.pfnGetOrdinal = L0::zeCommandListGetOrdinal;
     this->coreCommandList.pfnImmediateGetIndex = L0::zeCommandListImmediateGetIndex;
     this->coreCommandList.pfnIsImmediate = L0::zeCommandListIsImmediate;
-    this->coreCommandList.pfnAppendSignalExternalSemaphoreExt = nullptr;
-    this->coreCommandList.pfnAppendWaitExternalSemaphoreExt = nullptr;
-    this->coreCommandListExp.pfnCreateCloneExp = nullptr;
+    this->coreCommandList.pfnAppendSignalExternalSemaphoreExt = L0::zeCommandListAppendSignalExternalSemaphoreExt;
+    this->coreCommandList.pfnAppendWaitExternalSemaphoreExt = L0::zeCommandListAppendWaitExternalSemaphoreExt;
+    this->coreCommandListExp.pfnCreateCloneExp = L0::zeCommandListCreateCloneExp;
     this->coreCommandListExp.pfnImmediateAppendCommandListsExp = L0::zeCommandListImmediateAppendCommandListsExp;
     this->coreCommandListExp.pfnGetNextCommandIdExp = L0::zeCommandListGetNextCommandIdExp;
     this->coreCommandListExp.pfnUpdateMutableCommandsExp = L0::zeCommandListUpdateMutableCommandsExp;
@@ -227,7 +227,7 @@ DriverDispatch::DriverDispatch() {
     this->coreEventPool.pfnGetIpcHandle = L0::zeEventPoolGetIpcHandle;
     this->coreEventPool.pfnOpenIpcHandle = L0::zeEventPoolOpenIpcHandle;
     this->coreEventPool.pfnCloseIpcHandle = L0::zeEventPoolCloseIpcHandle;
-    this->coreEventPool.pfnPutIpcHandle = nullptr;
+    this->coreEventPool.pfnPutIpcHandle = L0::zeEventPoolPutIpcHandle;
     this->coreEventPool.pfnGetContextHandle = L0::zeEventPoolGetContextHandle;
     this->coreEventPool.pfnGetFlags = L0::zeEventPoolGetFlags;
     this->coreEvent.pfnCreate = L0::zeEventCreate;

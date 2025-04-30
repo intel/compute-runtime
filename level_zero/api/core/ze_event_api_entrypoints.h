@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,12 @@ ze_result_t zeEventQueryKernelTimestampsExt(
     uint32_t *pCount,
     ze_event_query_kernel_timestamps_results_ext_properties_t *pResults) {
     return L0::Event::fromHandle(hEvent)->queryKernelTimestampsExt(L0::Device::fromHandle(hDevice), pCount, pResults);
+}
+
+ze_result_t zeEventPoolPutIpcHandle(
+    ze_context_handle_t hContext,
+    ze_ipc_event_pool_handle_t hIpc) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t zeEventPoolGetContextHandle(

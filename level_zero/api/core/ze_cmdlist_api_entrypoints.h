@@ -96,6 +96,12 @@ ze_result_t zeCommandListIsImmediate(
     return L0::CommandList::fromHandle(hCommandList)->isImmediate(pIsImmediate);
 }
 
+ze_result_t zeCommandListCreateCloneExp(
+    ze_command_list_handle_t hCommandList,
+    ze_command_list_handle_t *phClonedCommandList) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t zeCommandListImmediateAppendCommandListsExp(
     ze_command_list_handle_t hCommandListImmediate,
     uint32_t numCommandLists,
