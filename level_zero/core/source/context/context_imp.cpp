@@ -23,6 +23,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/helpers/default_descriptors.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
@@ -72,13 +73,16 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t size,
                                      size_t alignment,
                                      void **ptr) {
+
+    auto hostMemDesc = hostDesc ? hostDesc : &DefaultDescriptors::hostMemDesc;
+
     if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
     }
 
     bool relaxedSizeAllowed = NEO::debugManager.flags.AllowUnrestrictedSize.get();
-    if (hostDesc->pNext) {
-        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(hostDesc->pNext);
+    if (hostMemDesc->pNext) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(hostMemDesc->pNext);
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
             const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
                 reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
@@ -98,7 +102,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
     StructuresLookupTable lookupTable = {};
 
     lookupTable.relaxedSizeAllowed = NEO::debugManager.flags.AllowUnrestrictedSize.get();
-    auto parseResult = prepareL0StructuresLookupTable(lookupTable, hostDesc->pNext);
+    auto parseResult = prepareL0StructuresLookupTable(lookupTable, hostMemDesc->pNext);
 
     if (parseResult != ZE_RESULT_SUCCESS) {
         return parseResult;
@@ -131,11 +135,11 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                                                            this->rootDeviceIndices,
                                                                            this->deviceBitfields);
 
-    if (hostDesc->flags & ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
+    if (hostMemDesc->flags & ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
     }
 
-    if (hostDesc->flags & ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR) {
+    if (hostMemDesc->flags & ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR) {
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(*ptr);
     }
 
@@ -208,6 +212,9 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                        const ze_device_mem_alloc_desc_t *deviceDesc,
                                        size_t size,
                                        size_t alignment, void **ptr) {
+
+    auto deviceMemDesc = deviceDesc ? deviceDesc : &DefaultDescriptors::deviceMemDesc;
+
     if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
     }
@@ -220,7 +227,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     StructuresLookupTable lookupTable = {};
 
     lookupTable.relaxedSizeAllowed = NEO::debugManager.flags.AllowUnrestrictedSize.get();
-    auto parseResult = prepareL0StructuresLookupTable(lookupTable, deviceDesc->pNext);
+    auto parseResult = prepareL0StructuresLookupTable(lookupTable, deviceMemDesc->pNext);
 
     if (parseResult != ZE_RESULT_SUCCESS) {
         return parseResult;
@@ -261,11 +268,11 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, this->driverHandle->rootDeviceIndices, deviceBitfields);
-    unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice);
+    unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice);
     unifiedMemoryProperties.device = neoDevice;
     unifiedMemoryProperties.allocationFlags.flags.compressedHint = isAllocationSuitableForCompression(lookupTable, *device, size);
 
-    if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
+    if (deviceMemDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
     }
 
@@ -316,6 +323,10 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                                        size_t size,
                                        size_t alignment,
                                        void **ptr) {
+
+    auto deviceMemDesc = deviceDesc ? deviceDesc : &DefaultDescriptors::deviceMemDesc;
+    auto hostMemDesc = hostDesc ? hostDesc : &DefaultDescriptors::hostMemDesc;
+
     if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
     }
@@ -329,7 +340,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     StructuresLookupTable lookupTable = {};
 
     lookupTable.relaxedSizeAllowed = NEO::debugManager.flags.AllowUnrestrictedSize.get();
-    auto parseResult = prepareL0StructuresLookupTable(lookupTable, deviceDesc->pNext);
+    auto parseResult = prepareL0StructuresLookupTable(lookupTable, deviceMemDesc->pNext);
 
     if (parseResult != ZE_RESULT_SUCCESS) {
         return parseResult;
@@ -360,15 +371,15 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                                                                            deviceBitfields);
     unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
 
-    if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
+    if (deviceMemDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         unifiedMemoryProperties.allocationFlags.flags.locallyUncachedResource = 1;
     }
 
-    if (deviceDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) {
+    if (deviceMemDesc->flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) {
         unifiedMemoryProperties.allocationFlags.allocFlags.usmInitialPlacementGpu = 1;
     }
 
-    if (hostDesc->flags & ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) {
+    if (hostMemDesc->flags & ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) {
         unifiedMemoryProperties.allocationFlags.allocFlags.usmInitialPlacementCpu = 1;
     }
 
@@ -377,7 +388,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         unifiedMemoryProperties.allocationFlags.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
     }
 
-    if (hostDesc->flags & ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR) {
+    if (hostMemDesc->flags & ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR) {
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(*ptr);
     }
 
