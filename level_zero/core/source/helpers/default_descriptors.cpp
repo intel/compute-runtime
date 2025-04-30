@@ -12,6 +12,12 @@
 namespace L0 {
 namespace DefaultDescriptors {
 
+const ze_context_desc_t contextDesc{
+    .stype = ze_structure_type_t::ZE_STRUCTURE_TYPE_CONTEXT_DESC,
+    .pNext = nullptr,
+    .flags = static_cast<ze_context_flags_t>(0),
+};
+
 static const zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffloadHint = {
     .stype = ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES,
     .pNext = nullptr,

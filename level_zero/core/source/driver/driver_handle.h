@@ -85,6 +85,8 @@ struct DriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
     virtual ze_result_t getErrorDescription(const char **ppString) = 0;
     virtual ze_result_t clearErrorDescription() = 0;
 
+    virtual ze_context_handle_t getDefaultContext() const = 0;
+
     static DriverHandle *fromHandle(ze_driver_handle_t handle) { return static_cast<DriverHandle *>(handle); }
     inline ze_driver_handle_t toHandle() { return this; }
 

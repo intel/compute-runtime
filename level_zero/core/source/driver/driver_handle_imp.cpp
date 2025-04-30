@@ -34,6 +34,7 @@
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/helpers/default_descriptors.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include "level_zero/driver_experimental/zex_common.h"
@@ -213,6 +214,10 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 }
 
 DriverHandleImp::~DriverHandleImp() {
+    if (this->defaultContext) {
+        L0::Context::fromHandle(this->defaultContext)->destroy();
+        this->defaultContext = nullptr;
+    }
     if (this->externalSemaphoreController) {
         this->externalSemaphoreController.reset();
     }
@@ -322,6 +327,8 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
             device->getBuiltinFunctionsLib()->ensureInitCompletion();
         }
     }
+
+    createContext(&DefaultDescriptors::contextDesc, 0u, nullptr, &defaultContext);
 
     return ZE_RESULT_SUCCESS;
 }

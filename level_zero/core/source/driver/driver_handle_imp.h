@@ -147,6 +147,7 @@ struct DriverHandleImp : public DriverHandle {
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
     NEO::UsmMemAllocPool usmHostMemAllocPool;
+    ze_context_handle_t defaultContext = nullptr;
 
     std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
     bool rtasLibraryUnavailable = false;
@@ -176,6 +177,10 @@ struct DriverHandleImp : public DriverHandle {
     int setErrorDescription(const std::string &str) override;
     ze_result_t getErrorDescription(const char **ppString) override;
     ze_result_t clearErrorDescription() override;
+
+    ze_context_handle_t getDefaultContext() const override {
+        return defaultContext;
+    }
 
   protected:
     NEO::GraphicsAllocation *getPeerAllocation(Device *device,

@@ -63,6 +63,15 @@ zeIntelGetDriverVersionString(
     return ZE_RESULT_SUCCESS;
 }
 
+ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(
+    ze_driver_handle_t hDriver) {
+    return L0::DriverHandle::fromHandle(hDriver)->getDefaultContext();
+}
+
+ze_context_handle_t ZE_APICALL zerDriverGetDefaultContext() {
+    return L0::DriverHandle::fromHandle(L0::globalDriverHandles->front())->getDefaultContext();
+}
+
 extern "C" {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

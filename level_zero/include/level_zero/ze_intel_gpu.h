@@ -275,6 +275,26 @@ zeIntelKernelGetBinaryExp(
     char *pKernelBinary         ///< [in,out] pointer to storage area for GEN ISA binary function
 );
 
+/// @brief Get default context associated with driver
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///     - Default context contains all devices within driver instance
+/// @returns
+///     - Context handle associated with driver
+ze_context_handle_t zeDriverGetDefaultContext(ze_driver_handle_t hDriver); ///> [in] handle of the driver
+
+/// @brief Get default context associated with default driver
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///     - Default context contains all devices within default driver instance
+/// @returns
+///     - Context handle associated with default driver
+ze_context_handle_t zerDriverGetDefaultContext();
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

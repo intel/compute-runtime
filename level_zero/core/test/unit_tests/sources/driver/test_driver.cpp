@@ -37,6 +37,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/driver_experimental/zex_api.h"
@@ -690,6 +691,58 @@ TEST(DriverTest, givenProgramDebuggingEnvVarValue2WhenCreatingDriverThenEnablePr
     delete driverHandle;
 }
 
+TEST(DriverTest, whenCreatingDriverThenDefaultContextWithAllDevicesIsCreated) {
+
+    ze_result_t returnValue;
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+    L0EnvVariables envVariables = {};
+
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandleImp *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    EXPECT_NE(nullptr, driverHandle);
+
+    auto defaultContext = driverHandle->getDefaultContext();
+    ASSERT_NE(nullptr, defaultContext);
+
+    auto context = static_cast<WhiteBox<::L0::ContextImp> *>(defaultContext);
+
+    EXPECT_NE(0u, context->numDevices);
+    EXPECT_EQ(context->numDevices, context->devices.size());
+    EXPECT_EQ(context->devices.size(), driverHandle->devices.size());
+    for (auto i = 0u; i < context->numDevices; i++) {
+        EXPECT_EQ(context->devices[i], driverHandle->devices[i]);
+    }
+
+    delete driverHandle;
+}
+
+TEST(DriverTest, givenDriverWhenGetDefaultContextApiIsCalledThenProperHandleIsReturned) {
+
+    ze_result_t returnValue;
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+    L0EnvVariables envVariables = {};
+
+    auto driverHandle = whiteboxCast(static_cast<::L0::DriverHandleImp *>(DriverHandle::create(std::move(devices), envVariables, &returnValue)));
+    EXPECT_NE(nullptr, driverHandle);
+
+    auto defaultContext = zeDriverGetDefaultContext(driverHandle);
+
+    EXPECT_NE(nullptr, defaultContext);
+
+    EXPECT_EQ(defaultContext, driverHandle->getDefaultContext());
+
+    delete driverHandle;
+}
+
 TEST(DriverTest, givenBuiltinsAsyncInitEnabledWhenCreatingDriverThenMakeSureBuiltinsInitIsCompletedOnExitOfDriverHandleInitialization) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useinitBuiltinsAsyncEnabled = true;
@@ -859,6 +912,14 @@ TEST_F(DriverHandleTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1U, count);
     EXPECT_NE(nullptr, driverHandle);
+}
+
+TEST_F(DriverHandleTest,
+       givenInitializedDriverWhenZerDriverGetDefaultContextIsCalledThenDefaultContextFromFirstDriverHandleIsReturned) {
+    globalDriverHandles->push_back(nullptr);
+    auto defaultContext = zerDriverGetDefaultContext();
+
+    EXPECT_EQ(defaultContext, driverHandle->getDefaultContext());
 }
 
 TEST_F(DriverHandleTest,
@@ -1118,6 +1179,8 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexDriverImportExternalPointer) expectedImport = L0::zexDriverImportExternalPointer;
     decltype(&zexDriverReleaseImportedPointer) expectedRelease = L0::zexDriverReleaseImportedPointer;
     decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = L0::zexDriverGetHostPointerBaseAddress;
+    decltype(&zeDriverGetDefaultContext) expectedZeDriverGetDefaultContext = zeDriverGetDefaultContext;
+    decltype(&zerDriverGetDefaultContext) expectedZerDriverGetDefaultContext = zerDriverGetDefaultContext;
     decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = L0::zexKernelGetBaseAddress;
     decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = zeIntelGetDriverVersionString;
     decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = L0::zeIntelMediaCommunicationCreate;
@@ -1140,6 +1203,12 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverGetHostPointerBaseAddress", &funPtr));
     EXPECT_EQ(expectedGet, reinterpret_cast<decltype(&zexDriverGetHostPointerBaseAddress)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeDriverGetDefaultContext", &funPtr));
+    EXPECT_EQ(expectedZeDriverGetDefaultContext, reinterpret_cast<decltype(&zeDriverGetDefaultContext)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerDriverGetDefaultContext", &funPtr));
+    EXPECT_EQ(expectedZerDriverGetDefaultContext, reinterpret_cast<decltype(&zerDriverGetDefaultContext)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexKernelGetBaseAddress", &funPtr));
     EXPECT_EQ(expectedKernelGetBaseAddress, reinterpret_cast<decltype(&zexKernelGetBaseAddress)>(funPtr));

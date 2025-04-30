@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,12 @@ template <>
 struct WhiteBox<::L0::Context> : public ::L0::Context {};
 
 using Context = WhiteBox<::L0::Context>;
+
+template <>
+struct WhiteBox<::L0::ContextImp> : public ::L0::ContextImp {
+    using ::L0::ContextImp::devices;
+    using ::L0::ContextImp::numDevices;
+};
 
 template <>
 struct Mock<Context> : public Context {

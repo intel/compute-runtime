@@ -29,6 +29,8 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexDriverImportExternalPointer);
     RETURN_FUNC_PTR_IF_EXIST(zexDriverReleaseImportedPointer);
     RETURN_FUNC_PTR_IF_EXIST(zexDriverGetHostPointerBaseAddress);
+    RETURN_FUNC_PTR_IF_EXIST(zeDriverGetDefaultContext);
+    RETURN_FUNC_PTR_IF_EXIST(zerDriverGetDefaultContext);
 
     RETURN_FUNC_PTR_IF_EXIST(zexKernelGetBaseAddress);
     RETURN_FUNC_PTR_IF_EXIST(zexKernelGetArgumentSize);
