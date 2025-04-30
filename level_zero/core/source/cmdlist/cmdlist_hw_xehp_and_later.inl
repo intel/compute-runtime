@@ -319,6 +319,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     bool inOrderExecSignalRequired = false;
     bool inOrderNonWalkerSignalling = false;
+    bool isCounterBasedEvent = false;
 
     uint64_t inOrderCounterValue = 0;
     uint64_t inOrderIncrementValue = 0;
@@ -348,6 +349,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
                     inOrderExecInfo = this->inOrderExecInfo.get();
                     if (eventForInOrderExec && eventForInOrderExec->isCounterBased()) {
+                        isCounterBasedEvent = true;
                         if (eventForInOrderExec->getInOrderIncrementValue() > 0) {
                             inOrderIncrementGpuAddress = eventForInOrderExec->getInOrderExecInfo()->getBaseDeviceAddress();
                             inOrderIncrementValue = eventForInOrderExec->getInOrderIncrementValue();
@@ -382,6 +384,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .inOrderIncrementValue = inOrderIncrementValue,
             .device = neoDevice,
             .inOrderExecInfo = inOrderExecInfo,
+            .isCounterBasedEvent = isCounterBasedEvent,
             .isTimestampEvent = isTimestampEvent,
             .isHostScopeSignalEvent = isHostSignalScopeEvent,
             .isUsingSystemAllocation = isKernelUsingSystemAllocation,

@@ -207,6 +207,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .inOrderIncrementValue = 0,
             .device = neoDevice,
             .inOrderExecInfo = nullptr,
+            .isCounterBasedEvent = false,
             .isTimestampEvent = false,
             .isHostScopeSignalEvent = false,
             .isUsingSystemAllocation = false,

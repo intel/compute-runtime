@@ -683,6 +683,9 @@ HWTEST2_F(AppendMemoryCopyTests, givenCommandListAndHostPointersWhenMemoryCopyCa
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, MatchAny) {
 
+    if (device->getProductHelper().useAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/transfer_direction.h"
+#include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/vec.h"
@@ -239,7 +240,8 @@ struct CommandListCoreFamily : public CommandListImp {
                                                       uint64_t dstOffset, uintptr_t srcPtr,
                                                       NEO::GraphicsAllocation *srcPtrAlloc,
                                                       uint64_t srcOffset,
-                                                      uint64_t size);
+                                                      uint64_t size,
+                                                      Event *signalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
                                                             AlignedAllocationData *dstAllocationData,
@@ -335,6 +337,8 @@ struct CommandListCoreFamily : public CommandListImp {
     void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent, bool copyOperation, bool flushL3InPipeControl);
     void handlePostSubmissionState();
 
+    MOCKABLE_VIRTUAL void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent);
+
     void setupFillKernelArguments(size_t baseOffset,
                                   size_t patternSize,
                                   size_t dstSize,
@@ -367,6 +371,13 @@ struct CommandListCoreFamily : public CommandListImp {
         }
         return this->containsStatelessUncachedResource;
     }
+
+    bool isUsingSystemAllocation(const NEO::AllocationType &allocType) const {
+        return ((allocType == NEO::AllocationType::bufferHostMemory) ||
+                (allocType == NEO::AllocationType::svmCpu) ||
+                (allocType == NEO::AllocationType::externalHostPtr));
+    }
+
     void postInitComputeSetup();
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);
     virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) { return false; }
@@ -407,6 +418,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool allowCbWaitEventsNoopDispatch = false;
     bool copyOperationFenceSupported = false;
     bool implicitSynchronizedDispatchForCooperativeKernelsAllowed = false;
+    bool useAdditionalBlitProperties = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

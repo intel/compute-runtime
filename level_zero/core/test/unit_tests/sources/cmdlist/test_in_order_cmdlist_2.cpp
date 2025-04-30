@@ -3436,21 +3436,22 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         ASSERT_NE(cmdList.end(), itor);
         ASSERT_NE(nullptr, genCmdCast<XY_COPY_BLT *>(*itor));
 
-        auto flushDwItor = find<MI_FLUSH_DW *>(++itor, cmdList.end());
-        ASSERT_NE(cmdList.end(), flushDwItor);
-
-        auto signalSubCopyEvent = genCmdCast<MI_FLUSH_DW *>(*flushDwItor);
-        ASSERT_NE(nullptr, signalSubCopyEvent);
-
-        while (signalSubCopyEvent->getDestinationAddress() != signalSubCopyEventGpuVa) {
-            flushDwItor = find<MI_FLUSH_DW *>(++flushDwItor, cmdList.end());
+        if (!device->getProductHelper().useAdditionalBlitProperties()) {
+            auto flushDwItor = find<MI_FLUSH_DW *>(++itor, cmdList.end());
             ASSERT_NE(cmdList.end(), flushDwItor);
 
-            signalSubCopyEvent = genCmdCast<MI_FLUSH_DW *>(*flushDwItor);
+            auto signalSubCopyEvent = genCmdCast<MI_FLUSH_DW *>(*flushDwItor);
             ASSERT_NE(nullptr, signalSubCopyEvent);
-        }
 
-        itor = ++flushDwItor;
+            while (signalSubCopyEvent->getDestinationAddress() != signalSubCopyEventGpuVa) {
+                flushDwItor = find<MI_FLUSH_DW *>(++flushDwItor, cmdList.end());
+                ASSERT_NE(cmdList.end(), flushDwItor);
+
+                signalSubCopyEvent = genCmdCast<MI_FLUSH_DW *>(*flushDwItor);
+                ASSERT_NE(nullptr, signalSubCopyEvent);
+            }
+            itor = ++flushDwItor;
+        }
 
         auto semaphoreCmds = findAll<MI_SEMAPHORE_WAIT *>(beginItor, itor);
         EXPECT_EQ(numExpectedSemaphores, semaphoreCmds.size());
