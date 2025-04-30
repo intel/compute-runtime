@@ -55,6 +55,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::getSizeSystemMemoryFenceAddress;
     using BaseClass::getTagAddressValueForRingSwitch;
+    using BaseClass::globalFenceAllocation;
     using BaseClass::hwInfo;
     using BaseClass::immWritePostSyncOffset;
     using BaseClass::inputMonitorFenceDispatchRequirement;

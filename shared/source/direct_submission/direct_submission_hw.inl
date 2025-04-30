@@ -492,7 +492,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit) {
 
             this->partitionConfigSet = true;
         }
-        if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
+        if (this->globalFenceAllocation && !this->systemMemoryFenceAddressSet) {
             startBufferSize += getSizeSystemMemoryFenceAddress();
             dispatchSystemMemoryFenceAddress();
 
@@ -958,7 +958,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchUllsState() {
         dispatchPartitionRegisterConfiguration();
         this->partitionConfigSet = true;
     }
-    if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
+    if (this->globalFenceAllocation && !this->systemMemoryFenceAddressSet) {
         dispatchSystemMemoryFenceAddress();
         this->systemMemoryFenceAddressSet = true;
     }

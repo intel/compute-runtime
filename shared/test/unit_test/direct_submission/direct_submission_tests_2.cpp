@@ -129,7 +129,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenIni
 
     EXPECT_TRUE(directSubmission.initialize(true));
 
-    EXPECT_EQ(miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
+    EXPECT_EQ(directSubmission.globalFenceAllocation != nullptr, directSubmission.systemMemoryFenceAddressSet);
 
     validateFenceProgramming<FamilyType>(directSubmission, 1, expectedSysMemFenceAddress);
 }
@@ -151,7 +151,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenDis
 
     validateFenceProgramming<FamilyType>(directSubmission, 1, expectedSysMemFenceAddress);
 
-    EXPECT_EQ(miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
+    EXPECT_EQ(directSubmission.globalFenceAllocation != nullptr, directSubmission.systemMemoryFenceAddressSet);
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenSysMemFenceIsAlreadySentThenDontReprogram) {
@@ -193,6 +193,16 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToFalseWhenCre
     EXPECT_TRUE(directSubmission.initialize(true));
 
     EXPECT_FALSE(directSubmission.miMemFenceRequired);
+    EXPECT_EQ(directSubmission.systemMemoryFenceAddressSet, directSubmission.globalFenceAllocation != nullptr);
+}
+
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenNoGlobalFenceAllocationWhenInitializeThenDoNotProgramGlobalFence) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.globalFenceAllocation = nullptr;
+    directSubmission.systemMemoryFenceAddressSet = false;
+
+    EXPECT_TRUE(directSubmission.initialize(true));
+
     EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
 }
 
@@ -211,7 +221,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToTrueWhenCrea
 
     EXPECT_TRUE(directSubmission.initialize(true));
 
-    EXPECT_TRUE(directSubmission.systemMemoryFenceAddressSet);
+    EXPECT_EQ(directSubmission.systemMemoryFenceAddressSet, directSubmission.globalFenceAllocation != nullptr);
     EXPECT_TRUE(directSubmission.miMemFenceRequired);
 }
 
