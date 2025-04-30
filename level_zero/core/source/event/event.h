@@ -290,6 +290,9 @@ struct Event : _ze_event_handle_t {
     bool isWaitScope() const {
         return !!waitScope;
     }
+    bool isWaitScope(ze_event_scope_flags_t flag) const {
+        return !!(waitScope & flag);
+    }
     void setMetricNotification(MetricCollectorEventNotify *metricNotification) {
         this->metricNotification = metricNotification;
     }

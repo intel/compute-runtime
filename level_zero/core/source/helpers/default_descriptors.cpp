@@ -38,6 +38,15 @@ const ze_host_mem_alloc_desc_t hostMemDesc = {
     .pNext = nullptr,
     .flags = static_cast<ze_host_mem_alloc_flags_t>(ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED | ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT)};
 
+const zex_counter_based_event_desc_t counterBasedEventDesc = {
+    .stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
+    .pNext = nullptr,
+    .flags = static_cast<zex_counter_based_event_exp_flags_t>(
+        ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE |
+        ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE |
+        ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE),
+    .signalScope = static_cast<ze_event_scope_flags_t>(ZE_EVENT_SCOPE_FLAG_HOST),
+    .waitScope = static_cast<ze_event_scope_flags_t>(ZE_EVENT_SCOPE_FLAG_DEVICE)};
 } // namespace DefaultDescriptors
 
 } // namespace L0

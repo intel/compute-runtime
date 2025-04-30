@@ -16,6 +16,7 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/helpers/default_descriptors.h"
 
 namespace L0 {
 
@@ -48,16 +49,17 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
     constexpr uint32_t supportedBasedFlags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
 
     auto device = Device::fromHandle(toInternalType(hDevice));
+    auto counterBasedEventDesc = desc ? desc : &DefaultDescriptors::counterBasedEventDesc;
 
-    if (!hDevice || !desc || !phEvent) {
+    if (!hDevice || !phEvent) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    const bool ipcFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_IPC);
-    const bool timestampFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP);
-    const bool mappedTimestampFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP);
+    const bool ipcFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_IPC);
+    const bool timestampFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP);
+    const bool mappedTimestampFlag = !!(counterBasedEventDesc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP);
 
-    uint32_t inputCbFlags = desc->flags & supportedBasedFlags;
+    uint32_t inputCbFlags = counterBasedEventDesc->flags & supportedBasedFlags;
     if (inputCbFlags == 0) {
         inputCbFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
     }
@@ -66,7 +68,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto signalScope = desc->signalScope;
+    auto signalScope = counterBasedEventDesc->signalScope;
 
     if (NEO::debugManager.flags.MitigateHostVisibleSignal.get()) {
         signalScope &= ~ZE_EVENT_SCOPE_FLAG_HOST;
@@ -74,14 +76,14 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
 
     EventDescriptor eventDescriptor = {
         .eventPoolAllocation = nullptr,
-        .extensions = desc->pNext,
+        .extensions = counterBasedEventDesc->pNext,
         .totalEventSize = 0,
         .maxKernelCount = EventPacketsCount::maxKernelSplit,
         .maxPacketsCount = 1,
         .counterBasedFlags = inputCbFlags,
         .index = 0,
         .signalScope = signalScope,
-        .waitScope = desc->waitScope,
+        .waitScope = counterBasedEventDesc->waitScope,
         .timestampPool = timestampFlag,
         .kernelMappedTsPoolFlag = mappedTimestampFlag,
         .importedIpcPool = false,
@@ -92,7 +94,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
 
     auto l0Event = device->getL0GfxCoreHelper().createStandaloneEvent(eventDescriptor, device, result);
 
-    if (signalScope ^ desc->signalScope) {
+    if (signalScope ^ counterBasedEventDesc->signalScope) {
         l0Event->setMitigateHostVisibleSignal();
     }
 
