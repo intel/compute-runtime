@@ -216,10 +216,15 @@ void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family:
 template <>
 void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    if (hwInfo.featureTable.flags.ftrLocalMemory &&
-        (properties.allocationType == AllocationType::timestampPacketTagBuffer ||
-         properties.allocationType == AllocationType::commandBuffer)) {
-        allocationData.flags.useSystemMemory = false;
+    if (hwInfo.featureTable.flags.ftrLocalMemory) {
+        if (properties.allocationType == AllocationType::timestampPacketTagBuffer ||
+            properties.allocationType == AllocationType::commandBuffer) {
+            allocationData.flags.useSystemMemory = false;
+        }
+
+        if (properties.allocationType == AllocationType::semaphoreBuffer && !rootDeviceEnvironment.getProductHelper().isGlobalFenceInDirectSubmissionRequired(hwInfo)) {
+            allocationData.flags.useSystemMemory = true;
+        }
     }
 }
 
