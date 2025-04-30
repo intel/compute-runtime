@@ -59,6 +59,7 @@ struct EncodePostSyncArgs {
     NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
     bool isCounterBasedEvent = false;
     bool isTimestampEvent = false;
+    NEO::TagNodeBase *tsNode = nullptr;
     bool isHostScopeSignalEvent = false;
     bool isUsingSystemAllocation = false;
     bool dcFlushEnable = false;
@@ -87,6 +88,9 @@ struct EncodePostSync {
 
     template <typename CommandType>
     static void setupPostSyncForInOrderExec(CommandType &cmd, const EncodePostSyncArgs &args);
+
+    template <typename CommandType>
+    static void setupPostSyncForTimestamp(CommandType &cmd, const EncodePostSyncArgs &args);
 
     static uint32_t getPostSyncMocs(const RootDeviceEnvironment &rootDeviceEnvironment, const bool dcFlush);
 

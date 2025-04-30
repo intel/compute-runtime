@@ -200,6 +200,10 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
             numPackets *= static_cast<uint32_t>(inOrderTimestampNode.size());
         }
 
+        if (blitAdditionalPropertiesUsed) {
+            numPackets += static_cast<uint32_t>(inOrderTimestampNode.size());
+        }
+
         for (auto packetId = 0u; packetId < numPackets; packetId++) {
             if (this->l3FlushAppliedOnKernel.test(kernelId) && ((packetId % skipL3EventPacketIndex) != 0)) {
                 continue;

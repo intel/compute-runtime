@@ -19,12 +19,18 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
+    using BaseClass::blitAdditionalPropertiesUsed;
+    using BaseClass::contextEndTS;
+    using BaseClass::contextStartTS;
     using BaseClass::counterBasedMode;
     using BaseClass::csrs;
     using BaseClass::Event;
     using BaseClass::eventPoolAllocation;
+    using BaseClass::globalEndTS;
+    using BaseClass::globalStartTS;
     using BaseClass::gpuHangCheckPeriod;
     using BaseClass::hostAddressFromPool;
+    using BaseClass::inOrderTimestampNode;
     using BaseClass::isFromIpcPool;
     using BaseClass::l3FlushAppliedOnKernel;
     using BaseClass::maxKernelCount;
@@ -39,10 +45,17 @@ using Event = WhiteBox<::L0::Event>;
 template <typename TagSizeT>
 struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass = ::L0::EventImp<TagSizeT>;
+    using BaseClass::blitAdditionalPropertiesUsed;
+    using BaseClass::calculateProfilingData;
+    using BaseClass::contextEndTS;
+    using BaseClass::contextStartTS;
     using BaseClass::csrs;
+    using BaseClass::globalEndTS;
+    using BaseClass::globalStartTS;
     using BaseClass::gpuHangCheckPeriod;
     using BaseClass::hostAddressFromPool;
     using BaseClass::hostEventSetValueTimestamps;
+    using BaseClass::inOrderTimestampNode;
     using BaseClass::isFromIpcPool;
     using BaseClass::l3FlushAppliedOnKernel;
     using BaseClass::maxKernelCount;

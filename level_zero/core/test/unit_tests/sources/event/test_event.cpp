@@ -2802,6 +2802,61 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenFlagPrintTimestampPacketConten
     EXPECT_EQ(0, output.compare(expected.str().c_str()));
 }
 
+TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWithBlitAdditionalPropertiesWhenCallingCalulateProfilingDataThenCorrectDataSet) {
+    typename MockTimestampPackets32::Packet packetData[3];
+    uint32_t deviceCount = 1;
+    ze_device_handle_t rootDeviceHandle;
+
+    ze_result_t result = zeDeviceGet(driverHandle.get(), &deviceCount, &rootDeviceHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, neoDevice->getMemoryManager());
+    MockTagAllocator<NEO::TimestampPackets<uint32_t, 2>> blitTagAllocator(0, neoDevice->getMemoryManager());
+    auto event = std::unique_ptr<EventImp<uint32_t>>(static_cast<EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, L0::Device::fromHandle(rootDeviceHandle))));
+    ASSERT_NE(nullptr, event);
+
+    auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(deviceTagAllocator.getTag(), nullptr, *neoDevice, 1, false, false);
+
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+
+    event->resetInOrderTimestampNode(blitTagAllocator.getTag(), 1, true);
+    EXPECT_EQ(1u, event->inOrderTimestampNode.size());
+    ASSERT_TRUE(event->blitAdditionalPropertiesUsed);
+
+    event->setPacketsInUse(2u);
+
+    packetData[0].contextStart = 1u;
+    packetData[0].contextEnd = 2u;
+    packetData[0].globalStart = 3u;
+    packetData[0].globalEnd = 4u;
+
+    packetData[1].contextStart = 5u;
+    packetData[1].contextEnd = 6u;
+    packetData[1].globalStart = 7u;
+    packetData[1].globalEnd = 8u;
+
+    packetData[2].contextStart = 9u;
+    packetData[2].contextEnd = 10u;
+    packetData[2].globalStart = 11u;
+    packetData[2].globalEnd = 12u;
+
+    event->hostAddressFromPool = packetData;
+    uint32_t pCount = 3;
+
+    for (uint32_t packetId = 0; packetId < pCount; packetId++) {
+        event->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, event->hostAddressFromPool);
+        event->hostAddressFromPool = ptrOffset(event->hostAddressFromPool, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
+    }
+    result = event->calculateProfilingData();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(packetData[0].contextStart, event->contextStartTS);
+    EXPECT_EQ(packetData[2].contextEnd, event->contextEndTS);
+    EXPECT_EQ(packetData[0].globalStart, event->globalStartTS);
+    EXPECT_EQ(packetData[2].globalEnd, event->globalEndTS);
+}
+
 HWTEST2_F(TimestampEventCreateMultiKernel, givenFlagPrintTimestampPacketContentsWhenMultiKernelsAndMultiPacketsAndCallQueryKernelTimestampThenProperLogIsPrinted, IsAtLeastXeHpCore) {
     debugManager.flags.PrintTimestampPacketContents.set(1);
     typename MockTimestampPackets32::Packet packetData[4];
@@ -3857,6 +3912,23 @@ HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenA
     EXPECT_EQ(1u, downloadedAllocations);
 
     event->destroy();
+}
+HWTEST_F(EventTests, givenInOrderEventWhenCallingResetInOrderTimestampNodeWithBlitAdditionalPropertiesUsedThenBlitAdditionalPropertiesUsedIsSet) {
+    std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, neoDevice->getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> eventTagAllocator(0, neoDevice->getMemoryManager());
+    auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
+    ASSERT_NE(event, nullptr);
+
+    auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(deviceTagAllocator.getTag(), nullptr, *neoDevice, 1, false, false);
+
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+
+    EXPECT_FALSE(event->blitAdditionalPropertiesUsed);
+    event->resetInOrderTimestampNode(eventTagAllocator.getTag(), 1, true);
+    EXPECT_TRUE(event->blitAdditionalPropertiesUsed);
 }
 
 HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {
