@@ -31,6 +31,7 @@
 using namespace NEO;
 
 using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
+using AubCommandStreamReceiverWithoutAubStreamTests = Test<AubCommandStreamReceiverWithoutAubStreamFixture>;
 
 template <typename GfxFamily>
 struct MockAubCsrToTestDumpAubNonWritable : public AUBCommandStreamReceiverHw<GfxFamily> {
@@ -92,16 +93,19 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenTypeIsChe
     EXPECT_EQ(CommandStreamReceiverType::aub, aubCsr->getType());
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedThenAubManagerAndHardwareContextAreNull) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.UseAubStream.set(false);
+HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamReceiverWhenItIsCreatedThenAubManagerAndHardwareContextAreNull) {
+
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), false, 1);
     executionEnvironment.initGmm();
     executionEnvironment.initializeMemoryManager();
+
+    executionEnvironment.rootDeviceEnvironments[0]->initAubCenter(false, "", CommandStreamReceiverType::aub);
+    executionEnvironment.rootDeviceEnvironments[0]->aubCenter->getAubManager();
+
     DeviceBitfield deviceBitfield(1);
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, executionEnvironment, 0, deviceBitfield);
-    ASSERT_NE(nullptr, aubCsr);
 
+    ASSERT_NE(nullptr, aubCsr);
     EXPECT_EQ(nullptr, aubCsr->aubManager);
     EXPECT_EQ(nullptr, aubCsr->hardwareContextController);
 }
@@ -283,8 +287,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesInitializeTheirEnginesThenUniqueGlobalGttAddressesAreGenerated) {
-    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter());
+HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamReceiverWhenMultipleInstancesInitializeTheirEnginesThenUniqueGlobalGttAddressesAreGenerated) {
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter);
 
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto engineInstance = gfxCoreHelper.getGpgpuEngineInstances(pDevice->getRootDeviceEnvironment())[0];
@@ -306,7 +310,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
     EXPECT_NE(aubCsr1->engineInfo.ggttRingBuffer, aubCsr2->engineInfo.ggttRingBuffer);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldInitializeEngineInfo) {
+HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldInitializeEngineInfo) {
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
     aubCsr->hardwareContextController.reset(nullptr);
@@ -379,8 +383,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrAndResidentAllocationWhenProc
     EXPECT_EQ(&allocation2, memoryOperationsHandler->residentAllocations[0]);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenProcessResidencyIsCalledButAllocationSizeIsZeroThenItShouldntWriteMemory) {
-    DebugManagerStateRestore stateRestore;
+HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamReceiverInSubCaptureModeWhenProcessResidencyIsCalledButAllocationSizeIsZeroThenItShouldntWriteMemory) {
+
     AubSubCaptureCommon aubSubCaptureCommon;
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
@@ -400,7 +404,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     EXPECT_FALSE(aubCsr->writeMemoryCalled);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldntInitializeEngineInfo) {
+HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldntInitializeEngineInfo) {
+
     AubSubCaptureCommon aubSubCaptureCommon;
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
@@ -420,7 +425,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     EXPECT_EQ(nullptr, aubCsr->engineInfo.pRingBuffer);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldLeaveProperRingTailAlignment) {
+HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldLeaveProperRingTailAlignment) {
+
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
     auto allocationsForResidency = aubCsr->getResidencyAllocations();
@@ -510,7 +516,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneAndSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldUpdateHwTagWithLatestSentTaskCount) {
-    DebugManagerStateRestore stateRestore;
 
     AubSubCaptureCommon aubSubCaptureCommon;
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
@@ -537,7 +542,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStandaloneAndSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldNotUpdateHwTagWithLatestSentTaskCount) {
-    DebugManagerStateRestore stateRestore;
 
     AubSubCaptureCommon aubSubCaptureCommon;
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
@@ -565,7 +569,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledAndSubCaptureIsEnabledThenItShouldDeactivateSubCapture) {
-    DebugManagerStateRestore stateRestore;
 
     AubSubCaptureCommon aubSubCaptureCommon;
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
@@ -589,7 +592,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledAndSubCaptureIsEnabledThenItShouldCallPollForCompletion) {
-    DebugManagerStateRestore stateRestore;
 
     AubSubCaptureCommon aubSubCaptureCommon;
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);

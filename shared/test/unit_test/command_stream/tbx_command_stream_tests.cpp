@@ -763,7 +763,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpThenFileNameIsE
     executionEnvironment.initGmm();
 
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
-    setMockAubCenter(*rootDeviceEnvironment, CommandStreamReceiverType::tbx);
+    setMockAubCenter(*rootDeviceEnvironment, CommandStreamReceiverType::tbx, true);
 
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", mockRootDeviceIndex);
 

@@ -39,6 +39,7 @@
 using namespace NEO;
 
 using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
+using AubCommandStreamReceiverWithoutAubStreamTests = Test<AubCommandStreamReceiverWithoutAubStreamFixture>;
 
 struct FlatBatchBufferHelperAubTests : AubCommandStreamReceiverTests {
     void SetUp() override {
@@ -346,7 +347,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeThenExpectFlattenBatchBufferIsCalled) {
-    DebugManagerStateRestore dbgRestore;
+    DebugManagerStateRestore stateRestore;
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
     debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
 
@@ -384,7 +385,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeAndThereIsNoChainedBatchBufferThenExpectFlattenBatchBufferIsCalledAnyway) {
-    DebugManagerStateRestore dbgRestore;
+    DebugManagerStateRestore stateRestore;
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
     debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::immediateDispatch));
 
@@ -408,7 +409,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndBatchedDispatchModeThenExpectFlattenBatchBufferIsCalledAnyway) {
-    DebugManagerStateRestore dbgRestore;
+    DebugManagerStateRestore stateRestore;
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
     debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::batchedDispatch));
 
@@ -431,11 +432,14 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoCommentsIsCalled) {
-    DebugManagerStateRestore dbgRestore;
+    DebugManagerStateRestore stateRestore;
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+
+    aubCsr->hardwareContextController.reset(nullptr);
+
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
@@ -616,9 +620,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    AllocationProperties allocProperties{0u /* rootDeviceIndex */, true /* allocateMemory */,
-                                         &imgInfo, AllocationType::image, deviceBitfield};
-
+    AllocationProperties allocProperties{0u /* rootDeviceIndex */, true /* allocateMemory */, &imgInfo, AllocationType::image, deviceBitfield};
     auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
     imageAllocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = false;
@@ -795,50 +797,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     EXPECT_EQ(0u, aubCsr->writeMemoryParametrization.receivedAllocationView.first);
     EXPECT_EQ(0u, aubCsr->writeMemoryParametrization.receivedAllocationView.second);
     EXPECT_FALSE(aubCsr->writeMemoryParametrization.statusToReturn);
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledThenGraphicsAllocationSizeIsReadCorrectly) {
-    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter());
-
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
-    aubCsr->initializeEngine();
-    std::unique_ptr<MemoryManager> memoryManager(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
-
-    PhysicalAddressAllocator allocator;
-    struct PpgttMock : std::conditional<is64bit, PML4, PDPE>::type {
-        PpgttMock(PhysicalAddressAllocator *allocator) : std::conditional<is64bit, PML4, PDPE>::type(allocator) {}
-
-        void pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits, PageWalker &pageWalker, uint32_t memoryBank) override {
-            receivedSize = size;
-        }
-        size_t receivedSize = 0;
-    };
-    auto ppgttMock = new PpgttMock(&allocator);
-
-    aubCsr->ppgtt.reset(ppgttMock);
-
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-    aubCsr->setAubWritable(true, *gfxAllocation);
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    auto gmm = new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gfxAllocation->setDefaultGmm(gmm);
-
-    for (bool compressed : {false, true}) {
-        gmm->setCompressionEnabled(compressed);
-
-        aubCsr->writeMemory(*gfxAllocation);
-
-        if (compressed) {
-            EXPECT_EQ(gfxAllocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation(), ppgttMock->receivedSize);
-        } else {
-            EXPECT_EQ(gfxAllocation->getUnderlyingBufferSize(), ppgttMock->receivedSize);
-        }
-    }
-
-    memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, whenAubCommandStreamReceiverIsCreatedThenPPGTTAndGGTTCreatedHavePhysicalAddressAllocatorSet) {

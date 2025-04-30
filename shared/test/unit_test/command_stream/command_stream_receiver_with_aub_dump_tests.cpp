@@ -532,6 +532,9 @@ HWTEST_F(SimulatedCsrTest, givenTbxWithAubDumpCsrTypeWhenCreateCommandStreamRece
 }
 
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenNullAubManagerAvailableWhenTbxCsrWithAubDumpIsCreatedThenAubCsrIsCreated) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.UseAubStream.set(false);
+
     MockAubCenter *mockAubCenter = new MockAubCenter();
     ExecutionEnvironment *executionEnvironment = pDevice->getExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();

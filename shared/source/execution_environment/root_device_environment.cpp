@@ -33,6 +33,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/program/print_formatter.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/utilities/software_tags_manager.h"
@@ -54,6 +55,10 @@ void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::st
     if (!aubCenter) {
         UNRECOVERABLE_IF(!getGmmHelper());
         aubCenter.reset(new AubCenter(*this, localMemoryEnabled, aubFileName, csrType));
+    }
+    if (debugManager.flags.UseAubStream.get() && aubCenter->getAubManager() == nullptr) {
+        printToStderr("ERROR: Simulation mode detected but Aubstream is not available.\n");
+        UNRECOVERABLE_IF(true);
     }
 }
 
