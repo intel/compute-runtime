@@ -1126,7 +1126,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     bool mainStorageCleanupNeeded = !mainInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
     bool copyOffloadStorageCleanupNeeded = false;
 
-    const bool dualStreamCopyOffload = (getCopyOffloadModeForOperation(isCopyOffloadEnabled()) == CopyOffloadModes::dualStream);
+    const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(isCopyOffloadEnabled());
 
     if (dualStreamCopyOffload) {
         copyOffloadTaskCount = this->cmdQImmediateCopyOffload->getTaskCount();

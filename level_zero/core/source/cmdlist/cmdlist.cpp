@@ -230,7 +230,7 @@ void CommandList::synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t
 }
 
 NEO::CommandStreamReceiver *CommandList::getCsr(bool copyOffload) const {
-    auto queue = (getCopyOffloadModeForOperation(copyOffload) == CopyOffloadModes::dualStream) ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
+    auto queue = isDualStreamCopyOffloadOperation(copyOffload) ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
 
     return static_cast<CommandQueueImp *>(queue)->getCsr();
 }

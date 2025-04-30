@@ -53,6 +53,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::getCsr;
     using BaseClass::isCopyOffloadEnabled;
     using BaseClass::isCopyOnly;
+    using BaseClass::isDualStreamCopyOffloadOperation;
     using BaseClass::isInOrderExecutionEnabled;
     using BaseClass::isSkippingInOrderBarrierAllowed;
     using BaseClass::isTbxMode;

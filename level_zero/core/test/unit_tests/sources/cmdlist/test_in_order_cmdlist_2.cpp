@@ -101,6 +101,94 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenUseDef
     EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenDontProgramBcsMmioBase, IsAtLeastXeHpCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
+    auto immCmdList0 = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto immCmdList1 = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(2, true);
+    auto eventHandle0 = events[0]->toHandle();
+    auto eventHandle1 = events[1]->toHandle();
+
+    immCmdList0->appendMemoryCopy(&copyData1, &copyData2, 1, eventHandle0, 0, nullptr, copyParams);
+    immCmdList1->appendMemoryCopy(&copyData1, &copyData2, 1, eventHandle1, 0, nullptr, copyParams);
+    immCmdList1->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 1, &eventHandle0, copyParams);
+    auto cmdStream = immCmdList1->getCmdContainer().getCommandStream();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), 0));
+
+    auto itor = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+
+    while (itor != cmdList.end()) {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+        EXPECT_TRUE(cmd->getRegisterOffset() < RegisterOffsets::bcs0Base);
+        itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
+    }
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeAndProfilingEventWithRelaxedOrderingWhenAppendingThenDontBcsCommands, IsAtLeastXeHpCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    auto mainQueueDirectSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*mainQueueCsr);
+    auto offloadDirectSubmission = new MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>(*copyQueueCsr);
+
+    mainQueueCsr->directSubmission.reset(mainQueueDirectSubmission);
+    copyQueueCsr->blitterDirectSubmission.reset(offloadDirectSubmission);
+
+    int client1, client2;
+
+    mainQueueCsr->registerClient(&client1);
+    mainQueueCsr->registerClient(&client2);
+    copyQueueCsr->registerClient(&client1);
+    copyQueueCsr->registerClient(&client2);
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    auto eventHandle = events[0]->toHandle();
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, eventHandle, 0, nullptr, copyParams);
+
+    ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+    immCmdList->appendMemoryCopyRegion(&copyData1, &region, 1, 1, &copyData2, &region, 1, 1, eventHandle, 0, nullptr, copyParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto lrrCmds = findAll<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
+    auto lriCmds = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    auto lrmCmds = findAll<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+
+    for (auto &lrr : lrrCmds) {
+        auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*lrr);
+        EXPECT_TRUE(lrrCmd->getSourceRegisterAddress() < RegisterOffsets::bcs0Base);
+        EXPECT_TRUE(lrrCmd->getDestinationRegisterAddress() < RegisterOffsets::bcs0Base);
+    }
+
+    for (auto &lri : lriCmds) {
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lri);
+        EXPECT_TRUE(lriCmd->getRegisterOffset() < RegisterOffsets::bcs0Base);
+    }
+
+    for (auto &lrm : lrmCmds) {
+        auto lrmCmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*lrm);
+        EXPECT_TRUE(lrmCmd->getRegisterAddress() < RegisterOffsets::bcs0Base);
+    }
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeHpCore) {
     NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
 
