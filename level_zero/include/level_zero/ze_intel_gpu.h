@@ -283,7 +283,7 @@ zeIntelKernelGetBinaryExp(
 ///     - Default context contains all devices within driver instance
 /// @returns
 ///     - Context handle associated with driver
-ze_context_handle_t zeDriverGetDefaultContext(ze_driver_handle_t hDriver); ///> [in] handle of the driver
+ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(ze_driver_handle_t hDriver); ///> [in] handle of the driver
 
 /// @brief Get default context associated with default driver
 ///
@@ -293,7 +293,7 @@ ze_context_handle_t zeDriverGetDefaultContext(ze_driver_handle_t hDriver); ///> 
 ///     - Default context contains all devices within default driver instance
 /// @returns
 ///     - Context handle associated with default driver
-ze_context_handle_t zerDriverGetDefaultContext();
+ze_context_handle_t ZE_APICALL zerDriverGetDefaultContext();
 
 #if defined(__cplusplus)
 } // extern "C"
