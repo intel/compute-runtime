@@ -29,4 +29,8 @@ uint64_t IoctlHelperXePrelim::getPrimaryContextProperties() const {
     return 0;
 }
 
+uint64_t IoctlHelperXePrelim::getRootContextProperties() const {
+    return 0;
+}
+
 } // namespace NEO
