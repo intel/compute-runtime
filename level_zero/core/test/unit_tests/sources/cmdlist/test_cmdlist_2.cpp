@@ -82,7 +82,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                      uint64_t dstOffset, uintptr_t srcPtr,
                                      NEO::GraphicsAllocation *srcPtrAlloc,
                                      uint64_t srcOffset,
-                                     uint64_t size, Event *signalEvent) override {
+                                     uint64_t size) override {
         appendMemoryCopyBlitCalledTimes++;
         if (failOnFirstCopy && appendMemoryCopyBlitCalledTimes == 1) {
             return ZE_RESULT_ERROR_UNKNOWN;
@@ -108,7 +108,6 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
         return ZE_RESULT_SUCCESS;
     }
 
-    void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent) override {}
     ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
                                          Builtin builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, size_t dstOffset,

@@ -209,7 +209,6 @@ class ProductHelperHw : public ProductHelper {
     void setRenderCompressedFlags(HardwareInfo &hwInfo) const override;
     bool isCompressionForbidden(const HardwareInfo &hwInfo) const override;
     bool isExposingSubdevicesAllowed() const override;
-    bool useAdditionalBlitProperties() const override;
 
     ~ProductHelperHw() override = default;
 

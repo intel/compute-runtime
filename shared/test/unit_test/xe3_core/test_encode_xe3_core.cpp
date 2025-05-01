@@ -314,7 +314,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDefaultSettingForFenceWhenKernelUse
     dispatchInterface->getCrossThreadDataSizeResult = 0;
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
-    dispatchArgs.postSyncArgs.isUsingSystemAllocation = true;
+    dispatchArgs.postSyncArgs.isKernelUsingSystemAllocation = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
@@ -366,7 +366,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDefaultSettingForFenceWhenKernelUse
     dispatchInterface->getCrossThreadDataSizeResult = 0;
 
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
-    dispatchArgs.postSyncArgs.isUsingSystemAllocation = true;
+    dispatchArgs.postSyncArgs.isKernelUsingSystemAllocation = true;
     dispatchArgs.postSyncArgs.isHostScopeSignalEvent = true;
 
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);

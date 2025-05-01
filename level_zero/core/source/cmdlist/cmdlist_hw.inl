@@ -264,7 +264,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->maxLocalSubRegionSize = productHelper.getMaxLocalSubRegionSize(hwInfo);
     this->l3FlushAfterPostSyncRequired = productHelper.isL3FlushAfterPostSyncRequired(heaplessModeEnabled);
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo, this->l3FlushAfterPostSyncRequired);
-    this->useAdditionalBlitProperties = productHelper.useAdditionalBlitProperties();
 
     if (NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         this->defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
@@ -1414,7 +1413,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
 
     auto dstAllocationType = dstPtrAlloc->getAllocationType();
     launchParams.isBuiltInKernel = true;
-    launchParams.isDestinationAllocationInSystemMemory = this->isUsingSystemAllocation(dstAllocationType);
+    launchParams.isDestinationAllocationInSystemMemory =
+        (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
+        (dstAllocationType == NEO::AllocationType::svmCpu) ||
+        (dstAllocationType == NEO::AllocationType::externalHostPtr);
 
     if constexpr (checkIfAllocationImportedRequired()) {
         launchParams.isDestinationAllocationImported = this->isAllocationImported(dstPtrAlloc, device->getDriverHandle()->getSvmAllocsManager());
@@ -1428,20 +1430,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
                                                                        uint64_t dstOffset, uintptr_t srcPtr,
                                                                        NEO::GraphicsAllocation *srcPtrAlloc,
                                                                        uint64_t srcOffset,
-                                                                       uint64_t size,
-                                                                       Event *signalEvent) {
+                                                                       uint64_t size) {
     dstOffset += ptrDiff<uintptr_t>(dstPtr, dstPtrAlloc->getGpuAddress());
     srcOffset += ptrDiff<uintptr_t>(srcPtr, srcPtrAlloc->getGpuAddress());
 
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
+
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstPtrAlloc, srcPtrAlloc, {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0}, 0, 0, 0, 0, clearColorAllocation);
     commandContainer.addToResidencyContainer(dstPtrAlloc);
     commandContainer.addToResidencyContainer(srcPtrAlloc);
     commandContainer.addToResidencyContainer(clearColorAllocation);
-
-    if (useAdditionalBlitProperties) {
-        setAdditionalBlitProperties(blitProperties, signalEvent);
-    }
 
     NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
 
@@ -1561,7 +1559,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
     if (isCopyOnly(false)) {
         return appendMemoryCopyBlit(dstAddress, dstAllocation, 0u,
                                     srcAddress, srcAllocation, 0u,
-                                    size, nullptr);
+                                    size);
     } else {
         CmdListKernelLaunchParams launchParams = {};
         launchParams.isKernelSplitOperation = rightSize > 0;
@@ -1714,9 +1712,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     launchParams.pipeControlSignalling = (signalEvent && singlePipeControlPacket) || getDcFlushRequired(dstAllocationStruct.needsFlush);
 
-    if (!useAdditionalBlitProperties || !isCopyOnlyEnabled) {
-        appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false, isCopyOnlyEnabled);
-    }
+    appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false, isCopyOnlyEnabled);
 
     if (isCopyOnlyEnabled) {
         if (NEO::debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
@@ -1727,7 +1723,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                    dstAllocationStruct.alloc, dstAllocationStruct.offset,
                                    srcAllocationStruct.alignedAllocationPtr,
-                                   srcAllocationStruct.alloc, srcAllocationStruct.offset, size, signalEvent);
+                                   srcAllocationStruct.alloc, srcAllocationStruct.offset, size);
     } else {
         if (NEO::debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
             NEO::PipeControlArgs args;
@@ -1788,9 +1784,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc, isCopyOnlyEnabled);
 
-    if (!useAdditionalBlitProperties || !isCopyOnlyEnabled) {
-        appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false, isCopyOnlyEnabled);
-    }
+    appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false, isCopyOnlyEnabled);
 
     bool l3flushInPipeControl = !l3FlushAfterPostSyncRequired || isSplitOperation;
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent, isCopyOnlyEnabled, l3flushInPipeControl);
@@ -2481,6 +2475,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
         return;
     }
     commandContainer.addToResidencyContainer(event->getAllocation(this->device));
+
     if (beforeWalker) {
         event->resetKernelCountAndPacketUsedCount();
     } else {

@@ -42,7 +42,7 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
                                      uint64_t dstOffset, uintptr_t srcPtr,
                                      NEO::GraphicsAllocation *srcPtrAlloc,
                                      uint64_t srcOffset,
-                                     uint64_t size, Event *signalEvent) override {
+                                     uint64_t size) override {
         appendMemoryCopyBlitCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -213,7 +213,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListThenDcFlushIsNotAddedAf
     NEO::MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(dstPtr), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    commandList->appendMemoryCopyBlit(ptrOffset(dstPtr, dstOffset), &mockAllocationDst, 0, ptrOffset(srcPtr, srcOffset), &mockAllocationSrc, 0, copySize, nullptr);
+    commandList->appendMemoryCopyBlit(ptrOffset(dstPtr, dstOffset), &mockAllocationDst, 0, ptrOffset(srcPtr, srcOffset), &mockAllocationSrc, 0, copySize);
 
     auto &commandContainer = commandList->getCmdContainer();
     GenCmdList genCmdList;
@@ -427,73 +427,6 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenNotTiled1DArrayImagePas
     auto cmd = genCmdCast<XY_BLOCK_COPY_BLT *>(*itor);
     EXPECT_EQ(cmd->getSourceSurfaceDepth(), depth);
     EXPECT_EQ(cmd->getSourceSurfaceHeight(), arrayLevels);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-class MockCommandListForAdditionalBlitProperties : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
-  public:
-    using BaseClass = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
-    using BaseClass::setAdditionalBlitProperties;
-    using BaseClass::useAdditionalBlitProperties;
-};
-
-HWTEST_F(AppendMemoryCopyTests, givenBlitPropertiesWhenCallingSetAdditionalBlitPropertiesThenSyncPropertiesExtRemainsUnchanged) {
-    NEO::BlitProperties blitProperties{}, blitProperties2{}, blitPropertiesExpected{};
-    EncodePostSyncArgs &postSyncArgs = blitProperties.blitSyncProperties.postSyncArgs;
-    EncodePostSyncArgs &postSyncArgs2 = blitProperties2.blitSyncProperties.postSyncArgs;
-    EncodePostSyncArgs &postSyncArgsExpected = blitPropertiesExpected.blitSyncProperties.postSyncArgs;
-
-    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties<FamilyType::gfxCoreFamily>>();
-    EXPECT_FALSE(commandList->useAdditionalBlitProperties);
-    commandList->setAdditionalBlitProperties(blitProperties, nullptr);
-    EXPECT_EQ(postSyncArgs.isTimestampEvent, postSyncArgsExpected.isTimestampEvent);
-    EXPECT_EQ(postSyncArgs.postSyncImmValue, postSyncArgsExpected.postSyncImmValue);
-    EXPECT_EQ(postSyncArgs.interruptEvent, postSyncArgsExpected.interruptEvent);
-    EXPECT_EQ(postSyncArgs.eventAddress, postSyncArgsExpected.eventAddress);
-
-    commandList->useAdditionalBlitProperties = true;
-    commandList->setAdditionalBlitProperties(blitProperties2, nullptr);
-    EXPECT_EQ(postSyncArgs2.isTimestampEvent, postSyncArgsExpected.isTimestampEvent);
-    EXPECT_EQ(postSyncArgs2.postSyncImmValue, postSyncArgsExpected.postSyncImmValue);
-    EXPECT_EQ(postSyncArgs2.interruptEvent, postSyncArgsExpected.interruptEvent);
-    EXPECT_EQ(postSyncArgs2.eventAddress, postSyncArgsExpected.eventAddress);
-    EXPECT_EQ(nullptr, postSyncArgs2.inOrderExecInfo);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-class MockCommandListForAdditionalBlitProperties2 : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
-  public:
-    using BaseClass = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
-    using BaseClass::useAdditionalBlitProperties;
-    void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent) override {
-        additionalBlitPropertiesCalled++;
-        BaseClass::setAdditionalBlitProperties(blitProperties, signalEvent);
-    }
-    uint32_t additionalBlitPropertiesCalled = 0;
-};
-
-HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendMemoryCopyBlitThenAdditionalBlitPropertiesCalled) {
-    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
-    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
-    uintptr_t srcPtr = 0x5001;
-    uintptr_t dstPtr = 0x7001;
-    uint64_t srcOffset = 0x101;
-    uint64_t dstOffset = 0x201;
-    uint64_t copySize = 0x301;
-    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
-                                                  reinterpret_cast<void *>(srcPtr), 0x1000, 0, sizeof(uint32_t),
-                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
-                                                  reinterpret_cast<void *>(dstPtr), 0x1000, 0, sizeof(uint32_t),
-                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    commandList->useAdditionalBlitProperties = false;
-    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
-    commandList->appendMemoryCopyBlit(ptrOffset(dstPtr, dstOffset), &mockAllocationDst, 0, ptrOffset(srcPtr, srcOffset), &mockAllocationSrc, 0, copySize, nullptr);
-    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
-
-    commandList->useAdditionalBlitProperties = true;
-    commandList->appendMemoryCopyBlit(ptrOffset(dstPtr, dstOffset), &mockAllocationDst, 0, ptrOffset(srcPtr, srcOffset), &mockAllocationSrc, 0, copySize, nullptr);
-    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
 }
 
 } // namespace ult

@@ -114,7 +114,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::requiresDcFlushForDcMitigation;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::scratchAddressPatchingEnabled;
-    using BaseClass::setAdditionalBlitProperties;
     using BaseClass::setupTimestampEventForMultiTile;
     using BaseClass::signalAllEventPackets;
     using BaseClass::stateBaseAddressTracking;
@@ -629,7 +628,6 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     using BaseClass::encodeMiFlush;
     using BaseClass::getDeviceCounterAllocForResidency;
     using BaseClass::ownedPrivateAllocations;
-    using BaseClass::setAdditionalBlitProperties;
     using BaseClass::taskCountUpdateFenceRequired;
 
     ze_result_t executeMemAdvise(ze_device_handle_t hDevice,
@@ -656,7 +654,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                       uint64_t dstOffset, uintptr_t srcPtr,
                       NEO::GraphicsAllocation *srcPtrAlloc,
                       uint64_t srcOffset,
-                      uint64_t size, Event *signalEvent));
+                      uint64_t size));
 
     ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemory,
                          false,

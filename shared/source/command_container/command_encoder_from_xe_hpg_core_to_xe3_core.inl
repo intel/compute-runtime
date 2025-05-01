@@ -44,17 +44,10 @@ bool EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(bool co
 
 template <typename Family>
 template <typename CommandType>
-inline auto &EncodePostSync<Family>::getPostSync(CommandType &cmd, size_t index) {
-    UNRECOVERABLE_IF(index != 0);
-    return cmd.getPostSync();
-}
-
-template <typename Family>
-template <typename CommandType>
 void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const EncodePostSyncArgs &args) {
     using POSTSYNC_DATA = decltype(Family::template getPostSyncType<CommandType>());
 
-    auto &postSync = getPostSync(cmd, 0);
+    auto &postSync = cmd.getPostSync();
 
     uint64_t gpuVa = args.inOrderExecInfo->getBaseDeviceAddress() + args.inOrderExecInfo->getAllocationOffset();
     UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));

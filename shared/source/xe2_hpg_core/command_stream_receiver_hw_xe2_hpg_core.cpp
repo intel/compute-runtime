@@ -15,7 +15,6 @@ using Family = NEO::Xe2HpgCoreFamily;
 #include "shared/source/command_stream/command_stream_receiver_hw_heap_addressing.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/helpers/blit_commands_helper_from_gen12lp_to_xe3.inl"
 #include "shared/source/helpers/blit_commands_helper_pvc_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_xe2_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_xehp_and_later.inl"
@@ -271,9 +270,6 @@ template struct BlitCommandsHelper<Family>;
 template void BlitCommandsHelper<Family>::appendColorDepth<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd);
 template void BlitCommandsHelper<Family>::appendColorDepth<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd);
 template void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
-
-template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last);
-template void BlitCommandsHelper<Family>::applyAdditionalBlitProperties<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last);
 
 const Family::COMPUTE_WALKER Family::cmdInitGpgpuWalker = Family::COMPUTE_WALKER::sInit();
 const Family::CFE_STATE Family::cmdInitCfeState = Family::CFE_STATE::sInit();

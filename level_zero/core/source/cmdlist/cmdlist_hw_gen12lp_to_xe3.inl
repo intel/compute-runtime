@@ -14,8 +14,4 @@ constexpr bool CommandListCoreFamily<gfxCoreFamily>::checkIfAllocationImportedRe
     return false;
 }
 
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent) {
-}
-
 } // namespace L0

@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/csr_deps.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aux_translation.h"
@@ -18,7 +17,6 @@
 
 namespace NEO {
 struct TimestampPacketDependencies;
-struct BlitSyncPropertiesExt;
 class TagNodeBase;
 class TimestampPacketContainer;
 class GraphicsAllocation;
@@ -33,13 +31,13 @@ enum class BlitSyncMode {
 };
 
 struct BlitSyncProperties {
-    EncodePostSyncArgs postSyncArgs{};
     TagNodeBase *outputTimestampPacket = nullptr;
     BlitSyncMode syncMode = BlitSyncMode::none;
     uint64_t deviceGpuWriteAddress = 0;
     uint64_t hostGpuWriteAddress = 0;
     uint64_t timestampGpuWriteAddress = 0;
     uint64_t writeValue = 0;
+
     bool isTimestampMode() const {
         return (syncMode == BlitSyncMode::timestamp) || (syncMode == BlitSyncMode::timestampAndImmediate);
     }

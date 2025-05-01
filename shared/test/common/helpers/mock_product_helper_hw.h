@@ -27,7 +27,6 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
     aub_stream::EngineType getDefaultCopyEngine() const override;
     bool isBufferPoolAllocatorSupported() const override;
-    bool useAdditionalBlitProperties() const override { return enableAdditionalBlitProperties; }
 
     bool use128MbEdram = false;
     bool enableMidThreadPreemption = false;
@@ -37,7 +36,6 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     bool isCooperativeEngineSupportedValue = true;
     bool returnedIsUnlockingLockedPtrNecessary = false;
     bool isBufferPoolAllocatorSupportedValue = true;
-    bool enableAdditionalBlitProperties = false;
     uint32_t returnedStepping = 0;
     uint32_t returnedL1CachePolicy = 0;
     uint32_t returnedL1CachePolicyIfDebugger = 0;

@@ -8,12 +8,10 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
-#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -222,30 +220,12 @@ HWTEST_F(CommandEncoderTest, givenEncodePostSyncArgsWhenCallingRequiresSystemMem
         for (bool kernelUsingSystemAllocation : {true, false}) {
             args.device = pDevice;
             args.isHostScopeSignalEvent = hostScopeSignalEvent;
-            args.isUsingSystemAllocation = kernelUsingSystemAllocation;
+            args.isKernelUsingSystemAllocation = kernelUsingSystemAllocation;
 
             if (hostScopeSignalEvent && kernelUsingSystemAllocation && pDevice->getProductHelper().isGlobalFenceInPostSyncRequired(pDevice->getHardwareInfo())) {
                 EXPECT_TRUE(args.requiresSystemMemoryFence());
             } else {
                 EXPECT_FALSE(args.requiresSystemMemoryFence());
-            }
-        }
-    }
-}
-
-HWTEST_F(CommandEncoderTest, givenEncodePostSyncArgsWhenCallingIsRegularEventThenCorrectValuesAreReturned) {
-    EncodePostSyncArgs args{};
-    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
-    auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), deviceTagAllocator.getTag(), *pDevice, 1, false); // setting duplicateStorage = true;
-    for (bool counterBasedEvent : {true, false}) {
-        for (bool timestampEvent : {true, false}) {
-            for (uint64_t eventAddress : {0, 0x1010}) {
-                args.device = pDevice;
-                args.isCounterBasedEvent = counterBasedEvent;
-                args.isTimestampEvent = timestampEvent;
-                args.eventAddress = eventAddress;
-                bool expectedValidEvent = (eventAddress != 0) || (counterBasedEvent && !timestampEvent);
-                EXPECT_EQ(expectedValidEvent, args.isValidEvent());
             }
         }
     }

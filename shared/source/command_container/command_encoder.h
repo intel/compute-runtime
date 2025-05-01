@@ -57,20 +57,16 @@ struct EncodePostSyncArgs {
     uint64_t inOrderIncrementValue = 0;
     Device *device = nullptr;
     NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
-    bool isCounterBasedEvent = false;
     bool isTimestampEvent = false;
     bool isHostScopeSignalEvent = false;
-    bool isUsingSystemAllocation = false;
+    bool isKernelUsingSystemAllocation = false;
     bool dcFlushEnable = false;
     bool interruptEvent = false;
     bool isFlushL3ForExternalAllocationRequired = false;
     bool isFlushL3ForHostUsmRequired = false;
 
     bool requiresSystemMemoryFence() const {
-        return (isHostScopeSignalEvent && isUsingSystemAllocation && this->device->getProductHelper().isGlobalFenceInPostSyncRequired(this->device->getHardwareInfo()));
-    }
-    bool isValidEvent() const {
-        return (eventAddress != 0) || (isCounterBasedEvent && !isTimestampEvent);
+        return (isHostScopeSignalEvent && isKernelUsingSystemAllocation && this->device->getProductHelper().isGlobalFenceInPostSyncRequired(this->device->getHardwareInfo()));
     }
 };
 

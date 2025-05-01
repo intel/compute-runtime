@@ -372,7 +372,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     if (args.postSyncArgs.inOrderExecInfo) {
         EncodePostSync<Family>::setupPostSyncForInOrderExec(walkerCmd, args.postSyncArgs);
-    } else if (args.postSyncArgs.isValidEvent()) {
+    } else if (args.postSyncArgs.eventAddress) {
         EncodePostSync<Family>::setupPostSyncForRegularEvent(walkerCmd, args.postSyncArgs);
     } else {
         EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(walkerCmd);
@@ -487,7 +487,7 @@ template <typename CommandType>
 void EncodePostSync<Family>::setupPostSyncForRegularEvent(CommandType &cmd, const EncodePostSyncArgs &args) {
     using POSTSYNC_DATA = decltype(Family::template getPostSyncType<CommandType>());
 
-    auto &postSync = getPostSync(cmd, 0);
+    auto &postSync = cmd.getPostSync();
 
     auto operationType = POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA;
     uint64_t gpuVa = args.eventAddress;

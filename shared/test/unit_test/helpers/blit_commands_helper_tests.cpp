@@ -15,7 +15,6 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
@@ -710,80 +709,4 @@ HWTEST_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlus
     auto estimatedSizeWithNode = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
         blitPropertiesContainer2, false, true, false, false, pDevice->getRootDeviceEnvironment());
     EXPECT_NE(estimatedSizeWithoutNode, estimatedSizeWithNode);
-}
-
-HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutTimestampModeWhenCallingDispatchBlitCommandForBufferThenTheResultsAreTheSame, MatchAny) {
-    uint32_t src[] = {1, 2, 3, 4};
-    uint32_t dst[] = {4, 3, 2, 1};
-    uint32_t clear[] = {5, 6, 7, 8};
-    uint64_t srcGpuAddr = 0x12345;
-    uint64_t dstGpuAddr = 0x54321;
-    uint64_t clearGpuAddr = 0x5678;
-    std::unique_ptr<MockGraphicsAllocation> srcAlloc(new MockGraphicsAllocation(src, srcGpuAddr, sizeof(src)));
-    std::unique_ptr<MockGraphicsAllocation> dstAlloc(new MockGraphicsAllocation(dst, dstGpuAddr, sizeof(dst)));
-    std::unique_ptr<GraphicsAllocation> clearColorAllocation(new MockGraphicsAllocation(clear, clearGpuAddr, sizeof(clear)));
-
-    Vec3<size_t> srcOffsets{1, 0, 0};
-    Vec3<size_t> dstOffsets{1, 0, 0};
-    Vec3<size_t> copySize{(BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight) + 1, 2, 2};
-
-    size_t srcRowPitch = 0;
-    size_t srcSlicePitch = 0;
-
-    size_t dstRowPitch = 0;
-    size_t dstSlicePitch = 0;
-
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), srcAlloc.get(),
-                                                                          dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
-                                                                          dstRowPitch, dstSlicePitch, clearColorAllocation.get());
-
-    uint32_t streamBuffer[400] = {};
-    LinearStream stream(streamBuffer, sizeof(streamBuffer));
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
-
-    // change it into timestamp mode
-    blitProperties.blitSyncProperties.syncMode = NEO::BlitSyncMode::timestamp;
-
-    uint32_t streamBuffer2[400] = {};
-    LinearStream stream2(streamBuffer2, sizeof(streamBuffer2));
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream2, pDevice->getRootDeviceEnvironmentRef());
-
-    EXPECT_EQ(stream.getUsed(), stream2.getUsed());
-    EXPECT_EQ(0, memcmp(ptrOffset(stream.getCpuBase(), 0), ptrOffset(stream2.getCpuBase(), 0), std::min(stream.getUsed(), stream2.getUsed())));
-
-    // change productHelper to return true
-    pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
-    auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
-    mockProductHelper->enableAdditionalBlitProperties = true;
-
-    uint32_t streamBuffer3[400] = {};
-    LinearStream stream3(streamBuffer3, sizeof(streamBuffer2));
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream3, pDevice->getRootDeviceEnvironmentRef());
-
-    EXPECT_EQ(stream.getUsed(), stream3.getUsed());
-    EXPECT_EQ(0, memcmp(ptrOffset(stream.getCpuBase(), 0), ptrOffset(stream3.getCpuBase(), 0), std::min(stream.getUsed(), stream3.getUsed())));
-}
-
-HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlitCommandSizeThenBlockCopySizeIsReturned) {
-    Vec3<size_t> copySize{BlitterConstants::maxBlitWidth - 1, 1, 1};
-    NEO::CsrDependencies csrDependencies{};
-
-    size_t totalSize = NEO::BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(copySize, csrDependencies, false, false, true, pDevice->getRootDeviceEnvironmentRef(), false, false);
-
-    size_t expectedSize = sizeof(typename FamilyType::XY_BLOCK_COPY_BLT);
-    expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize();
-    expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize();
-    EXPECT_EQ(expectedSize, totalSize);
-}
-
-using IsWithinGen12LPAndXe3Core = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE3_CORE>;
-HWTEST2_F(BlitTests, givenXyCopyBltCommandWhenApplyBlitPropertiesIsCalledThenNothingChanged, IsWithinGen12LPAndXe3Core) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
-    auto bltCmdBefore = bltCmd;
-    BlitProperties properties = {};
-    NEO::BlitCommandsHelper<FamilyType>::applyAdditionalBlitProperties(properties, bltCmd, pDevice->getRootDeviceEnvironment(), false);
-    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_COPY_BLT)), 0);
-    NEO::BlitCommandsHelper<FamilyType>::applyAdditionalBlitProperties(properties, bltCmd, pDevice->getRootDeviceEnvironment(), true);
-    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_COPY_BLT)), 0);
 }
