@@ -209,10 +209,13 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
 
     appendColorDepth(blitProperties, bltCmd);
 
+    const bool useAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties();
+
     for (uint64_t slice = 0; slice < blitProperties.copySize.z; slice++) {
         for (uint64_t row = 0; row < blitProperties.copySize.y; row++) {
             uint64_t offset = 0;
             uint64_t sizeToBlit = blitProperties.copySize.x;
+            bool lastIteration = (slice == blitProperties.copySize.z - 1) && (row == blitProperties.copySize.y - 1);
             while (sizeToBlit != 0) {
                 if (sizeToBlit > maxWidth) {
                     // dispatch 2D blit: maxBlitWidth x (1 .. maxBlitHeight)
@@ -223,6 +226,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
                     width = sizeToBlit;
                     height = 1;
                 }
+                auto blitSize = width * height;
+                auto lastCommand = lastIteration && (sizeToBlit - blitSize == 0);
 
                 bltCmd.setDestinationX2CoordinateRight(static_cast<uint32_t>(width));
                 bltCmd.setDestinationY2CoordinateBottom(static_cast<uint32_t>(height));
@@ -237,6 +242,9 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
 
                 bltCmd.setDestinationBaseAddress(dstAddr);
                 bltCmd.setSourceBaseAddress(srcAddr);
+                if (useAdditionalBlitProperties && lastCommand) {
+                    applyAdditionalBlitProperties(blitProperties, bltCmd, rootDeviceEnvironment, lastCommand);
+                }
 
                 appendBlitCommandsForBuffer(blitProperties, bltCmd, rootDeviceEnvironment);
 
@@ -245,7 +253,6 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
 
                 dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
 
-                auto blitSize = width * height;
                 sizeToBlit -= blitSize;
                 offset += blitSize;
             }

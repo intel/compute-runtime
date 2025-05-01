@@ -96,5 +96,8 @@ struct BlitCommandsHelper {
 
     static void encodeWa(LinearStream &cmdStream, const BlitProperties &blitProperties, uint32_t &latestSentBcsWaValue);
     static size_t getWaCmdsSize(const BlitPropertiesContainer &blitPropertiesContainer);
+
+    template <typename CommandType>
+    static void applyAdditionalBlitProperties(const BlitProperties &blitProperties, CommandType &cmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool last);
 };
 } // namespace NEO
