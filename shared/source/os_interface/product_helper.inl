@@ -1121,4 +1121,9 @@ bool ProductHelperHw<gfxProduct>::isExposingSubdevicesAllowed() const {
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties() const {
+    return false;
+}
+
 } // namespace NEO
