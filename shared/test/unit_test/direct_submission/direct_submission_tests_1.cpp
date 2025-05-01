@@ -828,7 +828,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
     size_t expectedSize = Dispatcher::getSizePreemption() +
                           directSubmission.getSizeSemaphoreSection(false);
-    if (directSubmission.globalFenceAllocation && !heaplessStateInit) {
+    if (directSubmission.miMemFenceRequired && !heaplessStateInit) {
         expectedSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission.isRelaxedOrderingEnabled()) {
@@ -910,7 +910,7 @@ HWTEST_F(DirectSubmissionTest,
                           directSubmission.getDiagnosticModeSection();
     expectedSize += expectedExecCount * (directSubmission.getSizeDispatch(false, false, directSubmission.dispatchMonitorFenceRequired(false)) - directSubmission.getSizeNewResourceHandler());
 
-    if (directSubmission.globalFenceAllocation && !heaplessStateInit) {
+    if (directSubmission.miMemFenceRequired && !heaplessStateInit) {
         expectedSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission.isRelaxedOrderingEnabled()) {
@@ -953,7 +953,7 @@ HWTEST_F(DirectSubmissionTest,
     }
 
     size_t cmdOffset = 0;
-    if (directSubmission.globalFenceAllocation && !heaplessStateInit) {
+    if (directSubmission.miMemFenceRequired && !heaplessStateInit) {
         cmdOffset = directSubmission.getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission.isRelaxedOrderingEnabled()) {
@@ -1019,7 +1019,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_EQ(expectedDispatch, directSubmission.getSizeDispatch(false, false, directSubmission.dispatchMonitorFenceRequired(false)) - directSubmission.getSizeNewResourceHandler());
     expectedSize += expectedExecCount * expectedDispatch;
 
-    if (directSubmission.globalFenceAllocation && !heaplessStateInit) {
+    if (directSubmission.miMemFenceRequired && !heaplessStateInit) {
         expectedSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission.isRelaxedOrderingEnabled()) {
