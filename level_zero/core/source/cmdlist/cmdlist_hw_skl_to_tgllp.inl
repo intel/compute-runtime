@@ -209,7 +209,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .inOrderExecInfo = nullptr,
             .isTimestampEvent = false,
             .isHostScopeSignalEvent = false,
-            .isKernelUsingSystemAllocation = false,
+            .isUsingSystemAllocation = false,
             .dcFlushEnable = this->dcFlushSupport,
             .interruptEvent = false,
             .isFlushL3ForExternalAllocationRequired = false,
