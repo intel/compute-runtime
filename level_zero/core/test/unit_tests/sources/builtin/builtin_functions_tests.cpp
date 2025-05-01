@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -238,7 +238,7 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenHeaplessImageBuiltinsWhenInitBuiltinK
 
     lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImageRegionHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyImageToImage3dHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyImageToImage3d", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyImage3dToImage3d", lib.kernelNamePassed.c_str());
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {

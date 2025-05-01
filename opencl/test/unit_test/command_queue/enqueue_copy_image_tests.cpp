@@ -380,3 +380,51 @@ HWTEST_F(OneMipLevelCopyImageImageTests, GivenNotMippedImageWhenCopyingImageThen
     EXPECT_EQ(0u, usedBuiltinOpsParams.srcMipLevel);
     EXPECT_EQ(0u, usedBuiltinOpsParams.dstMipLevel);
 }
+
+HWTEST_F(EnqueueCopyImageTest, WhenCopyImage1dBufferToImage1dBufferThenCorrectBuitInIsSelected) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    std::unique_ptr<Image> srcImage1dBuffer;
+    srcImage1dBuffer.reset(Image1dBufferHelper<>::create(context));
+    VariableBackup<Image *> srcImageBackup(&srcImage, srcImage1dBuffer.get());
+    std::unique_ptr<Image> dstImage1dBuffer;
+    dstImage1dBuffer.reset(Image1dBufferHelper<>::create(context));
+    VariableBackup<Image *> dstImageBackup(&dstImage, dstImage1dBuffer.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
+    EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ, srcImage, dstImage);
+    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "CopyImage1dBufferToImage1dBuffer");
+}
+
+HWTEST_F(EnqueueCopyImageTest, WhenCopyImage1dBufferToImageThenCorrectBuitInIsSelected) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    std::unique_ptr<Image> srcImage1dBuffer;
+    srcImage1dBuffer.reset(Image1dBufferHelper<>::create(context));
+    VariableBackup<Image *> srcImageBackup(&srcImage, srcImage1dBuffer.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
+    EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ, srcImage, dstImage);
+    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "CopyImage1dBufferToImage3d");
+}
+
+HWTEST_F(EnqueueCopyImageTest, WhenCopyImageToImage1dBufferThenCorrectBuitInIsSelected) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    std::unique_ptr<Image> dstImage1dBuffer;
+    dstImage1dBuffer.reset(Image1dBufferHelper<>::create(context));
+    VariableBackup<Image *> dstImageBackup(&dstImage, dstImage1dBuffer.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
+    EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ, srcImage, dstImage);
+    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "CopyImage3dToImage1dBuffer");
+}
+
+HWTEST_F(EnqueueCopyImageTest, WhenCopyImageToImageThenCorrectBuitInIsSelected) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
+    EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ, srcImage, dstImage);
+    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
+    EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "CopyImage3dToImage3d");
+}

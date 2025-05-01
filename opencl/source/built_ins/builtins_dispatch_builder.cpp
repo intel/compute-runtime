@@ -856,7 +856,10 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBui
         : BuiltinDispatchInfoBuilder(kernelsLib, device) {
         populate(EBuiltInOps::copyImageToImage3d,
                  "",
-                 "CopyImageToImage3d", kernel);
+                 "CopyImage3dToImage3d", kernelCopyImage3dToImage3d,
+                 "CopyImage1dBufferToImage3d", kernelCopyImage1dBufferToImage3d,
+                 "CopyImage3dToImage1dBuffer", kernelCopyImage3dToImage1dBuffer,
+                 "CopyImage1dBufferToImage1dBuffer", kernelCopyImage1dBufferToImage1dBuffer);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -874,8 +877,19 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBui
         multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(srcImageRedescribed)); // life range same as mdi's
         multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(dstImageRedescribed)); // life range same as mdi's
 
+        bool src1dBuffer = srcImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER;
+        bool dst1dBuffer = dstImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER;
+
         // Set-up kernel
-        kernelNoSplit3DBuilder.setKernel(kernel->getKernel(clDevice.getRootDeviceIndex()));
+        if (src1dBuffer && dst1dBuffer) {
+            kernelNoSplit3DBuilder.setKernel(kernelCopyImage1dBufferToImage1dBuffer->getKernel(clDevice.getRootDeviceIndex()));
+        } else if (src1dBuffer) {
+            kernelNoSplit3DBuilder.setKernel(kernelCopyImage1dBufferToImage3d->getKernel(clDevice.getRootDeviceIndex()));
+        } else if (dst1dBuffer) {
+            kernelNoSplit3DBuilder.setKernel(kernelCopyImage3dToImage1dBuffer->getKernel(clDevice.getRootDeviceIndex()));
+        } else {
+            kernelNoSplit3DBuilder.setKernel(kernelCopyImage3dToImage3d->getKernel(clDevice.getRootDeviceIndex()));
+        }
 
         // Set-up source image
         kernelNoSplit3DBuilder.setArg(0, srcImageRedescribed, operationParams.srcMipLevel);
@@ -916,11 +930,17 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBui
         if (populateKernels) {
             populate(EBuiltInOps::copyImageToImage3d,
                      "",
-                     "CopyImageToImage3d", kernel);
+                     "CopyImage3dToImage3d", kernelCopyImage3dToImage3d,
+                     "CopyImage1dBufferToImage3d", kernelCopyImage1dBufferToImage3d,
+                     "CopyImage3dToImage1dBuffer", kernelCopyImage3dToImage1dBuffer,
+                     "CopyImage1dBufferToImage1dBuffer", kernelCopyImage1dBufferToImage1dBuffer);
         }
     }
 
-    MultiDeviceKernel *kernel = nullptr;
+    MultiDeviceKernel *kernelCopyImage3dToImage3d = nullptr;
+    MultiDeviceKernel *kernelCopyImage1dBufferToImage3d = nullptr;
+    MultiDeviceKernel *kernelCopyImage3dToImage1dBuffer = nullptr;
+    MultiDeviceKernel *kernelCopyImage1dBufferToImage1dBuffer = nullptr;
 };
 
 template <>
@@ -930,7 +950,10 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3dHeapless> : public BuiltInOp<EBui
         : BuiltInOp<EBuiltInOps::copyImageToImage3d>(kernelsLib, device, false) {
         populate(EBuiltInOps::copyImageToImage3dHeapless,
                  "",
-                 "CopyImageToImage3d", kernel);
+                 "CopyImage3dToImage3d", kernelCopyImage3dToImage3d,
+                 "CopyImage1dBufferToImage3d", kernelCopyImage1dBufferToImage3d,
+                 "CopyImage3dToImage1dBuffer", kernelCopyImage3dToImage1dBuffer,
+                 "CopyImage1dBufferToImage1dBuffer", kernelCopyImage1dBufferToImage1dBuffer);
     }
 };
 

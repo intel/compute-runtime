@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -285,11 +285,11 @@ void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
         builtin = NEO::EBuiltInOps::copyImage3dToBufferHeapless;
         break;
     case ImageBuiltin::copyImageRegion:
-        builtinName = "CopyImageToImage3d";
+        builtinName = "CopyImage3dToImage3d";
         builtin = NEO::EBuiltInOps::copyImageToImage3d;
         break;
     case ImageBuiltin::copyImageRegionHeapless:
-        builtinName = "CopyImageToImage3d";
+        builtinName = "CopyImage3dToImage3d";
         builtin = NEO::EBuiltInOps::copyImageToImage3dHeapless;
         break;
     default:
