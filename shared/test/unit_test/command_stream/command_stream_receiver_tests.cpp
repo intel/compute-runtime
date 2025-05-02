@@ -4472,7 +4472,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskWhenOneTimeContextSystemFenceRequiredThenExpectOneTimeSystemFenceCommand,
           IsHeapfulSupportedAndAtLeastXeHpcCore) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
-    if (!pDevice->getGfxCoreHelper().isFenceAllocationRequired(pDevice->getHardwareInfo(), pDevice->getProductHelper())) {
+    if (pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
         GTEST_SKIP();
     }
 
