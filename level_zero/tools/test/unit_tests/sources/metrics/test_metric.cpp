@@ -283,9 +283,5 @@ TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneAndNoSourcesAreAvailableThen
     deviceImp->metricContext.reset();
 }
 
-TEST_F(MetricRuntimeFixture, WhenRunTimeDisableIsDoneMultipleTimesThenEnableIsDoneOnlyOnce) {
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelDeviceDisableMetricsExp(device->toHandle()));
-}
-
 } // namespace ult
 } // namespace L0

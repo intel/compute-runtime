@@ -108,6 +108,7 @@ class MetricSource {
                                             uint32_t *pCount,
                                             zet_metric_handle_t *phExcludedMetrics,
                                             zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) = 0;
+    virtual bool canDisable() = 0;
 
   protected:
     uint32_t type = MetricSource::metricSourceTypeUndefined;
@@ -122,6 +123,7 @@ class MultiDomainDeferredActivationTracker {
     virtual bool activateMetricGroupsDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
     bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
     bool isMetricGroupActivatedInHw() const;
+    bool isAnyMetricGroupActivated() const { return domains.size() > 0; }
 
   protected:
     void deActivateDomain(uint32_t domain);
@@ -155,6 +157,7 @@ class MetricDeviceContext {
     static std::unique_ptr<MetricDeviceContext> create(Device &device);
     static ze_result_t enableMetricApi();
     static void enableMetricApiForDevice(zet_device_handle_t hDevice, bool &isFailed);
+    static ze_result_t disableMetricApiForDevice(zet_device_handle_t hDevice);
     ze_result_t getConcurrentMetricGroups(uint32_t metricGroupCount, zet_metric_group_handle_t *phMetricGroups,
                                           uint32_t *pConcurrentGroupCount, uint32_t *pCountPerConcurrentGroup);
 
@@ -170,6 +173,7 @@ class MetricDeviceContext {
                                     zet_metric_handle_t *phExcludedMetrics,
                                     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation);
     bool areMetricGroupsFromSameDeviceHierarchy(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
+    void setMetricsCollectionAllowed(bool status) { isMetricsCollectionAllowed = status; }
 
   protected:
     bool areMetricGroupsFromSameSource(uint32_t count, zet_metric_group_handle_t *phMetricGroups, uint32_t *sourceType);
@@ -180,9 +184,12 @@ class MetricDeviceContext {
 
   private:
     bool enable();
+    bool canDisable();
+    void disable();
     struct Device &device;
     bool multiDeviceCapable = false;
     uint32_t subDeviceIndex = 0;
+    bool isMetricsCollectionAllowed = false;
     bool isEnableChecked = false;
     std::mutex enableMetricsMutex;
 };
@@ -527,5 +534,6 @@ ze_result_t metricDecodeCalculateMultipleValues(zet_intel_metric_decoder_exp_han
                                                 uint32_t *pTotalMetricReportCount, zet_intel_metric_result_exp_t *pMetricResults);
 
 ze_result_t metricsEnable(zet_device_handle_t hDevice);
+ze_result_t metricsDisable(zet_device_handle_t hDevice);
 
 } // namespace L0

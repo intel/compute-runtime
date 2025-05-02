@@ -64,6 +64,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
                                     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) override;
 
     uint32_t metricSourceCount = 0;
+    bool canDisable() override;
 
   protected:
     void cacheMetricGroup();

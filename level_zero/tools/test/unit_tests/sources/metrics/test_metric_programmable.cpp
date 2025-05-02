@@ -41,6 +41,7 @@ void OaMetricProgrammableFixture::SetUp() {
     mockAdapterGroup.mockParams.Version.MajorNumber = 1;
     mockAdapterGroup.mockParams.Version.MinorNumber = 13;
     deviceContext = std::make_unique<MetricDeviceContext>(*device);
+    deviceContext->setMetricsCollectionAllowed(true);
     oaMetricSource = static_cast<OaMetricSourceImp *>(&deviceContext->getMetricSource<OaMetricSourceImp>());
     metricEnumeration = static_cast<MetricEnumeration *>(&oaMetricSource->getMetricEnumeration());
     metricEnumeration->setAdapterGroup(&mockAdapterGroup);

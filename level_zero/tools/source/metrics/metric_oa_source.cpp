@@ -112,6 +112,10 @@ Device &OaMetricSourceImp::getDevice() {
     return metricDeviceContext.getDevice();
 }
 
+bool OaMetricSourceImp::canDisable() {
+    return !activationTracker->isAnyMetricGroupActivated();
+}
+
 MetricsLibrary &OaMetricSourceImp::getMetricsLibrary() {
     return *metricsLibrary;
 }

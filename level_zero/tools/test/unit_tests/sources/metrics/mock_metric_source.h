@@ -56,6 +56,7 @@ class MockMetricSource : public L0::MetricSource {
                                     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+    bool canDisable() override { return false; }
 
     ~MockMetricSource() override = default;
 };

@@ -15,7 +15,7 @@ ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevic
 }
 
 ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::metricsDisable(hDevice);
 }
 
 ze_result_t ZE_APICALL zetIntelCommandListAppendMarkerExp(zet_command_list_handle_t hCommandList,

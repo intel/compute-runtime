@@ -58,7 +58,6 @@ MetricDeviceContext::MetricDeviceContext(Device &inputDevice) : device(inputDevi
 
 bool MetricDeviceContext::enable() {
     bool status = false;
-    std::lock_guard<std::mutex> lock(enableMetricsMutex);
     for (auto const &entry : metricSources) {
         auto const &metricSource = entry.second;
 
@@ -68,8 +67,25 @@ bool MetricDeviceContext::enable() {
         }
         status |= metricSource->isAvailable();
     }
+    setMetricsCollectionAllowed(status);
     isEnableChecked = true;
     return status;
+}
+
+bool MetricDeviceContext::canDisable() {
+    if (isMetricsCollectionAllowed) {
+        for (auto const &entry : metricSources) {
+            auto const &metricSource = entry.second;
+            if (!metricSource->canDisable()) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void MetricDeviceContext::disable() {
+    setMetricsCollectionAllowed(false);
 }
 
 ze_result_t MetricDeviceContext::metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) {
@@ -110,6 +126,11 @@ ze_result_t MetricDeviceContext::metricGroupGet(uint32_t *pCount, zet_metric_gro
 }
 
 ze_result_t MetricDeviceContext::activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups) {
+
+    if (!isMetricsCollectionAllowed) {
+        METRICS_LOG_ERR("%s", "Cannot activate when metrics is disabled");
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
 
     // Create a map of metric source types and Metric groups
     std::map<uint32_t, std::vector<zet_metric_group_handle_t>> metricGroupsPerMetricSourceMap{};
@@ -187,6 +208,7 @@ Device &MetricDeviceContext::getDevice() const {
 void MetricDeviceContext::enableMetricApiForDevice(zet_device_handle_t hDevice, bool &isFailed) {
 
     auto deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
+    std::lock_guard<std::mutex> lock(deviceImp->getMetricDeviceContext().enableMetricsMutex);
     // Initialize device.
     isFailed |= !deviceImp->metricContext->enable();
 
@@ -194,6 +216,30 @@ void MetricDeviceContext::enableMetricApiForDevice(zet_device_handle_t hDevice, 
     for (uint32_t i = 0; i < deviceImp->numSubDevices; ++i) {
         isFailed |= !deviceImp->subDevices[i]->getMetricDeviceContext().enable();
     }
+}
+
+ze_result_t MetricDeviceContext::disableMetricApiForDevice(zet_device_handle_t hDevice) {
+
+    auto deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
+    std::lock_guard<std::mutex> lock(deviceImp->getMetricDeviceContext().enableMetricsMutex);
+
+    for (uint32_t i = 0; i < deviceImp->numSubDevices; ++i) {
+        if (!deviceImp->subDevices[i]->getMetricDeviceContext().canDisable()) {
+            METRICS_LOG_ERR("%s", "Cannot disable sub device, since metrics resources are still in use.");
+            return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+        }
+    }
+
+    if (!deviceImp->getMetricDeviceContext().canDisable()) {
+        METRICS_LOG_ERR("%s", "Cannot disable root device, since metrics resources are still in use.");
+        return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+    }
+
+    for (uint32_t i = 0; i < deviceImp->numSubDevices; ++i) {
+        deviceImp->subDevices[i]->getMetricDeviceContext().disable();
+    }
+    deviceImp->getMetricDeviceContext().disable();
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t MetricDeviceContext::enableMetricApi() {
@@ -917,6 +963,10 @@ ze_result_t metricsEnable(zet_device_handle_t hDevice) {
 
     MetricDeviceContext::enableMetricApiForDevice(hDevice, isFailed);
     return isFailed ? ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE : ZE_RESULT_SUCCESS;
+}
+
+ze_result_t metricsDisable(zet_device_handle_t hDevice) {
+    return MetricDeviceContext::disableMetricApiForDevice(hDevice);
 }
 
 } // namespace L0

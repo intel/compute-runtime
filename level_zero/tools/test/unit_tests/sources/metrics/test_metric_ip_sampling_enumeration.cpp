@@ -283,6 +283,35 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenDummy
     }
 }
 
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenMetricsDisableIsCalledActivationReturnsFailure, EustallSupportedPlatforms) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        metricGroups.resize(metricGroupCount);
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+        ASSERT_NE(metricGroups[0], nullptr);
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroups[0]), ZE_RESULT_SUCCESS);
+        static_cast<DeviceImp *>(device)->activateMetricGroups();
+
+        // Disable Metrics
+        EXPECT_EQ(zetIntelDeviceDisableMetricsExp(device->toHandle()), ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+        // De-Activate all metric groups.
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
+        // Disable Metrics with all groups deactivated should return success
+        EXPECT_EQ(zetIntelDeviceDisableMetricsExp(device->toHandle()), ZE_RESULT_SUCCESS);
+        // Activate metric group on a disabled device should be failure.
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroups[0]), ZE_RESULT_ERROR_UNINITIALIZED);
+        EXPECT_EQ(zetIntelDeviceEnableMetricsExp(device->toHandle()), ZE_RESULT_SUCCESS);
+    }
+}
+
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenUnsupportedApisForMetricGroupReturnsFailure, EustallSupportedPlatforms) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
 

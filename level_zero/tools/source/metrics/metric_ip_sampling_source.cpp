@@ -260,6 +260,10 @@ ze_result_t IpSamplingMetricSourceImp::calcOperationCreate(MetricDeviceContext &
     return status;
 }
 
+bool IpSamplingMetricSourceImp::canDisable() {
+    return !activationTracker->isAnyMetricGroupActivated();
+}
+
 IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,
                                                    std::vector<IpSamplingMetricImp> &metrics) : IpSamplingMetricGroupBase(metricSource) {
     this->metrics.reserve(metrics.size());
