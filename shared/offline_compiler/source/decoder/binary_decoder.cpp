@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -237,7 +237,7 @@ void BinaryDecoder::parseTokens() {
             break;
         } else if (patchList[i].find("PATCH_TOKEN") == std::string::npos) {
             continue;
-        } else if (patchList[i].find("@") == std::string::npos) {
+        } else if (patchList[i].find('@') == std::string::npos) {
             continue;
         }
 
@@ -254,7 +254,7 @@ void BinaryDecoder::parseTokens() {
         nameEndPos = patchList[i].find(',', nameStartPos);
         patchTokenPtr->name = patchList[i].substr(nameStartPos, nameEndPos - nameStartPos);
 
-        nameStartPos = patchList[i].find("@");
+        nameStartPos = patchList[i].find('@');
         nameEndPos = patchList[i].find('@', nameStartPos + 1);
         if (nameEndPos == std::string::npos) {
             continue;
