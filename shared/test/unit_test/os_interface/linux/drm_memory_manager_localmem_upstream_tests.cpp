@@ -978,7 +978,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenGraphicsAllocationInDevicePoolIs
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-static uint32_t munmapCalledCount = 0u;
+[[maybe_unused]] static uint32_t munmapCalledCount = 0u;
 
 HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsUnalignedPointerThenCreateAllocWithAlignmentUnmapTwoUnalignedPart, NonDefaultIoctlsSupported) {
     DebugManagerStateRestore restorer;

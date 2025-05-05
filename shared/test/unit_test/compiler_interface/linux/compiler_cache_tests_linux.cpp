@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,8 +125,10 @@ TEST(CompilerCacheTests, GivenCompilerCacheWithOneMegabyteWhenEvictCacheIsCalled
 
     EXPECT_EQ(unlinkLocalFiles.size(), 2u);
 
-    EXPECT_NE(unlinkLocalFiles[0].find("file3"), unlinkLocalFiles[0].npos);
-    EXPECT_NE(unlinkLocalFiles[1].find("file4"), unlinkLocalFiles[1].npos);
+    auto file0 = unlinkLocalFiles[0];
+    auto file1 = unlinkLocalFiles[1];
+    EXPECT_NE(unlinkLocalFiles[0].find("file3"), file0.npos);
+    EXPECT_NE(unlinkLocalFiles[1].find("file4"), file1.npos);
 }
 
 TEST(CompilerCacheTests, GivenCompilerCacheWithWhenScandirFailThenEvictCacheFail) {
