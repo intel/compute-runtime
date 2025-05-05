@@ -1052,6 +1052,7 @@ std::string getMemoryType(zes_mem_type_t memType) {
         {ZES_MEM_TYPE_LPDDR3, "ZES_MEM_TYPE_LPDDR3"},
         {ZES_MEM_TYPE_LPDDR4, "ZES_MEM_TYPE_LPDDR4"},
         {ZES_MEM_TYPE_LPDDR5, "ZES_MEM_TYPE_LPDDR5"},
+        {ZES_MEM_TYPE_GDDR6, "ZES_MEM_TYPE_GDDR6"},
         {ZES_MEM_TYPE_SRAM, "ZES_MEM_TYPE_SRAM"},
         {ZES_MEM_TYPE_L1, "ZES_MEM_TYPE_L1"},
         {ZES_MEM_TYPE_L3, "ZES_MEM_TYPE_L3"},

@@ -65,9 +65,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
             case NEO::DeviceBlobConstants::MemoryType::lpddr5:
                 pProperties->type = ZES_MEM_TYPE_LPDDR5;
                 break;
-            default:
-                pProperties->type = ZES_MEM_TYPE_DDR;
+            case NEO::DeviceBlobConstants::MemoryType::gddr6:
+                pProperties->type = ZES_MEM_TYPE_GDDR6;
                 break;
+            default:
+                DEBUG_BREAK_IF(true);
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
 
             if (pProperties->type == ZES_MEM_TYPE_HBM) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -361,8 +361,25 @@ HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesMem
     }
 }
 
-HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesMemoryGetPropertiesWithDDRLocalMemoryThenVerifySysmanMemoryGetPropertiesCallSucceeds, IsPVC) {
+HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesMemoryGetPropertiesWithGddr6LocalMemoryThenVerifySysmanMemoryGetPropertiesCallSucceeds, IsPVC) {
     pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::gddr6);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    for (auto handle : handles) {
+        zes_mem_properties_t properties;
+        ze_result_t result = zesMemoryGetProperties(handle, &properties);
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(properties.type, ZES_MEM_TYPE_GDDR6);
+        EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(properties.physicalSize, 0u);
+        EXPECT_EQ(properties.numChannels, numMemoryChannels);
+        EXPECT_EQ(properties.busWidth, memoryBusWidth);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesMemoryGetPropertiesWithInvalidMemoryTypeThenVerifyGetPropertiesCallReturnsMemoryTypeAsDdrAndNumberOfChannelsAsUnknown) {
+    pDrm->setMemoryType(INT_MAX);
     auto handles = getMemoryHandles(memoryHandleComponentCount);
     for (auto handle : handles) {
         zes_mem_properties_t properties;
@@ -370,11 +387,11 @@ HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesMem
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(properties.type, ZES_MEM_TYPE_DDR);
         EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
+        EXPECT_EQ(properties.numChannels, -1);
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
         EXPECT_EQ(properties.physicalSize, 0u);
-        EXPECT_EQ(properties.numChannels, numMemoryChannels);
-        EXPECT_EQ(properties.busWidth, memoryBusWidth);
+        EXPECT_EQ(properties.busWidth, -1);
     }
 }
 
