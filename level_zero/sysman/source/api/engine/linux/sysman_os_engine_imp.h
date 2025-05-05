@@ -32,7 +32,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
     static zes_engine_group_t getGroupFromEngineType(zes_engine_group_t type);
     void getConfigPair(std::pair<uint64_t, uint64_t> &configPair) override;
     LinuxEngineImp() = default;
-    LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubDevice);
+    LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubDevice);
     ~LinuxEngineImp() override;
     void cleanup();
 
@@ -45,6 +45,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
     NEO::Drm *pDrm = nullptr;
     SysmanDeviceImp *pDevice = nullptr;
     uint32_t gtId = 0;
+    uint32_t tileId = 0;
     ze_bool_t onSubDevice = false;
 
   private:

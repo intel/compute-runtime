@@ -23,7 +23,7 @@ class WddmEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
     void getConfigPair(std::pair<uint64_t, uint64_t> &configPair) override { return; }
 
     WddmEngineImp() = default;
-    WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t gtId);
+    WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t tileId);
     ~WddmEngineImp() override = default;
 
   protected:

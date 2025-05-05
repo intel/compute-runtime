@@ -24,7 +24,7 @@ class OsEngine {
     virtual ze_result_t getProperties(zes_engine_properties_t &properties) = 0;
     virtual void getConfigPair(std::pair<uint64_t, uint64_t> &configPair) = 0;
     virtual bool isEngineModuleSupported() = 0;
-    static std::unique_ptr<OsEngine> create(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice);
+    static std::unique_ptr<OsEngine> create(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubdevice);
     static ze_result_t getNumEngineTypeAndInstances(std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> &engineGroupInstance, OsSysman *pOsSysman);
     static void initGroupEngineHandleGroupFd(OsSysman *pOsSysman);
     static void closeFdsForGroupEngineHandles(OsSysman *pOsSysman);

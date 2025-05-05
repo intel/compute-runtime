@@ -167,6 +167,14 @@ bool IoctlHelperXe::queryDeviceIdAndRevision(Drm &drm) {
     return true;
 }
 
+uint32_t IoctlHelperXe::getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const {
+
+    if (engineClass == DRM_XE_ENGINE_CLASS_VIDEO_DECODE || engineClass == DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE) {
+        return static_cast<uint32_t>(tileIdToMediaGtId[tileId]);
+    }
+    return static_cast<uint32_t>(tileIdToGtId[tileId]);
+}
+
 bool IoctlHelperXe::initialize() {
     xeLog("IoctlHelperXe::initialize\n", "");
 
@@ -245,6 +253,7 @@ bool IoctlHelperXe::initialize() {
             assignValue(tileIdToGtId, gt.tile_id, gt.gt_id);
         } else if (isMediaGt(gt.type)) {
             assignValue(mediaGtIdToTileId, gt.gt_id, gt.tile_id);
+            assignValue(tileIdToMediaGtId, gt.tile_id, gt.gt_id);
         }
     }
     querySupportedFeatures();

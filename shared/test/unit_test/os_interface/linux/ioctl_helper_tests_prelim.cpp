@@ -1002,15 +1002,26 @@ TEST_F(IoctlPrelimHelperTests, whenCallingGetStatusAndFlagsForResetStatsThenExpe
     EXPECT_FALSE(ioctlHelper.validPageFault(0u));
 }
 
-TEST_F(IoctlPrelimHelperTests, whenCallingGetTileIdFromGtIdThenExpectedValueIsReturned) {
+TEST_F(IoctlPrelimHelperTests, GivenIoctlHelperWhenCallingGetTileIdFromGtIdThenExpectedValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     MockIoctlHelperPrelim20 ioctlHelper{*drm};
 
-    int32_t gtId = 0;
+    uint32_t gtId = 0;
     EXPECT_EQ(gtId, ioctlHelper.getTileIdFromGtId(gtId));
     gtId = 1;
     EXPECT_EQ(gtId, ioctlHelper.getTileIdFromGtId(gtId));
+}
+
+TEST_F(IoctlPrelimHelperTests, GivenIoctlHelperWhenCallingGetGtIdFromTileIdThenExpectedValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperPrelim20 ioctlHelper{*drm};
+
+    uint32_t tileId = 0u;
+    EXPECT_EQ(tileId, ioctlHelper.getGtIdFromTileId(tileId, I915_ENGINE_CLASS_RENDER));
+    tileId = 1u;
+    EXPECT_EQ(tileId, ioctlHelper.getGtIdFromTileId(tileId, I915_ENGINE_CLASS_VIDEO));
 }
 
 TEST(DrmTest, GivenDrmWhenAskedForPreemptionThenCorrectValueReturned) {

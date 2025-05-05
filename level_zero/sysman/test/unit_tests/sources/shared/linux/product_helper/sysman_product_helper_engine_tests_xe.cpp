@@ -38,7 +38,7 @@ class SysmanProductHelperEngineXeTestFixture : public SysmanDeviceFixture {
         });
         device = pSysmanDevice;
         MockNeoDrm *pDrm = new MockNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
-        pDrm->ioctlHelper = std::make_unique<MockIoctlHelperXe>(*pDrm);
+        pDrm->ioctlHelper = std::make_unique<NEO::IoctlHelperXe>(*pDrm);
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockNeoDrm>(pDrm));
 

@@ -71,14 +71,14 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     auto engineInfo = pDrm->getEngineInfo();
     auto engineTileMap = engineInfo->getEngineTileInfo();
     for (auto itr = engineTileMap.begin(); itr != engineTileMap.end(); ++itr) {
-        uint32_t gtId = itr->first;
+        uint32_t tileId = itr->first;
         auto engineGroupRange = engineClassToEngineGroup.equal_range(static_cast<uint16_t>(itr->second.engineClass));
         for (auto l0EngineEntryInMap = engineGroupRange.first; l0EngineEntryInMap != engineGroupRange.second; l0EngineEntryInMap++) {
             auto l0EngineType = l0EngineEntryInMap->second;
-            engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(itr->second.engineInstance), gtId}});
+            engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(itr->second.engineInstance), tileId}});
             if (pSysmanKmdInterface->isGroupEngineInterfaceAvailable() || pSysmanProductHelper->isAggregationOfSingleEnginesSupported()) {
-                engineGroupInstance.insert({LinuxEngineImp::getGroupFromEngineType(l0EngineType), {0u, gtId}});
-                engineGroupInstance.insert({ZES_ENGINE_GROUP_ALL, {0u, pDrm->getIoctlHelper()->getTileIdFromGtId(gtId)}});
+                engineGroupInstance.insert({LinuxEngineImp::getGroupFromEngineType(l0EngineType), {0u, tileId}});
+                engineGroupInstance.insert({ZES_ENGINE_GROUP_ALL, {0u, tileId}});
             }
         }
     }
@@ -100,7 +100,7 @@ ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
 ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
     properties.type = engineGroup;
     properties.onSubdevice = onSubDevice;
-    properties.subdeviceId = pDrm->getIoctlHelper()->getTileIdFromGtId(gtId);
+    properties.subdeviceId = tileId;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -120,20 +120,24 @@ void LinuxEngineImp::getConfigPair(std::pair<uint64_t, uint64_t> &configPair) {
     return;
 }
 
-LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubDevice) : engineGroup(type), engineInstance(engineInstance), gtId(gtId), onSubDevice(onSubDevice) {
+LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubDevice) : engineGroup(type), engineInstance(engineInstance), tileId(tileId), onSubDevice(onSubDevice) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getSysmanDeviceImp();
     pPmuInterface = pLinuxSysmanImp->getPmuInterface();
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    if (!isGroupEngineHandle(type)) {
+        auto engineClass = engineGroupToEngineClass.find(type);
+        gtId = pDrm->getIoctlHelper()->getGtIdFromTileId(tileId, engineClass->second);
+    }
     init();
     if (initStatus != ZE_RESULT_SUCCESS) {
         cleanup();
     }
 }
 
-std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t gtId, ze_bool_t onSubDevice) {
-    std::unique_ptr<LinuxEngineImp> pLinuxEngineImp = std::make_unique<LinuxEngineImp>(pOsSysman, type, engineInstance, gtId, onSubDevice);
+std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubDevice) {
+    std::unique_ptr<LinuxEngineImp> pLinuxEngineImp = std::make_unique<LinuxEngineImp>(pOsSysman, type, engineInstance, tileId, onSubDevice);
     return pLinuxEngineImp;
 }
 

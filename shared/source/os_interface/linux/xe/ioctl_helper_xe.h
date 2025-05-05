@@ -135,9 +135,10 @@ class IoctlHelperXe : public IoctlHelper {
     bool resourceRegistrationEnabled() override { return true; }
     bool isPreemptionSupported() override { return true; }
     bool isTimestampsRefreshEnabled() override { return true; }
-    int getTileIdFromGtId(int gtId) const override {
+    uint32_t getTileIdFromGtId(uint32_t gtId) const override {
         return gtIdToTileId[gtId];
     }
+    uint32_t getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const override;
     bool makeResidentBeforeLockNeeded() const override;
 
   protected:
@@ -196,6 +197,7 @@ class IoctlHelperXe : public IoctlHelper {
     GtIdContainer gtIdToTileId;
     GtIdContainer tileIdToGtId;
     GtIdContainer mediaGtIdToTileId;
+    GtIdContainer tileIdToMediaGtId;
     XeDrm::drm_xe_query_gt_list *xeGtListData = nullptr;
 
     std::unique_ptr<XeDrm::drm_xe_engine_class_instance> defaultEngine;

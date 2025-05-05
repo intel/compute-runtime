@@ -1057,6 +1057,88 @@ TEST_F(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenRes
     }
 }
 
+TEST_F(IoctlHelperXeTest, GivenSingleTileWithMainTypesWhenCallingGetTileIdFromGtIdThenExpectedValuesAreReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->queryGtList.resize(49);
+    auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(drm->queryGtList.begin());
+    xeQueryGtList->num_gt = 2;
+    xeQueryGtList->gt_list[0] = {
+        DRM_XE_QUERY_GT_TYPE_MAIN, // type
+        0,                         // tile_id
+        0,                         // gt_id
+        {0},                       // padding
+        12500000,                  // reference_clock
+        0b100,                     // native mem regions
+        0x011,                     // slow mem regions
+    };
+    xeQueryGtList->gt_list[1] = {
+        DRM_XE_QUERY_GT_TYPE_MAIN, // type
+        0,                         // tile_id
+        1,                         // gt_id
+        {0},                       // padding
+        12500000,                  // reference_clock
+        0b100,                     // native mem regions
+        0x011,                     // slow mem regions
+    };
+
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    EXPECT_EQ(0u, xeIoctlHelper->getTileIdFromGtId(0));
+    EXPECT_EQ(0u, xeIoctlHelper->getTileIdFromGtId(1));
+}
+
+TEST_F(IoctlHelperXeTest, GivenSingleTileWithMainAndMediaTypesWhenCallingGetGtIdFromTileIdThenExpectedValuesAreReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->queryGtList.resize(49);
+    auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(drm->queryGtList.begin());
+    xeQueryGtList->num_gt = 4;
+    xeQueryGtList->gt_list[0] = {
+        DRM_XE_QUERY_GT_TYPE_MAIN, // type
+        0,                         // tile_id
+        0,                         // gt_id
+        {0},                       // padding
+        12500000,                  // reference_clock
+        0b100,                     // native mem regions
+        0x011,                     // slow mem regions
+    };
+    xeQueryGtList->gt_list[1] = {
+        DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+        0,                          // tile_id
+        1,                          // gt_id
+        {0},                        // padding
+        12500000,                   // reference_clock
+        0b100,                      // native mem regions
+        0x011,                      // slow mem regions
+    };
+    xeQueryGtList->gt_list[2] = {
+        DRM_XE_QUERY_GT_TYPE_MAIN, // type
+        1,                         // tile_id
+        2,                         // gt_id
+        {0},                       // padding
+        12500000,                  // reference_clock
+        0b010,                     // native mem regions
+        0x101,                     // slow mem regions
+    };
+    xeQueryGtList->gt_list[3] = {
+        DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+        1,                          // tile_id
+        3,                          // gt_id
+        {0},                        // padding
+        12500000,                   // reference_clock
+        0b001,                      // native mem regions
+        0x100,                      // slow mem regions
+    };
+
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    EXPECT_EQ(0u, xeIoctlHelper->getGtIdFromTileId(0, DRM_XE_ENGINE_CLASS_RENDER));
+    EXPECT_EQ(2u, xeIoctlHelper->getGtIdFromTileId(1, DRM_XE_ENGINE_CLASS_COPY));
+    EXPECT_EQ(1u, xeIoctlHelper->getGtIdFromTileId(0, DRM_XE_ENGINE_CLASS_VIDEO_DECODE));
+    EXPECT_EQ(3u, xeIoctlHelper->getGtIdFromTileId(1, DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE));
+}
+
 TEST_F(IoctlHelperXeTest, given2TileAndComputeDssWhenGetTopologyDataAndMapThenResultsAreCorrect) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
