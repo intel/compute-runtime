@@ -59,7 +59,7 @@ typedef enum _zet_intel_metric_append_marker_exp_version_t {
     ZET_INTEL_METRIC_APPEND_MARKER_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zet_intel_metric_append_marker_exp_version_t;
 
-#define ZET_INTEL_METRIC_GROUP_TYPE_EXP_FLAG_MARKER (static_cast<zet_metric_group_type_exp_flag_t>(ZE_BIT(3))) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+#define ZET_INTEL_METRIC_GROUP_TYPE_EXP_FLAG_MARKER (static_cast<zet_metric_group_type_exp_flags_t>(ZE_BIT(3)))
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Appends a metric marker to the command list based on the metricGroup

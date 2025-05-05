@@ -257,7 +257,7 @@ void sleep(uint32_t milliseconds) {
 }
 
 zet_metric_group_handle_t findMetricGroup(const char *groupName,
-                                          const zet_metric_group_sampling_type_flag_t samplingType,
+                                          const zet_metric_group_sampling_type_flags_t samplingType,
                                           ze_device_handle_t deviceHandle) {
 
     uint32_t metricGroupCount = 0;
