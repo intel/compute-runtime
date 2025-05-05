@@ -47,6 +47,8 @@ class TagNodeBase : public NonCopyableAndNonMovableClass {
 
     virtual void initialize() = 0;
 
+    virtual void markAsAborted() = 0;
+
     bool canBeReleased() const;
 
     virtual void *getCpuBase() const = 0;
@@ -114,6 +116,10 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
     }
 
     void *getCpuBase() const override { return tagForCpuAccess; }
+
+    void markAsAborted() override {
+        tagForCpuAccess->initialize(0);
+    }
 
     void assignDataToAllTimestamps(uint32_t packetIndex, const void *source) override;
 

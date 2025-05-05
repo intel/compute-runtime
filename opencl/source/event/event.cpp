@@ -675,6 +675,14 @@ void Event::submitCommand(bool abortTasks) {
         }
 
         auto &complStamp = cmdToProcess->submit(taskLevel, abortTasks);
+        if (abortTasks) {
+            if (timestampPacketContainer.get() != nullptr) {
+                const auto &timestamps = timestampPacketContainer->peekNodes();
+                for (auto i = 0u; i < timestamps.size(); i++) {
+                    timestamps[i]->markAsAborted();
+                }
+            }
+        }
         if (profilingCpuPath && this->isProfilingEnabled()) {
             setEndTimeStamp();
         }

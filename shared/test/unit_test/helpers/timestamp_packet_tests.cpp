@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -197,6 +197,31 @@ HWTEST_F(TimestampPacketTests, whenNewTagIsTakenThenReinitialize) {
         EXPECT_EQ(1u, packet.globalEnd);
     }
     EXPECT_EQ(1u, firstNode->getPacketsUsed());
+}
+
+HWTEST_F(TimestampPacketTests, GivenTagNodeWhenCallMarkAsAbortedThenClearTimestamps) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(executionEnvironment);
+    MockTagAllocator<MockTimestampPackets32> allocator(0, &memoryManager, 1);
+
+    using MockNode = TagNode<MockTimestampPackets32>;
+
+    auto firstNode = static_cast<MockNode *>(allocator.getTag());
+    auto initValue = 1u;
+    for (auto &packet : firstNode->tagForCpuAccess->packets) {
+        packet.contextStart = initValue;
+        packet.globalStart = initValue;
+        packet.contextEnd = initValue;
+        packet.globalEnd = initValue;
+    }
+    firstNode->markAsAborted();
+
+    for (const auto &packet : firstNode->tagForCpuAccess->packets) {
+        EXPECT_EQ(0u, packet.contextStart);
+        EXPECT_EQ(0u, packet.globalStart);
+        EXPECT_EQ(0u, packet.contextEnd);
+        EXPECT_EQ(0u, packet.globalEnd);
+    }
 }
 
 TEST_F(TimestampPacketTests, whenObjectIsCreatedThenInitializeAllStamps) {

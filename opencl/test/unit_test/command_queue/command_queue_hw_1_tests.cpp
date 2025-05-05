@@ -420,6 +420,39 @@ HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingWhenMappingBufferThenWi
     clReleaseEvent(gatingEvent);
 }
 
+HWTEST2_F(CommandQueueHwTest, GivenFillBufferBlockedOnUserEventWhenEventIsAbortedThenClearTimestamps, IsAtLeastXeHpCore) {
+    CommandQueueHw<FamilyType> cmdQ(context, pCmdQ->getDevice().getSpecializedDevice<ClDevice>(), 0, false);
+
+    auto buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, 20, nullptr, nullptr);
+    uint32_t pattern = 0xf0f1f2f3;
+
+    auto clUserEvent = clCreateUserEvent(context, nullptr);
+    cl_event clWaitingEvent;
+    auto retVal = clEnqueueFillBuffer(&cmdQ, buffer, &pattern, sizeof(pattern), 0, sizeof(pattern), 1, &clUserEvent, &clWaitingEvent);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto waitingEvent = castToObject<Event>(clWaitingEvent);
+
+    clSetUserEventStatus(clUserEvent, CL_INVALID_VALUE);
+    cmdQ.finish();
+
+    auto timestampPacketNodes = waitingEvent->getTimestampPacketNodes();
+    ASSERT_NE(timestampPacketNodes, nullptr);
+    const auto &timestamps = timestampPacketNodes->peekNodes();
+    for (const auto &node : timestamps) {
+        for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
+            EXPECT_EQ(0ULL, node->getContextStartValue(i));
+            EXPECT_EQ(0ULL, node->getContextEndValue(i));
+            EXPECT_EQ(0ULL, node->getGlobalStartValue(i));
+            EXPECT_EQ(0ULL, node->getGlobalEndValue(i));
+        }
+    }
+
+    clReleaseMemObject(buffer);
+    clReleaseEvent(clUserEvent);
+    clReleaseEvent(clWaitingEvent);
+}
+
 HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingWhenMappingBufferThenWillWaitForEvents) {
     struct MockEvent : UserEvent {
         MockEvent(Context *ctx, uint32_t updateCountBeforeCompleted)
