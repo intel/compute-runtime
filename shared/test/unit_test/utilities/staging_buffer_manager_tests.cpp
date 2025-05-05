@@ -157,7 +157,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
 
     void bufferTransferThroughStagingBuffers(size_t copySize, size_t expectedChunks, size_t expectedAllocations, CommandStreamReceiver *csr) {
         auto buffer = new unsigned char[copySize];
-        auto nonUsmBuffer = alignedMalloc(copySize, MemoryConstants::pageSize);
+        auto nonUsmBuffer = new unsigned char[copySize];
 
         size_t chunkCounter = 0;
         memset(buffer, 0, copySize);
@@ -180,7 +180,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
         EXPECT_EQ(expectedAllocations, newUsmAllocations);
 
         delete[] buffer;
-        alignedFree(nonUsmBuffer);
+        delete[] nonUsmBuffer;
     }
 
     void fillUserData(unsigned int *userData, size_t size) {
@@ -862,7 +862,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformBufferTransferWith
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkBufferWriteThenEarlyReturnWithFailure) {
     size_t expectedChunks = 4;
     constexpr int expectedErrorCode = 1;
-    auto ptr = alignedMalloc(stagingBufferSize * expectedChunks, MemoryConstants::pageSize);
+    auto ptr = new unsigned char[stagingBufferSize * expectedChunks];
 
     size_t chunkCounter = 0;
     ChunkTransferBufferFunc chunkWrite = [&](void *stagingBuffer, size_t offset, size_t size) -> int32_t {
@@ -873,69 +873,12 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkBufferWriteThe
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(1u, chunkCounter);
-    alignedFree(ptr);
-}
-
-TEST_F(StagingBufferManagerTest, givenStagingBufferWhenMisalignedTransferThenFirstChunkWithLeftover) {
-    size_t expectedChunks = 4;
-    auto ptr = alignedMalloc(stagingBufferSize * expectedChunks + MemoryConstants::pageSize, MemoryConstants::pageSize);
-    auto misalignedPtr = ptrOffset(ptr, 1);
-
-    size_t chunkCounter = 0;
-    ChunkTransferBufferFunc chunkWrite = [&](void *stagingBuffer, size_t offset, size_t size) -> int32_t {
-        if (chunkCounter == 0) {
-            EXPECT_EQ(MemoryConstants::pageSize - 1, size);
-        } else {
-            EXPECT_EQ(stagingBufferSize, size);
-        }
-        ++chunkCounter;
-        return 0;
-    };
-    auto ret = stagingBufferManager->performBufferTransfer(misalignedPtr, 0, stagingBufferSize * expectedChunks + MemoryConstants::pageSize - 1, chunkWrite, csr, false);
-    EXPECT_EQ(0, ret.chunkCopyStatus);
-    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
-    EXPECT_EQ(expectedChunks + 1, chunkCounter);
-    alignedFree(ptr);
-}
-
-TEST_F(StagingBufferManagerTest, givenStagingBufferWhenMisalignedTransferWithSmallSizeThenSingleChunkSubmitted) {
-    auto ptr = alignedMalloc(MemoryConstants::pageSize * 2, MemoryConstants::pageSize);
-    auto misalignedPtr = ptrOffset(ptr, MemoryConstants::pageSize / 2);
-
-    size_t chunkCounter = 0;
-    ChunkTransferBufferFunc chunkWrite = [&](void *stagingBuffer, size_t offset, size_t size) -> int32_t {
-        EXPECT_EQ(MemoryConstants::pageSize, size);
-        ++chunkCounter;
-        return 0;
-    };
-    auto ret = stagingBufferManager->performBufferTransfer(misalignedPtr, 0, MemoryConstants::pageSize, chunkWrite, csr, false);
-    EXPECT_EQ(0, ret.chunkCopyStatus);
-    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
-    EXPECT_EQ(1u, chunkCounter);
-    alignedFree(ptr);
-}
-
-TEST_F(StagingBufferManagerTest, givenStagingBufferWhenMisalignedTransferWithFailureInLeftoverThenPropagateErrorCode) {
-    size_t expectedChunks = 4;
-    constexpr int expectedErrorCode = 1;
-    auto ptr = alignedMalloc(stagingBufferSize * expectedChunks + MemoryConstants::pageSize, MemoryConstants::pageSize);
-    auto misalignedPtr = ptrOffset(ptr, 1);
-
-    size_t chunkCounter = 0;
-    ChunkTransferBufferFunc chunkWrite = [&](void *stagingBuffer, size_t offset, size_t size) -> int32_t {
-        ++chunkCounter;
-        return expectedErrorCode;
-    };
-    auto ret = stagingBufferManager->performBufferTransfer(misalignedPtr, 0, stagingBufferSize * expectedChunks + MemoryConstants::pageSize - 1, chunkWrite, csr, false);
-    EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
-    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
-    EXPECT_EQ(1u, chunkCounter);
-    alignedFree(ptr);
+    delete[] ptr;
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenReadBufferThenDataCopiedCorrectly) {
     size_t expectedChunks = 4;
-    auto ptr = alignedMalloc(stagingBufferSize * expectedChunks, MemoryConstants::pageSize);
+    auto ptr = new unsigned char[stagingBufferSize * expectedChunks];
     auto bufferData = new unsigned char[stagingBufferSize * expectedChunks];
     memset(ptr, 0, stagingBufferSize * expectedChunks);
     memset(bufferData, 0xFF, stagingBufferSize * expectedChunks);
@@ -949,14 +892,14 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenReadBufferThenDataCopiedC
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(0, memcmp(ptr, bufferData, stagingBufferSize * expectedChunks));
 
-    alignedFree(ptr);
+    delete[] ptr;
     delete[] bufferData;
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkBufferWriteWithRemainderThenReturnWithFailure) {
     size_t expectedChunks = 2;
     constexpr int expectedErrorCode = 1;
-    auto ptr = alignedMalloc(stagingBufferSize * expectedChunks + 512, MemoryConstants::pageSize);
+    auto ptr = new unsigned char[stagingBufferSize * expectedChunks + 512];
 
     size_t chunkCounter = 0;
     size_t remainderCounter = expectedChunks + 1;
@@ -971,5 +914,5 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkBufferWriteWit
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(remainderCounter, chunkCounter);
-    alignedFree(ptr);
+    delete[] ptr;
 }

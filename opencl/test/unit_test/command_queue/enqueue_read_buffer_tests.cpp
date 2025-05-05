@@ -860,19 +860,17 @@ struct ReadBufferStagingBufferTest : public EnqueueReadBufferHw {
     void SetUp() override {
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         EnqueueReadBufferHw::SetUp();
-        ptr = alignedMalloc(buffer.getSize(), MemoryConstants::pageSize);
     }
 
     void TearDown() override {
         if (defaultHwInfo->capabilityTable.ftrSvm == false) {
             return;
         }
-        alignedFree(ptr);
         EnqueueReadBufferHw::TearDown();
     }
     constexpr static size_t chunkSize = MemoryConstants::megaByte * 2;
 
-    void *ptr = nullptr;
+    unsigned char ptr[MemoryConstants::cacheLineSize];
     MockBuffer buffer;
     cl_queue_properties props = {};
 };
@@ -885,19 +883,6 @@ HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledThenRetu
     EXPECT_EQ(1ul, mockCommandQueueHw.enqueueReadBufferCounter);
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
-}
-
-HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledWithMisaligendMemoryThenReturnSuccess) {
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
-    auto hostMem = alignedMalloc(buffer.getSize() + MemoryConstants::pageSize, MemoryConstants::pageSize);
-    auto misalignedPtr = ptrOffset(hostMem, 1);
-    auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_READ_BUFFER, &buffer, false, 0, MemoryConstants::pageSize + 1, misalignedPtr, nullptr);
-    EXPECT_TRUE(mockCommandQueueHw.flushCalled);
-    EXPECT_EQ(res, CL_SUCCESS);
-    EXPECT_EQ(2ul, mockCommandQueueHw.enqueueReadBufferCounter);
-    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
-    alignedFree(hostMem);
 }
 
 HWTEST_F(ReadBufferStagingBufferTest, whenHostPtrRegisteredThenDontUseStagingUntilEventCompleted) {
@@ -940,7 +925,7 @@ HWTEST_F(ReadBufferStagingBufferTest, whenHostPtrRegisteredThenDontUseStagingUnt
 }
 
 HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledWithLargeSizeThenSplitTransfer) {
-    auto hostPtr = alignedMalloc(chunkSize * 4, MemoryConstants::pageSize);
+    auto hostPtr = new unsigned char[chunkSize * 4];
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
     auto retVal = CL_SUCCESS;
     std::unique_ptr<Buffer> buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(),
@@ -956,7 +941,7 @@ HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledWithLarg
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
 
-    alignedFree(hostPtr);
+    delete[] hostPtr;
 }
 
 HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledWithEventThenReturnValidEvent) {

@@ -17,6 +17,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/heap_allocator.h"
+
 namespace NEO {
 
 StagingBuffer::StagingBuffer(void *baseAddress, size_t size) : baseAddress(baseAddress) {
@@ -240,31 +241,14 @@ StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr
 
 StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *ptr, size_t globalOffset, size_t globalSize, ChunkTransferBufferFunc &chunkTransferBufferFunc, CommandStreamReceiver *csr, bool isRead) {
     StagingQueue stagingQueue;
-    auto basePtr = ptr;
-    size_t leftoverSize = 0;
-    if (globalSize > MemoryConstants::pageSize) {
-        ptr = alignUp(ptr, MemoryConstants::pageSize);
-        leftoverSize = ptrDiff(ptr, basePtr);
-        globalSize -= leftoverSize;
-    }
     auto copiesNum = globalSize / chunkSize;
     auto remainder = globalSize % chunkSize;
     auto chunkOffset = globalOffset;
-
     StagingTransferStatus result{};
-    if (leftoverSize) {
-        UserData userData{basePtr, leftoverSize};
-        result = performChunkTransfer(0, isRead, userData, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, leftoverSize);
-        if (result.chunkCopyStatus != 0) {
-            return result;
-        }
-        chunkOffset += leftoverSize;
-    }
-
-    for (auto chunkId = 0u; chunkId < copiesNum; chunkId++) {
-        auto chunkPtr = ptrOffset(ptr, chunkId * chunkSize);
+    for (auto i = 0u; i < copiesNum; i++) {
+        auto chunkPtr = ptrOffset(ptr, i * chunkSize);
         UserData userData{chunkPtr, chunkSize};
-        result = performChunkTransfer(chunkId + (leftoverSize ? 1 : 0), isRead, userData, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, chunkSize);
+        result = performChunkTransfer(i, isRead, userData, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, chunkSize);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
@@ -274,13 +258,13 @@ StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *pt
     if (remainder != 0) {
         auto chunkPtr = ptrOffset(ptr, copiesNum * chunkSize);
         UserData userData{chunkPtr, remainder};
-        result = performChunkTransfer(copiesNum + (leftoverSize ? 1 : 0), isRead, userData, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, remainder);
+        result = performChunkTransfer(copiesNum, isRead, userData, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, remainder);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
     }
 
-    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, copiesNum + (leftoverSize ? 1 : 0) + (remainder ? 1 : 0));
+    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, copiesNum + (remainder != 0 ? 1 : 0));
     return result;
 }
 

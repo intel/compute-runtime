@@ -43,20 +43,20 @@ TEST_F(ClEnqueueReadBufferTests, GivenCorrectArgumentsWhenReadingBufferThenSucce
 TEST_F(ClEnqueueReadBufferTests, GivenNonUsmMemoryWhenReadingBufferThenNonUsmPointerIsNotImported) {
     DebugManagerStateRestore restorer{};
     // 1KB staging buffer size
-    debugManager.flags.StagingBufferSize.set(4);
+    debugManager.flags.StagingBufferSize.set(1);
     debugManager.flags.EnableCopyWithStagingBuffers.set(1);
 
     MockContext context{};
     MockGraphicsAllocation allocation{};
     MockBuffer buffer{&context, allocation};
     MockCommandQueue commandQueue{context};
-    auto data = alignedMalloc(8192u, MemoryConstants::pageSize);
+    char data[2048];
     auto retVal = clEnqueueReadBuffer(
         &commandQueue,
         &buffer,
         false,
         0,
-        8192u,
+        sizeof(data),
         data,
         0,
         nullptr,
@@ -64,9 +64,8 @@ TEST_F(ClEnqueueReadBufferTests, GivenNonUsmMemoryWhenReadingBufferThenNonUsmPoi
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // 2 * 4KB copies
+    // 2 * 1KB copies
     EXPECT_EQ(2u, commandQueue.enqueueReadBufferImplCalledCount);
-    alignedFree(data);
 }
 
 TEST_F(ClEnqueueReadBufferTests, GivenQueueIncapableArgumentsWhenReadingBufferThenInvalidOperationIsReturned) {
