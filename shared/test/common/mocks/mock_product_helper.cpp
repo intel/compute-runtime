@@ -508,6 +508,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isCompressionForbidden(const HardwareInfo &h
 template <>
 void ProductHelperHw<IGFX_UNKNOWN>::setRenderCompressedFlags(HardwareInfo &hwInfo) const {}
 
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::allowSharedResourcesInCoherentMemory() const {
+    return false;
+}
+
 } // namespace NEO
 
 #include "shared/source/os_interface/product_helper.inl"

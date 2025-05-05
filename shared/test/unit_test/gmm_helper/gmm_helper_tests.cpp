@@ -766,13 +766,23 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
             case AllocationType::fillPattern:
             case AllocationType::internalHostMemory:
             case AllocationType::mapAllocation:
-            case AllocationType::ringBuffer:
             case AllocationType::semaphoreBuffer:
             case AllocationType::svmCpu:
             case AllocationType::svmZeroCopy:
             case AllocationType::tagBuffer:
                 expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
                 break;
+            case AllocationType::ringBuffer:
+                if (forceUncached) {
+                    expectedUsage = uncachedGmmUsageType;
+                    break;
+                }
+
+                if (productHelper.allowSharedResourcesInCoherentMemory()) {
+                    expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                    break;
+                }
+                [[fallthrough]];
             default:
                 expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
@@ -883,7 +893,6 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
             case AllocationType::timestampPacketTagBuffer:
                 expectedUsage = uncachedGmmUsageType;
                 break;
-
             case AllocationType::linearStream:
             case AllocationType::internalHeap:
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
@@ -895,10 +904,15 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_IMAGE;
                 break;
             case AllocationType::fillPattern:
-            case AllocationType::ringBuffer:
             case AllocationType::semaphoreBuffer:
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
                 break;
+            case AllocationType::ringBuffer:
+                if (productHelper.allowSharedResourcesInCoherentMemory()) {
+                    expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                    break;
+                }
+                [[fallthrough]];
             default:
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
@@ -920,13 +934,18 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
             case AllocationType::fillPattern:
             case AllocationType::internalHostMemory:
             case AllocationType::mapAllocation:
-            case AllocationType::ringBuffer:
             case AllocationType::semaphoreBuffer:
             case AllocationType::svmCpu:
             case AllocationType::svmZeroCopy:
             case AllocationType::tagBuffer:
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
                 break;
+            case AllocationType::ringBuffer:
+                if (productHelper.allowSharedResourcesInCoherentMemory()) {
+                    expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                    break;
+                }
+                [[fallthrough]];
             default:
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;

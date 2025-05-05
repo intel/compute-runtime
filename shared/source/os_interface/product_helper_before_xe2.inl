@@ -45,4 +45,9 @@ bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwI
     return isCompressionForbiddenCommon(true);
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::allowSharedResourcesInCoherentMemory() const {
+    return false;
+}
+
 } // namespace NEO

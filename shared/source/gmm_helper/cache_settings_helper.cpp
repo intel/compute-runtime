@@ -60,7 +60,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     }
 
     if (hwInfo->capabilityTable.isIntegratedDevice) {
-        if (AllocationType::ringBuffer == allocationType || AllocationType::semaphoreBuffer == allocationType) {
+        if (AllocationType::semaphoreBuffer == allocationType || (AllocationType::ringBuffer == allocationType && productHelper.allowSharedResourcesInCoherentMemory())) {
             return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
         }
     }

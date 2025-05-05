@@ -1180,3 +1180,11 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingIsPrimaryContextsAggreg
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingUseAdditionalBlitPropertiesThenFalseReturned) {
     EXPECT_FALSE(productHelper->useAdditionalBlitProperties());
 }
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingAllowSharedResourcesInCoherentMemoryThenFalseReturned, IsBeforeXe2HpgCore) {
+    EXPECT_FALSE(productHelper->allowSharedResourcesInCoherentMemory());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingAllowSharedResourcesInCoherentMemoryThenTrueReturned, IsAtLeastXe2HpgCore) {
+    EXPECT_TRUE(productHelper->allowSharedResourcesInCoherentMemory());
+}
