@@ -627,6 +627,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingPrefetch, false, "Enables prefetchi
 DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingDevMemPrefetch, false, "Enables prefetching of Device Memory chunks")
 DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingPreferredLocationHint, false, "Enables preferred location advise on chunks")
 DECLARE_DEBUG_VARIABLE(bool, EnableCompatibilityMode, true, "Enables compatibility mode for platforms which can use precompiled base platform configuration")
+DECLARE_DEBUG_VARIABLE(bool, DisableFlushL3ForHostUsm, false, "Disables L3 flush for host usm")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBOChunking, -1, "Enables use of chunking of BOs in the KMD, mask: -1 = default, 0 = no chunking, 1 = shared allocations only, 2 = multi-tile device allocations only, 3 = shared and multi-tile device allocations .")
 DECLARE_DEBUG_VARIABLE(int32_t, DestroyAllocationsViaGmm, -1, "Use DeAllocate2 wrapper instead of raw GDI destroy allocations")
 DECLARE_DEBUG_VARIABLE(int32_t, NumberOfBOChunks, 2, "Number of chunks to use")

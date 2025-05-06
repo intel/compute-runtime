@@ -362,6 +362,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     auto maxWgCountPerTile = kernel->getMaxWgCountPerTile(this->engineGroupType);
 
+    auto isFlushL3ForExternalAllocationRequired = isFlushL3AfterPostSync && isKernelUsingExternalAllocation;
+    auto isFlushL3ForHostUsmRequired = isFlushL3AfterPostSync && isKernelUsingSystemAllocation;
+    if (NEO::debugManager.flags.DisableFlushL3ForHostUsm.get() && isFlushL3ForHostUsmRequired) {
+        isFlushL3ForExternalAllocationRequired = true;
+        isFlushL3ForHostUsmRequired = false;
+    }
     NEO::EncodeKernelArgsExt dispatchKernelArgsExt = {};
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
@@ -390,8 +396,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .isUsingSystemAllocation = isKernelUsingSystemAllocation,
             .dcFlushEnable = this->dcFlushSupport,
             .interruptEvent = interruptEvent,
-            .isFlushL3ForExternalAllocationRequired = isFlushL3AfterPostSync && isKernelUsingExternalAllocation,
-            .isFlushL3ForHostUsmRequired = isFlushL3AfterPostSync && isKernelUsingSystemAllocation,
+            .isFlushL3ForExternalAllocationRequired = isFlushL3ForExternalAllocationRequired,
+            .isFlushL3ForHostUsmRequired = isFlushL3ForHostUsmRequired,
         },
         .preemptionMode = kernelPreemptionMode,
         .requiredPartitionDim = launchParams.requiredPartitionDim,

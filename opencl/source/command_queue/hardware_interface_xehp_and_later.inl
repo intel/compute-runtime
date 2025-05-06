@@ -107,6 +107,11 @@ inline void HardwareInterface<GfxFamily>::programWalker(
             bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation;
             bool flushL3AfterPostSyncForExternalAllocation = kernel.isUsingSharedObjArgs();
 
+            if (debugManager.flags.DisableFlushL3ForHostUsm.get() && flushL3AfterPostSyncForHostUsm) {
+                flushL3AfterPostSyncForHostUsm = false;
+                flushL3AfterPostSyncForExternalAllocation = true;
+            }
+
             GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacketFlushL3<WalkerType>(&walkerCmd, productHelper, flushL3AfterPostSyncForHostUsm, flushL3AfterPostSyncForExternalAllocation);
         }
     }
