@@ -840,7 +840,13 @@ bool Wddm::destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationC
     destroyAllocation.AllocationCount = allocationCount;
     destroyAllocation.Flags.AssumeNotInUse = debugManager.flags.SetAssumeNotInUse.get();
 
-    if (debugManager.flags.DestroyAllocationsViaGmm.get()) {
+    bool destroyViaGmm = true;
+
+    if (debugManager.flags.DestroyAllocationsViaGmm.get() != -1) {
+        destroyViaGmm = debugManager.flags.DestroyAllocationsViaGmm.get();
+    }
+
+    if (destroyViaGmm) {
         DeallocateGmm deallocateGmm{&destroyAllocation, getGdi()};
         status = static_cast<NTSTATUS>(this->rootDeviceEnvironment.getGmmClientContext()->deallocate2(&deallocateGmm));
     } else {
