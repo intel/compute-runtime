@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,8 @@
 namespace NEO {
 
 uint64_t GmmResourceInfo::getDriverProtectionBits() {
-    return 0u;
+    GMM_OVERRIDE_VALUES overrideValues{};
+    return static_cast<uint64_t>(resourceInfo->GetDriverProtectionBits(overrideValues));
 }
 
 bool GmmResourceInfo::isDisplayable() const {
