@@ -63,6 +63,11 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
         return nullptr;
     }
 
+    if (drm->isSharedSystemAllocEnabled()) {
+        auto hwInfo = drm->getRootDeviceEnvironment().getMutableHardwareInfo();
+        hwInfo->capabilityTable.sharedSystemMemCapabilities |= UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
+    }
+
     if (drm->enableTurboBoost()) {
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }

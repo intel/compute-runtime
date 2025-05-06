@@ -45,7 +45,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
-#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/directory.h"
@@ -497,7 +496,6 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
     auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
-    this->adjustSharedSystemMemCapabilities();
 
     querySystemInfo();
 
@@ -1861,12 +1859,6 @@ bool Drm::queryDeviceIdAndRevision() {
         return IoctlHelperXe::queryDeviceIdAndRevision(*this);
     }
     return IoctlHelperI915::queryDeviceIdAndRevision(*this);
-}
-
-void Drm::adjustSharedSystemMemCapabilities() {
-    if (!this->isSharedSystemAllocEnabled()) {
-        this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
-    }
 }
 
 uint32_t Drm::getAggregatedProcessCount() const {
