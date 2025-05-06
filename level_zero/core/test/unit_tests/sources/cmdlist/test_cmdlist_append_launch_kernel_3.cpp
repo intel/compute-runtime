@@ -942,7 +942,7 @@ struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKe
         if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
             const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
             auto implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.pImplicitArgs.get(), kernel.getKernelDescriptor(), !kernel.kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
-            return implicitArgsProgrammingSize - kernel.pImplicitArgs->getAlignedSize();
+            return implicitArgsProgrammingSize - kernel.pImplicitArgs->v0.header.structSize;
         } else {
             return 0u;
         }

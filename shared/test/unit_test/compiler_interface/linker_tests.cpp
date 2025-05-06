@@ -2146,7 +2146,7 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsV1WhenLinkingThen
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
 
-    EXPECT_EQ(ImplicitArgsV1::getAlignedSize(), *addressToPatch);
+    EXPECT_EQ(ImplicitArgsV1::getSize(), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
 

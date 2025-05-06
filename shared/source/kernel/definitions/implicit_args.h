@@ -47,7 +47,6 @@ struct alignas(32) ImplicitArgsV0 {
     uint8_t reserved[16];
 
     static constexpr uint8_t getSize() { return static_cast<uint8_t>((offsetof(ImplicitArgsV0, reserved))); }
-    static constexpr uint8_t getAlignedSize() { return sizeof(ImplicitArgsV0); }
 };
 
 static_assert(std::alignment_of_v<ImplicitArgsV0> == 32, "Implicit args size need to be aligned to 32");
@@ -79,7 +78,6 @@ struct alignas(32) ImplicitArgsV1 {
     uint8_t reserved[44];
 
     static constexpr uint8_t getSize() { return static_cast<uint8_t>(offsetof(ImplicitArgsV1, reserved)); }
-    static constexpr uint8_t getAlignedSize() { return sizeof(ImplicitArgsV1); }
 };
 
 static_assert(std::alignment_of_v<ImplicitArgsV1> == 32, "Implicit args size need to be aligned to 32");
@@ -109,18 +107,6 @@ struct alignas(32) ImplicitArgs {
 
         } else if (v1.header.structVersion == 1) {
             return v1.header.structSize;
-        }
-
-        DEBUG_BREAK_IF(true);
-        return 0;
-    }
-
-    uint8_t getAlignedSize() const {
-        if (v0.header.structVersion == 0) {
-            return ImplicitArgsV0::getAlignedSize();
-
-        } else if (v1.header.structVersion == 1) {
-            return ImplicitArgsV1::getAlignedSize();
         }
 
         DEBUG_BREAK_IF(true);

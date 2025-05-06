@@ -658,9 +658,9 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
                 if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
                     auto implicitArgsSize = 0;
                     if (pDevice->getGfxCoreHelper().getImplicitArgsVersion() == 0) {
-                        implicitArgsSize = ImplicitArgsV0::getAlignedSize();
+                        implicitArgsSize = ImplicitArgsV0::getSize();
                     } else if (pDevice->getGfxCoreHelper().getImplicitArgsVersion() == 1) {
-                        implicitArgsSize = ImplicitArgsV1::getAlignedSize();
+                        implicitArgsSize = ImplicitArgsV1::getSize();
                     } else {
                         UNRECOVERABLE_IF(true);
                     }
