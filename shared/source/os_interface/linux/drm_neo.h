@@ -153,6 +153,7 @@ class Drm : public DriverModel {
     bool isDirectSubmissionActive() const { return this->directSubmissionActive; }
     MOCKABLE_VIRTUAL void setSharedSystemAllocEnable(bool value) { this->sharedSystemAllocEnable = value; }
     MOCKABLE_VIRTUAL bool isSharedSystemAllocEnabled() const { return this->sharedSystemAllocEnable; }
+    void adjustSharedSystemMemCapabilities();
 
     MOCKABLE_VIRTUAL bool isSetPairAvailable();
     MOCKABLE_VIRTUAL bool getSetPairAvailable() { return setPairAvailable; }

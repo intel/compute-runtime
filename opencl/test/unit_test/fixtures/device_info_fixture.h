@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -22,6 +23,8 @@ struct GetDeviceInfoMemCapabilitiesTest : ::testing::Test {
     };
 
     void check(std::vector<TestParams> &params) {
+        DebugManagerStateRestore restore;
+        debugManager.flags.EnableSharedSystemUsmSupport.set(0);
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         const bool isKmdMigrationAvailable{device->getMemoryManager()->isKmdMigrationAvailable(device->getRootDeviceIndex())};
 

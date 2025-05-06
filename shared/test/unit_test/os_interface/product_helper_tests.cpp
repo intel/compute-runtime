@@ -71,18 +71,27 @@ HWTEST_F(ProductHelperTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThen
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSharedSystemMemCapabilitiesThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
 
-    EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
+    uint64_t caps = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    pInHwInfo.capabilityTable.sharedSystemMemCapabilities = caps;
+    EXPECT_EQ(caps, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
 
     for (auto enable : {-1, 0, 1}) {
         debugManager.flags.EnableSharedSystemUsmSupport.set(enable);
-
-        if (enable > 0) {
-            auto caps = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
+        if (enable != 0) {
             EXPECT_EQ(caps, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
         } else {
             EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
         }
     }
+    for (auto enable : {-1, 0, 1}) {
+        debugManager.flags.EnableRecoverablePageFaults.set(enable);
+        if (enable != 0) {
+            EXPECT_EQ(caps, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
+        } else {
+            EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
+        }
+    }
+    pInHwInfo.capabilityTable.sharedSystemMemCapabilities = caps;
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfIsBlitSplitEnqueueWARequiredThenReturnFalse) {
@@ -95,7 +104,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
 
     for (auto capabilityBitmask : {0, 0b0001, 0b0010, 0b0100, 0b1000, 0b1111}) {
         debugManager.flags.EnableUsmConcurrentAccessSupport.set(capabilityBitmask);
-        std::bitset<4> capabilityBitset(capabilityBitmask);
+        std::bitset<5> capabilityBitset(capabilityBitmask);
 
         auto hostMemCapabilities = productHelper->getHostMemCapabilities(&pInHwInfo);
         if (hostMemCapabilities > 0) {
