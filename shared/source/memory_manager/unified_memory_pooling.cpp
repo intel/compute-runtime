@@ -42,20 +42,6 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, void *ptr, 
     return true;
 }
 
-bool UsmMemAllocPool::ensureInitialized(SVMAllocsManager *svmMemoryManager) {
-    if (isInitialized()) {
-        return true;
-    }
-    std::unique_lock<std::mutex> lock(mtx);
-    if (isInitialized()) {
-        return true;
-    }
-    DEBUG_BREAK_IF(0u == poolSize || 0u == maxServicedSize || 0u == rootDeviceIndices.size() || deviceBitFields.empty());
-    SVMAllocsManager::UnifiedMemoryProperties poolMemoryProperties(poolMemoryType, poolAlignment, rootDeviceIndices, deviceBitFields);
-    poolMemoryProperties.device = device;
-    return initialize(svmMemoryManager, poolMemoryProperties, poolSize, minServicedSize, maxServicedSize);
-}
-
 bool UsmMemAllocPool::isInitialized() const {
     return this->pool;
 }
@@ -85,7 +71,11 @@ bool UsmMemAllocPool::sizeIsAllowed(size_t size) {
 }
 
 bool UsmMemAllocPool::flagsAreAllowed(const UnifiedMemoryProperties &memoryProperties) {
-    return memoryProperties.allocationFlags.allFlags == 0u &&
+    auto flagsWithoutCompression = memoryProperties.allocationFlags;
+    flagsWithoutCompression.flags.compressedHint = 0u;
+    flagsWithoutCompression.flags.uncompressedHint = 0u;
+
+    return flagsWithoutCompression.allFlags == 0u &&
            memoryProperties.allocationFlags.allAllocFlags == 0u;
 }
 

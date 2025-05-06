@@ -307,9 +307,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
     this->initHostUsmAllocPool();
     for (auto &device : this->devices) {
         this->initDeviceUsmAllocPool(*device->getNEODevice());
-        if (auto deviceUsmAllocPool = device->getNEODevice()->getUsmMemAllocPool()) {
-            deviceUsmAllocPool->ensureInitialized(this->svmAllocsManager);
-        }
         if (auto deviceUsmAllocPoolsManager = device->getNEODevice()->getUsmMemAllocPoolsManager()) {
             deviceUsmAllocPoolsManager->ensureInitialized(this->svmAllocsManager);
         }
@@ -387,8 +384,17 @@ void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device) {
     }
 
     if (enabled) {
-        device.resetUsmAllocationPool(new NEO::UsmMemAllocPool(rootDeviceIndices, deviceBitfields, &device, InternalMemoryType::deviceUnifiedMemory,
-                                                               poolSize, minServicedSize, maxServicedSize));
+        device.resetUsmAllocationPool(new NEO::UsmMemAllocPool);
+        auto &hwInfo = device.getHardwareInfo();
+        auto &l0GfxCoreHelper = device.getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+        const bool compressionEnabledByDefault = l0GfxCoreHelper.usmCompressionSupported(hwInfo) && l0GfxCoreHelper.forceDefaultUsmCompressionSupport();
+        NEO::SVMAllocsManager::UnifiedMemoryProperties poolMemoryProperties(InternalMemoryType::deviceUnifiedMemory,
+                                                                            MemoryConstants::pageSize2M,
+                                                                            rootDeviceIndices,
+                                                                            deviceBitfields);
+        poolMemoryProperties.device = &device;
+        poolMemoryProperties.allocationFlags.flags.compressedHint = compressionEnabledByDefault;
+        device.getUsmMemAllocPool()->initialize(this->svmAllocsManager, poolMemoryProperties, poolSize, minServicedSize, maxServicedSize);
     }
 }
 

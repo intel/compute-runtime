@@ -45,6 +45,7 @@ TEST_F(UnifiedMemoryPoolingStaticTest, givenUsmAllocPoolWhenCallingStaticMethods
 }
 
 using UnifiedMemoryPoolingTest = Test<SVMMemoryAllocatorFixture<true>>;
+
 TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingIsInitializedThenReturnCorrectValue) {
     UsmMemAllocPool usmMemAllocPool;
     EXPECT_FALSE(usmMemAllocPool.isInitialized());
@@ -57,25 +58,6 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingIsInitializedThenRe
 
     EXPECT_TRUE(usmMemAllocPool.initialize(svmManager.get(), unifiedMemoryProperties, 1 * MemoryConstants::megaByte, 0u, 1 * MemoryConstants::megaByte));
     EXPECT_TRUE(usmMemAllocPool.isInitialized());
-
-    usmMemAllocPool.cleanup();
-    EXPECT_FALSE(usmMemAllocPool.isInitialized());
-    EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(reinterpret_cast<void *>(0x1), true));
-}
-
-TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingEnsureInitializedThenReturnCorrectValue) {
-    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
-    auto device = deviceFactory->rootDevices[0];
-    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
-
-    UsmMemAllocPool usmMemAllocPool(rootDeviceIndices, deviceBitfields, device, InternalMemoryType::deviceUnifiedMemory, 1 * MemoryConstants::megaByte, 0u, 1 * MemoryConstants::megaByte);
-    EXPECT_FALSE(usmMemAllocPool.isInitialized());
-
-    EXPECT_TRUE(usmMemAllocPool.ensureInitialized(svmManager.get()));
-
-    EXPECT_TRUE(usmMemAllocPool.isInitialized());
-
-    EXPECT_TRUE(usmMemAllocPool.ensureInitialized(svmManager.get()));
 
     usmMemAllocPool.cleanup();
     EXPECT_FALSE(usmMemAllocPool.isInitialized());

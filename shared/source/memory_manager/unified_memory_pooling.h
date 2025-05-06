@@ -26,23 +26,9 @@ class UsmMemAllocPool {
     using AllocationsInfoStorage = BaseSortedPointerWithValueVector<AllocationInfo>;
 
     UsmMemAllocPool() = default;
-    UsmMemAllocPool(const RootDeviceIndicesContainer &rootDeviceIndices,
-                    const std::map<uint32_t, NEO::DeviceBitfield> &deviceBitFields,
-                    Device *device,
-                    InternalMemoryType poolMemoryType,
-                    size_t poolSize,
-                    size_t minServicedSize,
-                    size_t maxServicedSize) : rootDeviceIndices(rootDeviceIndices),
-                                              deviceBitFields(deviceBitFields),
-                                              device(device),
-                                              poolMemoryType(poolMemoryType),
-                                              poolSize(poolSize),
-                                              minServicedSize(minServicedSize),
-                                              maxServicedSize(maxServicedSize){};
     virtual ~UsmMemAllocPool() = default;
     bool initialize(SVMAllocsManager *svmMemoryManager, const UnifiedMemoryProperties &memoryProperties, size_t poolSize, size_t minServicedSize, size_t maxServicedSize);
     bool initialize(SVMAllocsManager *svmMemoryManager, void *ptr, SvmAllocationData *svmData, size_t minServicedSize, size_t maxServicedSize);
-    bool ensureInitialized(SVMAllocsManager *svmMemoryManager);
     bool isInitialized() const;
     size_t getPoolSize() const;
     MOCKABLE_VIRTUAL void cleanup();

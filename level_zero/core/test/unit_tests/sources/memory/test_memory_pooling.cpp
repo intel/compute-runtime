@@ -19,9 +19,9 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
-
 namespace L0 {
 namespace ult {
 template <int hostUsmPoolFlag = -1, int deviceUsmPoolFlag = -1, int poolingVersionFlag = -1>
@@ -246,70 +246,134 @@ TEST_F(AllocUsmDeviceEnabledMemoryTest, givenDeviceWhenCallingAllocDeviceMemWith
     auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
     ASSERT_NE(nullptr, mockDeviceMemAllocPool);
     EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
-
-    void *ptr1Byte = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &ptr1Byte);
-    EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
     auto poolAllocationData = driverHandle->svmAllocsManager->getSVMAlloc(mockDeviceMemAllocPool->pool);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr1Byte);
-    EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(ptr1Byte));
-    EXPECT_EQ(1u, mockDeviceMemAllocPool->allocations.getNumAllocs());
-    EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptr1Byte));
-    result = context->freeMem(ptr1Byte);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    ASSERT_NE(nullptr, poolAllocationData);
+    const bool poolIsCompressed = poolAllocationData->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled();
 
-    void *ptrThreshold = nullptr;
-    result = context->allocDeviceMem(l0Devices[0], &deviceDesc, poolAllocationThreshold, 0u, &ptrThreshold);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptrThreshold);
-    EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(ptrThreshold));
-    EXPECT_EQ(1u, mockDeviceMemAllocPool->allocations.getNumAllocs());
-    EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrThreshold));
-    result = context->freeMem(ptrThreshold);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    auto &hwInfo = l0Devices[0]->getHwInfo();
+    auto &l0GfxCoreHelper = l0Devices[0]->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    if (l0GfxCoreHelper.usmCompressionSupported(hwInfo) && l0GfxCoreHelper.forceDefaultUsmCompressionSupport()) {
+        EXPECT_TRUE(poolIsCompressed);
+    } else {
+        EXPECT_FALSE(poolIsCompressed);
+    }
 
-    void *ptrOverThreshold = nullptr;
-    result = context->allocDeviceMem(l0Devices[0], &deviceDesc, poolAllocationThreshold + 1u, 0u, &ptrOverThreshold);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptrOverThreshold);
-    EXPECT_FALSE(mockDeviceMemAllocPool->isInPool(ptrOverThreshold));
-    EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
-    EXPECT_NE(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrOverThreshold));
-    result = context->freeMem(ptrOverThreshold);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    {
+        void *ptr1Byte = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &ptr1Byte);
+        EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr1Byte);
+        EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(ptr1Byte));
+        EXPECT_EQ(1u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+        EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptr1Byte));
+        result = context->freeMem(ptr1Byte);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    }
 
-    void *ptrFreeMemExt = nullptr;
-    result = context->allocDeviceMem(l0Devices[0], &deviceDesc, poolAllocationThreshold, 0u, &ptrFreeMemExt);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptrFreeMemExt);
-    EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(ptrFreeMemExt));
-    EXPECT_EQ(1u, mockDeviceMemAllocPool->allocations.getNumAllocs());
-    EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrFreeMemExt));
-    ze_memory_free_ext_desc_t memFreeDesc = {};
-    memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
-    result = context->freeMemExt(&memFreeDesc, ptrFreeMemExt);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    {
+        void *ptrCompressedHint = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ze_memory_compression_hints_ext_desc_t externalMemoryDesc{};
+        externalMemoryDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        externalMemoryDesc.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+        deviceDesc.pNext = &externalMemoryDesc;
+        ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &ptrCompressedHint);
+        EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptrCompressedHint);
+        EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(ptrCompressedHint));
+        EXPECT_EQ(1u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+        EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrCompressedHint));
+        result = context->freeMem(ptrCompressedHint);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    }
 
-    void *ptrExportMemory = nullptr;
-    ze_external_memory_export_desc_t externalMemoryDesc{};
-    externalMemoryDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC;
-    externalMemoryDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
-    deviceDesc.pNext = &externalMemoryDesc;
-    result = context->allocDeviceMem(l0Devices[0], &deviceDesc, poolAllocationThreshold, 0u, &ptrExportMemory);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptrExportMemory);
-    EXPECT_FALSE(mockDeviceMemAllocPool->isInPool(ptrExportMemory));
-    EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
-    EXPECT_NE(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrExportMemory));
-    result = context->freeMemExt(&memFreeDesc, ptrExportMemory);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    {
+        void *ptrCompressedHint = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ze_memory_compression_hints_ext_desc_t externalMemoryDesc{};
+        externalMemoryDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        externalMemoryDesc.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_UNCOMPRESSED;
+        deviceDesc.pNext = &externalMemoryDesc;
+        ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &ptrCompressedHint);
+        EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptrCompressedHint);
+        EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(ptrCompressedHint));
+        EXPECT_EQ(1u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+        EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrCompressedHint));
+        result = context->freeMem(ptrCompressedHint);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    }
+
+    {
+        void *ptrThreshold = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, poolAllocationThreshold, 0u, &ptrThreshold);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptrThreshold);
+        EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(ptrThreshold));
+        EXPECT_EQ(1u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+        EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrThreshold));
+        result = context->freeMem(ptrThreshold);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    }
+
+    {
+        void *ptrOverThreshold = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, poolAllocationThreshold + 1u, 0u, &ptrOverThreshold);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptrOverThreshold);
+        EXPECT_FALSE(mockDeviceMemAllocPool->isInPool(ptrOverThreshold));
+        EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+        EXPECT_NE(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrOverThreshold));
+        result = context->freeMem(ptrOverThreshold);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    }
+
+    {
+        void *ptrFreeMemExt = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, poolAllocationThreshold, 0u, &ptrFreeMemExt);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptrFreeMemExt);
+        EXPECT_TRUE(mockDeviceMemAllocPool->isInPool(ptrFreeMemExt));
+        EXPECT_EQ(1u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+        EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrFreeMemExt));
+        ze_memory_free_ext_desc_t memFreeDesc = {};
+        memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+        result = context->freeMemExt(&memFreeDesc, ptrFreeMemExt);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    }
+    {
+
+        void *ptrExportMemory = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ze_external_memory_export_desc_t externalMemoryDesc{};
+        externalMemoryDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC;
+        externalMemoryDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+        deviceDesc.pNext = &externalMemoryDesc;
+        ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, poolAllocationThreshold, 0u, &ptrExportMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptrExportMemory);
+        EXPECT_FALSE(mockDeviceMemAllocPool->isInPool(ptrExportMemory));
+        EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+        EXPECT_NE(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrExportMemory));
+        ze_memory_free_ext_desc_t memFreeDesc = {};
+        memFreeDesc.freePolicy = ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_DEFER_FREE;
+        result = context->freeMemExt(&memFreeDesc, ptrExportMemory);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+    }
 }
 
 TEST_F(AllocUsmDeviceEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFromPooledAllocationThenOffsetIsApplied) {
