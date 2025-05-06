@@ -47,6 +47,7 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::maxRingBufferCount;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContextWin;
+    using BaseClass::pciBarrierPtr;
     using BaseClass::previousRingBuffer;
     using BaseClass::relaxedOrderingEnabled;
     using BaseClass::ringBufferEndCompletionTagData;

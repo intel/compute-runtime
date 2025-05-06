@@ -248,6 +248,8 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::updateMonitorFenceValueForResi
 template <typename GfxFamily, typename Dispatcher>
 inline void WddmDirectSubmission<GfxFamily, Dispatcher>::unblockPagingFenceSemaphore(uint64_t pagingFenceValue) {
     this->wddm->waitOnPagingFenceFromCpu(pagingFenceValue, true);
+
+    typename DirectSubmissionHw<GfxFamily, Dispatcher>::SemaphoreFenceHelper fence(*this);
     this->semaphoreData->pagingFenceCounter = static_cast<uint32_t>(*this->wddm->getPagingFenceAddress());
 }
 

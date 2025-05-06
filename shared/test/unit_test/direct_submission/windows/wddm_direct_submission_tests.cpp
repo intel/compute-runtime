@@ -29,6 +29,12 @@
 #include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
 
 extern uint64_t cpuFence;
+
+namespace CpuIntrinsicsTests {
+extern std::atomic<uint32_t> sfenceCounter;
+extern std::atomic<uint32_t> mfenceCounter;
+} // namespace CpuIntrinsicsTests
+
 namespace NEO {
 
 namespace SysCalls {
@@ -1204,6 +1210,34 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenUnblockPagingFenceSe
 
     wddmDirectSubmission.unblockPagingFenceSemaphore(pagingFenceValueToWait);
     EXPECT_GT(wddmDirectSubmission.semaphoreData->pagingFenceCounter, mockedPagingFence);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenDebugFlagSetWhenUnblockPagingFenceSemaphoreThenProgramSfenceInstruction) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    DebugManagerStateRestore restorer{};
+    FlushStampTracker flushStamp(true);
+
+    for (int32_t debugFlag : {-1, 0, 1, 2}) {
+        debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
+
+        MockWddmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
+        EXPECT_TRUE(directSubmission.initialize(true));
+
+        auto initialSfenceCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
+        auto initialMfenceCounterValue = CpuIntrinsicsTests::mfenceCounter.load();
+
+        directSubmission.unblockPagingFenceSemaphore(0u);
+
+        uint32_t expectedSfenceCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
+        uint32_t expectedMfenceCount = 0u;
+        if (!device->getHardwareInfo().capabilityTable.isIntegratedDevice && !directSubmission.pciBarrierPtr && !device->getProductHelper().isGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo()) && expectedSfenceCount > 0u) {
+            --expectedSfenceCount;
+            ++expectedMfenceCount;
+        }
+
+        EXPECT_EQ(initialSfenceCounterValue + expectedSfenceCount, CpuIntrinsicsTests::sfenceCounter);
+        EXPECT_EQ(initialMfenceCounterValue + expectedMfenceCount, CpuIntrinsicsTests::mfenceCounter);
+    }
 }
 
 TEST(DirectSubmissionControllerWindowsTest, givenDirectSubmissionControllerWhenCallingSleepThenRequestHighResolutionTimers) {

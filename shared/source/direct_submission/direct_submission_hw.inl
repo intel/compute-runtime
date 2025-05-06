@@ -31,7 +31,6 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/cpu_info.h"
-#include "shared/source/utilities/cpuintrinsics.h"
 
 #include "create_direct_submission_hw.inl"
 
@@ -436,13 +435,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateOsResources() {
 
 template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
-    if (sfenceMode >= DirectSubmissionSfenceMode::beforeSemaphoreOnly) {
-        if (!this->miMemFenceRequired && !this->pciBarrierPtr && !this->hwInfo->capabilityTable.isIntegratedDevice) {
-            CpuIntrinsics::mfence();
-        } else {
-            CpuIntrinsics::sfence();
-        }
-    }
+    SemaphoreFenceHelper fence(*this);
 
     if (this->pciBarrierPtr) {
         *this->pciBarrierPtr = 0u;
@@ -451,10 +444,6 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
     PRINT_DEBUG_STRING(debugManager.flags.DirectSubmissionPrintSemaphoreUsage.get() == 1, stdout, "DirectSubmission semaphore %" PRIx64 " unlocked with value: %u\n", semaphoreGpuVa, currentQueueWorkCount);
 
     semaphoreData->queueWorkCount = currentQueueWorkCount;
-
-    if (sfenceMode == DirectSubmissionSfenceMode::beforeAndAfterSemaphore) {
-        CpuIntrinsics::sfence();
-    }
 }
 
 template <typename GfxFamily, typename Dispatcher>

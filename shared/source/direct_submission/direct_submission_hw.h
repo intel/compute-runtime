@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <memory>
@@ -106,6 +107,25 @@ class DirectSubmissionHw {
     uint32_t getRelaxedOrderingQueueSize() const { return currentRelaxedOrderingQueueSize; }
 
   protected:
+    struct SemaphoreFenceHelper {
+        SemaphoreFenceHelper(const auto &directSubmission) : directSubmission(directSubmission) {
+            if (directSubmission.sfenceMode >= DirectSubmissionSfenceMode::beforeSemaphoreOnly) {
+                if (!directSubmission.miMemFenceRequired && !directSubmission.pciBarrierPtr && !directSubmission.hwInfo->capabilityTable.isIntegratedDevice) {
+                    CpuIntrinsics::mfence();
+                } else {
+                    CpuIntrinsics::sfence();
+                }
+            }
+        }
+        ~SemaphoreFenceHelper() {
+            if (directSubmission.sfenceMode == DirectSubmissionSfenceMode::beforeAndAfterSemaphore) {
+                CpuIntrinsics::sfence();
+            }
+        }
+
+        const DirectSubmissionHw<GfxFamily, Dispatcher> &directSubmission;
+    };
+
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
     static constexpr size_t prefetchNoops = prefetchSize / sizeof(uint32_t);
     bool allocateResources();
