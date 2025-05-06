@@ -88,6 +88,7 @@ struct BlitProperties {
     uint32_t *fillPattern = nullptr;
     uint64_t dstGpuAddress = 0;
     uint64_t srcGpuAddress = 0;
+    uint32_t computeStreamPartitionCount = 0;
 
     Vec3<size_t> copySize = 0;
     Vec3<size_t> dstOffset = 0;

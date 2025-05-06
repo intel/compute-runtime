@@ -1436,6 +1436,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
 
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstPtrAlloc, srcPtrAlloc, {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0}, 0, 0, 0, 0, clearColorAllocation);
+    blitProperties.computeStreamPartitionCount = this->partitionCount;
+
     commandContainer.addToResidencyContainer(dstPtrAlloc);
     commandContainer.addToResidencyContainer(srcPtrAlloc);
     commandContainer.addToResidencyContainer(clearColorAllocation);
@@ -1477,6 +1479,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     commandContainer.addToResidencyContainer(dstAllocationData->alloc);
     commandContainer.addToResidencyContainer(srcAllocationData->alloc);
     commandContainer.addToResidencyContainer(clearColorAllocation);
+
+    blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.bytesPerPixel = bytesPerPixel;
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;
@@ -1528,9 +1532,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dst, src,
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation);
+    blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.bytesPerPixel = bytesPerPixel;
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;
+
     commandContainer.addToResidencyContainer(dst);
     commandContainer.addToResidencyContainer(src);
     commandContainer.addToResidencyContainer(clearColorAllocation);
@@ -2457,6 +2463,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         memcpy_s(&patternToCommand, sizeof(patternToCommand), pattern, patternSize);
 
         auto blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(gpuAllocation, size, patternToCommand, patternSize, offset);
+        blitProperties.computeStreamPartitionCount = this->partitionCount;
 
         NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
         dummyBlitWa.isWaRequired = true;

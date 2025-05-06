@@ -105,6 +105,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isTimestampEventForMultiTile;
     using BaseClass::l3FlushAfterPostSyncRequired;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
+    using BaseClass::maxFillPaternSizeForCopyEngine;
     using BaseClass::obtainKernelPreemptionMode;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
