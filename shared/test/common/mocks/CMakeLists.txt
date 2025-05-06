@@ -128,6 +128,7 @@ if(WIN32 OR NOT DISABLE_WDDM_LINUX)
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface20.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface32.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger.h
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h

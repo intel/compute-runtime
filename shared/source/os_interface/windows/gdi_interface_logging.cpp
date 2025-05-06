@@ -466,6 +466,8 @@ template void logExit<CONST D3DKMT_SETALLOCATIONPRIORITY *>(NTSTATUS status, CON
 template void logEnter<CONST D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *>(CONST D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *param);
 template void logExit<CONST D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *>(NTSTATUS status, CONST D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *param);
 
+#include "gdi_interface_logging.inl"
+
 } // namespace GdiLogging
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,7 +97,7 @@ bool WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandH
     return STATUS_SUCCESS == status;
 }
 
-bool NEO::WddmInterface20::createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) {
+bool NEO::WddmInterface20::createFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) {
     auto ret = WddmInterface::createMonitoredFence(monitorFence);
     monitorFence.currentFenceValue = 1;
     return ret;
@@ -177,9 +177,9 @@ bool WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandH
     return status == STATUS_SUCCESS;
 }
 
-bool NEO::WddmInterface23::createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) {
+bool NEO::WddmInterface23::createFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) {
     MonitoredFence monitorFenceForResidency{};
-    auto ret = WddmInterface::createMonitoredFence(monitorFenceForResidency);
+    auto ret = createSyncObject(monitorFenceForResidency);
     auto &residencyController = osContext.getResidencyController();
     auto lastSubmittedFence = residencyController.getMonitoredFence().lastSubmittedFence;
     auto currentFenceValue = residencyController.getMonitoredFence().currentFenceValue;
@@ -196,5 +196,10 @@ bool NEO::WddmInterface23::createMonitoredFenceForDirectSubmission(MonitoredFenc
     monitorFence.gpuAddress = hwQueue.progressFenceGpuVA;
     monitorFence.fenceHandle = hwQueue.progressFenceHandle;
 
+    return ret;
+}
+
+bool WddmInterface23::createSyncObject(MonitoredFence &monitorFence) {
+    auto ret = WddmInterface::createMonitoredFence(monitorFence);
     return ret;
 }

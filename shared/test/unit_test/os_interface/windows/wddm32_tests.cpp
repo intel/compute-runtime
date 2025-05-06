@@ -1,82 +1,27 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/preemption.h"
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/gdi_interface.h"
-#include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/test/unit_test/os_interface/windows/wddm32_tests.h"
+
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_wddm.h"
-#include "shared/test/common/mocks/mock_wddm_interface23.h"
-#include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
-#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
-struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
-    void SetUp() override {
-        GdiDllFixture::setUp();
-
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment.rootDeviceEnvironments[0].get()));
-        auto &osInterface = executionEnvironment.rootDeviceEnvironments[0]->osInterface;
-        osInterface = std::make_unique<OSInterface>();
-        osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
-
-        wddm->featureTable->flags.ftrWddmHwQueues = true;
-        wddmMockInterface = new WddmMockInterface23(*wddm);
-        wddm->wddmInterface.reset(wddmMockInterface);
-    }
-
-    void init() {
-        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
-        wddmMockInterface = static_cast<WddmMockInterface23 *>(wddm->wddmInterface.release());
-        wddm->init();
-        wddm->wddmInterface.reset(wddmMockInterface);
-        auto &gfxCoreHelper = this->executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-        osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u,
-                                                   EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*this->executionEnvironment.rootDeviceEnvironments[0])[0], preemptionMode));
-        osContext->ensureContextInitialized(false);
-    }
-
-    void TearDown() override {
-        GdiDllFixture::tearDown();
-    }
-
-    MockExecutionEnvironment executionEnvironment;
-    std::unique_ptr<OsContextWin> osContext;
-    WddmMock *wddm = nullptr;
-    WddmMockInterface23 *wddmMockInterface = nullptr;
-};
-
-struct Wddm23Tests : public Wddm23TestsWithoutWddmInit {
-    using Wddm23TestsWithoutWddmInit::TearDown;
-    void SetUp() override {
-        Wddm23TestsWithoutWddmInit::SetUp();
-        init();
-    }
-};
-
-TEST_F(Wddm23Tests, whenGetDedicatedVideoMemoryIsCalledThenCorrectValueIsReturned) {
+TEST_F(Wddm32Tests, whenGetDedicatedVideoMemoryIsCalledThenCorrectValueIsReturned) {
     EXPECT_EQ(wddm->dedicatedVideoMemory, wddm->getDedicatedVideoMemory());
 }
 
-TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
+TEST_F(Wddm32Tests, whenCreateContextIsCalledThenEnableHwQueues) {
     EXPECT_TRUE(wddm->wddmInterface->hwQueuesSupported());
     EXPECT_EQ(1u, getCreateContextDataFcn()->Flags.HwQueueSupported);
 }
 
-TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
+TEST_F(Wddm32Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
     auto &gfxCoreHelper = this->executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto defaultEngine = gfxCoreHelper.getGpgpuEngineInstances(*this->executionEnvironment.rootDeviceEnvironments[0])[0];
     OsContextWin osContextWithoutPreemption(*wddm, 0, 0u,
@@ -90,7 +35,7 @@ TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutI
     EXPECT_EQ(1u, getCreateHwQueueDataFcn()->Flags.DisableGpuTimeout);
 }
 
-TEST_F(Wddm23Tests, whenDestroyHwQueueCalledThenPassExistingHandle) {
+TEST_F(Wddm32Tests, whenDestroyHwQueueCalledThenPassExistingHandle) {
     D3DKMT_HANDLE hwQueue = 123;
     osContext->setHwQueue({hwQueue, 0, nullptr, 0});
     wddmMockInterface->destroyHwQueue(osContext->getHwQueue().handle);
@@ -102,28 +47,14 @@ TEST_F(Wddm23Tests, whenDestroyHwQueueCalledThenPassExistingHandle) {
     EXPECT_NE(hwQueue, getDestroyHwQueueDataFcn()->hHwQueue); // gdi not called when 0
 }
 
-TEST_F(Wddm23Tests, whenObjectIsDestructedThenDestroyHwQueue) {
+TEST_F(Wddm32Tests, whenObjectIsDestructedThenDestroyHwQueue) {
     D3DKMT_HANDLE hwQueue = 123;
     osContext->setHwQueue({hwQueue, 0, nullptr, 0});
     osContext.reset();
     EXPECT_EQ(hwQueue, getDestroyHwQueueDataFcn()->hHwQueue);
 }
 
-TEST_F(Wddm23Tests, whencreateMonitoredFenceForDirectSubmissionThenObtainHwQueueFenceAndReplaceResidencyControllerWithNewFence) {
-    EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().fenceHandle, osContext->getHwQueue().progressFenceHandle);
-    osContext->getResidencyController().getMonitoredFence().currentFenceValue = 2u;
-    osContext->getResidencyController().getMonitoredFence().lastSubmittedFence = 1u;
-    MonitoredFence fence{};
-    wddm->getWddmInterface()->createFenceForDirectSubmission(fence, *osContext);
-    EXPECT_EQ(osContext->getHwQueue().progressFenceHandle, fence.fenceHandle);
-    EXPECT_NE(osContext->getResidencyController().getMonitoredFence().fenceHandle, osContext->getHwQueue().progressFenceHandle);
-    EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().currentFenceValue, 2u);
-    EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().lastSubmittedFence, 1u);
-    EXPECT_EQ(fence.currentFenceValue, 2u);
-    EXPECT_EQ(fence.lastSubmittedFence, 1u);
-}
-
-TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpdateMonitoredFence) {
+TEST_F(Wddm32Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpdateMonitoredFence) {
     uint64_t cmdBufferAddress = 123;
     size_t cmdSize = 456;
     auto hwQueue = osContext->getHwQueue();
@@ -151,7 +82,7 @@ TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpd
     EXPECT_EQ(1u, osContext->getResidencyController().getMonitoredFence().lastSubmittedFence);
 }
 
-TEST_F(Wddm23Tests, givenDebugVariableSetWhenSubmitCalledThenUseCmdBufferHeaderSizeForPrivateDriverDataSize) {
+TEST_F(Wddm32Tests, givenDebugVariableSetWhenSubmitCalledThenUseCmdBufferHeaderSizeForPrivateDriverDataSize) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.set(true);
 
@@ -177,7 +108,7 @@ TEST_F(Wddm23Tests, givenDebugVariableSetWhenSubmitCalledThenUseCmdBufferHeaderS
     EXPECT_EQ(static_cast<UINT>(MemoryConstants::pageSize), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
 }
 
-TEST_F(Wddm23Tests, whenMonitoredFenceIsCreatedThenSetupAllRequiredFields) {
+TEST_F(Wddm32Tests, whenMonitoredFenceIsCreatedThenSetupAllRequiredFields) {
     wddm->wddmInterface->createMonitoredFence(*osContext);
     auto hwQueue = osContext->getHwQueue();
 
@@ -188,7 +119,7 @@ TEST_F(Wddm23Tests, whenMonitoredFenceIsCreatedThenSetupAllRequiredFields) {
     EXPECT_EQ(0u, osContext->getResidencyController().getMonitoredFence().lastSubmittedFence);
 }
 
-TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhenSubmitCalledThenCallWaitOnGpu) {
+TEST_F(Wddm32Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhenSubmitCalledThenCallWaitOnGpu) {
     uint64_t cmdBufferAddress = 123;
     size_t cmdSize = 456;
     COMMAND_BUFFER_HEADER cmdBufferHeader = {};
@@ -210,13 +141,13 @@ TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhe
     EXPECT_EQ(1u, wddm->waitOnGPUResult.called);
 }
 
-TEST_F(Wddm23Tests, givenDestructionOsContextWinWhenCallingDestroyMonitorFenceThenDoNotCallDestroy) {
+TEST_F(Wddm32Tests, givenDestructionOsContextWinWhenCallingDestroyMonitorFenceThenDoNotCallDestroy) {
     osContext.reset(nullptr);
     EXPECT_EQ(0u, wddmMockInterface->destroyMonitorFenceCalled);
     EXPECT_EQ(0u, getDestroySynchronizationObjectDataFcn()->hSyncObject);
 }
 
-TEST_F(Wddm23TestsWithoutWddmInit, whenInitCalledThenInitializeNewGdiDDIsAndCallToCreateHwQueue) {
+TEST_F(Wddm32TestsWithoutWddmInit, whenInitCalledThenInitializeNewGdiDDIsAndCallToCreateHwQueue) {
     EXPECT_EQ(nullptr, wddm->getGdi()->createHwQueue.mFunc);
     EXPECT_EQ(nullptr, wddm->getGdi()->destroyHwQueue.mFunc);
     EXPECT_EQ(nullptr, wddm->getGdi()->submitCommandToHwQueue.mFunc);
@@ -229,12 +160,12 @@ TEST_F(Wddm23TestsWithoutWddmInit, whenInitCalledThenInitializeNewGdiDDIsAndCall
     EXPECT_NE(nullptr, wddm->getGdi()->submitCommandToHwQueue.mFunc);
 }
 
-TEST_F(Wddm23TestsWithoutWddmInit, whenCreateHwQueueFailedThenReturnFalseFromInit) {
+TEST_F(Wddm32TestsWithoutWddmInit, whenCreateHwQueueFailedThenReturnFalseFromInit) {
     wddmMockInterface->forceCreateHwQueueFail = true;
     EXPECT_ANY_THROW(init());
 }
 
-TEST_F(Wddm23TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHwQueueThenReturnFailure) {
+TEST_F(Wddm32TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHwQueueThenReturnFailure) {
     struct MyMockGdi : public Gdi {
         bool setupHwQueueProcAddresses() override {
             return false;

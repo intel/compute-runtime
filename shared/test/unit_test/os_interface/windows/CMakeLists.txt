@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2024 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -34,6 +34,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_special_heap_test.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_reservation_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_windows_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm32_tests_extra.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/wddm_perf_tests.cpp
   )
 endif()
@@ -43,6 +44,7 @@ if(WIN32 OR(UNIX AND NOT DISABLE_WDDM_LINUX))
                  ${IGDRCL_SRC_tests_wddm_interface}
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm20_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm23_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm32_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_address_space_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mapper_tests.cpp

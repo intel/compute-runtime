@@ -560,6 +560,10 @@ NTSTATUS __stdcall mockD3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESY
     return STATUS_SUCCESS;
 }
 
+NTSTATUS __stdcall mockD3DKMTCreateNativeFence(IN OUT D3DKMT_CREATENATIVEFENCE *synchObject) {
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS __stdcall mockD3DKMTSetAllocationPriority(IN CONST D3DKMT_SETALLOCATIONPRIORITY *setAllocationPriority) {
     if (setAllocationPriority == nullptr || setAllocationPriority->hDevice != DEVICE_HANDLE) {
         return STATUS_INVALID_PARAMETER;

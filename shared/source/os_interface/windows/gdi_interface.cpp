@@ -59,6 +59,7 @@ bool Gdi::getAllProcAddresses() {
     createSynchronizationObject = gdiDll->getProcAddress("D3DKMTCreateSynchronizationObject");
     createSynchronizationObject2 = gdiDll->getProcAddress("D3DKMTCreateSynchronizationObject2");
     destroySynchronizationObject = gdiDll->getProcAddress("D3DKMTDestroySynchronizationObject");
+    createNativeFence = gdiDll->getProcAddress("D3DKMTCreateNativeFence");
     signalSynchronizationObject = gdiDll->getProcAddress("D3DKMTSignalSynchronizationObject");
     waitForSynchronizationObject = gdiDll->getProcAddress("D3DKMTWaitForSynchronizationObject");
     waitForSynchronizationObjectFromCpu = gdiDll->getProcAddress("D3DKMTWaitForSynchronizationObjectFromCpu");

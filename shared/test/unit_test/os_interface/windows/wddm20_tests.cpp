@@ -348,7 +348,7 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenCpuValueDifferentThanGpuHangIndicationWhe
 
 TEST_F(Wddm20WithMockGdiDllTests, whencreateMonitoredFenceForDirectSubmissionThenCreateFence) {
     MonitoredFence fence{};
-    wddm->getWddmInterface()->createMonitoredFenceForDirectSubmission(fence, *osContext);
+    wddm->getWddmInterface()->createFenceForDirectSubmission(fence, *osContext);
     EXPECT_EQ(wddmMockInterface->createMonitoredFenceCalled, 1u);
     EXPECT_NE(osContext->getHwQueue().progressFenceHandle, fence.fenceHandle);
     wddm->getWddmInterface()->destroyMonitorFence(fence);

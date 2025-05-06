@@ -116,8 +116,10 @@ if(DISABLE_WDDM_LINUX)
   )
 else()
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/sys_calls_win.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/compatible_driver_store.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/definitions/gdi_interface_logging.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/sys_calls_win.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_linux/wddm_interface_extra.cpp
   )
 endif()
 

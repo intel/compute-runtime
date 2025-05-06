@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ struct WddmSubmitArguments {
 
 enum class WddmVersion : uint32_t {
     wddm20 = 0,
-    wddm23
+    wddm23,
+    wddm32
 };
 } // namespace NEO

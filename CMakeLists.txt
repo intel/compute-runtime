@@ -927,12 +927,16 @@ include_directories(${NEO_SHARED_DIRECTORY}/kernel/definitions${BRANCH_DIR_SUFFI
 include_directories(${NEO_SHARED_DIRECTORY}/gen_common${BRANCH_DIR_SUFFIX})
 if(WIN32)
   include_directories(${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory${BRANCH_DIR_SUFFIX})
+  include_directories(${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/definitions)
 else()
   include_directories(${NEO_LINUX_KMD_HEADERS_DIR}
                       ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory
   )
   if("${BRANCH_TYPE}" STREQUAL "")
     include_directories(${NEO_SOURCE_DIR}/third_party/uapi/prelim)
+  endif()
+  if(NOT DISABLE_WDDM_LINUX)
+    include_directories(${NEO_SHARED_DIRECTORY}/os_interface/linux/wddm_linux/definitions)
   endif()
 endif()
 include_directories(${NEO_SHARED_DIRECTORY}/helpers/definitions${BRANCH_DIR_SUFFIX})
