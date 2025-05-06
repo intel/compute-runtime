@@ -82,7 +82,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     auto localIdsSize = alignUp(PerThreadDataHelper::getPerThreadDataSizeTotal(implicitArgs.v0.simdWidth, 32u /* grfSize */, GrfConfig::defaultGrfNumber /* numGrf */, 3u /* num channels */, totalWorkgroupSize, false, rootDeviceEnvironment), MemoryConstants::cacheLineSize);
-    EXPECT_EQ(localIdsSize + ImplicitArgsV0::getSize(), ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, rootDeviceEnvironment));
+    EXPECT_EQ(localIdsSize + ImplicitArgsV0::getAlignedSize(), ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, rootDeviceEnvironment));
 }
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayloadMappingWhenGettingSizeForImplicitArgsProgrammingThenCorrectSizeIsReturned) {
@@ -100,6 +100,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
     implicitArgs.v0.localSizeZ = 4;
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    EXPECT_EQ(alignUp(implicitArgs.v0.header.structSize, MemoryConstants::cacheLineSize), implicitArgs.getAlignedSize());
     EXPECT_EQ(alignUp(implicitArgs.v0.header.structSize, MemoryConstants::cacheLineSize), ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, rootDeviceEnvironment));
 }
 
@@ -147,12 +148,15 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
         EXPECT_NE(pattern, memoryToPatch.get()[offset]) << offset;
     }
 
-    for (; offset < totalSizeForPatching - ImplicitArgsV0::getSize(); offset++) {
+    for (; offset < totalSizeForPatching - ImplicitArgsV0::getAlignedSize(); offset++) {
         EXPECT_EQ(pattern, memoryToPatch.get()[offset]);
     }
 
-    for (; offset < totalSizeForPatching; offset++) {
+    for (; offset < totalSizeForPatching - (ImplicitArgsV0::getAlignedSize() - ImplicitArgsV0::getSize()); offset++) {
         EXPECT_NE(pattern, memoryToPatch.get()[offset]);
+    }
+    for (; offset < totalSizeForPatching; offset++) {
+        EXPECT_EQ(pattern, memoryToPatch.get()[offset]);
     }
 }
 
@@ -174,7 +178,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     auto totalSizeForPatching = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, rootDeviceEnvironment);
 
-    EXPECT_EQ(alignUp(ImplicitArgsV0::getSize(), MemoryConstants::cacheLineSize), totalSizeForPatching);
+    EXPECT_EQ(ImplicitArgsV0::getAlignedSize(), totalSizeForPatching);
 
     auto memoryToPatch = std::make_unique<uint8_t[]>(totalSizeForPatching);
 

@@ -102,6 +102,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     auto offsetCrossThreadData = indirectHeap.getUsed();
     char *pDest = nullptr;
 
+    DEBUG_BREAK_IF(indirectHeap.getUsed() % 64 != 0);
+
     pDest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
     memcpy_s(pDest, sizeCrossThreadData, kernel.getCrossThreadData(), sizeCrossThreadData);
 

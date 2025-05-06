@@ -11,9 +11,9 @@
 namespace ImplicitArgsTestHelper {
 constexpr uint32_t getImplicitArgsSize(uint32_t version) {
     if (version == 0) {
-        return NEO::ImplicitArgsV0::getSize();
+        return NEO::ImplicitArgsV0::getAlignedSize();
     } else if (version == 1) {
-        return NEO::ImplicitArgsV1::getSize();
+        return NEO::ImplicitArgsV1::getAlignedSize();
     }
     return 0;
 }

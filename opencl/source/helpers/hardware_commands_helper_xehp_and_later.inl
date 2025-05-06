@@ -130,6 +130,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     }
 
     if (sizeCrossThreadData > 0) {
+        if constexpr (!heaplessModeEnabled) {
+            DEBUG_BREAK_IF(indirectHeap.getUsed() % 64 != 0);
+        }
         dest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
         memcpy_s(dest, sizeCrossThreadData, src, sizeCrossThreadData);
     }

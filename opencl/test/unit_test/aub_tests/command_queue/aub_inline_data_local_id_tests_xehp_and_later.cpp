@@ -279,7 +279,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
 
         auto pImplicitArgs = kernel->getImplicitArgs();
         if (pImplicitArgs) {
-            payloadData = ptrOffset(payloadData, alignUp(pImplicitArgs->getSize(), MemoryConstants::cacheLineSize));
+            payloadData = ptrOffset(payloadData, pImplicitArgs->getAlignedSize());
         }
         EXPECT_EQ(0, memcmp(payloadData, crossThreadData, crossThreadDataSize));
     },
