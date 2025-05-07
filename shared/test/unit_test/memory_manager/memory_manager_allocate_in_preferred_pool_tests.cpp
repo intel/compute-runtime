@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -433,7 +433,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHo
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ((executionEnvironment.rootDeviceEnvironments[0u]->getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled || is32bit), allocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(is32bit, allocation->fragmentsStorage.fragmentCount);
     EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);

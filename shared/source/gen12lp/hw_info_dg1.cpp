@@ -66,7 +66,6 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     true,                                          // supportsOcl21Features
     false,                                         // supportsOnDemandPageFaults
     false,                                         // supportsIndependentForwardProgress
-    false,                                         // hostPtrTrackingEnabled
     false,                                         // isIntegratedDevice
     true,                                          // supportsMediaBlock
     true,                                          // p2pAccessSupported

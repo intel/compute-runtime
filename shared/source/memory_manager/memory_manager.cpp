@@ -1012,7 +1012,7 @@ bool MemoryManager::isHostPointerTrackingEnabled(uint32_t rootDeviceIndex) {
     if (debugManager.flags.EnableHostPtrTracking.get() != -1) {
         return !!debugManager.flags.EnableHostPtrTracking.get();
     }
-    return (peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.hostPtrTrackingEnabled | is32bit);
+    return is32bit;
 }
 
 bool MemoryManager::useNonSvmHostPtrAlloc(AllocationType allocationType, uint32_t rootDeviceIndex) {

@@ -67,7 +67,6 @@ const RuntimeCapabilityTable LNL::capabilityTable{
     true,                                                      // supportsOcl21Features
     true,                                                      // supportsOnDemandPageFaults
     true,                                                      // supportsIndependentForwardProgress
-    false,                                                     // hostPtrTrackingEnabled
     true,                                                      // isIntegratedDevice
     false,                                                     // supportsMediaBlock
     false,                                                     // p2pAccessSupported

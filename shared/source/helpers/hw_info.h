@@ -53,7 +53,6 @@ struct RuntimeCapabilityTable {
     bool supportsOcl21Features;
     bool supportsOnDemandPageFaults;
     bool supportsIndependentForwardProgress;
-    bool hostPtrTrackingEnabled;
     bool isIntegratedDevice;
     bool supportsMediaBlock;
     bool p2pAccessSupported;
@@ -114,7 +113,6 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.supportsOcl21Features == rhs.supportsOcl21Features);
     result &= (lhs.supportsOnDemandPageFaults == rhs.supportsOnDemandPageFaults);
     result &= (lhs.supportsIndependentForwardProgress == rhs.supportsIndependentForwardProgress);
-    result &= (lhs.hostPtrTrackingEnabled == rhs.hostPtrTrackingEnabled);
     result &= (lhs.isIntegratedDevice == rhs.isIntegratedDevice);
     result &= (lhs.supportsMediaBlock == rhs.supportsMediaBlock);
     result &= (lhs.fusedEuEnabled == rhs.fusedEuEnabled);

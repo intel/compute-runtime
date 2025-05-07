@@ -79,7 +79,6 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     true,                                                      // supportsOcl21Features
     true,                                                      // supportsOnDemandPageFaults
     true,                                                      // supportsIndependentForwardProgress
-    false,                                                     // hostPtrTrackingEnabled
     false,                                                     // isIntegratedDevice
     false,                                                     // supportsMediaBlock
     true,                                                      // p2pAccessSupported

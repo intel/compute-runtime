@@ -69,7 +69,6 @@ const RuntimeCapabilityTable BMG::capabilityTable{
     true,                                                     // supportsOcl21Features
     true,                                                     // supportsOnDemandPageFaults
     true,                                                     // supportsIndependentForwardProgress
-    false,                                                    // hostPtrTrackingEnabled
     false,                                                    // isIntegratedDevice
     false,                                                    // supportsMediaBlock
     false,                                                    // p2pAccessSupported

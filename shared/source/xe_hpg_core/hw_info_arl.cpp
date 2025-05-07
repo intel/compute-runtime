@@ -64,7 +64,6 @@ const RuntimeCapabilityTable ARL::capabilityTable{
     true,                                                      // supportsOcl21Features
     false,                                                     // supportsOnDemandPageFaults
     false,                                                     // supportsIndependentForwardProgress
-    false,                                                     // hostPtrTrackingEnabled
     true,                                                      // isIntegratedDevice
     true,                                                      // supportsMediaBlock
     false,                                                     // p2pAccessSupported
