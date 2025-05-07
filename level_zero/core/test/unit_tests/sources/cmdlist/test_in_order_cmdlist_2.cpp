@@ -331,6 +331,53 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
     }
 }
 
+HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListThenAcceptOffloadHint) {
+    zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffloadDesc = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES};
+    copyOffloadDesc.copyOffloadEnabled = true;
+
+    ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    cmdListDesc.pNext = &copyOffloadDesc;
+    ze_command_list_handle_t hCmdList;
+
+    {
+        NEO::debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
+
+        cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
+
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
+
+        if (device->getProductHelper().isDcFlushAllowed()) {
+            EXPECT_EQ(CopyOffloadModes::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
+        } else {
+            EXPECT_EQ(nonDualStreamMode, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
+        }
+
+        zeCommandListDestroy(hCmdList);
+    }
+
+    {
+        cmdListDesc.flags = 0;
+
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
+
+        EXPECT_EQ(CopyOffloadModes::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
+
+        zeCommandListDestroy(hCmdList);
+    }
+
+    {
+        NEO::debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+
+        cmdListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
+
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
+
+        EXPECT_EQ(CopyOffloadModes::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
+
+        zeCommandListDestroy(hCmdList);
+    }
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsThenUseCopyCommands, IsAtLeastXeHpCore) {
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
 

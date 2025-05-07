@@ -13,6 +13,7 @@
 #include "shared/source/utilities/stackvec.h"
 #include "shared/source/utilities/tag_allocator.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -92,6 +93,15 @@ bool L0GfxCoreHelperHw<Family>::isThreadControlStoppedSupported() const {
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::threadResumeRequiresUnlock() const {
     return false;
+}
+
+template <typename Family>
+CopyOffloadMode L0GfxCoreHelperHw<Family>::getDefaultCopyOffloadMode() const {
+    if (NEO::debugManager.flags.OverrideCopyOffloadMode.get() != -1) {
+        return static_cast<CopyOffloadMode>(NEO::debugManager.flags.OverrideCopyOffloadMode.get());
+    }
+
+    return CopyOffloadModes::dualStream;
 }
 
 } // namespace L0

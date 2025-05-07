@@ -219,6 +219,7 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
     uint32_t index = 0;
     uint32_t commandQueueGroupOrdinal = desc->commandQueueGroupOrdinal;
     NEO::SynchronizedDispatchMode syncDispatchMode = NEO::SynchronizedDispatchMode::disabled;
+    bool copyOffloadHint = false;
     adjustCommandQueueDesc(commandQueueGroupOrdinal, index);
 
     NEO::EngineGroupType engineGroupType = getEngineGroupTypeForOrdinal(commandQueueGroupOrdinal);
@@ -241,6 +242,10 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
             createCommandList = newCreateFunc;
         }
 
+        if (static_cast<uint32_t>(pNext->stype) == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES) {
+            copyOffloadHint = reinterpret_cast<const zex_intel_queue_copy_operations_offload_hint_exp_desc_t *>(pNext)->copyOffloadEnabled;
+        }
+
         pNext = reinterpret_cast<const ze_base_desc_t *>(pNext->pNext);
     }
 
@@ -261,6 +266,12 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
         } else {
             returnValue = ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
+    }
+
+    const bool copyOffloadAllowed = cmdList->isInOrderExecutionEnabled() && !getProductHelper().isDcFlushAllowed() && (getL0GfxCoreHelper().getDefaultCopyOffloadMode() != CopyOffloadModes::dualStream);
+
+    if (copyOffloadHint && copyOffloadAllowed) {
+        cmdList->enableCopyOperationOffload(productFamily, this, nullptr);
     }
 
     if (returnValue != ZE_RESULT_SUCCESS) {

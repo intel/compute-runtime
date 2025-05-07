@@ -273,11 +273,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 }
 
 void CommandListImp::enableCopyOperationOffload(uint32_t productFamily, Device *device, const ze_command_queue_desc_t *desc) {
-    this->copyOffloadMode = CopyOffloadModes::dualStream;
-
-    if (NEO::debugManager.flags.OverrideCopyOffloadMode.get() != -1) {
-        this->copyOffloadMode = static_cast<CopyOffloadMode>(NEO::debugManager.flags.OverrideCopyOffloadMode.get());
-    }
+    this->copyOffloadMode = device->getL0GfxCoreHelper().getDefaultCopyOffloadMode();
 
     if (this->copyOffloadMode != CopyOffloadModes::dualStream) {
         return;
