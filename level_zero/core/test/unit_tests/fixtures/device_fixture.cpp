@@ -312,5 +312,29 @@ void GetMemHandlePtrTestFixture::tearDown() {
 
 PageFaultDeviceFixture::PageFaultDeviceFixture() = default;
 PageFaultDeviceFixture::~PageFaultDeviceFixture() = default;
+
+void ExtensionFixture::setUp() {
+    DeviceFixture::setUp();
+
+    uint32_t count = 0;
+    ze_result_t res = DeviceFixture::driverHandle->getExtensionProperties(&count, nullptr);
+    EXPECT_NE(0u, count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    extensionProperties.resize(count);
+    res = DeviceFixture::driverHandle->getExtensionProperties(&count, extensionProperties.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+void ExtensionFixture::tearDown() {
+    DeviceFixture::tearDown();
+}
+
+void ExtensionFixture::verifyExtensionDefinition(const char *extName, unsigned int extVersion) {
+    auto it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [&extName](const auto &extension) { return (strcmp(extension.name, extName) == 0); });
+    EXPECT_NE(it, extensionProperties.end());
+    EXPECT_EQ((*it).version, extVersion);
+}
+
 } // namespace ult
 } // namespace L0

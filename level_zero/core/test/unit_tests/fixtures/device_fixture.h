@@ -331,5 +331,13 @@ struct MultiSubDeviceWithContextGroupAndImplicitScalingTest : public MultiSubDev
     HardwareInfo hardwareInfo;
 };
 
+struct ExtensionFixture : public DeviceFixture {
+    void setUp();
+    void tearDown();
+    void verifyExtensionDefinition(const char *extName, unsigned int extVersion);
+
+    std::vector<ze_driver_extension_properties_t> extensionProperties;
+};
+
 } // namespace ult
 } // namespace L0

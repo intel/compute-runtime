@@ -211,8 +211,10 @@ if(BUILD_WITH_L0)
   else()
     include_directories(${LevelZero_INCLUDE_DIRS})
   endif()
+
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist/cmdlist_extended${BRANCH_DIR_SUFFIX})
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/driver/definitions${BRANCH_DIR_SUFFIX})
 
   # Create our shared library/DLL
   configure_file(ze_intel_gpu_version.h.in ${NEO_BUILD_DIR}/ze_intel_gpu_version.h)

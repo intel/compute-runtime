@@ -63,7 +63,7 @@ typedef struct _ze_intel_device_module_dp_exp_properties_t {
 } ze_intel_device_module_dp_exp_properties_t;
 
 #ifndef ZE_INTEL_COMMAND_LIST_MEMORY_SYNC
-/// @brief wait on memory extension name
+/// @brief Cmd List memory sync extension name
 #define ZE_INTEL_COMMAND_LIST_MEMORY_SYNC "ZE_intel_experimental_command_list_memory_sync"
 #endif // ZE_INTEL_COMMAND_LIST_MEMORY_SYNC
 
