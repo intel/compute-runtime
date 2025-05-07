@@ -2102,8 +2102,13 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsV1WhenLinkingThen
     reloc.r_offset = 8;
     reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
 
-    vISA::GenRelocEntry relocs[] = {reloc};
-    constexpr uint32_t numRelocations = 1;
+    vISA::GenRelocEntry reloc64 = {};
+    memcpy_s(reloc64.r_symbol, 1024, relocationName.c_str(), relocationName.size());
+    reloc64.r_offset = 16;
+    reloc64.r_type = vISA::GenRelocType::R_SYM_ADDR;
+
+    vISA::GenRelocEntry relocs[] = {reloc, reloc64};
+    constexpr uint32_t numRelocations = 2;
     bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
     EXPECT_TRUE(decodeRelocSuccess);
 
@@ -2149,6 +2154,11 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsV1WhenLinkingThen
     EXPECT_EQ(ImplicitArgsV1::getAlignedSize(), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
+
+    auto addressToPatch64 = (instructionSegment.data() + reloc64.r_offset);
+    uint64_t patchedValue64 = 0;
+    memcpy_s(&patchedValue64, sizeof(patchedValue64), addressToPatch64, sizeof(patchedValue64));
+    EXPECT_EQ(ImplicitArgsV1::getAlignedSize(), patchedValue64);
 
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }

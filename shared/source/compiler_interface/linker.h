@@ -267,7 +267,8 @@ struct Linker {
     template <typename PatchSizeT>
     void patchIncrement(void *dstAllocation, size_t relocationOffset, const void *initData, uint64_t incrementValue);
 
-    std::unordered_map<uint32_t /*ISA segment id*/, StackVec<uint32_t *, 2> /*implicit args relocation address to patch*/> pImplicitArgsRelocationAddresses;
+    /* <ISA segment id> to <implicit args relocation address to patch, relocation type> */
+    std::unordered_map<uint32_t, StackVec<std::pair<void *, RelocationInfo::Type>, 2>> pImplicitArgsRelocationAddresses;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<LinkerInput>);

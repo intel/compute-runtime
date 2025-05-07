@@ -450,7 +450,7 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
                 uint32_t crossThreadDataSize = kernelDescriptors.at(segId)->kernelAttributes.crossThreadDataSize - kernelDescriptors.at(segId)->kernelAttributes.inlineDataPayloadSize;
                 *reinterpret_cast<uint32_t *>(relocAddress) = crossThreadDataSize;
             } else if (relocation.symbolName == implicitArgsRelocationSymbolName) {
-                pImplicitArgsRelocationAddresses[static_cast<uint32_t>(segId)].push_back(reinterpret_cast<uint32_t *>(relocAddress));
+                pImplicitArgsRelocationAddresses[static_cast<uint32_t>(segId)].push_back(std::pair<void *, RelocationInfo::Type>(relocAddress, relocation.type));
             } else if (relocation.symbolName.empty()) {
                 uint64_t patchValue = 0;
                 patchAddress(relocAddress, patchValue, relocation);
@@ -656,7 +656,7 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
                 UNRECOVERABLE_IF(!pDevice);
                 kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = kernelDescriptor.kernelAttributes.flags.useStackCalls || pDevice->getDebugger() != nullptr;
                 if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
-                    auto implicitArgsSize = 0;
+                    uint64_t implicitArgsSize = 0;
                     if (pDevice->getGfxCoreHelper().getImplicitArgsVersion() == 0) {
                         implicitArgsSize = ImplicitArgsV0::getAlignedSize();
                     } else if (pDevice->getGfxCoreHelper().getImplicitArgsVersion() == 1) {
@@ -664,7 +664,9 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
                     } else {
                         UNRECOVERABLE_IF(true);
                     }
-                    *pImplicitArgsReloc = implicitArgsSize;
+                    // Choose relocation size based on relocation type
+                    auto patchSize = pImplicitArgsReloc.second == RelocationInfo::Type::address ? 8 : 4;
+                    patchWithRequiredSize(pImplicitArgsReloc.first, patchSize, implicitArgsSize);
                 }
             }
         }
