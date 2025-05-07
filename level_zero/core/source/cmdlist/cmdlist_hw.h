@@ -196,7 +196,7 @@ struct CommandListCoreFamily : public CommandListImp {
     void appendWaitOnInOrderDependency(std::shared_ptr<NEO::InOrderExecInfo> &inOrderExecInfo, CommandToPatchContainer *outListCommands,
                                        uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency,
                                        bool skipAddingWaitEventsToResidency, bool noopDispatch, bool dualStreamCopyOffloadOperation);
-    void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired);
+    MOCKABLE_VIRTUAL void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired);
     void handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining, bool copyOffloadOperation);
     void handleInOrderCounterOverflow(bool copyOffloadOperation);
 

@@ -469,47 +469,50 @@ class MockCommandListForAdditionalBlitProperties2 : public WhiteBox<::L0::Comman
         additionalBlitPropertiesCalled++;
         BaseClass::setAdditionalBlitProperties(blitProperties, signalEvent);
     }
+    void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired) override {
+        appendSignalInOrderDependencyCounterCalled++;
+        BaseClass::appendSignalInOrderDependencyCounter(signalEvent, copyOffloadOperation, stall, textureFlushRequired);
+    }
     uint32_t additionalBlitPropertiesCalled = 0;
+    uint32_t appendSignalInOrderDependencyCounterCalled = 0;
 };
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendMemoryCopyBlitThenAdditionalBlitPropertiesCalled) {
     auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
-    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
-    uintptr_t srcPtr = 0x5001;
-    uintptr_t dstPtr = 0x7001;
-    uint64_t srcOffset = 0x101;
-    uint64_t dstOffset = 0x201;
-    uint64_t copySize = 0x301;
-    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
-                                                  reinterpret_cast<void *>(srcPtr), 0x1000, 0, sizeof(uint32_t),
-                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
-                                                  reinterpret_cast<void *>(dstPtr), 0x1000, 0, sizeof(uint32_t),
-                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    commandList->initialize(device, NEO::EngineGroupType::copy, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+
+    void *srcBuffer = nullptr;
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &srcBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, srcBuffer);
+
+    void *dstBuffer = nullptr;
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, dstBuffer);
+
     commandList->useAdditionalBlitProperties = false;
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
-    commandList->appendMemoryCopyBlit(ptrOffset(dstPtr, dstOffset), &mockAllocationDst, 0, ptrOffset(srcPtr, srcOffset), &mockAllocationSrc, 0, copySize, nullptr);
+    CmdListMemoryCopyParams copyParams = {};
+    commandList->appendMemoryCopy(dstBuffer, srcBuffer, 4906u, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
 
     commandList->useAdditionalBlitProperties = true;
-    commandList->appendMemoryCopyBlit(ptrOffset(dstPtr, dstOffset), &mockAllocationDst, 0, ptrOffset(srcPtr, srcOffset), &mockAllocationSrc, 0, copySize, nullptr);
+    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    commandList->appendMemoryCopy(dstBuffer, srcBuffer, 4906u, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+
+    context->freeMem(dstBuffer);
+    context->freeMem(srcBuffer);
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendMemoryCopyImageBlitThenAdditionalBlitPropertiesCalled) {
     auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
-    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-
+    commandList->initialize(device, NEO::EngineGroupType::copy, ZE_COMMAND_LIST_FLAG_IN_ORDER);
     NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
@@ -519,17 +522,19 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
 
     commandList->useAdditionalBlitProperties = false;
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
-    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, event.get());
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr);
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
 
     commandList->useAdditionalBlitProperties = true;
-    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, event.get());
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr);
     EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendMemoryCopyRegionThenAdditionalBlitPropertiesCalled) {
     auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
-    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+    commandList->initialize(device, NEO::EngineGroupType::copy, ZE_COMMAND_LIST_FLAG_IN_ORDER);
     void *srcBuffer = reinterpret_cast<void *>(0x1234);
     void *dstBuffer = reinterpret_cast<void *>(0x2345);
     uint32_t width = 16;
@@ -543,11 +548,37 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
     commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
                                         srcBuffer, &sr, width, 0, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
 
     commandList->useAdditionalBlitProperties = true;
     commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
                                         srcBuffer, &sr, width, 0, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendBlitFillThenAdditionalBlitPropertiesCalled) {
+    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+
+    void *dstBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer);
+    uint32_t one = 1u;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, dstBuffer);
+
+    commandList->useAdditionalBlitProperties = false;
+    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    commandList->appendBlitFill(dstBuffer, &one, sizeof(uint8_t), 4096u, nullptr, 0, nullptr, false);
+    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+
+    commandList->useAdditionalBlitProperties = true;
+    commandList->appendBlitFill(dstBuffer, &one, sizeof(uint8_t), 4096u, nullptr, 0, nullptr, false);
+    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    context->freeMem(dstBuffer);
 }
 
 } // namespace ult

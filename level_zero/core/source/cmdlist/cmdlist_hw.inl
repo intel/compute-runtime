@@ -1555,9 +1555,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
 
     if (!useAdditionalBlitProperties) {
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
-    }
-    if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
+        if (this->isInOrderExecutionEnabled()) {
+            appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
+        }
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -1826,7 +1826,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     if (this->isInOrderExecutionEnabled() && !isNonDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed)) {
         bool emitPipeControl = !isCopyOnlyEnabled && launchParams.pipeControlSignalling;
 
-        if (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed || emitPipeControl) {
+        if ((!useAdditionalBlitProperties || !isCopyOnlyEnabled) &&
+            (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed || emitPipeControl)) {
             dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnlyEnabled);
             appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false);
         }
@@ -1933,7 +1934,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     if (this->isInOrderExecutionEnabled()) {
         if (inOrderCopyOnlySignalingAllowed) {
-            appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false);
+            if (!useAdditionalBlitProperties) {
+                appendSignalInOrderDependencyCounter(signalEvent, memoryCopyParams.copyOffloadAllowed, false, false);
+            }
             handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
         }
     } else {
@@ -2482,7 +2485,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
             appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
         }
 
-        if (isInOrderExecutionEnabled()) {
+        if (isInOrderExecutionEnabled() && !useAdditionalBlitProperties) {
             appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
         }
         handleInOrderDependencyCounter(signalEvent, false, false);
