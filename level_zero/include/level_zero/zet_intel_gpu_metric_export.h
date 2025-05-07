@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -458,4 +458,4 @@ typedef struct _zet_intel_metric_df_gpu_export_data_format_t {
 } // extern "C"
 #endif
 
-#endif // _ZET_INTEL_GPU_METRIC_H
+#endif // _ZET_INTEL_GPU_METRIC_EXPORT_H

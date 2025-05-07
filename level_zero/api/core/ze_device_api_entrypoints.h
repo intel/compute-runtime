@@ -288,14 +288,14 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetGlobalTimestamps(
         deviceTimestamp);
 }
 
-ze_result_t zeDeviceReserveCacheExt(
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceReserveCacheExt(
     ze_device_handle_t hDevice,
     size_t cacheLevel,
     size_t cacheReservationSize) {
     return L0::zeDeviceReserveCacheExt(hDevice, cacheLevel, cacheReservationSize);
 }
 
-ze_result_t zeDeviceSetCacheAdviceExt(
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceSetCacheAdviceExt(
     ze_device_handle_t hDevice,
     void *ptr,
     size_t regionSize,
@@ -303,7 +303,7 @@ ze_result_t zeDeviceSetCacheAdviceExt(
     return L0::zeDeviceSetCacheAdviceExt(hDevice, ptr, regionSize, cacheRegion);
 }
 
-ze_result_t zeDevicePciGetPropertiesExt(
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDevicePciGetPropertiesExt(
     ze_device_handle_t hDevice,
     ze_pci_ext_properties_t *pPciProperties) {
     return L0::zeDevicePciGetPropertiesExt(hDevice, pPciProperties);

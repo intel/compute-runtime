@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,7 +113,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetIpcProperties(
         pIpcProperties);
 }
 
-ZE_APIEXPORT ze_result_t zeDriverGetLastErrorDescription(
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetLastErrorDescription(
     ze_driver_handle_t hDriver,
     const char **ppString) {
     return L0::zeDriverGetLastErrorDescription(
