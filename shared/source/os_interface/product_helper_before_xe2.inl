@@ -46,7 +46,7 @@ bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwI
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::allowSharedResourcesInCoherentMemory() const {
+bool ProductHelperHw<gfxProduct>::isResourceUncachedForCS(AllocationType allocationType) const {
     return false;
 }
 

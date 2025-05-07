@@ -1181,10 +1181,22 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingUseAdditionalBlitProper
     EXPECT_FALSE(productHelper->useAdditionalBlitProperties());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingAllowSharedResourcesInCoherentMemoryThenFalseReturned, IsBeforeXe2HpgCore) {
-    EXPECT_FALSE(productHelper->allowSharedResourcesInCoherentMemory());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingIsResourceUncachedForCSThenFalseReturned, IsBeforeXe2HpgCore) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocationType = static_cast<AllocationType>(i);
+        EXPECT_FALSE(productHelper->isResourceUncachedForCS(allocationType));
+    }
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingAllowSharedResourcesInCoherentMemoryThenTrueReturned, IsAtLeastXe2HpgCore) {
-    EXPECT_TRUE(productHelper->allowSharedResourcesInCoherentMemory());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingIsResourceUncachedForCSThenTrueReturned, IsAtLeastXe2HpgCore) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocationType = static_cast<AllocationType>(i);
+        if (allocationType == AllocationType::commandBuffer ||
+            allocationType == AllocationType::ringBuffer ||
+            allocationType == AllocationType::semaphoreBuffer) {
+            EXPECT_TRUE(productHelper->isResourceUncachedForCS(allocationType));
+        } else {
+            EXPECT_FALSE(productHelper->isResourceUncachedForCS(allocationType));
+        }
+    }
 }

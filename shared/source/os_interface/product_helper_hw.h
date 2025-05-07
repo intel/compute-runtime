@@ -137,7 +137,7 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getMaxNumSamplers() const override;
     uint32_t getCommandBuffersPreallocatedPerCommandQueue() const override;
     uint32_t getInternalHeapsPreallocated() const override;
-    bool overrideAllocationCacheable(const AllocationData &allocationData) const override;
+    bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const override;
     bool is2MBLocalMemAlignmentEnabled() const override;
     bool isPostImageWriteFlushRequired() const override;
 
@@ -184,7 +184,7 @@ class ProductHelperHw : public ProductHelper {
     std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
     bool isCachingOnCpuAvailable() const override;
     bool isNewCoherencyModelSupported() const override;
-    bool allowSharedResourcesInCoherentMemory() const override;
+    bool isResourceUncachedForCS(AllocationType allocationType) const override;
     bool deferMOCSToPatIndex() const override;
     bool supportReadOnlyAllocations() const override;
     const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const override;

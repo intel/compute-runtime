@@ -509,7 +509,7 @@ template <>
 void ProductHelperHw<IGFX_UNKNOWN>::setRenderCompressedFlags(HardwareInfo &hwInfo) const {}
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::allowSharedResourcesInCoherentMemory() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isResourceUncachedForCS(AllocationType allocationType) const {
     return false;
 }
 

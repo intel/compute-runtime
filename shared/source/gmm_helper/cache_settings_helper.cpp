@@ -13,9 +13,9 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
-
 namespace NEO {
 
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo) {
@@ -60,7 +60,9 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     }
 
     if (hwInfo->capabilityTable.isIntegratedDevice) {
-        if (AllocationType::semaphoreBuffer == allocationType || (AllocationType::ringBuffer == allocationType && productHelper.allowSharedResourcesInCoherentMemory())) {
+        if (productHelper.isResourceUncachedForCS(allocationType)) {
+            return GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+        } else if (AllocationType::semaphoreBuffer == allocationType) {
             return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
         }
     }

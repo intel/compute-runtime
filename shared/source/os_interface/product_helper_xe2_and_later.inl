@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/os_interface/product_helper_hw.h"
-
 namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -50,8 +49,8 @@ bool ProductHelperHw<gfxProduct>::isCompressionForbidden(const HardwareInfo &hwI
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::allowSharedResourcesInCoherentMemory() const {
-    return true;
+bool ProductHelperHw<gfxProduct>::isResourceUncachedForCS(AllocationType allocationType) const {
+    return GraphicsAllocation::isAccessedFromCommandStreamer(allocationType);
 }
 
 } // namespace NEO

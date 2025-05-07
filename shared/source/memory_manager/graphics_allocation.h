@@ -259,6 +259,12 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
                type == AllocationType::profilingTagBuffer;
     }
 
+    static bool isAccessedFromCommandStreamer(AllocationType allocationType) {
+        return allocationType == AllocationType::commandBuffer ||
+               allocationType == AllocationType::ringBuffer ||
+               allocationType == AllocationType::semaphoreBuffer;
+    }
+
     static uint32_t getNumHandlesForKmdSharedAllocation(uint32_t numBanks);
 
     void *getReservedAddressPtr() const {

@@ -142,11 +142,11 @@ TEST_F(WddmMemoryManagerTests, GivenNotCompressedAndNotLockableAllocationTypeWhe
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST_F(WddmMemoryManagerTests, GivenOverrideAllocationCacheableWhenAllocateUsingKmdAndMapToCpuVaThenOverrideAllocationCacheable) {
+TEST_F(WddmMemoryManagerTests, GivenoverrideAllocationCpuCacheableWhenAllocateUsingKmdAndMapToCpuVaThenoverrideAllocationCpuCacheable) {
     NEO::AllocationData allocData = {};
     allocData.type = NEO::AllocationType::commandBuffer;
     auto mockProductHelper = std::make_unique<MockProductHelper>();
-    mockProductHelper->overrideAllocationCacheableResult = true;
+    mockProductHelper->overrideAllocationCpuCacheableResult = true;
     executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper.release());
 
     memoryManager->callBaseAllocateGraphicsMemoryUsingKmdAndMapItToCpuVA = true;
