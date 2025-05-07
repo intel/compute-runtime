@@ -1075,6 +1075,14 @@ static NEO::SubDeviceIdsVec getSubDeviceIds(CommandStreamReceiver &csr) {
     return subDeviceIds;
 };
 
+void SVMAllocsManager::sharedSystemMemAdvise(Device &device, MemAdvise memAdviseOp, const void *ptr, const size_t size) {
+
+    // All vm_ids on a single device for shared system USM allocation
+    auto subDeviceIds = NEO::SubDevice::getSubDeviceIdsFromDevice(device);
+
+    memoryManager->setSharedSystemMemAdvise(ptr, size, memAdviseOp, subDeviceIds, device.getRootDeviceIndex());
+}
+
 void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, const void *ptr, const size_t size) {
 
     auto svmData = getSVMAlloc(ptr);
@@ -1110,6 +1118,14 @@ void SVMAllocsManager::prefetchSVMAllocs(Device &device, CommandStreamReceiver &
             }
         }
     }
+}
+
+void SVMAllocsManager::sharedSystemAtomicAccess(Device &device, AtomicAccessMode mode, const void *ptr, const size_t size) {
+
+    // All vm_ids on a single device for shared system USM allocation
+    auto subDeviceIds = NEO::SubDevice::getSubDeviceIdsFromDevice(device);
+
+    memoryManager->setSharedSystemAtomicAccess(ptr, size, mode, subDeviceIds, device.getRootDeviceIndex());
 }
 
 std::unique_lock<std::mutex> SVMAllocsManager::obtainOwnership() {

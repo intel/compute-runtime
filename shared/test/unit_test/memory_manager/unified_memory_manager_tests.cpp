@@ -374,6 +374,42 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenPrefetchMemor
     free(ptr);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemMemAdviseIsCalledThenMemoryManagerSetSharedSystemMemAdviseIsCalled) {
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+
+    MemAdvise memAdviseOp = MemAdvise::setSystemMemoryPreferredLocation;
+    auto ptr = malloc(4096);
+    EXPECT_NE(nullptr, ptr);
+
+    svmManager->sharedSystemMemAdvise(*device, memAdviseOp, ptr, 4096);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    EXPECT_TRUE(mockMemoryManager->setSharedSystemMemAdviseCalled);
+
+    free(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenSharedSystemAllocationWhenSharedSystemAtomicAccessIsCalledThenMemoryManagerSetSharedSystemAtomicAccessIsCalled) {
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+
+    AtomicAccessMode mode = AtomicAccessMode::device;
+    auto ptr = malloc(4096);
+    EXPECT_NE(nullptr, ptr);
+
+    svmManager->sharedSystemAtomicAccess(*device, mode, ptr, 4096);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    EXPECT_TRUE(mockMemoryManager->setSharedSystemAtomicAccessCalled);
+
+    free(ptr);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, givenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenSVMAllocsIsCalledThenPrefetchSharedUnifiedMemoryInSvmAllocsManager) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);

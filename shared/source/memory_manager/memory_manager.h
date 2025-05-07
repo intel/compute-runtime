@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_control.h"
@@ -27,8 +28,6 @@
 #include <vector>
 
 namespace NEO {
-
-using SubDeviceIdsVec = StackVec<uint32_t, 4>;
 
 class AllocationsList;
 class MultiGraphicsAllocation;
@@ -279,10 +278,11 @@ class MemoryManager {
     virtual AllocationStatus registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex);
 
     virtual bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) { return true; }
-    virtual bool setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, uint32_t rootDeviceIndex) { return true; }
+    virtual bool setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) { return true; }
     virtual bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) { return true; }
     virtual bool prefetchSharedSystemAlloc(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) { return true; }
     virtual bool setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t size, AtomicAccessMode mode, uint32_t rootDeviceIndex) { return true; }
+    virtual bool setSharedSystemAtomicAccess(const void *ptr, const size_t size, AtomicAccessMode mode, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) { return true; }
 
     bool isExternalAllocation(AllocationType allocationType);
     LocalMemoryUsageBankSelector *getLocalMemoryUsageBankSelector(AllocationType allocationType, uint32_t rootDeviceIndex);

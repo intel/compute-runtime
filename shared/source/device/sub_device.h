@@ -9,6 +9,9 @@
 #include "shared/source/device/device.h"
 
 namespace NEO {
+
+using SubDeviceIdsVec = StackVec<uint32_t, 4>;
+
 class RootDevice;
 class SubDevice : public Device {
   public:
@@ -20,6 +23,8 @@ class SubDevice : public Device {
     Device *getRootDevice() const override;
 
     uint32_t getSubDeviceIndex() const;
+    static NEO::SubDeviceIdsVec getSubDeviceIdsFromDevice(NEO::Device &device);
+    static uint32_t getSubDeviceId(NEO::Device &device);
     bool isSubDevice() const override { return true; }
 
   protected:

@@ -401,7 +401,8 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
 
     EXPECT_TRUE(xeIoctlHelper->setVmBoAdvise(0, 0, nullptr));
 
-    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(0, 0, 0, 0, 0));
+    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(0, 0, 0, 0, {0}));
+    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(0, 0, 0, 0, {0, 0}));
 
     EXPECT_TRUE(xeIoctlHelper->setVmBoAdviseForChunking(0, 0, 0, 0, nullptr));
 

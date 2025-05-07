@@ -313,7 +313,7 @@ TEST_F(IoctlPrelimHelperTests, givenIoctlHelperisVmBindPatIndexExtSupportedRetur
 }
 
 TEST_F(IoctlPrelimHelperTests, givenIoctlHelperSetVmSharedSystemMemAdviseReturnsTrue) {
-    ASSERT_EQ(true, ioctlHelper.setVmSharedSystemMemAdvise(0u, 0u, 0u, 0u, 0u));
+    ASSERT_EQ(true, ioctlHelper.setVmSharedSystemMemAdvise(0u, 0u, 0u, 0u, {0u}));
 }
 
 TEST_F(IoctlPrelimHelperTests, whenGettingVmBindExtFromHandlesThenProperStructsAreReturned) {

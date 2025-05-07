@@ -112,7 +112,8 @@ enum class AtomicAccessMode : uint32_t {
     none = 1,
     host = 2,
     device = 3,
-    system = 4
+    system = 4,
+    invalid = 5
 };
 
 enum class SynchronizedDispatchMode : uint32_t {

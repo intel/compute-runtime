@@ -1367,9 +1367,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeMemAdvise(ze_device_han
             }
 
             DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
-            auto memoryManager = device->getDriverHandle()->getMemoryManager();
+            auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
 
-            memoryManager->setSharedSystemMemAdvise(ptr, size, memAdviseOp, deviceImp->getRootDeviceIndex());
+            unifiedMemoryManager->sharedSystemMemAdvise(*deviceImp->getNEODevice(), memAdviseOp, ptr, size);
 
             return ZE_RESULT_SUCCESS;
         } else {

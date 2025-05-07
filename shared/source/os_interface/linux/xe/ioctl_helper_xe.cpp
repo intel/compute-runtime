@@ -848,8 +848,20 @@ bool IoctlHelperXe::setVmBoAdvise(int32_t handle, uint32_t attribute, void *regi
     return true;
 }
 
-bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const uint32_t vmId) {
-    xeLog(" -> IoctlHelperXe::%s h=0x%llx s=0x%llx vmid=0x%x\n", __FUNCTION__, handle, size, vmId);
+bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const std::vector<uint32_t> &vmIds) {
+    std::string vmIdsStr = "[";
+    for (size_t i = 0; i < vmIds.size(); ++i) {
+        {
+            std::stringstream ss;
+            ss << std::hex << vmIds[i];
+            vmIdsStr += "0x" + ss.str();
+        }
+        if (i != vmIds.size() - 1) {
+            vmIdsStr += ", ";
+        }
+    }
+    vmIdsStr += "]";
+    xeLog(" -> IoctlHelperXe::%s h=0x%x s=0x%lx vmids=%s\n", __FUNCTION__, handle, size, vmIdsStr.c_str());
     // There is no vmAdvise attribute in Xe, so return success
     return true;
 }

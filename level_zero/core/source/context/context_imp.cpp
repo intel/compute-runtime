@@ -14,6 +14,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/cpu_info.h"
@@ -997,55 +998,93 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    uint32_t attrEval = 0;
-    memcpy_s(&attrEval, sizeof(uint32_t), &attr, sizeof(uint32_t));
-
-    ze_device_memory_access_properties_t memProp;
     auto device = Device::fromHandle(hDevice);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    if (allocData == nullptr) {
+    const bool sharedSystemAllocEnabled = device->getNEODevice()->areSharedSystemAllocationsAllowed();
+
+    if (allocData == nullptr && !sharedSystemAllocEnabled) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    ze_memory_allocation_properties_t memoryProperties = {};
-    this->getMemAllocProperties(ptr, &memoryProperties, &hDevice);
-    if (memoryProperties.type != ZE_MEMORY_TYPE_SHARED) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+
+    if (allocData != nullptr) {
+        ze_memory_allocation_properties_t memoryProperties = {};
+        this->getMemAllocProperties(ptr, &memoryProperties, &hDevice);
+        if (memoryProperties.type != ZE_MEMORY_TYPE_SHARED) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
     }
+
     DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
+    const bool isSharedSystemAlloc = ((allocData == nullptr) && sharedSystemAllocEnabled);
 
-    if (attrEval == 0) {
-        deviceImp->atomicAccessAllocations[allocData] = attr;
-        return ZE_RESULT_SUCCESS;
-    }
+    auto attrEval = static_cast<uint32_t>(attr);
 
+    ze_device_memory_access_properties_t memProp;
     deviceImp->getMemoryAccessProperties(&memProp);
+    NEO::AtomicAccessMode mode = NEO::AtomicAccessMode::invalid;
 
-    NEO::AtomicAccessMode mode = NEO::AtomicAccessMode::none;
     if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS) {
-        if (!(memProp.deviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
+        auto deviceAllocCapabilities = memProp.deviceAllocCapabilities;
+        if (isSharedSystemAlloc) {
+            deviceAllocCapabilities = memProp.sharedSystemAllocCapabilities;
+        }
+
+        if (!(deviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         mode = NEO::AtomicAccessMode::device;
     }
     if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS) {
-        if (!(memProp.hostAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
+        auto hostAllocCapabilities = memProp.hostAllocCapabilities;
+        if (isSharedSystemAlloc) {
+            hostAllocCapabilities = memProp.sharedSystemAllocCapabilities;
+        }
+        if (!(hostAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         mode = NEO::AtomicAccessMode::host;
     }
 
     if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS) {
-        if ((!(memProp.sharedSingleDeviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC)) &&
-            (!(memProp.sharedCrossDeviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC))) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        if (isSharedSystemAlloc) {
+            auto sharedSystemAllocCapabilities = memProp.sharedSystemAllocCapabilities;
+            if (!(sharedSystemAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else {
+            auto sharedSingleDeviceAllocCapabilities = memProp.sharedSingleDeviceAllocCapabilities;
+            auto sharedCrossDeviceAllocCapabilities = memProp.sharedCrossDeviceAllocCapabilities;
+            if ((!(sharedSingleDeviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC)) &&
+                (!(sharedCrossDeviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC))) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
         }
         mode = NEO::AtomicAccessMode::system;
     }
 
-    auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());
+    if ((attr == 0) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_HOST_ATOMICS) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_ATOMICS) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_DEVICE_ATOMICS) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_SYSTEM_ATOMICS)) {
+
+        mode = NEO::AtomicAccessMode::none;
+    }
+
+    if (mode == NEO::AtomicAccessMode::invalid) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     auto memoryManager = device->getDriverHandle()->getMemoryManager();
-    memoryManager->setAtomicAccess(alloc, size, mode, deviceImp->getRootDeviceIndex());
-    deviceImp->atomicAccessAllocations[allocData] = attr;
+    if (isSharedSystemAlloc) {
+
+        DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
+        auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
+
+        unifiedMemoryManager->sharedSystemAtomicAccess(*deviceImp->getNEODevice(), mode, ptr, size);
+
+    } else {
+        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());
+        memoryManager->setAtomicAccess(alloc, size, mode, deviceImp->getRootDeviceIndex());
+        deviceImp->atomicAccessAllocations[allocData] = attr;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

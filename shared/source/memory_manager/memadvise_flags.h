@@ -44,12 +44,6 @@ enum class MemAdvise : uint8_t {
     biasUncached,                       /* hints that memory should not be cached */
     setSystemMemoryPreferredLocation,   /* hint that the preferred memory location is host memory */
     clearSystemMemoryPreferredLocation, /* removes the effect of SetSystemMemoryPreferredLocation */
-    setAtomicDevice,                    /* hint that memory will be accessed atomically by the specified device */
-    clearAtomicDevice,                  /* removes the effect of SetAtomicDevice */
-    setAtomicGlobal,                    /* hint that memory will be accessed atomically by device on system memory */
-    clearAtomicGlobal,                  /* removes the effect of SetAtomicGlobal */
-    setAtomicCpu,                       /* hint that memory will be accessed atomically by CPU */
-    clearAtomicCpu,                     /* removes the effect of SetAtomicCpu */
     invalidAdvise                       /* invalid advise */
 };
 } // namespace NEO

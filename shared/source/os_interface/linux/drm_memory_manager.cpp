@@ -294,7 +294,7 @@ bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdvise
     return drmAllocation->setMemAdvise(&this->getDrm(rootDeviceIndex), flags);
 }
 
-bool DrmMemoryManager::setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, uint32_t rootDeviceIndex) {
+bool DrmMemoryManager::setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
 
     auto &drm = this->getDrm(rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
@@ -321,27 +321,43 @@ bool DrmMemoryManager::setSharedSystemMemAdvise(const void *ptr, const size_t si
         attribute = ioctlHelper->getPreferredLocationAdvise();
         param = (static_cast<uint64_t>(-1) << 32) | static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice));
         break;
-    case MemAdvise::setAtomicDevice:
+    default:
+        return false;
+    }
+
+    // Apply the shared system USM IOCTL to all the VMs of the device
+    std::vector<uint32_t> vmIds;
+    vmIds.reserve(subDeviceIds.size());
+    for (auto subDeviceId : subDeviceIds) {
+        vmIds.push_back(drm.getVirtualMemoryAddressSpace(subDeviceId));
+    }
+
+    auto result = ioctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds);
+
+    return result;
+}
+
+bool DrmMemoryManager::setSharedSystemAtomicAccess(const void *ptr, const size_t size, AtomicAccessMode mode, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
+    auto &drm = this->getDrm(rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
+
+    uint32_t attribute = 0;
+    uint64_t param = 0;
+
+    switch (mode) {
+    case AtomicAccessMode::device:
         attribute = ioctlHelper->getAtomicAdvise(false);
         param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassDevice)) << 32);
         break;
-    case MemAdvise::clearAtomicDevice:
-        attribute = ioctlHelper->getAtomicAdvise(false);
-        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined)) << 32);
-        break;
-    case MemAdvise::setAtomicGlobal:
+    case AtomicAccessMode::system:
         attribute = ioctlHelper->getAtomicAdvise(false);
         param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassGlobal)) << 32);
         break;
-    case MemAdvise::clearAtomicGlobal:
-        attribute = ioctlHelper->getAtomicAdvise(false);
-        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined)) << 32);
-        break;
-    case MemAdvise::setAtomicCpu:
+    case AtomicAccessMode::host:
         attribute = ioctlHelper->getAtomicAdvise(false);
         param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassSystem)) << 32);
         break;
-    case MemAdvise::clearAtomicCpu:
+    case AtomicAccessMode::none:
         attribute = ioctlHelper->getAtomicAdvise(false);
         param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined)) << 32);
         break;
@@ -349,11 +365,14 @@ bool DrmMemoryManager::setSharedSystemMemAdvise(const void *ptr, const size_t si
         return false;
     }
 
-    // Single vm_id for shared system allocation
-    uint32_t vmHandleId = 0;
-    auto vmId = drm.getVirtualMemoryAddressSpace(vmHandleId);
+    // Apply the shared system USM IOCTL to all the VMs of the device
+    std::vector<uint32_t> vmIds;
+    vmIds.reserve(subDeviceIds.size());
+    for (auto subDeviceId : subDeviceIds) {
+        vmIds.push_back(drm.getVirtualMemoryAddressSpace(subDeviceId));
+    }
 
-    auto result = ioctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmId);
+    auto result = ioctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds);
 
     return result;
 }

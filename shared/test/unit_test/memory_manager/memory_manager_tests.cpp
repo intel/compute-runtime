@@ -53,7 +53,15 @@ using namespace NEO;
 TEST(MemoryManagerTest, WhenCallingSetSharedSystemMemAdviseThenReturnTrue) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, MemAdvise::invalidAdvise, 0u));
+    auto subDeviceId = SubDeviceIdsVec{0};
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, MemAdvise::invalidAdvise, subDeviceId, 0u));
+}
+
+TEST(MemoryManagerTest, WhenCallingSetSharedSystemAtomicAccessThenReturnTrue) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    auto subDeviceId = SubDeviceIdsVec{0};
+    EXPECT_TRUE(memoryManager.setSharedSystemAtomicAccess(nullptr, 0u, AtomicAccessMode::none, subDeviceId, 0u));
 }
 
 TEST(MemoryManagerTest, WhenCallingHasPageFaultsEnabledThenReturnFalse) {
