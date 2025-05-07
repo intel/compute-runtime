@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,12 +102,10 @@ TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeThenCo
     const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
 
     cl_device_svm_capabilities expectedCaps = 0;
-    if (hwInfo.capabilityTable.ftrSvm != 0) {
-        if (hwInfo.capabilityTable.ftrSupportsCoherency != 0) {
-            expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
-        } else {
-            expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
-        }
+    if (hwInfo.capabilityTable.ftrSupportsCoherency != 0) {
+        expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
+    } else {
+        expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
     }
     EXPECT_EQ(svmCaps, expectedCaps);
 }
@@ -167,10 +165,7 @@ TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUs
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_device_svm_capabilities expectedCaps = 0;
-    if (hwInfo.capabilityTable.ftrSvm != 0) {
-        expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
-    }
+    cl_device_svm_capabilities expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
     EXPECT_EQ(svmCaps, expectedCaps);
 }
 
@@ -192,10 +187,7 @@ TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUs
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_device_svm_capabilities expectedCaps = 0;
-    if (hwInfo.capabilityTable.ftrSvm != 0) {
-        expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
-    }
+    cl_device_svm_capabilities expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
     EXPECT_EQ(svmCaps, expectedCaps);
 }
 

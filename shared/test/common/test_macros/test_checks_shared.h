@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,6 @@ bool supportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment);
 bool fullySupportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment);
 bool supportsImages(const HardwareInfo &hardwareInfo);
 bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
-bool supportsSvm(const HardwareInfo *pHardwareInfo);
-bool supportsSvm(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
-bool supportsSvm(const Device *pDevice);
 } // namespace TestChecks
 
 } // namespace NEO
@@ -37,10 +34,7 @@ bool supportsSvm(const Device *pDevice);
         GTEST_SKIP();                   \
     }
 
-#define REQUIRE_SVM_OR_SKIP(param)                      \
-    if (NEO::TestChecks::supportsSvm(param) == false) { \
-        GTEST_SKIP();                                   \
-    }
+#define REQUIRE_SVM_OR_SKIP(param) (void)param
 
 #define REQUIRE_BLITTER_OR_SKIP(param)                      \
     if (NEO::TestChecks::supportsBlitter(param) == false) { \

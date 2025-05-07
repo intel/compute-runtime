@@ -55,7 +55,6 @@ const RuntimeCapabilityTable ADLN::capabilityTable{
     false,                                          // ftrSupportsFP64
     false,                                          // ftrSupportsFP64Emulation
     false,                                          // ftrSupports64BitMath
-    true,                                           // ftrSvm
     false,                                          // ftrSupportsCoherency
     false,                                          // ftrRenderCompressedBuffers
     false,                                          // ftrRenderCompressedImages

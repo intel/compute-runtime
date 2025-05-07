@@ -530,10 +530,6 @@ struct MemoryManagerPropertiesCheck : public MockMemoryManager {
 
 struct UnifiedMemoryManagerPropertiesTest : public ::testing::Test {
     void SetUp() override {
-        bool svmSupported = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
-        if (!svmSupported) {
-            GTEST_SKIP();
-        }
         memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
         svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
         memoryManager->pageFaultManager.reset(new MockPageFaultManager);
@@ -925,10 +921,6 @@ TEST_F(UnifiedMemoryManagerPropertiesTest,
 struct ShareableUnifiedMemoryManagerPropertiesTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = platform()->peekExecutionEnvironment();
-        bool svmSupported = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
-        if (!svmSupported) {
-            GTEST_SKIP();
-        }
         memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, *executionEnvironment);
         svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
         memoryManager->pageFaultManager.reset(new MockPageFaultManager);

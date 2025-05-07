@@ -58,7 +58,6 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     false,                                                     // ftrSupportsFP64
     true,                                                      // ftrSupportsFP64Emulation
     true,                                                      // ftrSupports64BitMath
-    true,                                                      // ftrSvm
     false,                                                     // ftrSupportsCoherency
     false,                                                     // ftrRenderCompressedBuffers
     false,                                                     // ftrRenderCompressedImages

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -207,28 +207,6 @@ TEST_F(ClEnqueueSVMMemcpyTests, GivenInvalidPtrAndZeroSizeWhenCopyingSVMMemoryTh
         EXPECT_TRUE(pCommandQueue->enqueueMarkerWithWaitListCalled);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
-}
-
-TEST_F(ClEnqueueSVMMemcpyTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMemcpyThenInvalidOperationErrorIsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.ftrSvm = false;
-
-    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    cl_device_id deviceId = pDevice.get();
-    auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
-    auto pCommandQueue = std::make_unique<MockCommandQueue>(pContext.get(), pDevice.get(), nullptr, false);
-
-    auto retVal = clEnqueueSVMMemcpy(
-        pCommandQueue.get(), // cl_command_queue command_queue
-        CL_FALSE,            // cl_bool blocking_copy
-        nullptr,             // void *dst_ptr
-        nullptr,             // const void *src_ptr
-        0,                   // size_t size
-        0,                   // cl_uint num_events_in_wait_list
-        nullptr,             // const cl_event *event_wait_list
-        nullptr              // cl_event *event
-    );
-    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
 TEST_F(ClEnqueueSVMMemcpyTests, givenCopyValidForStagingBuffersCopyThenTransferSuccesfull) {

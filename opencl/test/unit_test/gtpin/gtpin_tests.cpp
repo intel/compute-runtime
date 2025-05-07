@@ -2166,15 +2166,6 @@ class GTPinFixtureWithLocalMemory : public GTPinFixture {
 
 using GTPinTestsWithLocalMemory = Test<GTPinFixtureWithLocalMemory>;
 
-TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCantBeAllocatedInSharedMemory) {
-    debugManager.flags.GTPinAllocateBufferInSharedMemory.set(-1);
-    auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
-    auto canUseSharedAllocation = gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo());
-    if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
-        EXPECT_FALSE(canUseSharedAllocation);
-    }
-}
-
 HWTEST_F(GTPinTests, givenGtPinWithSupportForSharedAllocationWhenGtPinHelperFunctionsAreCalledThenCheckIfSharedAllocationCanBeUsed) {
     auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {

@@ -643,9 +643,6 @@ struct WriteBufferStagingBufferTest : public EnqueueWriteBufferHw {
     }
 
     void TearDown() override {
-        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
-            return;
-        }
         EnqueueWriteBufferHw::TearDown();
     }
     constexpr static size_t chunkSize = MemoryConstants::megaByte * 2;

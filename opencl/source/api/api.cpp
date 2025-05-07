@@ -4801,10 +4801,6 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
     }
 
     const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
-    if (!hwInfo.capabilityTable.ftrSvm) {
-        TRACING_EXIT(ClSvmAlloc, &pAlloc);
-        return pAlloc;
-    }
 
     if (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) {
         bool supportsFineGrained = hwInfo.capabilityTable.ftrSupportsCoherency;
@@ -4837,12 +4833,6 @@ void CL_API_CALL clSVMFree(cl_context context,
         withCastToInternal(context, &pContext));
 
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(ClSvmFree, nullptr);
-        return;
-    }
-
-    auto pClDevice = pContext->getDevice(0);
-    if (!pClDevice->getHardwareInfo().capabilityTable.ftrSvm) {
         TRACING_EXIT(ClSvmFree, nullptr);
         return;
     }
@@ -4882,13 +4872,6 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
                    "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(ClEnqueueSvmFree, &retVal);
-        return retVal;
-    }
-
-    auto &device = pCommandQueue->getDevice();
-    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
-        retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(ClEnqueueSvmFree, &retVal);
         return retVal;
     }
@@ -4946,11 +4929,6 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
     }
 
     auto &device = pCommandQueue->getDevice();
-    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
-        retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(ClEnqueueSvmMemcpy, &retVal);
-        return retVal;
-    }
 
     if ((dstPtr == nullptr) || (srcPtr == nullptr)) {
         retVal = CL_INVALID_VALUE;
@@ -5017,13 +4995,6 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
         return retVal;
     }
 
-    auto &device = pCommandQueue->getDevice();
-    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
-        retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(ClEnqueueSvmMemFill, &retVal);
-        return retVal;
-    }
-
     if ((svmPtr == nullptr) || (size == 0)) {
         retVal = CL_INVALID_VALUE;
         TRACING_EXIT(ClEnqueueSvmMemFill, &retVal);
@@ -5079,13 +5050,6 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
         return retVal;
     }
 
-    auto &device = pCommandQueue->getDevice();
-    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
-        retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(ClEnqueueSvmMap, &retVal);
-        return retVal;
-    }
-
     if ((svmPtr == nullptr) || (size == 0)) {
         retVal = CL_INVALID_VALUE;
         TRACING_EXIT(ClEnqueueSvmMap, &retVal);
@@ -5135,13 +5099,6 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
                    "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(ClEnqueueSvmUnmap, &retVal);
-        return retVal;
-    }
-
-    auto &device = pCommandQueue->getDevice();
-    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
-        retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(ClEnqueueSvmUnmap, &retVal);
         return retVal;
     }
@@ -5217,15 +5174,6 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
     DBG_LOG_INPUTS("kernel", kernel, "argIndex", argIndex, "argValue", argValue);
 
     for (const auto &pDevice : multiDeviceKernel->getDevices()) {
-        const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
-        if (!hwInfo.capabilityTable.ftrSvm) {
-            retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
-            return retVal;
-        }
-    }
-
-    for (const auto &pDevice : multiDeviceKernel->getDevices()) {
         auto pKernel = multiDeviceKernel->getKernel(pDevice->getRootDeviceIndex());
         cl_int kernelArgAddressQualifier = asClKernelArgAddressQualifier(pKernel->getKernelInfo()
                                                                              .kernelDescriptor.payloadMappings.explicitArgs[argIndex]
@@ -5277,23 +5225,6 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     if (CL_SUCCESS != retVal) {
         TRACING_EXIT(ClSetKernelExecInfo, &retVal);
         return retVal;
-    }
-
-    switch (paramName) {
-    case CL_KERNEL_EXEC_INFO_SVM_PTRS:
-    case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
-    case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
-    case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
-    case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:
-    case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL:
-        for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
-            const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
-            if (!hwInfo.capabilityTable.ftrSvm) {
-                retVal = CL_INVALID_OPERATION;
-                TRACING_EXIT(ClSetKernelExecInfo, &retVal);
-                return retVal;
-            }
-        }
     }
 
     switch (paramName) {
@@ -5841,13 +5772,6 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
         EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
-        return retVal;
-    }
-
-    auto &device = pCommandQueue->getDevice();
-    if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
-        retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
         return retVal;
     }

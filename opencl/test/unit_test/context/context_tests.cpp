@@ -261,22 +261,6 @@ TEST_F(ContextTest, givenContextWhenSharingTableIsNotEmptyThenReturnsSharingFunc
     EXPECT_EQ(sharingF, sharingFunctions);
 }
 
-TEST(Context, givenFtrSvmFalseWhenContextIsCreatedThenSVMAllocsManagerIsNotCreated) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1u);
-    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    hwInfo->capabilityTable.ftrSvm = false;
-
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(hwInfo, executionEnvironment, 0));
-
-    cl_device_id clDevice = device.get();
-    cl_int retVal = CL_SUCCESS;
-    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
-    ASSERT_NE(nullptr, context);
-    auto svmManager = context->getSVMAllocsManager();
-    EXPECT_EQ(nullptr, svmManager);
-}
-
 TEST(Context, whenCreateContextThenSpecialQueueUsesInternalEngine) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     cl_device_id clDevice = device.get();

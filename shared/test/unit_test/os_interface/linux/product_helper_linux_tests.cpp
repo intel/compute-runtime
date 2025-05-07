@@ -294,18 +294,6 @@ TEST_F(MockProductHelperTestLinux, givenInstrumentationForHardwareIsEnabledOrDis
     EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled);
 }
 
-TEST_F(MockProductHelperTestLinux, givenGttSizeReturnedWhenInitializingHwInfoThenSetSvmFtr) {
-    drm->storedGTTSize = MemoryConstants::max64BitAppAddress;
-    int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
-    EXPECT_EQ(0, ret);
-    EXPECT_FALSE(outHwInfo.capabilityTable.ftrSvm);
-
-    drm->storedGTTSize = MemoryConstants::max64BitAppAddress + 1;
-    ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
-    EXPECT_EQ(0, ret);
-    EXPECT_TRUE(outHwInfo.capabilityTable.ftrSvm);
-}
-
 TEST_F(MockProductHelperTestLinux, givenGttSizeReturnedWhenInitializingHwInfoThenSetGpuAddressSpace) {
     drm->storedGTTSize = maxNBitValue(40) + 1;
     int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
@@ -318,7 +306,6 @@ TEST_F(MockProductHelperTestLinux, givenFailingGttSizeIoctlWhenInitializingHwInf
     int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
 
-    EXPECT_TRUE(outHwInfo.capabilityTable.ftrSvm);
     EXPECT_NE(0u, outHwInfo.capabilityTable.gpuAddressSpace);
     EXPECT_EQ(pInHwInfo.capabilityTable.gpuAddressSpace, outHwInfo.capabilityTable.gpuAddressSpace);
 }

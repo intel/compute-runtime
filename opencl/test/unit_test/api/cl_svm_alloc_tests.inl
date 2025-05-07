@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,15 +125,7 @@ TEST_P(ClSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAlloc
     cl_mem_flags flags = GetParam();
     void *svmPtr = nullptr;
 
-    // 1: no svm - no flags supported
-    pHwInfo->capabilityTable.ftrSvm = false;
-    pHwInfo->capabilityTable.ftrSupportsCoherency = false;
-
-    svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
-    EXPECT_EQ(nullptr, svmPtr);
-
-    // 2: coarse svm - normal flags supported
-    pHwInfo->capabilityTable.ftrSvm = true;
+    // 1: coarse svm - normal flags supported
     svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
     if (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) {
         // fg svm flags not supported
@@ -144,7 +136,7 @@ TEST_P(ClSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAlloc
         clSVMFree(pContext, svmPtr);
     }
 
-    // 3: fg svm - all flags supported
+    // 2: fg svm - all flags supported
     pHwInfo->capabilityTable.ftrSupportsCoherency = true;
     svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
     EXPECT_NE(nullptr, svmPtr);
@@ -264,7 +256,6 @@ TEST_F(ClSVMAllocTests, GivenForcedFineGrainedSvmWhenCreatingSvmAllocThenAllocat
     REQUIRE_SVM_OR_SKIP(pDevice);
     DebugManagerStateRestore restore{};
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->getMutableHardwareInfo();
-    hwInfo->capabilityTable.ftrSvm = true;
     hwInfo->capabilityTable.ftrSupportsCoherency = false;
 
     auto allocation = clSVMAlloc(pContext, CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER, 4096 /* Size */, 0 /* alignment */);

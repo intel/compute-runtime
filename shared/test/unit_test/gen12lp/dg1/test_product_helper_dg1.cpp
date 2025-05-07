@@ -72,11 +72,6 @@ DG1TEST_F(Dg1HwInfo, givenBoolWhenCallDg1HardwareInfoSetupThenFeatureTableAndWor
     }
 }
 
-DG1TEST_F(Dg1HwInfo, whenPlatformIsDg1ThenExpectSvmIsSet) {
-    const HardwareInfo &hardwareInfo = DG1::hwInfo;
-    EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
-}
-
 using Dg1ProductHelper = ProductHelperTest;
 
 DG1TEST_F(Dg1ProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {

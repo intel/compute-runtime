@@ -296,20 +296,16 @@ bool Context::createImpl(const cl_context_properties *properties,
             memoryManager->getDeferredDeleter()->addClient();
         }
 
-        bool anySvmSupport = false;
         for (auto &device : devices) {
             device->incRefInternal();
-            anySvmSupport |= device->getHardwareInfo().capabilityTable.ftrSvm;
         }
 
         setupContextType();
-        if (anySvmSupport) {
-            this->svmAllocsManager = new SVMAllocsManager(this->memoryManager,
-                                                          this->areMultiStorageAllocationsPreferred());
-            this->svmAllocsManager->initUsmAllocationsCaches(device->getDevice());
-            auto requiresWritableStaging = device->getDefaultEngine().commandStreamReceiver->getType() != CommandStreamReceiverType::hardware;
-            this->stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager, rootDeviceIndices, deviceBitfields, requiresWritableStaging);
-        }
+        this->svmAllocsManager = new SVMAllocsManager(this->memoryManager,
+                                                      this->areMultiStorageAllocationsPreferred());
+        this->svmAllocsManager->initUsmAllocationsCaches(device->getDevice());
+        auto requiresWritableStaging = device->getDefaultEngine().commandStreamReceiver->getType() != CommandStreamReceiverType::hardware;
+        this->stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager, rootDeviceIndices, deviceBitfields, requiresWritableStaging);
 
         smallBufferPoolAllocator.setParams(SmallBuffersParams::getPreferredBufferPoolParams(device->getProductHelper()));
     }

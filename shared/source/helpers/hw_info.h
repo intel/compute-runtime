@@ -42,7 +42,6 @@ struct RuntimeCapabilityTable {
     bool ftrSupportsFP64;
     bool ftrSupportsFP64Emulation;
     bool ftrSupports64BitMath;
-    bool ftrSvm;
     bool ftrSupportsCoherency;
     bool ftrRenderCompressedBuffers;
     bool ftrRenderCompressedImages;
@@ -101,7 +100,6 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.ftrSupportsFP64 == rhs.ftrSupportsFP64);
     result &= (lhs.ftrSupportsFP64Emulation == rhs.ftrSupportsFP64Emulation);
     result &= (lhs.ftrSupports64BitMath == rhs.ftrSupports64BitMath);
-    result &= (lhs.ftrSvm == rhs.ftrSvm);
     result &= (lhs.ftrSupportsCoherency == rhs.ftrSupportsCoherency);
     result &= (lhs.ftrRenderCompressedBuffers == rhs.ftrRenderCompressedBuffers);
     result &= (lhs.ftrRenderCompressedImages == rhs.ftrRenderCompressedImages);

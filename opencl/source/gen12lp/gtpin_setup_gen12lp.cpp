@@ -24,7 +24,6 @@ bool GTPinGfxCoreHelperHw<GfxFamily>::canUseSharedAllocation(const HardwareInfo 
     if (debugManager.flags.GTPinAllocateBufferInSharedMemory.get() != -1) {
         canUseSharedAllocation = !!debugManager.flags.GTPinAllocateBufferInSharedMemory.get();
     }
-    canUseSharedAllocation &= hwInfo.capabilityTable.ftrSvm;
     return canUseSharedAllocation;
 }
 

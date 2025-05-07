@@ -16,7 +16,6 @@ struct HardwareInfo;
 struct RootDeviceEnvironment;
 
 namespace TestChecks {
-bool supportsSvm(const ClDevice *pClDevice);
 bool supportsImages(const Context *pContext);
 bool supportsOcl21(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 bool supportsAuxResolves(const RootDeviceEnvironment &rootDeviceEnvironment);

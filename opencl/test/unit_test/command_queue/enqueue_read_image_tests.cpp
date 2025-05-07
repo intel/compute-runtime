@@ -1077,10 +1077,6 @@ HWTEST_F(OneMipLevelReadImageTests, GivenNotMippedImageWhenReadingImageThenDoNot
 }
 
 HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageWithUsmPtrThenDontImportAllocation) {
-    bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
-    if (!svmSupported) {
-        GTEST_SKIP();
-    }
     auto svmManager = pCmdQ->getContext().getSVMAllocsManager();
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
@@ -1113,9 +1109,6 @@ struct ReadImageStagingBufferTest : public EnqueueReadImageTest {
     }
 
     void TearDown() override {
-        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
-            return;
-        }
         delete[] ptr;
         EnqueueReadImageTest::TearDown();
     }

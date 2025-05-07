@@ -80,23 +80,6 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgIndexWhenSettingKernelArgTh
     EXPECT_EQ(CL_INVALID_ARG_INDEX, retVal);
 }
 
-TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKernelArgSVMPointerThenInvalidOperationErrorIsReturned) {
-    auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
-    hwInfo->capabilityTable.ftrSvm = false;
-
-    cl_int retVal{CL_SUCCESS};
-    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(
-        MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), retVal));
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clSetKernelArgSVMPointer(
-        pMultiDeviceKernel.get(), // cl_kernel kernel
-        0,                        // cl_uint arg_index
-        nullptr                   // const void *arg_value
-    );
-    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
-}
-
 TEST_F(clSetKernelArgSVMPointerTests, GivenLocalAddressAndNullArgValueWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
     pKernelInfo->setAddressQualifier(0, KernelArgMetadata::AddrLocal);
 

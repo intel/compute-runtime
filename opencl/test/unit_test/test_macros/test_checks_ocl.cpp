@@ -22,10 +22,6 @@
 
 using namespace NEO;
 
-bool TestChecks::supportsSvm(const ClDevice *pClDevice) {
-    return supportsSvm(&pClDevice->getDevice());
-}
-
 bool TestChecks::supportsImages(const Context *pContext) {
     return pContext->getDevice(0)->getSharedDeviceInfo().imageSupport;
 }

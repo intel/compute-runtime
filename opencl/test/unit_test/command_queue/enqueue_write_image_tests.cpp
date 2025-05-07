@@ -758,10 +758,6 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWr
 }
 
 HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrThenDontImportAllocation) {
-    bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
-    if (!svmSupported) {
-        GTEST_SKIP();
-    }
     auto svmManager = pCmdQ->getContext().getSVMAllocsManager();
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
@@ -787,10 +783,6 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrThenDontImportAll
 }
 
 HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrAndSizeLowerThanRequiredThenFail) {
-    bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
-    if (!svmSupported) {
-        GTEST_SKIP();
-    }
     auto svmManager = pCmdQ->getContext().getSVMAllocsManager();
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
@@ -813,10 +805,6 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrAndSizeLowerThanR
 }
 
 HWTEST_F(EnqueueWriteImageTest, whenisValidForStagingTransferCalledThenReturnCorrectValue) {
-    bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
-    if (!svmSupported) {
-        GTEST_SKIP();
-    }
     auto isStagingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
     unsigned char ptr[16];
 
@@ -841,9 +829,6 @@ struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {
     }
 
     void TearDown() override {
-        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
-            return;
-        }
         delete[] ptr;
         EnqueueWriteImageTest::TearDown();
     }

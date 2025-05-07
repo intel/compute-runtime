@@ -148,10 +148,6 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenCheckingIsInUseThenReturn
 struct SvmAllocationCacheTestFixture {
     SvmAllocationCacheTestFixture() : executionEnvironment(defaultHwInfo.get()) {}
     void setUp() {
-        bool svmSupported = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
-        if (!svmSupported) {
-            GTEST_SKIP();
-        }
     }
     void tearDown() {
     }

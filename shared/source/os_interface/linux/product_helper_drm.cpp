@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,7 +90,6 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     featureTable->flags.ftrEDram = (gtSystemInfo->EdramSizeInKb != 0) ? 1 : 0;
 
     outHwInfo->capabilityTable.maxRenderFrequency = maxGpuFreq;
-    outHwInfo->capabilityTable.ftrSvm = featureTable->flags.ftrSVM;
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
     setupDefaultEngineType(*outHwInfo, rootDeviceEnvironment);

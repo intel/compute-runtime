@@ -318,15 +318,13 @@ void ClDevice::initializeCaps() {
     deviceInfo.genericAddressSpaceSupport = ocl21FeaturesEnabled;
 
     deviceInfo.linkerAvailable = true;
-    deviceInfo.svmCapabilities = hwInfo.capabilityTable.ftrSvm * CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
-    if (hwInfo.capabilityTable.ftrSvm) {
-        auto reportFineGrained = hwInfo.capabilityTable.ftrSvm * hwInfo.capabilityTable.ftrSupportsCoherency;
-        if (debugManager.flags.ForceFineGrainedSVMSupport.get() != -1) {
-            reportFineGrained = !!debugManager.flags.ForceFineGrainedSVMSupport.get();
-        }
-        if (reportFineGrained) {
-            deviceInfo.svmCapabilities |= static_cast<cl_device_svm_capabilities>(CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS);
-        }
+    deviceInfo.svmCapabilities = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
+    auto reportFineGrained = hwInfo.capabilityTable.ftrSupportsCoherency;
+    if (debugManager.flags.ForceFineGrainedSVMSupport.get() != -1) {
+        reportFineGrained = !!debugManager.flags.ForceFineGrainedSVMSupport.get();
+    }
+    if (reportFineGrained) {
+        deviceInfo.svmCapabilities |= static_cast<cl_device_svm_capabilities>(CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS);
     }
 
     for (auto &engineGroup : this->getDevice().getRegularEngineGroups()) {

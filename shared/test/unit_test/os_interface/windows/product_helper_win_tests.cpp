@@ -55,15 +55,6 @@ TEST_F(ProductHelperTestWindows, givenCorrectParametersWhenConfiguringHwInfoThen
     EXPECT_EQ(0, ret);
 }
 
-TEST_F(ProductHelperTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenSetFtrSvmCorrectly) {
-    auto ftrSvm = outHwInfo.featureTable.flags.ftrSVM;
-
-    int ret = productHelper->configureHwInfoWddm(&pInHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
-    ASSERT_EQ(0, ret);
-
-    EXPECT_EQ(outHwInfo.capabilityTable.ftrSvm, ftrSvm);
-}
-
 TEST_F(ProductHelperTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabledWhenConfiguringHwInfoThenOverrideItUsingHaveInstrumentation) {
     int ret;
 

@@ -59,11 +59,6 @@ ADLPTEST_F(AdlpHwInfo, givenBoolWhenCallAdlpHardwareInfoSetupThenFeatureTableAnd
     }
 }
 
-ADLPTEST_F(AdlpHwInfo, whenPlatformIsAdlpThenExpectSvmIsSet) {
-    const HardwareInfo &hardwareInfo = ADLP::hwInfo;
-    EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
-}
-
 using AdlpProductHelper = ProductHelperTest;
 
 ADLPTEST_F(AdlpProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
