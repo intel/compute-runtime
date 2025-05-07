@@ -316,6 +316,22 @@ uint32_t ZE_APICALL zerDeviceTranslateToIdentifier(ze_device_handle_t hDevice); 
 ///     - device handle associated with the identifier
 ze_device_handle_t ZE_APICALL zerIdentifierTranslateToDeviceHandle(uint32_t identifier); ///< [in] integer identifier of the device
 
+/// @brief Global device synchronization
+///
+/// @details
+///    - The application may call this function from simultaneous threads.
+///    - The implementation of this function should be lock-free.
+///    - Ensures that everything that was submitted to the device is completed.
+///    - Ensures that all submissions in all queues on device are completed.
+///    - It is not allowed to call this function while some command list are in graph capture mode.
+///    - Returns error if error is detected during execution on device.
+///    - Hangs indefinitely if GPU execution is blocked on non signaled event.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice); ///> [in] handle of the device
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

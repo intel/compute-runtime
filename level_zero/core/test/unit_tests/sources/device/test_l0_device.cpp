@@ -6785,5 +6785,81 @@ TEST_F(DeviceSimpleTests, whenWorkgroupSizeCheckedThenSizeLimitIs1kOrLess) {
 
     EXPECT_LE(properties.maxTotalGroupSize, CommonConstants::maxWorkgroupSize);
 }
+
+HWTEST_F(DeviceSimpleTests, givenGpuHangWhenSynchronizingDeviceThenErrorIsPropagated) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
+
+    auto result = zeDeviceSynchronize(device);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+}
+
+HWTEST_F(DeviceSimpleTests, givenNoGpuHangWhenSynchronizingDeviceThenCallWaitForTaskCountWithKmdNotifyFallbackOnEachCsr) {
+    auto &engines = neoDevice->getAllEngines();
+
+    TaskCountType taskCountToWait = 1u;
+    FlushStamp flushStampToWait = 4u;
+    for (auto &engine : engines) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+        csr->latestSentTaskCount = 0u;
+        csr->latestFlushedTaskCount = 0u;
+        csr->taskCount = taskCountToWait++;
+        csr->flushStamp->setStamp(flushStampToWait++);
+        csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
+    }
+
+    auto &secondaryCsrs = neoDevice->getSecondaryCsrs();
+    for (auto &secondaryCsr : secondaryCsrs) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryCsr.get());
+        csr->latestSentTaskCount = 0u;
+        csr->latestFlushedTaskCount = 0u;
+        csr->taskCount = taskCountToWait++;
+        csr->flushStamp->setStamp(flushStampToWait++);
+        csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
+    }
+
+    auto result = zeDeviceSynchronize(device);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (auto &engine : engines) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+        EXPECT_EQ(1u, csr->waitForTaskCountWithKmdNotifyInputParams.size());
+        EXPECT_EQ(csr->taskCount, csr->waitForTaskCountWithKmdNotifyInputParams[0].taskCountToWait);
+        EXPECT_EQ(csr->flushStamp->peekStamp(), csr->waitForTaskCountWithKmdNotifyInputParams[0].flushStampToWait);
+        EXPECT_FALSE(csr->waitForTaskCountWithKmdNotifyInputParams[0].useQuickKmdSleep);
+        EXPECT_EQ(NEO::QueueThrottle::MEDIUM, csr->waitForTaskCountWithKmdNotifyInputParams[0].throttle);
+    }
+
+    for (auto &secondaryCsr : secondaryCsrs) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryCsr.get());
+        EXPECT_EQ(1u, csr->waitForTaskCountWithKmdNotifyInputParams.size());
+        EXPECT_EQ(csr->taskCount, csr->waitForTaskCountWithKmdNotifyInputParams[0].taskCountToWait);
+        EXPECT_EQ(csr->flushStamp->peekStamp(), csr->waitForTaskCountWithKmdNotifyInputParams[0].flushStampToWait);
+        EXPECT_FALSE(csr->waitForTaskCountWithKmdNotifyInputParams[0].useQuickKmdSleep);
+        EXPECT_EQ(NEO::QueueThrottle::MEDIUM, csr->waitForTaskCountWithKmdNotifyInputParams[0].throttle);
+    }
+}
+
+HWTEST_F(DeviceSimpleTests, givenGpuHangOnSecondaryCsrWhenSynchronizingDeviceThenErrorIsPropagated) {
+    if (neoDevice->getSecondaryCsrs().empty()) {
+        GTEST_SKIP();
+    }
+    auto &engines = neoDevice->getAllEngines();
+
+    for (auto &engine : engines) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+        csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
+    }
+
+    auto &secondaryCsrs = neoDevice->getSecondaryCsrs();
+    for (auto &secondaryCsr : secondaryCsrs) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryCsr.get());
+        csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
+    }
+
+    auto result = zeDeviceSynchronize(device);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+}
+
 } // namespace ult
 } // namespace L0

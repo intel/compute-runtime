@@ -330,6 +330,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
+        waitForTaskCountWithKmdNotifyInputParams.push_back({taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle});
         if (waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
             return *waitForTaskCountWithKmdNotifyFallbackReturnValue;
         }
@@ -590,6 +591,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     LinearStream *commandStreamHeaplessStateInit = nullptr;
 
     const IndirectHeap *recordedSsh = nullptr;
+
+    struct WaitForTaskCountWithKmdNotifyParams {
+        TaskCountType taskCountToWait;
+        FlushStamp flushStampToWait;
+        bool useQuickKmdSleep;
+        QueueThrottle throttle;
+    };
+
+    std::vector<WaitForTaskCountWithKmdNotifyParams> waitForTaskCountWithKmdNotifyInputParams;
 
     std::mutex mutex;
     std::atomic<uint32_t> recursiveLockCounter;
