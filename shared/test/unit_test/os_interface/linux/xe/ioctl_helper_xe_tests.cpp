@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
@@ -2783,6 +2784,7 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionConfigFlagHasGpuAddrMirror
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
     DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     mockIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
         if (request == DRM_IOCTL_XE_DEVICE_QUERY) {
             struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
@@ -2802,6 +2804,10 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionConfigFlagHasGpuAddrMirror
 
     EXPECT_TRUE(IoctlHelperXe::queryDeviceIdAndRevision(*drm));
     EXPECT_TRUE(drm->isSharedSystemAllocEnabled());
+    uint64_t caps = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    drm->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = caps;
+    drm->adjustSharedSystemMemCapabilities();
+    EXPECT_EQ(caps, drm->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities);
     EXPECT_TRUE(drm->hasPageFaultSupport());
 }
 
@@ -2828,6 +2834,10 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionAndConfigFlagHasGpuAddrMir
 
     EXPECT_TRUE(IoctlHelperXe::queryDeviceIdAndRevision(*drm));
     EXPECT_FALSE(drm->isSharedSystemAllocEnabled());
+    uint64_t caps = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    drm->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = caps;
+    drm->adjustSharedSystemMemCapabilities();
+    EXPECT_EQ(0lu, drm->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities);
 }
 
 TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionAndSharedSystemUsmSupportDebugFlagClearThenSharedSystemAllocEnableFalse) {
@@ -2854,6 +2864,10 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionAndSharedSystemUsmSupportD
 
     EXPECT_TRUE(IoctlHelperXe::queryDeviceIdAndRevision(*drm));
     EXPECT_FALSE(drm->isSharedSystemAllocEnabled());
+    uint64_t caps = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    drm->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = caps;
+    drm->adjustSharedSystemMemCapabilities();
+    EXPECT_EQ(0lu, drm->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities);
     EXPECT_FALSE(drm->hasPageFaultSupport());
 }
 
