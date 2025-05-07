@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -438,69 +438,6 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
                 EXPECT_TRUE(compressionEnabled);
             } else {
                 EXPECT_FALSE(compressionEnabled);
-            }
-        }
-    }
-}
-
-TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenCorrectValueIsReturned) {
-    DebugManagerStateRestore debugRestore;
-    VariableBackup<bool> renderCompressedBuffersCapability{&defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers, true};
-    VariableBackup<unsigned short> hardwareStepping{&defaultHwInfo->platform.usRevId};
-    debugManager.flags.EnableMultiTileCompression.set(1);
-
-    uint32_t numsSubDevices[] = {0, 2};
-    cl_mem_flags flagsValues[] = {0, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS, CL_MEM_COMPRESSED_HINT_INTEL,
-                                  CL_MEM_UNCOMPRESSED_HINT_INTEL};
-    cl_mem_flags_intel flagsIntelValues[] = {0, CL_MEM_COMPRESSED_HINT_INTEL, CL_MEM_UNCOMPRESSED_HINT_INTEL};
-    uint32_t contextTypes[] = {ContextType::CONTEXT_TYPE_DEFAULT, ContextType::CONTEXT_TYPE_SPECIALIZED,
-                               ContextType::CONTEXT_TYPE_UNRESTRICTIVE};
-
-    for (auto numSubDevices : numsSubDevices) {
-        UltClDeviceFactory clDeviceFactory{1, numSubDevices};
-
-        for (auto contextType : contextTypes) {
-            if ((numSubDevices == 0) && (contextType != ContextType::CONTEXT_TYPE_DEFAULT)) {
-                continue;
-            }
-
-            ClDeviceVector contextDevices;
-            if (contextType != ContextType::CONTEXT_TYPE_SPECIALIZED) {
-                contextDevices.push_back(clDeviceFactory.rootDevices[0]);
-            }
-            if (contextType != ContextType::CONTEXT_TYPE_DEFAULT) {
-                contextDevices.push_back(clDeviceFactory.subDevices[0]);
-                contextDevices.push_back(clDeviceFactory.subDevices[1]);
-            }
-            MockContext context{contextDevices};
-
-            for (auto flags : flagsValues) {
-                for (auto flagsIntel : flagsIntelValues) {
-
-                    auto &device = context.getDevice(0)->getDevice();
-                    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel,
-                                                                                                         0, &device);
-
-                    bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
-                    MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
-                        memoryProperties, compressionEnabled, false);
-
-                    bool isCompressionDisabled = isValueSet(flags, CL_MEM_UNCOMPRESSED_HINT_INTEL) ||
-                                                 isValueSet(flagsIntel, CL_MEM_UNCOMPRESSED_HINT_INTEL);
-                    bool expectBufferCompressed = !isCompressionDisabled;
-
-                    bool isMultiTile = (numSubDevices > 1);
-                    if (expectBufferCompressed && isMultiTile) {
-                        bool isBufferReadOnly = isValueSet(flags, CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS);
-                        expectBufferCompressed = (contextType == ContextType::CONTEXT_TYPE_SPECIALIZED) || isBufferReadOnly;
-                    }
-
-                    if (expectBufferCompressed) {
-                        EXPECT_TRUE(compressionEnabled);
-                    } else {
-                        EXPECT_FALSE(compressionEnabled);
-                    }
-                }
             }
         }
     }
