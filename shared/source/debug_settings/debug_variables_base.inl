@@ -181,7 +181,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkGroupCount, -1, "-1: default, >0:
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdQueueSynchronousMode, -1, "Overrides all command queues synchronous mode: -1: do not override, 0: implicit driver behavior, 1: synchronous, 2: asynchronous")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideImmediateCmdListSynchronousMode, -1, "Overrides all immediate command lists synchronous mode: -1: do not override, 0: implicit driver behavior, 1: synchronous, 2: asynchronous")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStatelessCompression, -1, "-1: default, 0: disable, 1: Enable E2EC in SBA for all stateless accesses")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableMultiTileCompression, -1, "-1: default, 0: disable, 1: enable, Enables compression in multi tile scenarios.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmResourceUsageField, -1, "-1: default, >=0: gmm.resourceParams.Usage is set to this value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmCacheableField, -1, "-1: default, >=0: gmm Flags.Info.Cacheable is set to this value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideBufferSuitableForRenderCompression, -1, "-1: default, 0: Disable, 1: Enable")

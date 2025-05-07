@@ -413,32 +413,3 @@ TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenContextRequiresResolve
 
     EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
 }
-
-TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferCompressionSupportThenCorrectValueIsReturned) {
-    DebugManagerStateRestore debugRestore;
-    VariableBackup<bool> renderCompressedBuffersCapability{&defaultHwInfo->capabilityTable.ftrRenderCompressedBuffers};
-    int32_t enableMultiTileCompressionValues[] = {-1, 0, 1};
-
-    for (auto ftrRenderCompressedBuffers : ::testing::Bool()) {
-        renderCompressedBuffersCapability = ftrRenderCompressedBuffers;
-        for (auto enableMultiTileCompressionValue : enableMultiTileCompressionValues) {
-            debugManager.flags.EnableMultiTileCompression.set(enableMultiTileCompressionValue);
-
-            MockSpecializedContext context;
-            auto &device = context.getDevice(0)->getDevice();
-            MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &device);
-
-            bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
-
-            MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
-                memoryProperties, compressionEnabled, false);
-
-            bool expectBufferCompressed = ftrRenderCompressedBuffers && (enableMultiTileCompressionValue == 1);
-            if (expectBufferCompressed) {
-                EXPECT_TRUE(compressionEnabled);
-            } else {
-                EXPECT_FALSE(compressionEnabled);
-            }
-        }
-    }
-}

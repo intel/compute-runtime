@@ -115,9 +115,7 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
     for (auto &pClDevice : context.getDevices()) {
         auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
         if (context.containsMultipleSubDevices(rootDeviceIndex)) {
-            if (debugManager.flags.EnableMultiTileCompression.get() <= 0) {
-                return false;
-            }
+            return false;
         }
     }
     if (preferCompression) {
