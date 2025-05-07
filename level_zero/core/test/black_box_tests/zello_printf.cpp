@@ -14,10 +14,13 @@
 #include <cstring>
 #include <iostream>
 #include <numeric>
+#include <sstream>
+
 #ifdef _WIN32
 #include <windows.h>
 
 #include <io.h>
+#include <process.h>
 
 #pragma warning(disable : 4996)
 #else
@@ -111,7 +114,12 @@ void cleanUp(ze_context_handle_t context, ze_module_handle_t module, ze_kernel_h
 int main(int argc, char *argv[]) {
     constexpr uint32_t kernelsCount = 4;
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
-    const char *fileName = "zello_printf_output.txt";
+    auto pid = getpid();
+    std::stringstream filenameWithPid;
+    filenameWithPid << "zello_printf_output_" << pid << ".txt";
+    auto fileNameStr = filenameWithPid.str();
+    auto *fileName = fileNameStr.c_str();
+
     bool validatePrintfOutput = true;
     bool printfValidated = false;
     int stdoutFd = -1;
