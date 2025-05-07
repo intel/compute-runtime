@@ -372,7 +372,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     if (args.postSyncArgs.inOrderExecInfo) {
         EncodePostSync<Family>::setupPostSyncForInOrderExec(walkerCmd, args.postSyncArgs);
-    } else if (args.postSyncArgs.isValidEvent()) {
+    } else if (args.postSyncArgs.isRegularEvent()) {
         EncodePostSync<Family>::setupPostSyncForRegularEvent(walkerCmd, args.postSyncArgs);
     } else {
         EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(walkerCmd);

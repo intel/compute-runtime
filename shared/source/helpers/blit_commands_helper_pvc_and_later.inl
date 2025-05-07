@@ -32,6 +32,12 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitPropert
 
     blitCmd.setFillData(*blitProperties.fillPattern);
 
+    const bool useAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties();
+
+    if (useAdditionalBlitProperties) {
+        applyAdditionalBlitProperties(blitProperties, blitCmd, rootDeviceEnvironment, false);
+    }
+
     auto sizeToFill = blitProperties.copySize.x;
     uint64_t offset = blitProperties.dstOffset.x;
     while (sizeToFill != 0) {
@@ -49,16 +55,20 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitPropert
                 tmpCmd.setFillType(MEM_SET::FILL_TYPE::FILL_TYPE_MATRIX_FILL);
             }
         }
+        auto blitSize = width * height;
+        auto lastCommand = (sizeToFill - blitSize == 0);
         tmpCmd.setFillWidth(static_cast<uint32_t>(width));
         tmpCmd.setFillHeight(static_cast<uint32_t>(height));
         tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
 
+        if (useAdditionalBlitProperties && lastCommand) {
+            applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
+        }
         appendBlitMemSetCommand(blitProperties, &tmpCmd);
 
         auto cmd = linearStream.getSpaceForCmd<MEM_SET>();
         *cmd = tmpCmd;
 
-        auto blitSize = width * height;
         offset += blitSize;
         sizeToFill -= blitSize;
     }

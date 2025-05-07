@@ -70,8 +70,8 @@ struct EncodePostSyncArgs {
     bool requiresSystemMemoryFence() const {
         return (isHostScopeSignalEvent && isUsingSystemAllocation && this->device->getProductHelper().isGlobalFenceInPostSyncRequired(this->device->getHardwareInfo()));
     }
-    bool isValidEvent() const {
-        return (eventAddress != 0) || (isCounterBasedEvent && !isTimestampEvent);
+    bool isRegularEvent() const {
+        return (eventAddress != 0) && (inOrderExecInfo == nullptr);
     }
 };
 

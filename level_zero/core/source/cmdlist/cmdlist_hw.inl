@@ -1496,7 +1496,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
 
     const bool copyOnly = isCopyOnly(dualStreamCopyOffload);
 
-    if (copyOnly) {
+    if (useAdditionalBlitProperties) {
+        setAdditionalBlitProperties(blitProperties, signalEvent);
+    } else if (copyOnly) {
         appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     }
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
@@ -1508,7 +1510,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     }
     dummyBlitWa.isWaRequired = true;
 
-    if (copyOnly) {
+    if (!useAdditionalBlitProperties && copyOnly) {
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
     }
     return ZE_RESULT_SUCCESS;
@@ -1541,14 +1543,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     commandContainer.addToResidencyContainer(src);
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
-    appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
+    if (useAdditionalBlitProperties) {
+        setAdditionalBlitProperties(blitProperties, signalEvent);
+    } else {
+        appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
+    }
     blitProperties.transform1DArrayTo2DArrayIfNeeded();
 
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
     dummyBlitWa.isWaRequired = true;
 
-    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
-
+    if (!useAdditionalBlitProperties) {
+        appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
+    }
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
     }
@@ -1831,7 +1838,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     } else {
         handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
     }
-
     appendSynchronizedDispatchCleanupSection();
 
     if (NEO::debugManager.flags.EnableSWTags.get()) {
@@ -2439,7 +2445,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         }
 
         auto neoDevice = device->getNEODevice();
-        appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
+        if (!useAdditionalBlitProperties) {
+            appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
+        }
         NEO::GraphicsAllocation *gpuAllocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr,
                                                                                                             size,
                                                                                                             neoDevice->getRootDeviceIndex(),
@@ -2463,12 +2471,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         memcpy_s(&patternToCommand, sizeof(patternToCommand), pattern, patternSize);
 
         auto blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(gpuAllocation, size, patternToCommand, patternSize, offset);
+        if (useAdditionalBlitProperties) {
+            setAdditionalBlitProperties(blitProperties, signalEvent);
+        }
         blitProperties.computeStreamPartitionCount = this->partitionCount;
 
         NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
         dummyBlitWa.isWaRequired = true;
-
-        appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
+        if (!useAdditionalBlitProperties) {
+            appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
+        }
 
         if (isInOrderExecutionEnabled()) {
             appendSignalInOrderDependencyCounter(signalEvent, false, false, false);

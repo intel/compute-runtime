@@ -237,16 +237,13 @@ HWTEST_F(CommandEncoderTest, givenEncodePostSyncArgsWhenCallingIsRegularEventThe
     EncodePostSyncArgs args{};
     MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
     auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), deviceTagAllocator.getTag(), *pDevice, 1, false); // setting duplicateStorage = true;
-    for (bool counterBasedEvent : {true, false}) {
-        for (bool timestampEvent : {true, false}) {
-            for (uint64_t eventAddress : {0, 0x1010}) {
-                args.device = pDevice;
-                args.isCounterBasedEvent = counterBasedEvent;
-                args.isTimestampEvent = timestampEvent;
-                args.eventAddress = eventAddress;
-                bool expectedValidEvent = (eventAddress != 0) || (counterBasedEvent && !timestampEvent);
-                EXPECT_EQ(expectedValidEvent, args.isValidEvent());
-            }
+    for (bool inOrderExec : {true, false}) {
+        for (uint64_t eventAddress : {0, 0x1010}) {
+            args.device = pDevice;
+            args.inOrderExecInfo = (inOrderExec) ? reinterpret_cast<InOrderExecInfo *>(0x1234) : nullptr;
+            args.eventAddress = eventAddress;
+            bool expectedRegularEvent = (eventAddress != 0 && !inOrderExec);
+            EXPECT_EQ(expectedRegularEvent, args.isRegularEvent());
         }
     }
 }

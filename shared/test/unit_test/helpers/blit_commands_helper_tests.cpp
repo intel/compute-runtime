@@ -712,7 +712,7 @@ HWTEST_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlus
     EXPECT_NE(estimatedSizeWithoutNode, estimatedSizeWithNode);
 }
 
-HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutTimestampModeWhenCallingDispatchBlitCommandForBufferThenTheResultsAreTheSame, MatchAny) {
+HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForBufferPerRowThenTheResultsAreTheSame, MatchAny) {
     uint32_t src[] = {1, 2, 3, 4};
     uint32_t dst[] = {4, 3, 2, 1};
     uint32_t clear[] = {5, 6, 7, 8};
@@ -741,8 +741,10 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutTimestampM
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
 
-    // change it into timestamp mode
-    blitProperties.blitSyncProperties.syncMode = NEO::BlitSyncMode::timestamp;
+    // change productHelper to return true
+    pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
+    auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
+    mockProductHelper->enableAdditionalBlitProperties = true;
 
     uint32_t streamBuffer2[400] = {};
     LinearStream stream2(streamBuffer2, sizeof(streamBuffer2));
@@ -750,18 +752,101 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutTimestampM
 
     EXPECT_EQ(stream.getUsed(), stream2.getUsed());
     EXPECT_EQ(0, memcmp(ptrOffset(stream.getCpuBase(), 0), ptrOffset(stream2.getCpuBase(), 0), std::min(stream.getUsed(), stream2.getUsed())));
+}
+
+HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForImageRegionThenTheResultsAreTheSame, MatchAny) {
+    MockGraphicsAllocation srcAlloc;
+    MockGraphicsAllocation dstAlloc;
+    MockGraphicsAllocation clearColorAllocation;
+
+    Vec3<size_t> dstOffsets = {0, 0, 0};
+    Vec3<size_t> srcOffsets = {0, 0, 0};
+
+    size_t copySizeX = BlitterConstants::maxBlitWidth - 1;
+    size_t copySizeY = BlitterConstants::maxBlitHeight - 1;
+    Vec3<size_t> copySize = {copySizeX, copySizeY, 0x2};
+    Vec3<size_t> srcSize = {copySizeX, copySizeY, 0x2};
+    Vec3<size_t> dstSize = {copySizeX, copySizeY, 0x2};
+
+    size_t srcRowPitch = srcSize.x;
+    size_t srcSlicePitch = srcSize.y;
+    size_t dstRowPitch = dstSize.x;
+    size_t dstSlicePitch = dstSize.y;
+
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, &srcAlloc,
+                                                                     dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
+                                                                     dstRowPitch, dstSlicePitch, &clearColorAllocation);
+    blitProperties.bytesPerPixel = 4;
+    blitProperties.srcSize = srcSize;
+    blitProperties.dstSize = dstSize;
+
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
 
     // change productHelper to return true
     pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
     auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
     mockProductHelper->enableAdditionalBlitProperties = true;
 
-    uint32_t streamBuffer3[400] = {};
-    LinearStream stream3(streamBuffer3, sizeof(streamBuffer2));
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream3, pDevice->getRootDeviceEnvironmentRef());
+    uint32_t streamBuffer2[100] = {};
+    LinearStream stream2(streamBuffer2, sizeof(streamBuffer2));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, stream2, pDevice->getRootDeviceEnvironmentRef());
 
-    EXPECT_EQ(stream.getUsed(), stream3.getUsed());
-    EXPECT_EQ(0, memcmp(ptrOffset(stream.getCpuBase(), 0), ptrOffset(stream3.getCpuBase(), 0), std::min(stream.getUsed(), stream3.getUsed())));
+    EXPECT_EQ(stream.getUsed(), stream2.getUsed());
+    EXPECT_EQ(0, memcmp(ptrOffset(stream.getCpuBase(), 0), ptrOffset(stream2.getCpuBase(), 0), std::min(stream.getUsed(), stream2.getUsed())));
+}
+
+HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryColorFillThenTheResultsAreTheSame, MatchAny) {
+    size_t dstSize = sizeof(uint8_t) * (BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight);
+    MockGraphicsAllocation dstAlloc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
+                                    reinterpret_cast<void *>(0x1234), 0x1000, 0, dstSize,
+                                    MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    uint32_t pattern[4] = {};
+    pattern[0] = 0x1;
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, dstSize, pattern, sizeof(uint8_t), 0);
+
+    uint32_t streamBuffer[800] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
+
+    // change productHelper to return true
+    pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
+    auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
+    mockProductHelper->enableAdditionalBlitProperties = true;
+
+    uint32_t streamBuffer2[800] = {};
+    LinearStream stream2(streamBuffer2, sizeof(streamBuffer2));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream2, pDevice->getRootDeviceEnvironmentRef());
+
+    EXPECT_EQ(stream.getUsed(), stream2.getUsed());
+    EXPECT_EQ(0, memcmp(ptrOffset(stream.getCpuBase(), 0), ptrOffset(stream2.getCpuBase(), 0), std::min(stream.getUsed(), stream2.getUsed())));
+}
+
+HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryFillThenTheResultsAreTheSame, MatchAny) {
+    size_t dstSize = 2 * sizeof(uint32_t) * (BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight) + sizeof(uint32_t);
+    MockGraphicsAllocation dstAlloc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
+                                    reinterpret_cast<void *>(0x1234), 0x1000, 0, dstSize,
+                                    MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    uint32_t pattern[4] = {};
+    pattern[0] = 0x4567;
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, dstSize, pattern, sizeof(uint32_t), 0);
+
+    uint32_t streamBuffer[1200] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitMemoryFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
+
+    // change productHelper to return true
+    pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
+    auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
+    mockProductHelper->enableAdditionalBlitProperties = true;
+
+    uint32_t streamBuffer2[1200] = {};
+    LinearStream stream2(streamBuffer2, sizeof(streamBuffer2));
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitMemoryFill(blitProperties, stream2, pDevice->getRootDeviceEnvironmentRef());
+
+    EXPECT_EQ(stream.getUsed(), stream2.getUsed());
+    EXPECT_EQ(0, memcmp(ptrOffset(stream.getCpuBase(), 0), ptrOffset(stream2.getCpuBase(), 0), std::min(stream.getUsed(), stream2.getUsed())));
 }
 
 HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlitCommandSizeThenBlockCopySizeIsReturned) {
