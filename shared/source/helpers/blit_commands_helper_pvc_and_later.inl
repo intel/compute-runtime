@@ -34,12 +34,9 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitPropert
 
     const bool useAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties();
 
-    if (useAdditionalBlitProperties) {
-        applyAdditionalBlitProperties(blitProperties, blitCmd, rootDeviceEnvironment, false);
-    }
-
     auto sizeToFill = blitProperties.copySize.x;
     uint64_t offset = blitProperties.dstOffset.x;
+    bool firstCommand = true;
     while (sizeToFill != 0) {
         auto tmpCmd = blitCmd;
         tmpCmd.setDestinationStartAddress(ptrOffset(blitProperties.dstAllocation->getGpuAddress(), static_cast<size_t>(offset)));
@@ -61,8 +58,9 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitPropert
         tmpCmd.setFillHeight(static_cast<uint32_t>(height));
         tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
 
-        if (useAdditionalBlitProperties && lastCommand) {
+        if (useAdditionalBlitProperties && (firstCommand || lastCommand)) {
             applyAdditionalBlitProperties(blitProperties, tmpCmd, rootDeviceEnvironment, lastCommand);
+            firstCommand = false;
         }
         appendBlitMemSetCommand(blitProperties, &tmpCmd);
 

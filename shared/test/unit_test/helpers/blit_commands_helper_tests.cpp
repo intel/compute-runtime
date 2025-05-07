@@ -764,9 +764,9 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
 
     size_t copySizeX = BlitterConstants::maxBlitWidth - 1;
     size_t copySizeY = BlitterConstants::maxBlitHeight - 1;
-    Vec3<size_t> copySize = {copySizeX, copySizeY, 0x2};
-    Vec3<size_t> srcSize = {copySizeX, copySizeY, 0x2};
-    Vec3<size_t> dstSize = {copySizeX, copySizeY, 0x2};
+    Vec3<size_t> copySize = {copySizeX, copySizeY, 0x3};
+    Vec3<size_t> srcSize = {copySizeX, copySizeY, 0x3};
+    Vec3<size_t> dstSize = {copySizeX, copySizeY, 0x3};
 
     size_t srcRowPitch = srcSize.x;
     size_t srcSlicePitch = srcSize.y;
@@ -798,7 +798,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
 }
 
 HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryColorFillThenTheResultsAreTheSame, MatchAny) {
-    size_t dstSize = sizeof(uint8_t) * (BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight);
+    size_t dstSize = 2 * BlitterConstants::maxBlitSetWidth + sizeof(uint8_t);
     MockGraphicsAllocation dstAlloc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                     reinterpret_cast<void *>(0x1234), 0x1000, 0, dstSize,
                                     MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
@@ -806,16 +806,17 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWith
     pattern[0] = 0x1;
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, dstSize, pattern, sizeof(uint8_t), 0);
 
-    uint32_t streamBuffer[800] = {};
+    uint32_t streamBuffer[1200] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     NEO::BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
 
+    EXPECT_EQ(1u, blitProperties.fillPatternSize);
     // change productHelper to return true
     pDevice->getRootDeviceEnvironmentRef().productHelper.reset(new MockProductHelperHw<productFamily>);
     auto *mockProductHelper = static_cast<MockProductHelperHw<productFamily> *>(pDevice->getRootDeviceEnvironmentRef().productHelper.get());
     mockProductHelper->enableAdditionalBlitProperties = true;
 
-    uint32_t streamBuffer2[800] = {};
+    uint32_t streamBuffer2[1200] = {};
     LinearStream stream2(streamBuffer2, sizeof(streamBuffer2));
     NEO::BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream2, pDevice->getRootDeviceEnvironmentRef());
 
