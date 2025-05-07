@@ -416,12 +416,18 @@ struct CommandList : _ze_command_list_handle_t {
         return statelessBuiltinsEnabled;
     }
 
-    void setNeedsTextureCacheFlushOnBarrier(bool value) {
-        needsTextureCacheFlushOnBarrier = value;
+    bool isTextureCacheFlushPending() const {
+        return textureCacheFlushPending;
     }
 
-    bool isTextureCacheFlushOnBarrierNeeded() const {
-        return needsTextureCacheFlushOnBarrier;
+    void setTextureCacheFlushPending(bool isPending) {
+        textureCacheFlushPending = isPending;
+    }
+
+    bool consumeTextureCacheFlushPending() {
+        bool wasPending = textureCacheFlushPending;
+        textureCacheFlushPending = false;
+        return wasPending;
     }
 
     void registerCsrDcFlushForDcMitigation(NEO::CommandStreamReceiver &csr);
@@ -536,7 +542,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool statelessBuiltinsEnabled = false;
     bool localDispatchSupport = false;
     bool l3FlushAfterPostSyncRequired = false;
-    bool needsTextureCacheFlushOnBarrier = false;
+    bool textureCacheFlushPending = false;
     bool closedCmdList = false;
 };
 

@@ -1562,7 +1562,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     CmdListKernelLaunchParams launchParams = {};
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(commandList->isTextureCacheFlushOnBarrierNeeded());
+    EXPECT_TRUE(commandList->isTextureCacheFlushPending());
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1570,7 +1570,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     result = commandList->appendBarrier(nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_FALSE(commandList->isTextureCacheFlushOnBarrierNeeded());
+    EXPECT_FALSE(commandList->isTextureCacheFlushPending());
 
     usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -1586,7 +1586,67 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     EXPECT_TRUE(cmd->getTextureCacheInvalidationEnable());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenTextureCacheFlushOnBarrierNeededStateIsCleared, IsXeHpgCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendingTwiceThenPipeControlWithTextureCacheInvalidationIsProgrammedBetweenWalkers, IsXeHpgCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+
+    StackVec<ze_command_list_flags_t, 2> testedCmdListFlags = {ZE_COMMAND_LIST_FLAG_IN_ORDER,
+                                                               ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING};
+
+    for (auto cmdListFlags : testedCmdListFlags) {
+        auto kernel = std::make_unique<Mock<KernelImp>>();
+        kernel->module = module.get();
+        kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
+
+        ze_group_count_t groupCount{1, 1, 1};
+        ze_result_t returnValue;
+        ze_command_list_flags_t flags = cmdListFlags;
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, flags, returnValue, false));
+
+        auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+
+        CmdListKernelLaunchParams launchParams = {};
+        auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_TRUE(commandList->isTextureCacheFlushPending());
+
+        auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+        EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+        usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+        result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+        EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+        GenCmdList cmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+        auto itorCW = findAll<COMPUTE_WALKER *>(
+            cmdList.begin(), cmdList.end());
+        ASSERT_EQ(2u, itorCW.size());
+
+        auto firstCW = itorCW[0];
+        auto secondCW = itorCW[1];
+
+        auto pcBetweenCW =
+            findAll<PIPE_CONTROL *>(firstCW, secondCW);
+
+        bool foundTextureCacheInvalidation = false;
+        for (auto itorPC : pcBetweenCW) {
+            auto pcCmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
+            if (pcCmd->getTextureCacheInvalidationEnable()) {
+                foundTextureCacheInvalidation = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(foundTextureCacheInvalidation);
+    }
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenTextureCacheFlushPendingStateIsCleared, IsXeHpgCore) {
     auto kernel = std::make_unique<Mock<KernelImp>>();
     kernel->module = module.get();
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
@@ -1598,9 +1658,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenText
     CmdListKernelLaunchParams launchParams = {};
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(commandList->isTextureCacheFlushOnBarrierNeeded());
+    EXPECT_TRUE(commandList->isTextureCacheFlushPending());
     commandList->reset();
-    EXPECT_FALSE(commandList->isTextureCacheFlushOnBarrierNeeded());
+    EXPECT_FALSE(commandList->isTextureCacheFlushPending());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

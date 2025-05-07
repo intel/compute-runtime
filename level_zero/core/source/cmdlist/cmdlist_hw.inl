@@ -153,7 +153,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
     latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     taskCountUpdateFenceRequired = false;
-    needsTextureCacheFlushOnBarrier = false;
+    textureCacheFlushPending = false;
     closedCmdList = false;
 
     this->inOrderPatchCmds.clear();
@@ -2778,7 +2778,11 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 
             if (resolveDependenciesViaPipeControls) {
                 NEO::PipeControlArgs args;
-                args.csStallOnly = true;
+                if (this->consumeTextureCacheFlushPending()) {
+                    args.textureCacheInvalidationEnable = true;
+                } else {
+                    args.csStallOnly = true;
+                }
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
                 break;
             } else {
@@ -2907,6 +2911,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         } else if (!this->l3FlushAfterPostSyncRequired) {
             NEO::PipeControlArgs args;
             args.dcFlushEnable = true;
+            args.textureCacheInvalidationEnable = this->consumeTextureCacheFlushPending();
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
         }
     }
@@ -3186,6 +3191,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             if (!skipBarrierForEndProfiling) {
                 NEO::PipeControlArgs args;
                 args.dcFlushEnable = getDcFlushRequired(event->isSignalScope());
+                args.textureCacheInvalidationEnable = this->consumeTextureCacheFlushPending();
                 NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
 
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

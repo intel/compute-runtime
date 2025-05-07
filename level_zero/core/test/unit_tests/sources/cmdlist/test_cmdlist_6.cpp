@@ -1279,6 +1279,21 @@ TEST(CommandList, whenAsMutableIsCalledNullptrIsReturned) {
     MockCommandList cmdList;
     EXPECT_EQ(nullptr, cmdList.asMutable());
 }
+
+TEST(CommandList, WhenConsumeTextureCacheFlushPendingThenReturnsCurrentValueAndClearsFlag) {
+    MockCommandList cmdList;
+    {
+        cmdList.setTextureCacheFlushPending(false);
+        EXPECT_FALSE(cmdList.consumeTextureCacheFlushPending());
+        EXPECT_FALSE(cmdList.isTextureCacheFlushPending());
+    }
+    {
+        cmdList.setTextureCacheFlushPending(true);
+        EXPECT_TRUE(cmdList.consumeTextureCacheFlushPending());
+        EXPECT_FALSE(cmdList.isTextureCacheFlushPending());
+    }
+}
+
 class MockCommandQueueIndirectAccess : public Mock<CommandQueue> {
   public:
     MockCommandQueueIndirectAccess(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : Mock(device, csr, desc) {}

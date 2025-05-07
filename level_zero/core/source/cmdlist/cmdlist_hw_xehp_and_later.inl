@@ -360,6 +360,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
+    if (this->consumeTextureCacheFlushPending()) {
+        NEO::PipeControlArgs args;
+        args.textureCacheInvalidationEnable = true;
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+    }
+
     auto maxWgCountPerTile = kernel->getMaxWgCountPerTile(this->engineGroupType);
 
     auto isFlushL3ForExternalAllocationRequired = isFlushL3AfterPostSync && isKernelUsingExternalAllocation;
@@ -445,6 +451,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
     }
 
+    bool textureFlushRequired = false;
+    if (this->device->getProductHelper().isPostImageWriteFlushRequired() &&
+        kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg) {
+        if (this->isImmediateType()) {
+            textureFlushRequired = true;
+        } else {
+            this->setTextureCacheFlushPending(true);
+        }
+    }
+
     if (!launchParams.makeKernelCommandView) {
         if (compactEvent && (!compactEvent->isCounterBased() || this->asMutable())) {
             void **syncCmdBuffer = nullptr;
@@ -465,16 +481,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             if (!launchParams.isKernelSplitOperation) {
                 dispatchEventRemainingPacketsPostSyncOperation(event, false);
             }
-        }
-    }
-
-    bool textureFlushRequired = false;
-    if (this->device->getProductHelper().isPostImageWriteFlushRequired() &&
-        kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg) {
-        if (this->isImmediateType()) {
-            textureFlushRequired = true;
-        } else if (!this->inOrderExecInfo) {
-            this->setNeedsTextureCacheFlushOnBarrier(true);
         }
     }
 
@@ -620,12 +626,7 @@ NEO::PipeControlArgs CommandListCoreFamily<gfxCoreFamily>::createBarrierFlags() 
     NEO::PipeControlArgs args;
     args.hdcPipelineFlush = true;
     args.unTypedDataPortCacheFlush = true;
-
-    if (this->isTextureCacheFlushOnBarrierNeeded()) {
-        args.textureCacheInvalidationEnable = true;
-        this->setNeedsTextureCacheFlushOnBarrier(false);
-    }
-
+    args.textureCacheInvalidationEnable = this->consumeTextureCacheFlushPending();
     return args;
 }
 
