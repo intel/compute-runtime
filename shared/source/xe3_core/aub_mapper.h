@@ -17,9 +17,7 @@ struct Xe3CoreFamily;
 
 template <>
 struct AUBFamilyMapper<Xe3CoreFamily> {
-    enum { device = AubMemDump::DeviceValues::Ptl };
-
-    using AubTraits = AubMemDump::Traits<device, MemoryConstants::gfxAddressBits>;
+    using AubTraits = AubMemDump::Traits<MemoryConstants::gfxAddressBits>;
 
     static const AubMemDump::LrcaHelper *const csTraits[aub_stream::NUM_ENGINES];
 

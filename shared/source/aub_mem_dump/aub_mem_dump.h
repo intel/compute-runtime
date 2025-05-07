@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,13 +89,12 @@ typedef CmdServicesMemTraceRegisterWrite::RegisterSizeValues RegisterSizeValues;
 typedef CmdServicesMemTraceRegisterWrite::RegisterSpaceValues RegisterSpaceValues;
 typedef CmdServicesMemTraceMemoryPoll::DataSizeValues DataSizeValues;
 
-template <int deviceIn, int addressingBitsIn>
+template <int addressingBitsIn>
 struct Traits {
     typedef struct AubStream Stream;
 
     enum {
         addressingBits = addressingBitsIn,
-        device = deviceIn
     };
 };
 

@@ -12,7 +12,6 @@
 namespace NEO {
 struct Xe3CoreFamily;
 using Family = NEO::Xe3CoreFamily;
-constexpr static auto deviceValue = AubMemDump::DeviceValues::Ptl;
 
 template class AubHelperHw<Family>;
 } // namespace NEO

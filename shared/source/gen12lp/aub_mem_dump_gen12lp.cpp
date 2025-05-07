@@ -17,17 +17,12 @@
 #include "config.h"
 
 namespace AubMemDump {
-
-enum {
-    device = DeviceValues::Tgllp
-};
-
 // Instantiate these common template implementations.
-template struct AubDump<Traits<device, 32>>;
-template struct AubDump<Traits<device, 48>>;
+template struct AubDump<Traits<32>>;
+template struct AubDump<Traits<48>>;
 
-template struct AubPageTableHelper32<Traits<device, 32>>;
-template struct AubPageTableHelper64<Traits<device, 48>>;
+template struct AubPageTableHelper32<Traits<32>>;
+template struct AubPageTableHelper64<Traits<48>>;
 } // namespace AubMemDump
 
 namespace NEO {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,7 @@ struct XeHpcCoreFamily;
 
 template <>
 struct AUBFamilyMapper<XeHpcCoreFamily> {
-    enum { device = AubMemDump::DeviceValues::Pvc };
-
-    using AubTraits = AubMemDump::Traits<device, MemoryConstants::gfxAddressBits>;
+    using AubTraits = AubMemDump::Traits<MemoryConstants::gfxAddressBits>;
 
     static const AubMemDump::LrcaHelper *const csTraits[aub_stream::NUM_ENGINES];
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@
 namespace NEO {
 struct Xe2HpgCoreFamily;
 using Family = NEO::Xe2HpgCoreFamily;
-constexpr static auto deviceValue = AubMemDump::DeviceValues::Bmg;
 
 template class AubHelperHw<Family>;
 } // namespace NEO

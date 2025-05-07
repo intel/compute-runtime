@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ void setupAUBWithBatchBuffer(const NEO::Device *pDevice, aub_stream::EngineType 
     // Header
     auto &hwInfo = pDevice->getHardwareInfo();
     const auto &productHelper = pDevice->getProductHelper();
-    aubFile.init(productHelper.getAubStreamSteppingFromHwRevId(hwInfo), AUB::Traits::device);
+    aubFile.init(productHelper.getAubStreamSteppingFromHwRevId(hwInfo), AubMemDump::DeviceValues::Tgllp);
 
     aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x229c), 0xffff8280);
 
