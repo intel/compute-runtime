@@ -558,6 +558,65 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithArguments(ze_kernel_handle_t hKernel,
+                                                                                  const ze_group_count_t groupCounts,
+                                                                                  const ze_group_size_t groupSizes,
+
+                                                                                  void **pArguments,
+                                                                                  void *pNext,
+                                                                                  ze_event_handle_t hSignalEvent,
+                                                                                  uint32_t numWaitEvents,
+                                                                                  ze_event_handle_t *phWaitEvents) {
+
+    auto kernel = L0::Kernel::fromHandle(hKernel);
+
+    if (kernel == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    auto result = kernel->setGroupSize(groupSizes.groupSizeX, groupSizes.groupSizeY, groupSizes.groupSizeZ);
+
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    auto &args = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs;
+
+    if (args.size() > 0 && !pArguments) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    for (auto i = 0u; i < args.size(); i++) {
+
+        auto &arg = args[i];
+        auto argSize = sizeof(void *);
+        auto argValue = pArguments[i];
+
+        switch (arg.type) {
+        case NEO::ArgDescriptor::argTPointer:
+            if (arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal) {
+                argSize = *reinterpret_cast<size_t *>(argValue);
+                argValue = nullptr;
+            }
+            break;
+        case NEO::ArgDescriptor::argTValue:
+            argSize = std::numeric_limits<size_t>::max();
+
+        default:
+            break;
+        }
+        result = kernel->setArgumentValue(i, argSize, argValue);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+    }
+
+    L0::CmdListKernelLaunchParams launchParams = {};
+    launchParams.skipInOrderNonWalkerSignaling = this->skipInOrderNonWalkerSignalingAllowed(hSignalEvent);
+
+    return this->appendLaunchKernel(hKernel, groupCounts, hSignalEvent, numWaitEvents, phWaitEvents, launchParams, false);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_handle_t hEvent) {
     auto event = Event::fromHandle(hEvent);
 

@@ -133,6 +133,15 @@ struct CommandListCoreFamily : public CommandListImp {
                                                     ze_event_handle_t hEvent,
                                                     uint32_t numWaitEvents,
                                                     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+    ze_result_t appendLaunchKernelWithArguments(ze_kernel_handle_t hKernel,
+                                                const ze_group_count_t groupCounts,
+                                                const ze_group_size_t groupSizes,
+
+                                                void **pArguments,
+                                                void *pNext,
+                                                ze_event_handle_t hSignalEvent,
+                                                uint32_t numWaitEvents,
+                                                ze_event_handle_t *phWaitEvents) override;
     ze_result_t appendMemAdvise(ze_device_handle_t hDevice,
                                 const void *ptr, size_t size,
                                 ze_memory_advice_t advice) override;

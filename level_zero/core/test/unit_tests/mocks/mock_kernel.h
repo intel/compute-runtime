@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,9 +119,21 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
 
         if (checkPassedArgumentValues) {
             UNRECOVERABLE_IF(argIndex >= passedArgumentValues.size());
+            auto &explicitArgs = getImmutableData()->getDescriptor().payloadMappings.explicitArgs;
+            if (explicitArgs[argIndex].type == NEO::ArgDescriptor::argTValue) {
+
+                size_t maxArgSize = 0u;
+
+                for (const auto &element : explicitArgs[argIndex].as<NEO::ArgDescValue>().elements) {
+                    maxArgSize += element.size;
+                }
+                argSize = std::min(maxArgSize, argSize);
+            }
 
             passedArgumentValues[argIndex].resize(argSize);
-            memcpy(passedArgumentValues[argIndex].data(), pArgValue, argSize);
+            if (pArgValue) {
+                memcpy(passedArgumentValues[argIndex].data(), pArgValue, argSize);
+            }
 
             return ZE_RESULT_SUCCESS;
         } else {

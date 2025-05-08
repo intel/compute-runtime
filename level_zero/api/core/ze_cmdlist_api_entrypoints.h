@@ -134,6 +134,22 @@ ze_result_t zeCommandListAppendWaitExternalSemaphoreExt(
     return L0::CommandList::fromHandle(hCommandList)->appendWaitExternalSemaphores(numSemaphores, phSemaphores, waitParams, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
+ze_result_t zeCommandListAppendLaunchKernelWithArguments(
+    ze_command_list_handle_t hCommandList,
+    ze_kernel_handle_t hKernel,
+    const ze_group_count_t groupCounts,
+    const ze_group_size_t groupSizes,
+    void **pArguments,
+    void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    if (!hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelWithArguments(hKernel, groupCounts, groupSizes, pArguments, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -270,4 +286,17 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitExternalSemaphoreExt(
     ze_event_handle_t *phWaitEvents) {
     return L0::CommandList::fromHandle(hCommandList)->appendWaitExternalSemaphores(numSemaphores, phSemaphores, waitParams, hSignalEvent, numWaitEvents, phWaitEvents);
 }
+
+ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
+    ze_command_list_handle_t hCommandList,
+    ze_kernel_handle_t hKernel,
+    const ze_group_count_t groupCounts,
+    const ze_group_size_t groupSizes,
+    void **pArguments,
+    void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandListAppendLaunchKernelWithArguments(hCommandList, hKernel, groupCounts, groupSizes, pArguments, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
+} // extern "C"

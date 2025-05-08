@@ -36,6 +36,8 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zerIdentifierTranslateToDeviceHandle);
     RETURN_FUNC_PTR_IF_EXIST(zeDeviceSynchronize);
 
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListAppendLaunchKernelWithArguments);
+
     RETURN_FUNC_PTR_IF_EXIST(zexKernelGetBaseAddress);
     RETURN_FUNC_PTR_IF_EXIST(zexKernelGetArgumentSize);
     RETURN_FUNC_PTR_IF_EXIST(zexKernelGetArgumentType);

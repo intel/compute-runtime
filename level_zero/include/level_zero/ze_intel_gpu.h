@@ -332,6 +332,48 @@ ze_device_handle_t ZE_APICALL zerIdentifierTranslateToDeviceHandle(uint32_t iden
 ///     - ::ZE_RESULT_ERROR_DEVICE_LOST
 ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice); ///> [in] handle of the device
 
+/// @brief Append with arguments
+///
+/// @details
+///    - The application may call this function from simultaneous threads.
+///    - The implementation of this function should be lock-free.
+///    - Appends kernel to command list with arguments.
+///    - Kernel object state is updated with new arguments, as if separate zeKernelSetArgumentValue were called.
+///    - If argument is SLM (size), then SLM size in bytes for this resource is provided under pointer on specific index and its type is size_t.
+///    - If argument is an immediate type (i.e. structure, non pointer type), then values under pointer must contain full size of immediate type.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hCommandList`
+///         + `nullptr == hKernel`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pArguments`
+///     - ::ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT
+///     - ::ZE_RESULT_ERROR_INVALID_SIZE
+///         + `(nullptr == phWaitEvents) && (0 < numWaitEvents)`
+typedef struct _ze_group_size_t {
+    uint32_t groupSizeX; ///< [in] local work-group size in X dimension
+    uint32_t groupSizeY; ///< [in] local work-group size in Y dimension
+    uint32_t groupSizeZ; ///< [in] local work-group size in Z dimension
+
+} ze_group_size_t;
+
+ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
+    ze_command_list_handle_t hCommandList, ///< [in] handle of the command list
+    ze_kernel_handle_t hKernel,            ///< [in] handle of the kernel object
+    const ze_group_count_t groupCounts,    ///< [in] thread group counts
+    const ze_group_size_t groupSizes,      ///< [in] thread group sizes
+    void **pArguments,                     ///< [in] kernel arguments; pointer to list where each argument represents a pointer to the argument value on specific index
+    void *pNext,                           ///< [in][optional] extensions
+    ze_event_handle_t hSignalEvent,        ///< [in][optional] handle of the event to signal on completion
+    uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
+    ze_event_handle_t *phWaitEvents);      ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
