@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,18 +117,18 @@ bool OsContext::checkDirectSubmissionSupportsEngine(const DirectSubmissionProper
             supported = blitterOverrideKey == 0 ? false : true;
             startOnInit = blitterOverrideKey == 1 ? true : false;
         }
-    } else if (contextEngineType == aub_stream::ENGINE_RCS) {
-        int32_t renderOverrideKey = debugManager.flags.DirectSubmissionOverrideRenderSupport.get();
-        if (renderOverrideKey != -1) {
-            supported = renderOverrideKey == 0 ? false : true;
-            startOnInit = renderOverrideKey == 1 ? true : false;
-        }
-    } else {
-        // assume else is CCS
+    } else if (EngineHelpers::isCcs(contextEngineType)) {
         int32_t computeOverrideKey = debugManager.flags.DirectSubmissionOverrideComputeSupport.get();
         if (computeOverrideKey != -1) {
             supported = computeOverrideKey == 0 ? false : true;
             startOnInit = computeOverrideKey == 1 ? true : false;
+        }
+    } else {
+        // assume else is RCS
+        int32_t renderOverrideKey = debugManager.flags.DirectSubmissionOverrideRenderSupport.get();
+        if (renderOverrideKey != -1) {
+            supported = renderOverrideKey == 0 ? false : true;
+            startOnInit = renderOverrideKey == 1 ? true : false;
         }
     }
 
