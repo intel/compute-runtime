@@ -330,7 +330,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
-        waitForTaskCountWithKmdNotifyInputParams.push_back({taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle});
+        if (captureWaitForTaskCountWithKmdNotifyInputParams) {
+            static std::mutex waitForTaskCountWithKmdNotifyInputParamsMtx;
+            std::unique_lock<std::mutex> lock(waitForTaskCountWithKmdNotifyInputParamsMtx);
+            waitForTaskCountWithKmdNotifyInputParams.push_back({taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle});
+        }
         if (waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
             return *waitForTaskCountWithKmdNotifyFallbackReturnValue;
         }
@@ -667,6 +671,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool isUserFenceWaitSupported = false;
     bool isAnyDirectSubmissionEnabledCallBase = true;
     bool isAnyDirectSubmissionEnabledResult = true;
+    std::atomic_bool captureWaitForTaskCountWithKmdNotifyInputParams = false;
 };
 
 } // namespace NEO

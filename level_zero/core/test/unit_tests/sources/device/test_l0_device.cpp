@@ -6805,6 +6805,7 @@ HWTEST_F(DeviceSimpleTests, givenNoGpuHangWhenSynchronizingDeviceThenCallWaitFor
         csr->latestFlushedTaskCount = 0u;
         csr->taskCount = taskCountToWait++;
         csr->flushStamp->setStamp(flushStampToWait++);
+        csr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
         csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
     }
 
@@ -6815,6 +6816,7 @@ HWTEST_F(DeviceSimpleTests, givenNoGpuHangWhenSynchronizingDeviceThenCallWaitFor
         csr->latestFlushedTaskCount = 0u;
         csr->taskCount = taskCountToWait++;
         csr->flushStamp->setStamp(flushStampToWait++);
+        csr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
         csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
     }
 
