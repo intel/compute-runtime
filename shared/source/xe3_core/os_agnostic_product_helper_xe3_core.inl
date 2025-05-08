@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/os_interface/product_helper.inl"
 #include "shared/source/os_interface/product_helper_from_xe_hpg_to_xe3.inl"
 #include "shared/source/os_interface/product_helper_xe2_and_later.inl"
@@ -55,4 +56,14 @@ template <>
 bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
     return true;
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
+    const bool enabled = !isOOQ && queueTaskCount == queueCsr.peekTaskCount() && !queueCsr.directSubmissionRelaxedOrderingEnabled();
+    if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+        return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
+    }
+    return enabled;
+}
+
 } // namespace NEO
