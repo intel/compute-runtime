@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,8 +12,6 @@ set(RUNTIME_SRCS_EVENT
     ${CMAKE_CURRENT_SOURCE_DIR}/event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/event_builder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/event_builder.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/event_tracker.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/event_tracker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/user_event.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/user_event.h
 )

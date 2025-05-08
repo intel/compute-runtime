@@ -29,7 +29,6 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/async_events_handler.h"
-#include "opencl/source/event/event_tracker.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
@@ -49,9 +48,6 @@ Event::Event(
       cmdQueue(cmdQueue),
       cmdType(cmdType),
       taskCount(taskCount) {
-    if (NEO::debugManager.flags.EventsTrackerEnable.get()) {
-        EventsTracker::getEventsTracker().notifyCreation(this);
-    }
     flushStamp.reset(new FlushStampTracker(true));
 
     DBG_LOG(EventsDebugEnable, "Event()", this);
@@ -91,10 +87,6 @@ Event::Event(
 }
 
 Event::~Event() {
-    if (NEO::debugManager.flags.EventsTrackerEnable.get()) {
-        EventsTracker::getEventsTracker().notifyDestruction(this);
-    }
-
     DBG_LOG(EventsDebugEnable, "~Event()", this);
     // no commands should be registred
     DEBUG_BREAK_IF(this->cmdToSubmit.load());
@@ -647,9 +639,6 @@ void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
         if (NEO::MultiThreadHelpers::atomicCompareExchangeWeakSpin(executionStatus, prevStatus, newExecutionStatus)) {
             break;
         }
-    }
-    if (NEO::debugManager.flags.EventsTrackerEnable.get()) {
-        EventsTracker::getEventsTracker().notifyTransitionedExecutionStatus();
     }
 }
 

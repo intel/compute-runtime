@@ -341,7 +341,6 @@ DECLARE_DEBUG_VARIABLE(bool, LogWaitingForCompletion, false, "Logs waiting for c
 DECLARE_DEBUG_VARIABLE(bool, LogUsmReuse, false, "Logs operations of usm reuse to csv file")
 DECLARE_DEBUG_VARIABLE(bool, ResidencyDebugEnable, false, "enables debug messages and checks for Residency Model")
 DECLARE_DEBUG_VARIABLE(bool, EventsDebugEnable, false, "enables debug messages for events, virtual events, blocked enqueues, events trees etc.")
-DECLARE_DEBUG_VARIABLE(bool, EventsTrackerEnable, false, "enables event graphs dumping")
 DECLARE_DEBUG_VARIABLE(bool, PrintLWSSizes, false, "prints driver chosen local workgroup sizes")
 DECLARE_DEBUG_VARIABLE(bool, PrintDispatchParameters, false, "prints dispatch parameters of kernels passed to clEnqueueNDRangeKernel")
 DECLARE_DEBUG_VARIABLE(bool, PrintProgramBinaryProcessingTime, false, "prints execution time of Program::processGenBinary() method during program building")
