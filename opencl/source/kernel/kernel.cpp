@@ -1230,88 +1230,10 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
     }
 }
 
-void Kernel::performKernelTuning(CommandStreamReceiver &commandStreamReceiver, const Vec3<size_t> &lws, const Vec3<size_t> &gws, const Vec3<size_t> &offsets, TimestampPacketContainer *timestampContainer) {
-    auto performTunning = TunningType::disabled;
-
-    if (debugManager.flags.EnableKernelTunning.get() != -1) {
-        performTunning = static_cast<TunningType>(debugManager.flags.EnableKernelTunning.get());
-    }
-
-    if (performTunning == TunningType::full) {
-        KernelConfig config{gws, lws, offsets};
-
-        auto submissionDataIt = this->kernelSubmissionMap.find(config);
-        if (submissionDataIt == this->kernelSubmissionMap.end()) {
-            KernelSubmissionData submissionData;
-            submissionData.kernelStandardTimestamps = std::make_unique<TimestampPacketContainer>();
-            submissionData.kernelSubdeviceTimestamps = std::make_unique<TimestampPacketContainer>();
-            submissionData.status = TunningStatus::standardTunningInProgress;
-            submissionData.kernelStandardTimestamps->assignAndIncrementNodesRefCounts(*timestampContainer);
-            this->kernelSubmissionMap[config] = std::move(submissionData);
-            this->singleSubdevicePreferredInCurrentEnqueue = false;
-            return;
-        }
-
-        auto &submissionData = submissionDataIt->second;
-
-        if (submissionData.status == TunningStatus::tunningDone) {
-            this->singleSubdevicePreferredInCurrentEnqueue = submissionData.singleSubdevicePreferred;
-        }
-
-        if (submissionData.status == TunningStatus::subdeviceTunningInProgress) {
-            if (this->hasTunningFinished(submissionData)) {
-                submissionData.status = TunningStatus::tunningDone;
-                submissionData.kernelStandardTimestamps.reset();
-                submissionData.kernelSubdeviceTimestamps.reset();
-                this->singleSubdevicePreferredInCurrentEnqueue = submissionData.singleSubdevicePreferred;
-            } else {
-                this->singleSubdevicePreferredInCurrentEnqueue = false;
-            }
-        }
-
-        if (submissionData.status == TunningStatus::standardTunningInProgress) {
-            submissionData.status = TunningStatus::subdeviceTunningInProgress;
-            submissionData.kernelSubdeviceTimestamps->assignAndIncrementNodesRefCounts(*timestampContainer);
-            this->singleSubdevicePreferredInCurrentEnqueue = true;
-        }
-    }
-}
-
-bool Kernel::hasTunningFinished(KernelSubmissionData &submissionData) {
-    if (!this->hasRunFinished(submissionData.kernelStandardTimestamps.get()) ||
-        !this->hasRunFinished(submissionData.kernelSubdeviceTimestamps.get())) {
-        return false;
-    }
-
-    uint64_t globalStartTS = 0u;
-    uint64_t globalEndTS = 0u;
-
-    Event::getBoundaryTimestampValues(submissionData.kernelStandardTimestamps.get(), globalStartTS, globalEndTS);
-    auto standardTSDiff = globalEndTS - globalStartTS;
-
-    Event::getBoundaryTimestampValues(submissionData.kernelSubdeviceTimestamps.get(), globalStartTS, globalEndTS);
-    auto subdeviceTSDiff = globalEndTS - globalStartTS;
-
-    submissionData.singleSubdevicePreferred = standardTSDiff > subdeviceTSDiff;
-
-    return true;
-}
-
-bool Kernel::hasRunFinished(TimestampPacketContainer *timestampContainer) {
-    for (const auto &node : timestampContainer->peekNodes()) {
-        for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
-            if (node->getContextEndValue(i) == 1) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 bool Kernel::isSingleSubdevicePreferred() const {
     auto &gfxCoreHelper = this->getGfxCoreHelper();
 
-    return this->singleSubdevicePreferredInCurrentEnqueue || gfxCoreHelper.singleTileExecImplicitScalingRequired(this->usesSyncBuffer());
+    return gfxCoreHelper.singleTileExecImplicitScalingRequired(this->usesSyncBuffer());
 }
 
 void Kernel::setInlineSamplers() {

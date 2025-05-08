@@ -111,9 +111,7 @@ class MockKernel : public Kernel {
     using Kernel::isUnifiedMemorySyncRequired;
     using Kernel::kernelArgHandlers;
     using Kernel::kernelArguments;
-    using Kernel::KernelConfig;
     using Kernel::kernelHasIndirectAccess;
-    using Kernel::kernelSubmissionMap;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
     using Kernel::localBindingTableOffset;
@@ -129,7 +127,6 @@ class MockKernel : public Kernel {
     using Kernel::preferredWkgMultipleOffset;
     using Kernel::privateSurface;
     using Kernel::setInlineSamplers;
-    using Kernel::singleSubdevicePreferredInCurrentEnqueue;
     using Kernel::unifiedMemoryControls;
 
     using Kernel::implicitArgsVersion;

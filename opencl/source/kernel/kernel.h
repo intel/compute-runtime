@@ -74,18 +74,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         bool isSetToNullptr = false;
     };
 
-    enum class TunningStatus {
-        standardTunningInProgress,
-        subdeviceTunningInProgress,
-        tunningDone
-    };
-
-    enum class TunningType {
-        disabled,
-        simple,
-        full
-    };
-
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
                                                 size_t argSize,
                                                 const void *argVal);
@@ -279,7 +267,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     bool isVmeKernel() const { return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme; }
     bool requiresSystolicPipelineSelectMode() const { return systolicPipelineSelectMode; }
 
-    void performKernelTuning(CommandStreamReceiver &commandStreamReceiver, const Vec3<size_t> &lws, const Vec3<size_t> &gws, const Vec3<size_t> &offsets, TimestampPacketContainer *timestampContainer);
     MOCKABLE_VIRTUAL bool isSingleSubdevicePreferred() const;
     void setInlineSamplers();
 
@@ -405,41 +392,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     }
 
   protected:
-    struct KernelConfig {
-        Vec3<size_t> gws;
-        Vec3<size_t> lws;
-        Vec3<size_t> offsets;
-        bool operator==(const KernelConfig &other) const { return this->gws == other.gws && this->lws == other.lws && this->offsets == other.offsets; }
-    };
-    struct KernelConfigHash {
-        size_t operator()(KernelConfig const &config) const {
-            auto hash = std::hash<size_t>{};
-            size_t gwsHashX = hash(config.gws.x);
-            size_t gwsHashY = hash(config.gws.y);
-            size_t gwsHashZ = hash(config.gws.z);
-            size_t gwsHash = hashCombine(gwsHashX, gwsHashY, gwsHashZ);
-            size_t lwsHashX = hash(config.lws.x);
-            size_t lwsHashY = hash(config.lws.y);
-            size_t lwsHashZ = hash(config.lws.z);
-            size_t lwsHash = hashCombine(lwsHashX, lwsHashY, lwsHashZ);
-            size_t offsetsHashX = hash(config.offsets.x);
-            size_t offsetsHashY = hash(config.offsets.y);
-            size_t offsetsHashZ = hash(config.offsets.z);
-            size_t offsetsHash = hashCombine(offsetsHashX, offsetsHashY, offsetsHashZ);
-            return hashCombine(gwsHash, lwsHash, offsetsHash);
-        }
-
-        size_t hashCombine(size_t hash1, size_t hash2, size_t hash3) const {
-            return (hash1 ^ (hash2 << 1u)) ^ (hash3 << 2u);
-        }
-    };
-    struct KernelSubmissionData {
-        std::unique_ptr<TimestampPacketContainer> kernelStandardTimestamps;
-        std::unique_ptr<TimestampPacketContainer> kernelSubdeviceTimestamps;
-        TunningStatus status;
-        bool singleSubdevicePreferred = false;
-    };
-
     Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
 
     void makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
@@ -462,17 +414,12 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     }
     cl_int patchPrivateSurface();
 
-    bool hasTunningFinished(KernelSubmissionData &submissionData);
-    bool hasRunFinished(TimestampPacketContainer *timestampContainer);
-
     void initializeLocalIdsCache();
     std::unique_ptr<LocalIdsCache> localIdsCache;
 
     UnifiedMemoryControls unifiedMemoryControls{};
 
     std::map<uint32_t, MemObj *> migratableArgsMap{};
-
-    std::unordered_map<KernelConfig, KernelSubmissionData, KernelConfigHash> kernelSubmissionMap;
 
     std::vector<SimpleKernelArgInfo> kernelArguments;
     std::vector<KernelArgHandler> kernelArgHandlers;
@@ -522,7 +469,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     bool auxTranslationRequired = false;
     bool systolicPipelineSelectMode = false;
     bool isUnifiedMemorySyncRequired = true;
-    bool singleSubdevicePreferredInCurrentEnqueue = false;
     bool kernelHasIndirectAccess = true;
     bool anyKernelArgumentUsingSystemMemory = false;
     bool isDestinationAllocationInSystemMemory = false;

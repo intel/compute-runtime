@@ -423,13 +423,9 @@ TEST_F(KernelTests, WhenIsSingleSubdevicePreferredIsCalledThenCorrectValuesAreRe
     std::unique_ptr<MockKernel> kernel{MockKernel::create<MockKernel>(pClDevice->getDevice(), pProgram)};
     for (auto usesSyncBuffer : ::testing::Bool()) {
         kernel->getAllocatedKernelInfo()->kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = usesSyncBuffer;
-        for (auto singleSubdevicePreferredInCurrentEnqueue : ::testing::Bool()) {
-            kernel->singleSubdevicePreferredInCurrentEnqueue = singleSubdevicePreferredInCurrentEnqueue;
 
-            EXPECT_EQ(usesSyncBuffer, kernel->usesSyncBuffer());
-            auto expectedSingleSubdevicePreferredInCurrentEnqueue = singleSubdevicePreferredInCurrentEnqueue || helper.singleTileExecImplicitScalingRequired(usesSyncBuffer);
-            EXPECT_EQ(expectedSingleSubdevicePreferredInCurrentEnqueue, kernel->isSingleSubdevicePreferred());
-        }
+        EXPECT_EQ(usesSyncBuffer, kernel->usesSyncBuffer());
+        EXPECT_EQ(helper.singleTileExecImplicitScalingRequired(usesSyncBuffer), kernel->isSingleSubdevicePreferred());
     }
 }
 
@@ -2369,118 +2365,6 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicAndImplicitArgsHas
     EXPECT_TRUE(kernel->getHasIndirectAccess());
 
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
-}
-
-TEST(KernelConfigTests, givenTwoKernelConfigsWhenCompareThenResultsAreCorrect) {
-    Vec3<size_t> lws{1, 1, 1};
-    Vec3<size_t> gws{1, 1, 1};
-    Vec3<size_t> offsets{1, 1, 1};
-    MockKernel::KernelConfig config{gws, lws, offsets};
-    MockKernel::KernelConfig config2{gws, lws, offsets};
-    EXPECT_TRUE(config == config2);
-
-    config2.offsets.z = 2;
-    EXPECT_FALSE(config == config2);
-
-    config2.lws.z = 2;
-    config2.offsets.z = 1;
-    EXPECT_FALSE(config == config2);
-
-    config2.lws.z = 1;
-    config2.gws.z = 2;
-    EXPECT_FALSE(config == config2);
-}
-
-HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenKernelConfigDataIsTracked) {
-    using TimestampPacketType = typename FamilyType::TimestampPacketType;
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableKernelTunning.set(2u);
-
-    auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
-    MockKernelWithInternals mockKernel(*this->pClDevice);
-
-    Vec3<size_t> lws{1, 1, 1};
-    Vec3<size_t> gws{1, 1, 1};
-    Vec3<size_t> offsets{1, 1, 1};
-    MockKernel::KernelConfig config{gws, lws, offsets};
-
-    MockTimestampPacketContainer container(*commandStreamReceiver.getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer subdeviceContainer(*commandStreamReceiver.getTimestampPacketAllocator(), 2);
-
-    auto result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
-    EXPECT_EQ(result, mockKernel.mockKernel->kernelSubmissionMap.end());
-
-    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
-
-    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
-    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
-    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::standardTunningInProgress);
-    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
-
-    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &subdeviceContainer);
-
-    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
-    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
-    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::subdeviceTunningInProgress);
-    EXPECT_TRUE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
-
-    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
-
-    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
-    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
-    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::subdeviceTunningInProgress);
-    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
-
-    TimestampPacketType data[4] = {static_cast<TimestampPacketType>(container.getNode(0u)->getContextStartValue(0)),
-                                   static_cast<TimestampPacketType>(container.getNode(0u)->getGlobalStartValue(0)),
-                                   2, 2};
-
-    container.getNode(0u)->assignDataToAllTimestamps(0, data);
-
-    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
-
-    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
-    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
-    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::subdeviceTunningInProgress);
-    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
-
-    data[0] = static_cast<TimestampPacketType>(subdeviceContainer.getNode(0u)->getContextStartValue(0));
-    data[1] = static_cast<TimestampPacketType>(subdeviceContainer.getNode(0u)->getGlobalStartValue(0));
-    data[2] = 2;
-    data[3] = 2;
-
-    subdeviceContainer.getNode(0u)->assignDataToAllTimestamps(0, data);
-
-    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
-
-    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
-    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
-    EXPECT_NE(result->second.kernelStandardTimestamps.get(), nullptr);
-    EXPECT_NE(result->second.kernelSubdeviceTimestamps.get(), nullptr);
-    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::subdeviceTunningInProgress);
-    EXPECT_FALSE(mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
-
-    data[0] = static_cast<TimestampPacketType>(subdeviceContainer.getNode(1u)->getContextStartValue(0));
-    data[1] = static_cast<TimestampPacketType>(subdeviceContainer.getNode(1u)->getGlobalStartValue(0));
-    data[2] = 2;
-    data[3] = 2;
-
-    subdeviceContainer.getNode(1u)->assignDataToAllTimestamps(0, data);
-
-    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
-
-    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
-    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
-    EXPECT_EQ(result->second.kernelStandardTimestamps.get(), nullptr);
-    EXPECT_EQ(result->second.kernelSubdeviceTimestamps.get(), nullptr);
-    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::tunningDone);
-    EXPECT_EQ(result->second.singleSubdevicePreferred, mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
-
-    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
-    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
-    EXPECT_NE(result, mockKernel.mockKernel->kernelSubmissionMap.end());
-    EXPECT_EQ(result->second.status, MockKernel::TunningStatus::tunningDone);
-    EXPECT_EQ(result->second.singleSubdevicePreferred, mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 }
 
 HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenExecEnvDoesNotHavePageFaultManagerThenPageFaultDoesNotMoveAllocation) {
