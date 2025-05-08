@@ -496,7 +496,6 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
     auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
-    this->adjustSharedSystemMemCapabilities();
 
     querySystemInfo();
 
@@ -1860,12 +1859,6 @@ bool Drm::queryDeviceIdAndRevision() {
         return IoctlHelperXe::queryDeviceIdAndRevision(*this);
     }
     return IoctlHelperI915::queryDeviceIdAndRevision(*this);
-}
-
-void Drm::adjustSharedSystemMemCapabilities() {
-    if (!this->isSharedSystemAllocEnabled()) {
-        this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
-    }
 }
 
 uint32_t Drm::getAggregatedProcessCount() const {
