@@ -48,9 +48,9 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfHostDeviceAllocationCacheIsEnabledT
     EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
 }
 
-TEST(ApiSpecificConfigL0Tests, WhenCheckingIfUsmAllocPoolingIsEnabledThenReturnCorrectValue) {
+TEST(ApiSpecificConfigL0Tests, WhenCheckingIfUsmAllocPoolingIsEnabledThenReturnFalse) {
     EXPECT_FALSE(ApiSpecificConfig::isHostUsmPoolingEnabled());
-    EXPECT_TRUE(ApiSpecificConfig::isDeviceUsmPoolingEnabled());
+    EXPECT_FALSE(ApiSpecificConfig::isDeviceUsmPoolingEnabled());
 }
 
 TEST(ApiSpecificConfigL0Tests, GivenDebugFlagCombinationsGetCorrectSharedAllocPrefetchEnabled) {

@@ -175,6 +175,7 @@ ze_result_t ContextMemHandleMock::getImageAllocProperties(Image *image,
 }
 
 void MemoryExportImportWSLTest::SetUp() {
+
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
@@ -196,8 +197,6 @@ void MemoryExportImportWSLTest::SetUp() {
 }
 
 void MemoryExportImportWSLTest::TearDown() {
-    // clean usm device pool before replacing mem manager
-    neoDevice->cleanupUsmAllocationPool();
     driverHandle->setMemoryManager(prevMemoryManager);
     delete currMemoryManager;
 }
