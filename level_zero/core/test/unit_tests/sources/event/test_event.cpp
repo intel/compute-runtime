@@ -3126,6 +3126,7 @@ TEST_F(EventPoolCreateMultiDeviceFlatHierarchy, givenFlatHierarchyWhenCallZeGetD
     }
 
     static_cast<DeviceImp *>(driverHandle->devices[1])->numSubDevices = 0;
+    driverHandle->setupDevicesToExpose();
     uint32_t deviceCount2 = 0;
     result = zeDeviceGet(driverHandle.get(), &deviceCount2, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

@@ -1005,6 +1005,7 @@ TEST_F(DriverHandleTest, givenInitializedDriverWithTwoDevicesWhenGetDeviceIsCall
     auto newNeoDevice = L0::Device::create(driverHandleImp, std::move(testNeoDevice), false, &result);
     driverHandleImp->devices.push_back(newNeoDevice);
     driverHandleImp->numDevices++;
+    driverHandleImp->setupDevicesToExpose();
 
     uint32_t count = 0U;
     result = driverHandle->getDevice(&count, nullptr);

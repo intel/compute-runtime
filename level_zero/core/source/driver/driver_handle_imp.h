@@ -182,6 +182,7 @@ struct DriverHandleImp : public DriverHandle {
     ze_context_handle_t getDefaultContext() const override {
         return defaultContext;
     }
+    void setupDevicesToExpose();
 
   protected:
     NEO::GraphicsAllocation *getPeerAllocation(Device *device,
