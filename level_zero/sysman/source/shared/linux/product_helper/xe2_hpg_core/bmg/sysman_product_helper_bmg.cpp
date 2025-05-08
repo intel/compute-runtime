@@ -811,7 +811,9 @@ static ze_result_t getCounterValues(const std::vector<std::pair<const std::strin
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
 
-        totalCounter += packInto64Bit(regH, regL);
+        uint64_t counter = packInto64Bit(regH, regL);
+        keyH.find("_32B_") != std::string::npos ? counter *= 32 : counter *= 64;
+        totalCounter += counter;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -844,7 +846,6 @@ static ze_result_t getMemoryBandwidthCounterValues(const std::map<std::string, u
         {"_CH1_SOC_64B_WR_REQ_LOWER", "_CH1_SOC_64B_WR_REQ_UPPER"}};
 
     constexpr uint64_t maxSupportedMsu = 8;
-    constexpr uint64_t transactionSize = 32;
 
     pBandwidth->readCounter = 0;
     pBandwidth->writeCounter = 0;
@@ -864,9 +865,6 @@ static ze_result_t getMemoryBandwidthCounterValues(const std::map<std::string, u
             }
         }
     }
-
-    pBandwidth->readCounter = (pBandwidth->readCounter * transactionSize) / microFactor;
-    pBandwidth->writeCounter = (pBandwidth->writeCounter * transactionSize) / microFactor;
 
     return ZE_RESULT_SUCCESS;
 }
