@@ -33,7 +33,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
         REQUIRE_SVM_OR_SKIP(&hardwareInfo);
-        this->svmAllocsManager = std::make_unique<MockSVMAllocsManager>(pDevice->getMemoryManager(), false);
+        this->svmAllocsManager = std::make_unique<MockSVMAllocsManager>(pDevice->getMemoryManager());
         debugManager.flags.EnableCopyWithStagingBuffers.set(1);
         RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
         std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};

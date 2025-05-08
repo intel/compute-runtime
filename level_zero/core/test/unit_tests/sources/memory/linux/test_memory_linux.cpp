@@ -204,7 +204,7 @@ struct MemoryExportImportObtainFdTest : public ::testing::Test {
         driverHandle->setMemoryManager(currMemoryManager);
 
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
-        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager, false);
+        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
         driverHandle->svmAllocsManager = currSvmAllocsManager;
 
         context = std::make_unique<L0::ContextImp>(driverHandle.get());
@@ -637,7 +637,7 @@ struct MemoryObtainFdTest : public ::testing::Test {
         driverHandle->setMemoryManager(currMemoryManager);
 
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
-        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager, false);
+        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
         driverHandle->svmAllocsManager = currSvmAllocsManager;
 
         context = std::make_unique<L0::ContextImp>(driverHandle.get());

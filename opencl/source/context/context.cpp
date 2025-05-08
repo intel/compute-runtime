@@ -301,8 +301,7 @@ bool Context::createImpl(const cl_context_properties *properties,
         }
 
         setupContextType();
-        this->svmAllocsManager = new SVMAllocsManager(this->memoryManager,
-                                                      this->areMultiStorageAllocationsPreferred());
+        this->svmAllocsManager = new SVMAllocsManager(this->memoryManager);
         this->svmAllocsManager->initUsmAllocationsCaches(device->getDevice());
         auto requiresWritableStaging = device->getDefaultEngine().commandStreamReceiver->getType() != CommandStreamReceiverType::hardware;
         this->stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager, rootDeviceIndices, deviceBitfields, requiresWritableStaging);

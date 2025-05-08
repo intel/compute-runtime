@@ -716,7 +716,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     mock->setBindAvailable();
 
     executionEnvironment->calculateMaxOsContextCount();
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
@@ -765,7 +765,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, MmapFailWhenCreateSharedUnifiedMem
         return MAP_FAILED;
     };
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
@@ -789,7 +789,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     mock->ioctlCallsCount = 0;
     mock->setBindAvailable();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
@@ -835,7 +835,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhe
     mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
@@ -882,7 +882,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLoc
     mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
@@ -940,7 +940,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKmdMigratedSharedAllocationWh
     mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
@@ -990,7 +990,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
     mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
@@ -1033,7 +1033,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
     mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
@@ -1090,7 +1090,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialP
     mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
@@ -1134,7 +1134,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrati
     mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
@@ -1275,7 +1275,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenVmAdviseIoctlFailsThenCreateSh
     mock->queryEngineInfo();
     mock->context.vmAdviseReturn = -1;
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
 
@@ -1300,7 +1300,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     mock->queryEngineInfo();
     mock->context.mmapOffsetReturn = -1;
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
@@ -1327,7 +1327,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     auto size = 2 * MemoryConstants::megaByte;
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
@@ -1375,7 +1375,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateKmdMigratedSharedAlloca
     mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     auto size = 2 * MemoryConstants::megaByte;
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
@@ -2068,7 +2068,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
     mock->ioctlCallsCount = 0;
     mock->setBindAvailable();
 
-    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
 

@@ -2048,7 +2048,7 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
 
 struct SVMAllocsManagerMock : public NEO::SVMAllocsManager {
     using SVMAllocsManager::mtxForIndirectAccess;
-    SVMAllocsManagerMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount) override {
         makeIndirectAllocationsResidentCalledTimes++;
     }

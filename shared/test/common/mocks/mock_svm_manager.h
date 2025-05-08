@@ -17,7 +17,6 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
   public:
     using SVMAllocsManager::memoryManager;
     using SVMAllocsManager::mtxForIndirectAccess;
-    using SVMAllocsManager::multiOsContextSupport;
     using SVMAllocsManager::svmAllocs;
     using SVMAllocsManager::SVMAllocsManager;
     using SVMAllocsManager::svmDeferFreeAllocs;
@@ -45,7 +44,7 @@ struct SVMMemoryAllocatorFixture {
     void setUp() {
         executionEnvironment.initGmm();
         memoryManager = std::make_unique<MockMemoryManager>(false, enableLocalMemory, executionEnvironment);
-        svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
+        svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
         if (enableLocalMemory) {
             memoryManager->pageFaultManager.reset(new MockPageFaultManager);
         }

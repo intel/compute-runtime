@@ -134,7 +134,7 @@ TEST_F(PageFaultManagerTest,
     auto osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
     csr->setupContext(*osContext);
-    auto unifiedMemoryManager = std::make_unique<SVMAllocsManager>(executionEnvironment.memoryManager.get(), false);
+    auto unifiedMemoryManager = std::make_unique<SVMAllocsManager>(executionEnvironment.memoryManager.get());
     auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
 
     OSInterface osInterface;

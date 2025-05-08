@@ -141,7 +141,7 @@ struct IpcMemoryImplicitScalingTest : public ::testing::Test {
         driverHandle->setMemoryManager(currMemoryManager);
 
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
-        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager, false);
+        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
         driverHandle->svmAllocsManager = currSvmAllocsManager;
 
         context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
@@ -1486,7 +1486,7 @@ TEST_F(MemoryTest, givenContextWhenGettingPitchFor2dImageThenCorrectRowPitchIsRe
 }
 
 struct SVMAllocsManagerSharedAllocZexPointerMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerSharedAllocZexPointerMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerSharedAllocZexPointerMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void *createHostUnifiedMemoryAllocation(size_t size,
                                             const UnifiedMemoryProperties &memoryProperties) override {
         hostUnifiedMemoryAllocationTimes++;
@@ -1717,7 +1717,7 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithHostInitialPlacementBiasFlagThe
 }
 
 struct SVMAllocsManagerFreeExtMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerFreeExtMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerFreeExtMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     bool freeSVMAlloc(void *ptr, bool blocking) override {
         if (blocking) {
             blockingCallsMade++;
@@ -2234,7 +2234,7 @@ TEST_F(FreeExtTests,
 }
 
 struct SVMAllocsManagerOutOFMemoryMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerOutOFMemoryMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerOutOFMemoryMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void *createUnifiedMemoryAllocation(size_t size,
                                         const UnifiedMemoryProperties &svmProperties) override {
         return nullptr;
@@ -2291,7 +2291,7 @@ TEST_F(OutOfMemoryTests,
 }
 
 struct SVMAllocsManagerRelaxedSizeMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerRelaxedSizeMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerRelaxedSizeMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void *createUnifiedMemoryAllocation(size_t size,
                                         const UnifiedMemoryProperties &svmProperties) override {
         validateMemoryProperties(svmProperties);
@@ -3797,7 +3797,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
 
-        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager, driverHandle->devices[0]->isImplicitScalingCapable());
+        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
         driverHandle->svmAllocsManager = currSvmAllocsManager;
     }
@@ -5485,7 +5485,7 @@ TEST_F(ImportFdUncachedTests,
 }
 
 struct SVMAllocsManagerSharedAllocFailMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerSharedAllocFailMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerSharedAllocFailMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void *createSharedUnifiedMemoryAllocation(size_t size,
                                               const UnifiedMemoryProperties &svmProperties,
                                               void *cmdQ) override {
@@ -5539,7 +5539,7 @@ TEST_F(SharedAllocFailTests, whenAllocatinSharedMemoryAndAllocationFailsThenOutO
 }
 
 struct SVMAllocsManagerSharedAllocMultiDeviceMock : public NEO::SVMAllocsManager {
-    SVMAllocsManagerSharedAllocMultiDeviceMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+    SVMAllocsManagerSharedAllocMultiDeviceMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
     void *createHostUnifiedMemoryAllocation(size_t size,
                                             const UnifiedMemoryProperties &memoryProperties) override {
         createHostUnifiedMemoryAllocationTimes++;

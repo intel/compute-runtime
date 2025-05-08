@@ -522,7 +522,7 @@ void MemoryExportImportImplicitScalingTest::SetUp() {
     driverHandle->setMemoryManager(currMemoryManager);
 
     prevSvmAllocsManager = driverHandle->svmAllocsManager;
-    currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager, false);
+    currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
     driverHandle->svmAllocsManager = currSvmAllocsManager;
 
     device = driverHandle->devices[0];

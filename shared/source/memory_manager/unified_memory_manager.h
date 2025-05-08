@@ -219,7 +219,7 @@ class SVMAllocsManager {
         defer = 2
     };
 
-    SVMAllocsManager(MemoryManager *memoryManager, bool multiOsContextSupport);
+    SVMAllocsManager(MemoryManager *memoryManager);
     MOCKABLE_VIRTUAL ~SVMAllocsManager();
     void *createSVMAlloc(size_t size,
                          const SvmAllocationProperties svmProperties,
@@ -305,7 +305,6 @@ class SVMAllocsManager {
     MemoryManager *memoryManager;
     std::shared_mutex mtx;
     std::mutex mtxForIndirectAccess;
-    bool multiOsContextSupport;
     std::unique_ptr<SvmAllocationCache> usmDeviceAllocationsCache;
     std::unique_ptr<SvmAllocationCache> usmHostAllocationsCache;
     std::multimap<uint32_t, GraphicsAllocation *> internalAllocationsMap;

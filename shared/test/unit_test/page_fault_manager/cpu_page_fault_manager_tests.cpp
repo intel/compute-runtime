@@ -136,7 +136,7 @@ TEST_F(PageFaultManagerTest, givenNonGpuAllocsContainerWhenMovingToGpuDomainMult
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainAllocsThenAllocationsInGpuDomainAreNotMoved) {
-    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager.get());
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
 
     void *alloc1 = reinterpret_cast<void *>(0x1);
@@ -178,7 +178,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainWithPr
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintUmdSharedMigration.set(1);
 
-    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager.get());
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     void *alloc1 = reinterpret_cast<void *>(0x1);
     void *alloc2 = reinterpret_cast<void *>(0x100);
@@ -888,7 +888,7 @@ TEST_F(PageFaultManagerTest, givenHwCsrWhenSelectingHandlerThenHwGpuDomainHandle
 struct PageFaultManagerTestWithDebugFlag : public ::testing::TestWithParam<uint32_t> {
     void SetUp() override {
         memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
-        unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
+        unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
         pageFaultManager = std::make_unique<MockPageFaultManager>();
         cmdQ = reinterpret_cast<void *>(0xFFFF);
     }
@@ -979,7 +979,7 @@ TEST_F(PageFaultManagerTest, givenNoUsmInitialPlacementFlagsWHenInsertingUsmAllo
 
 TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryNotInGpuDomainThenTbxFaultManagerShouldDoNothingBeforeCallingDefaultHandler) {
     auto memoryManager2 = std::make_unique<MockMemoryManager>(executionEnvironment);
-    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get(), false);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get());
     auto pageFaultManager2 = std::make_unique<MockPageFaultManagerImpl<TbxPageFaultManager>>();
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
 
@@ -1000,7 +1000,7 @@ TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryNotInGpuDomainThenTbxFa
 
 TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryInGpuDomainThenTbxFaultManagerShouldAllowCpuAccessBeforeCallingDefaultHandler) {
     auto memoryManager2 = std::make_unique<MockMemoryManager>(executionEnvironment);
-    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get(), false);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get());
     auto pageFaultManager2 = std::make_unique<MockPageFaultManagerImpl<TbxPageFaultManager>>();
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
 
@@ -1022,7 +1022,7 @@ TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryInGpuDomainThenTbxFault
 
 TEST_F(PageFaultManagerTest, givenTbxModeWhenSharedMemoryIsManagedWhenHandleFaultIsFalseThenTbxFaultManagerShouldNotHandleFault) {
     auto memoryManager2 = std::make_unique<MockMemoryManager>(executionEnvironment);
-    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get(), false);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get());
     auto pageFaultManager2 = std::make_unique<MockPageFaultManagerImpl<TbxPageFaultManager>>();
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
 

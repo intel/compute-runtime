@@ -52,7 +52,7 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingIsInitializedThenRe
 
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     auto device = deviceFactory->rootDevices[0];
-    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M, rootDeviceIndices, deviceBitfields);
 
@@ -73,7 +73,7 @@ class InitializedUnifiedMemoryPoolingTest : public UnifiedMemoryPoolingTest {
 
         deviceFactory = std::unique_ptr<UltDeviceFactory>(new UltDeviceFactory(1, 1));
         device = deviceFactory->rootDevices[0];
-        svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+        svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
         static_cast<MockMemoryManager *>(device->getMemoryManager())->failInDevicePoolWithError = failAllocation;
 
         poolMemoryProperties = std::make_unique<SVMAllocsManager::UnifiedMemoryProperties>(poolMemoryType, MemoryConstants::pageSize2M, rootDeviceIndices, deviceBitfields);
@@ -317,7 +317,7 @@ class UnifiedMemoryPoolingManagerTest : public SVMMemoryAllocatorFixture<true>, 
         poolInfo2MbTo16Mb = usmMemAllocPoolsManager->poolInfos[3];
         poolInfo16MbTo64Mb = usmMemAllocPoolsManager->poolInfos[4];
         poolInfo64MbTo256Mb = usmMemAllocPoolsManager->poolInfos[5];
-        svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+        svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
         mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
         mockMemoryManager->failInDevicePoolWithError = failAllocation;
         if (InternalMemoryType::deviceUnifiedMemory == poolMemoryType) {

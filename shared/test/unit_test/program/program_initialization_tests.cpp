@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     MockDevice device{};
     REQUIRE_SVM_OR_SKIP(&device);
     device.injectMemoryManager(new MockMemoryManager());
-    MockSVMAllocsManager svmAllocsManager(device.getMemoryManager(), false);
+    MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
     WhiteBox<LinkerInput> emptyLinkerInput;
     std::vector<uint8_t> initData;
     initData.resize(64, 7U);
@@ -74,7 +74,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
     MockDevice device{};
     REQUIRE_SVM_OR_SKIP(&device);
     device.injectMemoryManager(new MockMemoryManager());
-    MockSVMAllocsManager svmAllocsManager(device.getMemoryManager(), false);
+    MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
     WhiteBox<LinkerInput> linkerInputExportGlobalVariables;
     WhiteBox<LinkerInput> linkerInputExportGlobalConstants;
     linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
@@ -172,7 +172,7 @@ TEST(AllocateGlobalSurfaceTest, WhenGlobalsAreNotExportedAndAllocationFailsThenG
     auto memoryManager = std::make_unique<MockMemoryManager>(*device.getExecutionEnvironment());
     memoryManager->failInAllocateWithSizeAndAlignment = true;
     device.injectMemoryManager(memoryManager.release());
-    MockSVMAllocsManager mockSvmAllocsManager(device.getMemoryManager(), false);
+    MockSVMAllocsManager mockSvmAllocsManager(device.getMemoryManager());
     WhiteBox<LinkerInput> emptyLinkerInput;
     std::vector<uint8_t> initData;
     initData.resize(64, 7U);
@@ -231,7 +231,7 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
             debugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
             MockDevice device;
             device.getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
-            MockSVMAllocsManager svmAllocsManager(device.getMemoryManager(), false);
+            MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
 
             auto pAllocation = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, true /* constant */,
                                                       nullptr /* linker input */, initData.data());

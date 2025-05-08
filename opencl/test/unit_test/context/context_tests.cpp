@@ -781,7 +781,7 @@ struct MockGTPinTestContext : Context {
 };
 
 struct MockSVMAllocManager : SVMAllocsManager {
-    MockSVMAllocManager() : SVMAllocsManager(nullptr, false) {}
+    MockSVMAllocManager() : SVMAllocsManager(nullptr) {}
     ~MockSVMAllocManager() override {
         svmAllocManagerDeleted = true;
     }
