@@ -105,6 +105,7 @@ struct BlitProperties {
     GMM_YUV_PLANE_ENUM dstPlane = GMM_YUV_PLANE_ENUM::GMM_NO_PLANE;
     GMM_YUV_PLANE_ENUM srcPlane = GMM_YUV_PLANE_ENUM::GMM_NO_PLANE;
     bool isSystemMemoryPoolUsed = false;
+    bool isBlitAllowedForDepthFormat = true;
 };
 
 } // namespace NEO

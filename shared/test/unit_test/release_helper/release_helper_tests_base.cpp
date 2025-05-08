@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -168,5 +168,13 @@ void ReleaseHelperTestsBase::whenIsDummyBlitWaRequiredCalledThenFalseReturned() 
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
         EXPECT_FALSE(releaseHelper->isDummyBlitWaRequired());
+    }
+}
+void ReleaseHelperTestsBase::whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isBlitImageAllowedForDepthFormat());
     }
 }
