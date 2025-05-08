@@ -104,7 +104,6 @@ struct DriverHandleImp : public DriverHandle {
     void initializeVertexes();
     ze_result_t fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phDevices) override;
     void createHostPointerManager();
-    void sortNeoDevices(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
 
     bool isRemoteImageNeeded(Image *image, Device *device);
     bool isRemoteResourceNeeded(void *ptr,
