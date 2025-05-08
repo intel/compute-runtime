@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -326,7 +326,6 @@ HWTEST_F(EnqueueKernelTest, givenBcsEnabledWhenThread1EnqueueWriteBufferAndThrea
 HWTEST_F(EnqueueKernelTest, givenBcsEnabledAndQueuePerThreadWhenEnqueueWriteBufferAndEnqueueNDRangeKernelInLoopThenIsNoRace) {
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.set(1);
-    debugManager.flags.EnableCmdQRoundRobindEngineAssign.set(0);
     HardwareInfo hwInfo = *pDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     REQUIRE_FULL_BLITTER_OR_SKIP(*pDevice->executionEnvironment->rootDeviceEnvironments[0]);

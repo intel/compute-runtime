@@ -9,10 +9,6 @@
 
 namespace NEO {
 
-bool CommandQueue::isAssignEngineRoundRobinEnabled() {
-    return true;
-}
-
 bool CommandQueue::isTimestampWaitEnabled() {
     return true;
 }

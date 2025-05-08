@@ -163,7 +163,6 @@ class ProductHelper {
     virtual bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const = 0;
     virtual bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAdjustWalkOrderAvailable(const ReleaseHelper *releaseHelper) const = 0;
-    virtual bool isAssignEngineRoundRobinSupported() const = 0;
     virtual uint32_t getL1CachePolicy(bool isDebuggerActive) const = 0;
     virtual bool isEvictionIfNecessaryFlagSupported() const = 0;
     virtual void adjustNumberOfCcs(HardwareInfo &hwInfo) const = 0;

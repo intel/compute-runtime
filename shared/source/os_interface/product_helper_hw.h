@@ -105,7 +105,6 @@ class ProductHelperHw : public ProductHelper {
     bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const override;
     bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
     bool isAdjustWalkOrderAvailable(const ReleaseHelper *releaseHelper) const override;
-    bool isAssignEngineRoundRobinSupported() const override;
     uint32_t getL1CachePolicy(bool isDebuggerActive) const override;
     bool isEvictionIfNecessaryFlagSupported() const override;
     void adjustNumberOfCcs(HardwareInfo &hwInfo) const override;

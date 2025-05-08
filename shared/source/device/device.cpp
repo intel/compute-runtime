@@ -878,25 +878,6 @@ EngineControl &Device::getInternalEngine() {
     return this->getNearestGenericSubDevice(0)->getEngine(engineType, EngineUsage::internal);
 }
 
-EngineControl &Device::getNextEngineForCommandQueue() {
-    this->initializeEngineRoundRobinControls();
-
-    const auto &defaultEngine = this->getDefaultEngine();
-
-    const auto &hardwareInfo = this->getHardwareInfo();
-    const auto &gfxCoreHelper = getGfxCoreHelper();
-    const auto engineGroupType = gfxCoreHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hardwareInfo);
-
-    const auto defaultEngineGroupIndex = this->getEngineGroupIndexFromEngineGroupType(engineGroupType);
-    auto &engineGroup = this->getRegularEngineGroups()[defaultEngineGroupIndex];
-
-    auto engineIndex = 0u;
-    do {
-        engineIndex = (this->regularCommandQueuesCreatedWithinDeviceCount++ / this->queuesPerEngineCount) % engineGroup.engines.size();
-    } while (!this->availableEnginesForCommandQueueusRoundRobin.test(engineIndex));
-    return engineGroup.engines[engineIndex];
-}
-
 EngineControl *Device::getInternalCopyEngine() {
     if (!getHardwareInfo().capabilityTable.blitterOperationsSupported) {
         return nullptr;
@@ -987,28 +968,6 @@ void Device::finalizeRayTracing() {
         delete rtDispatchGlobalsInfos[i];
         rtDispatchGlobalsInfos[i] = nullptr;
     }
-}
-
-void Device::initializeEngineRoundRobinControls() {
-    if (this->availableEnginesForCommandQueueusRoundRobin.any()) {
-        return;
-    }
-
-    uint32_t queuesPerEngine = 1u;
-
-    if (debugManager.flags.CmdQRoundRobindEngineAssignNTo1.get() != -1) {
-        queuesPerEngine = debugManager.flags.CmdQRoundRobindEngineAssignNTo1.get();
-    }
-
-    this->queuesPerEngineCount = queuesPerEngine;
-
-    std::bitset<8> availableEngines = std::numeric_limits<uint8_t>::max();
-
-    if (debugManager.flags.CmdQRoundRobindEngineAssignBitfield.get() != -1) {
-        availableEngines = debugManager.flags.CmdQRoundRobindEngineAssignBitfield.get();
-    }
-
-    this->availableEnginesForCommandQueueusRoundRobin = availableEngines;
 }
 
 OSTime *Device::getOSTime() const { return getRootDeviceEnvironment().osTime.get(); };

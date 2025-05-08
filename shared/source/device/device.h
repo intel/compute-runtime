@@ -121,7 +121,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     size_t getEngineGroupIndexFromEngineGroupType(EngineGroupType engineGroupType) const;
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
-    EngineControl &getNextEngineForCommandQueue();
     EngineControl &getInternalEngine();
     EngineControl *getInternalCopyEngine();
     EngineControl *getHpCopyEngine();
@@ -319,7 +318,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     std::atomic_uint32_t regularCommandQueuesCreatedWithinDeviceCount{0};
     std::bitset<8> availableEnginesForCommandQueueusRoundRobin = 0;
     uint32_t queuesPerEngineCount = 1;
-    void initializeEngineRoundRobinControls();
     bool hasGenericSubDevices = false;
     bool rootCsrCreated = false;
     const uint32_t rootDeviceIndex;

@@ -11,10 +11,6 @@
 
 namespace NEO {
 
-bool CommandQueue::isAssignEngineRoundRobinEnabled() {
-    return false;
-}
-
 bool CommandQueue::isTimestampWaitEnabled() {
     return ultHwConfig.useWaitForTimestamps;
 }

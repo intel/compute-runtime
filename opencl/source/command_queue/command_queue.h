@@ -274,7 +274,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void allocateHeapMemory(IndirectHeapType heapType,
                             size_t minRequiredSize, IndirectHeap *&indirectHeap);
 
-    static bool isAssignEngineRoundRobinEnabled();
     static bool isTimestampWaitEnabled();
 
     MOCKABLE_VIRTUAL void releaseIndirectHeap(IndirectHeapType heapType);

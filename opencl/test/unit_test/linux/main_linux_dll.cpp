@@ -891,10 +891,6 @@ TEST(DirectSubmissionControllerTest, whenCheckDirectSubmissionControllerSupportT
     EXPECT_TRUE(DirectSubmissionController::isSupported());
 }
 
-TEST(CommandQueueTest, whenCheckEngineRoundRobinAssignThenReturnsTrue) {
-    EXPECT_TRUE(CommandQueue::isAssignEngineRoundRobinEnabled());
-}
-
 TEST(CommandQueueTest, whenCheckEngineTimestampWaitEnabledThenReturnsTrue) {
     EXPECT_TRUE(CommandQueue::isTimestampWaitEnabled());
 }

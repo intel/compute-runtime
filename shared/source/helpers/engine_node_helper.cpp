@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -205,51 +205,6 @@ aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDev
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto enableCmdQRoundRobindBcsEngineAssign = false;
-
-    if (debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get() != -1) {
-        enableCmdQRoundRobindBcsEngineAssign = debugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get();
-    }
-
-    if (enableCmdQRoundRobindBcsEngineAssign) {
-        aub_stream::EngineType engineType;
-
-        auto bcsRoundRobinLimit = EngineHelpers::numLinkedCopyEngines;
-        auto engineOffset = 0u;
-        auto mainCE = false;
-
-        if (debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.get() != -1) {
-            engineOffset = debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.get();
-            mainCE = engineOffset == 0;
-        }
-
-        if (mainCE) {
-            bcsRoundRobinLimit++;
-        }
-
-        if (debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.get() != -1) {
-            bcsRoundRobinLimit = debugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.get();
-        }
-
-        do {
-            auto selectEngineValue = (selectorCopyEngine.fetch_add(1u) % bcsRoundRobinLimit) + engineOffset;
-
-            if (mainCE) {
-                if (selectEngineValue == 0u) {
-                    engineType = aub_stream::EngineType::ENGINE_BCS;
-                } else {
-                    engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + selectEngineValue - 1);
-                }
-            } else {
-                engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + selectEngineValue);
-            }
-
-        } while (!gfxCoreHelper.isSubDeviceEngineSupported(rootDeviceEnvironment, deviceBitfield, engineType) || !hwInfo.featureTable.ftrBcsInfo.test(engineType == aub_stream::EngineType::ENGINE_BCS
-                                                                                                                                                          ? 0
-                                                                                                                                                          : engineType - aub_stream::EngineType::ENGINE_BCS1 + 1));
-
-        return engineType;
-    }
 
     const aub_stream::EngineType engine1 = gfxCoreHelper.isSubDeviceEngineSupported(rootDeviceEnvironment, deviceBitfield, aub_stream::ENGINE_BCS1) && aub_stream::ENGINE_BCS1 != productHelper.getDefaultCopyEngine()
                                                ? aub_stream::ENGINE_BCS1

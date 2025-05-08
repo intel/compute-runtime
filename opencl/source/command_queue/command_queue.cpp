@@ -187,35 +187,17 @@ void CommandQueue::initializeGpgpu() const {
         static std::mutex mutex;
         std::lock_guard<std::mutex> lock(mutex);
         if (gpgpuEngine == nullptr) {
-            auto &productHelper = device->getProductHelper();
-            auto engineRoundRobinAvailable = productHelper.isAssignEngineRoundRobinSupported() &&
-                                             this->isAssignEngineRoundRobinEnabled();
-
-            if (debugManager.flags.EnableCmdQRoundRobindEngineAssign.get() != -1) {
-                engineRoundRobinAvailable = debugManager.flags.EnableCmdQRoundRobindEngineAssign.get();
-            }
-
-            auto assignEngineRoundRobin =
-                !this->isSpecialCommandQueue &&
-                !this->queueFamilySelected &&
-                !(getCmdQueueProperties<cl_queue_priority_khr>(propertiesVector.data(), CL_QUEUE_PRIORITY_KHR) & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) &&
-                engineRoundRobinAvailable;
-
             auto defaultEngineType = device->getDefaultEngine().getEngineType();
 
             const GfxCoreHelper &gfxCoreHelper = getDevice().getGfxCoreHelper();
             bool secondaryContextsEnabled = gfxCoreHelper.areSecondaryContextsSupported();
 
-            if (assignEngineRoundRobin) {
-                this->gpgpuEngine = &device->getDevice().getNextEngineForCommandQueue();
-            } else {
-                if (secondaryContextsEnabled && EngineHelpers::isCcs(defaultEngineType)) {
-                    tryAssignSecondaryEngine(device->getDevice(), gpgpuEngine, {defaultEngineType, EngineUsage::regular});
-                }
+            if (secondaryContextsEnabled && EngineHelpers::isCcs(defaultEngineType)) {
+                tryAssignSecondaryEngine(device->getDevice(), gpgpuEngine, {defaultEngineType, EngineUsage::regular});
+            }
 
-                if (gpgpuEngine == nullptr) {
-                    this->gpgpuEngine = &device->getDefaultEngine();
-                }
+            if (gpgpuEngine == nullptr) {
+                this->gpgpuEngine = &device->getDefaultEngine();
             }
 
             this->initializeGpgpuInternals();
