@@ -371,6 +371,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(LinearStream &linearStream
         appendBlitMemoryOptionsForFillBuffer(dummyAllocation, blitCmd, *rootDeviceEnvironment);
 
         BlitProperties blitProperties = {};
+        blitProperties.dstAllocation = dummyAllocation;
 
         appendBlitFillCommand(blitProperties, blitCmd);
 
