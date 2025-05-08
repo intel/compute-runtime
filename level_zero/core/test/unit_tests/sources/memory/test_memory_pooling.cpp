@@ -177,6 +177,30 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWi
     EXPECT_EQ(0u, mockHostMemAllocPool->allocations.getNumAllocs());
 }
 
+TEST_F(AllocUsmHostEnabledMemoryTest, givenPooledAllocationWhenCallingGetMemAddressRangeThenCorrectValuesAreReturned) {
+    auto pool = &driverHandle->usmHostMemAllocPool;
+
+    void *pooledAllocation = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocHostMem(&hostDesc, 1u, 0u, &pooledAllocation);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pooledAllocation);
+    EXPECT_TRUE(pool->isInPool(pooledAllocation));
+
+    size_t size = 0u;
+    context->getMemAddressRange(pooledAllocation, nullptr, &size);
+    EXPECT_GE(size, 1u);
+    EXPECT_EQ(pool->getPooledAllocationSize(pooledAllocation), size);
+
+    void *basePtr = nullptr;
+    context->getMemAddressRange(pooledAllocation, &basePtr, nullptr);
+    EXPECT_NE(nullptr, basePtr);
+    EXPECT_EQ(pool->getPooledAllocationBasePtr(pooledAllocation), basePtr);
+
+    result = context->freeMem(pooledAllocation);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 TEST_F(AllocUsmHostEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFromPooledAllocationThenOffsetIsApplied) {
     auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(&driverHandle->usmHostMemAllocPool);
     EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInitialized());
@@ -374,6 +398,30 @@ TEST_F(AllocUsmDeviceEnabledMemoryTest, givenDeviceWhenCallingAllocDeviceMemWith
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
     }
+}
+
+TEST_F(AllocUsmDeviceEnabledMemoryTest, givenPooledAllocationWhenCallingGetMemAddressRangeThenCorrectValuesAreReturned) {
+    auto pool = l0Devices[0]->getNEODevice()->getUsmMemAllocPool();
+
+    void *pooledAllocation = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, poolAllocationThreshold, 0u, &pooledAllocation);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, pooledAllocation);
+    EXPECT_TRUE(pool->isInPool(pooledAllocation));
+
+    size_t size = 0u;
+    context->getMemAddressRange(pooledAllocation, nullptr, &size);
+    EXPECT_GE(size, poolAllocationThreshold);
+    EXPECT_EQ(pool->getPooledAllocationSize(pooledAllocation), size);
+
+    void *basePtr = nullptr;
+    context->getMemAddressRange(pooledAllocation, &basePtr, nullptr);
+    EXPECT_NE(nullptr, basePtr);
+    EXPECT_EQ(pool->getPooledAllocationBasePtr(pooledAllocation), basePtr);
+
+    result = context->freeMem(pooledAllocation);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(AllocUsmDeviceEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFromPooledAllocationThenOffsetIsApplied) {

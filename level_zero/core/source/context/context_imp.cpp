@@ -618,15 +618,31 @@ ze_result_t ContextImp::getMemAddressRange(const void *ptr,
                                            size_t *pSize) {
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (allocData) {
-        NEO::GraphicsAllocation *alloc;
-        alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
-        if (pBase) {
-            uint64_t *allocBase = reinterpret_cast<uint64_t *>(pBase);
-            *allocBase = alloc->getGpuAddress();
+        NEO::UsmMemAllocPool *pool = nullptr;
+        if (driverHandle->usmHostMemAllocPool.isInPool(ptr)) {
+            pool = &driverHandle->usmHostMemAllocPool;
+        } else if (allocData->device && allocData->device->getUsmMemAllocPool() && allocData->device->getUsmMemAllocPool()->isInPool(ptr)) {
+            pool = allocData->device->getUsmMemAllocPool();
         }
+        if (pool) {
+            if (pBase) {
+                *pBase = pool->getPooledAllocationBasePtr(ptr);
+            }
 
-        if (pSize) {
-            *pSize = allocData->size;
+            if (pSize) {
+                *pSize = pool->getPooledAllocationSize(ptr);
+            }
+        } else {
+            NEO::GraphicsAllocation *alloc;
+            alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+            if (pBase) {
+                uint64_t *allocBase = reinterpret_cast<uint64_t *>(pBase);
+                *allocBase = alloc->getGpuAddress();
+            }
+
+            if (pSize) {
+                *pSize = allocData->size;
+            }
         }
 
         return ZE_RESULT_SUCCESS;
