@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -391,7 +392,12 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
         thirdLevelBatch = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
         secondLevelBatchStream = std::make_unique<LinearStream>(secondLevelBatch);
         thirdLevelBatchStream = std::make_unique<LinearStream>(thirdLevelBatch);
-    };
+
+        auto &compilerProductHelper = device->getCompilerProductHelper();
+        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(device->getHardwareInfo());
+        this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
+    }
+
     void tearDown() {
         debugManager.flags.AubDumpAddMmioRegistersList.getRef() = "unk";
         debugManager.flags.AubDumpAddMmioRegistersList.getRef().shrink_to_fit();
@@ -403,18 +409,27 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
         memoryManager->freeGraphicsMemory(helperSurface);
 
         AUBFixture::tearDown();
-    };
+    }
 
     void flushStream() {
         DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
         dispatchFlags.guardCommandBufferWithPipeControl = true;
 
         csr->makeResident(*helperSurface);
-        csr->flushTask(*taskStream, 0,
-                       &csr->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
-                       &csr->getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
-                       &csr->getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
-                       0u, dispatchFlags, device->getDevice());
+
+        if (this->heaplessStateInitEnabled) {
+            csr->flushTaskStateless(*taskStream, 0,
+                                    &csr->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+                                    &csr->getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+                                    &csr->getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
+                                    0u, dispatchFlags, device->getDevice());
+        } else {
+            csr->flushTask(*taskStream, 0,
+                           &csr->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+                           &csr->getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+                           &csr->getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
+                           0u, dispatchFlags, device->getDevice());
+        }
 
         csr->flushBatchedSubmissions();
     }
@@ -431,6 +446,7 @@ struct MultiLevelBatchAubFixture : public AUBFixture {
 
     GraphicsAllocation *secondLevelBatch = nullptr;
     GraphicsAllocation *thirdLevelBatch = nullptr;
+    bool heaplessStateInitEnabled = false;
 };
 
 using MultiLevelBatchTestsWithNesting = Test<MultiLevelBatchAubFixture<true>>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
@@ -54,6 +55,11 @@ struct MiAtomicAubFixture : public AUBFixture {
         taskStream.replaceGraphicsAllocation(streamAllocation);
         taskStream.replaceBuffer(streamAllocation->getUnderlyingBuffer(),
                                  streamAllocation->getUnderlyingBufferSize());
+
+        auto &compilerProductHelper = device->getCompilerProductHelper();
+
+        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(device->getHardwareInfo());
+        this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
     }
 
     void tearDown() {
@@ -71,11 +77,20 @@ struct MiAtomicAubFixture : public AUBFixture {
 
         csr->makeResident(*deviceSurface);
         csr->makeResident(*systemSurface);
-        csr->flushTask(taskStream, 0,
-                       &csr->getIndirectHeap(IndirectHeapType::dynamicState, 0u),
-                       &csr->getIndirectHeap(IndirectHeapType::indirectObject, 0u),
-                       &csr->getIndirectHeap(IndirectHeapType::surfaceState, 0u),
-                       0u, dispatchFlags, device->getDevice());
+
+        if (this->heaplessStateInitEnabled) {
+            csr->flushTaskStateless(taskStream, 0,
+                                    &csr->getIndirectHeap(IndirectHeapType::dynamicState, 0u),
+                                    &csr->getIndirectHeap(IndirectHeapType::indirectObject, 0u),
+                                    &csr->getIndirectHeap(IndirectHeapType::surfaceState, 0u),
+                                    0u, dispatchFlags, device->getDevice());
+        } else {
+            csr->flushTask(taskStream, 0,
+                           &csr->getIndirectHeap(IndirectHeapType::dynamicState, 0u),
+                           &csr->getIndirectHeap(IndirectHeapType::indirectObject, 0u),
+                           &csr->getIndirectHeap(IndirectHeapType::surfaceState, 0u),
+                           0u, dispatchFlags, device->getDevice());
+        }
 
         csr->flushBatchedSubmissions();
     }
@@ -84,6 +99,7 @@ struct MiAtomicAubFixture : public AUBFixture {
     GraphicsAllocation *streamAllocation = nullptr;
     GraphicsAllocation *deviceSurface = nullptr;
     GraphicsAllocation *systemSurface = nullptr;
+    bool heaplessStateInitEnabled = false;
 };
 
 using MiAtomicAubTest = Test<MiAtomicAubFixture>;

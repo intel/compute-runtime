@@ -5962,7 +5962,6 @@ HWTEST_F(CommandStreamReceiverHwHeaplessTest, whenHeaplessCommandStreamReceiverF
 
     EXPECT_ANY_THROW(csr->flushTaskStateless(commandStream, 0, nullptr, nullptr, nullptr, 0, csr->recordedDispatchFlags, *pDevice));
     EXPECT_ANY_THROW(csr->programHeaplessProlog(*pDevice));
-    EXPECT_ANY_THROW(csr->programStateBaseAddressHeapless(*pDevice, commandStream));
     EXPECT_ANY_THROW(csr->programComputeModeHeapless(*pDevice, commandStream));
     EXPECT_ANY_THROW(csr->getCmdSizeForHeaplessPrologue(*pDevice));
     EXPECT_ANY_THROW(csr->handleAllocationsResidencyForHeaplessProlog(commandStream, *pDevice));
@@ -6369,12 +6368,20 @@ HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushBcsTa
 
 HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushImmediateTaskCalledThenDispachEpilogueCommandsIntoEpilogueStream) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
+    auto heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
     // first flush can carry preamble, no interest in flags here
-    commandStreamReceiver.flushImmediateTask(commandStream,
-                                             commandStream.getUsed(),
-                                             immediateFlushTaskFlags,
-                                             *pDevice);
+    if (heaplessStateInit) {
+        commandStreamReceiver.flushImmediateTaskStateless(commandStream,
+                                                          commandStream.getUsed(),
+                                                          immediateFlushTaskFlags,
+                                                          *pDevice);
+
+    } else {
+        commandStreamReceiver.flushImmediateTask(commandStream,
+                                                 commandStream.getUsed(),
+                                                 immediateFlushTaskFlags,
+                                                 *pDevice);
+    }
 
     // regular dispatch here
     GraphicsAllocation *commandBuffer = commandStreamReceiver.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver.getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -6387,10 +6394,18 @@ HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushImmed
     immediateFlushTaskFlags.requireTaskCountUpdate = true;
     immediateFlushTaskFlags.optionalEpilogueCmdStream = &epilogueStream;
 
-    commandStreamReceiver.flushImmediateTask(commandStream,
-                                             commandStream.getUsed(),
-                                             immediateFlushTaskFlags,
-                                             *pDevice);
+    if (heaplessStateInit) {
+        commandStreamReceiver.flushImmediateTaskStateless(commandStream,
+                                                          commandStream.getUsed(),
+                                                          immediateFlushTaskFlags,
+                                                          *pDevice);
+
+    } else {
+        commandStreamReceiver.flushImmediateTask(commandStream,
+                                                 commandStream.getUsed(),
+                                                 immediateFlushTaskFlags,
+                                                 *pDevice);
+    }
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandBuffer));
     EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.dispatchMonitorFence);

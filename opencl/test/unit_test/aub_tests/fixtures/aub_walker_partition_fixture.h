@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,6 +120,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 
     HardwareParse hwParser;
     DispatchParameters dispatchParamters;
+    bool heaplessStateInitEnabled = false;
 };
 
 struct AubWalkerPartitionTest : public AubWalkerPartitionFixture,

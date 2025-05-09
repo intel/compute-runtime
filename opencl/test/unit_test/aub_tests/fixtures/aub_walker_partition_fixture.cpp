@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -120,6 +121,11 @@ void AubWalkerPartitionZeroFixture::setUp() {
     helperSurface = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
     memset(helperSurface->getUnderlyingBuffer(), 0, MemoryConstants::pageSize);
     taskStream = std::make_unique<LinearStream>(streamAllocation);
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(device->getHardwareInfo());
+    this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
 }
 void AubWalkerPartitionZeroFixture::tearDown() {
     auto memoryManager = this->device->getMemoryManager();
@@ -133,11 +139,20 @@ void AubWalkerPartitionZeroFixture::flushStream() {
     dispatchFlags.guardCommandBufferWithPipeControl = true;
 
     csr->makeResident(*helperSurface);
-    csr->flushTask(*taskStream, 0,
-                   &csr->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
-                   &csr->getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
-                   &csr->getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
-                   0u, dispatchFlags, device->getDevice());
+
+    if (this->heaplessStateInitEnabled) {
+        csr->flushTaskStateless(*taskStream, 0,
+                                &csr->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+                                &csr->getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+                                &csr->getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
+                                0u, dispatchFlags, device->getDevice());
+    } else {
+        csr->flushTask(*taskStream, 0,
+                       &csr->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+                       &csr->getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+                       &csr->getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
+                       0u, dispatchFlags, device->getDevice());
+    }
 
     csr->flushBatchedSubmissions();
 }
