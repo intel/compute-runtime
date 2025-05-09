@@ -107,8 +107,8 @@ void *DeferredDeleter::run(void *arg) {
         lock.lock();
         // Check whether working thread should be stopped
     } while (!self->shouldStop());
-    self->exitedMainLoop = true;
     lock.unlock();
+    self->exitedMainLoop = true;
     return nullptr;
 }
 
