@@ -1543,11 +1543,6 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMost
     descEven.height = 16;
     descEven.depth = 1;
 
-    // Some formats aren't compilable on all generations, so for those we
-    // skip the format check and rely on gen-specific tests defined elsewhere.
-    static const typename RENDER_SURFACE_STATE::SURFACE_FORMAT noFormatCheck =
-        static_cast<typename RENDER_SURFACE_STATE::SURFACE_FORMAT>(0xffff); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
-
     struct FormatInfo {
         size_t elemBitSize;
         ze_image_format_layout_t formatLayout;
@@ -1589,9 +1584,7 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMost
 
             auto surfaceState = &imageCore->surfaceState;
 
-            if (testFormats[i].ssFormat != noFormatCheck) {
-                ASSERT_EQ(surfaceState->getSurfaceFormat(), testFormats[i].ssFormat);
-            }
+            ASSERT_EQ(surfaceState->getSurfaceFormat(), testFormats[i].ssFormat);
 
             delete imageCore;
         }

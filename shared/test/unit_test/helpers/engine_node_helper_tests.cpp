@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,6 @@ TEST(EngineNodeHelperTest, givenValidEngineUsageWhenGettingStringRepresentationT
 
 TEST(EngineNodeHelperTest, givenInValidEngineUsageWhenGettingStringRepresentationThenReturnUnknown) {
     EXPECT_EQ(std::string{"Unknown"}, EngineHelpers::engineUsageToString(EngineUsage::engineUsageCount));
-    EXPECT_EQ(std::string{"Unknown"}, EngineHelpers::engineUsageToString(static_cast<EngineUsage>(0xcc))); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
 }
 
 TEST(EngineNodeHelperTest, givenValidEngineTypeWhenGettingStringRepresentationThenItIsCorrect) {
@@ -79,7 +78,6 @@ TEST(EngineNodeHelperTest, givenCcsWhenGettingCcsIndexThenReturnCorrectIndex) {
 
 TEST(EngineNodeHelperTest, givenInvalidEngineTypeWhenGettingStringRepresentationThenItIsCorrect) {
     EXPECT_EQ(std::string{"Unknown"}, EngineHelpers::engineTypeToString(aub_stream::EngineType::NUM_ENGINES));
-    EXPECT_EQ(std::string{"Unknown"}, EngineHelpers::engineTypeToString(static_cast<aub_stream::EngineType>(0xcc))); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
 }
 
 TEST(EngineNodeHelperTest, givenLinkCopyEnginesSupportedWhenGettingBcsEngineTypeThenFirstReturnMainCopyEngineAndThenRoundRobinBetweenLinkEngines) {
