@@ -112,7 +112,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
-    using BaseClass::requiresDcFlushForDcMitigation;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::scratchAddressPatchingEnabled;
     using BaseClass::setAdditionalBlitProperties;

@@ -505,7 +505,6 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     if (cmdQ->peekIsCopyOnlyCommandQueue()) {
         completionStamp = flushBcsTask(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies, requireTaskCountUpdate, appendOperation, csr);
     } else {
-        this->registerCsrDcFlushForDcMitigation(*csr);
         completionStamp = (this->*computeFlushMethod)(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, requireTaskCountUpdate);
     }
 

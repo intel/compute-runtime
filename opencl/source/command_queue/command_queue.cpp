@@ -672,8 +672,7 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
     }
 
     if (this->getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled()) {
-        if (this->getDevice().getProductHelper().isDcFlushMitigated() || isDisplayableReleased) {
-            this->getGpgpuCommandStreamReceiver().registerDcFlushForDcMitigation();
+        if (isDisplayableReleased) {
             this->getGpgpuCommandStreamReceiver().sendRenderStateCacheFlush();
             {
                 TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);

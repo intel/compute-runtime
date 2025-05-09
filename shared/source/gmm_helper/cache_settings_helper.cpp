@@ -48,10 +48,6 @@ bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmReso
 }
 
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo *hwInfo) {
-    if (productHelper.overrideUsageForDcFlushMitigation(allocationType)) {
-        return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
-    }
-
     if (debugManager.flags.ForceGmmSystemMemoryBufferForAllocations.get()) {
         UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(allocationType))) & debugManager.flags.ForceGmmSystemMemoryBufferForAllocations.get()) {

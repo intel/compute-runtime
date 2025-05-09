@@ -2062,10 +2062,6 @@ inline std::unique_ptr<Gmm> DrmMemoryManager::makeGmmIfSingleHandle(const Alloca
         gmmRequirements.overriderCacheable.enableOverride = true;
         gmmRequirements.overriderCacheable.value = true;
     }
-    if (productHelper.overrideCacheableForDcFlushMitigation(allocationData.type)) {
-        gmmRequirements.overriderPreferNoCpuAccess.enableOverride = true;
-        gmmRequirements.overriderPreferNoCpuAccess.value = false;
-    }
 
     return std::make_unique<Gmm>(gmmHelper,
                                  nullptr,

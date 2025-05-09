@@ -17,27 +17,6 @@ constexpr static auto gfxProduct = IGFX_LUNARLAKE;
 namespace NEO {
 
 template <>
-uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const {
-    if (this->overridePatToUCAndTwoWayCohForDcFlushMitigation(allocationType)) {
-        if (debugManager.flags.OverrideReadWritePatForDcFlushMitigation.get() != -1) {
-            return debugManager.flags.OverrideReadWritePatForDcFlushMitigation.get();
-        }
-
-        return 2; // L3: WB, L4: UC, 2-Way coh
-    }
-
-    if (this->overridePatToUCAndOneWayCohForDcFlushMitigation(allocationType)) {
-        if (debugManager.flags.OverrideWriteOnlyPatForDcFlushMitigation.get() != -1) {
-            return debugManager.flags.OverrideWriteOnlyPatForDcFlushMitigation.get();
-        }
-
-        return 1; // L3: WB, L4: UC, 1-Way coh
-    }
-
-    return patIndex;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::restartDirectSubmissionForHostptrFree() const {
     return true;
 }

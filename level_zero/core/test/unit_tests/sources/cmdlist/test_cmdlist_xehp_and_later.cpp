@@ -1630,30 +1630,6 @@ HWTEST2_F(CommandListAppendLaunchRayTracingKernelTest, givenKernelUsingRayTracin
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListAppendLaunchRayTracingKernelTest, givenDcFlushMitigationWhenAppendLaunchKernelWithRayTracingIsCalledThenRequireDcFlush, RayTracingMatcher) {
-    VariableBackup<GraphicsAllocation *> rtMemoryBackedBuffer{&neoDevice->rtMemoryBackedBuffer, buffer1};
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowDcFlush.set(0);
-
-    Mock<::L0::KernelImp> kernel;
-    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
-    kernel.module = pMockModule.get();
-
-    kernel.setGroupSize(4, 1, 1);
-    ze_group_count_t groupCount{8, 1, 1};
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    kernel.immutableData.kernelDescriptor->kernelAttributes.flags.hasRTCalls = true;
-    CmdListKernelLaunchParams launchParams = {};
-
-    result = pCommandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(pCommandList->requiresDcFlushForDcMitigation, device->getProductHelper().isDcFlushMitigated());
-}
-
 using RayTracingCmdListTest = Test<RayTracingCmdListFixture>;
 
 template <typename FamilyType>
@@ -1774,28 +1750,6 @@ HWTEST2_F(RayTracingCmdListTest,
 }
 
 HWTEST2_F(RayTracingCmdListTest,
-          givenDcFlushMitigationWhenRegularAppendLaunchKernelAndExecuteThenRegisterDcFlushForDcFlushMitigation,
-          RayTracingMatcher) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowDcFlush.set(0);
-
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
-
-    ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = commandList->close();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(ultCsr->registeredDcFlushForDcFlushMitigation, device->getProductHelper().isDcFlushMitigated());
-}
-
-HWTEST2_F(RayTracingCmdListTest,
           givenRayTracingKernelWhenRegularCmdListExecutedAndImmediateExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
           RayTracingMatcher) {
     if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
@@ -1897,22 +1851,6 @@ HWTEST2_F(RayTracingCmdListTest,
 
     residentCount++;
     ultCsr->isMadeResident(rtAllocation, residentCount);
-}
-
-HWTEST2_F(RayTracingCmdListTest,
-          givenDcFlushMitigationWhenImmediateAppendLaunchKernelThenRegisterDcFlushForDcFlushMitigation,
-          RayTracingMatcher) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowDcFlush.set(0);
-
-    commandListImmediate->isSyncModeQueue = true;
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
-
-    ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ultCsr->registeredDcFlushForDcFlushMitigation, device->getProductHelper().isDcFlushMitigated());
 }
 
 HWTEST2_F(RayTracingCmdListTest,

@@ -204,8 +204,6 @@ Buffer *Buffer::create(Context *context,
                   flags, 0, size, hostPtr, bufferCreateArgs, errcodeRet);
 }
 
-extern bool checkIsGpuCopyRequiredForDcFlushMitigation(AllocationType type);
-
 bool inline copyHostPointer(Buffer *buffer,
                             Device &device,
                             size_t size,
@@ -217,8 +215,7 @@ bool inline copyHostPointer(Buffer *buffer,
     auto memory = buffer->getGraphicsAllocation(rootDeviceIndex);
     auto isCompressionEnabled = memory->isCompressionEnabled();
     const bool isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(memory->getMemoryPool());
-    const bool isGpuCopyRequiredForDcFlushMitigation = productHelper.isDcFlushMitigated() && checkIsGpuCopyRequiredForDcFlushMitigation(memory->getAllocationType());
-    const bool gpuCopyRequired = isCompressionEnabled || isLocalMemory || isGpuCopyRequiredForDcFlushMitigation;
+    const bool gpuCopyRequired = isCompressionEnabled || isLocalMemory;
     if (gpuCopyRequired) {
         auto &hwInfo = device.getHardwareInfo();
 
@@ -241,14 +238,11 @@ bool inline copyHostPointer(Buffer *buffer,
             memory->setAubWritable(true, GraphicsAllocation::defaultBank);
             memory->setTbxWritable(true, GraphicsAllocation::defaultBank);
             memcpy_s(ptrOffset(lockedPointer, buffer->getOffset()), size, hostPtr, size);
-            if (isGpuCopyRequiredForDcFlushMitigation) {
-                CpuIntrinsics::sfence();
-            }
             return true;
         } else {
             auto blitMemoryToAllocationResult = BlitOperationResult::unsupported;
 
-            if (productHelper.isBlitterFullySupported(hwInfo) && (isLocalMemory || isGpuCopyRequiredForDcFlushMitigation)) {
+            if (productHelper.isBlitterFullySupported(hwInfo) && isLocalMemory) {
                 device.stopDirectSubmissionForCopyEngine();
                 blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, memory, buffer->getOffset(), hostPtr, {size, 1, 1});
             }

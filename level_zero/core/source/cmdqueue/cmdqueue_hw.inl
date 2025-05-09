@@ -819,8 +819,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
 
             ctx.cmdListScratchAddressPatchingEnabled |= commandList->getCmdListScratchAddressPatchingEnabled();
 
-            commandList->registerCsrDcFlushForDcMitigation(*this->getCsr());
-
             ctx.spaceForResidency += estimateCommandListResidencySize(commandList);
         }
     }
@@ -1381,7 +1379,6 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncRegular(
 
     NEO::PipeControlArgs args;
     args.dcFlushEnable = this->csr->getDcFlushSupport();
-    args.dcFlushEnable |= this->csr->checkDcFlushRequiredForDcMitigationAndReset();
     args.workloadPartitionOffset = this->partitionCount > 1;
     args.notifyEnable = this->csr->isUsedNotifyEnableForPostSync();
     NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(

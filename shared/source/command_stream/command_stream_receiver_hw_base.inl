@@ -1224,7 +1224,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
     auto lock = obtainUniqueOwnership();
 
     PipeControlArgs args;
-    args.dcFlushEnable = this->dcFlushSupport || this->checkDcFlushRequiredForDcMitigationAndReset();
+    args.dcFlushEnable = this->dcFlushSupport;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
 
@@ -1850,7 +1850,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::processBarrierWithPostSync(Linea
     auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
 
     args.dcFlushEnable = getDcFlushRequired(dispatchFlags.dcFlush);
-    args.dcFlushEnable |= this->checkDcFlushRequiredForDcMitigationAndReset();
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
     args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush || this->heapStorageRequiresRecyclingTag;
@@ -2225,7 +2224,6 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushClientBufferComma
 
         PipeControlArgs args = {};
         args.dcFlushEnable = this->dcFlushSupport;
-        args.dcFlushEnable |= this->checkDcFlushRequiredForDcMitigationAndReset();
         args.notifyEnable = isUsedNotifyEnableForPostSync();
         args.workloadPartitionOffset = isMultiTileOperationEnabled();
         MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(

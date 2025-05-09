@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,10 +27,6 @@ LNLTEST_F(GfxCoreHelperTestsLnl, givenCommandBufferAllocationTypeWhenGetAllocati
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
 
     EXPECT_TRUE(allocData.flags.useSystemMemory);
-}
-
-LNLTEST_F(GfxCoreHelperTestsLnl, WhenAskingForDcFlushThenReturnTrue) {
-    EXPECT_NE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, this->pDevice->getRootDeviceEnvironment()), this->pDevice->getRootDeviceEnvironment().getProductHelper().isDcFlushMitigated());
 }
 
 LNLTEST_F(GfxCoreHelperTestsLnl, givenGetDeviceTimestampWidthCalledThenReturnCorrectValue) {

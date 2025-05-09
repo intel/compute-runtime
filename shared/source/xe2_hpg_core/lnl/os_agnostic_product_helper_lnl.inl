@@ -15,7 +15,7 @@ namespace NEO {
 
 template <>
 bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const AllocationData &allocationData) const {
-    return GraphicsAllocation::isAccessedFromCommandStreamer(allocationData.type) || this->overrideCacheableForDcFlushMitigation(allocationData.type);
+    return GraphicsAllocation::isAccessedFromCommandStreamer(allocationData.type);
 }
 
 template <>

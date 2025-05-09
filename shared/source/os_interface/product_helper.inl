@@ -442,58 +442,13 @@ bool ProductHelperHw<gfxProduct>::isPrimaryContextsAggregationSupported() const 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    bool dcFlushAllowed = GfxProduct::isDcFlushAllowed && !this->mitigateDcFlush();
+    bool dcFlushAllowed = GfxProduct::isDcFlushAllowed;
 
     if (debugManager.flags.AllowDcFlush.get() != -1) {
         dcFlushAllowed = debugManager.flags.AllowDcFlush.get();
     }
 
     return dcFlushAllowed;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::mitigateDcFlush() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isDcFlushMitigated() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    bool dcFlushAllowed = GfxProduct::isDcFlushAllowed;
-    return this->isDcFlushAllowed() != dcFlushAllowed;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::overrideUsageForDcFlushMitigation(AllocationType allocationType) const {
-    return this->isDcFlushMitigated() && (this->overridePatToUCAndTwoWayCohForDcFlushMitigation(allocationType) || overridePatToUCAndOneWayCohForDcFlushMitigation(allocationType));
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::overridePatToUCAndTwoWayCohForDcFlushMitigation(AllocationType allocationType) const {
-    return this->isDcFlushMitigated() &&
-           (this->overrideCacheableForDcFlushMitigation(allocationType) ||
-            allocationType == AllocationType::timestampPacketTagBuffer ||
-            allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::gpuTimestampDeviceBuffer);
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::overridePatToUCAndOneWayCohForDcFlushMitigation(AllocationType allocationType) const {
-    return this->isDcFlushMitigated() &&
-           (allocationType == AllocationType::internalHeap ||
-            allocationType == AllocationType::linearStream);
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::overrideCacheableForDcFlushMitigation(AllocationType allocationType) const {
-    return this->isDcFlushMitigated() &&
-           (allocationType == AllocationType::externalHostPtr ||
-            allocationType == AllocationType::bufferHostMemory ||
-            allocationType == AllocationType::mapAllocation ||
-            allocationType == AllocationType::svmCpu ||
-            allocationType == AllocationType::svmZeroCopy ||
-            allocationType == AllocationType::internalHostMemory ||
-            allocationType == AllocationType::printfSurface);
 }
 
 template <PRODUCT_FAMILY gfxProduct>

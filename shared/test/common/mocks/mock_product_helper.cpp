@@ -268,36 +268,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isDcFlushAllowed() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isDcFlushMitigated() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::mitigateDcFlush() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::overridePatToUCAndTwoWayCohForDcFlushMitigation(AllocationType allocationType) const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::overrideUsageForDcFlushMitigation(AllocationType allocationType) const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::overridePatToUCAndOneWayCohForDcFlushMitigation(AllocationType allocationType) const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::overrideCacheableForDcFlushMitigation(AllocationType allocationType) const {
-    return false;
-}
-
-template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
 }

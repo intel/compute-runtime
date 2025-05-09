@@ -25,7 +25,6 @@ struct UltHwConfig {
     bool useWaitForTimestamps = false;
     bool useBlitSplit = false;
     bool useFirstSubmissionInitDevice = false;
-    bool useGpuCopyForDcFlushMitigation = false;
 
     bool csrFailInitDirectSubmission = false;
     bool csrBaseCallDirectSubmissionAvailable = false;
@@ -36,8 +35,6 @@ struct UltHwConfig {
 
     bool csrBaseCallCreatePreemption = true;
     bool csrCreatePreemptionReturnValue = true;
-
-    uint8_t padding[7] = {};
 };
 
 extern UltHwConfig ultHwConfig;

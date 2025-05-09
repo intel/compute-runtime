@@ -349,16 +349,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         requiresInstructionCacheFlush = true;
     }
 
-    MOCKABLE_VIRTUAL bool checkDcFlushRequiredForDcMitigationAndReset() {
-        auto ret = this->requiresDcFlush;
-        this->requiresDcFlush = false;
-        return ret;
-    }
-
-    void registerDcFlushForDcMitigation() {
-        this->requiresDcFlush = true;
-    }
-
     bool isLocalMemoryEnabled() const { return localMemoryEnabled; }
 
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }

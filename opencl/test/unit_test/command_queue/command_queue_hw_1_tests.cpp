@@ -1501,7 +1501,6 @@ HWTEST_F(CommandQueueHwTest, givenDirectSubmissionAndSharedDisplayableImageWhenR
     result = mockCmdQueueHw.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
     EXPECT_EQ(result, CL_SUCCESS);
     EXPECT_TRUE(ultCsr.renderStateCacheFlushed);
-    EXPECT_TRUE(ultCsr.renderStateCacheDcFlushForced);
     EXPECT_EQ(finishCalledBefore + 1u, mockCmdQueueHw.finishCalledCount);
     EXPECT_EQ(taskCountBefore + 1u, mockCmdQueueHw.taskCount);
 }

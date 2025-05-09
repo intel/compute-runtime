@@ -696,10 +696,6 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
         internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
         heapMemory = nullptr;
         this->heapStorageRequiresRecyclingTag = true;
-
-        if (this->peekRootDeviceEnvironment().getProductHelper().isDcFlushMitigated()) {
-            this->registerDcFlushForDcMitigation();
-        }
     }
 
     if (!heapMemory) {

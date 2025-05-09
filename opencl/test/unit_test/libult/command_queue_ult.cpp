@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,10 +17,6 @@ bool CommandQueue::isAssignEngineRoundRobinEnabled() {
 
 bool CommandQueue::isTimestampWaitEnabled() {
     return ultHwConfig.useWaitForTimestamps;
-}
-
-bool checkIsGpuCopyRequiredForDcFlushMitigation(AllocationType type) {
-    return ultHwConfig.useGpuCopyForDcFlushMitigation;
 }
 
 } // namespace NEO

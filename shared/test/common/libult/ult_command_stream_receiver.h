@@ -302,11 +302,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         downloadAllocationCalled = true;
     }
 
-    bool checkDcFlushRequiredForDcMitigationAndReset() override {
-        this->registeredDcFlushForDcFlushMitigation = this->requiresDcFlush;
-        return BaseClass::checkDcFlushRequiredForDcMitigationAndReset();
-    }
-
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         std::lock_guard<std::mutex> guard(mutex);
         latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
@@ -526,7 +521,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
 
     SubmissionStatus sendRenderStateCacheFlush() override {
         this->renderStateCacheFlushed = true;
-        this->renderStateCacheDcFlushForced = this->requiresDcFlush;
         if (callBaseSendRenderStateCacheFlush) {
             return BaseClass::sendRenderStateCacheFlush();
         }
@@ -637,7 +631,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     std::atomic<bool> latestDownloadAllocationsBlocking = false;
 
     bool renderStateCacheFlushed = false;
-    bool renderStateCacheDcFlushForced = false;
     bool cpuCopyForHostPtrSurfaceAllowed = false;
     bool createPageTableManagerCalled = false;
     bool recordFlushedBatchBuffer = false;
@@ -667,7 +660,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool isKmdWaitOnTaskCountAllowedValue = false;
     bool stopDirectSubmissionCalled = false;
     bool stopDirectSubmissionCalledBlocking = false;
-    bool registeredDcFlushForDcFlushMitigation = false;
     bool isUserFenceWaitSupported = false;
     bool isAnyDirectSubmissionEnabledCallBase = true;
     bool isAnyDirectSubmissionEnabledResult = true;

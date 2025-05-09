@@ -218,7 +218,6 @@ struct CommandList : _ze_command_list_handle_t {
         return commandListPerThreadScratchSize[slotId];
     }
 
-    void forceDcFlushForDcFlushMitigation();
     void setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const;
     ze_result_t validateLaunchParams(const CmdListKernelLaunchParams &launchParams) const;
 
@@ -430,8 +429,6 @@ struct CommandList : _ze_command_list_handle_t {
         return wasPending;
     }
 
-    void registerCsrDcFlushForDcMitigation(NEO::CommandStreamReceiver &csr);
-
     NEO::EngineGroupType getEngineGroupType() const {
         return engineGroupType;
     }
@@ -538,7 +535,6 @@ struct CommandList : _ze_command_list_handle_t {
     bool heaplessStateInitEnabled = false;
     bool scratchAddressPatchingEnabled = false;
     bool taskCountUpdateFenceRequired = false;
-    bool requiresDcFlushForDcMitigation = false;
     bool statelessBuiltinsEnabled = false;
     bool localDispatchSupport = false;
     bool l3FlushAfterPostSyncRequired = false;

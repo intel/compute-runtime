@@ -322,36 +322,6 @@ HWTEST_F(ProductHelperTest, givenVariousValuesWhenGettingAubStreamSteppingFromHw
     EXPECT_EQ(AubMemDump::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
 }
 
-HWTEST_F(ProductHelperTest, givenDcFlushMitigationWhenOverridePatToUCAndTwoWayCohForDcFlushMitigationThenReturnCorrectValue) {
-    DebugManagerStateRestore restorer;
-    if (!productHelper->isDcFlushMitigated()) {
-        for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
-            auto allocationType = static_cast<AllocationType>(i);
-            EXPECT_FALSE(productHelper->overridePatToUCAndTwoWayCohForDcFlushMitigation(allocationType));
-        }
-    }
-    debugManager.flags.AllowDcFlush.set(0);
-    for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
-        auto allocationType = static_cast<AllocationType>(i);
-        if (allocationType == AllocationType::externalHostPtr ||
-            allocationType == AllocationType::bufferHostMemory ||
-            allocationType == AllocationType::mapAllocation ||
-            allocationType == AllocationType::svmCpu ||
-            allocationType == AllocationType::svmZeroCopy ||
-            allocationType == AllocationType::internalHostMemory ||
-            allocationType == AllocationType::timestampPacketTagBuffer ||
-            allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::gpuTimestampDeviceBuffer ||
-            allocationType == AllocationType::linearStream ||
-            allocationType == AllocationType::internalHeap ||
-            allocationType == AllocationType::printfSurface) {
-            EXPECT_EQ(productHelper->overrideUsageForDcFlushMitigation(allocationType), productHelper->isDcFlushMitigated());
-        } else {
-            EXPECT_FALSE(productHelper->overridePatToUCAndTwoWayCohForDcFlushMitigation(allocationType));
-        }
-    }
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedForDefaultEngineTypeAdjustmentThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->isDefaultEngineTypeAdjustmentRequired(pInHwInfo));
