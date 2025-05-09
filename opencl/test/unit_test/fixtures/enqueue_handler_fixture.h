@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,4 +23,23 @@ class EnqueueHandlerTest : public NEO::ClDeviceFixture,
         ClDeviceFixture::tearDown();
     }
     NEO::MockContext *context;
+};
+
+template <template <typename> class CsrType>
+class EnqueueHandlerTestT : public EnqueueHandlerTest {
+  public:
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        NEO::EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<CsrType<FamilyType>>();
+        EnqueueHandlerTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        EnqueueHandlerTest::TearDown();
+    }
 };

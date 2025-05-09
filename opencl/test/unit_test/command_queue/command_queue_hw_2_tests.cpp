@@ -349,12 +349,27 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferRectCallWh
     EXPECT_EQ(ptrOffset, builtinParams.srcOffset.x);
 }
 
-HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompletedEventWhenEnqueueCompletesVirtualEventThenUpdatedTaskLevelIsPassedToEnqueueAndFlushTask) {
+struct OOQueueHwTestWithMockCsr : public OOQueueHwTest {
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCsr<FamilyType>>();
+        OOQueueHwTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        OOQueueHwTest::TearDown();
+    }
+};
+
+HWTEST_TEMPLATED_F(OOQueueHwTestWithMockCsr, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompletedEventWhenEnqueueCompletesVirtualEventThenUpdatedTaskLevelIsPassedToEnqueueAndFlushTask) {
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
 
-    int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCSR);
+    auto mockCSR = static_cast<MockCsr<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     auto mockKernel = mockKernelWithInternals.mockKernel;

@@ -63,6 +63,11 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     using AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion;
     using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;
 
+    MockAubCsr(ExecutionEnvironment &executionEnvironment,
+               uint32_t rootDeviceIndex,
+               const DeviceBitfield deviceBitfield)
+        : AUBCommandStreamReceiverHw<GfxFamily>("", true, executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {

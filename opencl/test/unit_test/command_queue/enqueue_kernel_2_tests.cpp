@@ -443,9 +443,26 @@ INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
 
 typedef EnqueueKernelTypeTest<int> EnqueueKernelWithScratch;
 
-HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWithDifferentScratchSizesThenPreviousScratchAllocationIsMadeNonResidentPriorStoringOnResueList) {
-    auto mockCsr = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+struct EnqueueKernelWithScratchAndMockCsrHw
+    : public EnqueueKernelWithScratch {
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCsrHw<FamilyType>>();
+        EnqueueKernelWithScratch::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        EnqueueKernelWithScratch::TearDown();
+    }
+};
+
+HWTEST_TEMPLATED_P(EnqueueKernelWithScratchAndMockCsrHw, GivenKernelRequiringScratchWhenItIsEnqueuedWithDifferentScratchSizesThenPreviousScratchAllocationIsMadeNonResidentPriorStoringOnResueList) {
+    auto *mockCsr = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
 
     uint32_t scratchSizeSlot0 = 1024u;
 
@@ -530,6 +547,9 @@ HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bit
 
 INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
                          EnqueueKernelWithScratch, testing::Values(1));
+
+INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
+                         EnqueueKernelWithScratchAndMockCsrHw, testing::Values(1));
 
 TestParam testParamPrintf[] = {
     {1, 1, 1, 1, 1, 1}};

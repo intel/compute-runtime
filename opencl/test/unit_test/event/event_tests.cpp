@@ -1790,6 +1790,9 @@ struct TestEventCsr : public UltCommandStreamReceiver<GfxFamily> {
     TestEventCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : UltCommandStreamReceiver<GfxFamily>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
 
+    TestEventCsr(const ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : UltCommandStreamReceiver<GfxFamily>(const_cast<ExecutionEnvironment &>(executionEnvironment), rootDeviceIndex, deviceBitfield) {}
+
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         waitForCompletionWithTimeoutParamsPassed.push_back({params.enableTimeout, params.waitTimeout, taskCountToWait});
@@ -1807,7 +1810,7 @@ struct TestEventCsr : public UltCommandStreamReceiver<GfxFamily> {
     StackVec<WaitForCompletionWithTimeoutParams, 1> waitForCompletionWithTimeoutParamsPassed{};
 };
 
-HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
+HWTEST_TEMPLATED_F(EventTestWithTestEventCsr, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
     HardwareInfo localHwInfo = pDevice->getHardwareInfo();
     localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
     localHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep = true;
@@ -1816,8 +1819,7 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
 
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&localHwInfo);
 
-    auto csr = new TestEventCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(csr);
+    auto *csr = static_cast<TestEventCsr<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     event.updateCompletionStamp(1u, 0, 1u, 1u);
@@ -1829,7 +1831,7 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
     EXPECT_EQ(localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
-HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
+HWTEST_TEMPLATED_F(EventTestWithTestEventCsr, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
     HardwareInfo localHwInfo = pDevice->getHardwareInfo();
     localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
     localHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep = true;
@@ -1839,8 +1841,7 @@ HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestT
 
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&localHwInfo);
 
-    auto csr = new TestEventCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(csr);
+    auto *csr = static_cast<TestEventCsr<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     event.updateCompletionStamp(1u, 0, 1u, 1u);
@@ -1852,10 +1853,9 @@ HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestT
     EXPECT_EQ(localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
-HWTEST_F(EventTest, givenGpuHangWhenWaitIsCalledThenPassRequestToWaitingFunctionAndReturnGpuHang) {
-    auto csr = new TestEventCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+HWTEST_TEMPLATED_F(EventTestWithTestEventCsr, givenGpuHangWhenWaitIsCalledThenPassRequestToWaitingFunctionAndReturnGpuHang) {
+    auto *csr = static_cast<TestEventCsr<FamilyType> *>(&pDevice->getUltCommandStreamReceiver<FamilyType>());
     csr->waitForCompletionWithTimeoutResult = WaitStatus::gpuHang;
-    pDevice->resetCommandStreamReceiver(csr);
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 

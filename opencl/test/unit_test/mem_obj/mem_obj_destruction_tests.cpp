@@ -33,6 +33,9 @@ class MyCsr : public UltCommandStreamReceiver<Family> {
     MyCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
 
+    MyCsr(const ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment), rootDeviceIndex, deviceBitfield) {}
+
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         waitForCompletionWithTimeoutParamsPassed.push_back({params.enableTimeout, params.waitTimeout, taskCountToWait});
@@ -130,6 +133,22 @@ class MemObjAsyncDestructionTest : public MemObjDestructionTest<> {
     DebugManagerStateRestore restorer;
 };
 
+class MemObjAsyncDestructionTestWithMyCsr : public MemObjAsyncDestructionTest {
+  public:
+    void SetUp() override {}
+    void TearDown() override {}
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MyCsr<FamilyType>>();
+        MemObjAsyncDestructionTest::SetUp();
+    }
+    template <typename FamilyType>
+    void tearDownT() {
+        MemObjAsyncDestructionTest::TearDown();
+    }
+};
+
 class MemObjMultiAllocationAsyncDestructionTest : public MemObjDestructionTest<true> {
   public:
     void SetUp() override {
@@ -164,6 +183,22 @@ class MemObjSyncDestructionTest : public MemObjDestructionTest<> {
         MemObjDestructionTest::TearDown();
     }
     DebugManagerStateRestore restorer;
+};
+
+class MemObjSyncDestructionTestWithMyCsr : public MemObjSyncDestructionTest {
+  public:
+    void SetUp() override {}
+    void TearDown() override {}
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MyCsr<FamilyType>>();
+        MemObjSyncDestructionTest::SetUp();
+    }
+    template <typename FamilyType>
+    void tearDownT() {
+        MemObjSyncDestructionTest::TearDown();
+    }
 };
 
 TEST_P(MemObjAsyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyncDestructionsAreEnabledAndAllocationIsNotReadyAndMemObjectIsDestructedThenAllocationIsDeferred) {
@@ -297,7 +332,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     }
 }
 
-HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabledThatHasAllocatedMappedPtrWhenItIsDestroyedThenDestructorWaitsOnTaskCount) {
+HWTEST_TEMPLATED_P(MemObjAsyncDestructionTestWithMyCsr, givenUsedMemObjWithAsyncDestructionsEnabledThatHasAllocatedMappedPtrWhenItIsDestroyedThenDestructorWaitsOnTaskCount) {
     makeMemObjUsed();
 
     bool hasAllocatedMappedPtr = GetParam();
@@ -307,8 +342,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         memObj->setAllocatedMapPtr(allocatedPtr);
     }
 
-    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(mockCsr);
+    auto *mockCsr = static_cast<MyCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
     *mockCsr->getTagAddress() = 0;
     auto osContextId = mockCsr->getOsContext().getContextId();
 
@@ -329,7 +363,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     }
 }
 
-HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabledThatHasDestructableMappedPtrWhenItIsDestroyedThenDestructorWaitsOnTaskCount) {
+HWTEST_TEMPLATED_P(MemObjAsyncDestructionTestWithMyCsr, givenUsedMemObjWithAsyncDestructionsEnabledThatHasDestructableMappedPtrWhenItIsDestroyedThenDestructorWaitsOnTaskCount) {
     auto storage = alignedMalloc(size, MemoryConstants::pageSize);
 
     bool hasAllocatedMappedPtr = GetParam();
@@ -350,8 +384,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     }
 
     makeMemObjUsed();
-    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(mockCsr);
+    auto *mockCsr = static_cast<MyCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
     *mockCsr->getTagAddress() = 0;
 
     auto osContextId = mockCsr->getOsContext().getContextId();
@@ -377,7 +410,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     }
 }
 
-HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyncDestructionsAreDisabledThenDestructorWaitsOnTaskCount) {
+HWTEST_TEMPLATED_P(MemObjSyncDestructionTestWithMyCsr, givenMemObjWithDestructableAllocationWhenAsyncDestructionsAreDisabledThenDestructorWaitsOnTaskCount) {
     bool isMemObjReady;
     isMemObjReady = GetParam();
 
@@ -386,8 +419,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     } else {
         makeMemObjNotReady();
     }
-    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(mockCsr);
+    auto *mockCsr = static_cast<MyCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
     *mockCsr->getTagAddress() = 0;
 
     auto osContextId = mockCsr->getOsContext().getContextId();
@@ -401,7 +433,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     EXPECT_EQ(expectedTaskCount, mockCsr->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
 }
 
-HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyncDestructionsAreDisabledThenAllocationIsNotDeferred) {
+HWTEST_TEMPLATED_P(MemObjSyncDestructionTestWithMyCsr, givenMemObjWithDestructableAllocationWhenAsyncDestructionsAreDisabledThenAllocationIsNotDeferred) {
     bool isMemObjReady;
     isMemObjReady = GetParam();
 
@@ -410,8 +442,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     } else {
         makeMemObjNotReady();
     }
-    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(mockCsr);
+    auto *mockCsr = static_cast<MyCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
     *mockCsr->getTagAddress() = 0;
 
     delete memObj;
@@ -419,11 +450,10 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     EXPECT_TRUE(allocationList.peekIsEmpty());
 }
 
-HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestructionsAreDisabledThenWaitForCompletionWithTimeoutOnMapAllocation) {
+HWTEST_TEMPLATED_P(MemObjSyncDestructionTestWithMyCsr, givenMemObjWithMapAllocationWhenAsyncDestructionsAreDisabledThenWaitForCompletionWithTimeoutOnMapAllocation) {
     auto isMapAllocationUsed = GetParam();
 
-    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(mockCsr);
+    auto *mockCsr = static_cast<MyCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
     *mockCsr->getTagAddress() = 0;
 
     GraphicsAllocation *mapAllocation = nullptr;
@@ -459,11 +489,10 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestruc
     }
 }
 
-HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestructionsAreDisabledThenMapAllocationIsNotDeferred) {
+HWTEST_TEMPLATED_P(MemObjSyncDestructionTestWithMyCsr, givenMemObjWithMapAllocationWhenAsyncDestructionsAreDisabledThenMapAllocationIsNotDeferred) {
     auto hasMapAllocation = GetParam();
 
-    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(mockCsr);
+    auto *mockCsr = static_cast<MyCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
     *mockCsr->getTagAddress() = 0;
 
     GraphicsAllocation *mapAllocation = nullptr;
@@ -490,11 +519,10 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestruc
     EXPECT_TRUE(allocationList.peekIsEmpty());
 }
 
-HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithoutMemUseHostPtrFlagWhenAsyncDestructionsAreEnabledThenMapAllocationIsDeferred) {
+HWTEST_TEMPLATED_P(MemObjAsyncDestructionTestWithMyCsr, givenMemObjWithMapAllocationWithoutMemUseHostPtrFlagWhenAsyncDestructionsAreEnabledThenMapAllocationIsDeferred) {
     auto hasMapAllocation = GetParam();
 
-    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(mockCsr);
+    auto *mockCsr = static_cast<MyCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
     *mockCsr->getTagAddress() = 0;
 
     GraphicsAllocation *mapAllocation = nullptr;
@@ -529,11 +557,10 @@ HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithoutMemUseHo
     }
 }
 
-HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithMemUseHostPtrFlagWhenAsyncDestructionsAreEnabledThenMapAllocationIsNotDeferred) {
+HWTEST_TEMPLATED_P(MemObjAsyncDestructionTestWithMyCsr, givenMemObjWithMapAllocationWithMemUseHostPtrFlagWhenAsyncDestructionsAreEnabledThenMapAllocationIsNotDeferred) {
     auto hasMapAllocation = GetParam();
 
-    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(mockCsr);
+    auto *mockCsr = static_cast<MyCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
     *mockCsr->getTagAddress() = 0;
 
     GraphicsAllocation *mapAllocation = nullptr;
@@ -578,7 +605,12 @@ INSTANTIATE_TEST_SUITE_P(
 
 INSTANTIATE_TEST_SUITE_P(
     MemObjTests,
-    MemObjSyncDestructionTest,
+    MemObjAsyncDestructionTestWithMyCsr,
+    testing::Bool());
+
+INSTANTIATE_TEST_SUITE_P(
+    MemObjTests,
+    MemObjSyncDestructionTestWithMyCsr,
     testing::Bool());
 
 using UsmDestructionTests = ::testing::Test;
