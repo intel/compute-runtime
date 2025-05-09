@@ -85,6 +85,7 @@ struct BlitProperties {
     GraphicsAllocation *dstAllocation = nullptr;
     GraphicsAllocation *srcAllocation = nullptr;
     GraphicsAllocation *clearColorAllocation = nullptr;
+    void *lastBlitCommand = nullptr;
     uint32_t *fillPattern = nullptr;
     uint64_t dstGpuAddress = 0;
     uint64_t srcGpuAddress = 0;

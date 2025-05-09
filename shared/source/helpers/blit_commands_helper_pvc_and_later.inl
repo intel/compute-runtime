@@ -12,9 +12,11 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
+BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
     using MEM_SET = typename Family::MEM_SET;
     auto blitCmd = Family::cmdInitMemSet;
+    const auto maxBlitSetWidth = getMaxBlitSetWidth(rootDeviceEnvironment);
+    const auto maxBlitSetHeight = getMaxBlitSetHeight(rootDeviceEnvironment);
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getL3EnabledMOCS();
     if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
@@ -34,25 +36,26 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitPropert
 
     const bool useAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties();
 
-    auto sizeToFill = blitProperties.copySize.x;
+    uint64_t sizeToFill = blitProperties.copySize.x;
     uint64_t offset = blitProperties.dstOffset.x;
+    BlitCommandsResult result{};
     bool firstCommand = true;
     while (sizeToFill != 0) {
         auto tmpCmd = blitCmd;
         tmpCmd.setDestinationStartAddress(ptrOffset(blitProperties.dstAllocation->getGpuAddress(), static_cast<size_t>(offset)));
-        size_t height = 0;
-        size_t width = 0;
-        if (sizeToFill <= BlitterConstants::maxBlitSetWidth) {
+        uint64_t height = 0;
+        uint64_t width = 0;
+        if (sizeToFill <= maxBlitSetWidth) {
             width = sizeToFill;
             height = 1;
         } else {
-            width = BlitterConstants::maxBlitSetWidth;
-            height = std::min<size_t>((sizeToFill / width), BlitterConstants::maxBlitSetHeight);
+            width = maxBlitSetWidth;
+            height = std::min<uint64_t>((sizeToFill / width), maxBlitSetHeight);
             if (height > 1) {
                 tmpCmd.setFillType(MEM_SET::FILL_TYPE::FILL_TYPE_MATRIX_FILL);
             }
         }
-        auto blitSize = width * height;
+        auto blitSize = static_cast<uint64_t>(width * height);
         auto lastCommand = (sizeToFill - blitSize == 0);
         tmpCmd.setFillWidth(static_cast<uint32_t>(width));
         tmpCmd.setFillHeight(static_cast<uint32_t>(height));
@@ -66,10 +69,13 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitPropert
 
         auto cmd = linearStream.getSpaceForCmd<MEM_SET>();
         *cmd = tmpCmd;
-
+        if (lastCommand) {
+            result.lastBlitCommand = cmd;
+        }
         offset += blitSize;
         sizeToFill -= blitSize;
     }
+    return result;
 }
 
 } // namespace NEO

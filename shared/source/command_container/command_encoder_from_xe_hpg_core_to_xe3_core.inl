@@ -91,6 +91,9 @@ void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t a
 }
 
 template <typename Family>
+void InOrderPatchCommandHelpers::PatchCmd<Family>::patchBlitterCommand(uint64_t appendCounterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
+}
+template <typename Family>
 template <typename CommandType>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, CommandType &cmd, const EncodeWalkerArgs &walkerArgs) {}
 

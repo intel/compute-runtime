@@ -312,8 +312,8 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitPropertie
 }
 
 template <>
-void BlitCommandsHelper<Family>::dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
-    NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill(blitProperties, linearStream, rootDeviceEnvironment);
+BlitCommandsResult BlitCommandsHelper<Family>::dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
+    return NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill(blitProperties, linearStream, rootDeviceEnvironment);
 }
 
 template <>

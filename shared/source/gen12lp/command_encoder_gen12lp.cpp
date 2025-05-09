@@ -712,6 +712,9 @@ template <typename Family>
 template <typename CommandType>
 void EncodePostSync<Family>::adjustTimestampPacket(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
+template <typename Family>
+void InOrderPatchCommandHelpers::PatchCmd<Family>::patchBlitterCommand(uint64_t appendCounterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {}
+
 template <>
 size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {
     size_t size = 0;
@@ -803,6 +806,7 @@ namespace NEO {
 template struct EncodeL3State<Family>;
 
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue);
+template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchBlitterCommand(uint64_t appendCounterValue, InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
 template struct EncodeDispatchKernelWithHeap<Family>;
 } // namespace NEO
 

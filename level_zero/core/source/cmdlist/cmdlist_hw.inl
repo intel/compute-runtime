@@ -1445,8 +1445,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     }
 
     NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
-
-    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *this->dummyBlitWa.rootDeviceEnvironment);
+    auto blitResult = NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *this->dummyBlitWa.rootDeviceEnvironment);
+    if (useAdditionalBlitProperties && this->isInOrderExecutionEnabled()) {
+        auto inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+        addCmdForPatching(nullptr, blitResult.lastBlitCommand, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::xyCopyBlt);
+    }
     dummyBlitWa.isWaRequired = true;
     return ZE_RESULT_SUCCESS;
 }
@@ -1501,10 +1504,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     }
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(copySizeModified, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+    NEO::BlitCommandsResult blitResult{};
     if (copyRegionPreferred) {
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(blitProperties, *commandContainer.getCommandStream(), rootDeviceEnvironment);
+        blitResult = NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(blitProperties, *commandContainer.getCommandStream(), rootDeviceEnvironment);
     } else {
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), rootDeviceEnvironment);
+        blitResult = NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), rootDeviceEnvironment);
+    }
+    if (useAdditionalBlitProperties && this->isInOrderExecutionEnabled()) {
+        auto inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+        addCmdForPatching(nullptr, blitResult.lastBlitCommand, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::xyCopyBlt);
     }
     dummyBlitWa.isWaRequired = true;
 
@@ -1548,7 +1556,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     }
     blitProperties.transform1DArrayTo2DArrayIfNeeded();
 
-    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
+    auto blitResult = NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
+    if (useAdditionalBlitProperties && this->isInOrderExecutionEnabled()) {
+        auto inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+        addCmdForPatching(nullptr, blitResult.lastBlitCommand, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::xyBlockCopyBlt);
+    }
     dummyBlitWa.isWaRequired = true;
 
     if (!useAdditionalBlitProperties) {
@@ -2476,7 +2488,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         }
         blitProperties.computeStreamPartitionCount = this->partitionCount;
 
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
+        auto blitResult = NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
+        if (useAdditionalBlitProperties && this->isInOrderExecutionEnabled()) {
+            using PatchCmdType = NEO::InOrderPatchCommandHelpers::PatchCmdType;
+            PatchCmdType patchCmdType = (blitProperties.fillPatternSize == 1) ? PatchCmdType::memSet : PatchCmdType::xyColorBlt;
+            auto inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+            addCmdForPatching(nullptr, blitResult.lastBlitCommand, nullptr, inOrderCounterValue, patchCmdType);
+        }
         dummyBlitWa.isWaRequired = true;
         if (isCopyOnlySignaling) {
             appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);

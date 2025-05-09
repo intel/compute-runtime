@@ -141,7 +141,11 @@ enum class PatchCmdType {
     sdi,
     semaphore,
     walker,
-    pipeControl
+    pipeControl,
+    xyCopyBlt,
+    xyBlockCopyBlt,
+    xyColorBlt,
+    memSet
 };
 
 template <typename GfxFamily>
@@ -172,6 +176,12 @@ struct PatchCmd {
             break;
         case PatchCmdType::pipeControl:
             patchPipeControl(appendCounterValue);
+            break;
+        case PatchCmdType::xyCopyBlt:
+        case PatchCmdType::xyBlockCopyBlt:
+        case PatchCmdType::xyColorBlt:
+        case PatchCmdType::memSet:
+            patchBlitterCommand(appendCounterValue, patchCmdType);
             break;
         default:
             UNRECOVERABLE_IF(true);
@@ -218,6 +228,7 @@ struct PatchCmd {
     }
 
     void patchComputeWalker(uint64_t appendCounterValue);
+    void patchBlitterCommand(uint64_t appendCounterValue, PatchCmdType patchCmdType);
 
     void patchPipeControl(uint64_t appendCounterValue) {
         auto pcCmd = reinterpret_cast<typename GfxFamily::PIPE_CONTROL *>(cmd1);

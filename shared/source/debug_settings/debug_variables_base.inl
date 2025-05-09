@@ -130,6 +130,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, MultiStoragePolicy, -1, "-1: default, 0: subdevi
 DECLARE_DEBUG_VARIABLE(int32_t, MultiStorageGranularity, -1, "Forces granularity for chunk size and mapping colouring policies: -1: default 64 kB, >0 - enabled chunk size based colouring with granularity in kb (should be multiple of 64kb page size, because of alignment restrictions)")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxWidth, -1, "-1: default, >=0: Max width")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxHeight, -1, "-1: default, >=0: Max height")
+DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxSetWidth, -1, "-1: default, >=0: Max width")
+DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxSetHeight, -1, "-1: default, >=0: Max height")
 DECLARE_DEBUG_VARIABLE(int32_t, PostBlitCommand, -1, "-1: default, 0: MI_ARB_CHECK, 1: MI_FLUSH, 2: Nothing")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideHwIpVersion, -1, "-1: default,  >=0: Hardware IP version")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePreemptionSurfaceSizeInMb, -1, "-1: default, >=0 Override preemption surface size with value")

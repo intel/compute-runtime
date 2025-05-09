@@ -495,16 +495,48 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
 
     commandList->useAdditionalBlitProperties = false;
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
     CmdListMemoryCopyParams copyParams = {};
     commandList->appendMemoryCopy(dstBuffer, srcBuffer, 4906u, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(1u, commandList->inOrderPatchCmds.size());
 
     commandList->useAdditionalBlitProperties = true;
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
     commandList->appendMemoryCopy(dstBuffer, srcBuffer, 4906u, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(3u, commandList->inOrderPatchCmds.size());
+    EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::xyCopyBlt, commandList->inOrderPatchCmds[2].patchCmdType);
+
+    context->freeMem(dstBuffer);
+    context->freeMem(srcBuffer);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendMemoryCopyBlitThenInOrderPatchCmdsRemainsTheSame) {
+    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+
+    void *srcBuffer = nullptr;
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &srcBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, srcBuffer);
+
+    void *dstBuffer = nullptr;
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, dstBuffer);
+
+    commandList->useAdditionalBlitProperties = true;
+    CmdListMemoryCopyParams copyParams = {};
+    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
+    commandList->appendMemoryCopy(dstBuffer, srcBuffer, 4906u, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
 
     context->freeMem(dstBuffer);
     context->freeMem(srcBuffer);
@@ -522,14 +554,36 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
 
     commandList->useAdditionalBlitProperties = false;
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
     commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr);
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(1u, commandList->inOrderPatchCmds.size());
 
     commandList->useAdditionalBlitProperties = true;
     commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr);
     EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(2u, commandList->inOrderPatchCmds.size());
+    EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::xyBlockCopyBlt, commandList->inOrderPatchCmds[1].patchCmdType);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendMemoryCopyImageBlitThenInOrderPatchCmdsRemainsTheSame) {
+    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0);
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    commandList->useAdditionalBlitProperties = true;
+    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr);
+    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendMemoryCopyRegionThenAdditionalBlitPropertiesCalled) {
@@ -545,16 +599,40 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
 
     commandList->useAdditionalBlitProperties = false;
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
     commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
                                         srcBuffer, &sr, width, 0, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(1u, commandList->inOrderPatchCmds.size());
 
     commandList->useAdditionalBlitProperties = true;
     commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
                                         srcBuffer, &sr, width, 0, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(3u, commandList->inOrderPatchCmds.size());
+    EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::xyCopyBlt, commandList->inOrderPatchCmds[2].patchCmdType);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendMemoryCopyRegionThenInOrderPatchCmdsRemainsTheSame) {
+    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0);
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
+    uint32_t width = 16;
+    uint32_t height = 16;
+    ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
+    ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
+    CmdListMemoryCopyParams copyParams = {};
+
+    commandList->useAdditionalBlitProperties = true;
+    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
+    commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                        srcBuffer, &sr, width, 0, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendBlitFillThenAdditionalBlitPropertiesCalled) {
@@ -571,14 +649,209 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
 
     commandList->useAdditionalBlitProperties = false;
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
     commandList->appendBlitFill(dstBuffer, &one, sizeof(uint8_t), 4096u, nullptr, 0, nullptr, copyParams);
+
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(1u, commandList->inOrderPatchCmds.size());
 
     commandList->useAdditionalBlitProperties = true;
     commandList->appendBlitFill(dstBuffer, &one, sizeof(uint8_t), 4096u, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(3u, commandList->inOrderPatchCmds.size());
+    EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::memSet, commandList->inOrderPatchCmds[2].patchCmdType);
+    context->freeMem(dstBuffer);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendBlitWithTwoBytesPatternFillThenAdditionalBlitPropertiesCalled) {
+    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+
+    void *dstBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer);
+    uint32_t one = 1u;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, dstBuffer);
+    CmdListMemoryCopyParams copyParams = {};
+
+    commandList->maxFillPaternSizeForCopyEngine = 4;
+
+    commandList->useAdditionalBlitProperties = false;
+    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
+    commandList->appendBlitFill(dstBuffer, &one, sizeof(uint16_t), 4096u, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(1u, commandList->inOrderPatchCmds.size());
+
+    commandList->useAdditionalBlitProperties = true;
+    commandList->appendBlitFill(dstBuffer, &one, sizeof(uint16_t), 4096u, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(3u, commandList->inOrderPatchCmds.size());
+    EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::xyColorBlt, commandList->inOrderPatchCmds[2].patchCmdType);
+    context->freeMem(dstBuffer);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyRegularCommandListWithUseAdditionalBlitPropertiesWhenCallingAppendBlitFillThenInOrderPatchCmdsRemainsTheSame) {
+    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0);
+
+    void *dstBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer);
+    uint32_t one = 1u;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, dstBuffer);
+    CmdListMemoryCopyParams copyParams = {};
+
+    commandList->useAdditionalBlitProperties = true;
+    EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
+    commandList->appendBlitFill(dstBuffer, &one, sizeof(uint8_t), 4096u, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
+    context->freeMem(dstBuffer);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenPatchingCommandsAfterCallingMemoryCopyRegionThenCommandsRemainsTheSame) {
+    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+    void *srcBuffer = reinterpret_cast<void *>(0x1234);
+    void *dstBuffer = reinterpret_cast<void *>(0x2345);
+    uint32_t width = 16;
+    uint32_t height = 16;
+    ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
+    ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
+    CmdListMemoryCopyParams copyParams = {};
+
+    commandList->useAdditionalBlitProperties = true;
+    EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
+    commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
+                                        srcBuffer, &sr, width, 0, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(1u, commandList->inOrderPatchCmds.size());
+    EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::xyCopyBlt, commandList->inOrderPatchCmds[0].patchCmdType);
+
+    commandList->enablePatching(0);
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    auto &inOrderPatchCmd = commandList->inOrderPatchCmds[0];
+    EXPECT_NE(nullptr, inOrderPatchCmd.cmd1);
+    EXPECT_EQ(nullptr, inOrderPatchCmd.cmd2);
+    XY_COPY_BLT copyBlt = *reinterpret_cast<XY_COPY_BLT *>(inOrderPatchCmd.cmd1);
+    inOrderPatchCmd.patch(3);
+    XY_COPY_BLT *modifiedBlt = reinterpret_cast<XY_COPY_BLT *>(inOrderPatchCmd.cmd1);
+    EXPECT_EQ(memcmp(modifiedBlt, &copyBlt, sizeof(XY_COPY_BLT)), 0);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenPatchingCommandsAfterCallingMemoryCopyThenCommandsRemainsTheSame) {
+    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    commandList->useAdditionalBlitProperties = true;
+    EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr);
+    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(1u, commandList->inOrderPatchCmds.size());
+    EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::xyBlockCopyBlt, commandList->inOrderPatchCmds[0].patchCmdType);
+
+    commandList->enablePatching(0);
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
+    auto &inOrderPatchCmd = commandList->inOrderPatchCmds[0];
+    EXPECT_NE(nullptr, inOrderPatchCmd.cmd1);
+    EXPECT_EQ(nullptr, inOrderPatchCmd.cmd2);
+    XY_BLOCK_COPY_BLT copyBlt = *reinterpret_cast<XY_BLOCK_COPY_BLT *>(inOrderPatchCmd.cmd1);
+    inOrderPatchCmd.patch(3);
+    XY_BLOCK_COPY_BLT *modifiedBlt = reinterpret_cast<XY_BLOCK_COPY_BLT *>(inOrderPatchCmd.cmd1);
+    EXPECT_EQ(memcmp(modifiedBlt, &copyBlt, sizeof(XY_BLOCK_COPY_BLT)), 0);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenPatchingCommandsAfterCallingMemoryFillWithTwoBytesPatternThenCommandsRemainsTheSame) {
+    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+
+    void *dstBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer);
+    uint32_t one = 1u;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, dstBuffer);
+    CmdListMemoryCopyParams copyParams = {};
+
+    commandList->maxFillPaternSizeForCopyEngine = 4;
+
+    commandList->useAdditionalBlitProperties = true;
+    EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
+    commandList->appendBlitFill(dstBuffer, &one, sizeof(uint16_t), 4096u, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(1u, commandList->inOrderPatchCmds.size());
+    EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::xyColorBlt, commandList->inOrderPatchCmds[0].patchCmdType);
+
+    commandList->enablePatching(0);
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
+    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+    auto &inOrderPatchCmd = commandList->inOrderPatchCmds[0];
+    EXPECT_NE(nullptr, inOrderPatchCmd.cmd1);
+    EXPECT_EQ(nullptr, inOrderPatchCmd.cmd2);
+    XY_COLOR_BLT copyBlt = *reinterpret_cast<XY_COLOR_BLT *>(inOrderPatchCmd.cmd1);
+    inOrderPatchCmd.patch(3);
+    XY_COLOR_BLT *modifiedBlt = reinterpret_cast<XY_COLOR_BLT *>(inOrderPatchCmd.cmd1);
+    EXPECT_EQ(memcmp(modifiedBlt, &copyBlt, sizeof(XY_COLOR_BLT)), 0);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenPatchingCommandsAfterCallingMemoryFillWithSingleBytePatternThenCommandsRemainsTheSame, IsAtLeastXeHpcCore) {
+    auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties2<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+
+    void *dstBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &dstBuffer);
+    uint32_t one = 1u;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, dstBuffer);
+    CmdListMemoryCopyParams copyParams = {};
+
+    commandList->maxFillPaternSizeForCopyEngine = 4;
+
+    commandList->useAdditionalBlitProperties = true;
+    EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
+    commandList->appendBlitFill(dstBuffer, &one, sizeof(uint8_t), 4096u, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
+    EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
+    EXPECT_EQ(1u, commandList->inOrderPatchCmds.size());
+    EXPECT_EQ(InOrderPatchCommandHelpers::PatchCmdType::memSet, commandList->inOrderPatchCmds[0].patchCmdType);
+
+    commandList->enablePatching(0);
+    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
+    using MEM_SET = typename GfxFamily::MEM_SET;
+    auto &inOrderPatchCmd = commandList->inOrderPatchCmds[0];
+    EXPECT_NE(nullptr, inOrderPatchCmd.cmd1);
+    EXPECT_EQ(nullptr, inOrderPatchCmd.cmd2);
+    MEM_SET copyBlt = *reinterpret_cast<MEM_SET *>(inOrderPatchCmd.cmd1);
+    inOrderPatchCmd.patch(3);
+    MEM_SET *modifiedBlt = reinterpret_cast<MEM_SET *>(inOrderPatchCmd.cmd1);
+    EXPECT_EQ(memcmp(modifiedBlt, &copyBlt, sizeof(MEM_SET)), 0);
+
     context->freeMem(dstBuffer);
 }
 

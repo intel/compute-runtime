@@ -24,6 +24,10 @@ struct RootDeviceEnvironment;
 class ProductHelper;
 struct EncodeDummyBlitWaArgs;
 
+struct BlitCommandsResult {
+    void *lastBlitCommand = nullptr;
+};
+
 template <typename GfxFamily>
 struct BlitCommandsHelper {
     using COLOR_DEPTH = typename GfxFamily::XY_COLOR_BLT::COLOR_DEPTH;
@@ -31,6 +35,8 @@ struct BlitCommandsHelper {
     static uint64_t getMaxBlitWidthOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint64_t getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
     static uint64_t getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
+    static uint64_t getMaxBlitSetWidth(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static uint64_t getMaxBlitSetHeight(const RootDeviceEnvironment &rootDeviceEnvironment);
     static void dispatchPreBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimatePreBlitCommandSize();
     static void dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
@@ -46,12 +52,12 @@ struct BlitCommandsHelper {
     static uint64_t calculateBlitCommandDestinationBaseAddressCopyRegion(const BlitProperties &blitProperties, size_t slice);
     static uint64_t calculateBlitCommandSourceBaseAddressCopyRegion(const BlitProperties &blitProperties, size_t slice);
     static void dispatchBlitCommands(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
-    static void dispatchBlitCommandsForBufferRegion(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
-    static void dispatchBlitCommandsForBufferPerRow(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
-    static void dispatchBlitCommandsForImageRegion(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
-    static void dispatchBlitMemoryColorFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
-    static void dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
-    static void dispatchBlitMemoryFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
+    static BlitCommandsResult dispatchBlitCommandsForBufferRegion(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
+    static BlitCommandsResult dispatchBlitCommandsForBufferPerRow(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
+    static BlitCommandsResult dispatchBlitCommandsForImageRegion(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
+    static BlitCommandsResult dispatchBlitMemoryColorFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
+    static BlitCommandsResult dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
+    static BlitCommandsResult dispatchBlitMemoryFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
     static void dispatchDummyBlit(LinearStream &linearStream, EncodeDummyBlitWaArgs &waArgs);
     static size_t getDummyBlitSize(const EncodeDummyBlitWaArgs &waArgs);
     static bool isDummyBlitWaNeeded(const EncodeDummyBlitWaArgs &waArgs);
