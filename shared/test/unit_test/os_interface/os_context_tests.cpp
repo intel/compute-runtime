@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 
 #include "gtest/gtest.h"
 
@@ -79,6 +81,58 @@ TEST(OSContext, givenSetPowerHintThenGetPowerHintShowsTheSameValue) {
     pOsContext->setUmdPowerHintValue(1);
     EXPECT_EQ(1, pOsContext->getUmdPowerHintValue());
     delete pOsContext;
+}
+
+TEST(OSContext, givenPowerHintSetToMaxWhenCheckingDirectSubmissionAvailabilityThenFalseIsReturnedUnlessDebugFlagEnableDirectSubmissionTrue) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    auto pOsContext = std::make_unique<OsContextMock>(0, 0, engineDescriptor);
+    ASSERT_NE(pOsContext, nullptr);
+    pOsContext->callBaseIsDirectSubmissionSupported = false;
+    pOsContext->mockDirectSubmissionSupported = true;
+    pOsContext->setDefaultContext(true);
+    ASSERT_NE(defaultHwInfo, nullptr);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.directSubmissionEngines.data[pOsContext->getEngineType()]
+        .engineSupported = true;
+    bool submitOnInit = false;
+
+    pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax());
+    EXPECT_FALSE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+    pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax() / 2);
+    EXPECT_TRUE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+
+    DebugManagerStateRestore debugFlagsStateRestorer;
+    {
+        debugManager.flags.EnableDirectSubmission.set(-1); // only in this case second/csr flag have any significance here
+        {
+            debugManager.flags.SetCommandStreamReceiver.set(0); // as representation of values <= 0
+            pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax());
+            EXPECT_FALSE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+            pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax() / 2);
+            EXPECT_TRUE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+        }
+        {
+            debugManager.flags.SetCommandStreamReceiver.set(1); // as representation of values > 0
+            pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax());
+            EXPECT_FALSE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+            pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax() / 2);
+            EXPECT_FALSE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+        }
+    }
+    {
+        debugManager.flags.EnableDirectSubmission.set(0);
+        pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax());
+        EXPECT_FALSE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+        pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax() / 2);
+        EXPECT_FALSE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+    }
+    {
+        debugManager.flags.EnableDirectSubmission.set(1);
+        pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax());
+        EXPECT_TRUE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+        pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax() / 2);
+        EXPECT_TRUE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+    }
 }
 
 TEST(OSContext, givenOsContextWhenQueryingForOfflineDumpContextIdThenCorrectValueIsReturned) {

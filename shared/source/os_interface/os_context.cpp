@@ -64,7 +64,8 @@ bool OsContext::ensureContextInitialized(bool allocateInterrupt) {
 }
 
 bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &submitOnInit) {
-    bool enableDirectSubmission = this->isDirectSubmissionSupported();
+    bool enableDirectSubmission = this->isDirectSubmissionSupported() &&
+                                  this->getUmdPowerHintValue() < NEO::OsContext::getUmdPowerHintMax();
 
     if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
         enableDirectSubmission = false;
