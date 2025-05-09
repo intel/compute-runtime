@@ -49,11 +49,11 @@ constexpr size_t heapRegularSize = reservedRangeSize - heapFrontWindowSize;
 using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
 
 BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable) : rootDevice(rootDevice),
-                                                                                             surfaceStateSize(rootDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>().getRenderSurfaceStateSize()),
                                                                                              memManager(rootDevice->getMemoryManager()),
-                                                                                             isMultiOsContextCapable(isMultiOsContextCapable),
+                                                                                             deviceBitfield(rootDevice->getDeviceBitfield()),
+                                                                                             surfaceStateSize(rootDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>().getRenderSurfaceStateSize()),
                                                                                              rootDeviceIndex(rootDevice->getRootDeviceIndex()),
-                                                                                             deviceBitfield(rootDevice->getDeviceBitfield()) {
+                                                                                             isMultiOsContextCapable(isMultiOsContextCapable) {
 
     for (auto heapType = 0; heapType < BindlesHeapType::numHeapTypes; heapType++) {
         auto size = MemoryConstants::pageSize64k;
