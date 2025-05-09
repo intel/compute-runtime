@@ -256,10 +256,8 @@ ze_result_t ImageImp::getDeviceOffset(uint64_t *deviceOffset) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    auto bindlessSlot = this->getBindlessSlot();
-
-    DEBUG_BREAK_IF(bindlessSlot == nullptr);
-    *deviceOffset = bindlessSlot->surfaceStateOffset;
+    DEBUG_BREAK_IF(this->getBindlessSlot() == nullptr);
+    *deviceOffset = this->getBindlessSlot()->surfaceStateOffset;
 
     return ZE_RESULT_SUCCESS;
 }

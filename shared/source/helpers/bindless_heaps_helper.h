@@ -74,35 +74,37 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
     std::optional<AddressRange> reserveMemoryRange(size_t size, size_t alignment, HeapIndex heapIndex);
     bool initializeReservedMemory();
     bool isReservedMemoryModeAvailable();
-    bool growHeap(BindlesHeapType heapType);
 
+  protected:
     Device *rootDevice = nullptr;
-    DeviceBitfield deviceBitfield;
-    GraphicsAllocation *borderColorStates;
+    const size_t surfaceStateSize;
+    bool growHeap(BindlesHeapType heapType);
     MemoryManager *memManager = nullptr;
-    std::array<std::vector<SurfaceStateInHeapInfo>, 2> surfaceStateInHeapVectorReuse[2];
-    std::bitset<64> stateCacheDirtyForContext;
-    std::unique_ptr<HeapAllocator> heapFrontWindow;
-    std::unique_ptr<HeapAllocator> heapRegular;
+    bool isMultiOsContextCapable = false;
+    const uint32_t rootDeviceIndex;
     std::unique_ptr<IndirectHeap> surfaceStateHeaps[BindlesHeapType::numHeapTypes];
-    std::vector<AddressRange> reservedRanges;
+    GraphicsAllocation *borderColorStates;
     std::vector<GraphicsAllocation *> ssHeapsAllocations;
 
-    const size_t surfaceStateSize;
     size_t reuseSlotCountThreshold = 512;
-    const uint32_t rootDeviceIndex;
     uint32_t allocatePoolIndex = 0;
     uint32_t releasePoolIndex = 0;
-    uint64_t reservedRangeBase = 0;
+    bool allocateFromReusePool = false;
+    std::array<std::vector<SurfaceStateInHeapInfo>, 2> surfaceStateInHeapVectorReuse[2];
+    std::bitset<64> stateCacheDirtyForContext;
 
     std::mutex mtx;
-
-    bool allocateFromReusePool = false;
+    DeviceBitfield deviceBitfield;
     bool globalBindlessDsh = false;
-    bool heaplessEnabled = false;
-    bool isMultiOsContextCapable = false;
-    bool reservedMemoryInitialized = false;
+
     bool useReservedMemory = false;
+    bool reservedMemoryInitialized = false;
+    uint64_t reservedRangeBase = 0;
+
+    std::unique_ptr<HeapAllocator> heapFrontWindow;
+    std::unique_ptr<HeapAllocator> heapRegular;
+
+    std::vector<AddressRange> reservedRanges;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<BindlessHeapsHelper>);
