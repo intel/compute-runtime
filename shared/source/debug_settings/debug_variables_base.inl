@@ -436,8 +436,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphorePlacement, -1, "-1: do 
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionBufferAddressing, -1, "-1: do not override, 0: not use 48bit, 1: use 48bit")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphoreAddressing, -1, "-1: do not override, 0: not use 48bit, 1: use 48bit")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableCpuCacheFlush, -1, "-1: do not override, 0: disable, 1: enable")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionEnableDebugBuffer, 0, "0: diagnostic feature disabled - dispatch regular workload, 1: dispatch diagnostic buffer - mode 1 - single SDI command, 2: dispatch diagnostic buffer - mode 2 - no command")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDiagnosticExecutionCount, 30, "Number of executions of EnableDebugBuffer modes within diagnostic run")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDrmContext, -1, "Create special drm context: -1: default, when new residency model available, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideBlitterSupport, -1, "Overrides default blitter support: -1: do not override, 0: disable engine support, 1: enable engine support with init start, 2: enable engine support without init start")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideRenderSupport, -1, "Overrides default render support: -1: do not override, 0: disable engine support, 1: enable engine support with init start, 2: enable engine support without init start")

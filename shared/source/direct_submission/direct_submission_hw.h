@@ -25,10 +25,7 @@ struct RingSemaphoreData {
     uint8_t reservedCacheline0[60];
     uint32_t tagAllocation;
     uint8_t reservedCacheline1[60];
-    uint32_t diagnosticModeCounter;
-    uint32_t reserved0Uint32;
-    uint64_t reserved1Uint64;
-    uint8_t reservedCacheline2[48];
+    uint8_t reservedCacheline2[64];
     uint64_t miFlushSpace;
     uint8_t reservedCacheline3[56];
     uint32_t pagingFenceCounter;
@@ -56,7 +53,6 @@ inline constexpr bool defaultDisableMonitorFence = true;
 } // namespace UllsDefaults
 
 struct BatchBuffer;
-class DirectSubmissionDiagnosticsCollector;
 class FlushStampTracker;
 class GraphicsAllocation;
 struct HardwareInfo;
@@ -205,11 +201,6 @@ class DirectSubmissionHw {
     void dispatchSystemMemoryFenceAddress();
     size_t getSizeSystemMemoryFenceAddress();
 
-    void createDiagnostic();
-    void initDiagnostic(bool &submitOnInit);
-    MOCKABLE_VIRTUAL void performDiagnosticMode();
-    void dispatchDiagnosticModeSection();
-    size_t getDiagnosticModeSection();
     void setImmWritePostSyncOffset();
     virtual void dispatchStopRingBufferSection(){};
     virtual size_t dispatchStopRingBufferSectionSize() {
@@ -239,7 +230,6 @@ class DirectSubmissionHw {
     uint32_t maxRingBufferCount = std::numeric_limits<uint32_t>::max();
 
     LinearStream ringCommandStream;
-    std::unique_ptr<DirectSubmissionDiagnosticsCollector> diagnostic;
 
     uint64_t semaphoreGpuVa = 0u;
     uint64_t gpuVaForMiFlush = 0u;
@@ -261,13 +251,10 @@ class DirectSubmissionHw {
     GraphicsAllocation *relaxedOrderingSchedulerAllocation = nullptr;
     void *semaphorePtr = nullptr;
     volatile RingSemaphoreData *semaphoreData = nullptr;
-    volatile void *workloadModeOneStoreAddress = nullptr;
     uint32_t *pciBarrierPtr = nullptr;
     volatile TagAddressType *tagAddress;
 
     uint32_t currentQueueWorkCount = 1u;
-    uint32_t workloadMode = 0;
-    uint32_t workloadModeOneExpectedValue = 0u;
     uint32_t activeTiles = 1u;
     uint32_t immWritePostSyncOffset = 0u;
     uint32_t currentRelaxedOrderingQueueSize = 0;

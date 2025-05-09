@@ -33,7 +33,6 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
-#include "shared/test/unit_test/mocks/mock_direct_submission_diagnostic_collector.h"
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> sfenceCounter;
@@ -547,88 +546,6 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
         }
     }
     EXPECT_FALSE(foundFlush);
-}
-
-HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenDirectSubmissionDebugBufferModeOneWhenDispatchWorkloadCalledThenExpectNoStartAndLoadDataImm) {
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using Dispatcher = RenderDispatcher<FamilyType>;
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false, false, regularDirectSubmission.dispatchMonitorFenceRequired(false));
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-
-    directSubmission.workloadMode = 1;
-    bool ret = directSubmission.allocateResources();
-    EXPECT_TRUE(ret);
-
-    size_t startSize = directSubmission.getSizeStartSection();
-    size_t storeDataSize = Dispatcher::getSizeStoreDwordCommand();
-
-    size_t debugSizeDispatch = directSubmission.getSizeDispatch(false, false, directSubmission.dispatchMonitorFenceRequired(false));
-    EXPECT_EQ(debugSizeDispatch, (regularSizeDispatch - startSize + storeDataSize));
-
-    directSubmission.workloadModeOneExpectedValue = 0x40u;
-    directSubmission.semaphoreGpuVa = 0xAFF0000;
-    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.hasStallingCmds));
-    size_t expectedDispatchSize = debugSizeDispatch - directSubmission.getSizeNewResourceHandler();
-    EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
-
-    HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
-
-    if (directSubmission.getSizePrefetchMitigation() == sizeof(MI_BATCH_BUFFER_START)) {
-        EXPECT_EQ(1u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
-    } else {
-        EXPECT_EQ(0u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
-    }
-
-    MI_STORE_DATA_IMM *storeData = hwParse.getCommand<MI_STORE_DATA_IMM>();
-    ASSERT_NE(nullptr, storeData);
-    EXPECT_EQ(0x40u + 1u, storeData->getDataDword0());
-    uint64_t expectedGpuVa = directSubmission.semaphoreGpuVa;
-    auto semaphore = static_cast<RingSemaphoreData *>(directSubmission.semaphorePtr);
-    expectedGpuVa += ptrDiff(&semaphore->diagnosticModeCounter, directSubmission.semaphorePtr);
-    EXPECT_EQ(expectedGpuVa, storeData->getAddress());
-}
-
-HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenDirectSubmissionDebugBufferModeTwoWhenDispatchWorkloadCalledThenExpectNoStartAndNoLoadDataImm) {
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch(false, false, regularDirectSubmission.dispatchMonitorFenceRequired(false));
-
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-
-    directSubmission.workloadMode = 2;
-    bool ret = directSubmission.allocateResources();
-    EXPECT_TRUE(ret);
-
-    size_t startSize = directSubmission.getSizeStartSection();
-
-    size_t debugSizeDispatch = directSubmission.getSizeDispatch(false, false, directSubmission.dispatchMonitorFenceRequired(false));
-    EXPECT_EQ(debugSizeDispatch, (regularSizeDispatch - startSize));
-
-    directSubmission.currentQueueWorkCount = 0x40u;
-    directSubmission.dispatchWorkloadSection(batchBuffer, directSubmission.dispatchMonitorFenceRequired(batchBuffer.dispatchMonitorFence));
-    size_t expectedDispatchSize = debugSizeDispatch - directSubmission.getSizeNewResourceHandler();
-    EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
-
-    HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
-
-    if (directSubmission.getSizePrefetchMitigation() == sizeof(MI_BATCH_BUFFER_START)) {
-        EXPECT_EQ(1u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
-    } else {
-        EXPECT_EQ(0u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
-    }
-
-    MI_STORE_DATA_IMM *storeData = hwParse.getCommand<MI_STORE_DATA_IMM>();
-    EXPECT_EQ(nullptr, storeData);
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest,
