@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -7882,7 +7883,7 @@ TEST_F(DebugApiRegistersAccessTest, givenReadModeRegisterCalledThenSuccessIsRetu
 
 using DebugApiLinuxMultitileTest = Test<DebugApiLinuxMultiDeviceFixture>;
 
-TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndTileAttachDisabledWhenDebugSessionInitializedThenEuThreadsAreCreated) {
+HWTEST2_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndTileAttachDisabledWhenDebugSessionInitializedThenEuThreadsAreCreated, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ExperimentalEnableTileAttach.set(0);
 
@@ -7910,7 +7911,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndTileAttachDisabledWhenDebug
     EXPECT_FALSE(session->tileSessionsEnabled);
 }
 
-TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndRootAttachModeWhenDebugSessionInitializedThenEuThreadsAreCreated) {
+HWTEST2_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndRootAttachModeWhenDebugSessionInitializedThenEuThreadsAreCreated, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 1);
@@ -7936,7 +7937,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndRootAttachModeWhenDebugSess
     EXPECT_FALSE(session->tileSessionsEnabled);
 }
 
-TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceWhenDebugAttachCalledThenRootSessionIsCreatedAndTileAttachDisabled) {
+HWTEST2_F(DebugApiLinuxMultitileTest, GivenRootDeviceWhenDebugAttachCalledThenRootSessionIsCreatedAndTileAttachDisabled, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession = nullptr;
@@ -7962,7 +7963,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceWhenDebugAttachCalledThenRootS
     zetDebugDetach(debugSession);
 }
 
-TEST_F(DebugApiLinuxMultitileTest, GivenSubDeviceWhenDebugAttachCalledThenTileSessionsAreCreatedAndRootCannotBeAttached) {
+HWTEST2_F(DebugApiLinuxMultitileTest, GivenSubDeviceWhenDebugAttachCalledThenTileSessionsAreCreatedAndRootCannotBeAttached, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession = nullptr;
@@ -7990,7 +7991,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenSubDeviceWhenDebugAttachCalledThenTileSe
     zetDebugDetach(debugSession);
 }
 
-TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThreadsFromBothTilesAreResumed) {
+HWTEST2_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThreadsFromBothTilesAreResumed, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -8036,7 +8037,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThre
     EXPECT_EQ(thread.thread, sessionMock->resumedThreads[1][0].thread);
 }
 
-TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDeviceIndexThenCorrectValueReturned) {
+HWTEST2_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDeviceIndexThenCorrectValueReturned, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -8155,7 +8156,7 @@ struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFi
 
 using DebugApiLinuxMultiDeviceVmBindTest = Test<DebugApiLinuxMultiDeviceVmBindFixture<false>>;
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived, IsAtLeastGen12lp) {
 
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
@@ -8192,7 +8193,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBi
     EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
@@ -8237,7 +8238,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBi
     EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived, IsAtLeastGen12lp) {
 
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
@@ -8283,13 +8284,13 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWh
     EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived, IsAtLeastGen12lp) {
     givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived();
 }
 
 using DebugLinuxMultiDeviceVmBindBlockOnFenceTest = Test<DebugApiLinuxMultiDeviceVmBindFixture<true>>;
 
-TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
+HWTEST2_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived, IsAtLeastGen12lp) {
 
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
@@ -8333,11 +8334,11 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
     EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
 
-TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+HWTEST2_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived, IsAtLeastGen12lp) {
     givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived();
 }
 
-TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenAcknowledgingEventThenModuleFromBothTilesAreAcked) {
+HWTEST2_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenAcknowledgingEventThenModuleFromBothTilesAreAcked, IsAtLeastGen12lp) {
 
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
@@ -8381,7 +8382,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
     EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[1].size());
 }
 
-TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenModuleUUIDIsNotFoundThenAcknowledgeCallsDebugBreakAndReturnsSuccess) {
+HWTEST2_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenModuleUUIDIsNotFoundThenAcknowledgeCallsDebugBreakAndReturnsSuccess, IsAtLeastGen12lp) {
 
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
@@ -8421,7 +8422,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
     EXPECT_EQ(0u, handler->ackCount);
 }
 
-TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenZebinModuleForTileWithoutAckFlagWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterOneTileInstancesEventsReceived) {
+HWTEST2_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenZebinModuleForTileWithoutAckFlagWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterOneTileInstancesEventsReceived, IsAtLeastGen12lp) {
 
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
@@ -8458,7 +8459,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenZebinModuleForTileWitho
     EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingIsaMemoryThenOnlyWritesAreMirrored) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingIsaMemoryThenOnlyWritesAreMirrored, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
@@ -8499,7 +8500,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndRe
     EXPECT_EQ(1, handler->preadCalled);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingMemoryFailsThenErrorIsReturned) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingMemoryFailsThenErrorIsReturned, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
@@ -8531,7 +8532,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingMemor
     EXPECT_EQ(1, handler->pwriteCalled);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleIsaWithInvalidVmWhenReadingIsaMemoryThenErrorUninitializedIsReturned) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleIsaWithInvalidVmWhenReadingIsaMemoryThenErrorUninitializedIsReturned, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
@@ -8586,7 +8587,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleIsaWithInvalidVmWhenReadin
     EXPECT_EQ(0, handler->preadCalled);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndSingleInstanceWhenGettingIsaInfoThenIsaTrueAndErrorUninitializedIsReturned) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndSingleInstanceWhenGettingIsaInfoThenIsaTrueAndErrorUninitializedIsReturned, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
@@ -8618,7 +8619,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndSingleInstanc
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenNoIsaWhenGettingIsaInfoThenFalseReturned) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenNoIsaWhenGettingIsaInfoThenFalseReturned, IsAtLeastGen12lp) {
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
 
     zet_debug_memory_space_desc_t desc;
@@ -8633,7 +8634,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenNoIsaWhenGettingIsaInfoThenFalse
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenIsaWhenGettingIsaInfoForWrongAddressThenErrorUninitializedReturned) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenIsaWhenGettingIsaInfoForWrongAddressThenErrorUninitializedReturned, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
@@ -8670,7 +8671,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenIsaWhenGettingIsaInfoForWrongAdd
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingWrongIsaRangeThenErrorInvalidArgReturned) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingWrongIsaRangeThenErrorInvalidArgReturned, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
@@ -8707,7 +8708,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndRe
     EXPECT_EQ(0, handler->preadCalled);
 }
 
-TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleMemoryIsaWhenWritingAndReadingThenOnlyOneInstanceIsWrittenAndRead) {
+HWTEST2_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleMemoryIsaWhenWritingAndReadingThenOnlyOneInstanceIsWrittenAndRead, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
@@ -8785,7 +8786,7 @@ struct AffinityMaskMultipleSubdevicesLinux : DebugApiLinuxMultiDeviceFixture {
 
 using AffinityMaskMultipleSubdevicesTestLinux = Test<AffinityMaskMultipleSubdevicesLinux>;
 
-TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenEventWithAckFlagAndTileNotWithinBitfieldWhenHandlingEventForISAThenIsaIsNotStoredInMapAndEventIsAcked) {
+HWTEST2_F(AffinityMaskMultipleSubdevicesTestLinux, GivenEventWithAckFlagAndTileNotWithinBitfieldWhenHandlingEventForISAThenIsaIsNotStoredInMapAndEventIsAcked, IsAtLeastGen12lp) {
     uint64_t isaGpuVa = 0x345000;
     uint64_t isaSize = 0x2000;
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
@@ -8819,7 +8820,7 @@ TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenEventWithAckFlagAndTileNotW
     EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
 }
 
-TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenPfEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped) {
+HWTEST2_F(AffinityMaskMultipleSubdevicesTestLinux, GivenPfEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped, IsAtLeastGen12lp) {
     auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{1234}, deviceImp, 10);
 
     uint64_t ctxHandle = 2;
@@ -8850,7 +8851,7 @@ TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenPfEventForTileNotWithinBitf
     EXPECT_FALSE(debugSession->triggerEvents);
 }
 
-TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenAttEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped) {
+HWTEST2_F(AffinityMaskMultipleSubdevicesTestLinux, GivenAttEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped, IsAtLeastGen12lp) {
     auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{1234}, deviceImp, 10);
 
     uint64_t ctxHandle = 2;

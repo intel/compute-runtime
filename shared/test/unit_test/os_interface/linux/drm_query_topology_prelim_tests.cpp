@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
@@ -157,7 +158,7 @@ struct QueryTopologyTests : ::testing::Test {
     int receivedEuCount = 0;
 };
 
-TEST_F(QueryTopologyTests, givenZeroTilesWhenQueryingThenFallbackToQueryTopology) {
+HWTEST2_F(QueryTopologyTests, givenZeroTilesWhenQueryingThenFallbackToQueryTopology, IsAtLeastGen12lp) {
     createDrm(0);
 
     DrmQueryTopologyData topologyData = {};
@@ -175,7 +176,7 @@ TEST_F(QueryTopologyTests, givenZeroTilesWhenQueryingThenFallbackToQueryTopology
     EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQueryTopology) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQueryTopology, IsAtLeastGen12lp) {
     debugManager.flags.UseNewQueryTopoIoctl.set(false);
     createDrm(2);
 
@@ -194,7 +195,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenDebugFlagDisabledThenFallbackToQ
     EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl, IsAtLeastGen12lp) {
     createDrm(2);
 
     DrmQueryTopologyData topologyData = {};
@@ -212,7 +213,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenQueryingThenUseOnlyNewIoctl) {
     EXPECT_EQ(drmMock->queryComputeSlicesEuCount / drmMock->queryComputeSlicesSSCount, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback, IsAtLeastGen12lp) {
     createDrm(2);
 
     drmMock->engineInfo.reset();
@@ -231,7 +232,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWithoutEngineInfoThenFallback) {
     EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesWhenFailOnNewQueryThenFallback) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWhenFailOnNewQueryThenFallback, IsAtLeastGen12lp) {
     createDrm(2);
 
     drmMock->queryComputeSlicesEuCount = 0;
@@ -250,7 +251,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenFailOnNewQueryThenFallback) {
     EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesWhenIncorrectValuesQueriedThenFallback) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesWhenIncorrectValuesQueriedThenFallback, IsAtLeastGen12lp) {
     createDrm(2);
 
     drmMock->failOnQuery = true;
@@ -269,7 +270,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesWhenIncorrectValuesQueriedThenFallba
     EXPECT_EQ(drmMock->storedEUVal / drmMock->storedSSVal, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenAsymetricTilesWhenQueryingThenPickSmallerValue) {
+HWTEST2_F(QueryTopologyTests, givenAsymetricTilesWhenQueryingThenPickSmallerValue, IsAtLeastGen12lp) {
     createDrm(2);
 
     drmMock->useSmallerValuesOnSecondCall = true;
@@ -296,7 +297,7 @@ TEST_F(QueryTopologyTests, givenAsymetricTilesWhenQueryingThenPickSmallerValue) 
     EXPECT_EQ(drmMock->queryComputeSlicesEuCount / drmMock->queryComputeSlicesSSCount, topologyData.maxEusPerSubSlice);
 }
 
-TEST_F(QueryTopologyTests, givenAsymetricTilesWhenGettingSliceMappingsThenCorrectMappingsReturnedForBothDeviceIndexes) {
+HWTEST2_F(QueryTopologyTests, givenAsymetricTilesWhenGettingSliceMappingsThenCorrectMappingsReturnedForBothDeviceIndexes, IsAtLeastGen12lp) {
     createDrm(2);
 
     drmMock->useSmallerValuesOnSecondCall = true;
@@ -318,7 +319,7 @@ TEST_F(QueryTopologyTests, givenAsymetricTilesWhenGettingSliceMappingsThenCorrec
     }
 }
 
-TEST_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappingsThenMappingStoredForIndexZeroOnly) {
+HWTEST2_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappingsThenMappingStoredForIndexZeroOnly, IsAtLeastGen12lp) {
     debugManager.flags.UseNewQueryTopoIoctl.set(false);
     createDrm(2);
 
@@ -343,7 +344,7 @@ TEST_F(QueryTopologyTests, givenNonZeroTilesAndFallbackPathWhenGettingSliceMappi
     ASSERT_EQ(0u, device1SliceMapping.size());
 }
 
-TEST_F(QueryTopologyTests, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
+HWTEST2_F(QueryTopologyTests, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned, IsAtLeastGen12lp) {
     createDrm(2);
     DrmQueryTopologyData topologyData = {};
     drmMock->queryTopology(*rootDeviceEnvironment->getHardwareInfo(), topologyData);

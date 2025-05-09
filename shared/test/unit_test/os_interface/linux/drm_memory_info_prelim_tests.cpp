@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,13 +15,16 @@
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_os_library.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
+using MemoryInfoHw = ::testing::Test;
+using MemoryInfoPrelim = ::testing::Test;
 
-TEST(MemoryInfoPrelim, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMemoryInfoIsNotCreated) {
+HWTEST2_F(MemoryInfoPrelim, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMemoryInfoIsNotCreated, IsAtLeastGen12lp) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
@@ -37,7 +40,7 @@ TEST(MemoryInfoPrelim, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoT
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST(MemoryInfoPrelim, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreated) {
+HWTEST2_F(MemoryInfoPrelim, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreated, IsAtLeastGen12lp) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
@@ -69,7 +72,7 @@ TEST(MemoryInfoPrelim, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNo
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
 
-TEST(MemoryInfoPrelim, givenNewMemoryInfoQuerySupportedWhenQueryingMemoryInfoThenMemoryInfoIsCreatedWithRegions) {
+HWTEST2_F(MemoryInfoPrelim, givenNewMemoryInfoQuerySupportedWhenQueryingMemoryInfoThenMemoryInfoIsCreatedWithRegions, IsAtLeastGen12lp) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
@@ -118,7 +121,7 @@ struct DrmVmTestFixture {
 
 using DrmVmTestTest = Test<DrmVmTestFixture>;
 
-TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryThenVmCreatedUsingNewRegion) {
+HWTEST2_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryThenVmCreatedUsingNewRegion, IsAtLeastGen12lp) {
     debugManager.flags.EnableLocalMemory.set(1);
     drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
@@ -137,7 +140,7 @@ TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryT
     EXPECT_NE(0ull, drm->receivedGemVmControl.extensions);
 }
 
-TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedAndDebugKeyDisabledWhenCreatingVirtualMemoryThenVmCreatedNotUsingRegion) {
+HWTEST2_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedAndDebugKeyDisabledWhenCreatingVirtualMemoryThenVmCreatedNotUsingRegion, IsAtLeastGen12lp) {
     debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0);
 
     drm->memoryInfoQueried = false;
@@ -157,7 +160,7 @@ TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedAndDebugKeyDisabledWhenCre
     EXPECT_EQ(0ull, drm->receivedGemVmControl.extensions);
 }
 
-TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryFailsThenExpectDebugInformation) {
+HWTEST2_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryFailsThenExpectDebugInformation, IsAtLeastGen12lp) {
     NEO::debugManager.flags.PrintDebugMessages.set(1);
     NEO::debugManager.flags.EnableLocalMemory.set(1);
     drm->storedRetValForVmCreate = 1;
@@ -1010,4 +1013,32 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCallingCreatingGemExtWithMultiple
     EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[2].memoryClass);
     EXPECT_EQ(3u, createExt->memoryRegions[2].memoryInstance);
     EXPECT_EQ(size, drm->context.receivedCreateGemExt->size);
+}
+
+HWTEST2_F(MemoryInfoHw, givenDrmQueryMockObjWhenQueryingMemoryInfoThenNoNullptrIsReturned, IsAtLeastGen12lp) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+
+    drm->memoryInfoQueried = false;
+
+    drm->queryMemoryInfo();
+    EXPECT_NE(nullptr, drm->getMemoryInfo());
+    EXPECT_EQ(2u, drm->ioctlCallsCount);
+}
+
+HWTEST2_F(MemoryInfoHw, givenDrmQueryMockObjWhenQueryingMemoryInfoThenNullptrIsReturned, IsAtMostGen11) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+
+    drm->memoryInfoQueried = false;
+
+    drm->queryMemoryInfo();
+    EXPECT_EQ(nullptr, drm->getMemoryInfo());
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
 }

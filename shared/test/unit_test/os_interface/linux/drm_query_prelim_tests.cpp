@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -373,8 +373,11 @@ TEST(DrmBufferObjectTestPrelim, givenLocalMemoryEnabledWhenCreateDrmVirtualMemor
 
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
-
-    EXPECT_NE(drm.receivedGemVmControl.extensions, 0ull);
+    if (drm.rootDeviceEnvironment.gfxCoreHelper->createMemoryInfoSupported()) {
+        EXPECT_NE(drm.receivedGemVmControl.extensions, 0ull);
+    } else {
+        EXPECT_EQ(drm.receivedGemVmControl.extensions, 0ull);
+    }
 }
 
 TEST(DrmBufferObjectTestPrelim, givenBufferObjectSetToColourWithBindWhenBindingThenSetProperAddressAndSize) {

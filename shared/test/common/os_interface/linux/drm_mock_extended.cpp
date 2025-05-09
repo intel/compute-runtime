@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,13 @@
 
 DrmMockExtended::DrmMockExtended(RootDeviceEnvironment &rootDeviceEnvironmentIn, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironmentIn) {
     rootDeviceEnvironment.setHwInfoAndInitHelpers(inputHwInfo);
-    EXPECT_TRUE(queryMemoryInfo());
-    EXPECT_EQ(3u, ioctlCallsCount);
+    if (rootDeviceEnvironment.gfxCoreHelper->createMemoryInfoSupported()) {
+        EXPECT_TRUE(queryMemoryInfo());
+        EXPECT_EQ(3u, ioctlCallsCount);
+    } else {
+        EXPECT_FALSE(queryMemoryInfo());
+        EXPECT_EQ(1u, ioctlCallsCount);
+    }
     ioctlCallsCount = 0;
 }
 

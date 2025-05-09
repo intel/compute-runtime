@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -950,7 +950,7 @@ struct DistanceQueryDrmTests : ::testing::Test {
     RootDeviceEnvironment *rootDeviceEnvironment;
 };
 
-HWTEST_F(DistanceQueryDrmTests, givenDistanceQueryNotSupportedWhenQueryingEngineInfoThen) {
+HWTEST2_F(DistanceQueryDrmTests, givenDistanceQueryNotSupportedWhenQueryingEngineInfoThen, IsAtLeastGen12lp) {
     setTileCount(0);
     auto drm = createDrm(false);
     EXPECT_TRUE(drm->queryEngineInfo());
@@ -962,14 +962,14 @@ HWTEST_F(DistanceQueryDrmTests, givenDistanceQueryNotSupportedWhenQueryingEngine
     verifyEngineInfo(*drm);
 }
 
-HWTEST_F(DistanceQueryDrmTests, givenDistanceQuerySupportedAndZeroTilesWhenQueryingEngineInfoThen) {
+HWTEST2_F(DistanceQueryDrmTests, givenDistanceQuerySupportedAndZeroTilesWhenQueryingEngineInfoThen, IsAtLeastGen12lp) {
     setTileCount(0);
     auto drm = createDrm(true);
     EXPECT_TRUE(drm->queryEngineInfo());
     verifyEngineInfo(*drm);
 }
 
-HWTEST_F(DistanceQueryDrmTests, givenDistanceQuerySupportedAndTilesDetectedWhenQueryingEngineInfoThen) {
+HWTEST2_F(DistanceQueryDrmTests, givenDistanceQuerySupportedAndTilesDetectedWhenQueryingEngineInfoThen, IsAtLeastGen12lp) {
     setTileCount(1);
     auto drm = createDrm(true);
     EXPECT_TRUE(drm->queryEngineInfo());

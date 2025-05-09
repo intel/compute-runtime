@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1071,8 +1071,14 @@ std::vector<uint64_t> Drm::getMemoryRegions() {
 
 bool Drm::queryMemoryInfo() {
     UNRECOVERABLE_IF(memoryInfoQueried);
-    this->memoryInfo = ioctlHelper->createMemoryInfo();
     memoryInfoQueried = true;
+    if (!rootDeviceEnvironment.gfxCoreHelper->createMemoryInfoSupported()) {
+        this->memoryInfo = nullptr;
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: skipping creating memory info for unsupported devices\n");
+        return false;
+    }
+
+    this->memoryInfo = ioctlHelper->createMemoryInfo();
     return this->memoryInfo != nullptr;
 }
 

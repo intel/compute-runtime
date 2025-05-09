@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -198,6 +198,7 @@ class GfxCoreHelper {
     virtual uint32_t getDefaultSshSize(const ProductHelper &productHelper) const = 0;
 
     virtual bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
+    virtual bool createMemoryInfoSupported() const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -434,6 +435,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getDefaultSshSize(const ProductHelper &productHelper) const override;
 
     bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
+    bool createMemoryInfoSupported() const override;
 
     ~GfxCoreHelperHw() override = default;
 

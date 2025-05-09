@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/device/device_imp.h"
@@ -182,7 +183,7 @@ struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDe
 
 using TileAttachTest = Test<TileAttachFixture<>>;
 
-TEST_F(TileAttachTest, GivenTileAttachEnabledAndMultitileDeviceWhenInitializingDebugSessionThenTileSessionsAreCreated) {
+HWTEST2_F(TileAttachTest, GivenTileAttachEnabledAndMultitileDeviceWhenInitializingDebugSessionThenTileSessionsAreCreated, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -226,7 +227,7 @@ TEST_F(TileAttachTest, GivenTileAttachEnabledAndMultitileDeviceWhenInitializingD
     EXPECT_EQ(1u, threadId1.tileIndex);
 }
 
-TEST_F(TileAttachTest, GivenTileAttachDisabledAndMultitileDeviceWhenCreatingTileSessionsThenSessionsAreNotCreated) {
+HWTEST2_F(TileAttachTest, GivenTileAttachDisabledAndMultitileDeviceWhenCreatingTileSessionsThenSessionsAreNotCreated, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -239,7 +240,7 @@ TEST_F(TileAttachTest, GivenTileAttachDisabledAndMultitileDeviceWhenCreatingTile
     ASSERT_EQ(0u, session->tileSessions.size());
 }
 
-TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugDetachOnLastSessionThenRootSessionIsClosed) {
+HWTEST2_F(TileAttachTest, givenTileDeviceWhenCallingDebugDetachOnLastSessionThenRootSessionIsClosed, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr;
@@ -262,7 +263,7 @@ TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugDetachOnLastSessionThenRoo
     NEO::SysCalls::closeFuncArgPassed = 0;
 }
 
-TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachAndDetachThenSuccessAndValidSessionHandleAreReturned) {
+HWTEST2_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachAndDetachThenSuccessAndValidSessionHandleAreReturned, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr, debugSession1 = nullptr;
@@ -286,7 +287,7 @@ TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachAndDetachThenSuccess
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachAndDetachManyTimesThenSuccessAndValidSessionHandleAreReturned) {
+HWTEST2_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachAndDetachManyTimesThenSuccessAndValidSessionHandleAreReturned, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr;
@@ -307,7 +308,7 @@ TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachAndDetachManyTimesTh
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachTwiceThenTheSameSessionIsReturned) {
+HWTEST2_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachTwiceThenTheSameSessionIsReturned, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr, debugSession0Second = nullptr;
@@ -321,7 +322,7 @@ TEST_F(TileAttachTest, givenTileDeviceWhenCallingDebugAttachTwiceThenTheSameSess
     EXPECT_EQ(debugSession0Second, debugSession0);
 }
 
-TEST_F(TileAttachTest, givenCmdQsCreatedAndDestroyedWhenReadingEventsThenProcessEntryAndExitAreReturned) {
+HWTEST2_F(TileAttachTest, givenCmdQsCreatedAndDestroyedWhenReadingEventsThenProcessEntryAndExitAreReturned, IsAtLeastGen12lp) {
 
     prelim_drm_i915_debug_event_uuid uuid = {};
     uuid.base.type = PRELIM_DRM_I915_DEBUG_EVENT_UUID;
@@ -390,7 +391,7 @@ TEST_F(TileAttachTest, givenCmdQsCreatedAndDestroyedWhenReadingEventsThenProcess
     EXPECT_FALSE(tileSessions[1]->processEntryState);
 }
 
-TEST_F(TileAttachTest, givenTileSessionWhenAttchingThenProcessEntryEventIsGeneratedBasedOnEntryState) {
+HWTEST2_F(TileAttachTest, givenTileSessionWhenAttchingThenProcessEntryEventIsGeneratedBasedOnEntryState, IsAtLeastGen12lp) {
 
     tileSessions[1]->processEntryState = true;
 
@@ -407,7 +408,7 @@ TEST_F(TileAttachTest, givenTileSessionWhenAttchingThenProcessEntryEventIsGenera
     EXPECT_EQ(0u, tileSessions[1]->apiEvents.size());
 }
 
-TEST_F(TileAttachTest, givenDetachedRootSessionWhenAttchingTileThenDetachedEventIsGenerated) {
+HWTEST2_F(TileAttachTest, givenDetachedRootSessionWhenAttchingTileThenDetachedEventIsGenerated, IsAtLeastGen12lp) {
     tileSessions[1]->detached = true;
 
     tileSessions[1]->attachTile();
@@ -417,7 +418,7 @@ TEST_F(TileAttachTest, givenDetachedRootSessionWhenAttchingTileThenDetachedEvent
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, event.type);
 }
 
-TEST_F(TileAttachTest, givenPollReturnsErrorAndEinvalWhenReadingEventsThenProcessDetachedEventForAllTilesIsReturned) {
+HWTEST2_F(TileAttachTest, givenPollReturnsErrorAndEinvalWhenReadingEventsThenProcessDetachedEventForAllTilesIsReturned, IsAtLeastGen12lp) {
 
     auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
@@ -436,7 +437,7 @@ TEST_F(TileAttachTest, givenPollReturnsErrorAndEinvalWhenReadingEventsThenProces
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, event.type);
 }
 
-TEST_F(TileAttachTest, GivenTileAndVmBindForIsaWithAckWhenReadingEventThenModuleLoadWithAckIsReturnedForAttachedTile) {
+HWTEST2_F(TileAttachTest, GivenTileAndVmBindForIsaWithAckWhenReadingEventThenModuleLoadWithAckIsReturnedForAttachedTile, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr;
@@ -475,7 +476,7 @@ TEST_F(TileAttachTest, GivenTileAndVmBindForIsaWithAckWhenReadingEventThenModule
     EXPECT_EQ(elf + elfSize, event.info.module.moduleEnd);
 }
 
-TEST_F(TileAttachTest, GivenTileAndVmBindForIsaWithoutAckWhenReadingEventThenModuleLoadIsReturned) {
+HWTEST2_F(TileAttachTest, GivenTileAndVmBindForIsaWithoutAckWhenReadingEventThenModuleLoadIsReturned, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr;
@@ -505,7 +506,7 @@ TEST_F(TileAttachTest, GivenTileAndVmBindForIsaWithoutAckWhenReadingEventThenMod
     EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
 
-TEST_F(TileAttachTest, GivenTileAndVmBindEventsForIsaWhenReadingEventThenModuleLoadAndUnloadEventsAreReturned) {
+HWTEST2_F(TileAttachTest, GivenTileAndVmBindEventsForIsaWhenReadingEventThenModuleLoadAndUnloadEventsAreReturned, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr;
@@ -530,7 +531,7 @@ TEST_F(TileAttachTest, GivenTileAndVmBindEventsForIsaWhenReadingEventThenModuleL
     EXPECT_EQ(0u, event.flags);
 }
 
-TEST_F(TileAttachTest, GivenIsaWhenReadingOrWritingMemoryThenMemoryIsReadAndWritten) {
+HWTEST2_F(TileAttachTest, GivenIsaWhenReadingOrWritingMemoryThenMemoryIsReadAndWritten, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr, debugSession1 = nullptr;
@@ -579,7 +580,7 @@ TEST_F(TileAttachTest, GivenIsaWhenReadingOrWritingMemoryThenMemoryIsReadAndWrit
     EXPECT_EQ(1u, handler->preadCalled);
 }
 
-TEST_F(TileAttachTest, GivenElfAddressWhenReadMemoryCalledTheElfMemoryIsRead) {
+HWTEST2_F(TileAttachTest, GivenElfAddressWhenReadMemoryCalledTheElfMemoryIsRead, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr;
@@ -604,7 +605,7 @@ TEST_F(TileAttachTest, GivenElfAddressWhenReadMemoryCalledTheElfMemoryIsRead) {
     EXPECT_STREQ("ELF", output);
 }
 
-TEST_F(TileAttachTest, WhenCallingReadWriteMemoryforASingleThreadThenMemoryIsReadAndWritten) {
+HWTEST2_F(TileAttachTest, WhenCallingReadWriteMemoryforASingleThreadThenMemoryIsReadAndWritten, IsAtLeastGen12lp) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession0 = nullptr;
@@ -642,7 +643,7 @@ TEST_F(TileAttachTest, WhenCallingReadWriteMemoryforASingleThreadThenMemoryIsRea
     EXPECT_EQ(1u, handler->pwriteCalled);
 }
 
-TEST_F(TileAttachTest, givenExecutingThreadWhenInterruptingAndResumingThenCallsAreSentThroughRootSession) {
+HWTEST2_F(TileAttachTest, givenExecutingThreadWhenInterruptingAndResumingThenCallsAreSentThroughRootSession, IsAtLeastGen12lp) {
     // deubg attach both tiles
     rootSession->tileSessions[0].second = true;
     rootSession->tileSessions[1].second = true;
@@ -681,7 +682,7 @@ TEST_F(TileAttachTest, givenExecutingThreadWhenInterruptingAndResumingThenCallsA
     }
 }
 
-TEST_F(TileAttachTest, givenTwoInterruptsSentWhenCheckingTriggerEventsThenTriggerEventsIsSetForTiles) {
+HWTEST2_F(TileAttachTest, givenTwoInterruptsSentWhenCheckingTriggerEventsThenTriggerEventsIsSetForTiles, IsAtLeastGen12lp) {
     // deubg attach both tiles
     rootSession->tileSessions[0].second = true;
     rootSession->tileSessions[1].second = true;
@@ -717,7 +718,7 @@ TEST_F(TileAttachTest, givenTwoInterruptsSentWhenCheckingTriggerEventsThenTrigge
     EXPECT_TRUE(tileSessions[1]->triggerEvents);
 }
 
-TEST_F(TileAttachTest, givenInterruptSentWhenHandlingAttentionEventThenTriggerEventsIsSetForTileSession) {
+HWTEST2_F(TileAttachTest, givenInterruptSentWhenHandlingAttentionEventThenTriggerEventsIsSetForTileSession, IsAtLeastGen12lp) {
     // deubg attach both tiles
     rootSession->tileSessions[0].second = true;
     rootSession->tileSessions[1].second = true;
@@ -762,7 +763,7 @@ TEST_F(TileAttachTest, givenInterruptSentWhenHandlingAttentionEventThenTriggerEv
     EXPECT_TRUE(tileSessions[1]->triggerEvents);
 }
 
-TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedThreadsFromRaisedAttentionAreProcessed) {
+HWTEST2_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedThreadsFromRaisedAttentionAreProcessed, IsAtLeastGen12lp) {
     // debug attach both tiles
     rootSession->tileSessions[0].second = true;
     rootSession->tileSessions[1].second = true;
@@ -821,7 +822,7 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedT
     EXPECT_TRUE(tileSessions[1]->triggerEvents);
 }
 
-TEST_F(TileAttachTest, GivenNoPageFaultingThreadWhenHandlingPageFaultEventThenL0ApiEventGenerated) {
+HWTEST2_F(TileAttachTest, GivenNoPageFaultingThreadWhenHandlingPageFaultEventThenL0ApiEventGenerated, IsAtLeastGen12lp) {
 
     // debug attach both tiles
     rootSession->tileSessions[0].second = true;
@@ -884,7 +885,7 @@ TEST_F(TileAttachTest, GivenNoPageFaultingThreadWhenHandlingPageFaultEventThenL0
     ASSERT_EQ(event.type, ZET_DEBUG_EVENT_TYPE_PAGE_FAULT);
 }
 
-TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingPageFaultEventThenStoppedThreadsFromEventAreProcessed) {
+HWTEST2_F(TileAttachTest, givenStoppedThreadsWhenHandlingPageFaultEventThenStoppedThreadsFromEventAreProcessed, IsAtLeastGen12lp) {
     // debug attach both tiles
     rootSession->tileSessions[0].second = true;
     rootSession->tileSessions[1].second = true;
@@ -948,7 +949,7 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingPageFaultEventThenStoppedT
     EXPECT_TRUE(tileSessions[1]->allThreads[thread]->getPageFault());
 }
 
-TEST_F(TileAttachTest, GivenBlockingOnCpuDetachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenNoAckIoctlIsCalled) {
+HWTEST2_F(TileAttachTest, GivenBlockingOnCpuDetachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenNoAckIoctlIsCalled, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
@@ -969,7 +970,7 @@ TEST_F(TileAttachTest, GivenBlockingOnCpuDetachedTileAndZebinModulesWithEventsTo
     EXPECT_EQ(uint32_t(PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND), handler->debugEventAcked.type);
 }
 
-TEST_F(TileAttachTest, GivenBlockingOnCpuAttachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenLastEventIsAcked) {
+HWTEST2_F(TileAttachTest, GivenBlockingOnCpuAttachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenLastEventIsAcked, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
@@ -994,7 +995,7 @@ TEST_F(TileAttachTest, GivenBlockingOnCpuAttachedTileAndZebinModulesWithEventsTo
     EXPECT_EQ(uint32_t(PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND), handler->debugEventAcked.type);
 }
 
-TEST_F(TileAttachTest, GivenTileAttachedAndIsaWithOsEventToAckWhenDetachingTileThenAllEventsAreAcked) {
+HWTEST2_F(TileAttachTest, GivenTileAttachedAndIsaWithOsEventToAckWhenDetachingTileThenAllEventsAreAcked, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
@@ -1015,7 +1016,7 @@ TEST_F(TileAttachTest, GivenTileAttachedAndIsaWithOsEventToAckWhenDetachingTileT
     EXPECT_TRUE(isa->moduleLoadEventAck);
 }
 
-TEST_F(TileAttachTest, GivenBlockingOnCpuAndZebinModuleEventWithoutAckWhenHandlingEventThenNoEventsToAckAdded) {
+HWTEST2_F(TileAttachTest, GivenBlockingOnCpuAndZebinModuleEventWithoutAckWhenHandlingEventThenNoEventsToAckAdded, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
@@ -1035,7 +1036,7 @@ TEST_F(TileAttachTest, GivenBlockingOnCpuAndZebinModuleEventWithoutAckWhenHandli
 }
 using TileAttachBlockOnFenceTest = Test<TileAttachFixture<true>>;
 
-TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceDetachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenNoAckIoctlIsCalled) {
+HWTEST2_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceDetachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenNoAckIoctlIsCalled, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
@@ -1055,7 +1056,7 @@ TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceDetachedTileAndZebinModul
     EXPECT_EQ(uint32_t(PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND), handler->debugEventAcked.type);
 }
 
-TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenAllEventsAreAcked) {
+HWTEST2_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenAllEventsAreAcked, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
@@ -1083,7 +1084,7 @@ TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModul
     EXPECT_EQ(uint32_t(PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND), handler->debugEventAcked.type);
 }
 
-TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModulesWithEventsToAckWhenModuleLoadEventIsAckedThenAllNewEventsAreAutoAcked) {
+HWTEST2_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModulesWithEventsToAckWhenModuleLoadEventIsAckedThenAllNewEventsAreAutoAcked, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
@@ -1123,7 +1124,7 @@ TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModul
     EXPECT_EQ(0u, rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
 }
 
-TEST_F(TileAttachBlockOnFenceTest, GivenMultipleVmBindEventsForFirstZebinSegmentWhenHandlingEventThenLoadEventIsNotTriggered) {
+HWTEST2_F(TileAttachBlockOnFenceTest, GivenMultipleVmBindEventsForFirstZebinSegmentWhenHandlingEventThenLoadEventIsNotTriggered, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
@@ -1147,7 +1148,7 @@ TEST_F(TileAttachBlockOnFenceTest, GivenMultipleVmBindEventsForFirstZebinSegment
 
 using TileAttachAsyncThreadTest = Test<TileAttachFixture<>>;
 
-TEST_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsReadThenThreadUnavailableEventIsGenerated) {
+HWTEST2_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsReadThenThreadUnavailableEventIsGenerated, IsAtLeastGen12lp) {
     rootSession->tileSessions[0].second = true;
     tileSessions[0]->returnTimeDiff = DebugSessionLinuxi915::interruptTimeout * 10;
 
@@ -1174,7 +1175,7 @@ TEST_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsR
     EXPECT_EQ(0u, event.info.thread.thread.thread);
 }
 
-TEST_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoadAndUnloadEventsAreReportedForLastKernel) {
+HWTEST2_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoadAndUnloadEventsAreReportedForLastKernel, IsAtLeastGen12lp) {
     uint64_t isaGpuVa2 = 0x340000;
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
     prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
@@ -1329,7 +1330,7 @@ TEST_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoa
     }
 }
 
-TEST_F(TileAttachTest, GivenZebinModuleVmBindForModuleFromDifferentTileThenVmBindIsAutoacked) {
+HWTEST2_F(TileAttachTest, GivenZebinModuleVmBindForModuleFromDifferentTileThenVmBindIsAutoacked, IsAtLeastGen12lp) {
     auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
@@ -1365,7 +1366,7 @@ TEST_F(TileAttachTest, GivenZebinModuleVmBindForModuleFromDifferentTileThenVmBin
     EXPECT_EQ(handler->ackCount, 1u);
 }
 
-TEST_F(TileAttachTest, GivenZebinModuleDestroyedBeforeAttachWhenAttachingThenModuleLoadEventIsNotReported) {
+HWTEST2_F(TileAttachTest, GivenZebinModuleDestroyedBeforeAttachWhenAttachingThenModuleLoadEventIsNotReported, IsAtLeastGen12lp) {
     uint64_t isaGpuVa2 = 0x340000;
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
     prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);

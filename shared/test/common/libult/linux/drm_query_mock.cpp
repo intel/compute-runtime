@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,13 @@ DrmQueryMock::DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMo
     this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*this);
 
     memoryInfoQueried = false;
-    EXPECT_TRUE(queryMemoryInfo());
-    EXPECT_EQ(2u + getBaseIoctlCalls(), ioctlCallsCount);
+    if (this->rootDeviceEnvironment.gfxCoreHelper->createMemoryInfoSupported()) {
+        EXPECT_TRUE(queryMemoryInfo());
+        EXPECT_EQ(2u + getBaseIoctlCalls(), ioctlCallsCount);
+    } else {
+        EXPECT_FALSE(queryMemoryInfo());
+        EXPECT_EQ(getBaseIoctlCalls(), ioctlCallsCount);
+    }
     ioctlCallsCount = 0;
 }
 
