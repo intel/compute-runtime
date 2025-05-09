@@ -1368,7 +1368,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
 
-    if (directSubmission->miMemFenceRequired && !heaplessStateInit) {
+    if (directSubmission->globalFenceAllocation && !heaplessStateInit) {
         expectedSize += directSubmission->getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission->isRelaxedOrderingEnabled()) {
