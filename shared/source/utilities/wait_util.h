@@ -32,6 +32,9 @@ constexpr uint64_t defaultCounterValue = 16000;
 constexpr uint32_t defaultControlValue = 0;
 constexpr uint32_t defaultWaitCount = 1u;
 
+constexpr int64_t defaultWaitPkgThresholdForUllsLightInMicroSeconds = 1;
+constexpr uint64_t defaultCounterValueForUllsLight = 16000;
+
 extern WaitpkgUse waitpkgUse;
 extern int64_t waitPkgThresholdInMicroSeconds;
 extern uint64_t waitpkgCounterValue;
@@ -81,6 +84,9 @@ inline bool waitFunction(volatile TagAddressType *pollAddress, TaskCountType exp
 }
 
 void init(WaitpkgUse inputWaitpkgUse, const HardwareInfo &hwInfo);
+void overrideWaitpkgParams();
+void adjustWaitpkgParamsForUllsLight();
+
 } // namespace WaitUtils
 
 } // namespace NEO
