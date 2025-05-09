@@ -1003,7 +1003,9 @@ void DebugSessionLinuxi915::handleAttentionEvent(prelim_drm_i915_debug_event_eu_
     attentionEventFields.contextHandle = attention->ctx_handle;
     attentionEventFields.lrcHandle = attention->lrc_handle;
 
-    return updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, tileIndex, threadsWithAttention);
+    if (updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, tileIndex, threadsWithAttention) != ZE_RESULT_SUCCESS) {
+        PRINT_DEBUGGER_ERROR_LOG("Failed to update stopped threads and check trigger events\n", "");
+    }
 }
 
 std::unique_lock<std::mutex> DebugSessionLinuxi915::getThreadStateMutexForTileSession(uint32_t tileIndex) {

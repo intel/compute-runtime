@@ -749,7 +749,9 @@ void DebugSessionLinuxXe::handleAttentionEvent(NEO::EuDebugEventEuAttention *att
     attentionEventFields.contextHandle = attention->execQueueHandle;
     attentionEventFields.lrcHandle = attention->lrcHandle;
 
-    return updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, 0, threadsWithAttention);
+    if (updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, 0, threadsWithAttention) != ZE_RESULT_SUCCESS) {
+        PRINT_DEBUGGER_ERROR_LOG("Failed to update stopped threads and check trigger events\n", "");
+    }
 }
 
 int DebugSessionLinuxXe::threadControlInterruptAll() {

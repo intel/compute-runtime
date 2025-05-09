@@ -1682,7 +1682,9 @@ ze_result_t DebugSessionImp::isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP:
 
 ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) {
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
-    if (stateSaveAreaHeader->versionHeader.version.major != 3) {
+    if (!stateSaveAreaHeader) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    } else if (stateSaveAreaHeader->versionHeader.version.major != 3) {
         return ZE_RESULT_SUCCESS;
     }
 

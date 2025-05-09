@@ -684,10 +684,10 @@ ze_result_t DebugSessionLinux::getElfOffset(const zet_debug_memory_space_desc_t 
     return status;
 }
 
-void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) {
+ze_result_t DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) {
     auto vmHandle = getVmHandleFromClientAndlrcHandle(attention.clientHandle, attention.lrcHandle);
     if (vmHandle == invalidHandle) {
-        return;
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     auto hwInfo = connectedDevice->getHwInfo();
@@ -745,6 +745,7 @@ void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(const Attentio
     } else {
         checkTriggerEventsForAttention();
     }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionLinux::getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) {
