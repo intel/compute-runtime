@@ -34,7 +34,6 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
     void whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnDebugKey();
     void whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
-    void whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
     virtual std::vector<uint32_t> getRevisions() = 0;
 
     std::unique_ptr<ReleaseHelper> releaseHelper;

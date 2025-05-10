@@ -25,7 +25,6 @@
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
@@ -2206,83 +2205,6 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsFound) 
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
     auto cmdIterator = find<typename FamilyType::XY_BLOCK_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     EXPECT_NE(hwParser.cmdList.end(), cmdIterator);
-}
-
-HWTEST_F(BcsTests, givenSrcAndDstImageWhenDepthImageIsNotAllowedForBlitOperationThenAbortThrown) {
-    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
-        GTEST_SKIP();
-    }
-    auto releaseHelper = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
-    releaseHelper->isBlitImageAllowedForDepthFormatResult = false;
-    pDevice->getRootDeviceEnvironmentRef().releaseHelper.reset(releaseHelper.release());
-    cl_image_desc imgDesc = Image1dDefaults::imageDesc;
-    std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
-
-    BlitProperties blitProperties{};
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.dstPlane);
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.srcPlane);
-
-    BuiltinOpParams builtinOpParams{};
-    builtinOpParams.srcMemObj = image.get();
-    builtinOpParams.dstMemObj = image.get();
-    reinterpret_cast<MockImageBase *>(image.get())->imageFormat = {CL_DEPTH, CL_UNSIGNED_INT8};
-    builtinOpParams.size = {1, 1, 1};
-
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_THROW(ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::imageToImage,
-                                                       csr,
-                                                       builtinOpParams),
-                 std::exception);
-}
-HWTEST_F(BcsTests, givenDstImageAreDepthDepthImageIsNotAllowedForBlitOperationThenAbortThrown) {
-    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
-        GTEST_SKIP();
-    }
-    auto releaseHelper = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
-    releaseHelper->isBlitImageAllowedForDepthFormatResult = false;
-    pDevice->getRootDeviceEnvironmentRef().releaseHelper.reset(releaseHelper.release());
-    cl_image_desc imgDesc = Image1dDefaults::imageDesc;
-    std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
-
-    BlitProperties blitProperties{};
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.dstPlane);
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.srcPlane);
-
-    BuiltinOpParams builtinOpParams{};
-    builtinOpParams.dstMemObj = image.get();
-    reinterpret_cast<MockImageBase *>(image.get())->imageFormat = {CL_DEPTH, CL_UNSIGNED_INT8};
-    builtinOpParams.size = {1, 1, 1};
-
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_THROW(ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::hostPtrToImage,
-                                                       csr,
-                                                       builtinOpParams),
-                 std::exception);
-}
-HWTEST_F(BcsTests, givenSrcImageWhenDepthImageIsNotAllowedForBlitOperationThenAbortThrown) {
-    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
-        GTEST_SKIP();
-    }
-    auto releaseHelper = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
-    releaseHelper->isBlitImageAllowedForDepthFormatResult = false;
-    pDevice->getRootDeviceEnvironmentRef().releaseHelper.reset(releaseHelper.release());
-    cl_image_desc imgDesc = Image1dDefaults::imageDesc;
-    std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
-
-    BlitProperties blitProperties{};
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.dstPlane);
-    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.srcPlane);
-
-    BuiltinOpParams builtinOpParams{};
-    builtinOpParams.srcMemObj = image.get();
-    reinterpret_cast<MockImageBase *>(image.get())->imageFormat = {CL_DEPTH, CL_UNSIGNED_INT8};
-    builtinOpParams.size = {1, 1, 1};
-
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_THROW(ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::imageToHostPtr,
-                                                       csr,
-                                                       builtinOpParams),
-                 std::exception);
 }
 HWTEST_F(BcsTests, given1DTiledArrayImageWhenConstructPropertiesThenImageTransformedTo2DArray) {
     if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {

@@ -73,10 +73,6 @@ TEST_F(ReleaseHelper1257Tests, whenIsDummyBlitWaRequiredCalledThenFalseReturned)
     whenIsDummyBlitWaRequiredCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper1257Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned) {
-    whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
-}
-
 TEST_F(ReleaseHelper1257Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

@@ -101,11 +101,3 @@ TEST_F(ReleaseHelper1274Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
         EXPECT_EQ(13u, preferredSlmValueArray[5].valueToProgram);
     }
 }
-TEST_F(ReleaseHelper1274Tests, whenIsBlitImageAllowedForDepthFormatCalledThenFalseReturned) {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_FALSE(releaseHelper->isBlitImageAllowedForDepthFormat());
-    }
-}

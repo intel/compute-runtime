@@ -171,9 +171,5 @@ template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::computeSlmValues(uint32_t slmSize, bool isHeapless) const {
     return 0u;
 }
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isBlitImageAllowedForDepthFormat() const {
-    return true;
-}
 
 } // namespace NEO

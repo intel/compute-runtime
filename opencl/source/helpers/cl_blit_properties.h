@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/blit_properties.h"
-#include "shared/source/release_helper/release_helper.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/mem_obj/image.h"
@@ -25,8 +24,7 @@ struct ClBlitProperties {
         auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
         auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
         BlitProperties blitProperties{};
-        auto releaseHelper = commandStreamReceiver.getReleaseHelper();
-        bool isBlitAllowedForDepthImage = releaseHelper ? releaseHelper->isBlitImageAllowedForDepthFormat() : true;
+
         if (BlitterConstants::BlitDirection::bufferToBuffer == blitDirection ||
             BlitterConstants::BlitDirection::imageToImage == blitDirection) {
             auto dstOffset = builtinOpParams.dstOffset.x;
@@ -53,9 +51,9 @@ struct ClBlitProperties {
                                                                         builtinOpParams.size,
                                                                         builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
                                                                         builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
+
             if (BlitterConstants::BlitDirection::imageToImage == blitDirection) {
                 blitProperties.blitDirection = blitDirection;
-                blitProperties.isBlitAllowedForDepthFormat = isBlitAllowedForDepthImage;
                 setBlitPropertiesForImage(blitProperties, builtinOpParams);
             }
             blitProperties.transform1DArrayTo2DArrayIfNeeded();
@@ -142,7 +140,6 @@ struct ClBlitProperties {
 
         if (BlitterConstants::BlitDirection::hostPtrToImage == blitDirection ||
             BlitterConstants::BlitDirection::imageToHostPtr == blitDirection) {
-            blitProperties.isBlitAllowedForDepthFormat = isBlitAllowedForDepthImage;
             setBlitPropertiesForImage(blitProperties, builtinOpParams);
         }
 
@@ -183,7 +180,6 @@ struct ClBlitProperties {
         bool src1DBuffer = false, dst1DBuffer = false;
 
         if (srcImage) {
-            UNRECOVERABLE_IF(!blitProperties.isBlitAllowedForDepthFormat && Image::isDepthFormat(srcImage->getImageFormat()));
             const auto &imageDesc = srcImage->getImageDesc();
             blitProperties.srcSize.x = imageDesc.image_width;
             blitProperties.srcSize.y = std::max(imageDesc.image_height, size_t(1));
@@ -204,7 +200,6 @@ struct ClBlitProperties {
         }
 
         if (dstImage) {
-            UNRECOVERABLE_IF(!blitProperties.isBlitAllowedForDepthFormat && Image::isDepthFormat(dstImage->getImageFormat()));
             const auto &imageDesc = dstImage->getImageDesc();
             blitProperties.dstSize.x = imageDesc.image_width;
             blitProperties.dstSize.y = std::max(imageDesc.image_height, size_t(1));
