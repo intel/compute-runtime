@@ -11,6 +11,7 @@
 
 #include "igfxfmid.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

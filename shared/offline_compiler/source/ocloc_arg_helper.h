@@ -11,6 +11,7 @@
 #include "shared/source/utilities/const_stringref.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <map>
 #include <memory>
