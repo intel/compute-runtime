@@ -533,7 +533,7 @@ void Event::releaseTempInOrderTimestampNodes() {
 }
 
 ze_result_t Event::destroy() {
-    resetInOrderTimestampNode(nullptr, 0, false);
+    resetInOrderTimestampNode(nullptr, 0);
     releaseTempInOrderTimestampNodes();
 
     if (isCounterBasedExplicitlyEnabled() && isFromIpcPool) {
@@ -677,13 +677,13 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
 }
 
 void Event::unsetInOrderExecInfo() {
-    resetInOrderTimestampNode(nullptr, 0, false);
+    resetInOrderTimestampNode(nullptr, 0);
     inOrderExecInfo.reset();
     inOrderAllocationOffset = 0;
     inOrderExecSignalValue = 0;
 }
 
-void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount, bool blitAdditionalPropertiesUsed) {
+void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
     if (inOrderIncrementValue == 0 || !newNode) {
         for (auto &node : inOrderTimestampNode) {
             inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue);
@@ -696,13 +696,31 @@ void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partit
         inOrderTimestampNode.push_back(newNode);
 
         if (NEO::debugManager.flags.ClearStandaloneInOrderTimestampAllocation.get() != 0) {
-            clearLatestInOrderTimestampData(partitionCount);
-        }
-
-        if (blitAdditionalPropertiesUsed) {
-            this->blitAdditionalPropertiesUsed = true;
+            clearTimestampTagData(partitionCount, true, nullptr);
         }
     }
+}
+
+void Event::resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
+    if (!newNode) {
+        additionalTimestampNode.clear();
+        return;
+    }
+
+    if (inOrderIncrementValue > 0) {
+        // Aggregated events do not reset
+        additionalTimestampNode.push_back(newNode);
+        return;
+    }
+
+    additionalTimestampNode.clear();
+    additionalTimestampNode.push_back(newNode);
+
+    clearTimestampTagData(partitionCount, false, newNode);
+}
+
+NEO::TagNodeBase *Event::getEventAdditionalTimestampNode() {
+    return additionalTimestampNode.empty() ? nullptr : additionalTimestampNode.back();
 }
 
 NEO::GraphicsAllocation *Event::getExternalCounterAllocationFromAddress(uint64_t *address) const {

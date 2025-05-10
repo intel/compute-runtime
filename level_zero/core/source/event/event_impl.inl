@@ -200,8 +200,8 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
             numPackets *= static_cast<uint32_t>(inOrderTimestampNode.size());
         }
 
-        if (blitAdditionalPropertiesUsed) {
-            numPackets += static_cast<uint32_t>(inOrderTimestampNode.size());
+        if (additionalTimestampNode.size() > 0) {
+            numPackets += static_cast<uint32_t>(additionalTimestampNode.size());
         }
 
         for (auto packetId = 0u; packetId < numPackets; packetId++) {
@@ -228,8 +228,11 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::clearLatestInOrderTimestampData(uint32_t partitionCount) {
-    auto node = inOrderTimestampNode.back();
+void EventImp<TagSizeT>::clearTimestampTagData(uint32_t partitionCount, bool latestInorderData, NEO::TagNodeBase *newNode) {
+    auto node = newNode;
+    if (latestInorderData) {
+        node = inOrderTimestampNode.back();
+    }
     auto hostAddress = node->getCpuBase();
     auto deviceAddress = node->getGpuAddress();
 
@@ -261,6 +264,28 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 
             kernelEventCompletionData[i].assignDataToAllTimestamps(packetId, address);
             address = ptrOffset(address, singlePacketSize);
+        }
+
+        // Account for additional timestamp nodes
+        uint32_t remainingPackets = static_cast<uint32_t>(additionalTimestampNode.size());
+        if (remainingPackets == 0) {
+            continue;
+        }
+
+        nodeId = 0;
+        uint32_t normalizedPacketId = 0;
+        for (uint32_t packetId = packetsToCopy; packetId < packetsToCopy + remainingPackets; packetId++) {
+            if (inOrderIncrementValue > 0) {
+                if (normalizedPacketId % kernelEventCompletionData[i].getPacketsUsed() == 0) {
+                    address = additionalTimestampNode[nodeId++]->getCpuBase();
+                }
+            } else {
+                address = additionalTimestampNode[nodeId++]->getCpuBase();
+            }
+
+            kernelEventCompletionData[i].assignDataToAllTimestamps(packetId, address);
+            address = ptrOffset(address, singlePacketSize);
+            normalizedPacketId++;
         }
     }
 }
@@ -808,6 +833,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();
+    this->resetAdditionalTimestampNode(nullptr, 0);
     return ZE_RESULT_SUCCESS;
 }
 

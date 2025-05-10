@@ -19,7 +19,7 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
-    using BaseClass::blitAdditionalPropertiesUsed;
+    using BaseClass::additionalTimestampNode;
     using BaseClass::contextEndTS;
     using BaseClass::contextStartTS;
     using BaseClass::counterBasedMode;
@@ -45,7 +45,7 @@ using Event = WhiteBox<::L0::Event>;
 template <typename TagSizeT>
 struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass = ::L0::EventImp<TagSizeT>;
-    using BaseClass::blitAdditionalPropertiesUsed;
+    using BaseClass::additionalTimestampNode;
     using BaseClass::calculateProfilingData;
     using BaseClass::contextEndTS;
     using BaseClass::contextStartTS;
@@ -191,7 +191,7 @@ class MockEvent : public ::L0::Event {
     ze_result_t hostEventSetValue(State eventState) override {
         return ZE_RESULT_SUCCESS;
     }
-    void clearLatestInOrderTimestampData(uint32_t partitionCount) override {}
+    void clearTimestampTagData(uint32_t partitionCount, bool latestInorderData, NEO::TagNodeBase *newNode) override {}
     uint32_t getPacketsUsedInLastKernel() override { return 1; }
     uint32_t getPacketsInUse() const override { return 1; }
     void resetPackets(bool resetAllPackets) override {}

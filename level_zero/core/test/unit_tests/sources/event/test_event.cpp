@@ -2820,9 +2820,8 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWithBlitAdditionalPropert
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
-    event->resetInOrderTimestampNode(blitTagAllocator.getTag(), 1, true);
-    EXPECT_EQ(1u, event->inOrderTimestampNode.size());
-    ASSERT_TRUE(event->blitAdditionalPropertiesUsed);
+    event->resetAdditionalTimestampNode(blitTagAllocator.getTag(), 1);
+    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
 
     event->setPacketsInUse(2u);
 
@@ -3914,8 +3913,7 @@ HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenA
 
     event->destroy();
 }
-HWTEST_F(EventTests, givenInOrderEventWhenCallingResetInOrderTimestampNodeWithBlitAdditionalPropertiesUsedThenBlitAdditionalPropertiesUsedIsSet) {
-    std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
+HWTEST_F(EventTests, givenInOrderEventWhenCallingResetAdditionalTimestampNodeWithTagAllocatorThenTagAddedToAdditionalTimestampNodeVector) {
 
     MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, neoDevice->getMemoryManager());
     MockTagAllocator<DeviceAllocNodeType<true>> eventTagAllocator(0, neoDevice->getMemoryManager());
@@ -3927,9 +3925,39 @@ HWTEST_F(EventTests, givenInOrderEventWhenCallingResetInOrderTimestampNodeWithBl
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
-    EXPECT_FALSE(event->blitAdditionalPropertiesUsed);
-    event->resetInOrderTimestampNode(eventTagAllocator.getTag(), 1, true);
-    EXPECT_TRUE(event->blitAdditionalPropertiesUsed);
+    EXPECT_EQ(nullptr, event->getEventAdditionalTimestampNode());
+    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
+    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
+}
+
+HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeMultipleTimesWithTagAllocatorThenTagAddedToAdditionalTimestampNodeVectorOnce) {
+
+    MockTagAllocator<DeviceAllocNodeType<true>> eventTagAllocator(0, neoDevice->getMemoryManager());
+    auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
+    ASSERT_NE(event, nullptr);
+
+    EXPECT_EQ(nullptr, event->getEventAdditionalTimestampNode());
+    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
+    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
+
+    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
+    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
+    EXPECT_EQ(1u, event->additionalTimestampNode.size());
+}
+
+HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeWithNullptrThenVectorCleared) {
+
+    MockTagAllocator<DeviceAllocNodeType<true>> eventTagAllocator(0, neoDevice->getMemoryManager());
+    auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
+    ASSERT_NE(event, nullptr);
+
+    EXPECT_EQ(nullptr, event->getEventAdditionalTimestampNode());
+    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
+    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
+
+    event->resetAdditionalTimestampNode(nullptr, 0);
+    EXPECT_EQ(nullptr, event->getEventAdditionalTimestampNode());
+    EXPECT_EQ(0u, event->additionalTimestampNode.size());
 }
 
 HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {

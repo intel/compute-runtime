@@ -4375,7 +4375,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             auto tag = device->getInOrderTimestampAllocator()->getTag();
 
             this->commandContainer.addToResidencyContainer(tag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex()));
-            signalEvent->resetInOrderTimestampNode(tag, this->partitionCount, false);
+            signalEvent->resetInOrderTimestampNode(tag, this->partitionCount);
         }
     }
 

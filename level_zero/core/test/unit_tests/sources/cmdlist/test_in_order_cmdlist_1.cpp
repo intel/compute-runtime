@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -5495,6 +5496,28 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
     EXPECT_EQ(inOrderExecInfo->getExternalHostAllocation(), inOrderExecInfo->getDeviceCounterAllocation());
 
     zeEventDestroy(handle);
+
+    context->freeMem(devAddress);
+}
+
+HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEventAndAdditionalTimestampNodeThenSetAdditionalParamsVectorCorrectly) {
+    uint64_t counterValue = 4;
+    uint64_t incValue = 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto event = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    event->isTimestampEvent = true;
+    ASSERT_NE(nullptr, event->getInOrderExecInfo());
+
+    MockTagAllocator<DeviceAllocNodeType<true>> eventTagAllocator0(0, neoDevice->getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> eventTagAllocator1(0, neoDevice->getMemoryManager());
+    EXPECT_EQ(nullptr, event->getEventAdditionalTimestampNode());
+    event->resetAdditionalTimestampNode(eventTagAllocator0.getTag(), 1);
+    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
+
+    event->resetAdditionalTimestampNode(eventTagAllocator1.getTag(), 1);
+    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
+    EXPECT_EQ(2u, event->additionalTimestampNode.size());
 
     context->freeMem(devAddress);
 }
