@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/string.h"
 
+#include <cstdint>
 #include <string>
 
 namespace NEO {
