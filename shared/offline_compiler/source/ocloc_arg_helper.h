@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/utilities/const_stringref.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <map>
 #include <memory>
