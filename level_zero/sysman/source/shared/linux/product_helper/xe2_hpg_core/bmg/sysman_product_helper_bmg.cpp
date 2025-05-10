@@ -1073,6 +1073,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     return ZE_RESULT_SUCCESS;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isEccConfigurationSupported() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

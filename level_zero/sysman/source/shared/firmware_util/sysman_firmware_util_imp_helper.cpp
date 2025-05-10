@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,9 @@
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util_imp.h"
 
 static std::vector<std ::string> deviceSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
+static constexpr uint8_t eccStateNone = 0xFF;
+constexpr uint8_t maxGfspHeciOutBuffer = UINT8_MAX;
+constexpr uint8_t maxGfspHeciInBuffer = 4;
 
 namespace L0 {
 namespace Sysman {
@@ -20,8 +23,7 @@ const std::string fwGfspMemoryErrors = "igsc_gfsp_memory_errors";
 const std::string fwGfspGetHealthIndicator = "igsc_gfsp_get_health_indicator";
 const std::string fwGfspCountTiles = "igsc_gfsp_count_tiles";
 const std::string fwDeviceIfrRunMemPPRTest = "igsc_ifr_run_mem_ppr_test";
-const std::string fwEccConfigGet = "igsc_ecc_config_get";
-const std::string fwEccConfigSet = "igsc_ecc_config_set";
+const std::string fwGfspHeciCmd = "igsc_gfsp_heci_cmd";
 
 pIgscIfrGetStatusExt deviceIfrGetStatusExt;
 pIgscIafPscUpdate iafPscUpdate;
@@ -29,8 +31,7 @@ pIgscGfspMemoryErrors gfspMemoryErrors;
 pIgscGfspCountTiles gfspCountTiles;
 pIgscGfspGetHealthIndicator gfspGetHealthIndicator;
 pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
-pIgscGetEccConfig getEccConfig;
-pIgscSetEccConfig setEccConfig;
+pIgscGfspHeciCmd gfspHeciCmd;
 
 ze_result_t FirmwareUtilImp::fwIfrApplied(bool &ifrStatus) {
     uint32_t supportedTests = 0; // Bitmap holding the tests supported on the platform
@@ -143,26 +144,129 @@ void FirmwareUtilImp::fwGetMemoryHealthIndicator(zes_mem_health_t *health) {
 
 ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
-    getEccConfig = reinterpret_cast<pIgscGetEccConfig>(libraryHandle->getProcAddress(fwEccConfigGet));
-    if (getEccConfig != nullptr) {
-        int ret = getEccConfig(&fwDeviceHandle, currentState, pendingState);
-        if (ret != IGSC_SUCCESS) {
-            return ZE_RESULT_ERROR_UNINITIALIZED;
+    gfspHeciCmd = reinterpret_cast<pIgscGfspHeciCmd>(libraryHandle->getProcAddress(fwGfspHeciCmd));
+    if (gfspHeciCmd != nullptr) {
+        std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
+        size_t receivedSize = 0;
+        // Need to call gfspHeciCmd 0x10 cmd first and if not available, fallback and call 0x9.
+        int ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getEccConfigurationCmd16, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+
+        if (ret == IGSC_SUCCESS) {
+            *currentState = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccCurrentState] & 0x1;
+            *pendingState = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccPendingState] & 0x1;
+            return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_SUCCESS;
+        receivedSize = 0;
+        std::fill(outBuf.begin(), outBuf.end(), 0);
+        ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getEccConfigurationCmd9, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+
+        if (ret == IGSC_SUCCESS) {
+            *currentState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::currentState];
+            *pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return ZE_RESULT_ERROR_UNINITIALIZED;
+}
+
+ze_result_t FirmwareUtilImp::fwGetEccAvailable(ze_bool_t *pAvailable) {
+    *pAvailable = false;
+    const std::lock_guard<std::mutex> lock(this->fwLock);
+    gfspHeciCmd = reinterpret_cast<pIgscGfspHeciCmd>(libraryHandle->getProcAddress(fwGfspHeciCmd));
+    if (gfspHeciCmd != nullptr) {
+        std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
+        size_t receivedSize = 0;
+        // Need to call gfspHeciCmd 0x10 cmd first and if not available, fallback and call 0x9.
+        int ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getEccConfigurationCmd16, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+
+        if (ret == IGSC_SUCCESS) {
+            *pAvailable = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccAvailable] & 0x1;
+            return ZE_RESULT_SUCCESS;
+        }
+        receivedSize = 0;
+        std::fill(outBuf.begin(), outBuf.end(), 0);
+        ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getEccConfigurationCmd9, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+
+        if (ret == IGSC_SUCCESS) {
+            uint8_t currentState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::currentState];
+            uint8_t pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
+
+            if ((currentState != eccStateNone) && (pendingState != eccStateNone)) {
+                *pAvailable = true;
+            }
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return ZE_RESULT_ERROR_UNINITIALIZED;
+}
+
+ze_result_t FirmwareUtilImp::fwGetEccConfigurable(ze_bool_t *pConfigurable) {
+    *pConfigurable = false;
+    const std::lock_guard<std::mutex> lock(this->fwLock);
+    gfspHeciCmd = reinterpret_cast<pIgscGfspHeciCmd>(libraryHandle->getProcAddress(fwGfspHeciCmd));
+    if (gfspHeciCmd != nullptr) {
+        std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
+        size_t receivedSize = 0;
+        // Need to call gfspHeciCmd 0x10 cmd first and if not available, fallback and call 0x9.
+        int ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getEccConfigurationCmd16, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+
+        if (ret == IGSC_SUCCESS) {
+            *pConfigurable = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccConfigurable] & 0x1;
+            return ZE_RESULT_SUCCESS;
+        }
+        receivedSize = 0;
+        std::fill(outBuf.begin(), outBuf.end(), 0);
+        ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getEccConfigurationCmd9, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+
+        if (ret == IGSC_SUCCESS) {
+            uint8_t currentState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::currentState];
+            uint8_t pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
+
+            if ((currentState != eccStateNone) && (pendingState != eccStateNone)) {
+                *pConfigurable = true;
+            }
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
 ze_result_t FirmwareUtilImp::fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) {
-    const std::lock_guard<std::mutex> lock(this->fwLock);
-    setEccConfig = reinterpret_cast<pIgscSetEccConfig>(libraryHandle->getProcAddress(fwEccConfigSet));
-    if (setEccConfig != nullptr) {
-        int ret = setEccConfig(&fwDeviceHandle, newState, currentState, pendingState);
-        if (ret != IGSC_SUCCESS) {
-            return ZE_RESULT_ERROR_UNINITIALIZED;
+    std::unique_lock<std::mutex> lock(this->fwLock);
+    gfspHeciCmd = reinterpret_cast<pIgscGfspHeciCmd>(libraryHandle->getProcAddress(fwGfspHeciCmd));
+    if (gfspHeciCmd != nullptr) {
+        std::vector<uint8_t> inBuf(maxGfspHeciInBuffer, 0);
+        std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
+        size_t receivedSize = 0;
+        inBuf[GfspHeciConstants::SetEccCmd15BytePostition::request] = newState;
+        // Need to call gfspHeciCmd 0x15 cmd first and if not available, fallback and call 0x8.
+        int ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::setEccConfigurationCmd15, inBuf.data(), maxGfspHeciInBuffer, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+
+        if (ret == IGSC_SUCCESS) {
+            lock.unlock();
+            ze_result_t status = fwGetEccConfig(currentState, pendingState);
+            lock.lock();
+            if (status != ZE_RESULT_SUCCESS) {
+                return status;
+            }
+            *pendingState = outBuf[GfspHeciConstants::SetEccCmd15BytePostition::response] & 0x1;
+            return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_SUCCESS;
+        receivedSize = 0;
+        std::fill(inBuf.begin(), inBuf.end(), 0);
+        inBuf[GfspHeciConstants::SetEccCmd8BytePostition::setRequest] = newState;
+        std::fill(outBuf.begin(), outBuf.end(), 0);
+        ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::setEccConfigurationCmd8, inBuf.data(), maxGfspHeciInBuffer, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+
+        if (ret == IGSC_SUCCESS) {
+            *currentState = outBuf[GfspHeciConstants::SetEccCmd8BytePostition::responseCurrentState];
+            *pendingState = outBuf[GfspHeciConstants::SetEccCmd8BytePostition::responsePendingState];
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return ZE_RESULT_ERROR_UNINITIALIZED;
 }
