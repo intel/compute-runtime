@@ -10,6 +10,7 @@
 #include "shared/source/utilities/arrayref.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
