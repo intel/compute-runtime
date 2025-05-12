@@ -2162,13 +2162,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    size_t size,
                                                                    ze_event_handle_t hSignalEvent,
                                                                    uint32_t numWaitEvents,
-                                                                   ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+                                                                   ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
     if (size >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
     }
 
     const bool isHeapless = this->isHeaplessModeEnabled();
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadEnabled();
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
@@ -2191,13 +2192,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
     }
 
-    if (isCopyOnly(false)) {
-        auto status = appendBlitFill(ptr, pattern, patternSize, size, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+    if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
+        auto status = appendBlitFill(ptr, pattern, patternSize, size, signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
         addToMappedEventList(signalEvent);
         return status;
     }
 
-    ze_result_t res = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, false, true, false, false);
+    ze_result_t res = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, memoryCopyParams.relaxedOrderingDispatch, false, true, false, false);
     if (res) {
         return res;
     }
@@ -2426,17 +2427,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
-                                                                 const void *pattern,
-                                                                 size_t patternSize,
-                                                                 size_t size,
-                                                                 Event *signalEvent,
-                                                                 uint32_t numWaitEvents,
-                                                                 ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, const void *pattern, size_t patternSize, size_t size, Event *signalEvent, uint32_t numWaitEvents,
+                                                                 ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     if (this->maxFillPaternSizeForCopyEngine < patternSize) {
         return ZE_RESULT_ERROR_INVALID_SIZE;
     } else {
-        ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, false, true, false, false);
+        const bool dualStreamCopyOffloadOperation = isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed);
+        const bool isCopyOnlySignaling = isCopyOnly(dualStreamCopyOffloadOperation) && !useAdditionalBlitProperties;
+
+        ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, memoryCopyParams.relaxedOrderingDispatch, false, true, false, dualStreamCopyOffloadOperation);
         if (ret) {
             return ret;
         }
@@ -2446,7 +2445,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         }
 
         auto neoDevice = device->getNEODevice();
-        if (!useAdditionalBlitProperties) {
+        if (isCopyOnlySignaling) {
             appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
         }
         NEO::GraphicsAllocation *gpuAllocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr,
@@ -2479,14 +2478,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
 
         NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
         dummyBlitWa.isWaRequired = true;
-        if (!useAdditionalBlitProperties) {
+        if (isCopyOnlySignaling) {
             appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
         }
 
-        if (isInOrderExecutionEnabled() && !useAdditionalBlitProperties) {
+        if (isInOrderExecutionEnabled() && isCopyOnlySignaling) {
             appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
         }
-        handleInOrderDependencyCounter(signalEvent, false, false);
+        handleInOrderDependencyCounter(signalEvent, false, memoryCopyParams.copyOffloadAllowed);
     }
     return ZE_RESULT_SUCCESS;
 }

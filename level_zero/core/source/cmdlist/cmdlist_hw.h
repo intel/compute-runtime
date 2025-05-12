@@ -162,7 +162,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                  size_t patternSize, size_t size,
                                  ze_event_handle_t hSignalEvent,
                                  uint32_t numWaitEvents,
-                                 ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                 ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
     ze_result_t appendMILoadRegImm(uint32_t reg, uint32_t value, bool isBcs) override;
     ze_result_t appendMILoadRegReg(uint32_t reg1, uint32_t reg2) override;
@@ -272,7 +272,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                                 size_t patternSize, size_t size,
                                                 Event *signalEvent,
                                                 uint32_t numWaitEvents,
-                                                ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch);
+                                                ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams);
 
     MOCKABLE_VIRTUAL ze_result_t appendCopyImageBlit(NEO::GraphicsAllocation *src,
                                                      NEO::GraphicsAllocation *dst,

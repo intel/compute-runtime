@@ -975,9 +975,10 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 4096, 4096u, &dstBuffer);
 
+    CmdListMemoryCopyParams copyParams = {};
     int one = 1;
     commandListImmediate->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4096,
-                                           nullptr, 1, &eventHandle, false);
+                                           nullptr, 1, &eventHandle, copyParams);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 

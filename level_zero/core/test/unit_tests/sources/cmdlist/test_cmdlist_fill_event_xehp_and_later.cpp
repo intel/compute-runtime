@@ -111,10 +111,10 @@ void testSingleTileAppendMemoryFillManyImmediateKernels(FillTestInput &input, Te
     auto commandList = std::make_unique<CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     auto &commandContainer = commandList->commandContainer;
-
+    CmdListMemoryCopyParams copyParams = {};
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(input.dstPtr, input.patternPtr,
-                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, false);
+                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -196,10 +196,10 @@ void testSingleTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpecte
     auto commandList = std::make_unique<CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     auto &commandContainer = commandList->commandContainer;
-
+    CmdListMemoryCopyParams copyParams = {};
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(input.dstPtr, input.patternPtr,
-                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, false);
+                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -283,10 +283,10 @@ void testSingleTileAppendMemoryFillManyKernelsAndL3Flush(FillTestInput &input, T
     auto commandList = std::make_unique<CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     auto &commandContainer = commandList->commandContainer;
-
+    CmdListMemoryCopyParams copyParams = {};
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(input.dstPtr, input.patternPtr,
-                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, false);
+                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -367,10 +367,10 @@ void testSingleTileAppendMemoryFillSingleKernel(FillTestInput &input, TestExpect
     int pattern = 0;
     const size_t size = 1024;
     uint8_t array[size] = {};
-
+    CmdListMemoryCopyParams copyParams = {};
     auto &commandContainer = commandList->commandContainer;
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr, false);
+    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -452,10 +452,10 @@ void testSingleTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, 
     int pattern = 0;
     const size_t size = 1024;
     uint8_t array[size] = {};
-
+    CmdListMemoryCopyParams copyParams = {};
     auto &commandContainer = commandList->commandContainer;
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr, false);
+    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -566,10 +566,10 @@ void testMultiTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpected
     commandList->initialize(input.device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(2u, commandList->partitionCount);
     auto &commandContainer = commandList->commandContainer;
-
+    CmdListMemoryCopyParams copyParams = {};
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(input.dstPtr, input.patternPtr,
-                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, false);
+                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -685,10 +685,10 @@ void testMultiTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, T
     int pattern = 0;
     const size_t size = 1024;
     uint8_t array[size] = {};
-
+    CmdListMemoryCopyParams copyParams = {};
     auto &commandContainer = commandList->commandContainer;
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr, false);
+    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 

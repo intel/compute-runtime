@@ -4056,9 +4056,9 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
     result = context->freeMem(ptr);
@@ -4082,9 +4082,9 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
@@ -4109,9 +4109,9 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
@@ -4140,9 +4140,9 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device1, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
@@ -4167,9 +4167,9 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
@@ -4186,9 +4186,9 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device0, NEO::EngineGroupType::renderCompute, 0u);
-
+    CmdListMemoryCopyParams copyParams;
     char pattern = 'a';
-    ze_result_t result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    ze_result_t result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
     delete[] ptr;

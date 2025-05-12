@@ -939,10 +939,10 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     ze_host_mem_alloc_desc_t hostDesc = {};
     result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4090u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
+    CmdListMemoryCopyParams copyParams = {};
     int one = 1;
     result = commandList0->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
-                                            nullptr, 0, nullptr, false);
+                                            nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 1u);
@@ -998,10 +998,10 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                             NEO::EngineGroupType::compute,
                                                                             0u,
                                                                             result, false));
-
+    CmdListMemoryCopyParams copyParams = {};
     int one = 1;
     result = commandListRegular->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
-                                                  nullptr, 0, nullptr, false);
+                                                  nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     commandListRegular->close();
 
@@ -1072,10 +1072,10 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     ze_host_mem_alloc_desc_t hostDesc = {};
     result = context->allocHostMem(&hostDesc, 4096u, 0u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
+    CmdListMemoryCopyParams copyParams = {};
     int one = 1;
     result = commandList0->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
-                                            nullptr, 0, nullptr, false);
+                                            nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 3u);
