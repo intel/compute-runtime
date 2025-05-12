@@ -119,5 +119,6 @@ struct MulticontextAubFixture {
     bool isCcs1Supported = false;
     bool isRenderEngineSupported = true;
     bool skipped = false;
+    DispatchMode dispatchMode = DispatchMode::batchedDispatch;
 };
 } // namespace NEO

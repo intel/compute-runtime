@@ -23,7 +23,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     this->numberOfEnabledTiles = numberOfTiles;
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
 
-    debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::batchedDispatch));
+    debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(dispatchMode));
     debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
 
     HardwareInfo localHwInfo = *defaultHwInfo;
