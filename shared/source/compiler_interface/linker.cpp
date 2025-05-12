@@ -402,17 +402,20 @@ void Linker::patchAddress(void *relocAddress, const uint64_t value, const Linker
     switch (relocation.type) {
     default:
         UNRECOVERABLE_IF(RelocationInfo::Type::address != relocation.type);
-        *reinterpret_cast<uint64_t *>(relocAddress) = value;
+        memcpy_s(relocAddress, sizeof(uint64_t), &value, sizeof(uint64_t));
         break;
-    case RelocationInfo::Type::addressLow:
-        *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>(value & 0xffffffff);
-        break;
-    case RelocationInfo::Type::addressHigh:
-        *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>((value >> 32) & 0xffffffff);
-        break;
-    case RelocationInfo::Type::address16:
-        *reinterpret_cast<uint16_t *>(relocAddress) = static_cast<uint16_t>(value);
-        break;
+    case RelocationInfo::Type::addressLow: {
+        uint32_t valueToPatch = static_cast<uint32_t>(value & 0xffffffff);
+        memcpy_s(relocAddress, sizeof(uint32_t), &valueToPatch, sizeof(uint32_t));
+    } break;
+    case RelocationInfo::Type::addressHigh: {
+        uint32_t valueToPatch = static_cast<uint32_t>((value >> 32) & 0xffffffff);
+        memcpy_s(relocAddress, sizeof(uint32_t), &valueToPatch, sizeof(uint32_t));
+    } break;
+    case RelocationInfo::Type::address16: {
+        uint16_t valueToPatch = static_cast<uint16_t>(value & 0xffff);
+        memcpy_s(relocAddress, sizeof(uint16_t), &valueToPatch, sizeof(uint16_t));
+    } break;
     }
 }
 

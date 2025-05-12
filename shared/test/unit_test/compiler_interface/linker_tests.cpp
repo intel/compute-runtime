@@ -1329,6 +1329,97 @@ HWTEST_F(LinkerTests, givenValidStringSymbolsAndRelocationsWhenPatchingThenItIsP
     EXPECT_EQ(static_cast<size_t>(strAddr), *reinterpret_cast<const size_t *>(patchAddr));
 }
 
+TEST_F(LinkerTests, givenValidStringSymbolsAndRelocationsWithWordMisalignedOffsetWhenPatchingThenItIsProperlyPatched) {
+    NEO::Linker::SegmentInfo stringSegment;
+    stringSegment.gpuAddress = 0x1234000000567800;
+    stringSegment.segmentSize = 0x20;
+
+    uint8_t instructionSegment[32] = {};
+    NEO::Linker::PatchableSegment seg0;
+    seg0.hostPointer = instructionSegment;
+    seg0.segmentSize = sizeof(instructionSegment);
+    NEO::Linker::PatchableSegments patchableInstructionSegments{seg0, seg0, seg0, seg0};
+
+    WhiteBox<NEO::LinkerInput> linkerInput;
+
+    SymbolInfo strSymbol;
+    strSymbol.segment = SegmentType::globalStrings;
+    strSymbol.offset = 0U;
+    strSymbol.size = 8U;
+    linkerInput.symbols.insert({".str8", strSymbol});
+
+    strSymbol.offset = 8U;
+    strSymbol.size = 4U;
+    linkerInput.symbols.insert({".str4H", strSymbol});
+
+    strSymbol.offset = 12U;
+    strSymbol.size = 4U;
+    linkerInput.symbols.insert({".str4L", strSymbol});
+
+    strSymbol.offset = 16U;
+    strSymbol.size = 2U;
+    linkerInput.symbols.insert({".str2", strSymbol});
+
+    NEO::LinkerInput::RelocationInfo relocation;
+    relocation.offset = 1U;
+    relocation.relocationSegment = NEO::SegmentType::instructions;
+    relocation.symbolName = ".str8";
+    relocation.type = NEO::LinkerInput::RelocationInfo::Type::address;
+    linkerInput.textRelocations.push_back({relocation});
+
+    relocation.offset = 9U;
+    relocation.relocationSegment = NEO::SegmentType::instructions;
+    relocation.symbolName = ".str4H";
+    relocation.type = NEO::LinkerInput::RelocationInfo::Type::addressHigh;
+    linkerInput.textRelocations.push_back({relocation});
+
+    relocation.offset = 13U;
+    relocation.relocationSegment = NEO::SegmentType::instructions;
+    relocation.symbolName = ".str4L";
+    relocation.type = NEO::LinkerInput::RelocationInfo::Type::addressLow;
+    linkerInput.textRelocations.push_back({relocation});
+
+    relocation.offset = 17U;
+    relocation.relocationSegment = NEO::SegmentType::instructions;
+    relocation.symbolName = ".str2";
+    relocation.type = NEO::LinkerInput::RelocationInfo::Type::address16;
+    linkerInput.textRelocations.push_back({relocation});
+
+    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
+
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+    auto linkResult = linker.link(
+        {}, {}, {}, stringSegment,
+        nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
+        pDevice, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
+    EXPECT_EQ(0U, unresolvedExternals.size());
+    EXPECT_TRUE(linker.extractRelocatedSymbols().empty());
+
+    uint64_t str8Addr = static_cast<uint64_t>(stringSegment.gpuAddress);
+    uint32_t str4HAddr = static_cast<uint32_t>((stringSegment.gpuAddress + 8u) >> 32);
+    uint32_t str4LAddr = static_cast<uint32_t>((stringSegment.gpuAddress + 12u) & 0xffffffff);
+    uint16_t str2Addr = static_cast<uint16_t>((stringSegment.gpuAddress + 16u) & 0xffff);
+
+    EXPECT_NE(0u, str8Addr);
+    EXPECT_NE(0u, str4HAddr);
+    EXPECT_NE(0u, str4LAddr);
+    EXPECT_NE(0u, str2Addr);
+
+    auto patchAddrStr8 = ptrOffset(instructionSegment, 1u);
+    auto patchAddrStr4H = ptrOffset(instructionSegment, 9u);
+    auto patchAddrStr4L = ptrOffset(instructionSegment, 13u);
+    auto patchAddrStr2 = ptrOffset(instructionSegment, 17u);
+
+    EXPECT_EQ(0, memcmp(patchAddrStr8, &str8Addr, 8));
+    EXPECT_EQ(0, memcmp(patchAddrStr4H, &str4HAddr, 4));
+    EXPECT_EQ(0, memcmp(patchAddrStr4L, &str4LAddr, 4));
+    EXPECT_EQ(0, memcmp(patchAddrStr2, &str2Addr, 2));
+}
+
 HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThenTheyAreProperlyPatched) {
     uint64_t initGlobalConstantData[3];
     initGlobalConstantData[0] = 0x10;   // var1 address will be added here
