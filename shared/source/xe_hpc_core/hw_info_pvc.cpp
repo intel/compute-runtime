@@ -57,7 +57,7 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
     0,                                                         // maxRenderFrequency
     30,                                                        // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::Pvc,             // aubDeviceId
+    AubMemDump::CmdServicesMemTraceVersion::DeviceValues::Pvc, // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
     128,                                                       // maxProgrammableSlmSize
     sizeof(PVC::GRF),                                          // grfSize

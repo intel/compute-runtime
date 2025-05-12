@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #else
 #pragma pack(push, 4)
 #endif
-
+namespace AubMemDump {
 inline void setMisalignedUint64(uint64_t *address, const uint64_t value) {
     uint32_t *addressBits = reinterpret_cast<uint32_t *>(address);
     addressBits[0] = static_cast<uint32_t>(value);
@@ -62,7 +62,6 @@ struct AubCmdDumpBmpHd {
     }
 };
 static_assert(44 == sizeof(AubCmdDumpBmpHd), "Invalid size for AubCmdDumpBmpHd");
-
 struct AubPpgttContextCreate {
     AubCmdHdr header;
     uint32_t handle;
@@ -112,7 +111,7 @@ struct AubCaptureBinaryDumpHD {
     }
 };
 static_assert(56 == sizeof(AubCaptureBinaryDumpHD), "Invalid size for AubCaptureBinaryDumpHD");
-
+} // namespace AubMemDump
 #ifndef WIN32
 #pragma pack()
 #else

@@ -42,7 +42,7 @@ const RuntimeCapabilityTable ARL::capabilityTable{
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
     0,                                                         // maxRenderFrequency
     30,                                                        // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::Arl,             // aubDeviceId
+    AubMemDump::CmdServicesMemTraceVersion::DeviceValues::Arl, // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
     64,                                                        // maxProgrammableSlmSize
     sizeof(ARL::GRF),                                          // grfSize

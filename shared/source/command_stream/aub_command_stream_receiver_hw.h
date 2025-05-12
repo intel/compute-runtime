@@ -9,6 +9,8 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/memory_manager/residency_container.h"
 
+#include <mutex>
+
 namespace NEO {
 class PDPE;
 class PML4;
@@ -105,6 +107,12 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
     int getAddressSpaceFromPTEBits(uint64_t entryBits) const;
+
+    std::mutex mutex;
+
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockStream() {
+        return std::unique_lock<std::mutex>(mutex);
+    }
 
   protected:
     constexpr static uint32_t getMaskAndValueForPollForCompletion();

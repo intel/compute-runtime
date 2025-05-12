@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,7 +172,12 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool addAubCommentCalled = false;
     bool dumpAllocationCalled = false;
     bool skipTaskCountCheckForCompletionPoll = false;
+    bool lockStreamCalled = false;
 
+    std::unique_lock<std::mutex> lockStream() override {
+        lockStreamCalled = true;
+        return AUBCommandStreamReceiverHw<GfxFamily>::lockStream();
+    }
     void initFile(const std::string &fileName) override {
         fileIsOpen = true;
         openFileName = fileName;

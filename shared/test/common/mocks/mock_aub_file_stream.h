@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@
 #include <vector>
 
 namespace NEO {
-
 struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     bool init(uint32_t stepping, uint32_t device) override {
         initCalledCnt++;
@@ -36,10 +35,6 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     }
     void flush() override {
         flushCalled = true;
-    }
-    std::unique_lock<std::mutex> lockStream() override {
-        lockStreamCalled = true;
-        return AUBCommandStreamReceiver::AubFileStream::lockStream();
     }
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) override {
         mmioRegisterFromExpectMMIO = mmioRegister;

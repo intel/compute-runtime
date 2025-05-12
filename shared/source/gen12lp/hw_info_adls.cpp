@@ -33,46 +33,46 @@ const PLATFORM ADLS::platform = {
 const RuntimeCapabilityTable ADLS::capabilityTable{
     EngineDirectSubmissionInitVec{
         {aub_stream::ENGINE_RCS, {true, true}},
-        {aub_stream::ENGINE_CCS, {true, true}}},    // directSubmissionEngines
-    {0, 0, 0, 0, false, false, false, false},       // kmdNotifyProperties
-    MemoryConstants::max64BitAppAddress,            // gpuAddressSpace
-    0,                                              // sharedSystemMemCapabilities
-    MemoryConstants::pageSize,                      // requiredPreemptionSurfaceSize
-    "",                                             // deviceName
-    nullptr,                                        // preferredPlatformName
-    PreemptionMode::ThreadGroup,                    // defaultPreemptionMode
-    aub_stream::ENGINE_RCS,                         // defaultEngineType
-    0,                                              // maxRenderFrequency
-    30,                                             // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::Adls, // aubDeviceId
-    1,                                              // extraQuantityThreadsPerEU
-    64,                                             // maxProgrammableSlmSize
-    sizeof(ADLS::GRF),                              // grfSize
-    36u,                                            // timestampValidBits
-    32u,                                            // kernelTimestampValidBits
-    false,                                          // blitterOperationsSupported
-    true,                                           // ftrSupportsInteger64BitAtomics
-    false,                                          // ftrSupportsFP64
-    false,                                          // ftrSupportsFP64Emulation
-    false,                                          // ftrSupports64BitMath
-    false,                                          // ftrSupportsCoherency
-    false,                                          // ftrRenderCompressedBuffers
-    false,                                          // ftrRenderCompressedImages
-    true,                                           // instrumentationEnabled
-    true,                                           // ftr64KBpages
-    false,                                          // supportCacheFlushAfterWalker
-    true,                                           // supportsImages
-    true,                                           // supportsOcl21Features
-    false,                                          // supportsOnDemandPageFaults
-    false,                                          // supportsIndependentForwardProgress
-    true,                                           // isIntegratedDevice
-    true,                                           // supportsMediaBlock
-    false,                                          // p2pAccessSupported
-    false,                                          // p2pAtomicAccessSupported
-    true,                                           // fusedEuEnabled
-    false,                                          // l0DebuggerSupported;
-    true,                                           // supportsFloatAtomics
-    0                                               // cxlType
+        {aub_stream::ENGINE_CCS, {true, true}}},                // directSubmissionEngines
+    {0, 0, 0, 0, false, false, false, false},                   // kmdNotifyProperties
+    MemoryConstants::max64BitAppAddress,                        // gpuAddressSpace
+    0,                                                          // sharedSystemMemCapabilities
+    MemoryConstants::pageSize,                                  // requiredPreemptionSurfaceSize
+    "",                                                         // deviceName
+    nullptr,                                                    // preferredPlatformName
+    PreemptionMode::ThreadGroup,                                // defaultPreemptionMode
+    aub_stream::ENGINE_RCS,                                     // defaultEngineType
+    0,                                                          // maxRenderFrequency
+    30,                                                         // clVersionSupport
+    AubMemDump::CmdServicesMemTraceVersion::DeviceValues::Adls, // aubDeviceId
+    1,                                                          // extraQuantityThreadsPerEU
+    64,                                                         // maxProgrammableSlmSize
+    sizeof(ADLS::GRF),                                          // grfSize
+    36u,                                                        // timestampValidBits
+    32u,                                                        // kernelTimestampValidBits
+    false,                                                      // blitterOperationsSupported
+    true,                                                       // ftrSupportsInteger64BitAtomics
+    false,                                                      // ftrSupportsFP64
+    false,                                                      // ftrSupportsFP64Emulation
+    false,                                                      // ftrSupports64BitMath
+    false,                                                      // ftrSupportsCoherency
+    false,                                                      // ftrRenderCompressedBuffers
+    false,                                                      // ftrRenderCompressedImages
+    true,                                                       // instrumentationEnabled
+    true,                                                       // ftr64KBpages
+    false,                                                      // supportCacheFlushAfterWalker
+    true,                                                       // supportsImages
+    true,                                                       // supportsOcl21Features
+    false,                                                      // supportsOnDemandPageFaults
+    false,                                                      // supportsIndependentForwardProgress
+    true,                                                       // isIntegratedDevice
+    true,                                                       // supportsMediaBlock
+    false,                                                      // p2pAccessSupported
+    false,                                                      // p2pAtomicAccessSupported
+    true,                                                       // fusedEuEnabled
+    false,                                                      // l0DebuggerSupported;
+    true,                                                       // supportsFloatAtomics
+    0                                                           // cxlType
 };
 
 WorkaroundTable ADLS::workaroundTable = {};

@@ -45,7 +45,7 @@ const RuntimeCapabilityTable LNL::capabilityTable{
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
     0,                                                         // maxRenderFrequency
     30,                                                        // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::Lnl,             // aubDeviceId
+    AubMemDump::CmdServicesMemTraceVersion::DeviceValues::Lnl, // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
     128,                                                       // maxProgrammableSlmSize
     sizeof(LNL::GRF),                                          // grfSize

@@ -45,7 +45,7 @@ const RuntimeCapabilityTable PTL::capabilityTable{
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
     0,                                                         // maxRenderFrequency
     30,                                                        // clVersionSupport
-    CmdServicesMemTraceVersion::DeviceValues::Ptl,             // aubDeviceId
+    AubMemDump::CmdServicesMemTraceVersion::DeviceValues::Ptl, // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
     128,                                                       // maxProgrammableSlmSize
     sizeof(PTL::GRF),                                          // grfSize

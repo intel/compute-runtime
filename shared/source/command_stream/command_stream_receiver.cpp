@@ -42,12 +42,10 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/utilities/wait_util.h"
 
+#include "aub_services.h"
+
 #include <array>
 #include <iostream>
-
-namespace AubMemDump {
-#include "aub_services.h"
-}
 
 namespace NEO {
 

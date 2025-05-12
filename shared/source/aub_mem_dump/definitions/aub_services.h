@@ -16,7 +16,7 @@
 #else
 #pragma pack(push, 4)
 #endif
-
+namespace AubMemDump {
 struct CmdServicesMemTraceVersion {
     union {
         AubCmdHdr header;
@@ -1445,6 +1445,7 @@ struct CmdServicesMemTraceDumpCompress {
                TrmodeYs = 2 };
     };
 };
+} // namespace AubMemDump
 #ifndef WIN32
 #pragma pack()
 #else

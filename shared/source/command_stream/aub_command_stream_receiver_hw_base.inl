@@ -104,13 +104,13 @@ AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::openFile(const std::string &fileName) {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
     initFile(fileName);
 }
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::reopenFile(const std::string &fileName) {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (isFileOpen()) {
         if (fileName != getFileName()) {
@@ -182,7 +182,7 @@ const std::string AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
     isEngineInitialized = true;
 
     if (hardwareContextController) {
@@ -426,7 +426,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBufferAub(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (hardwareContextController) {
         if (batchBufferSize) {
@@ -602,7 +602,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
         }
     }
 
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (hardwareContextController) {
         hardwareContextController->pollForCompletion();
@@ -682,7 +682,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         return false;
     }
 
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (aubManager) {
         this->writeMemoryWithAubManager(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
@@ -712,7 +712,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(AllocationView &allocati
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::writeMMIO(uint32_t offset, uint32_t value) {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (hardwareContextController) {
         hardwareContextController->writeMMIO(offset, value);
@@ -733,7 +733,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
                                                          size_t length, uint32_t compareOperation) {
     pollForCompletion();
 
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (hardwareContextController) {
         hardwareContextController->expectMemory(reinterpret_cast<uint64_t>(gfxAddress), srcAddress, length, compareOperation);
@@ -807,7 +807,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         pollForCompletion();
     }
 
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
 
     if (hardwareContextController) {
         auto surfaceInfo = std::unique_ptr<aub_stream::SurfaceInfo>(AubAllocDump::getDumpSurfaceInfo<GfxFamily>(gfxAllocation, *this->peekGmmHelper(), dumpFormat));
@@ -838,11 +838,12 @@ AubSubCaptureStatus AUBCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSu
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::addAubComment(const char *message) {
-    auto streamLocked = getAubStream()->lockStream();
+    auto streamLocked = lockStream();
     if (aubManager) {
         aubManager->addComment(message);
         return;
     }
+
     getAubStream()->addComment(message);
 }
 

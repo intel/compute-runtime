@@ -9,16 +9,14 @@
 #include "shared/source/aub_mem_dump/aub_data.h"
 
 #include <fstream>
-#include <mutex>
 #include <string>
 
 namespace NEO {
 class AubHelper;
 }
 
-namespace AubMemDump {
 #include "aub_services.h"
-
+namespace AubMemDump {
 inline constexpr uint32_t rcsRegisterBase = 0x2000;
 
 #ifndef BIT
@@ -137,11 +135,9 @@ struct AubFileStream : public AubStream {
     MOCKABLE_VIRTUAL void expectMemory(uint64_t physAddress, const void *memory, size_t size,
                                        uint32_t addressSpace, uint32_t compareOperation);
     MOCKABLE_VIRTUAL bool addComment(const char *message);
-    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockStream();
 
     std::ofstream fileHandle;
     std::string fileName;
-    std::mutex mutex;
 };
 
 template <int addressingBits>

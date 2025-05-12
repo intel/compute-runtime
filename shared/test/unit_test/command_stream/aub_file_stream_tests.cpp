@@ -163,48 +163,35 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenFile
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenOpenFileIsCalledThenFileStreamShouldBeLocked) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto aubCsr = std::make_unique<MockAubCsr<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     std::string fileName = "file_name.aub";
 
-    aubCsr->stream = mockAubFileStream.get();
-
     aubCsr->openFile(fileName);
-    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+
+    EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenReopenFileIsCalledThenFileStreamShouldBeLocked) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto aubCsr = std::make_unique<MockAubCsr<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     std::string fileName = "file_name.aub";
 
-    aubCsr->stream = mockAubFileStream.get();
-
     aubCsr->reopenFile(fileName);
-    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+    EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIsCalledThenFileStreamShouldBeLocked) {
-
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
     aubCsr->initializeEngine();
-    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+    EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenSubmitBatchBufferIsCalledThenFileStreamShouldBeLocked) {
-
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
-
-    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
 
     auto pBatchBuffer = ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset);
     auto batchBufferGpuAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
@@ -212,77 +199,59 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenSu
     auto sizeBatchBuffer = currentOffset - batchBuffer.startOffset;
 
     aubCsr->initializeEngine();
-    mockAubFileStream->lockStreamCalled = false;
+    aubCsr->lockStreamCalled = false;
 
     aubCsr->submitBatchBufferAub(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, aubCsr->getMemoryBank(batchBuffer.commandBufferAllocation),
                                  aubCsr->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
-    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+    EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledThenFileStreamShouldBeLocked) {
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
     aubCsr->initializeEngine();
-
-    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
 
     aubCsr->writeMemory(allocation);
-    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+    EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenPollForCompletionIsCalledThenFileStreamShouldBeLocked) {
-
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-
-    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
 
     aubCsr->latestSentTaskCount = 1;
     aubCsr->pollForCompletionTaskCount = 0;
 
     aubCsr->pollForCompletion();
-    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+    EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenFileStreamShouldBeLocked) {
-
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
-    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
-
     aubCsr->expectMemoryEqual(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(0x1000), 0x1000);
-    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+    EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenAddAubCommentIsCalledThenFileStreamShouldBeLocked) {
-
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
-    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
-
     aubCsr->addAubComment("comment");
-    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+    EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenDumpAllocationIsCalledThenFileStreamShouldBeLocked) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     GraphicsAllocation allocation{0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount};
 
-    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
-
     aubCsr->dumpAllocation(allocation);
-    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+    EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldCallTheExpectedFunctions) {
