@@ -204,9 +204,7 @@ struct PrimeHandle {
 
 struct PrimaryContextHandle {
     uint32_t handle;
-    uint32_t pad;
     int32_t fd;
-    uint32_t pad2;
     uint64_t reserved[2];
 };
 
