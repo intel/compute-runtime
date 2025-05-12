@@ -113,5 +113,10 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallSumIpDataToTypedV
     EXPECT_EQ(0u, ipDataValues.size());
 }
 
+XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGetIpSamplingIpMaskIsCalledThenZeroIsReturned) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingIpMask());
+}
+
 } // namespace ult
 } // namespace L0

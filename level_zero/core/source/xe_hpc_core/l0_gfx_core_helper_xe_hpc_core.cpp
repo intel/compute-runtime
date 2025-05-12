@@ -69,6 +69,7 @@ typedef struct StallSumIpData {
 #pragma pack()
 
 constexpr uint32_t ipSamplingMetricCountXe = 10u;
+constexpr uint64_t ipSamplingIpMaskXe = 0x1fffffff;
 
 template <>
 uint32_t L0GfxCoreHelperHw<Family>::getIpSamplingMetricCount() {
@@ -96,7 +97,7 @@ bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdate(std::map<uint64_t, void *> 
     const uint8_t *tempAddr = pRawIpData;
     uint64_t ip = 0ULL;
     memcpy_s(reinterpret_cast<uint8_t *>(&ip), sizeof(ip), tempAddr, sizeof(ip));
-    ip &= 0x1fffffff;
+    ip &= ipSamplingIpMaskXe;
     StallSumIpData_t *stallSumData = nullptr;
     if (stallSumIpDataMap.count(ip) == 0) {
         stallSumData = new StallSumIpData_t{};
@@ -207,6 +208,11 @@ std::vector<std::pair<const char *, const char *>> L0GfxCoreHelperHw<Family>::ge
         {"OtherStall", "Stall on other condition"},
     };
     return stallSamplingReportList;
+}
+
+template <>
+uint64_t L0GfxCoreHelperHw<Family>::getIpSamplingIpMask() const {
+    return ipSamplingIpMaskXe;
 }
 
 template class L0GfxCoreHelperHw<Family>;

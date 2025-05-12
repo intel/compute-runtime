@@ -414,12 +414,14 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricCount(const uint8_t *pR
         return ZE_RESULT_ERROR_INVALID_SIZE;
     }
 
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(&this->getMetricSource().getMetricDeviceContext().getDevice());
+    auto &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     const uint32_t rawReportCount = static_cast<uint32_t>(rawDataSize) / rawReportSize;
 
     for (const uint8_t *pRawIpData = pRawData; pRawIpData < pRawData + (rawReportCount * rawReportSize); pRawIpData += rawReportSize) {
         uint64_t ip = 0ULL;
         memcpy_s(reinterpret_cast<uint8_t *>(&ip), sizeof(ip), pRawIpData, sizeof(ip));
-        ip &= 0x1fffffff;
+        ip &= l0GfxCoreHelper.getIpSamplingIpMask();
         stallReportIpCount.insert(ip);
     }
 

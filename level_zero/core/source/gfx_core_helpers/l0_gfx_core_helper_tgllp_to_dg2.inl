@@ -144,4 +144,9 @@ std::vector<std::pair<const char *, const char *>> L0GfxCoreHelperHw<Family>::ge
     return stallSamplingReportList;
 }
 
+template <typename Family>
+uint64_t L0GfxCoreHelperHw<Family>::getIpSamplingIpMask() const {
+    return 0;
+}
+
 } // namespace L0

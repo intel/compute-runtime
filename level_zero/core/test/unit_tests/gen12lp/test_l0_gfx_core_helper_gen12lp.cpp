@@ -110,5 +110,10 @@ GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallSumIpDataToTypedV
     EXPECT_EQ(0u, ipDataValues.size());
 }
 
+GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGetIpSamplingIpMaskIsCalledThenZeroIsReturned) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingIpMask());
+}
+
 } // namespace ult
 } // namespace L0

@@ -86,6 +86,11 @@ XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForDel
     EXPECT_NE(0u, stallSumIpDataMap.size());
 }
 
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForGetIpSamplingIpMaskThenCorrectValueIsReturned) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(0x1fffffffull, l0GfxCoreHelper.getIpSamplingIpMask());
+}
+
 XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForGetOaTimestampValidBitsThenCorrectValueIsReturned) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(32u, l0GfxCoreHelper.getOaTimestampValidBits());

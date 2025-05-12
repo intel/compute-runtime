@@ -108,6 +108,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) = 0;
     virtual void stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) = 0;
     virtual uint32_t getIpSamplingMetricCount() = 0;
+    virtual uint64_t getIpSamplingIpMask() const = 0;
     virtual bool synchronizedDispatchSupported() const = 0;
     virtual bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const = 0;
     virtual std::unique_ptr<NEO::TagAllocatorBase> getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, size_t initialTagCount, size_t packetsCountPerElement, size_t tagAlignment,
@@ -165,6 +166,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) override;
     void stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) override;
     uint32_t getIpSamplingMetricCount() override;
+    uint64_t getIpSamplingIpMask() const override;
     bool synchronizedDispatchSupported() const override;
     bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const override;
     std::unique_ptr<NEO::TagAllocatorBase> getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, size_t initialTagCount, size_t packetsCountPerElement, size_t tagAlignment,
