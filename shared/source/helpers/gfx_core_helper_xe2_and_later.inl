@@ -15,6 +15,7 @@ void GfxCoreHelperHw<Family>::applyAdditionalCompressionSettings(Gmm &gmm, bool 
     gmm.resourceParams.Flags.Info.NotCompressed = isNotCompressed;
     if (!isNotCompressed) {
         gmm.resourceParams.Flags.Info.Cacheable = 0;
+        gmm.applyExtraAuxInitFlag();
     }
 
     if (debugManager.flags.PrintGmmCompressionParams.get()) {
