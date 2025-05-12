@@ -3075,7 +3075,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredT
 
         fenceExpected &= getHelper<ProductHelper>().isDeviceToHostCopySignalingFenceRequired();
         size_t expectedFenceCount = fenceExpected ? 1 : 0;
-        if (getHelper<ProductHelper>().isGlobalFenceInCommandStreamRequired(pDevice->getHardwareInfo())) {
+        if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
             expectedFenceCount += 2;
         }
 
