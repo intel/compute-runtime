@@ -29,8 +29,6 @@
 
 using namespace NEO;
 
-#include "shared/test/common/test_macros/header/heapless_matchers.h"
-
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskTests;
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenCommandStreamReceiverGetsUpdated) {
@@ -762,7 +760,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerR
     EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenStateBaseAddressNotSentWhenFlushingTaskThenStateBaseAddressIsSent, IsHeapfulSupported) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenStateBaseAddressNotSentWhenFlushingTaskThenStateBaseAddressIsSent) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.setMediaVFEStateDirty(false);
@@ -776,7 +774,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenStateBaseAddressNotSentWhenF
     EXPECT_NE(cmdList.end(), stateBaseAddressItor);
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenSizeChangedWhenFlushingTaskThenStateBaseAddressIsSent, IsHeapfulSupported) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenSizeChangedWhenFlushingTaskThenStateBaseAddressIsSent) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto dshSize = dsh.getMaxAvailableSpace();
     auto iohSize = ioh.getMaxAvailableSpace();
@@ -805,7 +803,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenSizeChangedWhenFlushingTaskT
     EXPECT_NE(cmdList.end(), stateBaseAddressItor);
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenDshHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded, IsHeapfulSupported) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDshHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded) {
     bool deviceUsesDsh = pDevice->getHardwareInfo().capabilityTable.supportsImages;
     if (!deviceUsesDsh) {
         GTEST_SKIP();
@@ -821,7 +819,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenDshHeapChangeWhenFlushTaskIs
     EXPECT_NE(cmdList.end(), stateBaseAddressItor);
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenSshHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded, IsHeapfulSupported) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenSshHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     configureCSRtoNonDirtyState<FamilyType>(false);
 
@@ -833,7 +831,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenSshHeapChangeWhenFlushTaskIs
     EXPECT_NE(cmdList.end(), stateBaseAddressItor);
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenIohHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded, IsHeapfulSupported) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenIohHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     configureCSRtoNonDirtyState<FamilyType>(false);
 
@@ -845,7 +843,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenIohHeapChangeWhenFlushTaskIs
     EXPECT_NE(cmdList.end(), stateBaseAddressItor);
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenStateBaseAddressNotChangedWhenFlushingTaskThenStateBaseAddressIsNotSent, IsHeapfulSupported) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenStateBaseAddressNotChangedWhenFlushingTaskThenStateBaseAddressIsNotSent) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
     configureCSRHeapStatesToNonDirty<FamilyType>();
@@ -1271,14 +1269,14 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
 
     cmdList.clear();
     // Parse command list
-    parseCommands<FamilyType>(commandStreamTask, usedAfter - usedBefore);
+    parseCommands<FamilyType>(commandStreamTask, usedBefore);
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorPC);
+    EXPECT_NE(cmdList.end(), itorPC);
     if (UnitTestHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         itorPC++;
         itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
-        ASSERT_NE(cmdList.end(), itorPC);
+        EXPECT_NE(cmdList.end(), itorPC);
     }
 
     // Verify that the dcFlushEnabled bit is set in PC

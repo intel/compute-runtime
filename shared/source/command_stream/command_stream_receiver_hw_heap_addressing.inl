@@ -55,6 +55,11 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::programHeaplessProlog(Devic
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressHeapless(Device &device, LinearStream &commandStream) {
+    UNRECOVERABLE_IF(true);
+}
+
+template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programComputeModeHeapless(Device &device, LinearStream &commandStream) {
     UNRECOVERABLE_IF(true);
 }

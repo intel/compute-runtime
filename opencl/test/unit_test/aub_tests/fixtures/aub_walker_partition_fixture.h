@@ -120,7 +120,6 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 
     HardwareParse hwParser;
     DispatchParameters dispatchParamters;
-    bool heaplessStateInitEnabled = false;
 };
 
 struct AubWalkerPartitionTest : public AubWalkerPartitionFixture,
