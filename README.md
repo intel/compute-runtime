@@ -46,6 +46,10 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 |Lunar Lake| 3.0 | 1.6 | Y |
 |Panther Lake| 3.0 | 1.6 | Y |
 
+_No code changes may be introduced that would regress support for any currently supported hardware. All contributions must ensure continued compatibility and functionality across all supported hardware platforms. Failure to maintain hardware compatibility may result in the rejection or reversion of the contribution. Any deliberate modifications or removal of hardware support will be transparently communicated in the release notes._
+
+_Debug parameters, environmental variables, and internal data structures are considered as internal implementation detail and may be changed or removed at any time._
+
 ## Support for legacy platforms
 
 Support for Gen8, Gen9 and Gen11 devices is delivered via packages with legacy1 suffix, more details [here](LEGACY_PLATFORMS.md)
