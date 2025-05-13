@@ -18,9 +18,12 @@ class KernelEventCompletionData : public NEO::TimestampPackets<TagSizeT, NEO::Ti
   public:
     uint32_t getPacketsUsed() const { return packetsUsed; }
     void setPacketsUsed(uint32_t value) { packetsUsed = value; }
+    uint32_t getAdditionalPacketsUsed() const { return additionalPacketsUsed; }
+    void setAdditionalPacketsUsed(uint32_t value) { additionalPacketsUsed = value; }
 
   protected:
     uint32_t packetsUsed = 1;
+    uint32_t additionalPacketsUsed = 0;
 };
 
 template <typename TagSizeT>
@@ -52,6 +55,7 @@ struct EventImp : public Event {
     uint32_t getPacketsInUse() const override;
     uint32_t getPacketsUsedInLastKernel() override;
     void setPacketsInUse(uint32_t value) override;
+    void setAdditionalPacketsInUse(uint32_t value) override;
     ze_result_t hostEventSetValue(State eventState) override;
 
     std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;

@@ -337,7 +337,7 @@ struct CommandListCoreFamily : public CommandListImp {
     void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent, bool copyOperation, bool flushL3InPipeControl);
     void handlePostSubmissionState();
 
-    MOCKABLE_VIRTUAL void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent);
+    MOCKABLE_VIRTUAL void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, bool useAdditionalTimestamp);
 
     void setupFillKernelArguments(size_t baseOffset,
                                   size_t patternSize,

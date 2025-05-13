@@ -535,6 +535,7 @@ void Event::releaseTempInOrderTimestampNodes() {
 ze_result_t Event::destroy() {
     resetInOrderTimestampNode(nullptr, 0);
     releaseTempInOrderTimestampNodes();
+    resetAdditionalTimestampNode(nullptr, 0);
 
     if (isCounterBasedExplicitlyEnabled() && isFromIpcPool) {
         auto memoryManager = device->getNEODevice()->getMemoryManager();
@@ -703,6 +704,9 @@ void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partit
 
 void Event::resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
     if (!newNode) {
+        for (auto &node : additionalTimestampNode) {
+            node->returnTag();
+        }
         additionalTimestampNode.clear();
         return;
     }
@@ -713,14 +717,14 @@ void Event::resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t par
         return;
     }
 
-    additionalTimestampNode.clear();
+    if (additionalTimestampNode.size() > 0) {
+        auto existingNode = additionalTimestampNode.back();
+        existingNode->returnTag();
+        additionalTimestampNode.clear();
+    }
     additionalTimestampNode.push_back(newNode);
 
     clearTimestampTagData(partitionCount, false, newNode);
-}
-
-NEO::TagNodeBase *Event::getEventAdditionalTimestampNode() {
-    return additionalTimestampNode.empty() ? nullptr : additionalTimestampNode.back();
 }
 
 NEO::GraphicsAllocation *Event::getExternalCounterAllocationFromAddress(uint64_t *address) const {

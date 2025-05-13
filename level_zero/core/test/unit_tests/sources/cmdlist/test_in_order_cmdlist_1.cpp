@@ -5509,14 +5509,12 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
     event->isTimestampEvent = true;
     ASSERT_NE(nullptr, event->getInOrderExecInfo());
 
-    MockTagAllocator<DeviceAllocNodeType<true>> eventTagAllocator0(0, neoDevice->getMemoryManager());
-    MockTagAllocator<DeviceAllocNodeType<true>> eventTagAllocator1(0, neoDevice->getMemoryManager());
-    EXPECT_EQ(nullptr, event->getEventAdditionalTimestampNode());
-    event->resetAdditionalTimestampNode(eventTagAllocator0.getTag(), 1);
-    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
+    auto node0 = device->getDeviceInOrderCounterAllocator()->getTag();
 
-    event->resetAdditionalTimestampNode(eventTagAllocator1.getTag(), 1);
-    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
+    event->resetAdditionalTimestampNode(node0, 1);
+
+    auto node1 = device->getDeviceInOrderCounterAllocator()->getTag();
+    event->resetAdditionalTimestampNode(node1, 1);
     EXPECT_EQ(2u, event->additionalTimestampNode.size());
 
     context->freeMem(devAddress);

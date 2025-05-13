@@ -445,14 +445,14 @@ HWTEST_F(AppendMemoryCopyTests, givenBlitPropertiesWhenCallingSetAdditionalBlitP
 
     auto commandList = std::make_unique<MockCommandListForAdditionalBlitProperties<FamilyType::gfxCoreFamily>>();
     EXPECT_FALSE(commandList->useAdditionalBlitProperties);
-    commandList->setAdditionalBlitProperties(blitProperties, nullptr);
+    commandList->setAdditionalBlitProperties(blitProperties, nullptr, false);
     EXPECT_EQ(postSyncArgs.isTimestampEvent, postSyncArgsExpected.isTimestampEvent);
     EXPECT_EQ(postSyncArgs.postSyncImmValue, postSyncArgsExpected.postSyncImmValue);
     EXPECT_EQ(postSyncArgs.interruptEvent, postSyncArgsExpected.interruptEvent);
     EXPECT_EQ(postSyncArgs.eventAddress, postSyncArgsExpected.eventAddress);
 
     commandList->useAdditionalBlitProperties = true;
-    commandList->setAdditionalBlitProperties(blitProperties2, nullptr);
+    commandList->setAdditionalBlitProperties(blitProperties2, nullptr, false);
     EXPECT_EQ(postSyncArgs2.isTimestampEvent, postSyncArgsExpected.isTimestampEvent);
     EXPECT_EQ(postSyncArgs2.postSyncImmValue, postSyncArgsExpected.postSyncImmValue);
     EXPECT_EQ(postSyncArgs2.interruptEvent, postSyncArgsExpected.interruptEvent);
@@ -465,9 +465,9 @@ class MockCommandListForAdditionalBlitProperties2 : public WhiteBox<::L0::Comman
   public:
     using BaseClass = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
     using BaseClass::useAdditionalBlitProperties;
-    void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent) override {
+    void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, bool useAdditionalTimestamp) override {
         additionalBlitPropertiesCalled++;
-        BaseClass::setAdditionalBlitProperties(blitProperties, signalEvent);
+        BaseClass::setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
     }
     void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired) override {
         appendSignalInOrderDependencyCounterCalled++;

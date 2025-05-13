@@ -267,7 +267,14 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
         }
 
         // Account for additional timestamp nodes
-        uint32_t remainingPackets = static_cast<uint32_t>(additionalTimestampNode.size());
+        uint32_t remainingPackets = 0;
+        if (!additionalTimestampNode.empty()) {
+            remainingPackets = kernelEventCompletionData[i].getAdditionalPacketsUsed();
+            if (inOrderIncrementValue > 0) {
+                remainingPackets *= static_cast<uint32_t>(additionalTimestampNode.size());
+            }
+        }
+
         if (remainingPackets == 0) {
             continue;
         }
@@ -275,11 +282,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
         nodeId = 0;
         uint32_t normalizedPacketId = 0;
         for (uint32_t packetId = packetsToCopy; packetId < packetsToCopy + remainingPackets; packetId++) {
-            if (inOrderIncrementValue > 0) {
-                if (normalizedPacketId % kernelEventCompletionData[i].getPacketsUsed() == 0) {
-                    address = additionalTimestampNode[nodeId++]->getCpuBase();
-                }
-            } else {
+            if (normalizedPacketId % kernelEventCompletionData[i].getPacketsUsed() == 0) {
                 address = additionalTimestampNode[nodeId++]->getCpuBase();
             }
 
@@ -1084,6 +1087,11 @@ uint32_t EventImp<TagSizeT>::getPacketsUsedInLastKernel() {
 template <typename TagSizeT>
 void EventImp<TagSizeT>::setPacketsInUse(uint32_t value) {
     kernelEventCompletionData[getCurrKernelDataIndex()].setPacketsUsed(value);
+}
+
+template <typename TagSizeT>
+void EventImp<TagSizeT>::setAdditionalPacketsInUse(uint32_t value) {
+    kernelEventCompletionData[getCurrKernelDataIndex()].setAdditionalPacketsUsed(value);
 }
 
 template <typename TagSizeT>

@@ -2821,7 +2821,6 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWithBlitAdditionalPropert
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
     event->resetAdditionalTimestampNode(blitTagAllocator.getTag(), 1);
-    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
 
     event->setPacketsInUse(2u);
 
@@ -3485,6 +3484,42 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     }
 }
 
+TEST_F(EventTests, givenRegularEventWithoutAdditionalPacketsThenGetAdditionalPacketsRetursZero) {
+    eventDesc.index = 0;
+    eventDesc.signal = 0;
+    eventDesc.wait = 0;
+
+    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
+                                                                                                                           &eventDesc,
+                                                                                                                           device)));
+    ASSERT_NE(event, nullptr);
+
+    uint32_t *hostAddr = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
+    EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
+    EXPECT_EQ(1u, event->getPacketsInUse());
+
+    event->setAdditionalPacketsInUse(0u);
+    EXPECT_EQ(event->kernelEventCompletionData[0].getAdditionalPacketsUsed(), 0u);
+}
+
+TEST_F(EventTests, givenRegularEventUseOneAdditionalPacketsThenGetAdditionalPacketsRetursOne) {
+    eventDesc.index = 0;
+    eventDesc.signal = 0;
+    eventDesc.wait = 0;
+
+    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
+                                                                                                                           &eventDesc,
+                                                                                                                           device)));
+    ASSERT_NE(event, nullptr);
+
+    uint32_t *hostAddr = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
+    EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
+    EXPECT_EQ(1u, event->getPacketsInUse());
+
+    event->setAdditionalPacketsInUse(1u);
+    EXPECT_EQ(event->kernelEventCompletionData[0].getAdditionalPacketsUsed(), 1u);
+}
+
 TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThenExpectAllPacketsAreSignaled) {
     eventDesc.index = 0;
     eventDesc.signal = 0;
@@ -3913,22 +3948,6 @@ HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenA
 
     event->destroy();
 }
-HWTEST_F(EventTests, givenInOrderEventWhenCallingResetAdditionalTimestampNodeWithTagAllocatorThenTagAddedToAdditionalTimestampNodeVector) {
-
-    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, neoDevice->getMemoryManager());
-    MockTagAllocator<DeviceAllocNodeType<true>> eventTagAllocator(0, neoDevice->getMemoryManager());
-    auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
-    ASSERT_NE(event, nullptr);
-
-    auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(deviceTagAllocator.getTag(), nullptr, *neoDevice, 1, false, false);
-
-    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
-    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
-
-    EXPECT_EQ(nullptr, event->getEventAdditionalTimestampNode());
-    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
-    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
-}
 
 HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeMultipleTimesWithTagAllocatorThenTagAddedToAdditionalTimestampNodeVectorOnce) {
 
@@ -3936,12 +3955,9 @@ HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeMul
     auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
     ASSERT_NE(event, nullptr);
 
-    EXPECT_EQ(nullptr, event->getEventAdditionalTimestampNode());
     event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
-    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
 
     event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
-    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
     EXPECT_EQ(1u, event->additionalTimestampNode.size());
 }
 
@@ -3951,12 +3967,10 @@ HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeWit
     auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
     ASSERT_NE(event, nullptr);
 
-    EXPECT_EQ(nullptr, event->getEventAdditionalTimestampNode());
     event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
-    EXPECT_NE(nullptr, event->getEventAdditionalTimestampNode());
+    EXPECT_EQ(1u, event->additionalTimestampNode.size());
 
     event->resetAdditionalTimestampNode(nullptr, 0);
-    EXPECT_EQ(nullptr, event->getEventAdditionalTimestampNode());
     EXPECT_EQ(0u, event->additionalTimestampNode.size());
 }
 

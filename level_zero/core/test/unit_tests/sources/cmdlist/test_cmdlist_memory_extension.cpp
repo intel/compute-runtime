@@ -128,7 +128,7 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
         return ZE_RESULT_SUCCESS;
     }
 
-    void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent) override {}
+    void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, Event *signalEvent, bool useAdditionalTimestamp) override {}
 
     ze_result_t appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
                                            AlignedAllocationData *dstAllocationData,

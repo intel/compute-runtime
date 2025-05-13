@@ -1440,8 +1440,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     commandContainer.addToResidencyContainer(srcPtrAlloc);
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
+    size_t nBlitsPerRow = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, device->getNEODevice()->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+    bool useAdditionalTimestamp = nBlitsPerRow > 1;
     if (useAdditionalBlitProperties) {
-        setAdditionalBlitProperties(blitProperties, signalEvent);
+        setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
     }
 
     NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
@@ -1497,13 +1499,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
 
     const bool copyOnly = isCopyOnly(dualStreamCopyOffload);
 
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(copySizeModified, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+    size_t nBlits = copyRegionPreferred ? NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed) : NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+    bool useAdditionalTimestamp = nBlits > 1;
     if (useAdditionalBlitProperties) {
-        setAdditionalBlitProperties(blitProperties, signalEvent);
+        setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
     } else if (copyOnly) {
         appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     }
-    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
-    bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(copySizeModified, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+
     NEO::BlitCommandsResult blitResult{};
     if (copyRegionPreferred) {
         blitResult = NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(blitProperties, *commandContainer.getCommandStream(), rootDeviceEnvironment);
@@ -1549,8 +1554,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     commandContainer.addToResidencyContainer(src);
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
+    bool useAdditionalTimestamp = blitProperties.copySize.z > 1;
     if (useAdditionalBlitProperties) {
-        setAdditionalBlitProperties(blitProperties, signalEvent);
+        setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
     } else {
         appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     }
@@ -2484,7 +2490,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
 
         auto blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(gpuAllocation, size, patternToCommand, patternSize, offset);
         if (useAdditionalBlitProperties) {
-            setAdditionalBlitProperties(blitProperties, signalEvent);
+            setAdditionalBlitProperties(blitProperties, signalEvent, false);
         }
         blitProperties.computeStreamPartitionCount = this->partitionCount;
 
