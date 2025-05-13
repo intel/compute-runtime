@@ -8,40 +8,40 @@ components:
     branch: master
     dest_dir: aub_stream
     repository: https://github.com/intel/aubstream
-    revision: 159ea1b5c2e60de17fa90b98ac835251e41d095c
+    revision: b5abbe0564dcad9e225799c5c6c1c06a21b59fd4
     type: git
   gmmlib:
     asset_name: gmmlib
-    dest_dir: gmmlib
-    type: git
     branch: master
-    revision: intel-gmmlib-22.7.0
+    dest_dir: gmmlib
     repository: https://github.com/intel/gmmlib.git
+    revision: intel-gmmlib-22.7.0
+    type: git
   igc:
     asset_name: igc
-    dest_dir: igc
-    type: git
     branch: releases/2.11.x
-    revision: d88c4f68a13f63dc0341f9f01fb1e63160592e58
+    dest_dir: igc
     repository: https://github.com/intel/intelgraphicscompiler
+    revision: d88c4f68a13f63dc0341f9f01fb1e63160592e58
+    type: git
   igsc:
     asset_name: igsc
-    dest_dir: igsc
-    type: git
     branch: master
-    revision: V0.9.5
-    repository: https://github.com/intel/igsc.git
     component_version: 301
+    dest_dir: igsc
+    repository: https://github.com/intel/igsc.git
+    revision: V0.9.5
+    type: git
   internal:
     branch: master
     dest_dir: internal
     revision: FETCH_HEAD
     type: git
   kernels_bin:
-    dest_dir: kernels_bin
-    type: git
     branch: kernels_bin
-    revision: 3400-4163
+    dest_dir: kernels_bin
+    revision: 3406-4167
+    type: git
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
@@ -49,48 +49,48 @@ components:
     type: git
   level_zero:
     asset_name: level_zero
-    dest_dir: level_zero
-    type: git
     branch: master
-    revision: v1.21.9
+    dest_dir: level_zero
     repository: https://github.com/oneapi-src/level-zero
+    revision: v1.21.9
+    type: git
   libva:
     asset_name: libva
-    dest_dir: libva
-    type: git
     branch: v2.2-branch
-    revision: 2.2.0
+    dest_dir: libva
     repository: https://github.com/intel/libva.git
+    revision: 2.2.0
+    type: git
   metrics-discovery:
     asset_name: metrics-discovery
-    dest_dir: metrics/discovery
-    type: git
     branch: master
-    revision: metrics-discovery-1.14.180
+    dest_dir: metrics/discovery
     repository: https://github.com/intel/metrics-discovery.git
+    revision: metrics-discovery-1.14.180
+    type: git
   metrics-library:
     asset_name: metrics-library
-    dest_dir: metrics/library
-    type: git
     branch: master
-    revision: metrics-library-1.0.196
+    dest_dir: metrics/library
     repository: https://github.com/intel/metrics-library.git
+    revision: metrics-library-1.0.196
+    type: git
   neo-clang-format:
-    dest_dir: tools/clang-format
-    type: git
     branch: clang-format
+    dest_dir: tools/clang-format
     revision: 15.0.6
-  wdk:
-    dest_dir: wdk
     type: git
+  wdk:
     branch: wdk
+    dest_dir: wdk
     revision: 97f389b0607d40ce6096b9a22c113f79d609207e-3393
+    type: git
   wsl:
     branch: wsl
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-3400
+converter: M-3406
 include:
 - infra.yml
 version: '1'
