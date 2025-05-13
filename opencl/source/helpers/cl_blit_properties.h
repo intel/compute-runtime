@@ -24,7 +24,6 @@ struct ClBlitProperties {
         auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
         auto clearColorAllocation = commandStreamReceiver.getClearColorAllocation();
         BlitProperties blitProperties{};
-
         if (BlitterConstants::BlitDirection::bufferToBuffer == blitDirection ||
             BlitterConstants::BlitDirection::imageToImage == blitDirection) {
             auto dstOffset = builtinOpParams.dstOffset.x;
@@ -51,7 +50,6 @@ struct ClBlitProperties {
                                                                         builtinOpParams.size,
                                                                         builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
                                                                         builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch, clearColorAllocation);
-
             if (BlitterConstants::BlitDirection::imageToImage == blitDirection) {
                 blitProperties.blitDirection = blitDirection;
                 setBlitPropertiesForImage(blitProperties, builtinOpParams);

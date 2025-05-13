@@ -170,3 +170,12 @@ void ReleaseHelperTestsBase::whenIsDummyBlitWaRequiredCalledThenFalseReturned() 
         EXPECT_FALSE(releaseHelper->isDummyBlitWaRequired());
     }
 }
+
+void ReleaseHelperTestsBase::whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isBlitImageAllowedForDepthFormat());
+    }
+}
