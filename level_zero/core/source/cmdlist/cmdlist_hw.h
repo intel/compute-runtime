@@ -417,6 +417,7 @@ struct CommandListCoreFamily : public CommandListImp {
     void setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const;
     void dispatchInOrderPostOperationBarrier(Event *signalOperation, bool dcFlushRequired, bool copyOperation);
     NEO::GraphicsAllocation *getDeviceCounterAllocForResidency(NEO::GraphicsAllocation *counterDeviceAlloc);
+    bool isHighPriorityImmediateCmdList() const;
 
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 

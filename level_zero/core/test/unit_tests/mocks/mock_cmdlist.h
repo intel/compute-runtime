@@ -189,6 +189,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::allowCbWaitEventsNoopDispatch;
     using BaseClass::appendBlitFill;
     using BaseClass::appendLaunchKernelWithParams;
+    using BaseClass::appendMemoryCopyBlit;
     using BaseClass::appendMemoryCopyBlitRegion;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::closedCmdList;

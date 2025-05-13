@@ -35,6 +35,7 @@
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/utilities/software_tags_manager.h"
@@ -1481,6 +1482,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isHighPriorityImmediateCmdList() const {
+    return (this->isImmediateType() && getCsr(false)->getOsContext().isHighPriority());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t dstPtr,
                                                                        NEO::GraphicsAllocation *dstPtrAlloc,
                                                                        uint64_t dstOffset, uintptr_t srcPtr,
@@ -1494,6 +1500,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstPtrAlloc, srcPtrAlloc, {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0}, 0, 0, 0, 0, clearColorAllocation);
     blitProperties.computeStreamPartitionCount = this->partitionCount;
+    blitProperties.highPriority = isHighPriorityImmediateCmdList();
 
     commandContainer.addToResidencyContainer(dstPtrAlloc);
     commandContainer.addToResidencyContainer(srcPtrAlloc);
@@ -1543,6 +1550,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
     blitProperties.computeStreamPartitionCount = this->partitionCount;
+    blitProperties.highPriority = isHighPriorityImmediateCmdList();
     blitProperties.bytesPerPixel = bytesPerPixel;
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;
@@ -1605,6 +1613,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation);
     blitProperties.computeStreamPartitionCount = this->partitionCount;
+    blitProperties.highPriority = isHighPriorityImmediateCmdList();
     blitProperties.bytesPerPixel = bytesPerPixel;
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;
@@ -2552,6 +2561,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
             setAdditionalBlitProperties(blitProperties, signalEvent, false);
         }
         blitProperties.computeStreamPartitionCount = this->partitionCount;
+        blitProperties.highPriority = isHighPriorityImmediateCmdList();
 
         auto blitResult = NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
         if (useAdditionalBlitProperties && this->isInOrderExecutionEnabled()) {
