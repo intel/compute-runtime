@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,6 +137,12 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         }
         ioctlCnt.handleToPrimeFd++;
         if (failOnPrimeHandleToFd == true) {
+            return -1;
+        }
+    } break;
+    case DrmIoctl::syncObjFdToHandle: {
+        ioctlCnt.syncObjFdToHandle++;
+        if (failOnSyncObjFdToHandle == true) {
             return -1;
         }
     } break;

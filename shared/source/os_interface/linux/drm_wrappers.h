@@ -202,6 +202,13 @@ struct PrimeHandle {
     int32_t fileDescriptor;
 };
 
+struct SyncObjHandle {
+    uint32_t handle;
+    uint32_t flags;
+    int32_t fd;
+    uint32_t pad;
+};
+
 struct PrimaryContextHandle {
     uint32_t handle;
     int32_t fd;
@@ -271,6 +278,7 @@ enum class DrmIoctl {
     gemClose,
     primeFdToHandle,
     primeHandleToFd,
+    syncObjFdToHandle,
     gemVmBind,
     gemVmUnbind,
     gemWaitUserFence,

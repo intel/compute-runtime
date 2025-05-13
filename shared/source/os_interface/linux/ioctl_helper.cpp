@@ -94,6 +94,8 @@ unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const 
         return DRM_IOCTL_PRIME_FD_TO_HANDLE;
     case DrmIoctl::primeHandleToFd:
         return DRM_IOCTL_PRIME_HANDLE_TO_FD;
+    case DrmIoctl::syncObjFdToHandle:
+        return DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE;
     default:
         UNRECOVERABLE_IF(true);
         return 0u;
@@ -108,6 +110,8 @@ std::string IoctlHelper::getIoctlStringBase(DrmIoctl ioctlRequest) const {
         return "DRM_IOCTL_PRIME_FD_TO_HANDLE";
     case DrmIoctl::primeHandleToFd:
         return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
+    case DrmIoctl::syncObjFdToHandle:
+        return "DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE";
     default:
         UNRECOVERABLE_IF(true);
         return "";

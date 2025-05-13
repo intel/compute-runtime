@@ -522,6 +522,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     verifyIoctlString(DrmIoctl::gemWaitUserFence, "DRM_IOCTL_XE_WAIT_USER_FENCE");
     verifyIoctlString(DrmIoctl::primeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE");
     verifyIoctlString(DrmIoctl::primeHandleToFd, "DRM_IOCTL_PRIME_HANDLE_TO_FD");
+    verifyIoctlString(DrmIoctl::syncObjFdToHandle, "DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE");
     verifyIoctlString(DrmIoctl::getResetStats, "DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY");
 
     EXPECT_TRUE(xeIoctlHelper->completionFenceExtensionSupported(true));
@@ -583,6 +584,7 @@ TEST_F(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned
     verifyIoctlRequestValue(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY, DrmIoctl::gemContextDestroy);
     verifyIoctlRequestValue(DRM_IOCTL_PRIME_FD_TO_HANDLE, DrmIoctl::primeFdToHandle);
     verifyIoctlRequestValue(DRM_IOCTL_PRIME_HANDLE_TO_FD, DrmIoctl::primeHandleToFd);
+    verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE, DrmIoctl::syncObjFdToHandle);
 }
 
 TEST_F(IoctlHelperXeTest, verifyPublicFunctions) {
