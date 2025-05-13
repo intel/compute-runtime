@@ -38,6 +38,14 @@ static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetM
       {"XTAL_COUNT", 128},
       {"VCCGT_ENERGY_ACCUMULATOR", 407},
       {"VCCDDR_ENERGY_ACCUMULATOR", 410}}},
+    {0x1e2f8202, // BMG PUNIT rev 3
+     {{"XTAL_CLK_FREQUENCY", 1},
+      {"ACCUM_PACKAGE_ENERGY", 12},
+      {"ACCUM_PSYS_ENERGY", 13},
+      {"VRAM_BANDWIDTH", 14},
+      {"XTAL_COUNT", 128},
+      {"VCCGT_ENERGY_ACCUMULATOR", 407},
+      {"VCCDDR_ENERGY_ACCUMULATOR", 410}}},
     {0x5e2f8210, // BMG OOBMSM rev 15
      {{"PACKAGE_ENERGY_STATUS_SKU", 34},
       {"PLATFORM_ENERGY_STATUS", 35},
