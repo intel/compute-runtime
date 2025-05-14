@@ -50,6 +50,7 @@ struct MockDevice : public Device {
     ADDMETHOD_NOBASE(getExternalMemoryProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_external_memory_properties_t * pExternalMemoryProperties));
     ADDMETHOD_NOBASE(getGlobalTimestamps, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t * hostTimestamp, uint64_t *deviceTimestamp));
     ADDMETHOD_NOBASE(systemBarrier, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(synchronize, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getRootDevice, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t * phRootDevice));
     // Runtime internal methods
     ADDMETHOD_NOBASE(getExecEnvironment, void *, nullptr, ());

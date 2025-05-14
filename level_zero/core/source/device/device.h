@@ -91,6 +91,7 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t getDebugProperties(zet_device_debug_properties_t *pDebugProperties) = 0;
 
     virtual ze_result_t systemBarrier() = 0;
+    virtual ze_result_t synchronize() = 0;
 
     virtual ~Device() = default;
 

@@ -75,6 +75,7 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getDebugProperties(zet_device_debug_properties_t *pDebugProperties) override;
 
     ze_result_t systemBarrier() override;
+    ze_result_t synchronize() override;
     void *getExecEnvironment() override;
     BuiltinFunctionsLib *getBuiltinFunctionsLib() override;
     uint32_t getMOCS(bool l3enabled, bool l1enabled) override;
