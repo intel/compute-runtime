@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -234,19 +234,13 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeMemGetIpcHandleFromFileDescriptorExp(
     ze_context_handle_t hContext,
     uint64_t handle,
     ze_ipc_mem_handle_t *pIpcHandle) {
-    return L0::zeMemGetIpcHandleFromFileDescriptorExp(
-        hContext,
-        handle,
-        pIpcHandle);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeMemGetFileDescriptorFromIpcHandleExp(
     ze_context_handle_t hContext,
     ze_ipc_mem_handle_t ipcHandle,
     uint64_t *pHandle) {
-    return L0::zeMemGetFileDescriptorFromIpcHandleExp(
-        hContext,
-        ipcHandle,
-        pHandle);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 }
