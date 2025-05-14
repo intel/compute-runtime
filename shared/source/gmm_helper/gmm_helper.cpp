@@ -44,7 +44,7 @@ uint32_t GmmHelper::getMOCS(uint32_t type) const {
         type = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
 
-    if (this->rootDeviceEnvironment.getProductHelper().deferMOCSToPatIndex()) {
+    if (this->rootDeviceEnvironment.getProductHelper().deferMOCSToPatIndex(this->rootDeviceEnvironment.isWddmOnLinux())) {
         return 0u;
     }
 

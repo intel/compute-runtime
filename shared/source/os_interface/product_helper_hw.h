@@ -178,7 +178,7 @@ class ProductHelperHw : public ProductHelper {
     bool isCachingOnCpuAvailable() const override;
     bool isNewCoherencyModelSupported() const override;
     bool isResourceUncachedForCS(AllocationType allocationType) const override;
-    bool deferMOCSToPatIndex() const override;
+    bool deferMOCSToPatIndex(bool isWddmOnLinux) const override;
     bool supportReadOnlyAllocations() const override;
     const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxLocalRegionSize(const HardwareInfo &hwInfo) const override;

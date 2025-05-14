@@ -34,5 +34,10 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::deferMOCSToPatIndex(bool isWddmOnLinux) const {
+    return !isWddmOnLinux;
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

@@ -184,7 +184,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::deferMOCSToPatIndex() const {
+bool ProductHelperHw<IGFX_UNKNOWN>::deferMOCSToPatIndex(bool isWddmOnLinux) const {
     return false;
 }
 

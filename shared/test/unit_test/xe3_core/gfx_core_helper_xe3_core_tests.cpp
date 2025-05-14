@@ -702,7 +702,12 @@ XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForGlobalFe
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCallDeferMOCSToPatThenTrueIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.deferMOCSToPatIndex());
+    EXPECT_TRUE(productHelper.deferMOCSToPatIndex(false));
+}
+
+XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenTrueIsReturned) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.deferMOCSToPatIndex(true));
 }
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForCooperativeEngineSupportThenReturnFalse) {
