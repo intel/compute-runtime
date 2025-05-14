@@ -43,22 +43,16 @@ class ZesEccFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceEccAvailableTwiceThenVerifyApiCallSucceeds) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceEccAvailableThenVerifyApiCallSucceeds) {
     ze_bool_t eccAvailable = false;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
-    EXPECT_EQ(true, eccAvailable);
 
-    eccAvailable = false;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
     EXPECT_EQ(true, eccAvailable);
 }
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceEccConfigurableTwiceThenVerifyApiCallSucceeds) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceEccConfigurableThenVerifyApiCallSucceeds) {
     ze_bool_t eccConfigurable = false;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccConfigurable(pSysmanDevice->toHandle(), &eccConfigurable));
-    EXPECT_EQ(true, eccConfigurable);
 
-    eccConfigurable = false;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccConfigurable(pSysmanDevice->toHandle(), &eccConfigurable));
     EXPECT_EQ(true, eccConfigurable);
 }
@@ -82,8 +76,7 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsAbsentWhenCallingEcc
 TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwGetEccConfigFailsWhenCallingzesDeviceEccConfigurableAndAvailableThenVerifyApiCallReturnsFailure) {
     ze_bool_t eccConfigurable = true;
     ze_bool_t eccAvailable = true;
-    pMockFwInterface->mockFwGetEccAvailableResult = ZE_RESULT_ERROR_UNINITIALIZED;
-    pMockFwInterface->mockFwGetEccConfigurableResult = ZE_RESULT_ERROR_UNINITIALIZED;
+    pMockFwInterface->mockFwGetEccConfigResult = ZE_RESULT_ERROR_UNINITIALIZED;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEccConfigurable(pSysmanDevice->toHandle(), &eccConfigurable));
@@ -92,8 +85,18 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwGetEccConfigFailsWhenCallingzes
 TEST_F(ZesEccFixture, GivenValidSysmanHandleAndCurrentStateIsNoneWhenCallingzesDeviceEccConfigurableAndAvailableThenNotSupportedEccIsReturned) {
     ze_bool_t eccConfigurable = true;
     ze_bool_t eccAvailable = true;
-    pMockFwInterface->mockEccAvailable = false;
-    pMockFwInterface->mockEccConfigurable = false;
+    pMockFwInterface->mockCurrentState = eccStateNone;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
+    EXPECT_EQ(false, eccAvailable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccConfigurable(pSysmanDevice->toHandle(), &eccConfigurable));
+    EXPECT_EQ(false, eccConfigurable);
+}
+
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndPendingStateIsNoneWhenCallingzesDeviceEccConfigurableAndAvailableThenNotSupportedEccIsReturned) {
+    ze_bool_t eccConfigurable = true;
+    ze_bool_t eccAvailable = true;
+    pMockFwInterface->mockPendingState = eccStateNone;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(pSysmanDevice->toHandle(), &eccAvailable));
     EXPECT_EQ(false, eccAvailable);
