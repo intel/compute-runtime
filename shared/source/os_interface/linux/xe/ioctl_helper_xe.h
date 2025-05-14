@@ -176,7 +176,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint16_t getDefaultEngineClass(const aub_stream::EngineType &defaultEngineType);
     void setOptionalContextProperties(Drm &drm, void *extProperties, uint32_t &extIndexInOut);
     virtual void setContextProperties(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut);
-    virtual void applyContextFlags(void *execQueueCreate, bool allocateInterrupt){};
+    virtual void applyContextFlags(void *execQueueCreate, bool allocateInterrupt);
 
     struct GtIpVersion {
         uint16_t major;
@@ -185,6 +185,7 @@ class IoctlHelperXe : public IoctlHelper {
     };
     bool queryHwIpVersion(GtIpVersion &gtIpVersion);
 
+    bool isLowLatencyHintAvailable = false;
     int maxExecQueuePriority = 0;
     std::mutex xeLock;
     std::mutex gemCloseLock;
