@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ std::string lastTest("");
 namespace NEO {
 extern const unsigned int ultIterationMaxTimeInS;
 extern const char *executionName;
+extern const char *apiName;
 } // namespace NEO
 
 int newStdOut = -1;
@@ -26,7 +27,7 @@ void handleSIGABRT(int signal) {
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
-    std::cout << "SIGABRT in " << NEO::executionName << ", on: " << lastTest << std::endl;
+    std::cout << "SIGABRT in " << NEO::apiName << " " << NEO::executionName << ", on: " << lastTest << std::endl;
     if (sigaction(SIGABRT, &oldSigAbrt, nullptr) == -1) {
         std::cout << "FATAL: cannot fatal SIGABRT handler" << std::endl;
         std::cout << "FATAL: try SEGV" << std::endl;
@@ -44,7 +45,7 @@ void handleSIGALRM(int signal) {
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
-    std::cout << "Tests timeout in " << NEO::executionName << ", ";
+    std::cout << "Tests timeout in " << NEO::apiName << " " << NEO::executionName << ",";
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &alrmTimeSpec) == 0) {
         auto deltaSec = alrmTimeSpec.tv_sec - startTimeSpec.tv_sec;
         std::cout << " after: " << deltaSec << " seconds";
@@ -57,7 +58,7 @@ void handleSIGSEGV(int signal) {
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
-    std::cout << "SIGSEGV in " << NEO::executionName << ", on: " << lastTest << std::endl;
+    std::cout << "SIGSEGV in " << NEO::apiName << " " << NEO::executionName << ", on: " << lastTest << std::endl;
     abort();
 }
 

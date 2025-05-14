@@ -38,6 +38,7 @@ void CpuPageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaul
 
 void RootDeviceEnvironment::initApiGfxCoreHelper() {
 }
+const char *apiName = "SHARED";
 
 } // namespace NEO
 

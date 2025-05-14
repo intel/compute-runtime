@@ -14,6 +14,10 @@
 namespace L0 {
 extern std::vector<_ze_driver_handle_t *> *globalDriverHandles;
 }
+namespace NEO {
+const char *apiName = "L0";
+}
+
 using namespace NEO;
 void cleanTestHelpers() {
     delete L0::globalDriverHandles;
