@@ -227,7 +227,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
 
     size_t sizeForPipeControl = 0;
     if (isResolveDependenciesByPipeControlsEnabled) {
-        sizeForPipeControl = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
+        sizeForPipeControl = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
     }
 
     size_t extendedSize = sizeWithDisabled + EnqueueOperation<FamilyType>::getSizeRequiredForTimestampPacketWrite() + sizeForNodeDependency + sizeForPipeControl;

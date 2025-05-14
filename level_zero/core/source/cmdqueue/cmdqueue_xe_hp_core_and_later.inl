@@ -112,7 +112,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatchSize(bool bindingTableBaseAddress) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
-    size_t size = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+    size_t size = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
 
     if (this->doubleSbaWa) {
         size += sizeof(STATE_BASE_ADDRESS);

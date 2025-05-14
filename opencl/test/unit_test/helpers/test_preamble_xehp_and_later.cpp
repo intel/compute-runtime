@@ -437,7 +437,7 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWi
     std::vector<uint8_t> linearStreamBackingMemory;
     size_t sizeNeededForCommandSream = 0;
     if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
-        sizeNeededForCommandSream += MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
+        sizeNeededForCommandSream += MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
     }
 
     sizeNeededForCommandSream += sizeof(PIPELINE_SELECT);

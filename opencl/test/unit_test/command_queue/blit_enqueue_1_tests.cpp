@@ -508,7 +508,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWithRequiredC
     size_t dependencySize = numBuffersToEstimate * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<FamilyType>();
 
     auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
-    size_t cacheFlushSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
+    size_t cacheFlushSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment);
 
     setMockKernelArgs(std::array<Buffer *, 3>{{buffer0.get(), buffer1.get(), buffer2.get()}});
 

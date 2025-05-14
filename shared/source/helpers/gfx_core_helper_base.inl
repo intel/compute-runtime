@@ -198,7 +198,7 @@ template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData,
                                                                                const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args) {
 
-    void *commandBuffer = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, args.tlbInvalidation));
+    void *commandBuffer = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment));
 
     MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(commandBuffer, postSyncMode, gpuAddress, immediateData, rootDeviceEnvironment, args);
 }
@@ -218,7 +218,7 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
         setPostSyncExtraProperties(args);
     }
     MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(commandsBuffer, postSyncMode, gpuAddress, immediateData, args);
-    commandsBuffer = ptrOffset(commandsBuffer, getSizeForSingleBarrier(args.tlbInvalidation));
+    commandsBuffer = ptrOffset(commandsBuffer, getSizeForSingleBarrier());
 
     MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, rootDeviceEnvironment);
 }
@@ -235,7 +235,7 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
 
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, PipeControlArgs &args) {
-    auto barrier = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(args.tlbInvalidation));
+    auto barrier = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier());
 
     setSingleBarrier(barrier, postSyncMode, gpuAddress, immediateData, args);
 }
@@ -353,14 +353,14 @@ bool MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(bool isFlushPref
 }
 
 template <typename GfxFamily>
-size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(bool tlbInvalidationRequired) {
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() {
     return sizeof(typename GfxFamily::PIPE_CONTROL);
 }
 
 template <typename GfxFamily>
-size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, bool tlbInvalidationRequired) {
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment) {
 
-    size_t size = getSizeForSingleBarrier(tlbInvalidationRequired);
+    size_t size = getSizeForSingleBarrier();
     size += getSizeForBarrierWa(rootDeviceEnvironment);
     size += getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
     return size;
@@ -370,7 +370,7 @@ template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t size = 0;
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
-        size = getSizeForSingleBarrier(false) +
+        size = getSizeForSingleBarrier() +
                getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
     }
     return size;
@@ -490,11 +490,6 @@ size_t GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw() {
 }
 
 template <typename GfxFamily>
-size_t MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush() {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(true);
-}
-
-template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment);
@@ -525,7 +520,7 @@ void MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(LinearStream &
 
 template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForInstructionCacheFlush() {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
 }
 
 template <typename GfxFamily>

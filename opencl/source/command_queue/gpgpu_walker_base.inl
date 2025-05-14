@@ -75,7 +75,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (blitEnqueue) {
         size_t expectedSizeCS = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
         if (commandQueueHw.isCacheFlushForBcsRequired()) {
-            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment);
         }
 
         return expectedSizeCS;
@@ -99,7 +99,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps, relaxedOrderingEnabled);
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
         if (resolveDependenciesByPipecontrol) {
-            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
         }
         if (isMarkerWithProfiling) {
             if (!eventsInWaitlist) {
@@ -108,7 +108,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
             expectedSizeCS += 4 * EncodeStoreMMIO<GfxFamily>::size;
         }
     } else if (isMarkerWithProfiling) {
-        expectedSizeCS += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+        expectedSizeCS += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
         if (!gfxCoreHelper.useOnlyGlobalTimestamps()) {
             expectedSizeCS += 2 * EncodeStoreMMIO<GfxFamily>::size;
         }
@@ -118,7 +118,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     }
 
     if (debugManager.flags.PauseOnEnqueue.get() != -1) {
-        expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) * 2;
+        expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() * 2;
         expectedSizeCS += NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * 2;
     }
 
@@ -129,10 +129,10 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (outEvent) {
         auto pEvent = castToObjectOrAbort<Event>(*outEvent);
         if ((pEvent->getContext()->getRootDeviceIndices().size() > 1) && (!pEvent->isUserEvent())) {
-            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment);
         }
     }
-    expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+    expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
 
     if ((CL_COMMAND_BARRIER == eventType) && !commandQueue.isOOQEnabled() && eventsInWaitlist) {
         expectedSizeCS += EncodeStoreMemory<GfxFamily>::getStoreDataImmSize();
@@ -154,7 +154,7 @@ template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue) {
     size_t size = 0;
     if (reserveProfilingCmdsSpace) {
-        size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
     }
 
     return size;

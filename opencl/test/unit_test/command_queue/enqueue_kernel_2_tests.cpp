@@ -996,7 +996,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
     auto additionalPcCount = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
-                                 pDevice->getRootDeviceEnvironment(), false) /
+                                 pDevice->getRootDeviceEnvironment()) /
                              sizeof(typename FamilyType::PIPE_CONTROL);
 
     // |AuxToNonAux|NDR|NonAuxToAux|
@@ -1086,7 +1086,7 @@ HWTEST_F(EnqueueKernelTest, givenTimestampWriteEnableWhenMarkerProfilingWithoutW
     auto baseCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, false, false, false, nullptr);
     auto extendedCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, true, false, false, nullptr);
 
-    EXPECT_EQ(baseCommandStreamSize + 4 * EncodeStoreMMIO<FamilyType>::size + MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false), extendedCommandStreamSize);
+    EXPECT_EQ(baseCommandStreamSize + 4 * EncodeStoreMMIO<FamilyType>::size + MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(), extendedCommandStreamSize);
 }
 
 HWTEST_F(EnqueueKernelTest, givenRelaxedOrderingEnabledWhenCheckingSizeForCsThenReturnCorrectValue) {

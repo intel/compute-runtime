@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const Ha
     std::ignore = isBasicWARequired;
 
     if (isExtendedWARequired) {
-        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier();
     }
 
     return size;

@@ -49,7 +49,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
 
 template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment);
 }
 
 template <typename GfxFamily>
@@ -69,13 +69,13 @@ inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffe
 
 template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeCacheFlush(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    size_t size = MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+    size_t size = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     return size;
 }
 
 template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeTlbFlush(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(true);
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
 }
 
 } // namespace NEO

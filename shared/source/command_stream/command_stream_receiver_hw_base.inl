@@ -341,7 +341,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
 
         flushData.stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
         if (flushData.stateCacheFlushRequired) {
-            flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+            flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
         }
 
         if (requiresInstructionCacheFlush) {
@@ -484,7 +484,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     bool stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
     if (stateCacheFlushRequired) {
-        estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+        estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
     auto &commandStreamCSR = this->getCS(estimatedSize);
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
@@ -643,7 +643,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             auto lastTaskCount = primaryCmdBuffer->taskCount;
             auto lastPipeControlArgs = primaryCmdBuffer->epiloguePipeControlArgs;
 
-            auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), lastPipeControlArgs.tlbInvalidation);
+            auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment());
 
             FlushStampUpdateHelper flushStampUpdateHelper;
             flushStampUpdateHelper.insert(primaryCmdBuffer->flushStamp->getStampReference());
@@ -776,7 +776,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (!getSipSentFlag()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
     }
-    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
@@ -813,7 +813,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     }
 
     if (debugManager.flags.ForcePipeControlPriorToWalker.get()) {
-        size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+        size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
 
     return size;
@@ -1235,7 +1235,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
         args.tlbInvalidation = this->isTlbFlushRequiredForStateCacheFlush();
     }
 
-    auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), args.tlbInvalidation) + this->getCmdSizeForPrologue();
+    auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment()) + this->getCmdSizeForPrologue();
 
     auto &commandStream = getCS(dispatchSize);
     auto commandStreamStart = commandStream.getUsed();
@@ -2413,7 +2413,7 @@ bool CommandStreamReceiverHw<GfxFamily>::submitDependencyUpdate(TagNodeBase *tag
     }
     auto ownership = obtainUniqueOwnership();
     PipeControlArgs args;
-    auto expectedSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), args.tlbInvalidation) + this->getCmdSizeForPrologue();
+    auto expectedSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment()) + this->getCmdSizeForPrologue();
     auto &commandStream = getCS(expectedSize);
     auto commandStreamStart = commandStream.getUsed();
     auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tag);

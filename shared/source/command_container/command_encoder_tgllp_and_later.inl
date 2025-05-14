@@ -22,11 +22,11 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvir
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired) {
-        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier();
     }
     size += sizeof(typename Family::STATE_COMPUTE_MODE);
     if (hasSharedHandles) {
-        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier();
     }
     if (productHelper.is3DPipelineSelectWARequired() && isRcs) {
         size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(rootDeviceEnvironment));

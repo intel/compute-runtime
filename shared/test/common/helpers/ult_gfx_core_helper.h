@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace NEO {
 template <typename GfxFamily>
 struct UltMemorySynchronizationCommands : MemorySynchronizationCommands<GfxFamily> {
     static size_t getExpectedPipeControlCount(const RootDeviceEnvironment &rootDeviceEnvironment) {
-        return (MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) -
+        return (MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment) -
                 MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(rootDeviceEnvironment)) /
                sizeof(typename GfxFamily::PIPE_CONTROL);
     }

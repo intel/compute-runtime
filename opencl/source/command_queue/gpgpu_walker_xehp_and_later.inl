@@ -141,7 +141,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
     size_t numBarriers = MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(commandQueue.getDevice().getRootDeviceEnvironment()) ? 2 : 1;
 
     size_t size = sizeof(WalkerType) +
-                  (MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) * numBarriers) +
+                  (MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() * numBarriers) +
                   HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
                   EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(pKernel->getKernelInfo().heapInfo.kernelHeapSize, commandQueue.getDevice().getRootDeviceEnvironment());
     auto devices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getDeviceBitfield();

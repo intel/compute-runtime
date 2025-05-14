@@ -262,7 +262,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
     }
 
     if (ctx.isDispatchTaskCountPostSyncRequired) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment(), false);
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment());
     }
 
     if (instructionCacheFlushRequired) {
@@ -270,7 +270,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
     }
 
     if (stateCacheFlushRequired) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
 
     auto csrHw = reinterpret_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
@@ -313,7 +313,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     bool stateCacheFlushRequired = neoDevice->getBindlessHeapsHelper() ? neoDevice->getBindlessHeapsHelper()->getStateDirtyForContext(this->csr->getOsContext().getContextId()) : false;
     if (stateCacheFlushRequired) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
         neoDevice->getBindlessHeapsHelper()->clearStateDirtyForContext(this->csr->getOsContext().getContextId());
         ctx.globalInit = true;
     }
@@ -327,7 +327,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     linearStreamSizeEstimate += this->computeDebuggerCmdsSize(ctx);
 
     if (ctx.isDispatchTaskCountPostSyncRequired) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(neoDevice->getRootDeviceEnvironment(), false);
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(neoDevice->getRootDeviceEnvironment());
     }
 
     NEO::LinearStream child(nullptr);
@@ -748,7 +748,7 @@ size_t CommandQueueHw<gfxCoreFamily>::computePreemptionSizeForCommandList(
 
     if (ctx.statePreemption != commandListPreemption) {
         if (this->preemptionCmdSyncProgramming) {
-            preemptionSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+            preemptionSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
         }
         preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(commandListPreemption, ctx.statePreemption);
         ctx.statePreemption = commandListPreemption;

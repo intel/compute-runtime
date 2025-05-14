@@ -2192,7 +2192,7 @@ HWTEST_F(PauseOnGpuTests, givenResolveDependenciesByPipecontrolWhenEstimatingCom
 
     auto extendedCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, {}, false, false, false, *pCmdQ, multiDispatchInfo, false, false, true, nullptr);
 
-    EXPECT_EQ(baseCommandStreamSize + MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false), extendedCommandStreamSize);
+    EXPECT_EQ(baseCommandStreamSize + MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(), extendedCommandStreamSize);
 }
 
 HWTEST_F(PauseOnGpuTests, givenTimestampPacketWriteDisabledAndMarkerWithProfilingWhenEstimatingCommandStreamSizeThenStoreMMIOSizeIsIncluded) {

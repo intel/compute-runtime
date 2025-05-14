@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,11 +82,11 @@ size_t PreambleHelper<Family>::getCmdSizeForPipelineSelect(const RootDeviceEnvir
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
     size += sizeof(PIPELINE_SELECT);
     if (MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
-        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier();
     }
     if (debugManager.flags.CleanStateInPreamble.get()) {
         size += sizeof(PIPELINE_SELECT);
-        size += 2 * MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
+        size += 2 * MemorySynchronizationCommands<Family>::getSizeForSingleBarrier();
     }
     return size;
 }

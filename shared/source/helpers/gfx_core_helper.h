@@ -518,14 +518,13 @@ struct MemorySynchronizationCommands {
     static void addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void addInstructionCacheFlush(LinearStream &commandStream);
 
-    static size_t getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, bool tlbInvalidationRequired);
+    static size_t getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment);
-    static size_t getSizeForSingleBarrier(bool tlbInvalidationRequired);
+    static size_t getSizeForSingleBarrier();
     static size_t getSizeForSingleAdditionalSynchronizationForDirectSubmission(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForSingleAdditionalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForAdditonalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForInstructionCacheFlush();
-    static size_t getSizeForFullCacheFlush();
 
     static bool isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static bool isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);

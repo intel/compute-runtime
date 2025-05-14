@@ -30,7 +30,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const
             size += sizeof(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
         }
     }
-    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
 
     if (this->doubleSbaWa) {
         size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
@@ -158,7 +158,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
                                                                   false,
                                                                   false);
     } else {
-        return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
 }
 
@@ -169,7 +169,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncC
                                                                   false,
                                                                   true);
     } else {
-        return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), false);
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment());
     }
 }
 

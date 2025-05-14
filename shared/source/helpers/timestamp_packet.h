@@ -182,7 +182,7 @@ struct TimestampPacketHelper {
         size_t size = count * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
 
         if (auxTranslationDirection == AuxTranslationDirection::nonAuxToAux && cacheFlushForBcsRequired) {
-            size += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
+            size += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment);
         }
 
         return size;

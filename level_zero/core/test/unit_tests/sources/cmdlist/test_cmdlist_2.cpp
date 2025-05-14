@@ -2334,7 +2334,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(cmdContainer3rdCmdList.getEndCmdPtr());
     ASSERT_NE(nullptr, bbStartCmd);
 
-    size_t sbaSize = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
+    size_t sbaSize = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
     if (commandQueue->doubleSbaWa) {
         sbaSize += sizeof(STATE_BASE_ADDRESS);
     }

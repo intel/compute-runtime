@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,7 +88,7 @@ class BuiltInOp<EBuiltInOps::auxTranslation> : public BuiltinDispatchInfoBuilder
 
     template <typename GfxFamily>
     static size_t getSizeForSinglePipeControl(size_t, const RootDeviceEnvironment &rootDeviceEnvironment, bool) {
-        return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
 
     template <typename GfxFamily>

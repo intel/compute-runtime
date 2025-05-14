@@ -53,7 +53,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingPreemptionCmdThenExpectPrope
 }
 
 HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForMonitorFenceCmdSizeThenReturnRequiredPipeControlCmdSize) {
-    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(this->pDevice->getRootDeviceEnvironment(), false);
+    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(this->pDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedSize, RenderDispatcher<FamilyType>::getSizeMonitorFence(this->pDevice->getRootDeviceEnvironment()));
 }
@@ -84,13 +84,6 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPip
         }
     }
     EXPECT_TRUE(foundMonitorFence);
-}
-
-HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForCacheFlushCmdSizeThenReturnSetRequiredPipeControls) {
-    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForFullCacheFlush();
-
-    size_t actualSize = RenderDispatcher<FamilyType>::getSizeCacheFlush(pDevice->getRootDeviceEnvironment());
-    EXPECT_EQ(expectedSize, actualSize);
 }
 
 HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingCacheFlushCmdThenExpectPipeControlWithProperFields) {
