@@ -19,6 +19,7 @@ class Wddm;
 class WddmResidentAllocationsContainer {
   public:
     WddmResidentAllocationsContainer(Wddm *wddm) : wddm(wddm) {}
+    WddmResidentAllocationsContainer(Wddm *wddm, bool evictionAllowed) : wddm(wddm), isEvictionOnMakeResidentAllowed(evictionAllowed) {}
     MOCKABLE_VIRTUAL ~WddmResidentAllocationsContainer();
 
     MemoryOperationsStatus isAllocationResident(const D3DKMT_HANDLE &handle);
@@ -39,6 +40,7 @@ class WddmResidentAllocationsContainer {
     Wddm *wddm;
     std::vector<D3DKMT_HANDLE> resourceHandles;
     SpinLock resourcesLock;
+    const bool isEvictionOnMakeResidentAllowed{true};
 };
 
 } // namespace NEO

@@ -15,7 +15,7 @@
 namespace NEO {
 
 WddmMemoryOperationsHandler::WddmMemoryOperationsHandler(Wddm *wddm) : wddm(wddm) {
-    residentAllocations = std::make_unique<WddmResidentAllocationsContainer>(wddm);
+    residentAllocations = std::make_unique<WddmResidentAllocationsContainer>(wddm, false);
 }
 
 WddmMemoryOperationsHandler::~WddmMemoryOperationsHandler() = default;
