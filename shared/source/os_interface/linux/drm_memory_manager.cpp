@@ -1333,6 +1333,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
                                            osHandleData.handle, memoryPool, canonizedGpuAddress);
+    this->makeAllocationResident(drmAllocation);
 
     if (requireSpecificBitness && this->force32bitAllocations) {
         drmAllocation->set32BitAllocation(true);
