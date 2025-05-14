@@ -413,6 +413,10 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenQueryDeviceParamsIsCalledThenFalse
     EXPECT_FALSE(ioctlHelper.queryDeviceParams(&moduleId, &serverType));
 }
 
+TEST_F(IoctlPrelimHelperTests, givenPrelimWhenQueryDeviceCapsIsCalledThenNullptrIsReturned) {
+    EXPECT_EQ(ioctlHelper.queryDeviceCaps(), nullptr);
+}
+
 struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
     using IoctlHelperPrelim20::createGemExt;
     using IoctlHelperPrelim20::IoctlHelperPrelim20;
