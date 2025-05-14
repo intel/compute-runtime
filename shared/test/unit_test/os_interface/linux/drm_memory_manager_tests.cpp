@@ -1149,6 +1149,35 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingSharedHandleT
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUllsLightWhenCreateGraphicsAllocationFromSharedHandleThenAddToResidencyContainer) {
+    mock->ioctlExpected.total = -1;
+    this->dontTestIoctlInTearDown = true;
+
+    osHandle handle = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::sharedBuffer, false, {});
+    TestedDrmMemoryManager::OsHandleData osHandleData{handle};
+
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    memoryManager->allRegisteredEngines[this->device->getRootDeviceIndex()] = EngineControlContainer{this->device->allEngines};
+    for (auto &engine : memoryManager->getRegisteredEngines(this->device->getRootDeviceIndex())) {
+        engine.osContext->incRefInternal();
+        engine.osContext->setDirectSubmissionActive();
+    }
+
+    auto drmMemoryOperationsHandler = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
+    EXPECT_FALSE(drmMemoryOperationsHandler->obtainAndResetNewResourcesSinceLastRingSubmit());
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    EXPECT_EQ(handle, graphicsAllocation->peekSharedHandle());
+    EXPECT_EQ(drmMemoryOperationsHandler->isResident(this->device, *graphicsAllocation), MemoryOperationsStatus::success);
+    EXPECT_TRUE(drmMemoryOperationsHandler->obtainAndResetNewResourcesSinceLastRingSubmit());
+
+    memoryManager->closeSharedHandle(graphicsAllocation);
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenClosingInternalHandleThenSucceeds) {
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
