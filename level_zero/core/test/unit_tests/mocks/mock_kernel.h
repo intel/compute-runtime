@@ -119,15 +119,18 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
 
         if (checkPassedArgumentValues) {
             UNRECOVERABLE_IF(argIndex >= passedArgumentValues.size());
-            auto &explicitArgs = getImmutableData()->getDescriptor().payloadMappings.explicitArgs;
-            if (explicitArgs[argIndex].type == NEO::ArgDescriptor::argTValue) {
+            if (useExplicitArgs) {
+                auto &explicitArgs = getImmutableData()->getDescriptor().payloadMappings.explicitArgs;
+                UNRECOVERABLE_IF(argIndex >= explicitArgs.size());
+                if (explicitArgs[argIndex].type == NEO::ArgDescriptor::argTValue) {
 
-                size_t maxArgSize = 0u;
+                    size_t maxArgSize = 0u;
 
-                for (const auto &element : explicitArgs[argIndex].as<NEO::ArgDescValue>().elements) {
-                    maxArgSize += element.size;
+                    for (const auto &element : explicitArgs[argIndex].as<NEO::ArgDescValue>().elements) {
+                        maxArgSize += element.size;
+                    }
+                    argSize = std::min(maxArgSize, argSize);
                 }
-                argSize = std::min(maxArgSize, argSize);
             }
 
             passedArgumentValues[argIndex].resize(argSize);
@@ -150,6 +153,7 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
     bool enableForcingOfGenerateLocalIdByHw = false;
     bool forceGenerateLocalIdByHw = false;
     bool checkPassedArgumentValues = false;
+    bool useExplicitArgs = false;
 };
 
 } // namespace ult

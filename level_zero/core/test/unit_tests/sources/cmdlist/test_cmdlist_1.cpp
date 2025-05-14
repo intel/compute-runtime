@@ -3386,6 +3386,7 @@ TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, whenAppendLaunchKernelWi
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, kernel.initialize(&desc));
     kernel.checkPassedArgumentValues = true;
+    kernel.useExplicitArgs = true;
     kernel.passedArgumentValues.resize(5);
 
     void *argBuffer = reinterpret_cast<void *>(0xDEADF00);
