@@ -141,49 +141,6 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenParamsRetur
     }
 }
 
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingMemoryUtilizationThenMemoryParamsAreReturnedCorrectly) {
-    auto handles = getEnabledVfHandles(mockHandleCount);
-    for (auto hSysmanVf : handles) {
-        ASSERT_NE(nullptr, hSysmanVf);
-        uint32_t count = 0;
-        EXPECT_EQ(zesVFManagementGetVFMemoryUtilizationExp2(hSysmanVf, &count, nullptr), ZE_RESULT_SUCCESS);
-        EXPECT_GT(count, (uint32_t)0);
-        std::vector<zes_vf_util_mem_exp2_t> memUtils(count);
-        EXPECT_EQ(zesVFManagementGetVFMemoryUtilizationExp2(hSysmanVf, &count, memUtils.data()), ZE_RESULT_SUCCESS);
-        for (uint32_t it = 0; it < count; it++) {
-            EXPECT_EQ(memUtils[it].vfMemUtilized, mockLmemUsed);
-            EXPECT_EQ(memUtils[it].vfMemLocation, ZES_MEM_LOC_DEVICE);
-        }
-    }
-}
-
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingMemoryUtilizationWithoutMemUtilOutputParamTwiceThenApiReturnedCorrectly) {
-    auto handles = getEnabledVfHandles(mockHandleCount);
-    for (auto hSysmanVf : handles) {
-        ASSERT_NE(nullptr, hSysmanVf);
-        uint32_t count = 0;
-        EXPECT_EQ(zesVFManagementGetVFMemoryUtilizationExp2(hSysmanVf, &count, nullptr), ZE_RESULT_SUCCESS);
-        EXPECT_GT(count, (uint32_t)0);
-        uint32_t count2 = count;
-        EXPECT_EQ(zesVFManagementGetVFMemoryUtilizationExp2(hSysmanVf, &count2, nullptr), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(count2, count);
-        count2 = count2 + 2;
-        EXPECT_EQ(zesVFManagementGetVFMemoryUtilizationExp2(hSysmanVf, &count2, nullptr), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(count2, count);
-    }
-}
-
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingMemoryUtilizationWithSysfsAbsentThenUnSupportedErrorIsReturned) {
-    auto handles = getEnabledVfHandles(mockHandleCount);
-    for (auto hSysmanVf : handles) {
-        ASSERT_NE(nullptr, hSysmanVf);
-        uint32_t mockCount = 1;
-        pSysfsAccess->mockError = ZE_RESULT_ERROR_UNKNOWN;
-        std::vector<zes_vf_util_mem_exp2_t> memUtils(mockCount);
-        EXPECT_EQ(zesVFManagementGetVFMemoryUtilizationExp2(hSysmanVf, &mockCount, memUtils.data()), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    }
-}
-
 TEST_F(ZesVfFixture, GivenValidVfHandleWhenCallingZesVFManagementGetVFEngineUtilizationExpThenUnSupportedErrorIsReturned) {
     auto handles = getEnabledVfHandles(mockHandleCount);
     for (auto hSysmanVf : handles) {

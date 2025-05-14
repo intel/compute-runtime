@@ -1635,12 +1635,12 @@ void testSysmanVfTelemetry(ze_device_handle_t &device) {
         }
 
         // Get Mem utilization
+        std::cout << std::endl
+                  << "----- Memory Activity Stats ----- " << std::endl;
         count = 0;
         VALIDATECALL(zesVFManagementGetVFMemoryUtilizationExp2(handle, &count, nullptr));
         std::vector<zes_vf_util_mem_exp2_t> memUtils(count);
         VALIDATECALL(zesVFManagementGetVFMemoryUtilizationExp2(handle, &count, memUtils.data()));
-        std::cout << std::endl
-                  << "----- Memory Activity Stats ----- " << std::endl;
         for (uint32_t it = 0; it < count; it++) {
             if (verbose) {
                 std::cout << "Location of the Memory = " << getMemoryModuleLocation(memUtils[it].vfMemLocation) << std::endl;
@@ -1648,12 +1648,12 @@ void testSysmanVfTelemetry(ze_device_handle_t &device) {
             }
         }
 
+        std::cout << std::endl
+                  << "----- Engine Activity Stats ----- " << std::endl;
         count = 0;
         VALIDATECALL(zesVFManagementGetVFEngineUtilizationExp2(handle, &count, nullptr));
         std::vector<zes_vf_util_engine_exp2_t> engineUtils(count);
         VALIDATECALL(zesVFManagementGetVFEngineUtilizationExp2(handle, &count, engineUtils.data()));
-        std::cout << std::endl
-                  << "----- Engine Activity Stats ----- " << std::endl;
         for (uint32_t it = 0; it < count; it++) {
             if (verbose) {
                 std::cout << "Engine Type = " << getEngineType(engineUtils[it].vfEngineType) << std::endl;

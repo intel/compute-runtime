@@ -375,5 +375,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGroupEngineBusynessFromSingleE
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isVfMemoryUtilizationSupported() {
+    return false;
+}
+
 } // namespace Sysman
 } // namespace L0

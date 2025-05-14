@@ -21,6 +21,7 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_init_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_engine_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_engine_tests_xe.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_vf_management_tests.cpp
   )
 endif()
 add_subdirectories()

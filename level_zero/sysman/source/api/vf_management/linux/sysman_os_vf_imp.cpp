@@ -13,6 +13,7 @@
 
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
@@ -73,6 +74,12 @@ ze_result_t LinuxVfImp::vfOsGetCapabilities(zes_vf_exp2_capabilities_t *pCapabil
 }
 
 ze_result_t LinuxVfImp::vfOsGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2_t *pMemUtil) {
+
+    const auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    if (!pSysmanProductHelper->isVfMemoryUtilizationSupported()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     uint64_t vfLmemUsed = 0;
     if (*pCount == 0) {
         *pCount = maxMemoryTypes;

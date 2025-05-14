@@ -79,6 +79,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     bool isAggregationOfSingleEnginesSupported() override;
     ze_result_t getGroupEngineBusynessFromSingleEngines(LinuxSysmanImp *pLinuxSysmanImp, zes_engine_stats_t *pStats, zes_engine_group_t &engineGroup) override;
 
+    // Vf Management
+    bool isVfMemoryUtilizationSupported() override;
+
     ~SysmanProductHelperHw() override = default;
 
     const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override;

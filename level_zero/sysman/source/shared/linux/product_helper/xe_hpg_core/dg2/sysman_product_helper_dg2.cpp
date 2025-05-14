@@ -243,6 +243,11 @@ bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return true;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isVfMemoryUtilizationSupported() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

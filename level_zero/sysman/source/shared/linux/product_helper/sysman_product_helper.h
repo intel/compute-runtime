@@ -104,6 +104,9 @@ class SysmanProductHelper {
     virtual bool isAggregationOfSingleEnginesSupported() = 0;
     virtual ze_result_t getGroupEngineBusynessFromSingleEngines(LinuxSysmanImp *pLinuxSysmanImp, zes_engine_stats_t *pStats, zes_engine_group_t &engineGroup) = 0;
 
+    // Vf Management
+    virtual bool isVfMemoryUtilizationSupported() = 0;
+
     virtual ~SysmanProductHelper() = default;
     virtual const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() = 0;
 
