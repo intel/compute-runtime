@@ -64,6 +64,11 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckIsCopyBufferRectSpli
     EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
 }
 
+LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenFalseIsReturned) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.deferMOCSToPatIndex(true));
+}
+
 using LnlHwInfoLinux = ::testing::Test;
 
 LNLTEST_F(LnlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {

@@ -1226,8 +1226,9 @@ TEST(GmmHelperTest, givenNewCoherencyModelWhenGetMocsThenDeferToPat) {
     GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
 
     MockExecutionEnvironment executionEnvironment{};
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
-    if (!executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().deferMOCSToPatIndex()) {
+    auto &rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0];
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    if (!rootDeviceEnvironment->getProductHelper().deferMOCSToPatIndex(rootDeviceEnvironment->isWddmOnLinux())) {
         GTEST_SKIP();
     }
 

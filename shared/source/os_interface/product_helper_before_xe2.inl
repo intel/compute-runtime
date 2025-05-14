@@ -15,7 +15,7 @@ bool ProductHelperHw<gfxProduct>::useGemCreateExtInAllocateMemoryByKMD() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::deferMOCSToPatIndex() const {
+bool ProductHelperHw<gfxProduct>::deferMOCSToPatIndex(bool isWddmOnLinux) const {
     return false;
 }
 

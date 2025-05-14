@@ -72,7 +72,7 @@ XE2_HPG_CORETEST_F(BlitXe2HpgCoreTests, givenBufferWhenProgrammingBltCommandThen
     ASSERT_NE(hwParser.cmdList.end(), itorBltCmd);
     MEM_COPY *bltCmd = (MEM_COPY *)*itorBltCmd;
 
-    if (clDevice->getProductHelper().deferMOCSToPatIndex()) {
+    if (clDevice->getProductHelper().deferMOCSToPatIndex(clDevice->getRootDeviceEnvironment().isWddmOnLinux())) {
         EXPECT_EQ(0u, bltCmd->getDestinationMOCS());
         EXPECT_EQ(0u, bltCmd->getSourceMOCS());
     } else {

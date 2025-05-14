@@ -89,3 +89,7 @@ LNLTEST_F(LnlProductHelperWindows, givenOverrideDirectSubmissionTimeoutsCalledTh
     EXPECT_EQ(timeout.count(), 2'000);
     EXPECT_EQ(maxTimeout.count(), 3'000);
 }
+
+LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->deferMOCSToPatIndex(true));
+}

@@ -128,3 +128,7 @@ BMGTEST_F(BmgProductHelper, whenAdjustScratchSizeThenSizeIsDoubled) {
     productHelper->adjustScratchSize(scratchSize);
     EXPECT_EQ(initialScratchSize * 2, scratchSize);
 }
+
+BMGTEST_F(BmgProductHelper, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->deferMOCSToPatIndex(true));
+}
