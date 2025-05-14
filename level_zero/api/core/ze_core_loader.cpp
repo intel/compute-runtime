@@ -236,6 +236,8 @@ zeGetDeviceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnSetCacheAdviceExt, L0::globalDriverDispatch.coreDevice.pfnSetCacheAdviceExt, version, ZE_API_VERSION_1_2);
     fillDdiEntry(pDdiTable->pfnPciGetPropertiesExt, L0::globalDriverDispatch.coreDevice.pfnPciGetPropertiesExt, version, ZE_API_VERSION_1_3);
     fillDdiEntry(pDdiTable->pfnGetRootDevice, L0::globalDriverDispatch.coreDevice.pfnGetRootDevice, version, ZE_API_VERSION_1_7);
+    fillDdiEntry(pDdiTable->pfnImportExternalSemaphoreExt, L0::globalDriverDispatch.coreDevice.pfnImportExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
+    fillDdiEntry(pDdiTable->pfnReleaseExternalSemaphoreExt, L0::globalDriverDispatch.coreDevice.pfnReleaseExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
     driverDdiTable.coreDdiTable.Device = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         fillDdiEntry(pDdiTable->pfnGet, zeDeviceGetTracing, version, ZE_API_VERSION_1_0);
@@ -344,6 +346,8 @@ zeGetCommandListProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetOrdinal, L0::globalDriverDispatch.coreCommandList.pfnGetOrdinal, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnImmediateGetIndex, L0::globalDriverDispatch.coreCommandList.pfnImmediateGetIndex, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnIsImmediate, L0::globalDriverDispatch.coreCommandList.pfnIsImmediate, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnAppendSignalExternalSemaphoreExt, L0::globalDriverDispatch.coreCommandList.pfnAppendSignalExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
+    fillDdiEntry(pDdiTable->pfnAppendWaitExternalSemaphoreExt, L0::globalDriverDispatch.coreCommandList.pfnAppendWaitExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
     driverDdiTable.coreDdiTable.CommandList = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         fillDdiEntry(pDdiTable->pfnAppendBarrier, zeCommandListAppendBarrierTracing, version, ZE_API_VERSION_1_0);
