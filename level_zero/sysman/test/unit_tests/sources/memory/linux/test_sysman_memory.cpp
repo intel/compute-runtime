@@ -202,22 +202,38 @@ TEST_F(SysmanDeviceMemoryFixtureI915, GivenI915DriverVersionWhenValidCallingSysf
     EXPECT_STREQ("gt/gt0/mem_RPn_freq_mhz", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinMemoryFrequency, 0, true).c_str());
 }
 
-TEST_F(SysmanDeviceMemoryFixtureI915, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenZeroCountIsReturned) {
-    setLocalSupportedAndReinit(false);
+TEST_F(SysmanDeviceMemoryFixtureI915, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenZeroCountIsReturnedForDiscretePlatforms) {
+    if (!defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        setLocalSupportedAndReinit(false);
+    }
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumMemoryModules(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0u);
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(count, 1u);
+    } else {
+        EXPECT_EQ(count, 0u);
+    }
 }
 
-TEST_F(SysmanDeviceMemoryFixtureI915, GivenInvalidComponentCountWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenZeroCountIsReturned) {
-    setLocalSupportedAndReinit(false);
+TEST_F(SysmanDeviceMemoryFixtureI915, GivenInvalidComponentCountWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenZeroCountIsReturnedForDiscretePlatforms) {
+    if (!defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        setLocalSupportedAndReinit(false);
+    }
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumMemoryModules(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0u);
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(count, 1u);
+    } else {
+        EXPECT_EQ(count, 0u);
+    }
 
     count = count + 1;
     EXPECT_EQ(zesDeviceEnumMemoryModules(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0u);
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(count, 1u);
+    } else {
+        EXPECT_EQ(count, 0u);
+    }
 }
 
 HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenComponentCountZeroWhenEnumeratingMemoryModulesThenValidCountIsReturned, IsPVC) {
@@ -386,7 +402,11 @@ TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesMemory
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(properties.type, ZES_MEM_TYPE_DDR);
-        EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
+        if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+            EXPECT_EQ(properties.location, ZES_MEM_LOC_SYSTEM);
+        } else {
+            EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
+        }
         EXPECT_EQ(properties.numChannels, -1);
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
@@ -795,6 +815,7 @@ class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
     L0::Sysman::SysmanDevice *device = nullptr;
     MockMemorySysFsAccessInterface *pSysfsAccess = nullptr;
     MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = nullptr;
+    MockMemoryFsAccessInterface *pFsAccess = nullptr;
 
     void SetUp() override {
         debugManager.flags.EnableLocalMemory.set(1);
@@ -802,9 +823,12 @@ class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
 
         pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
         pSysfsAccess = new MockMemorySysFsAccessInterface();
+        pFsAccess = new MockMemoryFsAccessInterface();
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+        pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
         pLinuxSysmanImp->pSysfsAccess = pLinuxSysmanImp->pSysmanKmdInterface->getSysFsAccess();
+        pLinuxSysmanImp->pFsAccess = pLinuxSysmanImp->pSysmanKmdInterface->getFsAccess();
         pDrm = new MockMemoryNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
         pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<NEO::MockIoctlHelper>(*pDrm));
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
@@ -866,15 +890,36 @@ HWTEST2_F(SysmanMultiDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZesMe
     ze_result_t result = zesMemoryGetState(handles[0], &state1);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state1.health, ZES_MEM_HEALTH_UNKNOWN);
-    EXPECT_EQ(state1.size, NEO::probedSizeRegionOne);
-    EXPECT_EQ(state1.free, NEO::unallocatedSizeRegionOne);
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(state1.size, mockIntegratedDeviceAvailableMemory);
+        EXPECT_EQ(state1.free, mockIntegratedDeviceFreeMemory);
+    } else {
+        EXPECT_EQ(state1.size, NEO::probedSizeRegionOne);
+        EXPECT_EQ(state1.free, NEO::unallocatedSizeRegionOne);
+    }
 
     zes_mem_state_t state2;
     result = zesMemoryGetState(handles[1], &state2);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state2.health, ZES_MEM_HEALTH_UNKNOWN);
-    EXPECT_EQ(state2.size, NEO::probedSizeRegionFour);
-    EXPECT_EQ(state2.free, NEO::unallocatedSizeRegionFour);
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(state2.size, mockIntegratedDeviceAvailableMemory);
+        EXPECT_EQ(state2.free, mockIntegratedDeviceFreeMemory);
+    } else {
+        EXPECT_EQ(state2.size, NEO::probedSizeRegionFour);
+        EXPECT_EQ(state2.free, NEO::unallocatedSizeRegionFour);
+    }
+}
+
+HWTEST2_F(SysmanMultiDeviceMemoryFixture, GivenMemFreeAndMemAvailableMissingInMemInfoWhenCallingGetStateThenFreeAndSizeValuesAreZero, IsMTL) {
+    pFsAccess->mockMemInfoIncorrectValue = true;
+    auto handles = getMemoryHandles(pOsSysman->getSubDeviceCount());
+    zes_mem_state_t state = {};
+    ze_result_t result = zesMemoryGetState(handles[0], &state);
+
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(state.free, 0u);
+    EXPECT_EQ(state.size, 0u);
 }
 
 } // namespace ult

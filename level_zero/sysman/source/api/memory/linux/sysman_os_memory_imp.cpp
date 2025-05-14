@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
@@ -53,11 +54,54 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
                               "Error@ %s():createMemoryInfo failed errno:%d \n", __FUNCTION__, errno);
         return status;
     }
+    if (pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        const std::string memFreeKey = "MemFree";
+        const std::string memAvailableKey = "MemAvailable";
+        auto memInfoValues = readMemInfoValues(&pLinuxSysmanImp->getFsAccess(), {memFreeKey, memAvailableKey});
+        if (memInfoValues.find(memFreeKey) != memInfoValues.end() && memInfoValues.find(memAvailableKey) != memInfoValues.end()) {
+            pState->free = memInfoValues[memFreeKey] * 1024;
+            pState->size = memInfoValues[memAvailableKey] * 1024;
+        } else {
+            pState->free = 0;
+            pState->size = 0;
+            status = ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return status;
+    }
 
     auto region = memoryInfo->getMemoryRegion(MemoryBanks::getBankForLocalMemory(subdeviceId));
     pState->free = region.unallocatedSize;
     pState->size = region.probedSize;
     return status;
+}
+
+std::map<std::string, uint64_t> LinuxMemoryImp::readMemInfoValues(FsAccessInterface *pFsAccess, const std::vector<std::string> &keys) {
+    std::map<std::string, uint64_t> result = {};
+    const std::string memInfoFile = "/proc/meminfo";
+    std::vector<std::string> memInfo{};
+
+    if (pFsAccess->read(memInfoFile, memInfo) == ZE_RESULT_SUCCESS) {
+        for (const auto &line : memInfo) {
+            std::istringstream lineStream(line);
+            std::string label = "";
+            std::string unit = "";
+            uint64_t value = 0;
+
+            lineStream >> label >> value >> unit;
+
+            if (!label.empty() && label.back() == ':') {
+                label.pop_back();
+            }
+
+            if (std::find(keys.begin(), keys.end(), label) != keys.end()) {
+                result[label] = value;
+                if (result.size() == keys.size()) {
+                    break;
+                }
+            }
+        }
+    }
+    return result;
 }
 
 LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
@@ -69,6 +113,9 @@ LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint3
 
 bool LinuxMemoryImp::isMemoryModuleSupported() {
     auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    if (pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+        return true;
+    }
     return gfxCoreHelper.getEnableLocalMemory(pDevice->getHardwareInfo());
 }
 
