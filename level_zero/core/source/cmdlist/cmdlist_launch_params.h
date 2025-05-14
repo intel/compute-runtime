@@ -80,6 +80,7 @@ struct CmdListKernelLaunchParams {
     bool omitAddingEventResidency = false;
     bool omitAddingWaitEventsResidency = false;
     bool makeKernelCommandView = false;
+    bool relaxedOrderingDispatch = false;
 };
 
 struct CmdListMemoryCopyParams {

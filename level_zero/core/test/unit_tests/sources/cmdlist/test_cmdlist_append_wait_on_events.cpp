@@ -915,7 +915,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto eventHandle = event->toHandle();
     ze_group_count_t group = {1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    commandListImmediate->appendLaunchKernel(kernel->toHandle(), group, nullptr, 1, &eventHandle, launchParams, false);
+    commandListImmediate->appendLaunchKernel(kernel->toHandle(), group, nullptr, 1, &eventHandle, launchParams);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 }
@@ -1109,7 +1109,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     CmdListKernelLaunchParams cooperativeParams = {};
     cooperativeParams.isCooperative = true;
 
-    commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, cooperativeParams, false);
+    commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, cooperativeParams);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 }

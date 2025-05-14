@@ -160,7 +160,7 @@ ze_result_t zeCommandListAppendLaunchKernel(
     L0::CmdListKernelLaunchParams launchParams = {};
     launchParams.skipInOrderNonWalkerSignaling = cmdList->skipInOrderNonWalkerSignalingAllowed(hSignalEvent);
 
-    return cmdList->appendLaunchKernel(kernelHandle, *launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams, false);
+    return cmdList->appendLaunchKernel(kernelHandle, *launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
 }
 
 ze_result_t zeCommandListAppendLaunchCooperativeKernel(
@@ -174,7 +174,7 @@ ze_result_t zeCommandListAppendLaunchCooperativeKernel(
     L0::CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
 
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(kernelHandle, *launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams, false);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(kernelHandle, *launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
 }
 
 ze_result_t zeCommandListAppendLaunchKernelIndirect(

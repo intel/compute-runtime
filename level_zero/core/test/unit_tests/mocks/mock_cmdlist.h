@@ -356,7 +356,7 @@ struct MockCommandList : public CommandList {
                       const ze_group_count_t &threadGroupDimensions,
                       ze_event_handle_t hEvent, uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents,
-                      CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch));
+                      CmdListKernelLaunchParams &launchParams));
 
     ADDMETHOD_NOBASE(appendLaunchKernelIndirect, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_kernel_handle_t kernelHandle,
@@ -831,7 +831,7 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
                                    ze_event_handle_t hEvent,
                                    uint32_t numWaitEvents,
                                    ze_event_handle_t *phWaitEvents,
-                                   CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) override {
+                                   CmdListKernelLaunchParams &launchParams) override {
 
         const auto kernel = Kernel::fromHandle(kernelHandle);
         cmdListHelper.isaAllocation = kernel->getIsaAllocation();

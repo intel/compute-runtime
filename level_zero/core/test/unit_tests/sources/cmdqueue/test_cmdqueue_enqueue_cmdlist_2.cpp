@@ -380,7 +380,7 @@ struct PauseOnGpuFixture : public Test<ModuleFixture> {
     }
 
     void enqueueKernel() {
-        auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
         result = commandList->close();
@@ -422,7 +422,7 @@ struct PauseOnGpuTests : public PauseOnGpuFixture {
     }
 
     void enqueueKernel() {
-        auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
         result = commandList->close();
@@ -572,7 +572,7 @@ struct PauseOnGpuWithImmediateCommandListTests : public PauseOnGpuFixture {
     }
 
     void enqueueKernel() {
-        auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     }
 };

@@ -442,7 +442,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
     result = commandList->appendLaunchKernel(kernel->toHandle(),
                                              groupCount,
                                              nullptr, 0, nullptr,
-                                             launchParams, false);
+                                             launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto itorEvent = std::find(std::begin(commandList->getCmdContainer().getResidencyContainer()),
@@ -505,7 +505,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     result = commandList->appendLaunchKernel(kernel->toHandle(),
                                              groupCount,
                                              nullptr, 0, nullptr,
-                                             launchParams, false);
+                                             launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto itorEvent = std::find(std::begin(commandList->getCmdContainer().getResidencyContainer()),
@@ -572,7 +572,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     result = commandList->appendLaunchKernel(kernel->toHandle(),
                                              groupCount,
                                              nullptr, 0, nullptr,
-                                             launchParams, false);
+                                             launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(gpuAlloc->isResident(csr.getOsContext().getContextId()));
@@ -628,7 +628,7 @@ HWTEST_F(CommandQueueIndirectAllocations,
     result = commandListRegular->appendLaunchKernel(kernel->toHandle(),
                                                     groupCount,
                                                     nullptr, 0, nullptr,
-                                                    launchParams, false);
+                                                    launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     commandListRegular->close();
 
@@ -685,7 +685,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
     result = commandList->appendLaunchKernel(kernel->toHandle(),
                                              groupCount,
                                              nullptr, 0, nullptr,
-                                             launchParams, false);
+                                             launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     device->getDriverHandle()->getSvmAllocsManager()->freeSVMAlloc(deviceAlloc);
@@ -1325,7 +1325,7 @@ HWTEST2_F(DeferredFirstSubmissionCmdQueueTests, givenDebugFlagSetWhenSubmittingT
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
-    commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     commandList2->close();
     EXPECT_EQ(0u, primaryCsr->peekTaskCount());
     EXPECT_EQ(0u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
