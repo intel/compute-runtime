@@ -1029,7 +1029,8 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     ze_image_region_t dstRegion = {4, 4, 4, 2, 2, 2};
 
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendImageCopyRegion(imageDst->toHandle(), imageSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 1, &eventHandle, false);
+    CmdListMemoryCopyParams copyParams = {};
+    commandListImmediate->appendImageCopyRegion(imageDst->toHandle(), imageSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 1, &eventHandle, copyParams);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 }
@@ -1052,9 +1053,9 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto result = Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imagePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::unique_ptr<L0::Image> image(imagePtr);
-
+    CmdListMemoryCopyParams copyParams = {};
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendImageCopyFromMemory(imagePtr->toHandle(), ptr, nullptr, nullptr, 1, &eventHandle, false);
+    commandListImmediate->appendImageCopyFromMemory(imagePtr->toHandle(), ptr, nullptr, nullptr, 1, &eventHandle, copyParams);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
     ultCsr.getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);
@@ -1078,9 +1079,10 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto result = Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imagePtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::unique_ptr<L0::Image> image(imagePtr);
+    CmdListMemoryCopyParams copyParams = {};
 
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendImageCopyToMemory(ptr, imagePtr->toHandle(), nullptr, nullptr, 1, &eventHandle, false);
+    commandListImmediate->appendImageCopyToMemory(ptr, imagePtr->toHandle(), nullptr, nullptr, 1, &eventHandle, copyParams);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
     ultCsr.getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);

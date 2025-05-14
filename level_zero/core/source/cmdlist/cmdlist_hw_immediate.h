@@ -125,14 +125,14 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                           const ze_image_region_t *pDstRegion,
                                           ze_event_handle_t hEvent,
                                           uint32_t numWaitEvents,
-                                          ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                          ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
     ze_result_t appendImageCopyToMemory(void *dstPtr,
                                         ze_image_handle_t hSrcImage,
                                         const ze_image_region_t *pSrcRegion,
                                         ze_event_handle_t hEvent,
                                         uint32_t numWaitEvents,
-                                        ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                        ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
     ze_result_t appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage,
                                              const void *srcPtr,
@@ -141,7 +141,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                              uint32_t srcSlicePitch,
                                              ze_event_handle_t hEvent,
                                              uint32_t numWaitEvents,
-                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                             ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
     ze_result_t appendImageCopyToMemoryExt(void *dstPtr,
                                            ze_image_handle_t hSrcImage,
@@ -150,13 +150,12 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                            uint32_t destSlicePitch,
                                            ze_event_handle_t hEvent,
                                            uint32_t numWaitEvents,
-                                           ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                           ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
-    ze_result_t appendImageCopy(
-        ze_image_handle_t dst, ze_image_handle_t src,
-        ze_event_handle_t hEvent,
-        uint32_t numWaitEvents,
-        ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+    ze_result_t appendImageCopy(ze_image_handle_t dst, ze_image_handle_t src,
+                                ze_event_handle_t hEvent,
+                                uint32_t numWaitEvents,
+                                ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
     ze_result_t appendImageCopyRegion(ze_image_handle_t hDstImage,
                                       ze_image_handle_t hSrcImage,
@@ -164,7 +163,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                       const ze_image_region_t *pSrcRegion,
                                       ze_event_handle_t hEvent,
                                       uint32_t numWaitEvents,
-                                      ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                      ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
     ze_result_t appendMemoryRangesBarrier(uint32_t numRanges,
                                           const size_t *pRangeSizes,

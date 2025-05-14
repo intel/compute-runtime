@@ -187,7 +187,8 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
                                     size_t dstRowPitch, size_t dstSlicePitch,
                                     size_t bytesPerPixel, const Vec3<size_t> &copySize,
                                     const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
-                                    Event *signalEvent) override {
+                                    Event *signalEvent, uint32_t numWaitEvents,
+                                    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override {
         appendCopyImageBlitCalledTimes++;
         appendImageRegionCopySize = copySize;
         appendImageRegionSrcOrigin = srcOffsets;

@@ -15,6 +15,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/driver_experimental/zex_api.h"
 
@@ -380,6 +381,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListTh
 
 HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsThenUseCopyCommands, IsAtLeastXeHpCore) {
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
     EXPECT_FALSE(immCmdList->isCopyOnly(false));
@@ -445,6 +447,120 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
         EXPECT_EQ(initialCopyTaskCount + 3, copyQueueCsr->taskCount);
     }
+
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.width = 10;
+    zeDesc.height = 10;
+    zeDesc.depth = 1;
+    image->initialize(device, &zeDesc);
+    static_cast<MemoryAllocation *>(image->getAllocation())->overrideMemoryPool(NEO::MemoryPool::system64KBPages);
+
+    ze_image_region_t imgRegion = {0, 0, 0, 1, 1, 1};
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        immCmdList->appendImageCopyFromMemoryExt(image->toHandle(), data, &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), itor);
+
+        EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(initialCopyTaskCount + 4, copyQueueCsr->taskCount);
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        immCmdList->appendImageCopyToMemoryExt(data, image->toHandle(), &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), itor);
+
+        EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(initialCopyTaskCount + 5, copyQueueCsr->taskCount);
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        immCmdList->appendImageCopy(image->toHandle(), image->toHandle(), nullptr, 0, nullptr, copyParams);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), itor);
+
+        EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(initialCopyTaskCount + 6, copyQueueCsr->taskCount);
+    }
+    context->freeMem(data);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenImageCopyCalledThenSkipSycCommands, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto data = allocHostMem(1);
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.width = 10;
+    zeDesc.height = 10;
+    zeDesc.depth = 1;
+    image->initialize(device, &zeDesc);
+    static_cast<MemoryAllocation *>(image->getAllocation())->overrideMemoryPool(NEO::MemoryPool::system64KBPages);
+    ze_image_region_t imgRegion = {0, 0, 0, 1, 1, 1};
+
+    immCmdList->appendImageCopyToMemoryExt(data, image->toHandle(), &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto lrrCmds = findAll<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
+    auto lriCmds = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    auto lrmCmds = findAll<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+
+    for (auto &lrr : lrrCmds) {
+        auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*lrr);
+        EXPECT_TRUE(lrrCmd->getSourceRegisterAddress() < RegisterOffsets::bcs0Base);
+        EXPECT_TRUE(lrrCmd->getDestinationRegisterAddress() < RegisterOffsets::bcs0Base);
+    }
+
+    for (auto &lri : lriCmds) {
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lri);
+        EXPECT_TRUE(lriCmd->getRegisterOffset() < RegisterOffsets::bcs0Base);
+    }
+
+    for (auto &lrm : lrmCmds) {
+        auto lrmCmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*lrm);
+        EXPECT_TRUE(lrmCmd->getRegisterAddress() < RegisterOffsets::bcs0Base);
+    }
+
     context->freeMem(data);
 }
 

@@ -721,14 +721,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_image_handle_t hDstImage,
-                                                                            const void *srcPtr,
-                                                                            const ze_image_region_t *pDstRegion,
-                                                                            ze_event_handle_t hEvent,
-                                                                            uint32_t numWaitEvents,
-                                                                            ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_image_handle_t hDstImage, const void *srcPtr, const ze_image_region_t *pDstRegion, ze_event_handle_t hEvent,
+                                                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     return appendImageCopyFromMemoryExt(hDstImage, srcPtr, pDstRegion, 0, 0,
-                                        hEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+                                        hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 static ze_image_region_t getRegionFromImageDesc(ze_image_desc_t imgDesc) {
@@ -754,14 +750,8 @@ static ze_image_region_t getRegionFromImageDesc(ze_image_desc_t imgDesc) {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage,
-                                                                               const void *srcPtr,
-                                                                               const ze_image_region_t *pDstRegion,
-                                                                               uint32_t srcRowPitch,
-                                                                               uint32_t srcSlicePitch,
-                                                                               ze_event_handle_t hEvent,
-                                                                               uint32_t numWaitEvents,
-                                                                               ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage, const void *srcPtr, const ze_image_region_t *pDstRegion, uint32_t srcRowPitch, uint32_t srcSlicePitch,
+                                                                               ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     if (!hDstImage) {
         return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
     }
@@ -828,7 +818,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         image = peerImage;
     }
 
-    if (isCopyOnly(false)) {
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(*allocationStruct.alloc, *image->getAllocation());
+
+    if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
@@ -836,7 +828,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         size_t imgSlicePitch = image->getImageInfo().slicePitch;
         auto status = appendCopyImageBlit(allocationStruct.alloc, image->getAllocation(),
                                           {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, srcRowPitch, srcSlicePitch,
-                                          imgRowPitch, imgSlicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize, event);
+                                          imgRowPitch, imgSlicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize,
+                                          event, numWaitEvents, phWaitEvents, memoryCopyParams);
         addToMappedEventList(Event::fromHandle(hEvent));
         return status;
     }
@@ -927,7 +920,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
-    launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
+    launchParams.relaxedOrderingDispatch = memoryCopyParams.relaxedOrderingDispatch;
 
     auto status = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), kernelArgs,
                                                                            event, numWaitEvents, phWaitEvents,
@@ -943,9 +936,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
                                                                           const ze_image_region_t *pSrcRegion,
                                                                           ze_event_handle_t hEvent,
                                                                           uint32_t numWaitEvents,
-                                                                          ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+                                                                          ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     return appendImageCopyToMemoryExt(dstPtr, hSrcImage, pSrcRegion, 0, 0,
-                                      hEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+                                      hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -956,7 +949,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
                                                                              uint32_t destSlicePitch,
                                                                              ze_event_handle_t hEvent,
                                                                              uint32_t numWaitEvents,
-                                                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+                                                                             ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     if (!dstPtr) {
         return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
     }
@@ -1023,7 +1016,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         image = peerImage;
     }
 
-    if (isCopyOnly(false)) {
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(*image->getAllocation(), *allocationStruct.alloc);
+
+    if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if ((bytesPerPixel == 3) || (bytesPerPixel == 6) || image->isMimickedImage()) {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
@@ -1032,7 +1027,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         auto status = appendCopyImageBlit(image->getAllocation(), allocationStruct.alloc,
                                           {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, imgRowPitch, imgSlicePitch,
                                           destRowPitch, destSlicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth},
-                                          imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event);
+                                          imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event, numWaitEvents, phWaitEvents, memoryCopyParams);
         addToMappedEventList(event);
         return status;
     }
@@ -1146,7 +1141,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     if constexpr (checkIfAllocationImportedRequired()) {
         launchParams.isDestinationAllocationImported = this->isAllocationImported(allocationStruct.alloc, device->getDriverHandle()->getSvmAllocsManager());
     }
-    launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
+    launchParams.relaxedOrderingDispatch = memoryCopyParams.relaxedOrderingDispatch;
     ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), kernelArgs,
                                                                    event, numWaitEvents, phWaitEvents, launchParams);
     addToMappedEventList(event);
@@ -1163,7 +1158,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
                                                                         const ze_image_region_t *pSrcRegion,
                                                                         ze_event_handle_t hEvent,
                                                                         uint32_t numWaitEvents,
-                                                                        ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+                                                                        ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     auto dstImage = L0::Image::fromHandle(hDstImage);
     auto srcImage = L0::Image::fromHandle(hSrcImage);
     cl_int4 srcOffset, dstOffset;
@@ -1230,7 +1225,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         srcImage = peerImage;
     }
 
-    if (isCopyOnly(false)) {
+    memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(*srcImage->getAllocation(), *dstImage->getAllocation());
+
+    if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->imageElementSizeInBytes);
 
         ze_image_region_t region = getRegionFromImageDesc(srcImage->getImageDesc());
@@ -1249,7 +1246,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
 
         auto status = appendCopyImageBlit(srcImage->getAllocation(), dstImage->getAllocation(),
                                           {srcRegion.originX, srcRegion.originY, srcRegion.originZ}, {dstRegion.originX, dstRegion.originY, dstRegion.originZ}, srcRowPitch, srcSlicePitch,
-                                          dstRowPitch, dstSlicePitch, bytesPerPixel, {srcRegion.width, srcRegion.height, srcRegion.depth}, srcImgSize, dstImgSize, event);
+                                          dstRowPitch, dstSlicePitch, bytesPerPixel, {srcRegion.width, srcRegion.height, srcRegion.depth}, srcImgSize, dstImgSize,
+                                          event, numWaitEvents, phWaitEvents, memoryCopyParams);
         addToMappedEventList(event);
         return status;
     }
@@ -1291,7 +1289,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
-    launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
+    launchParams.relaxedOrderingDispatch = memoryCopyParams.relaxedOrderingDispatch;
     auto status = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernel->toHandle(), kernelArgs,
                                                                            event, numWaitEvents, phWaitEvents,
                                                                            launchParams);
@@ -1305,10 +1303,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopy(ze_image_handl
                                                                   ze_image_handle_t hSrcImage,
                                                                   ze_event_handle_t hEvent,
                                                                   uint32_t numWaitEvents,
-                                                                  ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+                                                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
 
     return this->appendImageCopyRegion(hDstImage, hSrcImage, nullptr, nullptr, hEvent,
-                                       numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+                                       numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1606,7 +1604,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
                                                                       size_t dstRowPitch, size_t dstSlicePitch,
                                                                       size_t bytesPerPixel, const Vec3<size_t> &copySize,
                                                                       const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
-                                                                      Event *signalEvent) {
+                                                                      Event *signalEvent, uint32_t numWaitEvents,
+                                                                      ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
+    const bool dualStreamCopyOffloadOperation = isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed);
+    const bool isCopyOnlySignaling = isCopyOnly(dualStreamCopyOffloadOperation) && !useAdditionalBlitProperties;
+
+    auto ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, memoryCopyParams.relaxedOrderingDispatch, false, true, false, dualStreamCopyOffloadOperation);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
     if (!handleCounterBasedEventOperations(signalEvent)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -1629,7 +1636,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     bool useAdditionalTimestamp = blitProperties.copySize.z > 1;
     if (useAdditionalBlitProperties) {
         setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
-    } else {
+    }
+
+    if (isCopyOnlySignaling) {
         appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     }
     blitProperties.transform1DArrayTo2DArrayIfNeeded();
@@ -1641,7 +1650,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     }
     dummyBlitWa.isWaRequired = true;
 
-    if (!useAdditionalBlitProperties) {
+    if (isCopyOnlySignaling) {
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
         if (this->isInOrderExecutionEnabled()) {
             appendSignalInOrderDependencyCounter(signalEvent, false, false, false);

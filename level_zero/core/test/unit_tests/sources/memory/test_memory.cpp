@@ -5929,14 +5929,14 @@ HWTEST2_F(MultipleDevicePeerImageTest,
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-
-    result = commandList0->appendImageCopy(image0Dst->toHandle(), image1Src->toHandle(), nullptr, 0, nullptr, false);
+    CmdListMemoryCopyParams copyParams = {};
+    result = commandList0->appendImageCopy(image0Dst->toHandle(), image1Src->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = image0Src->destroy();
@@ -5999,14 +5999,14 @@ HWTEST2_F(MultipleDevicePeerImageTest,
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-
-    result = commandList0->appendImageCopy(image0Dst->toHandle(), image1Src->toHandle(), nullptr, 0, nullptr, false);
+    CmdListMemoryCopyParams copyParams = {};
+    result = commandList0->appendImageCopy(image0Dst->toHandle(), image1Src->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, false);
+    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 
     result = image0Src->destroy();

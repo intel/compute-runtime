@@ -94,29 +94,29 @@ struct CommandListCoreFamily : public CommandListImp {
                                           const ze_image_region_t *pDstRegion,
                                           ze_event_handle_t hEvent,
                                           uint32_t numWaitEvents,
-                                          ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                          ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
     ze_result_t appendImageCopyToMemory(void *dstptr, ze_image_handle_t hSrcImage,
                                         const ze_image_region_t *pSrcRegion, ze_event_handle_t hEvent,
                                         uint32_t numWaitEvents,
-                                        ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                        ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
     ze_result_t appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage, const void *srcptr,
                                              const ze_image_region_t *pDstRegion,
                                              uint32_t srcRowPitch, uint32_t srcSlicePitch,
                                              ze_event_handle_t hEvent,
                                              uint32_t numWaitEvents,
-                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                             ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
     ze_result_t appendImageCopyToMemoryExt(void *dstptr, ze_image_handle_t hSrcImage,
                                            const ze_image_region_t *pSrcRegion,
                                            uint32_t destRowPitch, uint32_t destSlicePitch,
                                            ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                           ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                           ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
     ze_result_t appendImageCopyRegion(ze_image_handle_t hDstImage, ze_image_handle_t hSrcImage,
                                       const ze_image_region_t *pDstRegion, const ze_image_region_t *pSrcRegion,
                                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                      ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                      ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
     ze_result_t appendImageCopy(ze_image_handle_t hDstImage, ze_image_handle_t hSrcImage,
                                 ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+                                ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
     ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle,
                                    const ze_group_count_t &threadGroupDimensions,
                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
@@ -290,7 +290,8 @@ struct CommandListCoreFamily : public CommandListImp {
                                                      size_t dstRowPitch, size_t dstSlicePitch,
                                                      size_t bytesPerPixel, const Vec3<size_t> &copySize,
                                                      const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
-                                                     Event *signalEvent);
+                                                     Event *signalEvent, uint32_t numWaitEvents,
+                                                     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams);
 
     virtual ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
                                                      const ze_group_count_t &threadGroupDimensions,

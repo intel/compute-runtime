@@ -1947,7 +1947,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenNonInOrderCmdListWhenPass
         zeDesc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
         zeDesc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
         image->initialize(device, &zeDesc);
-        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, copyOnlyCmdList->appendImageCopyFromMemoryExt(image->toHandle(), &copyData, &imgRegion, 0, 0, eventHandle, 0, nullptr, false));
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, copyOnlyCmdList->appendImageCopyFromMemoryExt(image->toHandle(), &copyData, &imgRegion, 0, 0, eventHandle, 0, nullptr, copyParams));
     }
 
     context->freeMem(alloc);
@@ -4352,9 +4352,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
     image->initialize(device, &desc);
 
-    immCmdList->appendImageCopyFromMemoryExt(image->toHandle(), srcPtr, nullptr, 0, 0, nullptr, 0, nullptr, false);
+    immCmdList->appendImageCopyFromMemoryExt(image->toHandle(), srcPtr, nullptr, 0, 0, nullptr, 0, nullptr, copyParams);
     auto offset = cmdStream->getUsed();
-    immCmdList->appendImageCopyFromMemoryExt(image->toHandle(), srcPtr, nullptr, 0, 0, nullptr, 0, nullptr, false);
+    immCmdList->appendImageCopyFromMemoryExt(image->toHandle(), srcPtr, nullptr, 0, 0, nullptr, 0, nullptr, copyParams);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
