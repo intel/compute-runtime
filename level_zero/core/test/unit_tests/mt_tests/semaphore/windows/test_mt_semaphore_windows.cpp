@@ -60,7 +60,7 @@ HWTEST_F(WddmExternalSemaphoreMTTest, givenValidExternalSemaphoreWhenImportExter
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_D3D12_FENCE;
 
-    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC;
     win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
 
     desc.pNext = &win32Desc;
@@ -141,7 +141,7 @@ HWTEST2_F(WddmExternalSemaphoreMTTest, givenEnqueueSignalFailsWhenExternalSemaph
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_D3D12_FENCE;
 
-    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC;
     win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
 
     desc.pNext = &win32Desc;
@@ -185,7 +185,7 @@ HWTEST2_F(WddmExternalSemaphoreMTTest, givenSemaphoreSignalOperationEventWhenExt
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_D3D12_FENCE;
 
-    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC;
     win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
 
     desc.pNext = &win32Desc;
@@ -240,7 +240,7 @@ HWTEST2_F(WddmExternalSemaphoreMTTest, givenImmediateCommandListWhenAppendWaitEx
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_D3D12_FENCE;
 
-    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC;
     win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
 
     desc.pNext = &win32Desc;
@@ -278,7 +278,7 @@ HWTEST2_F(WddmExternalSemaphoreMTTest, givenRegularCommandListWhenAppendWaitExte
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_D3D12_FENCE;
 
-    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC;
     win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
 
     desc.pNext = &win32Desc;
@@ -347,7 +347,7 @@ HWTEST2_F(WddmExternalSemaphoreMTTest, givenInternalProxyEventFailsToAppendWhenA
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_D3D12_FENCE;
 
-    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC;
     win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
 
     desc.pNext = &win32Desc;
@@ -388,7 +388,7 @@ HWTEST2_F(WddmExternalSemaphoreMTTest, givenWaitEventFailsToAppendWhenAppendWait
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_D3D12_FENCE;
 
-    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC;
     win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
 
     desc.pNext = &win32Desc;
@@ -430,7 +430,7 @@ HWTEST2_F(WddmExternalSemaphoreMTTest, givenSignalEventFailsWhenAppendWaitExtern
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_D3D12_FENCE;
 
-    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    win32Desc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC;
     win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
 
     desc.pNext = &win32Desc;

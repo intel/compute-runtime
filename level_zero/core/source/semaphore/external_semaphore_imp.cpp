@@ -54,12 +54,12 @@ ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze
     if (semaphoreDesc->pNext != nullptr) {
         const ze_base_desc_t *extendedDesc =
             reinterpret_cast<const ze_base_desc_t *>(semaphoreDesc->pNext);
-        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC) { // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXT_DESC) {
             const ze_external_semaphore_win32_ext_desc_t *extendedSemaphoreDesc =
                 reinterpret_cast<const ze_external_semaphore_win32_ext_desc_t *>(extendedDesc);
             handle = extendedSemaphoreDesc->handle;
             name = extendedSemaphoreDesc->name;
-        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_FD_EXT_DESC) { // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_FD_EXT_DESC) {
             const ze_external_semaphore_fd_ext_desc_t *extendedSemaphoreDesc =
                 reinterpret_cast<const ze_external_semaphore_fd_ext_desc_t *>(extendedDesc);
             fd = extendedSemaphoreDesc->fd;
