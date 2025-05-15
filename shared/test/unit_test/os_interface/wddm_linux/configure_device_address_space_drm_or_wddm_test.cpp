@@ -734,7 +734,7 @@ TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCloseInternalHandleWithoutAllocatio
     memoryManager.freeGraphicsMemoryImpl(alloc);
 }
 
-TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCreateInternalHandleFailedThenEmpyHandleReturned) {
+TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCreateInternalHandleFailedThenEmptyHandleReturned) {
     osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
     osEnvironment->gdi->createAllocation2 = createAllocation2Mock;
     osEnvironment->gdi->mapGpuVirtualAddress = mapGpuVirtualAddressMock;
@@ -756,7 +756,7 @@ TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCreateInternalHandleFailedThenEmpyH
     memoryManager.closeInternalHandle(handle, 0u, alloc);
 
     memoryManager.failCreateInternalNTHandle = true;
-    EXPECT_EQ(1, alloc->createInternalHandle(&memoryManager, 0u, handle));
+    EXPECT_EQ(-1, alloc->createInternalHandle(&memoryManager, 0u, handle));
 
     memoryManager.freeGraphicsMemoryImpl(alloc);
 }

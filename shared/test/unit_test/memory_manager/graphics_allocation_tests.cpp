@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -247,7 +247,7 @@ TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsB
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsBeingObtainedOrCreatedThenZeroIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
     uint64_t handle = 0;
-    graphicsAllocation.createInternalHandle(nullptr, 0u, handle);
+    EXPECT_EQ(0, graphicsAllocation.createInternalHandle(nullptr, 0u, handle));
     EXPECT_EQ(0ull, handle);
     graphicsAllocation.clearInternalHandle(0u);
 }

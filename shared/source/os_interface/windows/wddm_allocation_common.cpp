@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,12 +16,12 @@ int WddmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t 
         WddmMemoryManager *wddmMemoryManager = reinterpret_cast<WddmMemoryManager *>(memoryManager);
         auto status = wddmMemoryManager->createInternalNTHandle(&resourceHandle, &ntSharedHandle, this->getRootDeviceIndex());
         if (status != STATUS_SUCCESS) {
-            return handle == 0;
+            return -1;
         }
         ntSecureHandle = castToUint64(ntSharedHandle);
         handle = ntSecureHandle;
     }
-    return handle == 0;
+    return handle == 0 ? -1 : 0;
 }
 void WddmAllocation::clearInternalHandle(uint32_t handleId) {
     ntSecureHandle = 0u;

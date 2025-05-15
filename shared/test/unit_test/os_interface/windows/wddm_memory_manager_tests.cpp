@@ -397,7 +397,7 @@ TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationWithFailingCreateInt
     memoryManager->closeInternalHandle(handle, 0u, graphicsAllocation);
 
     memoryManager->failCreateInternalNTHandle = true;
-    EXPECT_EQ(1, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+    EXPECT_EQ(-1, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

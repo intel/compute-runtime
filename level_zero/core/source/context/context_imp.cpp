@@ -770,7 +770,7 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
     for (uint32_t i = 0u; i < loopCount; i++) {
         uint64_t handle = 0;
         int ret = alloc->createInternalHandle(memoryManager, i, handle);
-        if (ret < 0) {
+        if (ret != 0) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
 
