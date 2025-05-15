@@ -2022,7 +2022,7 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenInvalidTransferDirectionWh
     MockBuffer dstMemObj{dstGraphicsAllocation};
 
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
-    args.direction = static_cast<TransferDirection>(0xFF); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    args.direction = static_cast<TransferDirection>(0xFF); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     EXPECT_ANY_THROW(queue->selectCsrForBuiltinOperation(args));
 }
 

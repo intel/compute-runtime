@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -511,7 +511,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 
     auto result = getAllocationTypeString(&graphicsAllocation);
 
