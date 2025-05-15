@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ struct CommandListImp : public CommandList {
     virtual void patchInOrderCmds() = 0;
     void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode);
     NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
-    void enableCopyOperationOffload(uint32_t productFamily, Device *device, const ze_command_queue_desc_t *desc);
+    void enableCopyOperationOffload();
     void setInterruptEventsCsr(NEO::CommandStreamReceiver &csr);
 
   protected:

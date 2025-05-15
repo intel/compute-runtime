@@ -194,7 +194,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         cmdList->enableInOrderExecution();
 
         if (copyOffloadEnabled) {
-            cmdList->enableCopyOperationOffload(device->getHwInfo().platform.eProductFamily, device, &desc);
+            cmdList->enableCopyOperationOffload();
             cmdList->copyOperationFenceSupported = device->getProductHelper().isDeviceToHostCopySignalingFenceRequired();
         }
 

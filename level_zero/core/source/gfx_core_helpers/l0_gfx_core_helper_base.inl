@@ -104,4 +104,9 @@ CopyOffloadMode L0GfxCoreHelperHw<Family>::getDefaultCopyOffloadMode() const {
     return CopyOffloadModes::dualStream;
 }
 
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::isDefaultCmdListWithCopyOffloadSupported() const {
+    return false;
+}
+
 } // namespace L0

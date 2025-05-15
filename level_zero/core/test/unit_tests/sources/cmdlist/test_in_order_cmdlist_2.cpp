@@ -190,6 +190,22 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeAndProfilingEventWithRe
     }
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingRegularCmdListThenEnableCopyOffload, IsAtLeastXeHpCore) {
+    NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    EXPECT_EQ(CopyOffloadModes::disabled, regularCmdList->copyOffloadMode);
+
+    NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(2);
+
+    regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    EXPECT_NE(CopyOffloadModes::disabled, regularCmdList->copyOffloadMode);
+    EXPECT_EQ(nullptr, regularCmdList->cmdQImmediateCopyOffload);
+
+    regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(true);
+    EXPECT_EQ(CopyOffloadModes::disabled, regularCmdList->copyOffloadMode);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeHpCore) {
     NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
 
@@ -213,11 +229,14 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
 
-            auto queue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
-            EXPECT_EQ(cmdQueueDesc.priority, queue->desc.priority);
-            EXPECT_EQ(cmdQueueDesc.mode, queue->desc.mode);
-            EXPECT_TRUE(queue->peekIsCopyOnlyCommandQueue());
-            EXPECT_TRUE(NEO::EngineHelpers::isBcs(queue->getCsr()->getOsContext().getEngineType()));
+            auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+            auto computeQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediate);
+
+            EXPECT_EQ(computeQueue->getCsr()->getOsContext().isHighPriority(), copyQueue->getCsr()->getOsContext().isHighPriority());
+
+            EXPECT_EQ(cmdQueueDesc.mode, copyQueue->desc.mode);
+            EXPECT_TRUE(copyQueue->peekIsCopyOnlyCommandQueue());
+            EXPECT_TRUE(NEO::EngineHelpers::isBcs(copyQueue->getCsr()->getOsContext().getEngineType()));
         }
 
         zeCommandListDestroy(cmdListHandle);
@@ -237,11 +256,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
             EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
 
-            auto queue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
-            EXPECT_EQ(cmdQueueDesc.priority, queue->desc.priority);
-            EXPECT_EQ(cmdQueueDesc.mode, queue->desc.mode);
-            EXPECT_TRUE(queue->peekIsCopyOnlyCommandQueue());
-            EXPECT_TRUE(NEO::EngineHelpers::isBcs(queue->getCsr()->getOsContext().getEngineType()));
+            auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+            auto computeQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediate);
+            EXPECT_EQ(computeQueue->getCsr()->getOsContext().isHighPriority(), copyQueue->getCsr()->getOsContext().isHighPriority());
+
+            EXPECT_EQ(cmdQueueDesc.mode, copyQueue->desc.mode);
+            EXPECT_TRUE(copyQueue->peekIsCopyOnlyCommandQueue());
+            EXPECT_TRUE(NEO::EngineHelpers::isBcs(copyQueue->getCsr()->getOsContext().getEngineType()));
         }
 
         zeCommandListDestroy(cmdListHandle);

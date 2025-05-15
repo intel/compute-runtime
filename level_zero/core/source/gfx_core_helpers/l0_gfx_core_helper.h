@@ -114,6 +114,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
                                                                                 NEO::DeviceBitfield deviceBitfield) const = 0;
     virtual uint64_t getOaTimestampValidBits() const = 0;
     virtual CopyOffloadMode getDefaultCopyOffloadMode() const = 0;
+    virtual bool isDefaultCmdListWithCopyOffloadSupported() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -170,6 +171,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
                                                                         NEO::DeviceBitfield deviceBitfield) const override;
     uint64_t getOaTimestampValidBits() const override;
     CopyOffloadMode getDefaultCopyOffloadMode() const override;
+    bool isDefaultCmdListWithCopyOffloadSupported() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;
