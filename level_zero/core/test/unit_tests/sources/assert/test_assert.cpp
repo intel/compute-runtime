@@ -228,7 +228,7 @@ TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenKernelWithAssert
     EXPECT_FALSE(commandList->hasKernelWithAssert());
 }
 
-HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenCheckingAssertThenPrintMessageAndAbortOnAssertHandlerIsCalled, MatchAny) {
+HWTEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenCheckingAssertThenPrintMessageAndAbortOnAssertHandlerIsCalled) {
     ze_result_t result;
     ze_command_queue_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
@@ -246,7 +246,7 @@ HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenCheckingAsser
     EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
 }
 
-HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListAndNoAssertHandlerWhenCheckingAssertThenUnrecoverableIsCalled, MatchAny) {
+HWTEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListAndNoAssertHandlerWhenCheckingAssertThenUnrecoverableIsCalled) {
     ze_result_t result;
     ze_command_queue_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
@@ -260,7 +260,7 @@ HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListAndNoAssertHandle
     EXPECT_THROW(static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> *>(commandList.get())->checkAssert(), std::exception);
 }
 
-HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsynchronousImmCommandListThenAssertIsNotChecked, MatchAny) {
+HWTEST_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsynchronousImmCommandListThenAssertIsNotChecked) {
     ze_result_t result;
 
     Mock<Module> module(device, nullptr, ModuleType::user);
@@ -295,7 +295,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsy
     EXPECT_EQ(0u, cmdList.checkAssertCalled);
 }
 
-HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSynchronousImmCommandListThenAssertIsChecked, MatchAny) {
+HWTEST_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSynchronousImmCommandListThenAssertIsChecked) {
     ze_result_t result;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     Mock<Module> module(device, nullptr, ModuleType::user);
@@ -329,7 +329,7 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSyn
     EXPECT_EQ(1u, cmdList.checkAssertCalled);
 }
 
-HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynchronousImmCommandListHangsThenAssertIsChecked, MatchAny) {
+HWTEST_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynchronousImmCommandListHangsThenAssertIsChecked) {
     ze_result_t result;
 
     Mock<Module> module(device, nullptr, ModuleType::user);

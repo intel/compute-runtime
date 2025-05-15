@@ -26,8 +26,7 @@ namespace ult {
 
 using AppendFillTest = Test<AppendFillFixture>;
 
-HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillWithImmediateValueThenSuccessIsReturned, MatchAny) {
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithImmediateValueThenSuccessIsReturned) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -38,8 +37,7 @@ HWTEST2_F(AppendFillTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillThenSuccessIsReturned, MatchAny) {
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillThenSuccessIsReturned) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -48,8 +46,7 @@ HWTEST2_F(AppendFillTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillWithAppendLaunchKernelFailureThenSuccessIsNotReturned, MatchAny) {
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithAppendLaunchKernelFailureThenSuccessIsNotReturned) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     commandList->thresholdOfCallsToAppendLaunchKernelWithParamsToFail = 0;
@@ -59,8 +56,7 @@ HWTEST2_F(AppendFillTest,
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(AppendFillTest,
-          givenTwoCallsToAppendMemoryFillWithSamePatternThenAllocationIsCreatedForEachCall, MatchAny) {
+HWTEST_F(AppendFillTest, givenTwoCallsToAppendMemoryFillWithSamePatternThenAllocationIsCreatedForEachCall) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -80,8 +76,7 @@ HWTEST2_F(AppendFillTest,
     delete[] newDstPtr;
 }
 
-HWTEST2_F(AppendFillTest,
-          givenTwoCallsToAppendMemoryFillWithDifferentPatternsThenAllocationIsCreatedForEachPattern, MatchAny) {
+HWTEST_F(AppendFillTest, givenTwoCallsToAppendMemoryFillWithDifferentPatternsThenAllocationIsCreatedForEachPattern) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -99,8 +94,7 @@ HWTEST2_F(AppendFillTest,
     EXPECT_EQ(patternAllocationsVectorSize + 1u, newPatternAllocationsVectorSize);
 }
 
-HWTEST2_F(AppendFillTest,
-          givenAppendMemoryFillWhenPatternSizeIsOneThenDispatchOneKernel, MatchAny) {
+HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPatternSizeIsOneThenDispatchOneKernel) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     int pattern = 0;
@@ -114,8 +108,7 @@ HWTEST2_F(AppendFillTest,
     delete[] ptr;
 }
 
-HWTEST2_F(AppendFillTest,
-          givenAppendMemoryFillWithUnalignedSizeWhenPatternSizeIsOneThenDispatchTwoKernels, MatchAny) {
+HWTEST_F(AppendFillTest, givenAppendMemoryFillWithUnalignedSizeWhenPatternSizeIsOneThenDispatchTwoKernels) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     int pattern = 0;
@@ -131,8 +124,7 @@ HWTEST2_F(AppendFillTest,
     delete[] ptr;
 }
 
-HWTEST2_F(AppendFillTest,
-          givenAppendMemoryFillWithSizeBelow16WhenPatternSizeIsOneThenDispatchTwoKernels, MatchAny) {
+HWTEST_F(AppendFillTest, givenAppendMemoryFillWithSizeBelow16WhenPatternSizeIsOneThenDispatchTwoKernels) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     int pattern = 0;
@@ -148,8 +140,7 @@ HWTEST2_F(AppendFillTest,
     delete[] ptr;
 }
 
-HWTEST2_F(AppendFillTest,
-          givenAppendMemoryFillWithSizeBelowMaxWorkgroupSizeWhenPatternSizeIsOneThenDispatchOneKernel, MatchAny) {
+HWTEST_F(AppendFillTest, givenAppendMemoryFillWithSizeBelowMaxWorkgroupSizeWhenPatternSizeIsOneThenDispatchOneKernel) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     int pattern = 0;
@@ -164,8 +155,7 @@ HWTEST2_F(AppendFillTest,
     delete[] ptr;
 }
 
-HWTEST2_F(AppendFillTest,
-          givenAppendMemoryFillWhenPatternSizeIsOneThenGroupCountIsCorrect, MatchAny) {
+HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPatternSizeIsOneThenGroupCountIsCorrect) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     int pattern = 0;
@@ -181,8 +171,7 @@ HWTEST2_F(AppendFillTest,
     delete[] ptr;
 }
 
-HWTEST2_F(AppendFillTest,
-          givenAppendMemoryFillWhenPtrWithOffsetAndPatternSizeIsOneThenThreeKernelsDispatched, MatchAny) {
+HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPtrWithOffsetAndPatternSizeIsOneThenThreeKernelsDispatched) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     int pattern = 0;
@@ -201,8 +190,7 @@ HWTEST2_F(AppendFillTest,
     delete[] ptr;
 }
 
-HWTEST2_F(AppendFillTest,
-          givenAppendMemoryFillWhenPtrWithOffsetAndSmallSizeAndPatternSizeIsOneThenTwoKernelsDispatched, MatchAny) {
+HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPtrWithOffsetAndSmallSizeAndPatternSizeIsOneThenTwoKernelsDispatched) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     int pattern = 0;
@@ -219,8 +207,7 @@ HWTEST2_F(AppendFillTest,
     delete[] ptr;
 }
 
-HWTEST2_F(AppendFillTest,
-          givenAppendMemoryFillWhenPtrWithOffsetAndFailAppendUnalignedFillKernelThenReturnError, MatchAny) {
+HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPtrWithOffsetAndFailAppendUnalignedFillKernelThenReturnError) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->thresholdOfCallsToAppendLaunchKernelWithParamsToFail = 0;
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
@@ -234,8 +221,7 @@ HWTEST2_F(AppendFillTest,
     delete[] ptr;
 }
 
-HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeThenSuccessIsReturned, MatchAny) {
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeThenSuccessIsReturned) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -248,8 +234,7 @@ HWTEST2_F(AppendFillTest,
     delete[] nonMultipleDstPtr;
 }
 
-HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeAndAppendLaunchKernelFailureOnRemainderThenSuccessIsNotReturned, MatchAny) {
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithSizeNotMultipleOfPatternSizeAndAppendLaunchKernelFailureOnRemainderThenSuccessIsNotReturned) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     commandList->thresholdOfCallsToAppendLaunchKernelWithParamsToFail = 1;
