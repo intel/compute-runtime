@@ -104,6 +104,7 @@ struct XeHpgCoreFamily : public XeHpgCore {
     using Parse = CmdParse<XeHpgCoreFamily>;
     using GfxFamily = XeHpgCoreFamily;
     using DefaultWalkerType = COMPUTE_WALKER;
+    using PorWalkerType = COMPUTE_WALKER;
     using FrontEndStateCommand = CFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
