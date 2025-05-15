@@ -20,8 +20,12 @@ namespace ult {
 struct MockEccFwInterface : public L0::Sysman::FirmwareUtil {
     ze_result_t mockFwGetEccConfigResult = ZE_RESULT_SUCCESS;
     ze_result_t mockFwSetEccConfigResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockFwGetEccAvailableResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockFwGetEccConfigurableResult = ZE_RESULT_SUCCESS;
 
     ze_bool_t mockSetConfig = true;
+    ze_bool_t mockEccAvailable = true;
+    ze_bool_t mockEccConfigurable = true;
     uint8_t mockCurrentState = 0;
     uint8_t mockPendingState = 0;
 
@@ -47,6 +51,24 @@ struct MockEccFwInterface : public L0::Sysman::FirmwareUtil {
         *currentState = mockCurrentState;
         *pendingState = mockPendingState;
 
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t fwGetEccAvailable(ze_bool_t *pAvailable) override {
+        if (mockFwGetEccAvailableResult != ZE_RESULT_SUCCESS) {
+            return mockFwGetEccAvailableResult;
+        }
+
+        *pAvailable = mockEccAvailable;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t fwGetEccConfigurable(ze_bool_t *pAvailable) override {
+        if (mockFwGetEccConfigurableResult != ZE_RESULT_SUCCESS) {
+            return mockFwGetEccConfigurableResult;
+        }
+
+        *pAvailable = mockEccConfigurable;
         return ZE_RESULT_SUCCESS;
     }
 

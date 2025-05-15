@@ -11,18 +11,31 @@
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware_util/mock_fw_util_fixture.h"
 
+#include <algorithm>
+
 namespace L0 {
 
 extern L0::Sysman::pIgscIfrGetStatusExt L0::Sysman::deviceIfrGetStatusExt;
 extern L0::Sysman::pIgscIfrRunMemPPRTest L0::Sysman::deviceIfrRunMemPPRTest;
-extern L0::Sysman::pIgscGetEccConfig getEccConfig;
-extern L0::Sysman::pIgscSetEccConfig setEccConfig;
+extern L0::Sysman::pIgscGfspHeciCmd gfspHeciCmd;
 
 namespace Sysman {
 namespace ult {
 
 constexpr static uint32_t mockMaxTileCount = 2;
 static int mockMemoryHealthIndicator = IGSC_HEALTH_INDICATOR_HEALTHY;
+std::vector<uint32_t> mockSupportedHeciCmds = {GfspHeciConstants::Cmd::getEccConfigurationCmd16, GfspHeciConstants::Cmd::setEccConfigurationCmd15};
+uint8_t mockEccCurrentState = 1;
+uint8_t mockEccPendingState = 1;
+uint8_t mockEccHeciCmd16Val = 1;
+
+void restoreEccMockVars() {
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.insert(mockSupportedHeciCmds.end(), {GfspHeciConstants::Cmd::getEccConfigurationCmd16, GfspHeciConstants::Cmd::setEccConfigurationCmd15});
+    mockEccCurrentState = 1;
+    mockEccPendingState = 1;
+    mockEccHeciCmd16Val = 1;
+}
 
 int mockDeviceIfrGetStatusExt(struct igsc_device_handle *handle, uint32_t *supportedTests, uint32_t *hwCapabilities, uint32_t *ifrApplied, uint32_t *prevErrors, uint32_t *pendingReset) {
     return 0;
@@ -32,19 +45,11 @@ int mockdeviceIfrRunMemPPRTest(struct igsc_device_handle *handle, uint32_t *stat
     return 0;
 }
 
-static inline int mockEccConfigGetSuccess(struct igsc_device_handle *handle, uint8_t *currentState, uint8_t *pendingState) {
+static inline int mockEccConfigGetSuccess(struct igsc_device_handle *handle, uint32_t gfspCmd, uint8_t *inBuffer, size_t inBufferSize, uint8_t *outBuffer, size_t outBufferSize, size_t *actualOutBufferSize) {
     return 0;
 }
 
-static inline int mockEccConfigSetSuccess(struct igsc_device_handle *handle, uint8_t newState, uint8_t *currentState, uint8_t *pendingState) {
-    return 0;
-}
-
-static inline int mockEccConfigGetFailure(struct igsc_device_handle *handle, uint8_t *currentState, uint8_t *pendingState) {
-    return -1;
-}
-
-static inline int mockEccConfigSetFailure(struct igsc_device_handle *handle, uint8_t newState, uint8_t *currentState, uint8_t *pendingState) {
+static inline int mockEccConfigGetFailure(struct igsc_device_handle *handle, uint32_t gfspCmd, uint8_t *inBuffer, size_t inBufferSize, uint8_t *outBuffer, size_t outBufferSize, size_t *actualOutBufferSize) {
     return -1;
 }
 
@@ -64,6 +69,71 @@ static inline int mockGetHealthIndicator(struct igsc_device_handle *handle, uint
 
 static inline int mockGetHealthIndicatorFailure(struct igsc_device_handle *handle, uint8_t *healthIndicator) {
     return -1;
+}
+
+static int mockGetEccAvailable(struct igsc_device_handle *handle, uint32_t gfspCmd, uint8_t *inBuffer, size_t inBufferSize, uint8_t *outBuffer, size_t outBufferSize, size_t *actualOutBufferSize) {
+
+    if (std::find(mockSupportedHeciCmds.begin(), mockSupportedHeciCmds.end(), gfspCmd) == mockSupportedHeciCmds.end()) {
+        return IGSC_ERROR_NOT_SUPPORTED;
+    }
+
+    switch (gfspCmd) {
+    case GfspHeciConstants::Cmd::getEccConfigurationCmd16:
+        outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccAvailable] = mockEccHeciCmd16Val;
+        return IGSC_SUCCESS;
+    case GfspHeciConstants::Cmd::getEccConfigurationCmd9:
+        outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::currentState] = mockEccCurrentState;
+        outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::pendingState] = mockEccPendingState;
+        return IGSC_SUCCESS;
+    default:
+        return IGSC_ERROR_NOT_SUPPORTED;
+    }
+}
+
+static int mockGetEccConfigurable(struct igsc_device_handle *handle, uint32_t gfspCmd, uint8_t *inBuffer, size_t inBufferSize, uint8_t *outBuffer, size_t outBufferSize, size_t *actualOutBufferSize) {
+
+    if (std::find(mockSupportedHeciCmds.begin(), mockSupportedHeciCmds.end(), gfspCmd) == mockSupportedHeciCmds.end()) {
+        return IGSC_ERROR_NOT_SUPPORTED;
+    }
+
+    switch (gfspCmd) {
+    case GfspHeciConstants::Cmd::getEccConfigurationCmd16:
+        outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccConfigurable] = mockEccHeciCmd16Val;
+        return IGSC_SUCCESS;
+    case GfspHeciConstants::Cmd::getEccConfigurationCmd9:
+        outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::currentState] = mockEccCurrentState;
+        outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::pendingState] = mockEccPendingState;
+        return IGSC_SUCCESS;
+    default:
+        return IGSC_ERROR_NOT_SUPPORTED;
+    }
+}
+
+static int mockGetEccConfig(struct igsc_device_handle *handle, uint32_t gfspCmd, uint8_t *inBuffer, size_t inBufferSize, uint8_t *outBuffer, size_t outBufferSize, size_t *actualOutBufferSize) {
+
+    if (std::find(mockSupportedHeciCmds.begin(), mockSupportedHeciCmds.end(), gfspCmd) == mockSupportedHeciCmds.end()) {
+        return IGSC_ERROR_NOT_SUPPORTED;
+    }
+
+    switch (gfspCmd) {
+    case GfspHeciConstants::Cmd::getEccConfigurationCmd16:
+        outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccCurrentState] = mockEccCurrentState;
+        outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccPendingState] = mockEccPendingState;
+        return IGSC_SUCCESS;
+    case GfspHeciConstants::Cmd::getEccConfigurationCmd9:
+        outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::currentState] = mockEccCurrentState;
+        outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::pendingState] = mockEccPendingState;
+        return IGSC_SUCCESS;
+    case GfspHeciConstants::Cmd::setEccConfigurationCmd15:
+        outBuffer[GfspHeciConstants::SetEccCmd15BytePostition::response] = inBuffer[GfspHeciConstants::SetEccCmd15BytePostition::request];
+        return IGSC_SUCCESS;
+    case GfspHeciConstants::Cmd::setEccConfigurationCmd8:
+        outBuffer[GfspHeciConstants::SetEccCmd8BytePostition::responsePendingState] = inBuffer[GfspHeciConstants::SetEccCmd8BytePostition::setRequest];
+        outBuffer[GfspHeciConstants::SetEccCmd8BytePostition::responseCurrentState] = mockEccCurrentState;
+        return IGSC_SUCCESS;
+    default:
+        return IGSC_ERROR_NOT_SUPPORTED;
+    }
 }
 
 TEST(FwStatusExtTest, GivenIFRWasSetWhenFirmwareUtilChecksIFRThenIFRStatusIsUpdated) {
@@ -169,8 +239,7 @@ TEST(FwEccTest, GivenFwEccConfigCallFailsWhenCallingFirmwareUtilSetAndGetEccThen
       public:
         ~IgscEccMockOsLibrary() override = default;
         void *getProcAddress(const std::string &procName) override {
-            eccFuncMap["igsc_ecc_config_get"] = reinterpret_cast<void *>(&mockEccConfigGetFailure);
-            eccFuncMap["igsc_ecc_config_set"] = reinterpret_cast<void *>(&mockEccConfigSetFailure);
+            eccFuncMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockEccConfigGetFailure);
             auto it = eccFuncMap.find(procName);
             if (eccFuncMap.end() == it) {
                 return nullptr;
@@ -211,8 +280,7 @@ TEST(LinuxFwEccTest, GivenValidFwUtilMethodWhenCallingFirmwareUtilSetAndGetEccTh
       public:
         ~IgscEccMockOsLibrary() override = default;
         void *getProcAddress(const std::string &procName) override {
-            eccFuncMap["igsc_ecc_config_get"] = reinterpret_cast<void *>(&mockEccConfigGetSuccess);
-            eccFuncMap["igsc_ecc_config_set"] = reinterpret_cast<void *>(&mockEccConfigSetSuccess);
+            eccFuncMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockEccConfigGetSuccess);
             auto it = eccFuncMap.find(procName);
             if (eccFuncMap.end() == it) {
                 return nullptr;
@@ -471,6 +539,356 @@ TEST(FwUtilImpProgressTest, GivenFirmwareUtilImpAndNullContextWhenSettingProgres
     uint32_t percent = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFwUtilImp->getFlashFirmwareProgress(&percent));
     EXPECT_EQ((uint32_t)0, percent);
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccAvailableSucessIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccAvailable);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd16);
+    ze_bool_t pAvailable;
+
+    std::vector<uint8_t> possibleEccStates = {0, 1};
+
+    for (auto iterEccAvailableStates : possibleEccStates) {
+        mockEccHeciCmd16Val = iterEccAvailableStates;
+
+        auto ret = pFwUtilImp->fwGetEccAvailable(&pAvailable);
+        EXPECT_EQ(pAvailable, mockEccHeciCmd16Val);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    }
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingFwGetEccAvailableSucessIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccAvailable);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+
+    ze_bool_t pAvailable;
+    auto ret = pFwUtilImp->fwGetEccAvailable(&pAvailable);
+    EXPECT_TRUE(pAvailable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedAndEccStateIsNoneThenWhenCallingFwGetEccAvailableCorrectReturnValueIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccAvailable);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+
+    ze_bool_t pAvailable;
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+    mockEccCurrentState = 0xff;
+    mockEccPendingState = 0x1;
+
+    auto ret = pFwUtilImp->fwGetEccAvailable(&pAvailable);
+    EXPECT_FALSE(pAvailable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    mockEccCurrentState = 0x1;
+    mockEccPendingState = 0xff;
+    ret = pFwUtilImp->fwGetEccAvailable(&pAvailable);
+    EXPECT_FALSE(pAvailable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd9AndCmd16AreUnsupportedWhenCallingFwGetEccAvailableThenUninitializedIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfigurable);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(0xff);
+
+    ze_bool_t pAvailable;
+    auto ret = pFwUtilImp->fwGetEccAvailable(&pAvailable);
+    EXPECT_FALSE(pAvailable);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigurableSucessIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfigurable);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd16);
+    ze_bool_t pConfigurable;
+
+    std::vector<uint8_t> possibleEccStates = {0, 1};
+
+    for (auto iterEccConfigurableStates : possibleEccStates) {
+        mockEccHeciCmd16Val = iterEccConfigurableStates;
+
+        auto ret = pFwUtilImp->fwGetEccConfigurable(&pConfigurable);
+        EXPECT_EQ(pConfigurable, mockEccHeciCmd16Val);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    }
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingFwGetEccConfigurableSucessIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfigurable);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+
+    ze_bool_t pConfigurable;
+    auto ret = pFwUtilImp->fwGetEccConfigurable(&pConfigurable);
+    EXPECT_TRUE(pConfigurable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedAndEccStateIsNoneThenWhenCallingFwGetEccConfigurableCorrectReturnValueIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfigurable);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+
+    ze_bool_t pConfigurable;
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+    mockEccCurrentState = 0xff;
+    mockEccPendingState = 0x1;
+
+    auto ret = pFwUtilImp->fwGetEccConfigurable(&pConfigurable);
+    EXPECT_FALSE(pConfigurable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    mockEccCurrentState = 0x1;
+    mockEccPendingState = 0xff;
+    ret = pFwUtilImp->fwGetEccConfigurable(&pConfigurable);
+    EXPECT_FALSE(pConfigurable);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd9AndCmd16AreUnsupportedWhenCallingFwGetEccConfigurableThenUninitializedIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfigurable);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(0xff);
+
+    ze_bool_t pConfigurable;
+    auto ret = pFwUtilImp->fwGetEccConfigurable(&pConfigurable);
+    EXPECT_FALSE(pConfigurable);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigSucessIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfig);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd16);
+    mockEccCurrentState = 1;
+    mockEccPendingState = 1;
+
+    uint8_t currentState;
+    uint8_t pendingState;
+    auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState);
+    EXPECT_EQ(currentState, mockEccCurrentState);
+    EXPECT_EQ(pendingState, mockEccPendingState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingFwGetEccConfigSucessIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfig);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+    uint8_t currentState;
+    uint8_t pendingState;
+
+    std::vector<uint8_t> possibleEccStates = {0, 1, 0xff};
+
+    for (auto iterCurrentState : possibleEccStates) {
+        for (auto iterPendingState : possibleEccStates) {
+            mockEccCurrentState = iterCurrentState;
+            mockEccPendingState = iterPendingState;
+
+            auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState);
+            EXPECT_EQ(currentState, mockEccCurrentState);
+            EXPECT_EQ(pendingState, mockEccPendingState);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+        }
+    }
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenUnavailableHeciFunctionPointersWhenCallingEccMethodsThenFailureIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+
+    ze_bool_t pAvailable;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pFwUtilImp->fwGetEccAvailable(&pAvailable));
+
+    ze_bool_t pConfigurable;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pFwUtilImp->fwGetEccConfigurable(&pConfigurable));
+
+    uint8_t currentState;
+    uint8_t pendingState;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pFwUtilImp->fwGetEccConfig(&currentState, &pendingState));
+
+    uint8_t newState = 1;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState));
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd15IsSupportedThenWhenCallingFwSetEccConfigSucessIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfig);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd16);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::setEccConfigurationCmd15);
+    mockEccCurrentState = 0;
+
+    uint8_t currentState;
+    uint8_t pendingState;
+    uint8_t newState = 1;
+    auto ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
+    EXPECT_EQ(currentState, mockEccCurrentState);
+    EXPECT_EQ(pendingState, newState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd15IsSupportedThenWhenCallingFwSetEccConfigAndFwGetEccConfigFailsThenFailureReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfig);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(0xff);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::setEccConfigurationCmd15);
+    mockEccCurrentState = 0;
+
+    uint8_t currentState;
+    uint8_t pendingState;
+    uint8_t newState = 1;
+    auto ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciSetCommandsAreNotSupportedThenWhenCallingFwSetEccConfigFailureReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfig);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(0xff);
+    mockEccCurrentState = 0;
+
+    uint8_t currentState;
+    uint8_t pendingState;
+    uint8_t newState = 1;
+    auto ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwEccTest, GivenHeciCmd15IsNotSupportedButCmd8IsSupportedThenWhenCallingFwSetEccConfigSucessIsReturned) {
+    restoreEccMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfig);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSupportedHeciCmds.clear();
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::setEccConfigurationCmd8);
+    mockEccCurrentState = 0;
+
+    uint8_t currentState;
+    uint8_t pendingState;
+    uint8_t newState = 1;
+    auto ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
+    EXPECT_EQ(currentState, mockEccCurrentState);
+    EXPECT_EQ(pendingState, newState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
     delete pFwUtilImp;
 }
 

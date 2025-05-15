@@ -37,34 +37,29 @@ ze_result_t EccImp::deviceEccAvailable(ze_bool_t *pAvailable) {
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            return result;
         }
     }
 
-    *pAvailable = false;
-    uint8_t currentState = 0;
-    uint8_t pendingState = 0;
-    ze_result_t result = pFwInterface->fwGetEccConfig(&currentState, &pendingState);
-    if (ZE_RESULT_SUCCESS == result) {
-        if ((currentState != eccStateNone) && (pendingState != eccStateNone)) {
-            *pAvailable = true;
-        }
-    }
-
-    return result;
+    return pFwInterface->fwGetEccAvailable(pAvailable);
 }
 
 ze_result_t EccImp::deviceEccConfigurable(ze_bool_t *pConfigurable) {
-    return deviceEccAvailable(pConfigurable);
+    if (pFwInterface == nullptr) {
+        ze_result_t result = getEccFwUtilInterface(pFwInterface);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+    }
+
+    return pFwInterface->fwGetEccConfigurable(pConfigurable);
 }
 
 ze_result_t EccImp::getEccState(zes_device_ecc_properties_t *pState) {
     if (pFwInterface == nullptr) {
         ze_result_t result = getEccFwUtilInterface(pFwInterface);
         if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting EccFwUtilInterface() and returning error \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            return result;
         }
     }
 
@@ -72,7 +67,6 @@ ze_result_t EccImp::getEccState(zes_device_ecc_properties_t *pState) {
     uint8_t pendingState = 0;
     ze_result_t result = pFwInterface->fwGetEccConfig(&currentState, &pendingState);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get ecc configuration and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     pState->currentState = getEccState(currentState);
