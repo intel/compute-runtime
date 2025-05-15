@@ -97,6 +97,10 @@ lint:
         - ci
         '*/.clang-tidy':
         - ci
+        '.config':
+        - ci
+        '*/.config':
+        - ci
         '*.md':
         - documentation
         'level_zero/api/driver_experimental/public/*':
