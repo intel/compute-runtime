@@ -3484,42 +3484,6 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     }
 }
 
-TEST_F(EventTests, givenRegularEventWithoutAdditionalPacketsThenGetAdditionalPacketsRetursZero) {
-    eventDesc.index = 0;
-    eventDesc.signal = 0;
-    eventDesc.wait = 0;
-
-    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
-                                                                                                                           &eventDesc,
-                                                                                                                           device)));
-    ASSERT_NE(event, nullptr);
-
-    uint32_t *hostAddr = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
-    EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
-    EXPECT_EQ(1u, event->getPacketsInUse());
-
-    event->setAdditionalPacketsInUse(0u);
-    EXPECT_EQ(event->kernelEventCompletionData[0].getAdditionalPacketsUsed(), 0u);
-}
-
-TEST_F(EventTests, givenRegularEventUseOneAdditionalPacketsThenGetAdditionalPacketsRetursOne) {
-    eventDesc.index = 0;
-    eventDesc.signal = 0;
-    eventDesc.wait = 0;
-
-    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
-                                                                                                                           &eventDesc,
-                                                                                                                           device)));
-    ASSERT_NE(event, nullptr);
-
-    uint32_t *hostAddr = static_cast<uint32_t *>(event->getCompletionFieldHostAddress());
-    EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
-    EXPECT_EQ(1u, event->getPacketsInUse());
-
-    event->setAdditionalPacketsInUse(1u);
-    EXPECT_EQ(event->kernelEventCompletionData[0].getAdditionalPacketsUsed(), 1u);
-}
-
 TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThenExpectAllPacketsAreSignaled) {
     eventDesc.index = 0;
     eventDesc.signal = 0;

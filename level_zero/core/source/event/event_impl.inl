@@ -228,11 +228,8 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::clearTimestampTagData(uint32_t partitionCount, bool latestInorderData, NEO::TagNodeBase *newNode) {
+void EventImp<TagSizeT>::clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) {
     auto node = newNode;
-    if (latestInorderData) {
-        node = inOrderTimestampNode.back();
-    }
     auto hostAddress = node->getCpuBase();
     auto deviceAddress = node->getGpuAddress();
 
@@ -269,7 +266,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
         // Account for additional timestamp nodes
         uint32_t remainingPackets = 0;
         if (!additionalTimestampNode.empty()) {
-            remainingPackets = kernelEventCompletionData[i].getAdditionalPacketsUsed();
+            remainingPackets = kernelEventCompletionData[i].getPacketsUsed();
             if (inOrderIncrementValue > 0) {
                 remainingPackets *= static_cast<uint32_t>(additionalTimestampNode.size());
             }
@@ -1087,11 +1084,6 @@ uint32_t EventImp<TagSizeT>::getPacketsUsedInLastKernel() {
 template <typename TagSizeT>
 void EventImp<TagSizeT>::setPacketsInUse(uint32_t value) {
     kernelEventCompletionData[getCurrKernelDataIndex()].setPacketsUsed(value);
-}
-
-template <typename TagSizeT>
-void EventImp<TagSizeT>::setAdditionalPacketsInUse(uint32_t value) {
-    kernelEventCompletionData[getCurrKernelDataIndex()].setAdditionalPacketsUsed(value);
 }
 
 template <typename TagSizeT>

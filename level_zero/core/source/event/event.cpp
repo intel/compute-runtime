@@ -697,7 +697,7 @@ void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partit
         inOrderTimestampNode.push_back(newNode);
 
         if (NEO::debugManager.flags.ClearStandaloneInOrderTimestampAllocation.get() != 0) {
-            clearTimestampTagData(partitionCount, true, nullptr);
+            clearTimestampTagData(partitionCount, inOrderTimestampNode.back());
         }
     }
 }
@@ -724,7 +724,7 @@ void Event::resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t par
     }
     additionalTimestampNode.push_back(newNode);
 
-    clearTimestampTagData(partitionCount, false, newNode);
+    clearTimestampTagData(partitionCount, newNode);
 }
 
 NEO::GraphicsAllocation *Event::getExternalCounterAllocationFromAddress(uint64_t *address) const {

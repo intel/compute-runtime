@@ -161,7 +161,6 @@ struct Event : _ze_event_handle_t {
     virtual void resetKernelCountAndPacketUsedCount() = 0;
     void *getHostAddress() const;
     virtual void setPacketsInUse(uint32_t value) = 0;
-    virtual void setAdditionalPacketsInUse(uint32_t value) = 0;
     uint32_t getCurrKernelDataIndex() const { return kernelCount - 1; }
     MOCKABLE_VIRTUAL void setGpuStartTimestamp();
     MOCKABLE_VIRTUAL void setGpuEndTimestamp();
@@ -350,7 +349,7 @@ struct Event : _ze_event_handle_t {
 
     void unsetCmdQueue();
     void releaseTempInOrderTimestampNodes();
-    virtual void clearTimestampTagData(uint32_t partitionCount, bool latestInorderData, NEO::TagNodeBase *newNode) = 0;
+    virtual void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) = 0;
 
     EventPool *eventPool = nullptr;
 

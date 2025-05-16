@@ -191,13 +191,12 @@ class MockEvent : public ::L0::Event {
     ze_result_t hostEventSetValue(State eventState) override {
         return ZE_RESULT_SUCCESS;
     }
-    void clearTimestampTagData(uint32_t partitionCount, bool latestInorderData, NEO::TagNodeBase *newNode) override {}
+    void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) override {}
     uint32_t getPacketsUsedInLastKernel() override { return 1; }
     uint32_t getPacketsInUse() const override { return 1; }
     void resetPackets(bool resetAllPackets) override {}
     void resetKernelCountAndPacketUsedCount() override {}
     void setPacketsInUse(uint32_t value) override {}
-    void setAdditionalPacketsInUse(uint32_t value) override {}
     uint64_t getPacketAddress(L0::Device *) override { return 0; }
     void setGpuStartTimestamp() override {}
     void setGpuEndTimestamp() override {}
