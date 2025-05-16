@@ -2094,6 +2094,7 @@ kernels:
       work_group_size_hint: [256, 2, 1]
       new_user_hint: new_user_hint_value
       invalid_kernel: invalid_kernel_reason
+      intel_reqd_thread_group_dispatch_size: 8
 ...
 )===";
 
@@ -2125,6 +2126,7 @@ kernels:
     EXPECT_TRUE(equals(attributes.otherHints[0].first, "new_user_hint"));
     EXPECT_TRUE(equals(attributes.otherHints[0].second, "new_user_hint_value"));
     EXPECT_TRUE(equals(attributes.invalidKernel.value(), "invalid_kernel_reason"));
+    EXPECT_EQ(8, attributes.intelReqdThreadgroupDispatchSize.value());
 }
 
 TEST(ReadZeInfoDebugEnvironment, givenSipSurfaceBtiEntryThenSetProperMembers) {
@@ -2366,6 +2368,7 @@ kernels:
       intel_reqd_sub_group_size: 16
       intel_reqd_workgroup_walk_order: [0, 1, 2]
       reqd_work_group_size: [256, 2, 1]
+      intel_reqd_thread_group_dispatch_size: 8
       vec_type_hint:   uint
       work_group_size_hint: [256, 2, 1]
       new_user_hint: new_user_hint_value
@@ -2376,8 +2379,9 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
 
-    EXPECT_STREQ("new_user_hint(new_user_hint_value) intel_reqd_sub_group_size(16) intel_reqd_workgroup_walk_order(0,1,2) reqd_work_group_size(256,2,1) work_group_size_hint(256,2,1) vec_type_hint(uint)", kernelDescriptor->kernelMetadata.kernelLanguageAttributes.c_str());
+    EXPECT_STREQ("new_user_hint(new_user_hint_value) intel_reqd_sub_group_size(16) intel_reqd_workgroup_walk_order(0,1,2) reqd_work_group_size(256,2,1) work_group_size_hint(256,2,1) vec_type_hint(uint) intel_reqd_thread_group_dispatch_size(8)", kernelDescriptor->kernelMetadata.kernelLanguageAttributes.c_str());
     EXPECT_EQ(16U, kernelDescriptor->kernelMetadata.requiredSubGroupSize);
+    EXPECT_EQ(8U, kernelDescriptor->kernelMetadata.requiredThreadGroupDispatchSize);
     EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.isInvalid);
 }
 

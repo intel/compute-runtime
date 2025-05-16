@@ -67,7 +67,7 @@ XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenInterfaceDescriptorDataWhenAdjustI
     MockDevice mockDevice;
     uint32_t threadsPerGroup = 1;
     uint32_t threadGroups[] = {walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension()};
-    EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, mockDevice, *defaultHwInfo, threadGroups, 1, 0, threadsPerGroup, walkerCmd);
+    EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, mockDevice, *defaultHwInfo, threadGroups, 0, 1, 0, threadsPerGroup, walkerCmd);
     EXPECT_EQ(2u, iddArg.getBindingTableEntryCount());
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT_BETWEEN_1_AND_4_SAMPLERS_USED, iddArg.getSamplerCount());
 }

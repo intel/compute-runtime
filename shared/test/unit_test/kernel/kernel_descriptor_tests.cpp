@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,6 +86,7 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_TRUE(desc.kernelMetadata.printfStringsMap.empty());
     EXPECT_EQ(0U, desc.kernelMetadata.compiledSubGroupsNumber);
     EXPECT_EQ(0U, desc.kernelMetadata.requiredSubGroupSize);
+    EXPECT_EQ(0U, desc.kernelMetadata.requiredThreadGroupDispatchSize);
     EXPECT_EQ(nullptr, desc.external.debugData.get());
     EXPECT_EQ(nullptr, desc.external.igcInfoForGtpin);
 }

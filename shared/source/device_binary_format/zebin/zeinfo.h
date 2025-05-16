@@ -80,6 +80,7 @@ inline constexpr ConstStringRef invalidKernel("invalid_kernel");
 inline constexpr ConstStringRef vecTypeHint("vec_type_hint");
 inline constexpr ConstStringRef workgroupSizeHint("work_group_size_hint");
 inline constexpr ConstStringRef hintSuffix("_hint");
+inline constexpr ConstStringRef intelReqdThreadgroupDispatchSize("intel_reqd_thread_group_dispatch_size");
 } // namespace Attributes
 
 namespace DebugEnv {
@@ -459,12 +460,14 @@ using ReqdWorkgroupSizeT = std::array<int32_t, 3>;
 using InvalidKernelT = ConstStringRef;
 using WorkgroupSizeHint = std::array<int32_t, 3>;
 using VecTypeHintT = ConstStringRef;
+using IntelReqdThreadgroupDispatchSizeT = int32_t;
 
 namespace Defaults {
 inline constexpr IntelReqdSubgroupSizeT intelReqdSubgroupSize = 0;
 inline constexpr IntelReqdWorkgroupWalkOrder intelReqdWorkgroupWalkOrder = {0, 0, 0};
 inline constexpr ReqdWorkgroupSizeT reqdWorkgroupSize = {0, 0, 0};
 inline constexpr WorkgroupSizeHint workgroupSizeHint = {0, 0, 0};
+inline constexpr IntelReqdThreadgroupDispatchSizeT intelReqdThreadgroupDispatchSize = 0;
 } // namespace Defaults
 
 struct AttributesBaseT {
@@ -474,6 +477,7 @@ struct AttributesBaseT {
     std::optional<InvalidKernelT> invalidKernel;
     std::optional<WorkgroupSizeHint> workgroupSizeHint;
     std::optional<VecTypeHintT> vecTypeHint;
+    std::optional<IntelReqdThreadgroupDispatchSizeT> intelReqdThreadgroupDispatchSize;
     std::vector<std::pair<ConstStringRef, ConstStringRef>> otherHints;
 };
 } // namespace Attributes

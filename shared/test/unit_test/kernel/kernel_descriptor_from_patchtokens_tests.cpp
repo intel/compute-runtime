@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -444,6 +444,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenhKernelAttributesThenPopulatesStrings
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_TRUE(kernelDescriptor.kernelMetadata.kernelLanguageAttributes.empty());
     EXPECT_EQ(0U, kernelDescriptor.kernelMetadata.requiredSubGroupSize);
+    EXPECT_EQ(0U, kernelDescriptor.kernelMetadata.requiredThreadGroupDispatchSize);
 
     iOpenCL::SPatchKernelAttributesInfo kernelAttributesToken;
     kernelAttributesToken.AttributesSize = 0U;
@@ -451,8 +452,9 @@ TEST(KernelDescriptorFromPatchtokens, GivenhKernelAttributesThenPopulatesStrings
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_TRUE(kernelDescriptor.kernelMetadata.kernelLanguageAttributes.empty());
     EXPECT_EQ(0U, kernelDescriptor.kernelMetadata.requiredSubGroupSize);
+    EXPECT_EQ(0U, kernelDescriptor.kernelMetadata.requiredThreadGroupDispatchSize);
 
-    std::string attribute = "intel_reqd_sub_group_size(32)";
+    std::string attribute = "intel_reqd_sub_group_size(32) intel_reqd_thread_group_dispatch_size(8)";
     kernelAttributesToken.AttributesSize = static_cast<uint32_t>(attribute.size());
     std::vector<uint8_t> tokenStorage;
     tokenStorage.insert(tokenStorage.end(), reinterpret_cast<uint8_t *>(&kernelAttributesToken), reinterpret_cast<uint8_t *>(&kernelAttributesToken + 1));
@@ -462,6 +464,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenhKernelAttributesThenPopulatesStrings
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_EQ(attribute, kernelDescriptor.kernelMetadata.kernelLanguageAttributes);
     EXPECT_EQ(32U, kernelDescriptor.kernelMetadata.requiredSubGroupSize);
+    EXPECT_EQ(8U, kernelDescriptor.kernelMetadata.requiredThreadGroupDispatchSize);
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.isInvalid);
 }
 

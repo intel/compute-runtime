@@ -126,6 +126,18 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchKernelAttribute
         }
     }
 
+    constexpr ConstStringRef attributeReqdThreadGroupDispatchSizeBeg = "intel_reqd_thread_group_dispatch_size(";
+    it = attributes.find(attributeReqdThreadGroupDispatchSizeBeg.begin());
+    if (it != std::string::npos) {
+        it += attributeReqdThreadGroupDispatchSizeBeg.size();
+        dst.kernelMetadata.requiredThreadGroupDispatchSize = 0U;
+        while ((attributes[it] >= '0') && (attributes[it] <= '9')) {
+            dst.kernelMetadata.requiredThreadGroupDispatchSize *= 10;
+            dst.kernelMetadata.requiredThreadGroupDispatchSize += attributes[it] - '0';
+            ++it;
+        }
+    }
+
     constexpr ConstStringRef invalidKernelAttrBeg = "invalid_kernel(";
     dst.kernelAttributes.flags.isInvalid = (attributes.find(invalidKernelAttrBeg.data()) != std::string::npos);
 }
