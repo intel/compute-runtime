@@ -33,9 +33,9 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     size_t getRenderPitch() override { return rowPitch; }
 
-    uint64_t getDriverProtectionBits(bool overrideUsage, uint32_t usage) override {
-        driverProtectionBitsUsageWasOverriden = overrideUsage;
-        driverProtectionBitsUsageOverride = usage;
+    uint64_t getDriverProtectionBits(uint32_t overrideUsage) override {
+        driverProtectionBitsUsageWasOverriden = GMM_RESOURCE_USAGE_UNKNOWN != overrideUsage;
+        driverProtectionBitsUsageOverride = overrideUsage;
         return driverProtectionBits;
     }
 

@@ -957,6 +957,11 @@ uint64_t ProductHelperHw<gfxProduct>::getPatIndex(CacheRegion cacheRegion, Cache
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getGmmResourceUsageOverride(uint32_t usageType) const {
+    return 0u;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
     return true;
 }

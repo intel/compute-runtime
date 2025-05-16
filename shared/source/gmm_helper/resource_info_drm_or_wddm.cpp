@@ -9,10 +9,10 @@
 
 namespace NEO {
 
-uint64_t GmmResourceInfo::getDriverProtectionBits(bool overrideUsage, uint32_t usage) {
+uint64_t GmmResourceInfo::getDriverProtectionBits(uint32_t overrideUsage) {
     GMM_OVERRIDE_VALUES overrideValues{};
-    if (overrideUsage) {
-        overrideValues.Usage = usage;
+    if (GMM_RESOURCE_USAGE_UNKNOWN != overrideUsage) {
+        overrideValues.Usage = overrideUsage;
     }
     return static_cast<uint64_t>(resourceInfo->GetDriverProtectionBits(overrideValues));
 }

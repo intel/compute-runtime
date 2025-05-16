@@ -993,6 +993,12 @@ HWTEST_F(ProductHelperTest, givenBooleanUncachedWhenCallOverridePatIndexThenProp
     EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
 }
 
+HWTEST_F(ProductHelperTest, givenGmmUsageTypeWhenCallingGetGmmResourceUsageOverrideThenReturnNoOverride) {
+    constexpr uint32_t noOverride = GMM_RESOURCE_USAGE_UNKNOWN;
+    EXPECT_EQ(noOverride, productHelper->getGmmResourceUsageOverride(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(noOverride, productHelper->getGmmResourceUsageOverride(GMM_RESOURCE_USAGE_XADAPTER_SHARED_RESOURCE));
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCorrectValueIsReturned) {
     if (releaseHelper) {
         EXPECT_EQ(releaseHelper->getSupportedNumGrfs(), productHelper->getSupportedNumGrfs(releaseHelper));
