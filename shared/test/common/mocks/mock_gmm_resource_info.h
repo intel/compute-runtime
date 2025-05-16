@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,11 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     size_t getRenderPitch() override { return rowPitch; }
 
-    uint64_t getDriverProtectionBits() override { return driverProtectionBits; }
+    uint64_t getDriverProtectionBits(bool overrideUsage, uint32_t usage) override {
+        driverProtectionBitsUsageWasOverriden = overrideUsage;
+        driverProtectionBitsUsageOverride = usage;
+        return driverProtectionBits;
+    }
 
     uint32_t getNumSamples() override { return mockResourceCreateParams.MSAA.NumSamples; }
 
@@ -116,6 +120,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     using GmmResourceInfo::decodeResourceInfo;
 
     uint64_t driverProtectionBits = 0;
+    bool driverProtectionBitsUsageWasOverriden = false;
+    uint32_t driverProtectionBitsUsageOverride = 0u;
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;
     SurfaceFormatInfo tempSurface{};
