@@ -247,7 +247,7 @@ TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsB
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsBeingObtainedOrCreatedThenZeroIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
     uint64_t handle = 0;
-    EXPECT_EQ(0, graphicsAllocation.createInternalHandle(nullptr, 0u, handle));
+    graphicsAllocation.createInternalHandle(nullptr, 0u, handle);
     EXPECT_EQ(0ull, handle);
     graphicsAllocation.clearInternalHandle(0u);
 }

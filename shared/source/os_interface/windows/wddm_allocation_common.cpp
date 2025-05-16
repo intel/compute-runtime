@@ -16,12 +16,12 @@ int WddmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t 
         WddmMemoryManager *wddmMemoryManager = reinterpret_cast<WddmMemoryManager *>(memoryManager);
         auto status = wddmMemoryManager->createInternalNTHandle(&resourceHandle, &ntSharedHandle, this->getRootDeviceIndex());
         if (status != STATUS_SUCCESS) {
-            return -1;
+            return handle == 0;
         }
         ntSecureHandle = castToUint64(ntSharedHandle);
         handle = ntSecureHandle;
     }
-    return handle == 0 ? -1 : 0;
+    return handle == 0;
 }
 void WddmAllocation::clearInternalHandle(uint32_t handleId) {
     ntSecureHandle = 0u;
