@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
@@ -264,6 +265,43 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalHostMemoryThenSucc
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(0u, allocation->getGpuAddress());
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalHostMemoryThenSuccessReturnedAndCacheableFlagIsOverriden) {
+    mock->ioctlExpected.gemWait = 49;
+    mock->ioctlExpected.gemCreateExt = 49;
+    mock->ioctlExpected.gemMmapOffset = 49;
+    mock->ioctlExpected.gemClose = 49;
+
+    std::vector<MemoryRegion> regionInfo(1);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    this->mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    this->mock->memoryInfoQueried = true;
+
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.flags.shareable = true;
+    auto gmmHelper = memoryManager->getGmmHelper(0);
+    auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
+
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        allocationData.type = static_cast<AllocationType>(i);
+        MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+        auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+        EXPECT_EQ(status, MemoryManager::AllocationStatus::Success);
+        EXPECT_NE(nullptr, allocation);
+        EXPECT_EQ(0u, allocation->getGpuAddress());
+
+        if (productHelper.overrideAllocationCpuCacheable(allocationData)) {
+            EXPECT_TRUE(allocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
+        } else {
+            auto gmmResourceUsage = CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo());
+            auto preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsage, gmmHelper->getRootDeviceEnvironment());
+            bool cacheable = !preferNoCpuAccess && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
+            EXPECT_EQ(cacheable, allocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
+        }
+
+        memoryManager->freeGraphicsMemory(allocation);
+    }
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCallingCheckUnexpectedGpuPagedfaultThenAllEnginesWereChecked) {
