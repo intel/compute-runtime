@@ -64,9 +64,6 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
     }
 
     template <typename FamilyType>
-    bool isStallingBarrier(GenCmdList::iterator &iter);
-
-    template <typename FamilyType>
     void findHardwareCommands();
 
     template <typename FamilyType>

@@ -393,28 +393,38 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, WhenForcePip
     GenCmdList::iterator itor = cmdList.begin();
     int counterPC = 0;
     while (itor != cmdList.end()) {
-        if (counterPC == 0 && isStallingBarrier<FamilyType>(itor)) {
-            counterPC++;
-            itor++;
-            continue;
-        }
         auto pipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*itor);
-        if (pipeControl != nullptr) {
-            // Second pipe control with all flushes
-            EXPECT_EQ(1, counterPC);
-            EXPECT_EQ(bool(pipeControl->getCommandStreamerStallEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getDcFlushEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getRenderTargetCacheFlushEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getInstructionCacheInvalidateEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getTextureCacheInvalidationEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getPipeControlFlushEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getVfCacheInvalidationEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getConstantCacheInvalidationEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getStateCacheInvalidationEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getTlbInvalidate()), true);
+        if (pipeControl) {
+            switch (counterPC) {
+            case 0: // First pipe control with CS Stall
+                EXPECT_EQ(bool(pipeControl->getCommandStreamerStallEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getDcFlushEnable()), false);
+                EXPECT_EQ(bool(pipeControl->getRenderTargetCacheFlushEnable()), false);
+                EXPECT_EQ(bool(pipeControl->getInstructionCacheInvalidateEnable()), false);
+                EXPECT_EQ(bool(pipeControl->getTextureCacheInvalidationEnable()), false);
+                EXPECT_EQ(bool(pipeControl->getPipeControlFlushEnable()), false);
+                EXPECT_EQ(bool(pipeControl->getVfCacheInvalidationEnable()), false);
+                EXPECT_EQ(bool(pipeControl->getConstantCacheInvalidationEnable()), false);
+                EXPECT_EQ(bool(pipeControl->getStateCacheInvalidationEnable()), false);
+                EXPECT_EQ(bool(pipeControl->getTlbInvalidate()), false);
+                break;
+            case 1: // Second pipe control with all flushes
+                EXPECT_EQ(bool(pipeControl->getCommandStreamerStallEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getDcFlushEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getRenderTargetCacheFlushEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getInstructionCacheInvalidateEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getTextureCacheInvalidationEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getPipeControlFlushEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getVfCacheInvalidationEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getConstantCacheInvalidationEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getStateCacheInvalidationEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getTlbInvalidate()), true);
+            default:
+                break;
+            }
             counterPC++;
-            break;
         }
+
         ++itor;
     }
 

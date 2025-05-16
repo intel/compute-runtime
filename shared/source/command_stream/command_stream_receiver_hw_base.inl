@@ -813,8 +813,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     }
 
     if (debugManager.flags.ForcePipeControlPriorToWalker.get()) {
-        size += MemorySynchronizationCommands<GfxFamily>::getSizeForStallingBarrier();
-        size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+        size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
 
     return size;
