@@ -37,12 +37,14 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
     auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
-    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
+    sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
 
     auto ptr2 = malloc(1024);
+
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
 
     EXPECT_EQ(0u, prefetchContext.allocations.size());
 

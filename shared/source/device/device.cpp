@@ -724,11 +724,11 @@ Debugger *Device::getDebugger() const {
 }
 
 bool Device::areSharedSystemAllocationsAllowed() const {
-    if ((debugManager.flags.EnableRecoverablePageFaults.get() == 0) || (debugManager.flags.EnableSharedSystemUsmSupport.get() == 0)) {
+    if ((debugManager.flags.EnableRecoverablePageFaults.get() == 0) || (debugManager.flags.EnableSharedSystemUsmSupport.get() != 1)) {
         return false;
     }
-    uint64_t mask = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
-    if (((getHardwareInfo().capabilityTable.sharedSystemMemCapabilities) & mask) == mask) {
+    uint64_t mask = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    if (getHardwareInfo().capabilityTable.sharedSystemMemCapabilities & mask) {
         return true;
     }
     return false;

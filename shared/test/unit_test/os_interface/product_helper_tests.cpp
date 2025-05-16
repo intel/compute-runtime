@@ -71,18 +71,26 @@ HWTEST_F(ProductHelperTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThen
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSharedSystemMemCapabilitiesThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
 
-    EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
+    uint64_t caps = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    pInHwInfo.capabilityTable.sharedSystemMemCapabilities = caps;
 
     for (auto enable : {-1, 0, 1}) {
         debugManager.flags.EnableSharedSystemUsmSupport.set(enable);
-
-        if (enable > 0) {
-            auto caps = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
-            EXPECT_EQ(caps, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
-        } else {
+        if (enable != 1) {
             EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
+        } else {
+            for (auto pf_enable : {-1, 0, 1}) {
+                debugManager.flags.EnableRecoverablePageFaults.set(pf_enable);
+                if (pf_enable != 0) {
+                    EXPECT_EQ(caps, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
+                } else {
+                    EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
+                }
+            }
         }
     }
+
+    pInHwInfo.capabilityTable.sharedSystemMemCapabilities = caps;
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfIsBlitSplitEnqueueWARequiredThenReturnFalse) {

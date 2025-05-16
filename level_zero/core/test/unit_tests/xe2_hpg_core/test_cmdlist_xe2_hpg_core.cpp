@@ -481,6 +481,8 @@ HWTEST2_F(CommandListStatePrefetchXe2HpgCore, givenUnifiedSharedMemoryWhenPrefet
 }
 
 HWTEST2_F(CommandListStatePrefetchXe2HpgCore, givenSharedSystemAllocationOnSupportedDeviceWhenPrefetchApiIsCalledThenRequestMemoryPrefetchCalled, IsXe2HpgCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     memoryManager->prefetchManager.reset(new MockPrefetchManager());
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
@@ -490,7 +492,7 @@ HWTEST2_F(CommandListStatePrefetchXe2HpgCore, givenSharedSystemAllocationOnSuppo
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
-    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
+    sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
     size_t size = 10;
     void *ptr = malloc(size);
@@ -510,10 +512,13 @@ HWTEST2_F(CommandListStatePrefetchXe2HpgCore, givenSharedSystemAllocationOnSuppo
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
-    sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
+    sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
     size_t size = 10;
     void *ptr = malloc(size);
