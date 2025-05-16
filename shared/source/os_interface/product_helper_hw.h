@@ -35,6 +35,7 @@ class ProductHelperHw : public ProductHelper {
     bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const override;
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
+    uint32_t getPreferredWorkgroupCountPerSubslice() const override;
     void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const override;
     void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const override;
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;

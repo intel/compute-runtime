@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,6 +101,7 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
                         kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion);
 
     wsInfo.setIfUseImg(kernelInfo);
+    wsInfo.setPreferredWgCountPerSubslice(device.getProductHelper().getPreferredWorkgroupCountPerSubslice());
 
     return wsInfo;
 }

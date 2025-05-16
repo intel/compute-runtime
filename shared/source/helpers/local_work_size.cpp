@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -360,6 +360,9 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
         workGroupSize[i] = 1;
 
     UNRECOVERABLE_IF(wsInfo.simdSize == 0);
+    uint64_t totalNumberOfItems = workItems[0] * workItems[1] * workItems[2];
+    auto optimalWgThreadCount = optimalHardwareThreadCountGeneric[0];
+    bool totalRequiredThreadGroupsMoreThanSingleThreadGroup = totalNumberOfItems > wsInfo.simdSize * optimalWgThreadCount;
 
     // Find biggest power of two which devide each dimension size
     if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers) {
@@ -367,9 +370,14 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
             return computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize, workDim);
         }
 
+        if (wsInfo.preferredWgCountPerSubSlice != 0 && wsInfo.simdSize == 32 && totalRequiredThreadGroupsMoreThanSingleThreadGroup) {
+            optimalWgThreadCount = std::min(optimalWgThreadCount, wsInfo.numThreadsPerSubSlice / wsInfo.preferredWgCountPerSubSlice);
+            wsInfo.maxWorkGroupSize = wsInfo.simdSize * optimalWgThreadCount;
+        }
+
         size_t itemsPowerOfTwoDivisors[3] = {1, 1, 1};
         for (auto i = 0u; i < workDim; i++) {
-            uint32_t requiredWorkItemsCount = uint32_t(wsInfo.simdSize * optimalHardwareThreadCountGeneric[0]);
+            uint32_t requiredWorkItemsCount = uint32_t(wsInfo.simdSize * optimalWgThreadCount);
             while (requiredWorkItemsCount > 1 && !(Math::isDivisibleByPowerOfTwoDivisor(uint32_t(workItems[i]), requiredWorkItemsCount)))
                 requiredWorkItemsCount >>= 1;
             itemsPowerOfTwoDivisors[i] = requiredWorkItemsCount;
@@ -382,7 +390,7 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
         // If computed dimension sizes which are powers of two are creating group which is
         // bigger than maxWorkGroupSize or this group would create more than optimal hardware threads then downsize it
         uint64_t allItems = itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] * itemsPowerOfTwoDivisors[2];
-        if (allItems > wsInfo.simdSize && (allItems > wsInfo.maxWorkGroupSize || allItems > wsInfo.simdSize * optimalHardwareThreadCountGeneric[0])) {
+        if (allItems > wsInfo.simdSize && (allItems > wsInfo.maxWorkGroupSize || allItems > wsInfo.simdSize * optimalWgThreadCount)) {
             return computePowerOfTwoLWS(itemsPowerOfTwoDivisors, wsInfo, workGroupSize, workDim, canUseNx4);
         }
         // If coputed workgroup is at this point in correct size
@@ -394,9 +402,8 @@ void computeWorkgroupSizeND(WorkSizeInfo &wsInfo, size_t workGroupSize[3], const
         }
     }
 
-    uint64_t totalNuberOfItems = workItems[0] * workItems[1] * workItems[2];
     // If dimensions are not powers of two but total number of items is less than max work group size
-    if (totalNuberOfItems <= wsInfo.maxWorkGroupSize) {
+    if (totalNumberOfItems <= wsInfo.maxWorkGroupSize) {
         for (auto i = 0u; i < workDim; i++)
             workGroupSize[i] = workItems[i];
         return;

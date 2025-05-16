@@ -1166,3 +1166,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingIsResourceUncachedForC
         }
     }
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingPreferredWorkgroupCountPerSubsliceThenZeroReturned) {
+    EXPECT_EQ(0u, productHelper->getPreferredWorkgroupCountPerSubslice());
+}

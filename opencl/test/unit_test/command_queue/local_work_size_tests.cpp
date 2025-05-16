@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -307,6 +307,257 @@ TEST_F(LocalWorkSizeTest, given2DimWorkGroupAndSimdEqual32WhenComputeCalledThenL
     EXPECT_EQ(workGroupSize[0], 1u);
     EXPECT_EQ(workGroupSize[1], 128u);
     EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST_F(LocalWorkSizeTest, givenSimdEqual32AndPreferredWgCountPerSubslice2WhenComputeCalledThenLocalGroupSizeIsLimited) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    WorkSizeInfo wsInfo(1024, 0u, 32, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
+    wsInfo.setPreferredWgCountPerSubslice(2);
+
+    constexpr uint32_t maxLws = 32 * 32 / 2; // simd size * num threadsPerSubslice / preferredWgCountPerSubslice
+
+    uint32_t workDim = 2;
+    size_t workGroup[3] = {384, 96, 1};
+    size_t workGroupSize[3];
+
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 128u);
+    EXPECT_EQ(workGroupSize[1], 2u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] < maxLws);
+
+    workGroup[0] = 1024 * 256;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 256u);
+    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 48;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 16u);
+    EXPECT_EQ(workGroupSize[1], 32u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 512;
+    workGroup[1] = 1;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 512u);
+    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 12;
+    workGroup[1] = 512;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 4u);
+    EXPECT_EQ(workGroupSize[1], 64u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 1;
+    workGroup[1] = 384;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 1u);
+    EXPECT_EQ(workGroupSize[1], 128u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 128;
+    workGroup[1] = 4;
+    wsInfo.imgUsed = true;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 128u);
+    EXPECT_EQ(workGroupSize[1], 4u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 64;
+    workGroup[1] = 8;
+    wsInfo.imgUsed = false;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 64u);
+    EXPECT_EQ(workGroupSize[1], 8u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 1024;
+    workGroup[1] = 9;
+    wsInfo.imgUsed = true;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 512u);
+    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+}
+
+TEST_F(LocalWorkSizeTest, givenSimdEqual32AndPreferredWgCountPerSubslice4WhenComputeCalledThenLocalGroupSizeIsLimited) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    WorkSizeInfo wsInfo(1024, 0u, 32, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
+    wsInfo.setPreferredWgCountPerSubslice(4);
+
+    constexpr uint32_t maxLws = 32 * 32 / 4; // simd size * num threadsPerSubslice / preferredWgCountPerSubslice
+
+    uint32_t workDim = 2;
+    size_t workGroup[3] = {384, 96, 1};
+    size_t workGroupSize[3];
+
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 128u);
+    EXPECT_EQ(workGroupSize[1], 2u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 1024 * 256;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 256u);
+    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 48;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 16u);
+    EXPECT_EQ(workGroupSize[1], 16u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 512;
+    workGroup[1] = 1;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 256u);
+    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 12;
+    workGroup[1] = 512;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 4u);
+    EXPECT_EQ(workGroupSize[1], 64u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 1;
+    workGroup[1] = 384;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 1u);
+    EXPECT_EQ(workGroupSize[1], 128u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 128;
+    workGroup[1] = 4;
+    wsInfo.imgUsed = true;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 64u);
+    EXPECT_EQ(workGroupSize[1], 4u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 64;
+    workGroup[1] = 8;
+    wsInfo.imgUsed = false;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 64u);
+    EXPECT_EQ(workGroupSize[1], 4u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 1024;
+    workGroup[1] = 9;
+    wsInfo.imgUsed = true;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 256u);
+    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+
+    workGroup[0] = 2048;
+    workGroup[1] = 1;
+    wsInfo.imgUsed = false;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 256u);
+    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_TRUE(workGroupSize[0] * workGroupSize[1] <= maxLws);
+}
+
+TEST_F(LocalWorkSizeTest, givenSimdEqual32AndPreferredWgCountPerSubslice4WhenBarriersOrSlmUsedThenLocalGroupSizeIsNotLimited) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    WorkSizeInfo wsInfo(1024, 0u, 32, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
+    wsInfo.setPreferredWgCountPerSubslice(4);
+
+    for (uint32_t i = 0; i < 2; i++) {
+        if (i == 0) {
+            wsInfo.hasBarriers = true;
+        } else if (i == 1) {
+            wsInfo.hasBarriers = false;
+            wsInfo.slmTotalSize = 256;
+        }
+
+        uint32_t workDim = 2;
+        size_t workGroup[3] = {384, 96, 1};
+        size_t workGroupSize[3];
+
+        NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+        if (wsInfo.slmTotalSize == 0) {
+            EXPECT_EQ(workGroupSize[0], 384u);
+            EXPECT_EQ(workGroupSize[1], 2u);
+            EXPECT_EQ(workGroupSize[2], 1u);
+        } else {
+            // use ratio in algorithm
+            EXPECT_EQ(workGroupSize[0], 64u);
+            EXPECT_EQ(workGroupSize[1], 16u);
+            EXPECT_EQ(workGroupSize[2], 1u);
+        }
+
+        workGroup[0] = 1024 * 256;
+        NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+        EXPECT_EQ(workGroupSize[0], 512u);
+        EXPECT_EQ(workGroupSize[1], 2u);
+        EXPECT_EQ(workGroupSize[2], 1u);
+
+        workGroup[0] = 48;
+        NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+        EXPECT_EQ(workGroupSize[0], 48u);
+        EXPECT_EQ(workGroupSize[1], 16u);
+        EXPECT_EQ(workGroupSize[2], 1u);
+
+        workGroup[0] = 128;
+        workGroup[1] = 4;
+        wsInfo.imgUsed = true;
+        NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+        EXPECT_EQ(workGroupSize[0], 128u);
+        EXPECT_EQ(workGroupSize[1], 4u);
+        EXPECT_EQ(workGroupSize[2], 1u);
+
+        workGroup[0] = 1024;
+        workGroup[1] = 9;
+        wsInfo.imgUsed = false;
+        NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+        if (wsInfo.slmTotalSize == 0) {
+            EXPECT_EQ(workGroupSize[0], 512u);
+            EXPECT_EQ(workGroupSize[1], 1u);
+            EXPECT_EQ(workGroupSize[2], 1u);
+        } else {
+            EXPECT_EQ(workGroupSize[0], 256u);
+            EXPECT_EQ(workGroupSize[1], 3u);
+            EXPECT_EQ(workGroupSize[2], 1u);
+        }
+
+        workGroup[0] = 2048;
+        workGroup[1] = 2;
+        wsInfo.imgUsed = false;
+        NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+        EXPECT_EQ(workGroupSize[0], 512u);
+        EXPECT_EQ(workGroupSize[1], 2u);
+        EXPECT_EQ(workGroupSize[2], 1u);
+    }
 }
 
 TEST_F(LocalWorkSizeTest, given3DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {

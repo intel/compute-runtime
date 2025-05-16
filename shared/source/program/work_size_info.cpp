@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,10 @@ void WorkSizeInfo::checkRatio(const size_t workItems[3]) {
         targetRatio = yTilingRatioValue;
         useStrictRatio = true;
     }
+}
+
+void WorkSizeInfo::setPreferredWgCountPerSubslice(uint32_t preferredWgCount) {
+    preferredWgCountPerSubSlice = preferredWgCount;
 }
 
 } // namespace NEO
