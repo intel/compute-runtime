@@ -1931,3 +1931,21 @@ HWTEST2_F(GfxCoreHelperTest, whenIsCacheFlushPriorImageReadRequiredCalledThenFal
     auto &helper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(helper.isCacheFlushPriorImageReadRequired());
 }
+
+HWTEST2_F(GfxCoreHelperTest, givenAtLeastXe2HpgWhenSetStallOnlyBarrierThenPipeControlProgrammed, IsBeforeXe2HpgCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    constexpr static auto bufferSize = sizeof(PIPE_CONTROL);
+
+    char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+    PipeControlArgs args;
+    args.csStallOnly = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, PostSyncMode::noWrite, 0u, 0u, args);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList pipeControlList = hwParser.getCommandsList<PIPE_CONTROL>();
+    EXPECT_EQ(1u, pipeControlList.size());
+    GenCmdList::iterator itor = pipeControlList.begin();
+    EXPECT_TRUE(hwParser.isStallingBarrier<FamilyType>(itor));
+}

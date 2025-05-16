@@ -97,4 +97,15 @@ bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
     return true;
 }
 
+template <>
+void MemorySynchronizationCommands<Family>::setStallingBarrier(void *commandsBuffer, PipeControlArgs &args) {
+    using RESOURCE_BARRIER = typename Family::RESOURCE_BARRIER;
+
+    auto resourceBarrier = Family::cmdInitResourceBarrier;
+    resourceBarrier.setBarrierType(RESOURCE_BARRIER::BARRIER_TYPE::BARRIER_TYPE_IMMEDIATE);
+    resourceBarrier.setWaitStage(RESOURCE_BARRIER::WAIT_STAGE::WAIT_STAGE_GPGPU);
+    resourceBarrier.setSignalStage(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU);
+    *reinterpret_cast<RESOURCE_BARRIER *>(commandsBuffer) = resourceBarrier;
+}
+
 } // namespace NEO

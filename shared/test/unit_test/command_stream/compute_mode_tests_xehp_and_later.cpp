@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     overrideComputeModeRequest<FamilyType>(false, true, true);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
+    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + MemorySynchronizationCommands<FamilyType>::getSizeForStallingBarrier();
     if (isBasicWARequired) {
         cmdsSize += +sizeof(PIPE_CONTROL);
     }
