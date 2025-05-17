@@ -68,10 +68,6 @@ constexpr uint64_t mockIdiWriteVal = 9u;
 constexpr uint64_t mockDisplayVc1ReadVal = 10u;
 constexpr uint64_t numberMcChannels = 16;
 
-constexpr uint64_t mockIntegratedDeviceAvailableMemory = 8192 * 1024;
-constexpr uint64_t mockIntegratedDeviceFreeMemory = 4096 * 1024;
-constexpr uint64_t mockIntegratedDevicePhysicalSize = 16384 * 1024;
-
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -169,26 +165,6 @@ struct MockMemorySysFsAccessInterface : public L0::Sysman::SysFsAccessInterface 
         }
         return result;
     }
-};
-
-struct MockMemoryFsAccessInterface : public L0::Sysman::FsAccessInterface {
-    bool mockMemInfoIncorrectValue = false;
-    ze_result_t read(std::string file, std::vector<std::string> &val) override {
-        if (file == "/proc/meminfo") {
-            if (mockMemInfoIncorrectValue) {
-                val.push_back("Buffers: 158772 kB");
-                val.push_back("Cached: 11744244 kB");
-                val.push_back("SwapCached: 1376 kB");
-                val.push_back("Active: 6777644 kB");
-            } else {
-                val.push_back("MemTotal: 16384 kB");
-                val.push_back("MemFree: 4096 kB");
-                val.push_back("MemAvailable: 8192 kB");
-            }
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-    MockMemoryFsAccessInterface() = default;
 };
 
 class MockProcFsAccessInterface : public L0::Sysman::ProcFsAccessInterface {

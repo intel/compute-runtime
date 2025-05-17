@@ -9,7 +9,6 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
-#include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
@@ -38,13 +37,8 @@ void SysmanProductHelperHw<gfxProduct>::getFrequencyStepSize(double *pStepSize) 
 template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
     auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
-    bool isIntegratedDevice = pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice;
 
-    if (isIntegratedDevice) {
-        pProperties->location = ZES_MEM_LOC_SYSTEM;
-    } else {
-        pProperties->location = ZES_MEM_LOC_DEVICE;
-    }
+    pProperties->location = ZES_MEM_LOC_DEVICE;
     pProperties->type = ZES_MEM_TYPE_DDR;
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subDeviceId;
@@ -90,17 +84,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
     pProperties->busWidth = memoryBusWidth;
     pProperties->physicalSize = 0;
 
-    if (isIntegratedDevice) {
-        pProperties->busWidth = -1;
-        pProperties->numChannels = -1;
-        pProperties->type = ZES_MEM_TYPE_FORCE_UINT32;
-
-        const std::string memTotalKey = "MemTotal";
-        auto memInfoValues = LinuxMemoryImp::readMemInfoValues(&pLinuxSysmanImp->getFsAccess(), {memTotalKey});
-        if (memInfoValues.find(memTotalKey) != memInfoValues.end()) {
-            pProperties->physicalSize = memInfoValues[memTotalKey] * 1024;
-        }
-    } else if (pSysmanKmdInterface->isPhysicalMemorySizeSupported() == true) {
+    if (pSysmanKmdInterface->isPhysicalMemorySizeSupported() == true) {
         if (isSubdevice) {
             std::string memval;
             std::string physicalSizeFile = pSysmanKmdInterface->getSysfsFilePathForPhysicalMemorySize(subDeviceId);
