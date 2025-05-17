@@ -9,6 +9,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
 
+#include <cstdint>
 #include <cstddef>
 #include <memory>
 #include <string>
