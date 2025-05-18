@@ -55,6 +55,9 @@ typedef int (*pIgscIfrGetStatusExt)(struct igsc_device_handle *handle,
                                     uint32_t *ifrApplied,
                                     uint32_t *prevErrors,
                                     uint32_t *pendingReset);
+
+typedef int (*pIgscDevicePscVersion)(struct igsc_device_handle *handle,
+                                     struct igsc_psc_version *version);
 typedef int (*pIgscIafPscUpdate)(struct igsc_device_handle *handle,
                                  const uint8_t *buffer,
                                  const uint32_t bufferLen,
@@ -82,6 +85,10 @@ typedef int (*pIgscGfspHeciCmd)(struct igsc_device_handle *handle,
                                 size_t outBufferSize,
                                 size_t *actualOutBufferSize);
 
+extern const std::string fwDeviceFwVersion;
+extern const std::string fwDeviceOpromVersion;
+extern const std::string fwDevicePscVersion;
+
 extern pIgscDeviceInitByDevice deviceInitByDevice;
 extern pIgscDeviceGetDeviceInfo deviceGetDeviceInfo;
 extern pIgscDeviceFwVersion deviceGetFwVersion;
@@ -95,6 +102,7 @@ extern pIgscDeviceOpromUpdate deviceOpromUpdate;
 extern pIgscDeviceOpromVersion deviceOpromVersion;
 extern pIgscDeviceClose deviceClose;
 extern pIgscIfrGetStatusExt deviceIfrGetStatusExt;
+extern pIgscDevicePscVersion deviceGetPscVersion;
 extern pIgscIafPscUpdate iafPscUpdate;
 extern pIgscGfspMemoryErrors gfspMemoryErrors;
 extern pIgscGfspCountTiles gfspCountTiles;

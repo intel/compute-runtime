@@ -26,20 +26,7 @@ class FirmwareInterface : public L0::Sysman::FirmwareUtil {};
 class FirmwareFsAccess : public L0::Sysman::FsAccessInterface {};
 class FirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {};
 
-struct MockFirmwareFsAccess : public FirmwareFsAccess {
-    ze_bool_t isReadFwTypes = true;
-    ze_result_t read(const std::string file, std::vector<std::string> &val) override {
-        if (isReadFwTypes) {
-            val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
-            val.push_back("mtd4: 00200000 00001000 \"i915-spi.42.auto.OptionROM\"");
-            val.push_back("mtd5: 00200000 00001000 \"i915-spi.42.auto.PSC\"");
-        } else {
-            val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
-            val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-};
+struct MockFirmwareFsAccess : public FirmwareFsAccess {};
 
 struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
@@ -83,6 +70,7 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 struct MockFirmwareInterface : public FirmwareInterface {
 
     ze_result_t getFwVersionResult = ZE_RESULT_SUCCESS;
+    ze_bool_t isFirmwareVersionsSupported = true;
 
     ze_result_t mockFwGetVersion(std::string &fwVersion) {
         return ZE_RESULT_SUCCESS;
@@ -112,7 +100,9 @@ struct MockFirmwareInterface : public FirmwareInterface {
     }
 
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override {
-        fwTypes = mockSupportedFirmwareTypes;
+        if (isFirmwareVersionsSupported) {
+            fwTypes = mockSupportedFirmwareTypes;
+        }
     }
 
     MockFirmwareInterface() = default;

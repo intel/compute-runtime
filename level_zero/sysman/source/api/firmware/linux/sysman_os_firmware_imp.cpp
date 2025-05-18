@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,37 +20,13 @@
 namespace L0 {
 namespace Sysman {
 
-static const std::string mtdDescriptor("/proc/mtd");
-
 void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
-    std::vector<std ::string> deviceSupportedFwTypes = {};
     supportedFwTypes.clear();
     if (pFwInterface != nullptr) {
         auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-        pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, deviceSupportedFwTypes);
-    }
-
-    if (deviceSupportedFwTypes.empty()) {
-        return;
-    }
-
-    FsAccessInterface *pFsAccess = &pLinuxSysmanImp->getFsAccess();
-    std::vector<std::string> mtdDescriptorStrings = {};
-    ze_result_t result = pFsAccess->read(mtdDescriptor, mtdDescriptorStrings);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s and returning error:0x%x \n", __FUNCTION__, mtdDescriptor.c_str(), result);
-        return;
-    }
-    for (const auto &readByteLine : mtdDescriptorStrings) {
-        for (const auto &fwType : deviceSupportedFwTypes) {
-            if (std::string::npos != readByteLine.find(fwType)) {
-                if (std::find(supportedFwTypes.begin(), supportedFwTypes.end(), fwType) == supportedFwTypes.end()) {
-                    supportedFwTypes.push_back(fwType);
-                }
-            }
-        }
+        pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, supportedFwTypes);
     }
 }
 

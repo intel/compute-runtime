@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ const std::string fwImageOpromInit = "igsc_image_oprom_init";
 const std::string fwImageOpromType = "igsc_image_oprom_type";
 const std::string fwDeviceOpromUpdate = "igsc_device_oprom_update";
 const std::string fwDeviceOpromVersion = "igsc_device_oprom_version";
+const std::string fwDevicePscVersion = "igsc_device_psc_version";
 const std::string fwDeviceClose = "igsc_device_close";
 
 pIgscDeviceInitByDevice deviceInitByDevice;
@@ -37,6 +38,7 @@ pIgscImageOpromInit imageOpromInit;
 pIgscImageOpromType imageOpromType;
 pIgscDeviceOpromUpdate deviceOpromUpdate;
 pIgscDeviceOpromVersion deviceOpromVersion;
+pIgscDevicePscVersion deviceGetPscVersion;
 pIgscDeviceClose deviceClose;
 
 bool FirmwareUtilImp::loadEntryPoints() {
@@ -51,6 +53,7 @@ bool FirmwareUtilImp::loadEntryPoints() {
     ok = ok && getSymbolAddr(fwImageOpromType, imageOpromType);
     ok = ok && getSymbolAddr(fwDeviceOpromUpdate, deviceOpromUpdate);
     ok = ok && getSymbolAddr(fwDeviceOpromVersion, deviceOpromVersion);
+    ok = ok && getSymbolAddr(fwDevicePscVersion, deviceGetPscVersion);
     ok = ok && getSymbolAddr(fwDeviceClose, deviceClose);
     ok = ok && loadEntryPointsExt();
 

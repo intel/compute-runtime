@@ -343,7 +343,35 @@ ze_result_t FirmwareUtilImp::flashFirmware(std::string fwType, void *pImage, uin
 }
 
 void FirmwareUtilImp::getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) {
-    fwTypes = deviceSupportedFirmwareTypes;
+    const std::lock_guard<std::mutex> lock(this->fwLock);
+    igsc_fw_version deviceFwVersion;
+    memset(&deviceFwVersion, 0, sizeof(deviceFwVersion));
+    deviceGetFwVersion = reinterpret_cast<pIgscDeviceFwVersion>(libraryHandle->getProcAddress(fwDeviceFwVersion));
+    int ret = deviceGetFwVersion(&fwDeviceHandle, &deviceFwVersion);
+    if (ret == IGSC_SUCCESS) {
+        fwTypes.push_back(deviceSupportedFirmwareTypes[0]);
+    }
+
+    igsc_oprom_version opromVersion;
+    memset(&opromVersion, 0, sizeof(opromVersion));
+    deviceOpromVersion = reinterpret_cast<pIgscDeviceOpromVersion>(libraryHandle->getProcAddress(fwDeviceOpromVersion));
+    ret = deviceOpromVersion(&fwDeviceHandle, IGSC_OPROM_CODE, &opromVersion);
+
+    if (ret == IGSC_SUCCESS) {
+        memset(&opromVersion, 0, sizeof(opromVersion));
+        int ret = deviceOpromVersion(&fwDeviceHandle, IGSC_OPROM_DATA, &opromVersion);
+        if (ret == IGSC_SUCCESS) {
+            fwTypes.push_back(deviceSupportedFirmwareTypes[1]);
+        }
+    }
+
+    igsc_psc_version devicePscVersion;
+    memset(&devicePscVersion, 0, sizeof(devicePscVersion));
+    deviceGetPscVersion = reinterpret_cast<pIgscDevicePscVersion>(libraryHandle->getProcAddress(fwDevicePscVersion));
+    ret = deviceGetPscVersion(&fwDeviceHandle, &devicePscVersion);
+    if (ret == IGSC_SUCCESS) {
+        fwTypes.push_back(deviceSupportedFirmwareTypes[2]);
+    }
 }
 
 ze_result_t FirmwareUtilImp::getFwVersion(std::string fwType, std::string &firmwareVersion) {

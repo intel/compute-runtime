@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -196,16 +196,16 @@ HWTEST2_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenFailedToReadPSCV
     delete ptestFirmwareImp;
 }
 
-HWTEST2_F(ZesSysmanFirmwareFixture, GivenRepeatedFWTypesWhenInitializingFirmwareContextThenexpectNoHandles, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesSysmanFirmwareFixture, GivenFwVersionsUnsupportedWhenInitializingFirmwareContextThenExpectZeroHandles, IsXeHpcOrXeHpgCore) {
     for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
         delete handle;
     }
     pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
-    pFsAccess->isReadFwTypes = false;
+    pMockFwInterface->isFirmwareVersionsSupported = false;
 
     pSysmanDeviceImp->pFirmwareHandleContext->init();
 
-    EXPECT_EQ(1u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
+    EXPECT_EQ(0u, pSysmanDeviceImp->pFirmwareHandleContext->handleList.size());
 }
 
 HWTEST2_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareThenSuccessIsReturned, IsXeHpcOrXeHpgCore) {
