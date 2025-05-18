@@ -524,6 +524,8 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     verifyIoctlString(DrmIoctl::primeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE");
     verifyIoctlString(DrmIoctl::primeHandleToFd, "DRM_IOCTL_PRIME_HANDLE_TO_FD");
     verifyIoctlString(DrmIoctl::syncObjFdToHandle, "DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE");
+    verifyIoctlString(DrmIoctl::syncObjWait, "DRM_IOCTL_SYNCOBJ_WAIT");
+    verifyIoctlString(DrmIoctl::syncObjSignal, "DRM_IOCTL_SYNCOBJ_SIGNAL");
     verifyIoctlString(DrmIoctl::getResetStats, "DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY");
 
     EXPECT_TRUE(xeIoctlHelper->completionFenceExtensionSupported(true));
@@ -586,6 +588,8 @@ TEST_F(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned
     verifyIoctlRequestValue(DRM_IOCTL_PRIME_FD_TO_HANDLE, DrmIoctl::primeFdToHandle);
     verifyIoctlRequestValue(DRM_IOCTL_PRIME_HANDLE_TO_FD, DrmIoctl::primeHandleToFd);
     verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE, DrmIoctl::syncObjFdToHandle);
+    verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_WAIT, DrmIoctl::syncObjWait);
+    verifyIoctlRequestValue(DRM_IOCTL_SYNCOBJ_SIGNAL, DrmIoctl::syncObjSignal);
 }
 
 TEST_F(IoctlHelperXeTest, verifyPublicFunctions) {

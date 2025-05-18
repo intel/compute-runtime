@@ -65,11 +65,41 @@ bool ExternalSemaphoreLinux::importSemaphore(void *extHandle, int fd, uint32_t f
 }
 
 bool ExternalSemaphoreLinux::enqueueWait(uint64_t *fenceValue) {
-    return false;
+    auto drm = this->osInterface->getDriverModel()->as<Drm>();
+
+    struct SyncObjWait args = {};
+    args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
+    args.timeoutNs = 0;
+    args.countHandles = 1u;
+    args.flags = 0;
+
+    auto ioctlHelper = drm->getIoctlHelper();
+
+    int ret = ioctlHelper->ioctl(DrmIoctl::syncObjWait, &args);
+    if (ret != 0) {
+        return false;
+    }
+
+    this->state = SemaphoreState::Signaled;
+
+    return true;
 }
 
 bool ExternalSemaphoreLinux::enqueueSignal(uint64_t *fenceValue) {
-    return false;
+    auto drm = this->osInterface->getDriverModel()->as<Drm>();
+
+    struct SyncObjArray args;
+    args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
+    args.countHandles = 1u;
+
+    auto ioctlHelper = drm->getIoctlHelper();
+
+    int ret = ioctlHelper->ioctl(DrmIoctl::syncObjSignal, &args);
+    if (ret != 0) {
+        return false;
+    }
+
+    return true;
 }
 
 } // namespace NEO

@@ -209,6 +209,21 @@ struct SyncObjHandle {
     uint32_t pad;
 };
 
+struct SyncObjWait {
+    uint64_t handles;
+    int64_t timeoutNs;
+    uint32_t countHandles;
+    uint32_t flags;
+    uint32_t firstSignaled;
+    uint32_t pad;
+};
+
+struct SyncObjArray {
+    uint64_t handles;
+    uint32_t countHandles;
+    uint32_t pad;
+};
+
 struct PrimaryContextHandle {
     uint32_t handle;
     int32_t fd;
@@ -279,6 +294,8 @@ enum class DrmIoctl {
     primeFdToHandle,
     primeHandleToFd,
     syncObjFdToHandle,
+    syncObjWait,
+    syncObjSignal,
     gemVmBind,
     gemVmUnbind,
     gemWaitUserFence,

@@ -915,6 +915,10 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) co
         return PRELIM_DRM_IOCTL_I915_GET_RESET_STATS;
     case DrmIoctl::syncObjFdToHandle:
         return DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE;
+    case DrmIoctl::syncObjWait:
+        return DRM_IOCTL_SYNCOBJ_WAIT;
+    case DrmIoctl::syncObjSignal:
+        return DRM_IOCTL_SYNCOBJ_SIGNAL;
     default:
         return IoctlHelperI915::getIoctlRequestValue(ioctlRequest);
     }

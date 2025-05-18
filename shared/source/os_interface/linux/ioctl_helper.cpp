@@ -96,6 +96,10 @@ unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const 
         return DRM_IOCTL_PRIME_HANDLE_TO_FD;
     case DrmIoctl::syncObjFdToHandle:
         return DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE;
+    case DrmIoctl::syncObjWait:
+        return DRM_IOCTL_SYNCOBJ_WAIT;
+    case DrmIoctl::syncObjSignal:
+        return DRM_IOCTL_SYNCOBJ_SIGNAL;
     default:
         UNRECOVERABLE_IF(true);
         return 0u;
@@ -112,6 +116,10 @@ std::string IoctlHelper::getIoctlStringBase(DrmIoctl ioctlRequest) const {
         return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
     case DrmIoctl::syncObjFdToHandle:
         return "DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE";
+    case DrmIoctl::syncObjWait:
+        return "DRM_IOCTL_SYNCOBJ_WAIT";
+    case DrmIoctl::syncObjSignal:
+        return "DRM_IOCTL_SYNCOBJ_SIGNAL";
     default:
         UNRECOVERABLE_IF(true);
         return "";
