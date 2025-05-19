@@ -1955,7 +1955,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenNonInOrderCmdListWhenPass
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingFromAppendCopyWhenDispatchingKernelThenProgramSemaphoreOnce) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForceL3FlushAfterPostSync.set(1);
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     bool heaplessEnabled = immCmdList->isHeaplessModeEnabled();
 
@@ -2007,8 +2008,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingFromAppendCop
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingFromAppendCopyAndFlushRequiredWhenDispatchingKernelThenProgramSemaphoreOnce) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForceL3FlushAfterPostSync.set(1);
+
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
     bool heaplessEnabled = immCmdList->isHeaplessModeEnabled();
+
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
