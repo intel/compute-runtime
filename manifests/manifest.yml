@@ -2,7 +2,7 @@ components:
   aub_configs:
     branch: aub_configs
     dest_dir: aub_configs
-    revision: d66cd9fa2fd14fd1f6c864eb53f6a33e7ff09dff
+    revision: adf4e596f6e47995e3c3d6a378ddb6c41128fddc
     type: git
   aub_stream:
     branch: master
