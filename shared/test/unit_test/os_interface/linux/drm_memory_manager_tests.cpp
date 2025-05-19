@@ -2037,6 +2037,37 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateG
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenAllocateMemoryByKMDWhenPreferCompressedThenCompressionEnabled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.RenderCompressedBuffersEnabled.set(true);
+
+    mock->ioctlHelper.reset(new MockIoctlHelper(*mock));
+    mock->queryMemoryInfo();
+    EXPECT_NE(nullptr, mock->getMemoryInfo());
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (debugManager.flags.UseGemCreateExtInAllocateMemoryByKMD.get() == 0 ||
+        !productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+        mock->ioctlExpected.gemCreate = 2;
+    } else {
+        mock->ioctlExpected.gemCreateExt = 2;
+    }
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
+
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.flags.preferCompressed = false;
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_FALSE(allocation->getDefaultGmm()->isCompressionEnabled());
+    memoryManager->freeGraphicsMemory(allocation);
+
+    allocationData.flags.preferCompressed = true;
+    allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_TRUE(allocation->getDefaultGmm()->isCompressionEnabled());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenSizeAndAlignmentWhenAskedToCreateGraphicsAllocationThenValidAllocationIsReturnedAndMemoryIsAligned) {
     mock->ioctlHelper.reset(new MockIoctlHelper(*mock));
     mock->queryMemoryInfo();
