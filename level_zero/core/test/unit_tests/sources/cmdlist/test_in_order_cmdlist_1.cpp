@@ -3937,6 +3937,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto immCmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = false;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -4066,6 +4067,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto immCmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = false;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -4281,6 +4283,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto immCmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = false;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -4319,6 +4322,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto immCmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = false;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 

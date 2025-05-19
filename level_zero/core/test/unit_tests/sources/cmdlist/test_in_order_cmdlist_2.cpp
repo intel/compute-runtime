@@ -820,6 +820,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
         debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
 
         auto immCmdList = createMultiTileImmCmdListWithOffload<FamilyType::gfxCoreFamily>(partitionCount);
+        immCmdList->useAdditionalBlitProperties = false;
 
         auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -849,6 +850,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
         debugManager.flags.InOrderAtomicSignallingEnabled.set(0);
 
         auto immCmdList = createMultiTileImmCmdListWithOffload<FamilyType::gfxCoreFamily>(partitionCount);
+        immCmdList->useAdditionalBlitProperties = false;
 
         auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -878,6 +880,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
         debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
 
         auto immCmdList = createMultiTileImmCmdListWithOffload<FamilyType::gfxCoreFamily>(partitionCount);
+        immCmdList->useAdditionalBlitProperties = false;
 
         auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -1362,6 +1365,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInterruptEventWhenDispatchingTheProgramU
     using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = false;
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->enableInterruptMode();
 
@@ -1400,6 +1404,7 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
     mockCmdQHw->initialize(true, false, false);
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(true);
+    regularCmdList->useAdditionalBlitProperties = false;
 
     auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
 
@@ -1880,6 +1885,8 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     auto regularCopyOnlyCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(true);
+    regularCmdList->useAdditionalBlitProperties = false;
+    regularCopyOnlyCmdList->useAdditionalBlitProperties = false;
 
     auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
     auto copyOnlyCmdStream = regularCopyOnlyCmdList->getCmdContainer().getCommandStream();
@@ -1936,6 +1943,7 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(true);
+    regularCmdList->useAdditionalBlitProperties = false;
 
     auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
 
