@@ -236,9 +236,6 @@ void SVMAllocsManager::SvmAllocationCache::logCacheOperation(const SvmAllocation
 }
 
 void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) {
-    if (this->allocations.empty()) {
-        return;
-    }
     std::lock_guard<std::mutex> lock(this->mtx);
     auto allocCleanCandidateIndex = allocations.size();
     while (0u != allocCleanCandidateIndex) {
