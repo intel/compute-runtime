@@ -23,6 +23,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef SYS_pidfd_open
+#define SYS_pidfd_open 434
+#endif
+
 #ifndef SYS_pidfd_getfd
 #define SYS_pidfd_getfd 438
 #endif
