@@ -156,7 +156,6 @@ if(BUILD_WITH_L0)
                            COMMAND echo Running copy_third_party_files for igc dir. Copy from: "${TEMP_DIR}" to: "${CUSTOM_COMMAND_BINARY_DIR}/"
                            COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
                            COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}" "${CUSTOM_COMMAND_BINARY_DIR}/"
-                           DEPENDS "${NEO__IGC_LIBRARY_PATH}"
         )
       endforeach()
     endif()
@@ -188,7 +187,6 @@ if(BUILD_WITH_L0)
                          COMMAND echo Running copy_third_party_files for gmm dir. Copy from: "${NEO__GMM_LIBRARY_PATH}" to: "${CUSTOM_COMMAND_BINARY_DIR}/"
                          COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
                          COMMAND ${CMAKE_COMMAND} -E copy_directory "${NEO__GMM_LIBRARY_PATH}" "${CUSTOM_COMMAND_BINARY_DIR}/"
-                         DEPENDS "${NEO__GMM_LIBRARY_PATH}"
       )
     endif()
   endif()
