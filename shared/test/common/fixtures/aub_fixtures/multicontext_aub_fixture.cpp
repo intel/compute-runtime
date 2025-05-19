@@ -69,6 +69,9 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
     isRenderEngineSupported = (renderEngine != aub_stream::NUM_ENGINES);
     auto firstEngine = isRenderEngineSupported ? renderEngine : aub_stream::ENGINE_CCS;
+    if (isFirstEngineBcs) {
+        firstEngine = aub_stream::ENGINE_BCS;
+    }
 
     std::stringstream strfilename;
     strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();

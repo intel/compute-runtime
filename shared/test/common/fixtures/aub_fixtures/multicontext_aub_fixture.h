@@ -118,6 +118,7 @@ struct MulticontextAubFixture {
     uint32_t numberOfEnabledTiles = 0;
     bool isCcs1Supported = false;
     bool isRenderEngineSupported = true;
+    bool isFirstEngineBcs = false;
     bool skipped = false;
     DispatchMode dispatchMode = DispatchMode::batchedDispatch;
 };
