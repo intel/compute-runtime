@@ -17,6 +17,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -251,7 +252,43 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
 }
 
 bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device) {
-    return false;
+    uint32_t sipIndex = static_cast<uint32_t>(type);
+    uint32_t rootDeviceIndex = device.getRootDeviceIndex();
+    auto sipKenel = device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex].get();
+    if (sipKenel != nullptr) {
+        return true;
+    }
+
+    std::vector<char> sipBinary;
+    std::vector<char> stateSaveAreaHeader;
+    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
+
+    auto ret = device.getSipExternalLibInterface()->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
+    if (ret != 0) {
+        return false;
+    }
+    UNRECOVERABLE_IF(sipBinary.size() == 0);
+
+    const auto allocType = AllocationType::kernelIsaInternal;
+    AllocationProperties properties = {device.getRootDeviceIndex(), sipBinary.size(), allocType, device.getDeviceBitfield()};
+    properties.flags.use32BitFrontWindow = false;
+
+    auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    if (sipAllocation == nullptr) {
+        return false;
+    }
+    auto &productHelper = device.getProductHelper();
+    MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
+                                                     device, sipAllocation, 0, sipBinary.data(),
+                                                     sipBinary.size());
+
+    device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
+        std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader), std::move(sipBinary));
+
+    if (type == SipKernelType::csr) {
+        rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = device.getBuiltIns()->getSipKernel(type, device).getStateSaveAreaSize(&device);
+    }
+    return true;
 }
 
 void SipKernel::selectSipClassType(std::string &fileName, Device &device) {
