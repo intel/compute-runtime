@@ -206,6 +206,7 @@ class ProductHelperHw : public ProductHelper {
     bool isCompressionForbidden(const HardwareInfo &hwInfo) const override;
     bool isExposingSubdevicesAllowed() const override;
     bool useAdditionalBlitProperties() const override;
+    bool isNonCoherentTimestampsModeEnabled() const override;
     bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const override;
 
     ~ProductHelperHw() override = default;

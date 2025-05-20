@@ -707,8 +707,8 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
                 break;
             case AllocationType::gpuTimestampDeviceBuffer:
             case AllocationType::timestampPacketTagBuffer:
-                expectedUsage = (forceUncached || productHelper.isDcFlushAllowed()) ? uncachedGmmUsageType
-                                                                                    : GMM_RESOURCE_USAGE_OCL_BUFFER;
+                expectedUsage = (forceUncached || !productHelper.isNonCoherentTimestampsModeEnabled()) ? uncachedGmmUsageType
+                                                                                                       : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
             case AllocationType::bufferHostMemory:
             case AllocationType::externalHostPtr:
@@ -754,8 +754,8 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
                 break;
             case AllocationType::gpuTimestampDeviceBuffer:
             case AllocationType::timestampPacketTagBuffer:
-                expectedUsage = (forceUncached || productHelper.isDcFlushAllowed()) ? uncachedGmmUsageType
-                                                                                    : GMM_RESOURCE_USAGE_OCL_BUFFER;
+                expectedUsage = (forceUncached || !productHelper.isNonCoherentTimestampsModeEnabled()) ? uncachedGmmUsageType
+                                                                                                       : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
             case AllocationType::bufferHostMemory:
             case AllocationType::externalHostPtr:
@@ -884,14 +884,25 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
     }
 }
 
-TEST(GmmTest, givenDebugFlagWhenTimestampAllocationsAreQueriedThenBufferPolicyIsReturned) {
+TEST(GmmTest, whenTimestampAllocationsAreQueriedThenCorrectBufferPolicyIsReturned) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForceNonCoherentModeForTimestamps.set(1);
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    auto expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+    auto uncachedType = productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+    auto expectedUsage = uncachedType;
+    if (productHelper.isNonCoherentTimestampsModeEnabled()) {
+        expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+    }
     EXPECT_EQ(expectedUsage, CacheSettingsHelper::getGmmUsageType(AllocationType::gpuTimestampDeviceBuffer, false, productHelper, defaultHwInfo.get()));
     EXPECT_EQ(expectedUsage, CacheSettingsHelper::getGmmUsageType(AllocationType::timestampPacketTagBuffer, false, productHelper, defaultHwInfo.get()));
+
+    debugManager.flags.ForceNonCoherentModeForTimestamps.set(0);
+    EXPECT_EQ(uncachedType, CacheSettingsHelper::getGmmUsageType(AllocationType::gpuTimestampDeviceBuffer, false, productHelper, defaultHwInfo.get()));
+    EXPECT_EQ(uncachedType, CacheSettingsHelper::getGmmUsageType(AllocationType::timestampPacketTagBuffer, false, productHelper, defaultHwInfo.get()));
+
+    debugManager.flags.ForceNonCoherentModeForTimestamps.set(1);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, CacheSettingsHelper::getGmmUsageType(AllocationType::gpuTimestampDeviceBuffer, false, productHelper, defaultHwInfo.get()));
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, CacheSettingsHelper::getGmmUsageType(AllocationType::timestampPacketTagBuffer, false, productHelper, defaultHwInfo.get()));
 }
 
 TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenReturnUncached) {

@@ -483,6 +483,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isResourceUncachedForCS(AllocationType alloc
     return false;
 }
 
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isNonCoherentTimestampsModeEnabled() const {
+    return false;
+}
+
 } // namespace NEO
 
 #include "shared/source/os_interface/product_helper.inl"

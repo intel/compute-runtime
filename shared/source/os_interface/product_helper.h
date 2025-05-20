@@ -269,6 +269,8 @@ class ProductHelper {
     virtual bool isCompressionForbidden(const HardwareInfo &hwInfo) const = 0;
     virtual bool isExposingSubdevicesAllowed() const = 0;
     virtual bool useAdditionalBlitProperties() const = 0;
+    virtual bool isNonCoherentTimestampsModeEnabled() const = 0;
+
     virtual bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const = 0;
     virtual ~ProductHelper() = default;
 
