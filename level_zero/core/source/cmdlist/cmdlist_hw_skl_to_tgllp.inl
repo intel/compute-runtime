@@ -273,7 +273,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         commandContainer.addToResidencyContainer(resource);
     }
 
-    if (kernelImmutableData->getDescriptor().kernelAttributes.flags.usesPrintf) {
+    if (kernelImp->getPrintfBufferAllocation() != nullptr) {
         storePrintfKernel(kernel);
     }
 

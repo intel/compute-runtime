@@ -556,7 +556,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     // Store PrintfBuffer from a kernel
     {
-        if (kernelDescriptor.kernelAttributes.flags.usesPrintf) {
+        if (kernelImp->getPrintfBufferAllocation() != nullptr) {
             storePrintfKernel(kernel);
         }
     }

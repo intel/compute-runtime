@@ -292,6 +292,44 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
     ASSERT_FALSE(event->getKernelForPrintf().expired());
 }
 
+HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelWithPrintfBufferCreatedForStackCallsWhenAppendingLaunchKernelIndirectThenKernelIsStoredOnEvent) {
+    Mock<Module> module(this->device, nullptr);
+    auto kernel = new Mock<::L0::KernelImp>{};
+    static_cast<ModuleImp *>(&module)->getPrintfKernelContainer().push_back(std::shared_ptr<Mock<::L0::KernelImp>>{kernel});
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    kernel->module = &module;
+    kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
+    kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
+    kernel->pImplicitArgs.reset(new ImplicitArgs());
+    kernel->pImplicitArgs->v0.header.structVersion = 0;
+    kernel->pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
+    UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel->immutableData.kernelDescriptor);
+    kernel->createPrintfBuffer();
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+
+    const auto &printfContainer = commandList->getPrintfKernelContainer();
+    EXPECT_EQ(0u, printfContainer.size());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    auto result = commandList->appendLaunchKernelIndirect(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(0u, printfContainer.size());
+    ASSERT_FALSE(event->getKernelForPrintf().expired());
+}
+
 HWTEST_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAppendingLaunchKernelIndirectThenKernelIsNotStoredOnEvent) {
     Mock<Module> module(this->device, nullptr);
     auto kernel = new Mock<::L0::KernelImp>{};
@@ -350,6 +388,49 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
 
     auto result = pCommandList->appendLaunchKernelWithParams(kernel, groupCount, event.get(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_FALSE(event->getKernelForPrintf().expired());
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelAndPrintfBufferForStackCallsWhenAppendingLaunchKernelWithParamThenKernelIsStoredOnEvent) {
+    Mock<Module> module(this->device, nullptr);
+    auto kernel = new Mock<::L0::KernelImp>{};
+    static_cast<ModuleImp *>(&module)->getPrintfKernelContainer().push_back(std::shared_ptr<Mock<::L0::KernelImp>>{kernel});
+
+    ze_result_t returnValue;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    kernel->module = &module;
+    kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
+    kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
+    kernel->pImplicitArgs.reset(new ImplicitArgs());
+    kernel->pImplicitArgs->v0.header.structVersion = 0;
+    kernel->pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
+    UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel->immutableData.kernelDescriptor);
+    kernel->createPrintfBuffer();
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = false;
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+
+    ze_group_count_t groupCount{1, 1, 1};
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+
+    const auto &printfContainer = pCommandList->getPrintfKernelContainer();
+    EXPECT_EQ(0u, printfContainer.size());
+
+    auto result = pCommandList->appendLaunchKernelWithParams(kernel, groupCount, event.get(), launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(0u, printfContainer.size());
 
     ASSERT_FALSE(event->getKernelForPrintf().expired());
 }

@@ -195,6 +195,8 @@ const char *printfKernelSource = R"===(
 #define MACRO_STR1 "string with tab(\\t) new line(\\n):"
 #define MACRO_STR2 "using tab \tand new line \nin this string"
 
+void printf_function();
+
 __kernel void printf_kernel(char byteValue, short shortValue, int intValue, long longValue) {
     printf("byte = %hhd\nshort = %hd\nint = %d\nlong = %ld", byteValue, shortValue, intValue, longValue);
 }
@@ -213,6 +215,18 @@ __kernel void print_string() {
 
 __kernel void print_macros() {
     printf("%s\n%s", MACRO_STR1, MACRO_STR2);
+}
+
+__kernel void print_from_function_kernel() {
+    printf_function();
+}
+
+)===";
+
+const char *printfFunctionSource = R"===(
+
+void printf_function() {
+     printf("test function\n");
 }
 
 )===";

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ extern const char *scratchKernelSrc;
 extern const char *scratchKernelBuildOptions;
 
 extern const char *printfKernelSource;
+extern const char *printfFunctionSource;
 
 extern const char *readNV12Module;
 
