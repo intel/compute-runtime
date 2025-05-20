@@ -35,7 +35,8 @@ TEST_F(ReleaseHelper1274Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isDirectSubmissionSupported());
         EXPECT_FALSE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_FALSE(releaseHelper->isRcsExposureDisabled());
-        EXPECT_TRUE(releaseHelper->isBindlessAddressingDisabled());
+        EXPECT_FALSE(releaseHelper->isBindlessAddressingDisabled());
+        EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_EQ(8u, releaseHelper->getNumThreadsPerEu());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
