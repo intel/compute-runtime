@@ -718,10 +718,26 @@ ze_result_t DeviceImp::getPciProperties(ze_pci_ext_properties_t *pPciProperties)
     return ZE_RESULT_SUCCESS;
 }
 
-const char *DeviceImp::getDeviceMemoryName() {
-    constexpr std::array<uint32_t, 4> hbmTypeIds = {2, 3, 5, 8};
+static const std::map<uint32_t, const char *> memoryTypeNames = {
+    {0, "DDR"},
+    {1, "DDR"},
+    {2, "HBM"},
+    {3, "HBM"},
+    {4, "DDR"},
+    {5, "HBM"},
+    {6, "DDR"},
+    {7, "DDR"},
+    {8, "HBM"},
+    {9, "HBM"},
+};
 
-    return std::find(hbmTypeIds.begin(), hbmTypeIds.end(), getHwInfo().gtSystemInfo.MemoryType) != hbmTypeIds.end() ? "HBM" : "DDR";
+const char *DeviceImp::getDeviceMemoryName() {
+    auto it = memoryTypeNames.find(getHwInfo().gtSystemInfo.MemoryType);
+    if (it != memoryTypeNames.end()) {
+        return it->second;
+    }
+    UNRECOVERABLE_IF(true);
+    return "unknown memory type";
 }
 
 ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) {
@@ -762,14 +778,20 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
             auto extendedProperties = reinterpret_cast<ze_device_memory_ext_properties_t *>(pNext);
 
             // GT_MEMORY_TYPES map to ze_device_memory_ext_type_t
-            const std::array<ze_device_memory_ext_type_t, 5> sysInfoMemType = {
+            const std::array<ze_device_memory_ext_type_t, 10> sysInfoMemType = {
                 ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
                 ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
                 ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
                 ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
                 ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
+                ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+                ZE_DEVICE_MEMORY_EXT_TYPE_DDR5,
+                ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
+                ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+                ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
             };
 
+            UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MemoryType >= sizeof(sysInfoMemType));
             extendedProperties->type = sysInfoMemType[hwInfo.gtSystemInfo.MemoryType];
 
             uint32_t enabledSubDeviceCount = 1;

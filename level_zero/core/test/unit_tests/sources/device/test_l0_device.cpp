@@ -384,12 +384,12 @@ TEST(L0DeviceTest, whenCallingGetDeviceMemoryNameThenCorrectTypeIsReturned) {
 
     auto &sysInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo;
 
-    for (uint32_t i = 0; i < 11; i++) {
+    for (uint32_t i = 0; i < 10; i++) {
         sysInfo.MemoryType = i;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMemoryProperties(&count, &memProperties));
 
-        if (i == 2 || i == 3 || i == 5 || i == 8) {
+        if (i == 2 || i == 3 || i == 5 || i == 8 || i == 9) {
             EXPECT_STREQ("HBM", memProperties.name);
         } else {
             EXPECT_STREQ("DDR", memProperties.name);
@@ -2103,17 +2103,23 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtProper
     res = device->getMemoryProperties(&count, &memProperties);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
-    const std::array<ze_device_memory_ext_type_t, 5> sysInfoMemType = {
+    const std::array<ze_device_memory_ext_type_t, 10> sysInfoMemType = {
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
         ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_DDR5,
+        ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
     };
 
     auto &hwInfo = device->getHwInfo();
     auto bandwidthPerNanoSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, nullptr, 0) / 1000000000;
 
+    UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MemoryType >= sizeof(sysInfoMemType));
     EXPECT_EQ(memExtProperties.type, sysInfoMemType[hwInfo.gtSystemInfo.MemoryType]);
     EXPECT_EQ(memExtProperties.physicalSize, productHelper.getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
     EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond);
@@ -2141,17 +2147,23 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnext
     res = device->getMemoryProperties(&count, &memProperties);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
-    const std::array<ze_device_memory_ext_type_t, 5> sysInfoMemType = {
+    const std::array<ze_device_memory_ext_type_t, 10> sysInfoMemType = {
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
         ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_DDR5,
+        ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
     };
 
     auto &hwInfo = device->getHwInfo();
     auto bandwidthPerNanoSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, nullptr, 0) / 1000000000;
 
+    UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MemoryType >= sizeof(sysInfoMemType));
     EXPECT_EQ(memExtProperties.type, sysInfoMemType[hwInfo.gtSystemInfo.MemoryType]);
     EXPECT_EQ(memExtProperties.physicalSize, productHelper.getDeviceMemoryPhysicalSizeInBytes(nullptr, 0));
     EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond);
@@ -2588,16 +2600,22 @@ HWTEST2_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabled
     res = device->getMemoryProperties(&count, &memProperties);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
-    const std::array<ze_device_memory_ext_type_t, 5> sysInfoMemType = {
+    const std::array<ze_device_memory_ext_type_t, 10> sysInfoMemType = {
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR4,
         ZE_DEVICE_MEMORY_EXT_TYPE_LPDDR5,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
         ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
         ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_DDR5,
+        ZE_DEVICE_MEMORY_EXT_TYPE_GDDR7,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
+        ZE_DEVICE_MEMORY_EXT_TYPE_HBM2,
     };
 
     auto bandwidthPerNanoSecond = raii.mockProductHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0) / 1000000000;
 
+    UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MemoryType >= sizeof(sysInfoMemType));
     EXPECT_EQ(memExtProperties.type, sysInfoMemType[hwInfo.gtSystemInfo.MemoryType]);
     EXPECT_EQ(memExtProperties.physicalSize, raii.mockProductHelper->getDeviceMemoryPhysicalSizeInBytes(nullptr, 0) * numSubDevices);
     EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond * numSubDevices);
