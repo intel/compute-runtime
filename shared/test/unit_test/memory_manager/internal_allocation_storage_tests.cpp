@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/utilities/containers_tests_helpers.h"
 
@@ -284,11 +285,17 @@ TEST_F(InternalAllocationStorageTest, givenAllocationListWhenTwoThreadsCleanConc
 }
 
 HWTEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachingReusableAllocationThenCheckTaskCountFinishedOnAllTiles) {
-    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
-    csr->setActivePartitions(2u);
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+
+    auto memoryManager = deviceFactory->rootDevices[0]->getMemoryManager();
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(deviceFactory->rootDevices[0]->getDefaultEngine().commandStreamReceiver);
+    ultCsr->setActivePartitions(2);
     ultCsr->immWritePostSyncWriteOffset = 32;
 
-    auto tagAddress = csr->getTagAddress();
+    auto storage = ultCsr->getInternalAllocationStorage();
+
+    auto tagAddress = ultCsr->getTagAddress();
     *tagAddress = 0xFF;
     tagAddress = ptrOffset(tagAddress, 32);
     *tagAddress = 0x0;
@@ -296,19 +303,111 @@ HWTEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachi
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-    EXPECT_EQ(allocation, csr->getAllocationsForReuse().peekHead());
-    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
-    allocation->updateTaskCount(1u, csr->getOsContext().getContextId());
+    EXPECT_EQ(allocation, ultCsr->getAllocationsForReuse().peekHead());
+    EXPECT_FALSE(ultCsr->getAllocationsForReuse().peekIsEmpty());
+    allocation->updateTaskCount(1u, ultCsr->getOsContext().getContextId());
 
-    std::unique_ptr<GraphicsAllocation> allocationReusable = csr->getAllocationsForReuse().detachAllocation(0, nullptr, csr, AllocationType::internalHostMemory);
+    std::unique_ptr<GraphicsAllocation> allocationReusable = ultCsr->getAllocationsForReuse().detachAllocation(0, nullptr, ultCsr, AllocationType::internalHostMemory);
     EXPECT_EQ(nullptr, allocationReusable.get());
 
     *tagAddress = 0x1;
-    allocationReusable = csr->getAllocationsForReuse().detachAllocation(0, nullptr, csr, AllocationType::internalHostMemory);
+    allocationReusable = ultCsr->getAllocationsForReuse().detachAllocation(0, nullptr, ultCsr, AllocationType::internalHostMemory);
     EXPECT_EQ(allocation, allocationReusable.get());
 
     memoryManager->freeGraphicsMemory(allocationReusable.release());
 }
+
+HWTEST_F(InternalAllocationStorageTest, givenSingleTempAllocationsListWhenStoringFromDifferentRootDeviceThenSelectCorrectly) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseSingleListForTemporaryAllocations.set(1);
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(2, 1));
+
+    auto memoryManager = deviceFactory->rootDevices[0]->getMemoryManager();
+
+    auto rootCsr0 = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(deviceFactory->rootDevices[0]->getDefaultEngine().commandStreamReceiver);
+    auto rootCsr1 = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(deviceFactory->rootDevices[1]->getDefaultEngine().commandStreamReceiver);
+
+    auto allocation0 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootCsr0->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto allocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootCsr1->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    memoryManager->storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation>(allocation0), rootCsr0->getOsContext().getContextId(), 0);
+    memoryManager->storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation>(allocation1), rootCsr1->getOsContext().getContextId(), 0);
+
+    std::unique_ptr<GraphicsAllocation> allocationReusable = memoryManager->obtainTemporaryAllocationWithPtr(rootCsr1, MemoryConstants::pageSize, allocation0->getUnderlyingBuffer(), allocation0->getAllocationType());
+    EXPECT_EQ(nullptr, allocationReusable.get());
+
+    allocationReusable = memoryManager->obtainTemporaryAllocationWithPtr(rootCsr0, MemoryConstants::pageSize, allocation0->getUnderlyingBuffer(), allocation0->getAllocationType());
+    EXPECT_NE(nullptr, allocationReusable.get());
+
+    memoryManager->freeGraphicsMemory(allocationReusable.release());
+
+    allocationReusable = memoryManager->obtainTemporaryAllocationWithPtr(rootCsr0, MemoryConstants::pageSize, allocation1->getUnderlyingBuffer(), allocation1->getAllocationType());
+    EXPECT_EQ(nullptr, allocationReusable.get());
+
+    allocationReusable = memoryManager->obtainTemporaryAllocationWithPtr(rootCsr1, MemoryConstants::pageSize, allocation1->getUnderlyingBuffer(), allocation1->getAllocationType());
+    EXPECT_NE(nullptr, allocationReusable.get());
+
+    memoryManager->freeGraphicsMemory(allocationReusable.release());
+}
+
+HWTEST_F(InternalAllocationStorageTest, givenSingleTempAllocationsListWhenStoringFromDifferentTileThenSelectCorrectly) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseSingleListForTemporaryAllocations.set(1);
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+
+    auto memoryManager = deviceFactory->rootDevices[0]->getMemoryManager();
+
+    auto csr0 = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(deviceFactory->rootDevices[0]->getDefaultEngine().commandStreamReceiver);
+    auto csr1 = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(deviceFactory->subDevices[0]->getDefaultEngine().commandStreamReceiver);
+
+    auto allocation0 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr0->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation0->storageInfo.subDeviceBitfield = csr0->deviceBitfield;
+    auto allocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr1->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation1->storageInfo.subDeviceBitfield = csr1->deviceBitfield;
+
+    memoryManager->storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation>(allocation0), csr0->getOsContext().getContextId(), 0);
+    memoryManager->storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation>(allocation1), csr1->getOsContext().getContextId(), 0);
+
+    std::unique_ptr<GraphicsAllocation> allocationReusable = memoryManager->obtainTemporaryAllocationWithPtr(csr1, MemoryConstants::pageSize, allocation0->getUnderlyingBuffer(), allocation0->getAllocationType());
+    EXPECT_EQ(nullptr, allocationReusable.get());
+
+    allocationReusable = memoryManager->obtainTemporaryAllocationWithPtr(csr0, MemoryConstants::pageSize, allocation0->getUnderlyingBuffer(), allocation0->getAllocationType());
+    EXPECT_NE(nullptr, allocationReusable.get());
+
+    memoryManager->freeGraphicsMemory(allocationReusable.release());
+
+    allocationReusable = memoryManager->obtainTemporaryAllocationWithPtr(csr0, MemoryConstants::pageSize, allocation1->getUnderlyingBuffer(), allocation1->getAllocationType());
+    EXPECT_EQ(nullptr, allocationReusable.get());
+
+    allocationReusable = memoryManager->obtainTemporaryAllocationWithPtr(csr1, MemoryConstants::pageSize, allocation1->getUnderlyingBuffer(), allocation1->getAllocationType());
+    EXPECT_NE(nullptr, allocationReusable.get());
+
+    memoryManager->freeGraphicsMemory(allocationReusable.release());
+}
+
+HWTEST_F(InternalAllocationStorageTest, givenSingleTempAllocationsListWhenStoringSysMemThenObtainCorrectly) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseSingleListForTemporaryAllocations.set(1);
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+
+    auto memoryManager = deviceFactory->rootDevices[0]->getMemoryManager();
+
+    auto csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(deviceFactory->subDevices[0]->getDefaultEngine().commandStreamReceiver);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation->storageInfo.subDeviceBitfield = 0;
+
+    memoryManager->storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation>(allocation), csr->getOsContext().getContextId(), 0);
+
+    std::unique_ptr<GraphicsAllocation> allocationReusable = memoryManager->obtainTemporaryAllocationWithPtr(csr, MemoryConstants::pageSize, allocation->getUnderlyingBuffer(), allocation->getAllocationType());
+    EXPECT_NE(nullptr, allocationReusable.get());
+
+    memoryManager->freeGraphicsMemory(allocationReusable.release());
+}
+
 TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenTaskCountMetsExpectationAndItHasBeenAssignedThenAllocIsRemoved) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     uint32_t expectedTaskCount = 10u;

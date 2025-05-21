@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 namespace NEO {
 class MockInternalAllocationStorage : public InternalAllocationStorage {
   public:
+    using InternalAllocationStorage::allocationLists;
     using InternalAllocationStorage::InternalAllocationStorage;
     void cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage) override {
         cleanAllocationsCalled++;

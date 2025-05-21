@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class InternalAllocationStorage {
     void storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage, TaskCountType taskCount);
     std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, AllocationType allocationType);
     std::unique_ptr<GraphicsAllocation> obtainTemporaryAllocationWithPtr(size_t requiredSize, const void *requiredPtr, AllocationType allocationType);
-    AllocationsList &getTemporaryAllocations() { return allocationLists[TEMPORARY_ALLOCATION]; }
+    AllocationsList &getTemporaryAllocations();
     AllocationsList &getAllocationsForReuse() { return allocationLists[REUSABLE_ALLOCATION]; }
     AllocationsList &getDeferredAllocations() { return allocationLists[DEFERRED_DEALLOCATION]; }
     DeviceBitfield getDeviceBitfield() const;

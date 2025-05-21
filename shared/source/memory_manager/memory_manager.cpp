@@ -28,6 +28,7 @@
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/deferrable_allocation_deletion.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
@@ -89,6 +90,56 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     if (debugManager.flags.EnableMultiStorageResources.get() != -1) {
         supportsMultiStorageResources = !!debugManager.flags.EnableMultiStorageResources.get();
     }
+
+    if (debugManager.flags.UseSingleListForTemporaryAllocations.get() == 1) {
+        singleTemporaryAllocationsList = true;
+        temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
+    }
+}
+
+void MemoryManager::storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t osContextId, TaskCountType taskCount) {
+    gfxAllocation->updateTaskCount(taskCount, osContextId);
+    temporaryAllocations->pushTailOne(*gfxAllocation.release());
+}
+
+void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, TaskCountType waitedTaskCount) {
+    auto lock = getHostPtrManager()->obtainOwnership();
+
+    GraphicsAllocation *currentAlloc = temporaryAllocations->detachNodes();
+
+    IDList<GraphicsAllocation, false, true> allocationsLeft;
+
+    while (currentAlloc != nullptr) {
+        const auto waitedOsContextId = csr.getOsContext().getContextId();
+        auto *nextAlloc = currentAlloc->next;
+        bool freeAllocation = false;
+
+        if (currentAlloc->isUsedByOsContext(waitedOsContextId)) {
+            if (currentAlloc->hostPtrTaskCountAssignment == 0 && currentAlloc->getTaskCount(waitedOsContextId) <= waitedTaskCount) {
+                if (!currentAlloc->isUsedByManyOsContexts() || !allocInUse(*currentAlloc)) {
+                    freeAllocation = true;
+                }
+            }
+        } else if (!allocInUse(*currentAlloc)) {
+            freeAllocation = true;
+        }
+
+        if (freeAllocation) {
+            freeGraphicsMemory(currentAlloc);
+        } else {
+            allocationsLeft.pushTailOne(*currentAlloc);
+        }
+
+        currentAlloc = nextAlloc;
+    }
+
+    if (!allocationsLeft.peekIsEmpty()) {
+        temporaryAllocations->splice(*allocationsLeft.detachNodes());
+    }
+}
+
+std::unique_ptr<GraphicsAllocation> MemoryManager::obtainTemporaryAllocationWithPtr(CommandStreamReceiver *csr, size_t requiredSize, const void *requiredPtr, AllocationType allocationType) {
+    return temporaryAllocations->detachAllocation(requiredSize, requiredPtr, csr, allocationType);
 }
 
 MemoryManager::~MemoryManager() {
@@ -974,14 +1025,24 @@ void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocat
     }
 }
 
-bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
+bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) const {
+    uint32_t numEnginesChecked = 0;
+    const uint32_t numContextsToCheck = graphicsAllocation.getNumRegisteredContexts();
+
     for (auto &engine : getRegisteredEngines(graphicsAllocation.getRootDeviceIndex())) {
         auto osContextId = engine.osContext->getContextId();
         auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
-        if (graphicsAllocation.isUsedByOsContext(osContextId) &&
-            engine.commandStreamReceiver->getTagAllocation() != nullptr &&
-            allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
-            return true;
+
+        if (graphicsAllocation.isUsedByOsContext(osContextId)) {
+            numEnginesChecked++;
+
+            if (engine.commandStreamReceiver->getTagAddress() && (allocationTaskCount > *engine.commandStreamReceiver->getTagAddress())) {
+                return true;
+            }
+        }
+
+        if (numEnginesChecked == numContextsToCheck) {
+            return false;
         }
     }
     return false;
@@ -991,10 +1052,15 @@ void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForComplet
     for (auto &engineContainer : allRegisteredEngines) {
         for (auto &engine : engineContainer) {
             auto csr = engine.commandStreamReceiver;
+
             if (waitForCompletion) {
                 csr->waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, csr->peekLatestSentTaskCount());
             }
             csr->getInternalAllocationStorage()->cleanAllocationList(*csr->getTagAddress(), AllocationUsage::TEMPORARY_ALLOCATION);
+
+            if (isSingleTemporaryAllocationsListEnabled() && (temporaryAllocations->peekIsEmpty() || !waitForCompletion)) {
+                return;
+            }
         }
     }
 }
