@@ -85,7 +85,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::isAllocTbxFaultable(GraphicsAllocati
     }
     auto allocType = gfxAlloc->getAllocationType();
 
-    if (allocType == AllocationType::bufferHostMemory || allocType == AllocationType::timestampPacketTagBuffer) {
+    if (allocType == AllocationType::bufferHostMemory) {
         return true;
     }
     return false;

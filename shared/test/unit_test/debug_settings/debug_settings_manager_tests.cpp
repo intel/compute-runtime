@@ -514,8 +514,17 @@ TEST(DurationLogTest, givenDurationGetTimeStringThenTimeStringIsCorrect) {
 
 TEST(DebugSettingsManager, GivenTbxOrTbxWithAubCsrTypeAndTbxFaultsEnabledWhenCallingIsTbxMngrEnabledThenReturnTrue) {
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableTbxPageFaultManager.set(true);
+    NEO::debugManager.flags.EnableTbxPageFaultManager.set(1);
 
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(2);
+    EXPECT_TRUE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(4);
+    EXPECT_TRUE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+}
+
+TEST(DebugSettingsManager, GivenTbxOrTbxWithAubCsrTypeAndAllElseDefaultWhenCallingIsTbxMngrEnabledThenReturnTrue) {
+    DebugManagerStateRestore restorer;
     NEO::debugManager.flags.SetCommandStreamReceiver.set(2);
     EXPECT_TRUE(NEO::debugManager.isTbxPageFaultManagerEnabled());
 
@@ -525,14 +534,14 @@ TEST(DebugSettingsManager, GivenTbxOrTbxWithAubCsrTypeAndTbxFaultsEnabledWhenCal
 
 TEST(DebugSettingsManager, GivenTbxFaultsDisabledWhenCallingIsTbxMngrEnabledThenReturnFalse) {
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableTbxPageFaultManager.set(false);
+    NEO::debugManager.flags.EnableTbxPageFaultManager.set(0);
 
     EXPECT_FALSE(NEO::debugManager.isTbxPageFaultManagerEnabled());
 }
 
 TEST(DebugSettingsManager, GivenHardwareOrHardwareWithAubCsrTypeAndTbxFaultsEnabledWhenCallingIsTbxMngrEnabledThenReturnFalse) {
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableTbxPageFaultManager.set(true);
+    NEO::debugManager.flags.EnableTbxPageFaultManager.set(1);
 
     NEO::debugManager.flags.SetCommandStreamReceiver.set(1);
     EXPECT_FALSE(NEO::debugManager.isTbxPageFaultManagerEnabled());

@@ -41,7 +41,7 @@ DECLARE_DEBUG_VARIABLE(bool, AUBDumpAllocsOnEnqueueSVMMemcpyOnly, false, "Force 
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpForceAllToLocalMemory, false, "Force placing every allocation in local memory address space")
 DECLARE_DEBUG_VARIABLE(bool, GenerateAubFilePerProcessId, true, "Generate aub file with process id")
 DECLARE_DEBUG_VARIABLE(bool, SetBufferHostMemoryAlwaysAubWritable, false, "Make buffer host memory allocation always uploaded to AUB/TBX")
-DECLARE_DEBUG_VARIABLE(bool, EnableTbxPageFaultManager, false, "Enables experimental page fault manager for host buffers and some other alloc types, replaces SetBufferHostMemoryAlwaysAubWritable")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableTbxPageFaultManager, -1, "Enable/Disable TbxPageFaultManager, overrides SetBufferHostMemoryAlwaysAubWritable to false if enabled: default 1, 0 - disable, 1 - enable")
 
 /*DEBUG FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableSWTags, false, "Enable software tagging in batch buffer")
