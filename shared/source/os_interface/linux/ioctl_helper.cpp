@@ -138,14 +138,14 @@ uint64_t *IoctlHelper::getPagingFenceAddress(uint32_t vmHandleId, OsContextLinux
     }
 }
 
-uint64_t IoctlHelper::acquireGpuRange(DrmMemoryManager &memoryManager, size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex) {
+uint64_t IoctlHelper::acquireGpuRange(DrmMemoryManager &memoryManager, size_t &size, uint32_t rootDeviceIndex, AllocationType allocType, HeapIndex heapIndex) {
     if (heapIndex >= HeapIndex::totalHeaps) {
         return 0;
     }
     return memoryManager.acquireGpuRange(size, rootDeviceIndex, heapIndex);
 }
 
-void IoctlHelper::releaseGpuRange(DrmMemoryManager &memoryManager, void *address, size_t size, uint32_t rootDeviceIndex) {
+void IoctlHelper::releaseGpuRange(DrmMemoryManager &memoryManager, void *address, size_t size, uint32_t rootDeviceIndex, AllocationType allocType) {
     memoryManager.releaseGpuRange(address, size, rootDeviceIndex);
 }
 
