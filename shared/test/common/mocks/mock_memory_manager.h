@@ -47,7 +47,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::overrideAllocationData;
     using MemoryManager::pageFaultManager;
     using MemoryManager::prefetchManager;
+    using MemoryManager::singleTemporaryAllocationsList;
     using MemoryManager::supportsMultiStorageResources;
+    using MemoryManager::temporaryAllocations;
     using MemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory;
     using MemoryManager::unMapPhysicalHostMemoryFromVirtualMemory;
     using MemoryManager::useNonSvmHostPtrAlloc;
@@ -153,8 +155,13 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         OsAgnosticMemoryManager::unlockResourceImpl(gfxAllocation);
     }
 
-    bool allocInUse(GraphicsAllocation &graphicsAllocation) override {
+    bool allocInUse(GraphicsAllocation &graphicsAllocation) const override {
         allocInUseCalled++;
+
+        if (callBaseAllocInUse) {
+            return OsAgnosticMemoryManager::allocInUse(graphicsAllocation);
+        }
+
         if (deferAllocInUse) {
             return true;
         }
@@ -317,7 +324,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
     uint32_t createGraphicsAllocationFromExistingStorageCalled = 0u;
-    uint32_t allocInUseCalled = 0u;
+    mutable uint32_t allocInUseCalled = 0u;
     uint32_t registerIpcExportedAllocationCalled = 0;
     int32_t overrideAllocateAsPackReturn = -1;
     std::vector<GraphicsAllocation *> allocationsFromExistingStorage{};
@@ -358,6 +365,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool singleFailureInAllocationWithHostPointer = false;
     bool isMockHostMemoryManager = false;
     bool deferAllocInUse = false;
+    bool callBaseAllocInUse = false;
     bool isMockEventPoolCreateMemoryManager = false;
     bool limitedGPU = false;
     bool returnFakeAllocation = false;

@@ -159,6 +159,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     bool isUsed() const { return registeredContextsNum > 0; }
     bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
     bool isUsedByOsContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
+    uint32_t getNumRegisteredContexts() const { return registeredContextsNum.load(); }
     MOCKABLE_VIRTUAL void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId);
     MOCKABLE_VIRTUAL TaskCountType getTaskCount(uint32_t contextId) const {
         if (contextId >= usageInfos.size()) {

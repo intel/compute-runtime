@@ -1242,6 +1242,16 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
 HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionAndTempAllocations, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager());
+    memoryManager->callBaseAllocInUse = true;
+
+    NEO::AllocationsList *memoryManagerTempAllocsList = nullptr;
+
+    auto singleTempAllocationsList = memoryManager->isSingleTemporaryAllocationsListEnabled();
+    if (singleTempAllocationsList) {
+        memoryManagerTempAllocsList = &memoryManager->getTemporaryAllocationsList();
+    }
+
     auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto offloadCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
 
@@ -1273,44 +1283,71 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
 
     // only main is completed
     immCmdList->hostSynchronize(0, true);
-    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    if (singleTempAllocationsList) {
+        EXPECT_TRUE(memoryManagerTempAllocsList->peekIsEmpty());
+    } else {
+        EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+        EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    }
 
     immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
-
-    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty()); // temp allocation created on offload csr
+    if (singleTempAllocationsList) {
+        EXPECT_FALSE(memoryManagerTempAllocsList->peekIsEmpty());
+    } else {
+        EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+        EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty()); // temp allocation created on offload csr
+    }
 
     mainInternalStorage->storeAllocationWithTaskCount(std::move(std::make_unique<MockGraphicsAllocation>()), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 1);
 
     // both completed
     immCmdList->hostSynchronize(0, true);
-    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    if (singleTempAllocationsList) {
+        EXPECT_TRUE(memoryManagerTempAllocsList->peekIsEmpty());
+    } else {
+        EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+        EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    }
 
     immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
-    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    if (singleTempAllocationsList) {
+        EXPECT_FALSE(memoryManagerTempAllocsList->peekIsEmpty());
+    } else {
+        EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+        EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    }
 
     auto mockAlloc = new MockGraphicsAllocation();
     mainInternalStorage->storeAllocationWithTaskCount(std::move(std::unique_ptr<MockGraphicsAllocation>(mockAlloc)), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 123);
 
     // only copy completed
     immCmdList->hostSynchronize(0, true);
-    EXPECT_FALSE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    if (singleTempAllocationsList) {
+        EXPECT_FALSE(memoryManagerTempAllocsList->peekIsEmpty());
+    } else {
+        EXPECT_FALSE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+        EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    }
 
     mockAlloc->updateTaskCount(1, mainQueueCsr->getOsContext().getContextId());
-
     immCmdList->hostSynchronize(0, true);
-    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+
+    if (singleTempAllocationsList) {
+        EXPECT_TRUE(memoryManagerTempAllocsList->peekIsEmpty());
+    } else {
+        EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+        EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    }
 
     // stored only in copy storage
     offloadInternalStorage->storeAllocationWithTaskCount(std::move(std::make_unique<MockGraphicsAllocation>()), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 1);
     immCmdList->hostSynchronize(0, true);
-    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    if (singleTempAllocationsList) {
+        EXPECT_TRUE(memoryManagerTempAllocsList->peekIsEmpty());
+    } else {
+        EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+        EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    }
     *hostAddress = std::numeric_limits<uint64_t>::max();
 }
 
