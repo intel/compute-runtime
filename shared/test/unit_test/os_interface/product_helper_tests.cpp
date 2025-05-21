@@ -79,9 +79,9 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSharedSystemMemCapabili
         if (enable != 1) {
             EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
         } else {
-            for (auto pf_enable : {-1, 0, 1}) {
-                debugManager.flags.EnableRecoverablePageFaults.set(pf_enable);
-                if (pf_enable != 0) {
+            for (auto pfEnable : {-1, 0, 1}) {
+                debugManager.flags.EnableRecoverablePageFaults.set(pfEnable);
+                if (pfEnable != 0) {
                     EXPECT_EQ(caps, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
                 } else {
                     EXPECT_EQ(0u, productHelper->getSharedSystemMemCapabilities(&pInHwInfo));
