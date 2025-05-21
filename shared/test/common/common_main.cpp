@@ -449,6 +449,7 @@ int main(int argc, char **argv) {
                 MockSipData::useMockSip = true;
             }
             sipInitialized = true;
+            debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.set(1);
         }
 
         Device::createPerformanceCountersFunc = [](Device *) -> std::unique_ptr<NEO::PerformanceCounters> { return {}; };

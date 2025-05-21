@@ -88,6 +88,9 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
     auto &hwInfo = device->getHardwareInfo();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+    if (debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.get() != -1) {
+        maxDbgSurfaceSize = static_cast<size_t>(debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.get());
+    }
     const auto &stateSaveAreaHeader = getStateSaveAreaHeader();
     if (stateSaveAreaHeader.empty()) {
         return maxDbgSurfaceSize;

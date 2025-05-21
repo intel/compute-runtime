@@ -427,6 +427,8 @@ TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledTwiceT
 using StateSaveAreaSipTest = Test<RawBinarySipFixture>;
 
 TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.set(-1);
 
     MockSipData::useMockSip = true;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader.clear();
@@ -436,11 +438,28 @@ TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSi
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.set(-1);
     MockSipData::useMockSip = true;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
     auto hwInfo = *NEO::defaultHwInfo.get();
     auto &gfxCoreHelper = this->pDevice->getGfxCoreHelper();
     EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
+}
+
+TEST_F(StateSaveAreaSipTest, givenOverrideSipKernelMaxDebugSurfaceSizeFlagSetWhenGettingStateSaveAreaSizeForInvalidInputThenValueOfDebugFlagIsReturned) {
+    DebugManagerStateRestore restore;
+    auto expectedValue = MemoryConstants::pageSize2M;
+    debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.set(static_cast<int32_t>(expectedValue));
+    MockSipData::useMockSip = true;
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    auto &gfxCoreHelper = this->pDevice->getGfxCoreHelper();
+    EXPECT_NE(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), expectedValue);
+    EXPECT_EQ(expectedValue, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
+
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader.clear();
+    EXPECT_EQ(expectedValue, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenCorrectDbgSurfaceSizeIsReturned) {

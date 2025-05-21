@@ -734,6 +734,9 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIs
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenMemTraceCommentWithDriverVersionIsPutIntoAubStream) {
+    DebugManagerStateRestore stateRestore;
+
+    debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.set(-1);
     auto mockAubManager = std::make_unique<MockAubManager>();
 
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
@@ -1001,6 +1004,7 @@ HWTEST_F(AubFileStreamTests, givenAndAubCommandStreamReceiverWhenCreateFullFileP
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenCommentWithNonDefaultFlagsAreAdded) {
     DebugManagerStateRestore stateRestore;
 
+    debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.set(-1);
     debugManager.flags.MakeAllBuffersResident.set(1);
     debugManager.flags.ZE_AFFINITY_MASK.set("non-default");
 
