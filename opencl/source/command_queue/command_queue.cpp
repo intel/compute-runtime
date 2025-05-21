@@ -177,7 +177,7 @@ CommandQueue::~CommandQueue() {
 }
 
 void tryAssignSecondaryEngine(Device &device, EngineControl *&engineControl, EngineTypeUsage engineTypeUsage) {
-    auto newEngine = device.getSecondaryEngineCsr(engineTypeUsage, false);
+    auto newEngine = device.getSecondaryEngineCsr(engineTypeUsage, 0, false);
     if (newEngine) {
         engineControl = newEngine;
     }

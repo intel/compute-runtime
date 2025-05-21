@@ -632,21 +632,21 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
     return true;
 }
 
-EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bool allocateInterrupt) {
+EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, int priorityLevel, bool allocateInterrupt) {
     if (secondaryEngines.find(engineTypeUsage.first) == secondaryEngines.end()) {
         return nullptr;
     }
 
     auto &secondaryEnginesForType = secondaryEngines[engineTypeUsage.first];
 
-    auto engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second);
+    auto engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, priorityLevel);
 
     bool isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
 
     if (isPrimaryContextInGroup && allocateInterrupt) {
         // Context 0 is already pre-initialized. We need non-initialized context, to pass context creation flag.
         // If all contexts are already initialized, just take next available. Interrupt request is only a hint.
-        engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second);
+        engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, priorityLevel);
     }
 
     isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
@@ -1225,7 +1225,7 @@ const EngineGroupT *Device::tryGetRegularEngineGroup(EngineGroupType engineGroup
     return nullptr;
 }
 
-EngineControl *SecondaryContexts::getEngine(EngineUsage usage) {
+EngineControl *SecondaryContexts::getEngine(EngineUsage usage, int priorityLevel) {
     auto secondaryEngineIndex = 0;
 
     std::lock_guard<std::mutex> guard(mutex);
@@ -1278,6 +1278,7 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage) {
     } else {
         DEBUG_BREAK_IF(true);
     }
+    engines[secondaryEngineIndex].osContext->overridePriority(priorityLevel);
 
     return &engines[secondaryEngineIndex];
 }

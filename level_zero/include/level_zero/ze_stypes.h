@@ -31,6 +31,7 @@ using zet_structure_type_ext_t = uint32_t;
 #define ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC static_cast<ze_structure_type_ext_t>(0x0003001C)
 #define ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES static_cast<ze_structure_type_ext_t>(0x0003001D)
 #define ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00030027)
+#define ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC static_cast<ze_structure_type_ext_t>(0x00030028)
 
 // Metric structure types
 #define ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATE_EXP_PROPERTIES static_cast<zet_structure_type_ext_t>(0x00010008)

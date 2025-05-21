@@ -205,6 +205,8 @@ class GfxCoreHelper {
 
     virtual bool isCacheFlushPriorImageReadRequired() const = 0;
 
+    virtual uint32_t getQueuePriorityLevels() const = 0;
+
     virtual ~GfxCoreHelper() = default;
 
   protected:
@@ -453,6 +455,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool getSipBinaryFromExternalLib() const override;
 
     bool isCacheFlushPriorImageReadRequired() const override;
+
+    uint32_t getQueuePriorityLevels() const override;
 
     ~GfxCoreHelperHw() override = default;
 

@@ -173,6 +173,13 @@ ze_device_handle_t zerIdentifierTranslateToDeviceHandle(uint32_t identifier) {
 ze_result_t zeDeviceSynchronize(ze_device_handle_t hDevice) {
     return L0::Device::fromHandle(hDevice)->synchronize();
 }
+ze_result_t ZE_APICALL zeDeviceGetPriorityLevels(
+    ze_device_handle_t hDevice,
+    int *lowestPriority,
+    int *highestPriority) {
+    return L0::Device::fromHandle(hDevice)->getPriorityLevels(lowestPriority, highestPriority);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -353,5 +360,12 @@ ze_device_handle_t ZE_APICALL zerIdentifierTranslateToDeviceHandle(uint32_t iden
 
 ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice) {
     return L0::zeDeviceSynchronize(hDevice);
+}
+
+ze_result_t ZE_APICALL zeDeviceGetPriorityLevels(
+    ze_device_handle_t hDevice,
+    int *lowestPriority,
+    int *highestPriority) {
+    return L0::zeDeviceGetPriorityLevels(hDevice, lowestPriority, highestPriority);
 }
 }

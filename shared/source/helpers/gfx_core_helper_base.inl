@@ -848,4 +848,9 @@ bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
     return false;
 }
 
+template <typename Family>
+uint32_t GfxCoreHelperHw<Family>::getQueuePriorityLevels() const {
+    return 2;
+}
+
 } // namespace NEO

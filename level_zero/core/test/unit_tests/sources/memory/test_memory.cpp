@@ -3856,7 +3856,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMPrepareIndirectAllocation
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr0 = nullptr;
     L0::DeviceImp *deviceImp0 = static_cast<L0::DeviceImp *>(device0);
-    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -3896,7 +3896,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest, whenisRemoteResourceNeededIsCalledWit
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr0 = nullptr;
     L0::DeviceImp *deviceImp0 = static_cast<L0::DeviceImp *>(device0);
-    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -3944,7 +3944,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeIndirectAllocationsRes
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr = nullptr;
     L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
-    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     // disable device usm pooling - allocation will not be pooled but pool will be initialized
@@ -3989,7 +3989,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeInternalAllocationsRes
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr = nullptr;
     L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
-    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     // disable device usm pooling - allocation will not be pooled but pool will be initialized

@@ -180,7 +180,7 @@ class MockDevice : public RootDevice {
         return getGlobalMemorySizeReturn;
     }
 
-    EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bool allocateInterrupt) override;
+    EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, int priorityLevel, bool allocateInterrupt) override;
 
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;

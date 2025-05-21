@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,6 +97,14 @@ void Device::ensureSyncDispatchTokenAllocation() {
             memset(syncDispatchTokenAllocation->getUnderlyingBuffer(), 0, syncDispatchTokenAllocation->getUnderlyingBufferSize());
         }
     }
+}
+
+ze_result_t Device::getPriorityLevels(int *lowestPriority, int *highestPriority) {
+
+    *highestPriority = queuePriorityHigh;
+    *lowestPriority = queuePriorityLow;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

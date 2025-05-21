@@ -195,11 +195,11 @@ AILConfiguration *MockDevice::getAilConfigurationHelper() const {
     return Device::getAilConfigurationHelper();
 }
 
-EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bool allocateInterrupt) {
+EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, int priorityLevel, bool allocateInterrupt) {
     if (disableSecondaryEngines) {
         return nullptr;
     }
-    return RootDevice::getSecondaryEngineCsr(engineTypeUsage, allocateInterrupt);
+    return RootDevice::getSecondaryEngineCsr(engineTypeUsage, priorityLevel, allocateInterrupt);
 }
 
 std::unique_ptr<CommandStreamReceiver> MockDevice::createCommandStreamReceiver() const {

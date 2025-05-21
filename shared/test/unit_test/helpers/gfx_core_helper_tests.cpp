@@ -1931,3 +1931,8 @@ HWTEST2_F(GfxCoreHelperTest, whenIsCacheFlushPriorImageReadRequiredCalledThenFal
     auto &helper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(helper.isCacheFlushPriorImageReadRequired());
 }
+
+TEST_F(GfxCoreHelperTest, whenGetQueuePriorityLevelsQueriedThen2IsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(2u, gfxCoreHelper.getQueuePriorityLevels());
+}
