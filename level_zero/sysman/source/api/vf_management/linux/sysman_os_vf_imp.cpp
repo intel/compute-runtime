@@ -54,21 +54,21 @@ ze_result_t LinuxVfImp::getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t
 
 ze_result_t LinuxVfImp::vfOsGetCapabilities(zes_vf_exp2_capabilities_t *pCapability) {
 
-    ze_result_t result = getVfBDFAddress((vfId - 1), &pCapability->address);
-    if (result != ZE_RESULT_SUCCESS) {
-        pCapability->address.domain = 0;
-        pCapability->address.bus = 0;
-        pCapability->address.device = 0;
-        pCapability->address.function = 0;
-        return result;
-    }
+    const auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    const auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
 
     uint64_t vfLmemQuota = 0;
-    if (!vfOsGetLocalMemoryQuota(vfLmemQuota)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t result = pSysmanProductHelper->getVfLocalMemoryQuota(pSysfsAccess, vfLmemQuota, vfId);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
     }
     pCapability->vfDeviceMemSize = vfLmemQuota;
+
     pCapability->vfID = vfId;
+    result = getVfBDFAddress((vfId - 1), &pCapability->address);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
 
     return ZE_RESULT_SUCCESS;
 }
@@ -103,14 +103,16 @@ ze_result_t LinuxVfImp::vfOsGetMemoryUtilization(uint32_t *pCount, zes_vf_util_m
     return ZE_RESULT_SUCCESS;
 }
 
-void LinuxVfImp::vfGetInstancesFromEngineInfo(NEO::EngineInfo *engineInfo, std::set<std::pair<zes_engine_group_t, uint32_t>> &engineGroupAndInstance) {
+void LinuxVfImp::vfGetInstancesFromEngineInfo(NEO::Drm *pDrm) {
 
-    auto engineTileMap = engineInfo->getEngineTileInfo();
+    auto engineTileMap = pDrm->getEngineInfo()->getEngineTileInfo();
     for (const auto &engine : engineTileMap) {
+        uint32_t tileId = engine.first;
+        uint32_t gtId = pDrm->getIoctlHelper()->getGtIdFromTileId(tileId, engine.second.engineClass);
         auto engineClassToEngineGroupRange = engineClassToEngineGroup.equal_range(static_cast<uint16_t>(engine.second.engineClass));
         for (auto l0EngineEntryInMap = engineClassToEngineGroupRange.first; l0EngineEntryInMap != engineClassToEngineGroupRange.second; l0EngineEntryInMap++) {
             auto l0EngineType = l0EngineEntryInMap->second;
-            engineGroupAndInstance.insert({l0EngineType, static_cast<uint32_t>(engine.second.engineInstance)});
+            engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(engine.second.engineInstance), gtId}});
         }
     }
 }
@@ -132,12 +134,11 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    const auto engineInfo = pDrm->getEngineInfo();
-    vfGetInstancesFromEngineInfo(engineInfo, engineGroupAndInstance);
-    for (const auto &engine : engineGroupAndInstance) {
+    vfGetInstancesFromEngineInfo(pDrm);
+    for (const auto &engine : engineGroupInstance) {
         auto engineClass = engineGroupToEngineClass.find(engine.first);
         std::pair<uint64_t, uint64_t> configPair{UINT64_MAX, UINT64_MAX};
-        auto result = pSysmanKmdInterface->getBusyAndTotalTicksConfigs(vfId, engine.second, engineClass->second, configPair);
+        auto result = pSysmanKmdInterface->getBusyAndTotalTicksConfigsForVf(pPmuInterface, vfId, engine.second.first, engineClass->second, engine.second.second, configPair);
         if (result != ZE_RESULT_SUCCESS) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the busy config and total ticks config and returning error:0x%x \n", __FUNCTION__, result);
             cleanup();
@@ -223,19 +224,6 @@ bool LinuxVfImp::vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) {
     if (result != ZE_RESULT_SUCCESS) {
         lMemUsed = 0;
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Used with error 0x%x \n", __FUNCTION__, result);
-        return false;
-    }
-    return true;
-}
-
-bool LinuxVfImp::vfOsGetLocalMemoryQuota(uint64_t &lMemQuota) {
-    std::string pathForLmemQuota = "/gt/lmem_quota";
-    std::string pathForDeviceMemQuota = pathForVfTelemetryPrefix + std::to_string(vfId) + pathForLmemQuota;
-
-    auto result = pSysfsAccess->read(pathForDeviceMemQuota.data(), lMemQuota);
-    if (result != ZE_RESULT_SUCCESS) {
-        lMemQuota = 0;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
         return false;
     }
     return true;

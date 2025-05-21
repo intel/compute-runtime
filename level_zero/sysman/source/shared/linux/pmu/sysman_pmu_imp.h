@@ -26,6 +26,7 @@ class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableAndNonMovableClass 
     int64_t pmuInterfaceOpen(uint64_t config, int group, uint32_t format) override;
     int32_t pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) override;
     int32_t getPmuConfigs(const std::string_view &sysmanDeviceDir, uint64_t engineClass, uint64_t engineInstance, uint64_t gtId, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) override;
+    int32_t getPmuConfigsForVf(const std::string_view &sysmanDeviceDir, uint64_t fnNumber, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) override;
 
   protected:
     MOCKABLE_VIRTUAL int32_t getErrorNo();

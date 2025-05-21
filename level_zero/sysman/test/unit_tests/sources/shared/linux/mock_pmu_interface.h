@@ -31,6 +31,7 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
     uint32_t mockPmuConfigCallCount = 0;
     std::vector<int32_t> mockEventConfigReturnValue = {};
     std::vector<int32_t> mockFormatConfigReturnValue = {};
+    std::vector<int32_t> mockVfConfigReturnValue = {};
 
     MockPmuInterfaceImp(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 
@@ -83,6 +84,15 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         } else {
             config = mockTotalTicksConfig;
             mockPmuConfigCallCount = 0;
+        }
+        return returnValue;
+    }
+
+    int32_t getPmuConfigsForVf(const std::string_view &sysmanDeviceDir, uint64_t fnNumber, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) override {
+        int32_t returnValue = 0;
+        if (!mockVfConfigReturnValue.empty()) {
+            returnValue = mockVfConfigReturnValue.front();
+            mockVfConfigReturnValue.erase(mockVfConfigReturnValue.begin());
         }
         return returnValue;
     }

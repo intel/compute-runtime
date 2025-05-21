@@ -218,8 +218,31 @@ void SysmanKmdInterfaceXe::getDriverVersion(char (&driverVersion)[ZES_STRING_PRO
     return;
 }
 
-ze_result_t SysmanKmdInterfaceXe::getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) {
-    return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+ze_result_t SysmanKmdInterfaceXe::getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
+                                                                   uint64_t fnNumber,
+                                                                   uint64_t engineInstance,
+                                                                   uint64_t engineClass,
+                                                                   uint64_t gtId,
+                                                                   std::pair<uint64_t, uint64_t> &configPair) {
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    const std::string sysmanDeviceDir = std::string(sysDevicesDir) + sysmanDeviceDirName;
+
+    auto ret = pPmuInterface->getPmuConfigs(sysmanDeviceDir, engineClass, engineInstance, gtId, configPair.first, configPair.second);
+    if (ret < 0) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs and returning error:0x%x\n", __FUNCTION__, result);
+        return result;
+    }
+
+    ret = pPmuInterface->getPmuConfigsForVf(sysmanDeviceDir, fnNumber, configPair.first, configPair.second);
+    if (ret < 0) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs for VF and returning error:0x%x\n", __FUNCTION__, result);
+        return result;
+    }
+
+    return result;
 }
 
 std::string SysmanKmdInterfaceXe::getGpuBindEntry() const {

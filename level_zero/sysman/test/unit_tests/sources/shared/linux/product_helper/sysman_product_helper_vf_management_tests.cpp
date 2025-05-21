@@ -53,6 +53,85 @@ HWTEST2_F(SysmanProductHelperVfManagementTest, GivenSysmanProductHelperWhenCheck
     EXPECT_FALSE(pSysmanProductHelper->isVfMemoryUtilizationSupported());
 }
 
+HWTEST2_F(SysmanProductHelperVfManagementTest, GivenValidVfHandleWhenQueryingVfCapabilitiesThenSuccessAndCorrectPciAddressIsReturned, IsDG2) {
+    constexpr uint32_t mockedDomain = 0;
+    constexpr uint32_t mockedBus = 0x4d;
+    constexpr uint32_t mockedDevice = 0;
+    constexpr uint32_t mockedFunction = 1;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(capabilities.address.domain, mockedDomain);
+        EXPECT_EQ(capabilities.address.bus, mockedBus);
+        EXPECT_EQ(capabilities.address.device, mockedDevice);
+        EXPECT_EQ(capabilities.address.function, mockedFunction);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperVfManagementTest, GivenValidVfHandleAndSysfsGetRealPathFailsWhenQueryingVfCapabilitiesThenErrorIsReturned, IsDG2) {
+    pSysfsAccess->mockRealPathError = ZE_RESULT_ERROR_UNKNOWN;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_ERROR_UNKNOWN);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperVfManagementTest, GivenValidVfHandleAndInvalidBDFWithImproperTokensWhenQueryingVfCapabilitiesThenErrorIsReturned, IsDG2) {
+    pSysfsAccess->mockValidBdfData = false;
+    pSysfsAccess->mockInvalidTokens = true;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperVfManagementTest, GivenValidVfHandleAndInvalidBDFWhenQueryingVfCapabilitiesThenErrorIsReturned, IsDG2) {
+    pSysfsAccess->mockValidBdfData = false;
+    pSysfsAccess->mockInvalidTokens = false;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperVfManagementTest, GivenValidVfHandleWhenQueryingVfCapabilitiesThenParamsReturnedCorrectly, IsDG2) {
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(capabilities.vfDeviceMemSize, mockLmemQuota);
+        EXPECT_GT(capabilities.vfID, 0u);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperVfManagementTest, GivenValidVfHandleWhenQueryingVfCapabilitiesAndSysfsReadForMemoryQuotaValueFailsThenErrorIsReturned, IsDG2) {
+
+    pSysfsAccess->mockReadMemoryError = ZE_RESULT_ERROR_UNKNOWN;
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto hSysmanVf : handles) {
+        ASSERT_NE(nullptr, hSysmanVf);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_ERROR_UNKNOWN);
+    }
+}
+
+HWTEST2_F(SysmanProductHelperVfManagementTest, GivenSysmanProductHelperWhenCallingGetVfLocalMemoryQuotaThenErrorIsReturned, IsNotDG2) {
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    constexpr uint32_t vfId = 1u;
+    uint64_t lMemQuota = 0u;
+    EXPECT_EQ(pSysmanProductHelper->getVfLocalMemoryQuota(pSysfsAccess.get(), lMemQuota, vfId), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
 HWTEST2_F(SysmanProductHelperVfManagementTest, GivenValidVfHandleWhenQueryingMemoryUtilizationThenMemoryParamsAreReturnedCorrectly, IsDG2) {
     auto handles = getEnabledVfHandles(mockHandleCount);
     for (auto hSysmanVf : handles) {
@@ -90,7 +169,7 @@ HWTEST2_F(SysmanProductHelperVfManagementTest, GivenValidVfHandleWhenQueryingMem
     for (auto hSysmanVf : handles) {
         ASSERT_NE(nullptr, hSysmanVf);
         uint32_t mockCount = 1;
-        pSysfsAccess->mockError = ZE_RESULT_ERROR_UNKNOWN;
+        pSysfsAccess->mockReadMemoryError = ZE_RESULT_ERROR_UNKNOWN;
         std::vector<zes_vf_util_mem_exp2_t> memUtils(mockCount);
         EXPECT_EQ(zesVFManagementGetVFMemoryUtilizationExp2(hSysmanVf, &mockCount, memUtils.data()), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     }

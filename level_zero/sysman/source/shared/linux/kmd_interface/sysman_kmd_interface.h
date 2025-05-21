@@ -159,7 +159,12 @@ class SysmanKmdInterface {
     virtual bool isSettingExclusiveModeSupported() const = 0;
     virtual void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual bool isVfEngineUtilizationSupported() const = 0;
-    virtual ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) = 0;
+    virtual ze_result_t getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
+                                                         uint64_t fnNumber,
+                                                         uint64_t engineInstance,
+                                                         uint64_t engineClass,
+                                                         uint64_t gtId,
+                                                         std::pair<uint64_t, uint64_t> &configPair) = 0;
     virtual std::string getGpuBindEntry() const = 0;
     virtual std::string getGpuUnBindEntry() const = 0;
     virtual std::vector<zes_power_domain_t> getPowerDomains() const = 0;
@@ -227,7 +232,12 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     bool isSettingExclusiveModeSupported() const override { return true; }
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
     bool isVfEngineUtilizationSupported() const override { return false; }
-    ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
+    ze_result_t getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
+                                                 uint64_t fnNumber,
+                                                 uint64_t engineInstance,
+                                                 uint64_t engineClass,
+                                                 uint64_t gtId,
+                                                 std::pair<uint64_t, uint64_t> &configPair) override;
     std::string getGpuBindEntry() const override;
     std::string getGpuUnBindEntry() const override;
     std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
@@ -282,7 +292,12 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     bool isSettingExclusiveModeSupported() const override { return true; }
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
     bool isVfEngineUtilizationSupported() const override { return true; }
-    ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
+    ze_result_t getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
+                                                 uint64_t fnNumber,
+                                                 uint64_t engineInstance,
+                                                 uint64_t engineClass,
+                                                 uint64_t gtId,
+                                                 std::pair<uint64_t, uint64_t> &configPair) override;
     std::string getGpuBindEntry() const override;
     std::string getGpuUnBindEntry() const override;
     std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
@@ -339,8 +354,13 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isSettingTimeoutModeSupported() const override { return false; }
     bool isSettingExclusiveModeSupported() const override { return false; }
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
-    bool isVfEngineUtilizationSupported() const override { return false; }
-    ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
+    bool isVfEngineUtilizationSupported() const override { return true; }
+    ze_result_t getBusyAndTotalTicksConfigsForVf(PmuInterface *const &pPmuInterface,
+                                                 uint64_t fnNumber,
+                                                 uint64_t engineInstance,
+                                                 uint64_t engineClass,
+                                                 uint64_t gtId,
+                                                 std::pair<uint64_t, uint64_t> &configPair) override;
     std::string getGpuBindEntry() const override;
     std::string getGpuUnBindEntry() const override;
     void setSysmanDeviceDirName(const bool isIntegratedDevice) override;

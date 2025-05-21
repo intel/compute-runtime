@@ -24,6 +24,7 @@ struct MockFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t gtFileReadStatus = ZE_RESULT_SUCCESS;
     ze_result_t engineClassFileReadStatus = ZE_RESULT_SUCCESS;
     ze_result_t engineInstanceFileReadStatus = ZE_RESULT_SUCCESS;
+    ze_result_t functionFileReadStatus = ZE_RESULT_SUCCESS;
 
     ze_result_t read(const std::string file, std::string &val) override {
 
@@ -39,6 +40,8 @@ struct MockFsAccess : public L0::Sysman::FsAccessInterface {
             val = "config:8-15";
         } else if ((engineInstanceFileReadStatus == ZE_RESULT_SUCCESS) && (file.find("engine_instance") != std::string::npos)) {
             val = "config:16-23";
+        } else if ((functionFileReadStatus == ZE_RESULT_SUCCESS) && (file.find("function") != std::string::npos)) {
+            val = "config:0-7";
         } else {
             val = mockReadValue;
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -75,7 +78,7 @@ struct SysmanXePmuFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(SysmanXePmuFixture, GivenPmuHandleAndValidConfigEventFileWhenCallingGetConfigFromEventFileThenValidConfigValueAndSuccessIsReturned) {
-    std::string eventFile = "sys/dev/xe/engine-active-ticks";
+    std::string_view eventFile = "sys/dev/xe/engine-active-ticks";
     uint64_t mockEventConfig = 2u;
     uint64_t config = UINT64_MAX;
     EXPECT_EQ(0, pPmuInterface->getConfigFromEventFile(eventFile, config));
@@ -89,27 +92,27 @@ TEST_F(SysmanXePmuFixture, GivenPmuHandleAndValidConfigEventFileWhenCallingGetCo
 }
 
 TEST_F(SysmanXePmuFixture, GivenPmuHandleAndInvalidConfigEventFileWhenCallingGetConfigFromEventFileThenFailureIsReturned) {
-    std::string eventFile = "sys/dev/xe/engine-ticks";
+    constexpr std::string_view eventFile = "sys/dev/xe/engine-ticks";
     uint64_t config = UINT64_MAX;
     EXPECT_EQ(-1, pPmuInterface->getConfigFromEventFile(eventFile, config));
 }
 
 TEST_F(SysmanXePmuFixture, GivenPmuHandleAndFsReadFailsForEventFileWhenCallingGetConfigFromEventFileThenFailureIsReturned) {
-    std::string eventFile = "sys/dev/xe/engine-active-ticks";
+    constexpr std::string_view eventFile = "sys/dev/xe/engine-active-ticks";
     pFsAccess->engineActiveTicksReadStatus = ZE_RESULT_ERROR_UNKNOWN;
     uint64_t config = UINT64_MAX;
     EXPECT_EQ(-1, pPmuInterface->getConfigFromEventFile(eventFile, config));
 }
 
 TEST_F(SysmanXePmuFixture, GivenPmuHandleAndEventFileHasInvalidValueWhenCallingGetConfigFromEventFileThenFailureIsReturned) {
-    std::string eventFile = "sys/dev/xe/engine-active-ticks";
+    constexpr std::string_view eventFile = "sys/dev/xe/engine-active-ticks";
     pFsAccess->mockReadValue = "invalidValue";
     uint64_t config = UINT64_MAX;
     EXPECT_EQ(-1, pPmuInterface->getConfigFromEventFile(eventFile, config));
 }
 
 TEST_F(SysmanXePmuFixture, GivenPmuHandleAndValidFormatConfigDirectoryNameWhenCallingGetConfigAfterFormatThenValidConfigValueAndSuccessIsReturned) {
-    std::string formatDir = "/sys/dev/xe/format";
+    constexpr std::string_view formatDir = "/sys/dev/xe/format";
     uint64_t mockConfig = 1u;
     uint32_t mockEngineClass = 1u;
     uint32_t mockEngineInstance = 0u;
@@ -120,7 +123,7 @@ TEST_F(SysmanXePmuFixture, GivenPmuHandleAndValidFormatConfigDirectoryNameWhenCa
 }
 
 TEST_F(SysmanXePmuFixture, GivenPmuHandleAndFsReadForGtFailsWhenCallingGetConfigAfterFormatThenFailureIsReturned) {
-    std::string formatDir = "/sys/dev/xe/format";
+    constexpr std::string_view formatDir = "/sys/dev/xe/format";
     uint64_t mockConfig = 1u;
     uint32_t mockEngineClass = 1u;
     uint32_t mockEngineInstance = 0u;
@@ -130,7 +133,7 @@ TEST_F(SysmanXePmuFixture, GivenPmuHandleAndFsReadForGtFailsWhenCallingGetConfig
 }
 
 TEST_F(SysmanXePmuFixture, GivenPmuHandleAndFsReadForEngineClassFailsWhenCallingGetConfigAfterFormatThenFailureIsReturned) {
-    std::string formatDir = "/sys/dev/xe/format";
+    constexpr std::string_view formatDir = "/sys/dev/xe/format";
     uint64_t mockConfig = 1u;
     uint32_t mockEngineClass = 1u;
     uint32_t mockEngineInstance = 0u;
@@ -140,7 +143,7 @@ TEST_F(SysmanXePmuFixture, GivenPmuHandleAndFsReadForEngineClassFailsWhenCalling
 }
 
 TEST_F(SysmanXePmuFixture, GivenPmuHandleAndFsReadForEngineInstanceFailsWhenCallingGetConfigAfterFormatThenFailureIsReturned) {
-    std::string formatDir = "/sys/dev/xe/format";
+    constexpr std::string_view formatDir = "/sys/dev/xe/format";
     uint64_t mockConfig = 1u;
     uint32_t mockEngineClass = 1u;
     uint32_t mockEngineInstance = 0u;
@@ -150,7 +153,7 @@ TEST_F(SysmanXePmuFixture, GivenPmuHandleAndFsReadForEngineInstanceFailsWhenCall
 }
 
 TEST_F(SysmanXePmuFixture, GivenPmuHandleAndGtFileHasInvalidValueWhenCallingGetConfigAfterFormatThenFailureIsReturned) {
-    std::string formatDir = "/sys/dev/xe/format";
+    constexpr std::string_view formatDir = "/sys/dev/xe/format";
     uint64_t mockConfig = 1u;
     uint32_t mockEngineClass = 1u;
     uint32_t mockEngineInstance = 0u;
@@ -160,13 +163,43 @@ TEST_F(SysmanXePmuFixture, GivenPmuHandleAndGtFileHasInvalidValueWhenCallingGetC
 }
 
 TEST_F(SysmanXePmuFixture, GivenPmuHandleAndGtFileHasInvalidConfigFormatWhenCallingGetConfigAfterFormatThenFailureIsReturned) {
-    std::string formatDir = "/sys/dev/xe/format";
+    constexpr std::string_view formatDir = "/sys/dev/xe/format";
     uint64_t mockConfig = 1u;
     uint32_t mockEngineClass = 1u;
     uint32_t mockEngineInstance = 0u;
     uint32_t mockGt = 0u;
     pFsAccess->mockReadValue = "config:32";
     EXPECT_EQ(-1, pPmuInterface->getConfigAfterFormat(formatDir, mockConfig, mockEngineClass, mockEngineInstance, mockGt));
+}
+
+TEST_F(SysmanXePmuFixture, GivenPmuHandleAndFunctionFileHasInvalidConfigValueWhenCallingGetPmuConfigsForVfThenFailureIsReturned) {
+    constexpr std::string_view sysmanDeviceDir = "/sys/dev/xe/";
+    uint64_t fnNumber = 1u;
+    uint64_t activeTicksConfig = 2u;
+    uint64_t totalTicksConfig = 3u;
+    pFsAccess->mockReadValue = "config:0";
+    EXPECT_EQ(-1, pPmuInterface->getPmuConfigsForVf(sysmanDeviceDir, fnNumber, activeTicksConfig, totalTicksConfig));
+}
+
+TEST_F(SysmanXePmuFixture, GivenPmuHandleAndFsReadForFunctionFileFailsWhenCallingGetPmuConfigsForVfThenFailureIsReturned) {
+    constexpr std::string_view sysmanDeviceDir = "/sys/dev/xe/";
+    uint64_t fnNumber = 1u;
+    uint64_t activeTicksConfig = 2u;
+    uint64_t totalTicksConfig = 3u;
+    pFsAccess->functionFileReadStatus = ZE_RESULT_ERROR_UNKNOWN;
+    EXPECT_EQ(-1, pPmuInterface->getPmuConfigsForVf(sysmanDeviceDir, fnNumber, activeTicksConfig, totalTicksConfig));
+}
+
+TEST_F(SysmanXePmuFixture, GivenPmuHandleAndValidFunctionFileContentsWhenCallingGetPmuConfigsForVfThenValidConfigsAndSuccessIsReturned) {
+    constexpr std::string_view sysmanDeviceDir = "/sys/dev/xe/";
+    constexpr uint64_t mockActiveTicksConfig = 3u;
+    constexpr uint64_t mockTotalTicksConfig = 5u;
+    uint64_t fnNumber = 1u;
+    uint64_t activeTicksConfig = 2u;
+    uint64_t totalTicksConfig = 4u;
+    EXPECT_EQ(0, pPmuInterface->getPmuConfigsForVf(sysmanDeviceDir, fnNumber, activeTicksConfig, totalTicksConfig));
+    EXPECT_EQ(mockActiveTicksConfig, activeTicksConfig);
+    EXPECT_EQ(mockTotalTicksConfig, totalTicksConfig);
 }
 
 } // namespace ult

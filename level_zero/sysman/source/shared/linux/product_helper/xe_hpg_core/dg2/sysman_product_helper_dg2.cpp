@@ -248,6 +248,20 @@ bool SysmanProductHelperHw<gfxProduct>::isVfMemoryUtilizationSupported() {
     return true;
 }
 
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getVfLocalMemoryQuota(SysFsAccessInterface *pSysfsAccess, uint64_t &lMemQuota, const uint32_t &vfId) {
+
+    const std::string pathForLmemQuota = "/gt/lmem_quota";
+    std::string pathForDeviceMemQuota = "iov/vf" + std::to_string(vfId) + pathForLmemQuota;
+
+    auto result = pSysfsAccess->read(pathForDeviceMemQuota, lMemQuota);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
+        return result;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

@@ -81,6 +81,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Vf Management
     bool isVfMemoryUtilizationSupported() override;
+    ze_result_t getVfLocalMemoryQuota(SysFsAccessInterface *pSysfsAccess, uint64_t &lMemQuota, const uint32_t &vfId) override;
 
     ~SysmanProductHelperHw() override = default;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,6 +116,7 @@ struct MockVfNeoDrm : public Drm {
 
 struct MockVfSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockError = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadMemoryError = ZE_RESULT_SUCCESS;
     ze_result_t mockRealPathError = ZE_RESULT_SUCCESS;
     bool mockValidBdfData = true;
     bool mockInvalidTokens = true;
@@ -140,8 +141,8 @@ struct MockVfSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     }
 
     ze_result_t getVal(const std::string file, uint64_t &val) {
-        if (mockError != ZE_RESULT_SUCCESS) {
-            return mockError;
+        if (mockReadMemoryError != ZE_RESULT_SUCCESS) {
+            return mockReadMemoryError;
         }
 
         if (file.compare(fileForLmemUsed) == 0) {
