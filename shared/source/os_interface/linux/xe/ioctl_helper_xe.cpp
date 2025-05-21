@@ -265,7 +265,6 @@ bool IoctlHelperXe::initialize() {
             assignValue(tileIdToMediaGtId, gt.tile_id, gt.gt_id);
         }
     }
-    querySupportedFeatures();
     return true;
 }
 
@@ -1017,8 +1016,25 @@ int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vecto
 }
 
 bool IoctlHelperXe::isPageFaultSupported() {
-    xeLog(" -> IoctlHelperXe::%s %d\n", __FUNCTION__, false);
-    return false;
+    auto checkVmCreateFlagsSupport = [&](uint32_t flags) -> bool {
+        struct drm_xe_vm_create vmCreate = {};
+        vmCreate.flags = flags;
+
+        auto ret = IoctlHelper::ioctl(DrmIoctl::gemVmCreate, &vmCreate);
+        if (ret == 0) {
+            struct drm_xe_vm_destroy vmDestroy = {};
+            vmDestroy.vm_id = vmCreate.vm_id;
+            ret = IoctlHelper::ioctl(DrmIoctl::gemVmDestroy, &vmDestroy);
+            DEBUG_BREAK_IF(ret != 0);
+            return true;
+        }
+        return false;
+    };
+    bool pageFaultSupport = checkVmCreateFlagsSupport(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE);
+
+    xeLog(" -> IoctlHelperXe::%s %d\n", __FUNCTION__, pageFaultSupport);
+
+    return pageFaultSupport;
 }
 
 uint32_t IoctlHelperXe::getEuStallFdParameter() {
@@ -1863,23 +1879,5 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         return "???";
     }
 }
-
-void IoctlHelperXe::querySupportedFeatures() {
-    auto checkVmCreateFlagsSupport = [&](uint32_t flags) -> bool {
-        struct drm_xe_vm_create vmCreate = {};
-        vmCreate.flags = flags;
-
-        auto ret = IoctlHelper::ioctl(DrmIoctl::gemVmCreate, &vmCreate);
-        if (ret == 0) {
-            struct drm_xe_vm_destroy vmDestroy = {};
-            vmDestroy.vm_id = vmCreate.vm_id;
-            ret = IoctlHelper::ioctl(DrmIoctl::gemVmDestroy, &vmDestroy);
-            DEBUG_BREAK_IF(ret != 0);
-            return true;
-        }
-        return false;
-    };
-    supportedFeatures.flags.pageFault = checkVmCreateFlagsSupport(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE);
-};
 
 } // namespace NEO

@@ -223,18 +223,6 @@ class IoctlHelperXe : public IoctlHelper {
         uint32_t drmContextId;
     };
 
-    struct SupportedFeatures {
-        union {
-            struct {
-                uint32_t pageFault : 1;
-                uint32_t reserved : 31;
-            } flags;
-            uint32_t allFlags = 0;
-        };
-    } supportedFeatures{};
-    static_assert(sizeof(SupportedFeatures::flags) == sizeof(SupportedFeatures::allFlags), "");
-
-    void querySupportedFeatures();
     std::unique_ptr<EuDebugInterface> euDebugInterface;
 };
 
