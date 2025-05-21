@@ -2413,7 +2413,7 @@ struct StagingBufferTest : public EnqueueSvmTest {
         EnqueueSvmTest::TearDown();
     }
 
-    static constexpr size_t stagingBufferSize = MemoryConstants::megaByte * 2;
+    static constexpr size_t stagingBufferSize = MemoryConstants::pageSize;
     static constexpr size_t copySize = stagingBufferSize * 4;
     static constexpr size_t expectedNumOfCopies = copySize / stagingBufferSize;
 

@@ -38,6 +38,7 @@ void StagingBufferTracker::freeChunk() const {
 
 StagingBufferManager::StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields, bool requiresWritable)
     : svmAllocsManager(svmAllocsManager), rootDeviceIndices(rootDeviceIndices), deviceBitfields(deviceBitfields), requiresWritable(requiresWritable) {
+    chunkSize = getDefaultStagingBufferSize();
     if (debugManager.flags.StagingBufferSize.get() != -1) {
         chunkSize = debugManager.flags.StagingBufferSize.get() * MemoryConstants::kiloByte;
     }
@@ -346,7 +347,7 @@ std::pair<HeapAllocator *, uint64_t> StagingBufferManager::requestStagingBuffer(
         return {retriedAllocator, retriedChunkBuffer};
     }
 
-    auto stagingBufferSize = alignUp(std::max(chunkSize, size), MemoryConstants::pageSize2M);
+    auto stagingBufferSize = alignUp(std::max(chunkSize, size), getDefaultStagingBufferSize());
     auto usmHost = allocateStagingBuffer(stagingBufferSize);
     if (usmHost != nullptr) {
         StagingBuffer stagingBuffer{usmHost, stagingBufferSize};

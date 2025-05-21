@@ -119,7 +119,7 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
 
     bool isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies);
 
-    size_t chunkSize = MemoryConstants::pageSize2M;
+    size_t chunkSize = 0;
     std::mutex mtx;
     std::vector<StagingBuffer> stagingBuffers;
     std::vector<StagingBufferTracker> trackers;
@@ -133,5 +133,7 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<StagingBufferManager>);
+
+size_t getDefaultStagingBufferSize();
 
 } // namespace NEO

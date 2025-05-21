@@ -833,7 +833,8 @@ struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {
         EnqueueWriteImageTest::TearDown();
     }
 
-    static constexpr size_t stagingBufferSize = MemoryConstants::megaByte * 2;
+    static constexpr size_t stagingBufferSize = MemoryConstants::pageSize;
+    static constexpr size_t pitchSize = stagingBufferSize / 2;
     static constexpr size_t writeSize = stagingBufferSize * 4;
     unsigned char *ptr;
     size_t origin[3] = {0, 0, 0};
@@ -844,7 +845,7 @@ struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {
 
 HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, pitchSize, pitchSize, ptr, nullptr);
     EXPECT_TRUE(mockCommandQueueHw.flushCalled);
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(4ul, mockCommandQueueHw.enqueueWriteImageCounter);
@@ -854,7 +855,7 @@ HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledThenRetu
 
 HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledWithoutRowPitchNorSlicePitchThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    region[0] = MemoryConstants::megaByte / dstImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    region[0] = pitchSize / dstImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, 0u, 0u, ptr, nullptr);
 
     EXPECT_EQ(res, CL_SUCCESS);
@@ -865,7 +866,7 @@ HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledWithoutR
 
 HWTEST_F(WriteImageStagingBufferTest, whenBlockingEnqueueStagingWriteImageCalledThenFinishCalled) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, true, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, true, origin, region, pitchSize, pitchSize, ptr, nullptr);
 
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(1u, mockCommandQueueHw.finishCalledCount);
@@ -875,7 +876,7 @@ HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledWithEven
     constexpr cl_command_type expectedLastCmd = CL_COMMAND_WRITE_IMAGE;
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     cl_event event;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, pitchSize, pitchSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -889,7 +890,7 @@ HWTEST_F(WriteImageStagingBufferTest, givenOutOfOrderQueueWhenEnqueueStagingWrit
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     mockCommandQueueHw.setOoqEnabled();
     cl_event event;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, pitchSize, pitchSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -905,7 +906,7 @@ HWTEST_F(WriteImageStagingBufferTest, givenOutOfOrderQueueWhenEnqueueStagingWrit
     mockCommandQueueHw.setOoqEnabled();
     cl_event event;
     region[1] = 1;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, pitchSize, pitchSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -919,7 +920,7 @@ HWTEST_F(WriteImageStagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagi
     cl_event event;
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     mockCommandQueueHw.setProfilingEnabled();
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, pitchSize, pitchSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -932,7 +933,7 @@ HWTEST_F(WriteImageStagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagi
 HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageFailedThenPropagateErrorCode) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     mockCommandQueueHw.enqueueWriteImageCallBase = false;
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, dstImage, false, origin, region, pitchSize, pitchSize, ptr, nullptr);
 
     EXPECT_EQ(res, CL_INVALID_OPERATION);
     EXPECT_EQ(1ul, mockCommandQueueHw.enqueueWriteImageCounter);
@@ -962,7 +963,7 @@ HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledFor3DIma
     size_t region[3] = {2, 2, 4};
     auto image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(context, &imageDesc));
 
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, image.get(), false, origin, region, 4u, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, image.get(), false, origin, region, 4u, pitchSize, ptr, nullptr);
     EXPECT_EQ(res, CL_SUCCESS);
 
     // (2, 2, 4) splitted into (2, 2, 2) * 2
@@ -984,6 +985,6 @@ HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledForMipMa
     size_t region[3] = {2, 2, 4};
     auto image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(context, &imageDesc));
 
-    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, image.get(), false, origin, region, 4u, MemoryConstants::megaByte, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, image.get(), false, origin, region, 4u, pitchSize, ptr, nullptr);
     EXPECT_EQ(res, CL_SUCCESS);
 }

@@ -22,6 +22,7 @@ add_executable(igdrcl_${target_name}
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.h
                ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_linux_tests.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
+               ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_get_staging_buffer_size.cpp
                ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
                ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_drm.cpp
                ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
