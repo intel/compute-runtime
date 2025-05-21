@@ -375,6 +375,10 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         return anyKernelArgumentUsingSystemMemory;
     }
 
+    bool isAnyKernelArgumentUsingZeroCopyMemory() const {
+        return anyKernelArgumentUsingZeroCopyMemory;
+    }
+
     static bool graphicsAllocationTypeUseSystemMemory(AllocationType type);
     void setDestinationAllocationInSystemMemory(bool value) {
         isDestinationAllocationInSystemMemory = value;
@@ -471,6 +475,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     bool isUnifiedMemorySyncRequired = true;
     bool kernelHasIndirectAccess = true;
     bool anyKernelArgumentUsingSystemMemory = false;
+    bool anyKernelArgumentUsingZeroCopyMemory = false;
     bool isDestinationAllocationInSystemMemory = false;
 };
 

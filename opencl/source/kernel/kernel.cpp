@@ -1469,6 +1469,8 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
             this->anyKernelArgumentUsingSystemMemory |= Kernel::graphicsAllocationTypeUseSystemMemory(gfxAllocationType);
         }
 
+        this->anyKernelArgumentUsingZeroCopyMemory |= buffer->isMemObjZeroCopy();
+
         if (buffer->peekSharingHandler()) {
             usingSharedObjArgs = true;
         }
