@@ -50,16 +50,6 @@ bool ReleaseHelperHw<release>::isBlitImageAllowedForDepthFormat() const {
 }
 
 template <>
-inline bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
-    return false;
-}
-
-template <>
-inline bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
-    return true;
-}
-
-template <>
 const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferredSlmValue(bool isHeapless) const {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename XeHpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
     static const SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {{
