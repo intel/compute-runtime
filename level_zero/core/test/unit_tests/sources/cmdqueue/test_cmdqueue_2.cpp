@@ -485,7 +485,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     } else {
         expectedSize += sizeof(MI_BATCH_BUFFER_END);
     }
-    expectedSize += NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(neoDevice->getRootDeviceEnvironment());
+    expectedSize += NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(neoDevice->getRootDeviceEnvironment(), true);
     expectedSize = alignUp(expectedSize, 8);
 
     const ze_command_queue_desc_t desc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, nullptr, 0, 0, 0, ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL};

@@ -442,7 +442,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenOutEventForMultiDeviceContextWhenCalcul
     auto baseCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, false, false, false, nullptr);
     auto extendedCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, false, false, false, &clEvent);
 
-    EXPECT_EQ(baseCommandStreamSize + MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pContext.getDevices()[0]->getRootDeviceEnvironment()), extendedCommandStreamSize);
+    EXPECT_EQ(baseCommandStreamSize + MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pContext.getDevices()[0]->getRootDeviceEnvironment(), true), extendedCommandStreamSize);
 }
 
 HWTEST2_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSizeIsComputedThenItIsProperlyAligned, IsHeapfulSupported) {

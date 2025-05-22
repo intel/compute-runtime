@@ -49,7 +49,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
 
 template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment);
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, true);
 }
 
 template <typename GfxFamily>

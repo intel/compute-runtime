@@ -262,7 +262,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
     }
 
     if (ctx.isDispatchTaskCountPostSyncRequired) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment());
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment(), true);
     }
 
     if (instructionCacheFlushRequired) {
@@ -327,7 +327,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     linearStreamSizeEstimate += this->computeDebuggerCmdsSize(ctx);
 
     if (ctx.isDispatchTaskCountPostSyncRequired) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(neoDevice->getRootDeviceEnvironment());
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(neoDevice->getRootDeviceEnvironment(), true);
     }
 
     NEO::LinearStream child(nullptr);

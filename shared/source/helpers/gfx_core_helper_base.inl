@@ -198,7 +198,7 @@ template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData,
                                                                                const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args) {
 
-    void *commandBuffer = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment));
+    void *commandBuffer = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, postSyncMode != PostSyncMode::noWrite));
 
     MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(commandBuffer, postSyncMode, gpuAddress, immediateData, rootDeviceEnvironment, args);
 }
@@ -220,7 +220,9 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
     MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(commandsBuffer, postSyncMode, gpuAddress, immediateData, args);
     commandsBuffer = ptrOffset(commandsBuffer, getSizeForSingleBarrier());
 
-    MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, rootDeviceEnvironment);
+    if (postSyncMode != PostSyncMode::noWrite) {
+        MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, rootDeviceEnvironment);
+    }
 }
 
 template <typename GfxFamily>
@@ -358,11 +360,13 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() {
 }
 
 template <typename GfxFamily>
-size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment) {
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, bool postSyncWrite) {
 
     size_t size = getSizeForSingleBarrier();
     size += getSizeForBarrierWa(rootDeviceEnvironment);
-    size += getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    if (postSyncWrite) {
+        size += getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    }
     return size;
 }
 

@@ -53,7 +53,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingPreemptionCmdThenExpectPrope
 }
 
 HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForMonitorFenceCmdSizeThenReturnRequiredPipeControlCmdSize) {
-    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(this->pDevice->getRootDeviceEnvironment());
+    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(this->pDevice->getRootDeviceEnvironment(), true);
 
     EXPECT_EQ(expectedSize, RenderDispatcher<FamilyType>::getSizeMonitorFence(this->pDevice->getRootDeviceEnvironment()));
 }

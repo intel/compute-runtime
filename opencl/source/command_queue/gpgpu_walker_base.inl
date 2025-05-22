@@ -75,7 +75,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (blitEnqueue) {
         size_t expectedSizeCS = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
         if (commandQueueHw.isCacheFlushForBcsRequired()) {
-            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment);
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, true);
         }
 
         return expectedSizeCS;
@@ -129,7 +129,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     if (outEvent) {
         auto pEvent = castToObjectOrAbort<Event>(*outEvent);
         if ((pEvent->getContext()->getRootDeviceIndices().size() > 1) && (!pEvent->isUserEvent())) {
-            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment);
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, true);
         }
     }
     expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();

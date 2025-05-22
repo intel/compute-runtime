@@ -400,7 +400,7 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWithBarrierWriteWhenEstima
     flags.isStallingCommandsOnNextFlushRequired = true;
     auto sizeWithPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, device->getDevice());
 
-    size_t extendedSize = sizeWithoutPcRequest + MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getRootDeviceEnvironment());
+    size_t extendedSize = sizeWithoutPcRequest + MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getRootDeviceEnvironment(), true);
 
     EXPECT_EQ(sizeWithPcRequest, extendedSize);
 }

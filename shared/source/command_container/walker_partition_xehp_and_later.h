@@ -345,7 +345,7 @@ void programPostSyncPipeControlCommand(void *&inputAddress,
                                                                                    rootDeviceEnvironment,
                                                                                    flushArgs);
 
-    totalBytesProgrammed += static_cast<uint32_t>(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment));
+    totalBytesProgrammed += static_cast<uint32_t>(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, true));
 }
 
 template <typename GfxFamily>
@@ -828,7 +828,7 @@ uint64_t computeBarrierControlSectionOffset(WalkerPartitionArgs &args,
     }
 
     if (args.usePostSync) {
-        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment);
+        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, true);
     } else {
         offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }

@@ -643,7 +643,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             auto lastTaskCount = primaryCmdBuffer->taskCount;
             auto lastPipeControlArgs = primaryCmdBuffer->epiloguePipeControlArgs;
 
-            auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment());
+            auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), true);
 
             FlushStampUpdateHelper flushStampUpdateHelper;
             flushStampUpdateHelper.insert(primaryCmdBuffer->flushStamp->getStampReference());
@@ -1235,7 +1235,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
         args.tlbInvalidation = this->isTlbFlushRequiredForStateCacheFlush();
     }
 
-    auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment()) + this->getCmdSizeForPrologue();
+    auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), true) + this->getCmdSizeForPrologue();
 
     auto &commandStream = getCS(dispatchSize);
     auto commandStreamStart = commandStream.getUsed();
@@ -2413,7 +2413,7 @@ bool CommandStreamReceiverHw<GfxFamily>::submitDependencyUpdate(TagNodeBase *tag
     }
     auto ownership = obtainUniqueOwnership();
     PipeControlArgs args;
-    auto expectedSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment()) + this->getCmdSizeForPrologue();
+    auto expectedSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), true) + this->getCmdSizeForPrologue();
     auto &commandStream = getCS(expectedSize);
     auto commandStreamStart = commandStream.getUsed();
     auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tag);

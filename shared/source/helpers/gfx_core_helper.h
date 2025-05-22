@@ -522,7 +522,7 @@ struct MemorySynchronizationCommands {
     static void addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void addInstructionCacheFlush(LinearStream &commandStream);
 
-    static size_t getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, bool postSyncWrite);
     static size_t getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForSingleBarrier();
     static size_t getSizeForSingleAdditionalSynchronizationForDirectSubmission(const RootDeviceEnvironment &rootDeviceEnvironment);
