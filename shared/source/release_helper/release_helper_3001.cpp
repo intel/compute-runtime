@@ -38,6 +38,11 @@ bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
 }
 
 template <>
+uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
+    return 64u;
+}
+
+template <>
 bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
     return false;
 }

@@ -38,7 +38,7 @@ TEST_F(ReleaseHelper3001Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_EQ(10u, releaseHelper->getNumThreadsPerEu());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
-        EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
+        EXPECT_EQ(64u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_TRUE(releaseHelper->getFtrXe2Compression());
     }
