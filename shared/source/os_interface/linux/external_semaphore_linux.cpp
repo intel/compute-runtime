@@ -40,6 +40,7 @@ std::unique_ptr<ExternalSemaphoreLinux> ExternalSemaphoreLinux::create(OSInterfa
 bool ExternalSemaphoreLinux::importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) {
     switch (type) {
     case ExternalSemaphore::OpaqueFd:
+    case ExternalSemaphore::TimelineSemaphoreFd:
         break;
     default:
         DEBUG_BREAK_IF(true);
@@ -60,24 +61,38 @@ bool ExternalSemaphoreLinux::importSemaphore(void *extHandle, int fd, uint32_t f
     }
 
     this->syncHandle = args.handle;
+    this->type = type;
 
     return true;
 }
 
 bool ExternalSemaphoreLinux::enqueueWait(uint64_t *fenceValue) {
     auto drm = this->osInterface->getDriverModel()->as<Drm>();
-
-    struct SyncObjWait args = {};
-    args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
-    args.timeoutNs = 0;
-    args.countHandles = 1u;
-    args.flags = 0;
-
     auto ioctlHelper = drm->getIoctlHelper();
 
-    int ret = ioctlHelper->ioctl(DrmIoctl::syncObjWait, &args);
-    if (ret != 0) {
-        return false;
+    if (this->type == ExternalSemaphore::TimelineSemaphoreFd) {
+        struct SyncObjTimelineWait args = {};
+        args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
+        args.points = reinterpret_cast<uintptr_t>(fenceValue);
+        args.timeoutNs = 0;
+        args.countHandles = 1u;
+        args.flags = 0;
+
+        int ret = ioctlHelper->ioctl(DrmIoctl::syncObjTimelineWait, &args);
+        if (ret != 0) {
+            return false;
+        }
+    } else {
+        struct SyncObjWait args = {};
+        args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
+        args.timeoutNs = 0;
+        args.countHandles = 1u;
+        args.flags = 0;
+
+        int ret = ioctlHelper->ioctl(DrmIoctl::syncObjWait, &args);
+        if (ret != 0) {
+            return false;
+        }
     }
 
     this->state = SemaphoreState::Signaled;
@@ -87,16 +102,27 @@ bool ExternalSemaphoreLinux::enqueueWait(uint64_t *fenceValue) {
 
 bool ExternalSemaphoreLinux::enqueueSignal(uint64_t *fenceValue) {
     auto drm = this->osInterface->getDriverModel()->as<Drm>();
-
-    struct SyncObjArray args;
-    args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
-    args.countHandles = 1u;
-
     auto ioctlHelper = drm->getIoctlHelper();
 
-    int ret = ioctlHelper->ioctl(DrmIoctl::syncObjSignal, &args);
-    if (ret != 0) {
-        return false;
+    if (this->type == ExternalSemaphore::TimelineSemaphoreFd) {
+        struct SyncObjTimelineArray args;
+        args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
+        args.points = reinterpret_cast<uintptr_t>(fenceValue);
+        args.countHandles = 1u;
+
+        int ret = ioctlHelper->ioctl(DrmIoctl::syncObjTimelineSignal, &args);
+        if (ret != 0) {
+            return false;
+        }
+    } else {
+        struct SyncObjArray args;
+        args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
+        args.countHandles = 1u;
+
+        int ret = ioctlHelper->ioctl(DrmIoctl::syncObjSignal, &args);
+        if (ret != 0) {
+            return false;
+        }
     }
 
     return true;

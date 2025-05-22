@@ -1812,6 +1812,10 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
         RETURN_ME(DRM_IOCTL_SYNCOBJ_WAIT);
     case DrmIoctl::syncObjSignal:
         RETURN_ME(DRM_IOCTL_SYNCOBJ_SIGNAL);
+    case DrmIoctl::syncObjTimelineWait:
+        RETURN_ME(DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT);
+    case DrmIoctl::syncObjTimelineSignal:
+        RETURN_ME(DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL);
     case DrmIoctl::getResetStats:
         RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY);
     case DrmIoctl::debuggerOpen:
@@ -1867,6 +1871,10 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         STRINGIFY_ME(DRM_IOCTL_SYNCOBJ_WAIT);
     case DrmIoctl::syncObjSignal:
         STRINGIFY_ME(DRM_IOCTL_SYNCOBJ_SIGNAL);
+    case DrmIoctl::syncObjTimelineWait:
+        STRINGIFY_ME(DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT);
+    case DrmIoctl::syncObjTimelineSignal:
+        STRINGIFY_ME(DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL);
     case DrmIoctl::debuggerOpen:
         STRINGIFY_ME(DRM_IOCTL_XE_EUDEBUG_CONNECT);
     case DrmIoctl::metadataCreate:

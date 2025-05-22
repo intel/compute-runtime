@@ -158,6 +158,18 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
             return -1;
         }
     } break;
+    case DrmIoctl::syncObjTimelineWait: {
+        ioctlCnt.syncObjTimelineWait++;
+        if (failOnSyncObjTimelineWait == true) {
+            return -1;
+        }
+    } break;
+    case DrmIoctl::syncObjTimelineSignal: {
+        ioctlCnt.syncObjTimelineSignal++;
+        if (failOnSyncObjTimelineSignal == true) {
+            return -1;
+        }
+    } break;
     case DrmIoctl::gemSetDomain: {
         auto setDomainParams = static_cast<NEO::GemSetDomain *>(arg);
         setDomainHandle = setDomainParams->handle;

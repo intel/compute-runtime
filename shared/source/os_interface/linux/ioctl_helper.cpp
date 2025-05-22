@@ -100,6 +100,10 @@ unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const 
         return DRM_IOCTL_SYNCOBJ_WAIT;
     case DrmIoctl::syncObjSignal:
         return DRM_IOCTL_SYNCOBJ_SIGNAL;
+    case DrmIoctl::syncObjTimelineWait:
+        return DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT;
+    case DrmIoctl::syncObjTimelineSignal:
+        return DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL;
     default:
         UNRECOVERABLE_IF(true);
         return 0u;
@@ -120,6 +124,10 @@ std::string IoctlHelper::getIoctlStringBase(DrmIoctl ioctlRequest) const {
         return "DRM_IOCTL_SYNCOBJ_WAIT";
     case DrmIoctl::syncObjSignal:
         return "DRM_IOCTL_SYNCOBJ_SIGNAL";
+    case DrmIoctl::syncObjTimelineWait:
+        return "DRM_IOCTL_SYNCOBJ_TIMELINE_WAIT";
+    case DrmIoctl::syncObjTimelineSignal:
+        return "DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL";
     default:
         UNRECOVERABLE_IF(true);
         return "";
