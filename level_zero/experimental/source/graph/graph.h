@@ -81,7 +81,7 @@ struct Graph : _ze_graph_handle_t {
 
         using ApiArgsT = typename Closure<api>::ApiArgs;
         auto capturedArgs = ApiArgsT{apiArgs...};
-        commands.push_back(CapturedCommand{Closure<api>(capturedArgs)});
+        commands.push_back(CapturedCommand{Closure<api>(capturedArgs, externalStorage)});
         return ZE_RESULT_SUCCESS;
     }
 
@@ -145,10 +145,14 @@ struct Graph : _ze_graph_handle_t {
     void tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinEvent);
     void forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent);
     void registerSignallingEventFromPreviousCommand(L0::Event &ev);
+    ClosureExternalStorage &getExternalStorage() {
+        return externalStorage;
+    }
 
   protected:
     void unregisterSignallingEvents();
 
+    ClosureExternalStorage externalStorage;
     std::vector<CapturedCommand> commands;
     StackVec<Graph *, 16> subGraphs;
 
@@ -268,4 +272,9 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     GraphSubmissionChain submissionChain;
 };
 
+constexpr size_t maxVariantSize = 3 * 64;
+#define RR_CAPTURED_API(X) \
+    static_assert(sizeof(Closure<CaptureApi::X>) < maxVariantSize, #X " is too big for common variant. Please export some of its state to ClosureExternalStorage");
+RR_CAPTURED_APIS()
+#undef RR_CAPTURED_API
 } // namespace L0

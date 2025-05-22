@@ -932,5 +932,58 @@ TEST(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToCommandL
     EXPECT_EQ(0U, subCmdlist.appendSignalEventCalled);
 }
 
+TEST(ClosureExternalStorage, GivenEventWaitListThenRecordsItProperly) {
+    MockEvent events[10];
+    ze_event_handle_t eventHandles[10];
+    std::transform(events, events + 10, eventHandles, [](auto &ev) { return &ev; });
+
+    L0::ClosureExternalStorage storage;
+    EXPECT_EQ(L0::ClosureExternalStorage::invalidEventsWaitListId, storage.registerEventsWaitList(eventHandles, eventHandles));
+
+    auto waitList0Id = storage.registerEventsWaitList(eventHandles, eventHandles + 1);
+    auto waitList1Id = storage.registerEventsWaitList(eventHandles + 3, eventHandles + 5);
+    auto waitList2Id = storage.registerEventsWaitList(eventHandles + 8, eventHandles + 10);
+
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsWaitListId, waitList0Id);
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsWaitListId, waitList1Id);
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsWaitListId, waitList2Id);
+
+    EXPECT_EQ(nullptr, storage.getEventsWaitList(L0::ClosureExternalStorage::invalidEventsWaitListId));
+
+    ASSERT_NE(nullptr, storage.getEventsWaitList(waitList0Id));
+    EXPECT_EQ(eventHandles[0], storage.getEventsWaitList(waitList0Id)[0]);
+
+    ASSERT_NE(nullptr, storage.getEventsWaitList(waitList1Id));
+    EXPECT_EQ(eventHandles[3], storage.getEventsWaitList(waitList1Id)[0]);
+    EXPECT_EQ(eventHandles[4], storage.getEventsWaitList(waitList1Id)[1]);
+
+    ASSERT_NE(nullptr, storage.getEventsWaitList(waitList2Id));
+    EXPECT_EQ(eventHandles[8], storage.getEventsWaitList(waitList2Id)[0]);
+    EXPECT_EQ(eventHandles[9], storage.getEventsWaitList(waitList2Id)[1]);
+}
+
+TEST(ClosureExternalStorage, GivenKernelMutableStateThenRecordsItProperly) {
+    KernelMutableState s1;
+    s1.globalOffsets[0] = 5U;
+    KernelMutableState s2;
+    s2.globalOffsets[0] = 7U;
+
+    L0::ClosureExternalStorage storage;
+
+    auto kernelState1Id = storage.registerKernelState(std::move(s1));
+    auto kernelState2Id = storage.registerKernelState(std::move(s2));
+
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsWaitListId, kernelState1Id);
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsWaitListId, kernelState2Id);
+
+    EXPECT_EQ(nullptr, storage.getKernelMutableState(L0::ClosureExternalStorage::invalidKernelStateId));
+
+    ASSERT_NE(nullptr, storage.getKernelMutableState(kernelState1Id));
+    EXPECT_EQ(5U, storage.getKernelMutableState(kernelState1Id)->globalOffsets[0]);
+
+    ASSERT_NE(nullptr, storage.getKernelMutableState(kernelState2Id));
+    EXPECT_EQ(7U, storage.getKernelMutableState(kernelState2Id)->globalOffsets[0]);
+}
+
 } // namespace ult
 } // namespace L0
