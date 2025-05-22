@@ -55,7 +55,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
         {
             // regHeader
             1,                    // num_slices
-            6,                    // num_subslices_per_slice
+            2,                    // num_subslices_per_slice
             16,                   // num_eus_per_subslice
             7,                    // num_threads_per_eu
             0,                    // state_area_offset

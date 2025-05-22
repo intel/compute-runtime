@@ -2244,6 +2244,14 @@ TEST_F(DeviceTests, GivenDebuggingEnabledWhenDeviceIsInitializedThenL0DebuggerIs
     EXPECT_NE(nullptr, device->getL0Debugger());
 }
 
+TEST_F(DeviceTests, GivenDebuggingEnabledAndInvalidStateSaveAreaHeaderWhenDeviceIsInitializedThenFailureIsReturned) {
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    VariableBackup<char> backupStateSaveAreaHeader{MockSipData::mockSipKernel->mockStateSaveAreaHeader.data(), '\0'};
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+    EXPECT_EQ(nullptr, device);
+}
+
 TEST_F(DeviceTests, givenDebuggerRequestedByUserAndNotAvailableWhenDeviceIsInitializedThenDeviceIsNullAndErrorIsPrinted) {
     extern bool forceCreateNullptrDebugger;
 

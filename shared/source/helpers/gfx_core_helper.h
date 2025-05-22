@@ -122,7 +122,6 @@ class GfxCoreHelper {
                                              const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, bool isHwLocalGeneration, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
-    virtual size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
     virtual bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
@@ -365,8 +364,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, bool isHwLocalGeneration, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     size_t getMaxFillPaternSizeForCopyEngine() const override;
-
-    size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const override;
 
     bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const override;
 

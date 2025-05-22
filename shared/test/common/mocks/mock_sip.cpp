@@ -10,16 +10,29 @@
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/test/common/helpers/test_files.h"
 
+#include "common/StateSaveAreaHeader.h"
+
 #include <fstream>
 #include <map>
 
 namespace NEO {
-MockSipKernel::MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) : SipKernel(type, sipAlloc, {'s', 's', 'a', 'h'}) {
+
+static constexpr SIP::StateSaveAreaHeaderV3 mockSipStateSaveAreaHeaderV3 = {
+    .versionHeader{
+        .magic = "tssarea",
+        .reserved1 = 0,
+        .version = {3, 0, 0},
+        .size = static_cast<uint8_t>(sizeof(SIP::StateSaveArea)),
+        .reserved2 = {0, 0, 0}},
+    .regHeader{}};
+
+MockSipKernel::MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc) : SipKernel(type, sipAlloc, {}) {
+    this->mockStateSaveAreaHeader.resize(sizeof(mockSipStateSaveAreaHeaderV3));
+    memcpy_s(this->mockStateSaveAreaHeader.data(), sizeof(mockSipStateSaveAreaHeaderV3), &mockSipStateSaveAreaHeaderV3, sizeof(mockSipStateSaveAreaHeaderV3));
     createMockSipAllocation();
 }
 
-MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::csr, nullptr, {'s', 's', 'a', 'h'}) {
-    createMockSipAllocation();
+MockSipKernel::MockSipKernel() : MockSipKernel(SipKernelType::csr, nullptr) {
 }
 
 MockSipKernel::~MockSipKernel() = default;

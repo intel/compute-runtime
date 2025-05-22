@@ -424,50 +424,35 @@ TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledTwiceT
     EXPECT_EQ(sipAllocation, sipAllocation2);
 }
 
-using StateSaveAreaSipTest = Test<RawBinarySipFixture>;
+struct StateSaveAreaSipTest : Test<RawBinarySipFixture> {
+    void SetUp() override {
+        RawBinarySipFixture::setUp();
+        MockSipData::useMockSip = true;
+        stateSaveAreaHeaderBackup = MockSipData::mockSipKernel->mockStateSaveAreaHeader;
+    }
+    void TearDown() override {
+        MockSipData::mockSipKernel->mockStateSaveAreaHeader = std::move(stateSaveAreaHeaderBackup);
+        RawBinarySipFixture::tearDown();
+    }
+    VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
+    std::vector<char> stateSaveAreaHeaderBackup;
+};
 
-TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.set(-1);
-
-    MockSipData::useMockSip = true;
+TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenZeroSizeIsReturned) {
     MockSipData::mockSipKernel->mockStateSaveAreaHeader.clear();
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = this->pDevice->getGfxCoreHelper();
-    EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
+    EXPECT_EQ(0u, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
-TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.set(-1);
-    MockSipData::useMockSip = true;
+TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenZeroSizeIsReturned) {
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = this->pDevice->getGfxCoreHelper();
-    EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
-}
-
-TEST_F(StateSaveAreaSipTest, givenOverrideSipKernelMaxDebugSurfaceSizeFlagSetWhenGettingStateSaveAreaSizeForInvalidInputThenValueOfDebugFlagIsReturned) {
-    DebugManagerStateRestore restore;
-    auto expectedValue = MemoryConstants::pageSize2M;
-    debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.set(static_cast<int32_t>(expectedValue));
-    MockSipData::useMockSip = true;
-    MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &gfxCoreHelper = this->pDevice->getGfxCoreHelper();
-    EXPECT_NE(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), expectedValue);
-    EXPECT_EQ(expectedValue, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
-
-    MockSipData::mockSipKernel->mockStateSaveAreaHeader.clear();
-    EXPECT_EQ(expectedValue, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
+    EXPECT_EQ(0u, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenCorrectDbgSurfaceSizeIsReturned) {
-    MockSipData::useMockSip = true;
     auto hwInfo = pDevice->getHardwareInfo();
     auto numSlices = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
-    EXPECT_EQ(0x1800u * numSlices * 6 * 16 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
+    EXPECT_EQ(0x1800u * numSlices * 2 * 16 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
     EXPECT_EQ(0x1800u * numSlices * 8 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
@@ -479,7 +464,6 @@ TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveArea
 }
 
 TEST_F(StateSaveAreaSipTest, givenStateSaveAreaHeaderVersion4WhenGetStateSaveAreaSizeCalledThenTotalWmtpDataSizeIsReturned) {
-    VariableBackup<bool> backupSipInitType(&MockSipData::useMockSip, true);
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(4);
     auto header = reinterpret_cast<SIP::StateSaveAreaHeader *>(MockSipData::mockSipKernel->mockStateSaveAreaHeader.data());
     header->versionHeader.version.major = 4u;

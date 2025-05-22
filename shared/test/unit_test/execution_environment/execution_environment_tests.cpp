@@ -362,9 +362,6 @@ TEST(ExecutionEnvironment, givenExperimentalUSMAllocationReuseCleanerSetAndNotEn
 }
 
 TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenSetDebugVariables) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.set(-1);
-
     const std::unordered_map<std::string, int32_t> config = {
         {"UseKmdMigration", 0},
         {"SplitBcsSize", 256}};
@@ -380,6 +377,7 @@ TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenS
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 
+    DebugManagerStateRestore restorer;
     debugManager.flags.NEO_CAL_ENABLED.set(1);
     ExecutionEnvironment exeEnv;
 

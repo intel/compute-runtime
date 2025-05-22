@@ -192,18 +192,19 @@ bool Device::initializeCommonResources() {
         }
     }
 
-    auto &hwInfo = getHardwareInfo();
-    auto &gfxCoreHelper = getGfxCoreHelper();
-    auto debugSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     if (this->isStateSipRequired()) {
         bool ret = SipKernel::initSipKernel(SipKernel::getSipKernelType(*this), *this);
         UNRECOVERABLE_IF(!ret);
-        debugSurfaceSize = NEO::SipKernel::getSipKernel(*this, nullptr).getStateSaveAreaSize(this);
-    }
-
-    const bool isDebugSurfaceRequired = getL0Debugger();
-    if (isDebugSurfaceRequired) {
-        allocateDebugSurface(debugSurfaceSize);
+        const bool isDebugSurfaceRequired = getL0Debugger();
+        if (isDebugSurfaceRequired) {
+            auto debugSurfaceSize = NEO::SipKernel::getSipKernel(*this, nullptr).getStateSaveAreaSize(this);
+            if (debugSurfaceSize) {
+                allocateDebugSurface(debugSurfaceSize);
+            } else {
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Unable to determine debug surface size.\n");
+                return false;
+            }
+        }
     }
 
     bool usmPoolManagerEnabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,15 +28,9 @@ void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version, L
     auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(version.major);
     auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
 
-    if (version.major >= 2) {
-        stateSaveArea.resize(
-            threadSlotOffset(pStateSaveAreaHeader, 0, 0, 0, 0) +
-            pStateSaveAreaHeader->regHeader.num_subslices_per_slice * pStateSaveAreaHeader->regHeader.num_eus_per_subslice * pStateSaveAreaHeader->regHeader.num_threads_per_eu * pStateSaveAreaHeader->regHeader.state_save_size);
-    } else {
-        auto &hwInfo = *NEO::defaultHwInfo.get();
-        auto &gfxCoreHelper = device->getGfxCoreHelper();
-        stateSaveArea.resize(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo) + MemoryConstants::pageSize);
-    }
+    auto stateSaveSize = pStateSaveAreaHeader->regHeader.num_subslices_per_slice * pStateSaveAreaHeader->regHeader.num_eus_per_subslice * pStateSaveAreaHeader->regHeader.num_threads_per_eu * pStateSaveAreaHeader->regHeader.state_save_size;
+
+    stateSaveArea.resize(threadSlotOffset(pStateSaveAreaHeader, 0, 0, 0, 0) + stateSaveSize);
 
     memcpy_s(stateSaveArea.data(), stateSaveArea.size(), pStateSaveAreaHeader, stateSaveAreaHeader.size());
 
@@ -63,11 +57,10 @@ void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version, L
     fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, 0, 0, 4, 0, 'a');
 
     if (version.major < 2) {
-        auto &hwInfo = *NEO::defaultHwInfo.get();
-        const uint32_t numSlices = hwInfo.gtSystemInfo.SliceCount > 2 ? 2 : hwInfo.gtSystemInfo.SliceCount;
-        const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount;
-        const uint32_t numEusPerSubslice = hwInfo.gtSystemInfo.EUCount / hwInfo.gtSystemInfo.SubSliceCount;
-        const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+        const uint32_t numSlices = pStateSaveAreaHeader->regHeader.num_slices;
+        const uint32_t numSubslicesPerSlice = pStateSaveAreaHeader->regHeader.num_subslices_per_slice;
+        const uint32_t numEusPerSubslice = pStateSaveAreaHeader->regHeader.num_eus_per_subslice;
+        const uint32_t numThreadsPerEu = pStateSaveAreaHeader->regHeader.num_threads_per_eu;
 
         const uint32_t midSlice = (numSlices > 1) ? (numSlices / 2) : 0;
         const uint32_t midSubslice = (numSubslicesPerSlice > 1) ? (numSubslicesPerSlice / 2) : 0;

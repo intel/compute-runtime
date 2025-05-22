@@ -5,7 +5,7 @@
  *
  */
 
-#include "mock_compilers.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/hw_info.h"
@@ -13,10 +13,10 @@
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
-#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
 #include "cif/macros/enable.h"
+#include "common/StateSaveAreaHeader.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
@@ -543,7 +543,14 @@ bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutine
     debugVars.receivedSipAddressingType = bindless ? MockCompilerDebugVars::SipAddressingType::bindless : MockCompilerDebugVars::SipAddressingType::bindful;
 
     const char mockData1[64] = {'C', 'T', 'N', 'I'};
-    const char mockData2[64] = {'S', 'S', 'A', 'H'};
+    const SIP::StateSaveAreaHeaderV3 mockSipStateSaveAreaHeaderV3 = {
+        .versionHeader{
+            .magic = "tssarea",
+            .reserved1 = 0,
+            .version = {3, 0, 0},
+            .size = static_cast<uint8_t>(sizeof(SIP::StateSaveArea)),
+            .reserved2 = {0, 0, 0}},
+        .regHeader{}};
 
     if (debugVars.forceBuildFailure || typeOfSystemRoutine == IGC::SystemRoutineType::undefined) {
         return false;
@@ -558,7 +565,7 @@ bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutine
     if (debugVars.stateSaveAreaHeaderToReturnSize > 0 && debugVars.stateSaveAreaHeaderToReturn != nullptr) {
         stateSaveAreaHeaderInit->PushBackRawBytes(debugVars.stateSaveAreaHeaderToReturn, debugVars.stateSaveAreaHeaderToReturnSize);
     } else {
-        stateSaveAreaHeaderInit->PushBackRawBytes(mockData2, 64);
+        stateSaveAreaHeaderInit->PushBackRawBytes(&mockSipStateSaveAreaHeaderV3, sizeof(mockSipStateSaveAreaHeaderV3));
     }
     return true;
 }

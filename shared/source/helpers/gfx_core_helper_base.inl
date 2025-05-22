@@ -593,11 +593,6 @@ void GfxCoreHelperHw<GfxFamily>::setSipKernelData(uint32_t *&sipKernelBinary, si
 }
 
 template <typename GfxFamily>
-size_t GfxCoreHelperHw<GfxFamily>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
-    return 24 * MemoryConstants::megaByte;
-}
-
-template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::adjustPreemptionSurfaceSize(size_t &csrSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
 }
 

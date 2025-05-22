@@ -292,32 +292,6 @@ TEST(L0DeviceTest, givenDisabledPreemptionWhenCreatingDeviceThenSipKernelIsNotIn
     EXPECT_FALSE(NEO::MockSipData::called);
 }
 
-TEST(L0DeviceTest, givenMidThreadPreemptionAndIncorrectStateSaveAreaHeaderWhenCreatingL0DeviceThenErrorIsReturned) {
-
-    VariableBackup<bool> mockSipCalled(&NEO::MockSipData::called, false);
-    VariableBackup<NEO::SipKernelType> mockSipCalledType(&NEO::MockSipData::calledType, NEO::SipKernelType::count);
-    VariableBackup<bool> backupSipInitType(&MockSipData::useMockSip, true);
-    NonCopyableVariableBackup<std::unique_ptr<MockSipKernel>> backupSipKernel(&MockSipData::mockSipKernel, std::make_unique<MockSipKernel>());
-
-    MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
-    auto header = reinterpret_cast<SIP::StateSaveAreaHeader *>(MockSipData::mockSipKernel->mockStateSaveAreaHeader.data());
-    header->versionHeader.version.major = 5u;
-
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
-    auto hwInfo = *NEO::defaultHwInfo;
-    hwInfo.capabilityTable.defaultPreemptionMode = NEO::PreemptionMode::MidThread;
-
-    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
-    EXPECT_NE(nullptr, device);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, returnValue);
-
-    EXPECT_EQ(NEO::SipKernelType::csr, NEO::MockSipData::calledType);
-    EXPECT_TRUE(NEO::MockSipData::called);
-}
-
 TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryThenInvalidDependencyIsNotReturned) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
@@ -351,46 +325,6 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyIsNo
     Os::frontEndDllName = oldFclDllName;
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-}
-
-TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryAndMidThreadPreemptionThenInvalidDependencyIsReturned) {
-    DebugManagerStateRestore restore{};
-    debugManager.flags.ForcePreemptionMode.set(PreemptionMode::MidThread);
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
-    auto hwInfo = *NEO::defaultHwInfo;
-
-    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
-    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto mockDevice = reinterpret_cast<NEO::MockDevice *>(neoDevice.get());
-    mockDevice->setPreemptionMode(NEO::PreemptionMode::MidThread);
-
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
-    ASSERT_NE(nullptr, device);
-    EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-}
-
-TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryAndMidThreadPreemptionThenInvalidDependencyIsReturned) {
-    DebugManagerStateRestore restore{};
-    debugManager.flags.ForcePreemptionMode.set(PreemptionMode::MidThread);
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
-    auto hwInfo = *NEO::defaultHwInfo;
-
-    auto oldFclDllName = Os::frontEndDllName;
-    Os::frontEndDllName = "_invalidFCL";
-    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
-    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto mockDevice = reinterpret_cast<NEO::MockDevice *>(neoDevice.get());
-    mockDevice->setPreemptionMode(NEO::PreemptionMode::MidThread);
-
-    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
-    ASSERT_NE(nullptr, device);
-    EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-
-    Os::frontEndDllName = oldFclDllName;
 }
 
 TEST(L0DeviceTest, givenFilledTopologyWhenGettingApiSliceThenCorrectSliceIdIsReturned) {

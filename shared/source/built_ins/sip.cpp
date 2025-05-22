@@ -86,18 +86,13 @@ const std::vector<char> &SipKernel::getBinary() const {
 
 size_t SipKernel::getStateSaveAreaSize(Device *device) const {
     auto &hwInfo = device->getHardwareInfo();
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
-    if (debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.get() != -1) {
-        maxDbgSurfaceSize = static_cast<size_t>(debugManager.flags.OverrideSipKernelMaxDbgSurfaceSize.get());
-    }
     const auto &stateSaveAreaHeader = getStateSaveAreaHeader();
     if (stateSaveAreaHeader.empty()) {
-        return maxDbgSurfaceSize;
+        return 0u;
     }
 
     if (strcmp(stateSaveAreaHeader.data(), "tssarea")) {
-        return maxDbgSurfaceSize;
+        return 0u;
     }
 
     auto hdr = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
