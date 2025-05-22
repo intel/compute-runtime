@@ -29,6 +29,14 @@ HWTEST_F(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCal
     EXPECT_TRUE(compilerProductHelper.isMidThreadPreemptionSupported(hwInfo));
 }
 
+TEST(CompilerProductHelperTest, GivenIgcLibraryNameDebugKeyWhenQueryingForCustomIgcLibraryNameThenDebugKeyValueisReturned) {
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.IgcLibraryName.set("my_custom_igc.so");
+    auto compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_STREQ("my_custom_igc.so", compilerProductHelper->getCustomIgcLibraryName());
+}
+
 TEST(CompilerProductHelperTest, WhenCompilerProductHelperCreateIsCalledWithUnknownProductThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, CompilerProductHelper::create(IGFX_UNKNOWN));
 }
