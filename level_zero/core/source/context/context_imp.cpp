@@ -451,6 +451,42 @@ void ContextImp::freePeerAllocations(const void *ptr, bool blocking, Device *dev
     }
 }
 
+NEO::UsmMemAllocPool *ContextImp::getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData) {
+    DEBUG_BREAK_IF(nullptr == svmData);
+    NEO::UsmMemAllocPool *usmPool = nullptr;
+
+    if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
+        driverHandle->usmHostMemAllocPool.isInPool(ptr)) {
+        usmPool = &driverHandle->usmHostMemAllocPool;
+    } else if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType) {
+        if (svmData->device->getUsmMemAllocPool() &&
+            svmData->device->getUsmMemAllocPool()->isInPool(ptr)) {
+            usmPool = svmData->device->getUsmMemAllocPool();
+        } else if (svmData->device->getUsmMemAllocPoolsManager()) {
+            usmPool = svmData->device->getUsmMemAllocPoolsManager()->getPoolContainingAlloc(ptr);
+        }
+    }
+
+    return usmPool;
+}
+
+bool ContextImp::tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool) {
+    if (usmPool) {
+        [[maybe_unused]] auto status = usmPool->freeSVMAlloc(ptr, false);
+        DEBUG_BREAK_IF(false == status);
+        return true;
+    } else if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType) {
+        if (auto deviceUsmPoolsManager = svmData->device->getUsmMemAllocPoolsManager()) {
+            DEBUG_BREAK_IF(false == deviceUsmPoolsManager->isInitialized());
+            if (deviceUsmPoolsManager->recycleSVMAlloc(const_cast<void *>(ptr),
+                                                       false)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 ze_result_t ContextImp::freeMem(const void *ptr) {
     return this->freeMem(ptr, false);
 }
@@ -461,15 +497,29 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    uint64_t addressForIpc = reinterpret_cast<uint64_t>(ptr);
+    auto *usmPool = getUsmPoolOwningPtr(ptr, allocation);
+    if (usmPool) {
+        if (nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
+            // ptr is within usm pool address space but is not allocated
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        } else {
+            addressForIpc = usmPool->getPoolAddress();
+        }
+    }
+
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lockIPC = this->driverHandle->lockIPCHandleMap();
     ipcHandleIterator = this->driverHandle->getIPCHandleMap().begin();
     while (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
-        if (ipcHandleIterator->second->ptr == reinterpret_cast<uint64_t>(ptr)) {
-            auto *memoryManager = driverHandle->getMemoryManager();
-            memoryManager->closeInternalHandle(ipcHandleIterator->second->ipcData.handle, ipcHandleIterator->second->handleId, nullptr);
-            delete ipcHandleIterator->second;
-            this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator->first);
+        if (ipcHandleIterator->second->ptr == addressForIpc) {
+            ipcHandleIterator->second->refcnt -= 1;
+            if (ipcHandleIterator->second->refcnt == 0 || nullptr == usmPool) {
+                auto *memoryManager = driverHandle->getMemoryManager();
+                memoryManager->closeInternalHandle(ipcHandleIterator->second->ipcData.handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
+                delete ipcHandleIterator->second;
+                this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator->first);
+            }
             break;
         }
         ipcHandleIterator++;
@@ -478,26 +528,11 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
     for (auto &pairDevice : this->devices) {
         this->freePeerAllocations(ptr, blocking, Device::fromHandle(pairDevice.second));
     }
-    if (InternalMemoryType::hostUnifiedMemory == allocation->memoryType) {
-        if (this->driverHandle->usmHostMemAllocPool.freeSVMAlloc(ptr, blocking)) {
-            return ZE_RESULT_SUCCESS;
-        }
-    } else if (InternalMemoryType::deviceUnifiedMemory == allocation->memoryType) {
-        if (auto deviceUsmPoolsManager = allocation->device->getUsmMemAllocPoolsManager()) {
-            DEBUG_BREAK_IF(false == deviceUsmPoolsManager->isInitialized());
-            if (deviceUsmPoolsManager->freeSVMAlloc(ptr, blocking)) {
-                return ZE_RESULT_SUCCESS;
-            }
-            if (deviceUsmPoolsManager->recycleSVMAlloc(const_cast<void *>(ptr),
-                                                       blocking)) {
-                return ZE_RESULT_SUCCESS;
-            }
-        } else if (auto deviceUsmPool = allocation->device->getUsmMemAllocPool()) {
-            if (deviceUsmPool->freeSVMAlloc(ptr, blocking)) {
-                return ZE_RESULT_SUCCESS;
-            }
-        }
+
+    if (this->tryFreeViaPooling(ptr, allocation, usmPool)) {
+        return ZE_RESULT_SUCCESS;
     }
+
     this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
 
     return ZE_RESULT_SUCCESS;
@@ -514,21 +549,18 @@ ze_result_t ContextImp::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc
         if (allocation == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
+        auto *usmPool = getUsmPoolOwningPtr(ptr, allocation);
+        if (usmPool && nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
+            // ptr is within usm pool address space but is not allocated
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
 
         for (auto &pairDevice : this->devices) {
             this->freePeerAllocations(ptr, false, Device::fromHandle(pairDevice.second));
         }
 
-        if (InternalMemoryType::hostUnifiedMemory == allocation->memoryType) {
-            if (this->driverHandle->usmHostMemAllocPool.freeSVMAlloc(ptr, false)) {
-                return ZE_RESULT_SUCCESS;
-            }
-        } else if (InternalMemoryType::deviceUnifiedMemory == allocation->memoryType) {
-            if (auto deviceUsmPool = allocation->device->getUsmMemAllocPool()) {
-                if (deviceUsmPool->freeSVMAlloc(ptr, false)) {
-                    return ZE_RESULT_SUCCESS;
-                }
-            }
+        if (this->tryFreeViaPooling(ptr, allocation, usmPool)) {
+            return ZE_RESULT_SUCCESS;
         }
 
         this->driverHandle->svmAllocsManager->freeSVMAllocDefer(const_cast<void *>(ptr));
@@ -630,19 +662,18 @@ ze_result_t ContextImp::getMemAddressRange(const void *ptr,
                                            size_t *pSize) {
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (allocData) {
-        NEO::UsmMemAllocPool *pool = nullptr;
-        if (driverHandle->usmHostMemAllocPool.isInPool(ptr)) {
-            pool = &driverHandle->usmHostMemAllocPool;
-        } else if (allocData->device && allocData->device->getUsmMemAllocPool() && allocData->device->getUsmMemAllocPool()->isInPool(ptr)) {
-            pool = allocData->device->getUsmMemAllocPool();
-        }
-        if (pool) {
+        auto usmPool = getUsmPoolOwningPtr(ptr, allocData);
+        if (usmPool) {
+            if (nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
+                // ptr is within usm pool address space but is not allocated
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
             if (pBase) {
-                *pBase = pool->getPooledAllocationBasePtr(ptr);
+                *pBase = usmPool->getPooledAllocationBasePtr(ptr);
             }
 
             if (pSize) {
-                *pSize = pool->getPooledAllocationSize(ptr);
+                *pSize = usmPool->getPooledAllocationSize(ptr);
             }
         } else {
             NEO::GraphicsAllocation *alloc;
@@ -683,31 +714,16 @@ ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
     return ZE_RESULT_SUCCESS;
 }
 
-void ContextImp::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcMemoryData &ipcData, uint64_t ptrAddress, uint8_t type) {
+void ContextImp::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcMemoryData &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool) {
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
 
     ipcData = {};
     ipcData.handle = handle;
     ipcData.type = type;
 
-    if (this->driverHandle->usmHostMemAllocPool.isInPool(addrToPtr(ptrAddress))) {
-        ipcData.poolOffset = this->driverHandle->usmHostMemAllocPool.getOffsetInPool(addrToPtr(ptrAddress));
-    } else {
-        for (auto const &devicePair : this->getDevices()) {
-            auto device = Device::fromHandle(devicePair.second);
-            auto neoDevice = device->getNEODevice();
-            if (auto deviceUsmMemAllocPoolsManager = neoDevice->getUsmMemAllocPoolsManager()) {
-                if (auto poolOffset = deviceUsmMemAllocPoolsManager->getOffsetInPool(addrToPtr(ptrAddress))) {
-                    ipcData.poolOffset = poolOffset;
-                    break;
-                }
-            } else if (auto deviceUsmMemAllocPool = neoDevice->getUsmMemAllocPool()) {
-                if (auto poolOffset = deviceUsmMemAllocPool->getOffsetInPool(addrToPtr(ptrAddress))) {
-                    ipcData.poolOffset = poolOffset;
-                    break;
-                }
-            }
-        }
+    if (usmPool) {
+        ipcData.poolOffset = usmPool->getOffsetInPool(addrToPtr(ptrAddress));
+        ptrAddress = usmPool->getPoolAddress();
     }
 
     auto lock = this->driverHandle->lockIPCHandleMap();
@@ -757,6 +773,14 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
     if (!allocData) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+    auto type = allocData->memoryType;
+
+    auto *usmPool = getUsmPoolOwningPtr(ptr, allocData);
+
+    if (usmPool && nullptr == usmPool->getPooledAllocationBasePtr(ptr)) {
+        // ptr is within usm pool address space but is not allocated
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     auto memoryManager = this->driverHandle->getMemoryManager();
     auto alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
@@ -772,7 +796,6 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
         return ZE_RESULT_SUCCESS;
     }
 
-    auto type = allocData->memoryType;
     auto ipcType = InternalIpcMemoryType::deviceUnifiedMemory;
     if (type == InternalMemoryType::hostUnifiedMemory) {
         ipcType = InternalIpcMemoryType::hostUnifiedMemory;
@@ -789,7 +812,7 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
         memoryManager->registerIpcExportedAllocation(alloc);
 
         IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandles[i].data);
-        setIPCHandleData(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType));
+        setIPCHandleData(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool);
     }
 
     return ZE_RESULT_SUCCESS;

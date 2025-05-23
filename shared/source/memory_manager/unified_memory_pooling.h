@@ -44,6 +44,7 @@ class UsmMemAllocPool {
     size_t getPooledAllocationSize(const void *ptr);
     void *getPooledAllocationBasePtr(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
+    uint64_t getPoolAddress() const;
 
     static constexpr auto chunkAlignment = 512u;
     static constexpr auto poolAlignment = MemoryConstants::pageSize2M;
@@ -84,7 +85,7 @@ class UsmMemAllocPoolsManager {
         PoolInfo{16 * MB+1,  64 * MB,  0},
         PoolInfo{64 * MB+1, 256 * MB,  0}};
     // clang-format on
-    const size_t firstNonPreallocatedIndex = 3u;
+    static constexpr size_t firstNonPreallocatedIndex = 3u;
 
     using UnifiedMemoryProperties = SVMAllocsManager::UnifiedMemoryProperties;
     static constexpr uint64_t KB = MemoryConstants::kiloByte; // NOLINT(readability-identifier-naming)
@@ -108,6 +109,7 @@ class UsmMemAllocPoolsManager {
     size_t getPooledAllocationSize(const void *ptr);
     void *getPooledAllocationBasePtr(const void *ptr);
     size_t getOffsetInPool(const void *ptr);
+    UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
 
   protected:
     static bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties) {
@@ -118,8 +120,6 @@ class UsmMemAllocPoolsManager {
     bool belongsInPreallocatedPool(size_t size) {
         return size <= poolInfos[firstNonPreallocatedIndex - 1].maxServicedSize;
     }
-
-    UsmMemAllocPool *getPoolContainingAlloc(const void *ptr);
 
     SVMAllocsManager *svmMemoryManager{};
     MemoryManager *memoryManager;

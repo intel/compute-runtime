@@ -167,6 +167,10 @@ size_t UsmMemAllocPool::getOffsetInPool(const void *ptr) const {
     return 0u;
 }
 
+uint64_t UsmMemAllocPool::getPoolAddress() const {
+    return castToUint64(this->pool);
+}
+
 bool UsmMemAllocPoolsManager::PoolInfo::isPreallocated() const {
     return 0u != preallocateSize;
 }
