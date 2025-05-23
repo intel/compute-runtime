@@ -18,6 +18,7 @@ struct RootDeviceEnvironment;
 namespace TestChecks {
 bool supportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment);
 bool fullySupportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment);
+bool allowsDcFlush(const Device *device);
 bool supportsImages(const HardwareInfo &hardwareInfo);
 bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 } // namespace TestChecks
@@ -39,6 +40,11 @@ bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 #define REQUIRE_BLITTER_OR_SKIP(param)                      \
     if (NEO::TestChecks::supportsBlitter(param) == false) { \
         GTEST_SKIP();                                       \
+    }
+
+#define REQUIRE_DC_FLUSH_OR_SKIP(param)                   \
+    if (NEO::TestChecks::allowsDcFlush(param) == false) { \
+        GTEST_SKIP();                                     \
     }
 
 #define REQUIRE_FULL_BLITTER_OR_SKIP(param)                      \

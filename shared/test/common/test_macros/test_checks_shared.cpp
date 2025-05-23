@@ -39,6 +39,10 @@ bool TestChecks::fullySupportsBlitter(const RootDeviceEnvironment &rootDeviceEnv
     return false;
 }
 
+bool TestChecks::allowsDcFlush(const Device *device) {
+    return device->getProductHelper().isDcFlushAllowed();
+}
+
 bool TestChecks::supportsImages(const HardwareInfo &hardwareInfo) {
     return hardwareInfo.capabilityTable.supportsImages;
 }
