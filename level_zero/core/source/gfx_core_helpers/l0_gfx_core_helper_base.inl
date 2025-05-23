@@ -80,7 +80,7 @@ std::unique_ptr<NEO::TagAllocatorBase> L0GfxCoreHelperHw<Family>::getInOrderTime
     using TimestampPacketType = typename Family::TimestampPacketType;
     using TimestampPacketsT = NEO::TimestampPackets<TimestampPacketType, 1>;
 
-    size_t size = sizeof(TimestampPacketsT) * std::max(packetsCountPerElement, size_t(2));
+    size_t size = sizeof(TimestampPacketsT) * packetsCountPerElement;
 
     return std::make_unique<NEO::TagAllocator<TimestampPacketsT>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, size, Event::State::STATE_CLEARED, false, true, deviceBitfield);
 }
