@@ -336,7 +336,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         enableSynchronizedDispatch((NEO::debugManager.flags.ForceSynchronizedDispatchMode.get() == 1) ? NEO::SynchronizedDispatchMode::full : NEO::SynchronizedDispatchMode::disabled);
     }
 
-    const bool copyOffloadSupported = l0GfxCoreHelper.isDefaultCmdListWithCopyOffloadSupported() || (NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 2);
+    const bool copyOffloadSupported = l0GfxCoreHelper.isDefaultCmdListWithCopyOffloadSupported(this->useAdditionalBlitProperties);
 
     if (copyOffloadSupported && !this->internalUsage && !isCopyOffloadEnabled()) {
         enableCopyOperationOffload();

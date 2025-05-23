@@ -269,7 +269,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 }
 
 void CommandListImp::enableCopyOperationOffload() {
-    if (isCopyOnly(false)) {
+    if (isCopyOnly(false) || !static_cast<DeviceImp *>(device)->tryGetCopyEngineOrdinal().has_value()) {
         return;
     }
 
@@ -277,11 +277,6 @@ void CommandListImp::enableCopyOperationOffload() {
 
     if (this->copyOffloadMode != CopyOffloadModes::dualStream || !isImmediateType()) {
         // No need to create internal bcs queue
-        return;
-    }
-
-    if (!static_cast<DeviceImp *>(device)->tryGetCopyEngineOrdinal().has_value()) {
-        this->copyOffloadMode = CopyOffloadModes::disabled;
         return;
     }
 

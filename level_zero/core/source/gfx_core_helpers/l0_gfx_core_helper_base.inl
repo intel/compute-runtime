@@ -105,8 +105,8 @@ CopyOffloadMode L0GfxCoreHelperHw<Family>::getDefaultCopyOffloadMode(bool additi
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::isDefaultCmdListWithCopyOffloadSupported() const {
-    return false;
+bool L0GfxCoreHelperHw<Family>::isDefaultCmdListWithCopyOffloadSupported(bool additionalBlitPropertiesSupported) const {
+    return (NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 2);
 }
 
 } // namespace L0

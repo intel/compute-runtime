@@ -385,8 +385,9 @@ HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListTh
         cmdListDesc.flags = 0;
 
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
+        bool supported = device->getL0GfxCoreHelper().isDefaultCmdListWithCopyOffloadSupported(device->getProductHelper().useAdditionalBlitProperties());
 
-        EXPECT_EQ(CopyOffloadModes::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
+        EXPECT_EQ(!supported, CopyOffloadModes::disabled == static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getCopyOffloadModeForOperation(true));
 
         zeCommandListDestroy(hCmdList);
     }
