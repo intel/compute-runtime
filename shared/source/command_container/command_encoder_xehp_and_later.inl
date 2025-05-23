@@ -653,8 +653,15 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WalkerType &walkerCmd,
     // so whenever local ids are driver or hw generated, reserve space by setting right values for emitLocalIds
     // 2) Auto-generation of local ids should be possible, when in fact local ids are used
     if (!localIdsGenerationByRuntime && localIdDimensions > 0) {
-        UNRECOVERABLE_IF(localIdDimensions != 3);
-        uint32_t emitLocalIdsForDim = (1 << 0) | (1 << 1) | (1 << 2);
+        UNRECOVERABLE_IF(localIdDimensions > 3);
+        uint32_t emitLocalIdsForDim = (1 << 0);
+
+        if (localIdDimensions > 1) {
+            emitLocalIdsForDim |= (1 << 1);
+        }
+        if (localIdDimensions > 2) {
+            emitLocalIdsForDim |= (1 << 2);
+        }
         walkerCmd.setEmitLocalId(emitLocalIdsForDim);
 
         walkerCmd.setLocalXMaximum(static_cast<uint32_t>(workGroupSizes[0] - 1));

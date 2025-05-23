@@ -673,6 +673,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredAnd
     dispatchInterface->requiredWalkGroupOrder = 2u;
     dispatchInterface->kernelDescriptor.kernelAttributes.flags.passInlineData = true;
     dispatchInterface->kernelDescriptor.kernelAttributes.numLocalIdChannels = 3u;
+    dispatchInterface->kernelDescriptor.kernelAttributes.localId[0] = 1;
+    dispatchInterface->kernelDescriptor.kernelAttributes.localId[1] = 1;
+    dispatchInterface->kernelDescriptor.kernelAttributes.localId[2] = 1;
     dispatchInterface->kernelDescriptor.kernelAttributes.simdSize = 32u;
     dispatchInterface->getCrossThreadDataSizeResult = 32u;
 
@@ -943,7 +946,57 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
     workGroupSizes[1] = workGroupSizes[2] = 2u;
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDimensions,
+
+    uint8_t localIdDims[3] = {2,
+                              1,
+                              3};
+
+    uint32_t expectedEmitLocalIds[3] = {(1 << 0) | (1 << 1),
+                                        (1 << 0),
+                                        (1 << 0) | (1 << 1) | (1 << 2)};
+
+    for (int i = 0; i < 3; i++) {
+        EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDims[i],
+                                                           0, 0, false, false, false, requiredWorkGroupOrder, rootDeviceEnvironment);
+        EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
+        EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
+        EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
+        EXPECT_EQ(1u, walkerCmd.getThreadGroupIdZDimension());
+
+        EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingX());
+        EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingY());
+        EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingZ());
+
+        auto expectedSimd = getSimdConfig<DefaultWalkerType>(simd);
+        EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
+        EXPECT_EQ(expectedSimd, walkerCmd.getMessageSimd());
+
+        EXPECT_EQ(0xffffffffu, walkerCmd.getExecutionMask());
+
+        EXPECT_EQ(expectedEmitLocalIds[i], walkerCmd.getEmitLocalId());
+        EXPECT_EQ(31u, walkerCmd.getLocalXMaximum());
+        EXPECT_EQ(1u, walkerCmd.getLocalYMaximum());
+        EXPECT_EQ(1u, walkerCmd.getLocalZMaximum());
+        EXPECT_EQ(2u, walkerCmd.getWalkOrder());
+
+        EXPECT_TRUE(walkerCmd.getGenerateLocalId());
+        EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGenerationByHwWhenLocalIdsNotPresentThenEmitLocalIdsIsNotSet) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
+    requiredWorkGroupOrder = 2u;
+    workGroupSizes[1] = workGroupSizes[2] = 2u;
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    uint8_t localIdDims = 0;
+    uint32_t expectedEmitLocalIds = 0;
+
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDims,
                                                        0, 0, false, false, false, requiredWorkGroupOrder, rootDeviceEnvironment);
     EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
@@ -960,14 +1013,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
 
     EXPECT_EQ(0xffffffffu, walkerCmd.getExecutionMask());
 
-    uint32_t expectedEmitLocalIds = (1 << 0) | (1 << 1) | (1 << 2);
     EXPECT_EQ(expectedEmitLocalIds, walkerCmd.getEmitLocalId());
-    EXPECT_EQ(31u, walkerCmd.getLocalXMaximum());
-    EXPECT_EQ(1u, walkerCmd.getLocalYMaximum());
-    EXPECT_EQ(1u, walkerCmd.getLocalZMaximum());
-    EXPECT_EQ(2u, walkerCmd.getWalkOrder());
-
-    EXPECT_TRUE(walkerCmd.getGenerateLocalId());
+    EXPECT_EQ(0u, walkerCmd.getLocalXMaximum());
+    EXPECT_EQ(0u, walkerCmd.getLocalYMaximum());
+    EXPECT_EQ(0u, walkerCmd.getLocalZMaximum());
+    EXPECT_EQ(0u, walkerCmd.getWalkOrder());
+    EXPECT_FALSE(walkerCmd.getGenerateLocalId());
     EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
 }
 
