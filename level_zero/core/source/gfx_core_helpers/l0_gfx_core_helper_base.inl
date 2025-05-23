@@ -96,7 +96,7 @@ bool L0GfxCoreHelperHw<Family>::threadResumeRequiresUnlock() const {
 }
 
 template <typename Family>
-CopyOffloadMode L0GfxCoreHelperHw<Family>::getDefaultCopyOffloadMode() const {
+CopyOffloadMode L0GfxCoreHelperHw<Family>::getDefaultCopyOffloadMode(bool additionalBlitPropertiesSupported) const {
     if (NEO::debugManager.flags.OverrideCopyOffloadMode.get() != -1) {
         return static_cast<CopyOffloadMode>(NEO::debugManager.flags.OverrideCopyOffloadMode.get());
     }

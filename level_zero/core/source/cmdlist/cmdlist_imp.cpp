@@ -273,7 +273,7 @@ void CommandListImp::enableCopyOperationOffload() {
         return;
     }
 
-    this->copyOffloadMode = device->getL0GfxCoreHelper().getDefaultCopyOffloadMode();
+    this->copyOffloadMode = device->getL0GfxCoreHelper().getDefaultCopyOffloadMode(device->getProductHelper().useAdditionalBlitProperties());
 
     if (this->copyOffloadMode != CopyOffloadModes::dualStream || !isImmediateType()) {
         // No need to create internal bcs queue
