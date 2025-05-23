@@ -263,6 +263,15 @@ TEST_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledThenStackSizePerRayIsSet
     }
 }
 
+TEST_F(DeviceTest, given8MaxBvhLevelsWhenAllocateRTDispatchGlobalsIsCalledThenMaxBvhLevelsIsSetCorrectly) {
+    uint32_t maxBvhLevels = 8u;
+    pDevice->initializeRayTracing(maxBvhLevels);
+    pDevice->allocateRTDispatchGlobals(maxBvhLevels);
+    EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(maxBvhLevels));
+    RTDispatchGlobals dispatchGlobals = *reinterpret_cast<struct RTDispatchGlobals *>(pDevice->getRTDispatchGlobals(maxBvhLevels)->rtDispatchGlobalsArray->getUnderlyingBuffer());
+    EXPECT_EQ(0u, static_cast<uint32_t>(dispatchGlobals.maxBVHLevels));
+}
+
 TEST_F(DeviceTest, givenNot48bResourceForRtWhenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsAllocatedWithout48bResourceFlag) {
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->is48bResourceNeededForRayTracingResult = false;
