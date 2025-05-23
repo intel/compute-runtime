@@ -78,6 +78,10 @@ TEST_F(ReleaseHelper2004Tests, whenIsBlitImageAllowedForDepthFormatCalledThenTru
     whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
 }
 
+TEST_F(ReleaseHelper2004Tests, whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnOverrideNumThreadsPerEuDebugKey) {
+    whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnOverrideNumThreadsPerEuDebugKey();
+}
+
 TEST_F(ReleaseHelper2004Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

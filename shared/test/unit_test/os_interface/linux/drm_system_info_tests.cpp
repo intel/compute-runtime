@@ -15,8 +15,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/drm_mock_device_blob.h"
-
-#include "gtest/gtest.h"
+#include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 
@@ -500,4 +499,39 @@ TEST(DrmSystemInfoTest, givenTopologyWithMoreEuPerDssThanInDeviceBlobWhenSetupHa
     EXPECT_NE(static_cast<uint32_t>(drm.storedEUVal), gtSystemInfo.EUCount);
     EXPECT_EQ(hwInfo.gtSystemInfo.SubSliceCount * drm.getSystemInfo()->getMaxEuPerDualSubSlice(), gtSystemInfo.EUCount);
     EXPECT_EQ(hwInfo.gtSystemInfo.EUCount * drm.getSystemInfo()->getNumThreadsPerEu(), gtSystemInfo.ThreadCount);
+}
+
+TEST(DrmSystemInfoTest, givenOverrideNumThreadsPerEuSetWhenSetupHardwareInfoThenCorrectThreadCountIsSet) {
+    DebugManagerStateRestore restorer;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    uint32_t dummyBlobThreadCount = 90;
+    uint32_t dummyBlobEuCount = 6;
+    {
+        DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+        drm.setupHardwareInfo(&device, false);
+        EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobThreadCount);
+    }
+    {
+        debugManager.flags.OverrideNumThreadsPerEu.set(7);
+        DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+        drm.setupHardwareInfo(&device, false);
+        EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobEuCount * 7);
+    }
+    {
+        debugManager.flags.OverrideNumThreadsPerEu.set(8);
+        DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+        drm.setupHardwareInfo(&device, false);
+        EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobEuCount * 8);
+    }
+    {
+        debugManager.flags.OverrideNumThreadsPerEu.set(10);
+        DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+        drm.setupHardwareInfo(&device, false);
+        EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, dummyBlobEuCount * 10);
+    }
 }

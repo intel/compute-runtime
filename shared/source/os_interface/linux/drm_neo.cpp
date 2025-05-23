@@ -607,6 +607,9 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     auto numThreadsPerEu = systemInfo ? systemInfo->getNumThreadsPerEu() : (releaseHelper ? releaseHelper->getNumThreadsPerEu() : 7u);
+    if (debugManager.flags.OverrideNumThreadsPerEu.get() != -1) {
+        numThreadsPerEu = debugManager.flags.OverrideNumThreadsPerEu.get();
+    }
 
     hwInfo->gtSystemInfo.ThreadCount = numThreadsPerEu * hwInfo->gtSystemInfo.EUCount;
 
