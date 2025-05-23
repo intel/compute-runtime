@@ -1572,15 +1572,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    const bool copyOnly = isCopyOnly(dualStreamCopyOffload);
-
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(copySizeModified, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
     size_t nBlits = copyRegionPreferred ? NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed) : NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
     bool useAdditionalTimestamp = nBlits > 1;
     if (useAdditionalBlitProperties) {
         setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
-    } else if (copyOnly) {
+    } else {
         appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     }
 
@@ -1596,7 +1594,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     }
     dummyBlitWa.isWaRequired = true;
 
-    if (!useAdditionalBlitProperties && copyOnly) {
+    if (!useAdditionalBlitProperties) {
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
     }
     return ZE_RESULT_SUCCESS;
@@ -1613,7 +1611,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
                                                                       Event *signalEvent, uint32_t numWaitEvents,
                                                                       ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     const bool dualStreamCopyOffloadOperation = isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed);
-    const bool isCopyOnlySignaling = isCopyOnly(dualStreamCopyOffloadOperation) && !useAdditionalBlitProperties;
 
     auto ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, memoryCopyParams.relaxedOrderingDispatch, false, true, false, dualStreamCopyOffloadOperation);
     if (ret != ZE_RESULT_SUCCESS) {
@@ -1642,9 +1639,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     bool useAdditionalTimestamp = blitProperties.copySize.z > 1;
     if (useAdditionalBlitProperties) {
         setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
-    }
-
-    if (isCopyOnlySignaling) {
+    } else {
         appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     }
     blitProperties.transform1DArrayTo2DArrayIfNeeded();
@@ -1656,7 +1651,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     }
     dummyBlitWa.isWaRequired = true;
 
-    if (isCopyOnlySignaling) {
+    if (!useAdditionalBlitProperties) {
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
         if (this->isInOrderExecutionEnabled()) {
             appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
@@ -1839,10 +1834,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     launchParams.pipeControlSignalling = (signalEvent && singlePipeControlPacket) || getDcFlushRequired(dstAllocationStruct.needsFlush);
 
-    if (!isNonDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed)) {
-        if (!useAdditionalBlitProperties || !isCopyOnlyEnabled) {
-            appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false, isCopyOnlyEnabled);
-        }
+    if (!useAdditionalBlitProperties || !isCopyOnlyEnabled) {
+        appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false, isCopyOnlyEnabled);
     }
 
     if (isCopyOnlyEnabled) {
@@ -1915,10 +1908,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc, isCopyOnlyEnabled);
 
-    if (!isNonDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed)) {
-        if (!useAdditionalBlitProperties || !isCopyOnlyEnabled) {
-            appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false, isCopyOnlyEnabled);
-        }
+    if (!useAdditionalBlitProperties || !isCopyOnlyEnabled) {
+        appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false, isCopyOnlyEnabled);
     }
 
     bool l3flushInPipeControl = !l3FlushAfterPostSyncRequired || isSplitOperation;
@@ -1926,7 +1917,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     addToMappedEventList(signalEvent);
 
-    if (this->isInOrderExecutionEnabled() && !isNonDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed)) {
+    if (this->isInOrderExecutionEnabled()) {
         bool emitPipeControl = !isCopyOnlyEnabled && launchParams.pipeControlSignalling;
 
         if ((!useAdditionalBlitProperties || !isCopyOnlyEnabled) &&
@@ -2005,8 +1996,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(*srcAllocationStruct.alloc, *dstAllocationStruct.alloc);
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
-    const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling &&
-                                                 isCopyOnlyEnabled && !isNonDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed);
+    const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (isCopyOnlyEnabled) {

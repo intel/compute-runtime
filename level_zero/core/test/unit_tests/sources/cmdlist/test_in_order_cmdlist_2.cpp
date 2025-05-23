@@ -85,6 +85,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenOverri
 HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenUseDefaultQueue, IsAtLeastXeHpCore) {
     debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = true;
 
     auto eventPool = createEvents<FamilyType>(1, true);
     auto eventHandle = events[0]->toHandle();
@@ -106,7 +107,9 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenDontPr
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
     auto immCmdList0 = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList0->useAdditionalBlitProperties = true;
     auto immCmdList1 = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList1->useAdditionalBlitProperties = true;
 
     auto eventPool = createEvents<FamilyType>(2, true);
     auto eventHandle0 = events[0]->toHandle();
@@ -137,6 +140,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeAndProfilingEventWithRe
     debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = true;
 
     auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
@@ -541,6 +545,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenImageCopyCalledT
     debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = true;
 
     auto eventPool = createEvents<FamilyType>(1, true);
 
@@ -593,6 +598,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenFillCalledThenSk
     debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->useAdditionalBlitProperties = true;
 
     auto eventPool = createEvents<FamilyType>(1, true);
 

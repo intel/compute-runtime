@@ -126,6 +126,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::updateStreamProperties;
     using BaseClass::updateStreamPropertiesForFlushTaskDispatchFlags;
     using BaseClass::updateStreamPropertiesForRegularCommandLists;
+    using BaseClass::useAdditionalBlitProperties;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
 
@@ -249,6 +250,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::synchronizedDispatchMode;
     using BaseClass::synchronizeInOrderExecution;
     using BaseClass::updateInOrderExecInfo;
+    using BaseClass::useAdditionalBlitProperties;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 
