@@ -387,13 +387,13 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
     this->numThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(
-        simdSize, static_cast<uint32_t>(itemsInGroup), grfCount, rootDeviceEnvironment);
+        simdSize, static_cast<uint32_t>(itemsInGroup), grfCount, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
 
     if (kernelRequiresGenerationOfLocalIdsByRuntime) {
         auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
         uint32_t perThreadDataSizeForWholeThreadGroupNeeded =
             static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-                simdSize, grfSize, grfCount, numChannels, itemsInGroup, rootDeviceEnvironment));
+                simdSize, grfSize, grfCount, numChannels, itemsInGroup, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment));
         if (perThreadDataSizeForWholeThreadGroupNeeded >
             perThreadDataSizeForWholeThreadGroupAllocated) {
             alignedFree(perThreadDataForWholeThreadGroup);
@@ -940,7 +940,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
 
     uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getMaxGroupSize(kernelDescriptor));
     const auto &rootDeviceEnvironment = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
-    maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, maxKernelWorkGroupSize, rootDeviceEnvironment);
+    maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, !kernelRequiresGenerationOfLocalIdsByRuntime, maxKernelWorkGroupSize, rootDeviceEnvironment);
     pKernelProperties->maxNumSubgroups = maxKernelWorkGroupSize / kernelDescriptor.kernelAttributes.simdSize;
 
     void *pNext = pKernelProperties->pNext;

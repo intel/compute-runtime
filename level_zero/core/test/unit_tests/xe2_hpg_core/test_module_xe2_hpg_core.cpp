@@ -69,13 +69,17 @@ XE2_HPG_CORETEST_F(Xe2KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThre
         module.getMaxGroupSizeResult = UINT32_MAX;
         kernel.module = &module;
 
-        std::array<std::array<uint32_t, 2>, 2> values = {{
-            {16u, 64u}, // SIMT Size, Max Num of threads
-            {32u, 32u},
+        std::array<std::array<uint32_t, 3>, 4> values = {{
+            {16u, 1u, 64u}, // SIMT Size, HW local-id generation, Max Num of threads
+            {32u, 1u, 32u},
+            {16u, 0u, 64u},
+            {32u, 0u, 64u},
+
         }};
 
-        for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
+        for (auto &[simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
+            kernel.forceGenerateLocalIdByHw = isHwLocalIdGeneration;
             kernel.setGroupSize(1024u, 1024u, 1024u);
             EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.numThreadsPerThreadGroup);
             kernel.groupSize[0] = kernel.groupSize[1] = kernel.groupSize[2] = 0;
@@ -92,13 +96,16 @@ XE2_HPG_CORETEST_F(Xe2KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThre
         module.getMaxGroupSizeResult = UINT32_MAX;
         kernel.module = &module;
 
-        std::array<std::array<uint32_t, 2>, 2> values = {{
-            {16u, 32u}, // SIMT Size, Max Num of threads
-            {32u, 32u},
+        std::array<std::array<uint32_t, 3>, 4> values = {{
+            {16u, 0u, 32u}, // SIMT Size, HW local-id generation, Max Num of threads
+            {16u, 1u, 32u},
+            {32u, 0u, 32u},
+            {32u, 1u, 32u},
         }};
 
-        for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
+        for (auto &[simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
+            kernel.forceGenerateLocalIdByHw = isHwLocalIdGeneration;
             kernel.setGroupSize(1024u, 1024u, 1024u);
             EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.numThreadsPerThreadGroup);
             kernel.groupSize[0] = kernel.groupSize[1] = kernel.groupSize[2] = 0;

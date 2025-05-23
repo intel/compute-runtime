@@ -256,24 +256,22 @@ uint32_t GfxCoreHelperHw<Family>::overrideMaxWorkGroupSize(uint32_t maxWG) const
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, bool isHwLocalIdGeneration, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     uint32_t numThreadsPerThreadGroup = getThreadsPerWG(simd, totalWorkItems);
     if (debugManager.flags.RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup.get() == 1) {
         return numThreadsPerThreadGroup;
     }
     auto simt = isSimd1(simd) ? 32u : simd;
     uint32_t maxThreadsPerThreadGroup = 32u;
-    // driver limit maxWorkgroupSize to 1024 (NEO-11881) so for simt 32 the max threads per thread group is 32
-    if (grfCount != GrfConfig::largeGrfNumber && (simt == 16u)) {
+    if (grfCount != GrfConfig::largeGrfNumber && ((simt == 16u) || (simt == 32u && !isHwLocalIdGeneration))) {
         maxThreadsPerThreadGroup = 64u;
     }
-    DEBUG_BREAK_IF(maxThreadsPerThreadGroup * simt > CommonConstants::maxWorkgroupSize);
     return std::min(numThreadsPerThreadGroup, maxThreadsPerThreadGroup);
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    const uint32_t threadsPerThreadGroup = calculateNumThreadsPerThreadGroup(simd, defaultMaxGroupSize, grfCount, rootDeviceEnvironment);
+uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, bool isHwLocalGeneration, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    const uint32_t threadsPerThreadGroup = calculateNumThreadsPerThreadGroup(simd, defaultMaxGroupSize, grfCount, isHwLocalGeneration, rootDeviceEnvironment);
     return (threadsPerThreadGroup * simd);
 }
 
