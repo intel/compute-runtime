@@ -12,6 +12,28 @@
 namespace NEO {
 
 template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForByteFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+    auto maxWidthToFill = getMaxBlitSetWidth(rootDeviceEnvironment);
+    auto maxHeightToFill = getMaxBlitSetHeight(rootDeviceEnvironment);
+    auto nBlits = 0;
+    uint64_t width = 1;
+    uint64_t height = 1;
+    uint64_t sizeToFill = copySize.x / patternSize;
+    while (sizeToFill != 0) {
+        if (sizeToFill <= maxWidthToFill) {
+            width = sizeToFill;
+            height = 1;
+        } else {
+            width = maxWidthToFill;
+            height = std::min((sizeToFill / width), maxHeightToFill);
+        }
+        sizeToFill -= (width * height);
+        nBlits++;
+    }
+    return nBlits;
+}
+
+template <typename GfxFamily>
 BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
     using MEM_SET = typename Family::MEM_SET;
     auto blitCmd = Family::cmdInitMemSet;

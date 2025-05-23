@@ -732,13 +732,15 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     uint64_t srcGpuAddr = 0x12345;
     uint64_t dstGpuAddr = 0x54321;
     uint64_t clearGpuAddr = 0x5678;
+    size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
+    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), false));
     std::unique_ptr<MockGraphicsAllocation> srcAlloc(new MockGraphicsAllocation(src, srcGpuAddr, sizeof(src)));
     std::unique_ptr<MockGraphicsAllocation> dstAlloc(new MockGraphicsAllocation(dst, dstGpuAddr, sizeof(dst)));
     std::unique_ptr<GraphicsAllocation> clearColorAllocation(new MockGraphicsAllocation(clear, clearGpuAddr, sizeof(clear)));
 
     Vec3<size_t> srcOffsets{1, 0, 0};
     Vec3<size_t> dstOffsets{1, 0, 0};
-    Vec3<size_t> copySize{(BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight) + 1, 2, 2};
+    Vec3<size_t> copySize{(maxBlitWidth * maxBlitHeight) + 1, 2, 2};
 
     size_t srcRowPitch = 0;
     size_t srcSlicePitch = 0;
@@ -749,7 +751,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), srcAlloc.get(),
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation.get());
-
+    ASSERT_FALSE(blitProperties.isSystemMemoryPoolUsed);
     uint32_t streamBuffer[400] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
     NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
@@ -779,13 +781,15 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     uint64_t srcGpuAddr = 0x12345;
     uint64_t dstGpuAddr = 0x54321;
     uint64_t clearGpuAddr = 0x5678;
+    size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
+    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), false));
     std::unique_ptr<MockGraphicsAllocation> srcAlloc(new MockGraphicsAllocation(src, srcGpuAddr, sizeof(src)));
     std::unique_ptr<MockGraphicsAllocation> dstAlloc(new MockGraphicsAllocation(dst, dstGpuAddr, sizeof(dst)));
     std::unique_ptr<GraphicsAllocation> clearColorAllocation(new MockGraphicsAllocation(clear, clearGpuAddr, sizeof(clear)));
 
     Vec3<size_t> srcOffsets{1, 0, 0};
     Vec3<size_t> dstOffsets{1, 0, 0};
-    Vec3<size_t> copySize{(BlitterConstants::maxBlitWidth + 1), (BlitterConstants::maxBlitHeight + 1), 3};
+    Vec3<size_t> copySize{(maxBlitWidth + 1), (maxBlitHeight + 1), 3};
 
     size_t srcRowPitch = 0;
     size_t srcSlicePitch = 0;
@@ -796,6 +800,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), srcAlloc.get(),
                                                                           dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation.get());
+    ASSERT_FALSE(blitProperties.isSystemMemoryPoolUsed);
 
     uint32_t streamBuffer[400] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -827,8 +832,10 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     Vec3<size_t> dstOffsets = {0, 0, 0};
     Vec3<size_t> srcOffsets = {0, 0, 0};
 
-    size_t copySizeX = BlitterConstants::maxBlitWidth - 1;
-    size_t copySizeY = BlitterConstants::maxBlitHeight - 1;
+    size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
+    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), false));
+    size_t copySizeX = maxBlitWidth - 1;
+    size_t copySizeY = maxBlitHeight - 1;
     Vec3<size_t> copySize = {copySizeX, copySizeY, 0x3};
     Vec3<size_t> srcSize = {copySizeX, copySizeY, 0x3};
     Vec3<size_t> dstSize = {copySizeX, copySizeY, 0x3};
@@ -841,6 +848,7 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
     auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, &srcAlloc,
                                                                      dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
                                                                      dstRowPitch, dstSlicePitch, &clearColorAllocation);
+    ASSERT_FALSE(blitProperties.isSystemMemoryPoolUsed);
     blitProperties.bytesPerPixel = 4;
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;
@@ -874,6 +882,8 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWith
     constexpr int32_t setHeight = 60;
     debugManager.flags.LimitBlitterMaxSetWidth.set(setWidth);
     debugManager.flags.LimitBlitterMaxSetHeight.set(setHeight);
+    debugManager.flags.LimitBlitterMaxWidth.set(setWidth);
+    debugManager.flags.LimitBlitterMaxHeight.set(setHeight);
 
     size_t dstSize = 3 * setWidth * setHeight + 1;
     MockGraphicsAllocation dstAlloc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
@@ -883,6 +893,9 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWith
     pattern[0] = 0x1;
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, dstSize, pattern, sizeof(uint8_t), 0);
     EXPECT_EQ(1u, blitProperties.fillPatternSize);
+
+    auto nBlits = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint8_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+    EXPECT_EQ(4u, nBlits);
 
     uint32_t streamBuffer[400] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -907,13 +920,21 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePatternWith
 }
 
 HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryFillThenTheResultsAreTheSame, MatchAny) {
-    size_t dstSize = 2 * sizeof(uint32_t) * (BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight) + sizeof(uint32_t);
+    size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
+    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), true));
+    size_t dstSize = 2 * sizeof(uint32_t) * (maxBlitWidth * maxBlitHeight) + sizeof(uint32_t);
     MockGraphicsAllocation dstAlloc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                     reinterpret_cast<void *>(0x1234), 0x1000, 0, dstSize,
                                     MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     uint32_t pattern[4] = {};
     pattern[0] = 0x4567;
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, dstSize, pattern, sizeof(uint32_t), 0);
+    ASSERT_TRUE(blitProperties.isSystemMemoryPoolUsed);
+
+    auto nBlitsColorFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+    auto nBlitsFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+    EXPECT_EQ(3u, nBlitsColorFill);
+    EXPECT_EQ(nBlitsFill, nBlitsColorFill);
 
     uint32_t streamBuffer[1200] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -938,7 +959,8 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
 }
 
 HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlitCommandSizeThenBlockCopySizeIsReturned) {
-    Vec3<size_t> copySize{BlitterConstants::maxBlitWidth - 1, 1, 1};
+    size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
+    Vec3<size_t> copySize{maxBlitWidth - 1, 1, 1};
     NEO::CsrDependencies csrDependencies{};
 
     size_t totalSize = NEO::BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(copySize, csrDependencies, false, false, true, pDevice->getRootDeviceEnvironmentRef(), false, false);

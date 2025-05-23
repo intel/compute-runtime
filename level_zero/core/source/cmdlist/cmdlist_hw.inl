@@ -2568,8 +2568,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         memcpy_s(&patternToCommand, sizeof(patternToCommand), pattern, patternSize);
 
         auto blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(gpuAllocation, size, patternToCommand, patternSize, offset);
+        size_t nBlits = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForColorFill(blitProperties.copySize, patternSize, device->getNEODevice()->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+        bool useAdditionalTimestamp = nBlits > 1;
         if (useAdditionalBlitProperties) {
-            setAdditionalBlitProperties(blitProperties, signalEvent, false);
+            setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);
         }
         blitProperties.computeStreamPartitionCount = this->partitionCount;
         blitProperties.highPriority = isHighPriorityImmediateCmdList();

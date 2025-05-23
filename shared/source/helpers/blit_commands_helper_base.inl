@@ -596,6 +596,37 @@ size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(const Vec3<s
 }
 
 template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+    auto maxWidthToFill = getMaxBlitWidth(rootDeviceEnvironment);
+    auto maxHeightToFill = getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed);
+    auto nBlits = 0;
+    uint64_t width = 1;
+    uint64_t height = 1;
+    uint64_t sizeToFill = copySize.x / patternSize;
+    while (sizeToFill != 0) {
+        if (sizeToFill <= maxWidthToFill) {
+            width = sizeToFill;
+            height = 1;
+        } else {
+            width = maxWidthToFill;
+            height = std::min((sizeToFill / width), maxHeightToFill);
+        }
+        sizeToFill -= (width * height);
+        nBlits++;
+    }
+    return nBlits;
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForColorFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+    if (patternSize == 1) {
+        return NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForByteFill(copySize, patternSize, rootDeviceEnvironment, isSystemMemoryPoolUsed);
+    } else {
+        return NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForFill(copySize, patternSize, rootDeviceEnvironment, isSystemMemoryPoolUsed);
+    }
+}
+
+template <typename GfxFamily>
 bool BlitCommandsHelper<GfxFamily>::preBlitCommandWARequired() {
     return false;
 }
