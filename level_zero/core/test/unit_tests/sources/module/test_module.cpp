@@ -4808,6 +4808,37 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndNoDebuggerOrStackCallsWhenLink
     EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
+TEST_F(ModuleTests, givenRequiredImplicitArgsInKernelAndNoDebuggerOrStackCallsWhenLinkingModuleThenImplicitArgsRequiredRemainSet) {
+    auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::user);
+    EXPECT_EQ(nullptr, neoDevice->getDebugger());
+
+    char data[64]{};
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->heapInfo.kernelHeapSize = 64;
+    kernelInfo->heapInfo.pKernelHeap = data;
+
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->setIsaPerKernelAllocation(pModule->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
+    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
+
+    kernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = false;
+    auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
+    pModule->kernelImmDatas.push_back(std::move(kernelImmData));
+    pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::addressLow, SegmentType::instructions}});
+    pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+
+    kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    auto status = pModule->linkBinary();
+    EXPECT_TRUE(status);
+
+    EXPECT_NE(0u, *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
+
+    EXPECT_TRUE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+}
+
 TEST_F(ModuleTests, givenModuleWithGlobalAndConstAllocationsWhenGettingModuleAllocationsThenAllAreReturned) {
     std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
                                                                       nullptr,

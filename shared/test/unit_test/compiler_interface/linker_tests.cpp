@@ -2122,7 +2122,7 @@ TEST_F(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocation
     EXPECT_EQ(expectedValue5, *reloc5Location);
 }
 
-TEST_F(LinkerTests, givenImplicitArgRelocationAndStackCallsThenPatchRelocationWithSizeOfImplicitArgStructAndUpdateKernelDescriptor) {
+TEST_F(LinkerTests, givenImplicitArgRelocationAndStackCallsOrRequiredImplicitArgsThenPatchRelocationWithSizeOfImplicitArgStructAndUpdateKernelDescriptor) {
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
@@ -2170,8 +2170,20 @@ TEST_F(LinkerTests, givenImplicitArgRelocationAndStackCallsThenPatchRelocationWi
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(0U, relocatedSymbols.size());
 
-    auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
+    auto addressToPatch = reinterpret_cast<uint32_t *>(instructionSegment.data() + reloc.r_offset);
     EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(deviceFactory.rootDevices[0]->getGfxCoreHelper().getImplicitArgsVersion()), *addressToPatch);
+    EXPECT_EQ(initData, *(addressToPatch - 1));
+    EXPECT_EQ(initData, *(addressToPatch + 1));
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+
+    kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
+    *addressToPatch = 0;
+
+    linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+                             nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
+                             deviceFactory.rootDevices[0], nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);

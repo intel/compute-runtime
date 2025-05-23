@@ -5400,6 +5400,46 @@ kernels:
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenExecEnvImplicitArgBufferUsedByCodeTrueWhenPopulatingKernelDescriptorThenImplicitArgsAreRequired) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 32
+        implicit_arg_buffer_used_by_code: true
+      payload_arguments:
+        - arg_type: work_dimensions
+            offset: 32
+            size: 4
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor->payloadMappings.implicitArgs.implicitArgsBuffer));
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenExecEnvImplicitArgBufferUsedByCodeFalseWhenPopulatingKernelDescriptorThenImplicitArgsAreNotRequired) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 32
+        implicit_arg_buffer_used_by_code: false
+      payload_arguments:
+        - arg_type: work_dimensions
+            offset: 32
+            size: 4
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor->payloadMappings.implicitArgs.implicitArgsBuffer));
+    EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs);
+}
+
 TEST(PopulateArgDescriptorCrossthreadPayload, GivenArgTypeWorkDimensionsWhenSizeIsInvalidThenPopulateKernelDescriptorFails) {
     NEO::KernelDescriptor kernelDescriptor;
     kernelDescriptor.payloadMappings.explicitArgs.resize(1);

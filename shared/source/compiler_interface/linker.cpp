@@ -657,7 +657,7 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
         if (pImplicitArgsRelocs != pImplicitArgsRelocationAddresses.end()) {
             for (const auto &pImplicitArgsReloc : pImplicitArgsRelocs->second) {
                 UNRECOVERABLE_IF(!pDevice);
-                kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = kernelDescriptor.kernelAttributes.flags.useStackCalls || pDevice->getDebugger() != nullptr;
+                kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs |= kernelDescriptor.kernelAttributes.flags.useStackCalls || pDevice->getDebugger() != nullptr;
                 if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
                     uint64_t implicitArgsSize = 0;
                     if (pDevice->getGfxCoreHelper().getImplicitArgsVersion() == 0) {
