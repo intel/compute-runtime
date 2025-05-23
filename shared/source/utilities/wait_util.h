@@ -28,7 +28,7 @@ enum class WaitpkgUse : int32_t {
 
 constexpr int64_t defaultWaitPkgThresholdInMicroSeconds = 20;
 constexpr int64_t defaultWaitPkgThresholdForDiscreteInMicroSeconds = 28;
-constexpr uint64_t defaultCounterValue = 16000;
+constexpr uint64_t defaultCounterValue = 12000;
 constexpr uint32_t defaultControlValue = 0;
 constexpr uint32_t defaultWaitCount = 1u;
 
