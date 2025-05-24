@@ -169,7 +169,7 @@ class MetricDeviceContext {
                                               zet_metric_group_handle_t *phMetricGroups);
     ze_result_t calcOperationCreate(zet_context_handle_t hContext,
                                     zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-                                    uint32_t *pCount,
+                                    uint32_t *pExcludedMetricCount,
                                     zet_metric_handle_t *phExcludedMetrics,
                                     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation);
     bool areMetricGroupsFromSameDeviceHierarchy(uint32_t count, zet_metric_group_handle_t *phMetricGroups);

@@ -546,7 +546,7 @@ bool MetricDeviceContext::areMetricsFromSameSource(uint32_t count, zet_metric_ha
 
 ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hContext,
                                                      zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-                                                     uint32_t *pCount,
+                                                     uint32_t *pExcludedMetricCount,
                                                      zet_metric_handle_t *phExcludedMetrics,
                                                      zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
 
@@ -598,7 +598,7 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     }
 
     MetricSource &metricSource = (metricGroupImp) ? metricGroupImp->getMetricSource() : metricImp->getMetricSource(); // NOLINT(clang-analyzer-core.CallAndMessage)
-    return metricSource.calcOperationCreate(*this, pCalculateDesc, pCount, phExcludedMetrics, phCalculateOperation);
+    return metricSource.calcOperationCreate(*this, pCalculateDesc, pExcludedMetricCount, phExcludedMetrics, phCalculateOperation);
 }
 
 ze_result_t MultiDeviceMetricImp::getProperties(zet_metric_properties_t *pProperties) {
@@ -916,12 +916,12 @@ ze_result_t metricCalculateOperationCreate(
     zet_context_handle_t hContext,
     zet_device_handle_t hDevice,
     zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-    uint32_t *pCount,
+    uint32_t *pExcludedMetricCount,
     zet_metric_handle_t *phExcludedMetrics,
     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
 
     DeviceImp *deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
-    return deviceImp->getMetricDeviceContext().calcOperationCreate(hContext, pCalculateDesc, pCount, phExcludedMetrics, phCalculateOperation);
+    return deviceImp->getMetricDeviceContext().calcOperationCreate(hContext, pCalculateDesc, pExcludedMetricCount, phExcludedMetrics, phCalculateOperation);
 }
 
 ze_result_t metricCalculateOperationDestroy(

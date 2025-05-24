@@ -281,7 +281,7 @@ zetIntelMetricCalculateOperationCreateExp(
     zet_device_handle_t hDevice,                                              ///< [in] handle of the device
     zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,                    ///< [in] pointer to structure with filters and operations to perform
                                                                               ///< at calculation time.
-    uint32_t *pCount,                                                         ///< [out] pointer to number of excluded metrics. These are metrics in the
+    uint32_t *pExcludedMetricCount,                                           ///< [out] pointer to number of excluded metrics. These are metrics in the
                                                                               ///< input list in pcalculateDesc that do not allow calculation
     zet_metric_handle_t *phExcludedMetrics,                                   ///< [in,out] [range(0, *pCount)] array of handles of excluded metrics
                                                                               ///< from the phCalculateOperation handle.

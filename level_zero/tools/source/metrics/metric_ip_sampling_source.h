@@ -59,7 +59,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
     }
     ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
                                     zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-                                    uint32_t *pCount,
+                                    uint32_t *pExcludedMetricCount,
                                     zet_metric_handle_t *phExcludedMetrics,
                                     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) override;
 

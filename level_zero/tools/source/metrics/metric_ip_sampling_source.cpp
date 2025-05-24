@@ -247,13 +247,13 @@ ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(zet_m
 
 ze_result_t IpSamplingMetricSourceImp::calcOperationCreate(MetricDeviceContext &metricDeviceContext,
                                                            zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-                                                           uint32_t *pCount,
+                                                           uint32_t *pExcludedMetricCount,
                                                            zet_metric_handle_t *phExcludedMetrics,
                                                            zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
     ze_result_t status = ZE_RESULT_ERROR_UNKNOWN;
 
     // All metrics in Ip sampling allow calculation
-    *pCount = 0;
+    *pExcludedMetricCount = 0;
 
     bool isMultiDevice = (metricDeviceContext.isImplicitScalingCapable()) ? true : false;
     status = IpSamplingMetricCalcOpImp::create(*this, pCalculateDesc, isMultiDevice, phCalculateOperation);
