@@ -63,6 +63,7 @@ inline constexpr ConstStringRef threadSchedulingMode("thread_scheduling_mode");
 inline constexpr ConstStringRef hasSample("has_sample");
 inline constexpr ConstStringRef actualKernelStartOffset("actual_kernel_start_offset");
 inline constexpr ConstStringRef requireImplicitArgBuffer("require_iab");
+inline constexpr ConstStringRef hasLscStoresWithNonDefaultL1CacheControls("has_lsc_stores_with_non_default_l1_cache_controls");
 
 namespace ThreadSchedulingMode {
 inline constexpr ConstStringRef ageBased("age_based");
@@ -360,6 +361,7 @@ using LocalRegionSizeT = int32_t;
 using WalkOrderT = int32_t;
 using PartitionDimT = int32_t;
 using RequireImplicitArgBufferT = bool;
+using HasLscStoresWithNonDefaultL1CacheControlsT = bool;
 
 namespace Defaults {
 inline constexpr BarrierCountT barrierCount = 0;
@@ -395,6 +397,7 @@ inline constexpr LocalRegionSizeT localRegionSize = -1;
 inline constexpr WalkOrderT dispatchWalkOrder = -1;
 inline constexpr PartitionDimT partitionDim = -1;
 inline constexpr RequireImplicitArgBufferT requireImplicitArgBuffer = false;
+inline constexpr HasLscStoresWithNonDefaultL1CacheControlsT hasLscStoresWithNonDefaultL1CacheControls = false;
 } // namespace Defaults
 
 inline constexpr ConstStringRef required[] = {
@@ -446,6 +449,7 @@ struct ExecutionEnvBaseT final : NEO::NonCopyableAndNonMovableClass {
     WalkOrderT dispatchWalkOrder = Defaults::dispatchWalkOrder;
     PartitionDimT partitionDim = Defaults::partitionDim;
     RequireImplicitArgBufferT requireImplicitArgBuffer = Defaults::requireImplicitArgBuffer;
+    HasLscStoresWithNonDefaultL1CacheControlsT hasLscStoresWithNonDefaultL1CacheControls = Defaults::hasLscStoresWithNonDefaultL1CacheControls;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<ExecutionEnvBaseT>);
