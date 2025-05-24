@@ -1166,12 +1166,6 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(*this);
         dispatchGlobals.numDSSRTStacks = rtStacksPerDss;
         dispatchGlobals.maxBVHLevels = maxBvhLevels;
-
-        constexpr auto maxProgrammableBvhLevels = 7;
-        if (maxBvhLevels > maxProgrammableBvhLevels) {
-            dispatchGlobals.maxBVHLevels = 0; // 0 = special case: use 8 levels
-        }
-
         uint32_t *dispatchGlobalsAsArray = reinterpret_cast<uint32_t *>(&dispatchGlobals);
         dispatchGlobalsAsArray[7] = 1;
 
