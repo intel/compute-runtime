@@ -1131,15 +1131,15 @@ TEST_F(HostPtrAllocationTest, givenDebugFlagSetWhenCreatingMemoryManagerThenEnab
 
     {
         auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
-        EXPECT_TRUE(memoryManager->isSingleTemporaryAllocationsListEnabled());
-        EXPECT_NE(nullptr, memoryManager->temporaryAllocations.get());
-    }
-
-    debugManager.flags.UseSingleListForTemporaryAllocations.set(0);
-    {
-        auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
         EXPECT_FALSE(memoryManager->isSingleTemporaryAllocationsListEnabled());
         EXPECT_EQ(nullptr, memoryManager->temporaryAllocations.get());
+    }
+
+    debugManager.flags.UseSingleListForTemporaryAllocations.set(1);
+    {
+        auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
+        EXPECT_TRUE(memoryManager->isSingleTemporaryAllocationsListEnabled());
+        EXPECT_NE(nullptr, memoryManager->temporaryAllocations.get());
     }
 }
 

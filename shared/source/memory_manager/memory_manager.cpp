@@ -92,7 +92,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         supportsMultiStorageResources = !!debugManager.flags.EnableMultiStorageResources.get();
     }
 
-    if (debugManager.flags.UseSingleListForTemporaryAllocations.get() != 0) {
+    if (debugManager.flags.UseSingleListForTemporaryAllocations.get() == 1) {
         singleTemporaryAllocationsList = true;
         temporaryAllocations = std::make_unique<AllocationsList>(AllocationUsage::TEMPORARY_ALLOCATION);
     }
@@ -115,16 +115,14 @@ void MemoryManager::cleanTemporaryAllocations(const CommandStreamReceiver &csr, 
         auto *nextAlloc = currentAlloc->next;
         bool freeAllocation = false;
 
-        if (currentAlloc->hostPtrTaskCountAssignment == 0) {
-            if (currentAlloc->isUsedByOsContext(waitedOsContextId)) {
-                if (currentAlloc->getTaskCount(waitedOsContextId) <= waitedTaskCount) {
-                    if (!currentAlloc->isUsedByManyOsContexts() || !allocInUse(*currentAlloc)) {
-                        freeAllocation = true;
-                    }
+        if (currentAlloc->isUsedByOsContext(waitedOsContextId)) {
+            if (currentAlloc->hostPtrTaskCountAssignment == 0 && currentAlloc->getTaskCount(waitedOsContextId) <= waitedTaskCount) {
+                if (!currentAlloc->isUsedByManyOsContexts() || !allocInUse(*currentAlloc)) {
+                    freeAllocation = true;
                 }
-            } else if (!allocInUse(*currentAlloc)) {
-                freeAllocation = true;
             }
+        } else if (!allocInUse(*currentAlloc)) {
+            freeAllocation = true;
         }
 
         if (freeAllocation) {

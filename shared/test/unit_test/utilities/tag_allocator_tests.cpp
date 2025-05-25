@@ -179,7 +179,6 @@ TEST_F(TagAllocatorTest, WhenGettingAndReturningTagThenFreeAndUsedListsAreUpdate
 TEST_F(TagAllocatorTest, WhenTagAllocatorIsCreatedThenItPopulatesTagsWithProperDeviceBitfield) {
     size_t alignment = 64;
 
-    memoryManager->recentlyPassedDeviceBitfield = 0;
     EXPECT_NE(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
     MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, alignment, deviceBitfield);
     EXPECT_EQ(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
