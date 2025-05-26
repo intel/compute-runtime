@@ -5400,13 +5400,13 @@ kernels:
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs);
 }
 
-TEST_F(decodeZeInfoKernelEntryTest, GivenExecEnvImplicitArgBufferUsedByCodeTrueWhenPopulatingKernelDescriptorThenImplicitArgsAreRequired) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenExecEnvRequireImplicitArgBufferTrueWhenPopulatingKernelDescriptorThenImplicitArgsAreRequired) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
         simd_size: 32
-        implicit_arg_buffer_used_by_code: true
+        require_iab: true
       payload_arguments:
         - arg_type: work_dimensions
             offset: 32
@@ -5420,13 +5420,13 @@ kernels:
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs);
 }
 
-TEST_F(decodeZeInfoKernelEntryTest, GivenExecEnvImplicitArgBufferUsedByCodeFalseWhenPopulatingKernelDescriptorThenImplicitArgsAreNotRequired) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenExecEnvRequireImplicitArgBufferFalseWhenPopulatingKernelDescriptorThenImplicitArgsAreNotRequired) {
     ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
         simd_size: 32
-        implicit_arg_buffer_used_by_code: false
+        require_iab: false
       payload_arguments:
         - arg_type: work_dimensions
             offset: 32

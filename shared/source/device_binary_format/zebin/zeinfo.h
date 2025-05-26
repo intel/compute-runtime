@@ -62,7 +62,7 @@ inline constexpr ConstStringRef workGroupWalkOrderDimensions("work_group_walk_or
 inline constexpr ConstStringRef threadSchedulingMode("thread_scheduling_mode");
 inline constexpr ConstStringRef hasSample("has_sample");
 inline constexpr ConstStringRef actualKernelStartOffset("actual_kernel_start_offset");
-inline constexpr ConstStringRef implicitArgBufferUsedByCode("implicit_arg_buffer_used_by_code");
+inline constexpr ConstStringRef requireImplicitArgBuffer("require_iab");
 
 namespace ThreadSchedulingMode {
 inline constexpr ConstStringRef ageBased("age_based");
@@ -359,7 +359,7 @@ using SpillSizeT = int32_t;
 using LocalRegionSizeT = int32_t;
 using WalkOrderT = int32_t;
 using PartitionDimT = int32_t;
-using HasImplicitArgBufferUsedByCodeT = bool;
+using RequireImplicitArgBufferT = bool;
 
 namespace Defaults {
 inline constexpr BarrierCountT barrierCount = 0;
@@ -394,7 +394,7 @@ inline constexpr SpillSizeT spillSize = 0;
 inline constexpr LocalRegionSizeT localRegionSize = -1;
 inline constexpr WalkOrderT dispatchWalkOrder = -1;
 inline constexpr PartitionDimT partitionDim = -1;
-inline constexpr HasImplicitArgBufferUsedByCodeT hasImplicitArgBufferUsedByCode = false;
+inline constexpr RequireImplicitArgBufferT requireImplicitArgBuffer = false;
 } // namespace Defaults
 
 inline constexpr ConstStringRef required[] = {
@@ -445,7 +445,7 @@ struct ExecutionEnvBaseT final : NEO::NonCopyableAndNonMovableClass {
     LocalRegionSizeT localRegionSize = Defaults::localRegionSize;
     WalkOrderT dispatchWalkOrder = Defaults::dispatchWalkOrder;
     PartitionDimT partitionDim = Defaults::partitionDim;
-    HasImplicitArgBufferUsedByCodeT hasImplicitArgBufferUsedByCode = Defaults::hasImplicitArgBufferUsedByCode;
+    RequireImplicitArgBufferT requireImplicitArgBuffer = Defaults::requireImplicitArgBuffer;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<ExecutionEnvBaseT>);
