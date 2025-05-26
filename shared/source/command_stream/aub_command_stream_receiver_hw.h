@@ -29,7 +29,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
   public:
     using BaseClass::peekExecutionEnvironment;
-    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfo;
@@ -42,10 +41,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     void makeResidentExternal(AllocationView &allocationView);
     void makeNonResidentExternal(uint64_t gpuAddress);
-
-    AubMemDump::AubFileStream *getAubStream() const {
-        return static_cast<AubMemDump::AubFileStream *>(this->stream);
-    }
 
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override;
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override;
@@ -95,10 +90,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     std::unique_ptr<std::conditional<is64bit, PML4, PDPE>::type> ppgtt;
     std::unique_ptr<PDPE> ggtt;
-    // remap CPU VA -> GGTT VA
-    AddressMapper *gttRemap;
-
-    MOCKABLE_VIRTUAL bool addPatchInfoComments();
     void addGUCStartMessage(uint64_t batchBufferAddress);
     uint32_t getGUCWorkQueueItemHeader();
 

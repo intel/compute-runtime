@@ -43,16 +43,6 @@ struct MockAubFileStreamMockMmioWrite : public AubMemDump::AubFileStream {
 };
 
 template <typename GfxFamily>
-struct MockAubCsrToTestDumpContext : public AUBCommandStreamReceiverHw<GfxFamily> {
-    using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;
-
-    void addContextToken(uint32_t dumpHandle) override {
-        handle = dumpHandle;
-    }
-    uint32_t handle = 0;
-};
-
-template <typename GfxFamily>
 struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::defaultSshSize;
     using AUBCommandStreamReceiverHw<GfxFamily>::taskCount;
@@ -199,8 +189,6 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     }
     bool fileIsOpen = false;
     std::string openFileName = "";
-
-    ADDMETHOD_NOBASE(addPatchInfoComments, bool, true, ());
 
     using CommandStreamReceiverHw<GfxFamily>::localMemoryEnabled;
 };

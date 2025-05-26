@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,8 +61,6 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
 
         aubManager.reset(createAubManager(options));
     }
-    addressMapper = std::make_unique<AddressMapper>();
-    streamProvider = std::make_unique<AubFileStreamProvider>();
     subCaptureCommon = std::make_unique<AubSubCaptureCommon>();
     if (debugManager.flags.AUBDumpSubCaptureMode.get()) {
         this->subCaptureCommon->subCaptureMode = static_cast<AubSubCaptureCommon::SubCaptureMode>(debugManager.flags.AUBDumpSubCaptureMode.get());
@@ -77,8 +75,6 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
 }
 
 AubCenter::AubCenter() {
-    addressMapper = std::make_unique<AddressMapper>();
-    streamProvider = std::make_unique<AubFileStreamProvider>();
     subCaptureCommon = std::make_unique<AubSubCaptureCommon>();
 }
 

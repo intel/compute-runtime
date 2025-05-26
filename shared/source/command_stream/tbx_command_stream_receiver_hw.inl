@@ -78,8 +78,6 @@ TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
     if (streamInitialized) {
         tbxStream.close();
     }
-
-    this->freeEngineInfo(gttRemap);
 }
 
 template <typename GfxFamily>
@@ -153,10 +151,6 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
     if (engineInfo.pLRCA) {
         return;
     }
-
-    this->initGlobalMMIO();
-    this->initEngineMMIO();
-    this->initAdditionalMMIO();
 
     // Global HW Status Page
     {

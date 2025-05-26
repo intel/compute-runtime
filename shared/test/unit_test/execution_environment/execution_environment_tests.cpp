@@ -204,23 +204,15 @@ TEST(RootDeviceEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenR
     auto aubManager = rootDeviceEnvironment->aubCenter->getAubManager();
     EXPECT_EQ(nullptr, aubManager);
 }
-
 TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
     MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 1u};
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::aub);
     auto currentAubCenter = rootDeviceEnvironment->aubCenter.get();
     EXPECT_NE(nullptr, currentAubCenter);
-    auto currentAubStreamProvider = currentAubCenter->getStreamProvider();
-    EXPECT_NE(nullptr, currentAubStreamProvider);
-    auto currentAubFileStream = currentAubStreamProvider->getStream();
-    EXPECT_NE(nullptr, currentAubFileStream);
     rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::aub);
     EXPECT_EQ(currentAubCenter, rootDeviceEnvironment->aubCenter.get());
-    EXPECT_EQ(currentAubStreamProvider, rootDeviceEnvironment->aubCenter->getStreamProvider());
-    EXPECT_EQ(currentAubFileStream, rootDeviceEnvironment->aubCenter->getStreamProvider()->getStream());
 }
-
 TEST(RootDeviceEnvironment, givenRootExecutionEnvironmentWhenGetAssertHandlerIsCalledThenItIsInitalizedOnce) {
     const HardwareInfo *hwInfo = defaultHwInfo.get();
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));

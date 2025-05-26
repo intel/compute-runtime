@@ -29,7 +29,6 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 
     bool getParametersForMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const;
-    void freeEngineInfo(AddressMapper &gttRemap);
     MOCKABLE_VIRTUAL uint32_t getDeviceIndex() const;
 
   public:
@@ -45,7 +44,6 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
         return 0u;
     }
     void initGlobalMMIO();
-    void initAdditionalMMIO();
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
     void getGTTData(void *memory, AubGTTData &data);
     uint32_t getMemoryBankForGtt() const;

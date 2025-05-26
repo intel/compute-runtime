@@ -38,15 +38,7 @@ using namespace NEO;
 
 using AubFileStreamTests = Test<AubCommandStreamReceiverFixture>;
 using AubFileStreamWithoutAubStreamTests = Test<AubCommandStreamReceiverWithoutAubStreamFixture>;
-
-struct AddPatchInfoCommentsAubTests : AubFileStreamWithoutAubStreamTests {
-    void SetUp() override {
-        debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
-        AubFileStreamWithoutAubStreamTests::SetUp();
-    }
-
-    DebugManagerStateRestore restore;
-};
+using AubCsrTests = Test<AubCommandStreamReceiverFixture>;
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitFileIsCalledWithInvalidFileNameThenFileIsNotOpened) {
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -55,18 +47,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitFileIsCalledWi
     EXPECT_THROW(aubCsr->initFile(invalidFileName), std::exception);
 }
 
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithoutAubManagerWhenInitFileIsCalledWithInvalidFileNameThenFileIsNotOpened) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.initializeMemoryManager();
-    DeviceBitfield deviceBitfield(1);
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, executionEnvironment, 0, deviceBitfield);
-    std::string invalidFileName = "";
-    aubCsr->aubManager = nullptr;
-
-    EXPECT_THROW(aubCsr->initFile(invalidFileName), std::exception);
-}
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitFileIsCalledThenFileIsOpenedAndFileNameIsStored) {
+HWTEST_F(AubCsrTests, givenAubCommandStreamReceiverWhenInitFileIsCalledThenFileIsOpenedAndFileNameIsStored) {
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     std::string fileName = "file_name.aub";
 
@@ -79,7 +60,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitFileIsCalledTh
     EXPECT_TRUE(aubCsr->getFileName().empty());
 }
 
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenReopenFileIsCalledThenFileWithSpecifiedNameIsReopened) {
+HWTEST_F(AubCsrTests, givenAubCommandStreamReceiverWhenReopenFileIsCalledThenFileWithSpecifiedNameIsReopened) {
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     std::string fileName = "file_name.aub";
     std::string newFileName = "new_file_name.aub";
@@ -91,20 +72,6 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenReopenFileIsCalled
     aubCsr->reopenFile(newFileName);
     EXPECT_TRUE(aubCsr->isFileOpen());
     EXPECT_STREQ(newFileName.c_str(), aubCsr->getFileName().c_str());
-}
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithoutAubManagerWhenInitFileIsCalledThenFileShouldBeInitializedWithHeaderOnce) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    std::string fileName = "file_name.aub";
-    aubCsr->aubManager = nullptr;
-    aubCsr->stream = mockAubFileStream.get();
-
-    aubCsr->initFile(fileName);
-    aubCsr->initFile(fileName);
-
-    EXPECT_EQ(1u, mockAubFileStream->openCalledCnt);
-    EXPECT_EQ(1u, mockAubFileStream->initCalledCnt);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenFileShouldBeInitializedOnce) {
@@ -119,29 +86,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInit
     EXPECT_EQ(1u, mockAubManager->openCalledCnt);
 }
 
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithoutAubManagerWhenFileFunctionsAreCalledThenTheyShouldCallTheExpectedAubManagerFunctions) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    std::string fileName = "file_name.aub";
-    aubCsr->aubManager = nullptr;
-    aubCsr->stream = mockAubFileStream.get();
-
-    aubCsr->initFile(fileName);
-    EXPECT_EQ(1u, mockAubFileStream->initCalledCnt);
-
-    EXPECT_TRUE(aubCsr->isFileOpen());
-    EXPECT_TRUE(mockAubFileStream->isOpenCalled);
-
-    EXPECT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
-    EXPECT_TRUE(mockAubFileStream->getFileNameCalled);
-
-    aubCsr->closeFile();
-    EXPECT_FALSE(aubCsr->isFileOpen());
-    EXPECT_TRUE(aubCsr->getFileName().empty());
-    EXPECT_TRUE(mockAubFileStream->closeCalled);
-}
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenFileFunctionsAreCalledThenTheyShouldCallTheExpectedAubManagerFunctions) {
+HWTEST_F(AubCsrTests, givenAubCommandStreamReceiverWithAubManagerWhenFileFunctionsAreCalledThenTheyShouldCallTheExpectedAubManagerFunctions) {
     auto mockAubManager = std::make_unique<MockAubManager>();
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     std::string fileName = "file_name.aub";
@@ -253,42 +198,8 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenDu
     aubCsr->dumpAllocation(allocation);
     EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldCallTheExpectedFunctions) {
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->aubManager = nullptr;
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-
-    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
-    ResidencyContainer allocationsForResidency = {};
-
-    aubCsr->flush(batchBuffer, allocationsForResidency);
-
-    EXPECT_TRUE(aubCsr->initializeEngineCalled);
-    EXPECT_TRUE(aubCsr->writeMemoryCalled);
-    EXPECT_TRUE(aubCsr->submitBatchBufferCalled);
-    EXPECT_FALSE(aubCsr->pollForCompletionCalled);
-}
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCallingAddAubCommentThenCallAddCommentOnAubFileStream) {
-    DebugManagerStateRestore stateRestore;
-
-    auto aubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->stream = aubFileStream.get();
-    aubCsr->aubManager = nullptr;
-
-    const char *comment = "message";
-    aubCsr->addAubComment(comment);
-
-    EXPECT_TRUE(aubCsr->addAubCommentCalled);
-    EXPECT_LT(0u, aubFileStream->addCommentCalled);
-    EXPECT_STREQ(comment, aubFileStream->comments[0].c_str());
-}
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenCallingAddAubCommentThenCallAddCommentOnAubManager) {
+using AubCsrTests = Test<AubCommandStreamReceiverFixture>;
+HWTEST_F(AubCsrTests, givenAubCommandStreamReceiverWithAubManagerWhenCallingAddAubCommentThenCallAddCommentOnAubManager) {
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
@@ -311,22 +222,6 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenCa
     EXPECT_TRUE(aubCsr->pollForCompletionCalled);
 }
 
-HWTEST_F(AubFileStreamTests, givenNewTaskSinceLastPollWhenCallingPollForCompletionThenCallRegisterPoll) {
-    auto aubStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContextController.reset(nullptr);
-    aubCsr->stream = aubStream.get();
-
-    aubCsr->latestSentTaskCount = 50;
-    aubCsr->pollForCompletionTaskCount = 49;
-    ASSERT_FALSE(aubStream->registerPollCalled);
-
-    aubCsr->pollForCompletion();
-    EXPECT_TRUE(aubStream->registerPollCalled);
-    EXPECT_EQ(50u, aubCsr->pollForCompletionTaskCount);
-}
-
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenNoNewTasksSinceLastPollWhenCallingPollForCompletionThenDontCallRegisterPoll) {
     auto aubStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
@@ -340,21 +235,6 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenNoNewTasksSinceLastPollWhenCal
     aubCsr->pollForCompletion();
     EXPECT_FALSE(aubStream->registerPollCalled);
     EXPECT_EQ(50u, aubCsr->pollForCompletionTaskCount);
-}
-
-HWTEST_F(AubFileStreamTests, givenNewTaskSinceLastPollWhenDeletingAubCsrThenCallRegisterPoll) {
-    auto aubStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContextController.reset(nullptr);
-    aubCsr->stream = aubStream.get();
-
-    aubCsr->latestSentTaskCount = 50;
-    aubCsr->pollForCompletionTaskCount = 49;
-    ASSERT_FALSE(aubStream->registerPollCalled);
-
-    aubExecutionEnvironment->commandStreamReceiver.reset();
-    EXPECT_TRUE(aubStream->registerPollCalled);
 }
 
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenNoNewTaskSinceLastPollWhenDeletingAubCsrThenDontCallRegisterPoll) {
@@ -371,7 +251,7 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenNoNewTaskSinceLastPollWhenDele
     EXPECT_FALSE(aubStream->registerPollCalled);
 }
 
-HWTEST_F(AubFileStreamTests, givenNewTasksAndHardwareContextPresentWhenCallingPollForCompletionThenCallPollForCompletion) {
+HWTEST_F(AubCsrTests, givenNewTasksAndHardwareContextPresentWhenCallingPollForCompletionThenCallPollForCompletion) {
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
@@ -385,7 +265,7 @@ HWTEST_F(AubFileStreamTests, givenNewTasksAndHardwareContextPresentWhenCallingPo
     EXPECT_TRUE(hardwareContext->pollForCompletionCalled);
 }
 
-HWTEST_F(AubFileStreamTests, givenNoNewTasksAndHardwareContextPresentWhenCallingPollForCompletionThenDontCallPollForCompletion) {
+HWTEST_F(AubCsrTests, givenNoNewTasksAndHardwareContextPresentWhenCallingPollForCompletionThenDontCallPollForCompletion) {
     MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
     aubCsr.setupContext(osContext);
@@ -397,64 +277,6 @@ HWTEST_F(AubFileStreamTests, givenNoNewTasksAndHardwareContextPresentWhenCalling
 
     aubCsr.pollForCompletion();
     EXPECT_FALSE(hardwareContext->pollForCompletionCalled);
-}
-
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenNoNewTasksSinceLastPollWhenCallingExpectMemoryThenDontCallRegisterPoll) {
-    auto aubStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->stream = aubStream.get();
-
-    aubCsr->latestSentTaskCount = 50;
-    aubCsr->pollForCompletionTaskCount = 50;
-    ASSERT_FALSE(aubStream->registerPollCalled);
-
-    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
-    aubCsr->expectMemoryNotEqual(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(0x1000), 0x1000);
-
-    EXPECT_FALSE(aubStream->registerPollCalled);
-}
-
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenNewTasksSinceLastPollWhenCallingExpectMemoryThenCallRegisterPoll) {
-    auto aubStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContextController.reset(nullptr);
-    aubCsr->stream = aubStream.get();
-
-    aubCsr->latestSentTaskCount = 50;
-    aubCsr->pollForCompletionTaskCount = 49;
-    ASSERT_FALSE(aubStream->registerPollCalled);
-
-    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
-    aubCsr->expectMemoryNotEqual(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(0x1000), 0x1000);
-
-    EXPECT_TRUE(aubStream->registerPollCalled);
-}
-
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverInSubCaptureModeWhenPollForCompletionIsCalledAndSubCaptureIsEnabledThenItShouldCallRegisterPoll) {
-    DebugManagerStateRestore stateRestore;
-    AubSubCaptureCommon aubSubCaptureCommon;
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
-    auto aubStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContextController.reset(nullptr);
-    aubCsr->stream = aubStream.get();
-
-    aubSubCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::toggle;
-    aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubSubCaptureManagerMock->checkAndActivateSubCapture("kernelName");
-    aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
-    ASSERT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
-
-    aubCsr->latestSentTaskCount = 50;
-    aubCsr->pollForCompletionTaskCount = 49;
-    ASSERT_FALSE(aubStream->registerPollCalled);
-
-    aubCsr->pollForCompletion();
-
-    EXPECT_TRUE(aubStream->registerPollCalled);
 }
 
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverInSubCaptureModeWhenPollForCompletionIsCalledButSubCaptureIsDisabledThenItShouldntCallRegisterPoll) {
@@ -480,7 +302,7 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverInSubC
     EXPECT_FALSE(aubStream->registerPollCalled);
 }
 
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithHardwareContextInSubCaptureModeWhenPollForCompletionIsCalledAndSubCaptureIsEnabledThenItShouldCallPollForCompletionOnHwContext) {
+HWTEST_F(AubCsrTests, givenAubCommandStreamReceiverWithHardwareContextInSubCaptureModeWhenPollForCompletionIsCalledAndSubCaptureIsEnabledThenItShouldCallPollForCompletionOnHwContext) {
     DebugManagerStateRestore stateRestore;
     AubSubCaptureCommon aubSubCaptureCommon;
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
@@ -525,19 +347,6 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithHardwareContextInS
     aubCsr.pollForCompletion();
 
     EXPECT_FALSE(hardwareContext->pollForCompletionCalled);
-}
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCalledThenItShouldCallTheExpectedFunctions) {
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->initializeEngine();
-    aubCsr->aubManager = nullptr;
-
-    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
-    ResidencyContainer allocationsForResidency = {&allocation};
-    aubCsr->processResidency(allocationsForResidency, 0u);
-
-    EXPECT_TRUE(aubCsr->writeMemoryCalled);
 }
 
 HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenItShouldCallTheExpectedFunctions) {
@@ -654,85 +463,6 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryNotEqu
     EXPECT_TRUE(mockHardwareContext->expectMemoryCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenFileStreamShouldBeFlushed) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-
-    aubCsr->stream = mockAubFileStream.get();
-
-    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
-    ResidencyContainer allocationsForResidency = {};
-
-    aubCsr->flush(batchBuffer, allocationsForResidency);
-    EXPECT_TRUE(mockAubFileStream->flushCalled);
-}
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryIsCalledThenPageWalkIsCallingStreamsExpectMemory) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    aubCsr->setupContext(pDevice->commandStreamReceivers[0]->getOsContext());
-    aubCsr->hardwareContextController.reset(nullptr);
-    aubCsr->stream = mockAubFileStream.get();
-
-    uintptr_t gpuAddress = 0x30000;
-    void *sourceAddress = reinterpret_cast<void *>(0x50000);
-    auto physicalAddress = aubCsr->ppgtt->map(gpuAddress, MemoryConstants::pageSize, PageTableEntry::presentBit, MemoryBanks::mainBank);
-
-    aubCsr->expectMemoryEqual(reinterpret_cast<void *>(gpuAddress), sourceAddress, MemoryConstants::pageSize);
-
-    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, mockAubFileStream->addressSpaceCapturedFromExpectMemory);
-    EXPECT_EQ(reinterpret_cast<uintptr_t>(sourceAddress), mockAubFileStream->memoryCapturedFromExpectMemory);
-    EXPECT_EQ(physicalAddress, mockAubFileStream->physAddressCapturedFromExpectMemory);
-    EXPECT_EQ(MemoryConstants::pageSize, mockAubFileStream->sizeCapturedFromExpectMemory);
-}
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithoutAubManagerWhenExpectMMIOIsCalledThenTheCorrectFunctionIsCalledFromAubFileStream) {
-    std::string fileName = "file_name.aub";
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(fileName.c_str(), true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-
-    aubCsr->aubManager = nullptr;
-    aubCsr->stream = mockAubFileStream.get();
-    aubCsr->setupContext(pDevice->commandStreamReceivers[0]->getOsContext());
-    aubCsr->initFile(fileName);
-
-    aubCsr->expectMMIO(5, 10);
-
-    EXPECT_EQ(5u, mockAubFileStream->mmioRegisterFromExpectMMIO);
-    EXPECT_EQ(10u, mockAubFileStream->expectedValueFromExpectMMIO);
-}
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenExpectMMIOIsCalledThenNoFunctionIsCalledFromAubFileStream) {
-    std::string fileName = "file_name.aub";
-    auto mockAubManager = std::make_unique<MockAubManager>();
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(fileName.c_str(), true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-
-    aubCsr->stream = mockAubFileStream.get();
-    aubCsr->setupContext(pDevice->commandStreamReceivers[0]->getOsContext());
-    aubCsr->initFile(fileName);
-
-    aubCsr->expectMMIO(5, 10);
-
-    EXPECT_NE(5u, mockAubFileStream->mmioRegisterFromExpectMMIO);
-    EXPECT_NE(10u, mockAubFileStream->expectedValueFromExpectMMIO);
-}
-
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIsCalledThenMemTraceCommentWithDriverVersionIsPutIntoAubStream) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    aubCsr->stream = mockAubFileStream.get();
-    aubCsr->hardwareContextController.reset(nullptr);
-    aubCsr->initializeEngine();
-
-    std::string commentWithDriverVersion = "driver version: " + std::string(driverVersion);
-    EXPECT_EQ(commentWithDriverVersion, mockAubFileStream->comments[0]);
-}
-
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenMemTraceCommentWithDriverVersionIsPutIntoAubStream) {
     auto mockAubManager = std::make_unique<MockAubManager>();
 
@@ -752,197 +482,6 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInit
     EXPECT_EQ(mockAubManager->receivedComments, commentWithDriverVersion);
 
     aubCsr->aubManager = nullptr;
-}
-
-HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenNoPatchInfoDataObjectsThenCommentsAreEmpty) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    aubCsr->stream = mockAubFileStream.get();
-
-    bool result = aubCsr->addPatchInfoComments();
-    EXPECT_TRUE(result);
-
-    ASSERT_EQ(2u, mockAubFileStream->comments.size());
-
-    EXPECT_EQ("PatchInfoData\n", mockAubFileStream->comments[0]);
-    EXPECT_EQ("AllocationsList\n", mockAubFileStream->comments[1]);
-    EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
-}
-
-HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenFirstAddCommentsFailsThenFunctionReturnsFalse) {
-
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    aubCsr->stream = mockAubFileStream.get();
-    mockAubFileStream->addCommentResult = false;
-
-    bool result = aubCsr->addPatchInfoComments();
-    EXPECT_FALSE(result);
-    EXPECT_EQ(1u, mockAubFileStream->addCommentCalled);
-}
-
-HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSecondAddCommentsFailsThenFunctionReturnsFalse) {
-
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    aubCsr->stream = mockAubFileStream.get();
-
-    mockAubFileStream->addCommentResults = {true, false};
-
-    bool result = aubCsr->addPatchInfoComments();
-    EXPECT_FALSE(result);
-    EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
-}
-
-HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenPatchInfoDataObjectsAddedThenCommentsAreNotEmpty) {
-
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    aubCsr->stream = mockAubFileStream.get();
-
-    PatchInfoData patchInfoData[2] = {{0xAAAAAAAA, 128u, PatchInfoAllocationType::defaultType, 0xBBBBBBBB, 256u, PatchInfoAllocationType::defaultType},
-                                      {0xBBBBBBBB, 128u, PatchInfoAllocationType::defaultType, 0xDDDDDDDD, 256u, PatchInfoAllocationType::defaultType}};
-
-    EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData[0]));
-    EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData[1]));
-
-    bool result = aubCsr->addPatchInfoComments();
-    EXPECT_TRUE(result);
-
-    ASSERT_EQ(2u, mockAubFileStream->comments.size());
-
-    EXPECT_EQ("PatchInfoData", mockAubFileStream->comments[0].substr(0, 13));
-    EXPECT_EQ("AllocationsList", mockAubFileStream->comments[1].substr(0, 15));
-
-    std::string line;
-    std::istringstream input1;
-    input1.str(mockAubFileStream->comments[0]);
-
-    uint32_t lineNo = 0;
-    while (std::getline(input1, line)) {
-        if (line.substr(0, 13) == "PatchInfoData") {
-            continue;
-        }
-        std::ostringstream ss;
-        ss << std::hex << patchInfoData[lineNo].sourceAllocation << ";" << patchInfoData[lineNo].sourceAllocationOffset << ";" << patchInfoData[lineNo].sourceType << ";";
-        ss << patchInfoData[lineNo].targetAllocation << ";" << patchInfoData[lineNo].targetAllocationOffset << ";" << patchInfoData[lineNo].targetType << ";";
-
-        EXPECT_EQ(ss.str(), line);
-        lineNo++;
-    }
-
-    std::vector<std::string> expectedAddresses = {"aaaaaaaa", "bbbbbbbb", "cccccccc", "dddddddd"};
-    lineNo = 0;
-
-    std::istringstream input2;
-    input2.str(mockAubFileStream->comments[1]);
-    while (std::getline(input2, line)) {
-        if (line.substr(0, 15) == "AllocationsList") {
-            continue;
-        }
-
-        bool foundAddr = false;
-        for (auto &addr : expectedAddresses) {
-            if (line.substr(0, 8) == addr) {
-                foundAddr = true;
-                break;
-            }
-        }
-        EXPECT_TRUE(foundAddr);
-        EXPECT_TRUE(line.size() > 9);
-        lineNo++;
-    }
-    EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
-}
-
-HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenSourceAllocationIsNullThenDoNotAddToAllocationsList) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    aubCsr->stream = mockAubFileStream.get();
-
-    PatchInfoData patchInfoData = {0x0, 0u, PatchInfoAllocationType::defaultType, 0xBBBBBBBB, 0u, PatchInfoAllocationType::defaultType};
-    EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData));
-
-    bool result = aubCsr->addPatchInfoComments();
-    EXPECT_TRUE(result);
-
-    ASSERT_EQ(2u, mockAubFileStream->comments.size());
-
-    ASSERT_EQ("PatchInfoData", mockAubFileStream->comments[0].substr(0, 13));
-    ASSERT_EQ("AllocationsList", mockAubFileStream->comments[1].substr(0, 15));
-
-    std::string line;
-    std::istringstream input;
-    input.str(mockAubFileStream->comments[1]);
-
-    std::vector<std::string> expectedAddresses = {"bbbbbbbb"};
-    while (std::getline(input, line)) {
-        if (line.substr(0, 15) == "AllocationsList") {
-            continue;
-        }
-
-        bool foundAddr = false;
-        for (auto &addr : expectedAddresses) {
-            if (line.substr(0, 8) == addr) {
-                foundAddr = true;
-                break;
-            }
-        }
-        EXPECT_TRUE(foundAddr);
-        EXPECT_TRUE(line.size() > 9);
-    }
-    EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
-}
-
-HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTargetAllocationIsNullThenDoNotAddToAllocationsList) {
-    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-
-    aubCsr->stream = mockAubFileStream.get();
-
-    PatchInfoData patchInfoData = {0xAAAAAAAA, 0u, PatchInfoAllocationType::defaultType, 0x0, 0u, PatchInfoAllocationType::defaultType};
-    EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData));
-
-    bool result = aubCsr->addPatchInfoComments();
-    EXPECT_TRUE(result);
-
-    ASSERT_EQ(2u, mockAubFileStream->comments.size());
-
-    ASSERT_EQ("PatchInfoData", mockAubFileStream->comments[0].substr(0, 13));
-    ASSERT_EQ("AllocationsList", mockAubFileStream->comments[1].substr(0, 15));
-
-    std::string line;
-    std::istringstream input;
-    input.str(mockAubFileStream->comments[1]);
-
-    std::vector<std::string> expectedAddresses = {"aaaaaaaa"};
-    while (std::getline(input, line)) {
-        if (line.substr(0, 15) == "AllocationsList") {
-            continue;
-        }
-
-        bool foundAddr = false;
-        for (auto &addr : expectedAddresses) {
-            if (line.substr(0, 8) == addr) {
-                foundAddr = true;
-                break;
-            }
-        }
-        EXPECT_TRUE(foundAddr);
-        EXPECT_TRUE(line.size() > 9);
-    }
-    EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
 }
 
 HWTEST2_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledForMultipleDevicesThenFileNameIsExtendedWithSuffixToIndicateMultipleDevices, IsAtMostXeHpcCore) {

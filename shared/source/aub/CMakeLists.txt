@@ -14,7 +14,6 @@ set(NEO_CORE_AUB
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}aub_helper_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_mapper_base.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/aub_stream_provider.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.h
 )
