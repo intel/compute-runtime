@@ -76,10 +76,6 @@ XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenisResolvingSubDeviceI
     EXPECT_TRUE(productHelper->isResolvingSubDeviceIDNeeded(releaseHelper));
 }
 
-XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
-}
-
 XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
     EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
 }

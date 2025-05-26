@@ -65,6 +65,10 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCallIsStagingBuffersEnabledThe
     EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
 }
 
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
+    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
+}
+
 PTLTEST_F(PtlProductHelper, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenTheFlagDerivedValueIsReturned) {
     DebugManagerStateRestore restorer;
 

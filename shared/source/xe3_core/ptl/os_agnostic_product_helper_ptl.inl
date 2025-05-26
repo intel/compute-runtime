@@ -21,7 +21,7 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
 
 template <>
 bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
-    return false;
+    return true;
 }
 
 template <>
