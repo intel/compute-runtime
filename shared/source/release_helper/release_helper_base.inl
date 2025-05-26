@@ -172,6 +172,11 @@ bool ReleaseHelperHw<releaseType>::getFtrXe2Compression() const {
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::programmAdditionalStallPriorToBarrierWithTimestamp() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::computeSlmValues(uint32_t slmSize, bool isHeapless) const {
     return 0u;
 }

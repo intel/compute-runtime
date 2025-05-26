@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,11 @@ const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferred
         {std::numeric_limits<uint32_t>::max(), PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_160K},
     }};
     return sizeToPreferredSlmValue;
+}
+
+template <>
+bool ReleaseHelperHw<release>::programmAdditionalStallPriorToBarrierWithTimestamp() const {
+    return true;
 }
 
 } // namespace NEO

@@ -74,7 +74,7 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAndCommandBufferAreNot
     size_t expectedStreamSize = 0;
     if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && (!pCmdQ->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled())) {
         expectedStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
-                                         pDevice->getRootDeviceEnvironment(), true),
+                                         pDevice->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData),
                                      MemoryConstants::cacheLineSize);
     }
     EXPECT_EQ(expectedStreamSize, commandStream.getUsed() - usedBeforeCS);
@@ -100,7 +100,7 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAndCommandBufferAreNo
 
     size_t expectedStreamSize = 0;
     if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        auto unalignedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), true) +
+        auto unalignedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData) +
                              EncodeStoreMemory<FamilyType>::getStoreDataImmSize() +
                              sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
         expectedStreamSize = alignUp(unalignedSize, MemoryConstants::cacheLineSize);

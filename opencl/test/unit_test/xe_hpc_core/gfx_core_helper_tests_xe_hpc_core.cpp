@@ -581,7 +581,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, whenPipecontrolWaIsProgrammedThen
     LinearStream cmdStream(buffer, sizeof(buffer));
     uint64_t gpuAddress = 0x1234;
 
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, gpuAddress, this->pDevice->getRootDeviceEnvironment());
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, gpuAddress, this->pDevice->getRootDeviceEnvironment(), NEO::PostSyncMode::noWrite);
 
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(buffer);
     ASSERT_NE(nullptr, pipeControl);

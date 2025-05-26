@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,7 +99,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
         LinearStream stream(buffer, 128);
         hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
-        MemorySynchronizationCommands<FamilyType>::addBarrierWa(stream, address, rootDeviceEnvironment);
+        MemorySynchronizationCommands<FamilyType>::addBarrierWa(stream, address, rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
 
         if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment) == false) {
             EXPECT_EQ(0u, stream.getUsed());

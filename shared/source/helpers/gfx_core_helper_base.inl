@@ -25,6 +25,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "encode_surface_state_args.h"
@@ -197,9 +198,7 @@ AuxTranslationMode GfxCoreHelperHw<Family>::getAuxTranslationMode(const Hardware
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData,
                                                                                const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args) {
-
-    void *commandBuffer = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, postSyncMode != PostSyncMode::noWrite));
-
+    void *commandBuffer = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, postSyncMode));
     MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(commandBuffer, postSyncMode, gpuAddress, immediateData, rootDeviceEnvironment, args);
 }
 
@@ -212,7 +211,7 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
     const RootDeviceEnvironment &rootDeviceEnvironment,
     PipeControlArgs &args) {
 
-    MemorySynchronizationCommands<GfxFamily>::setBarrierWa(commandsBuffer, gpuAddress, rootDeviceEnvironment);
+    MemorySynchronizationCommands<GfxFamily>::setBarrierWa(commandsBuffer, gpuAddress, rootDeviceEnvironment, postSyncMode);
 
     if (!args.blockSettingPostSyncProperties) {
         setPostSyncExtraProperties(args);
@@ -313,16 +312,17 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::addBarrierWa(LinearStream &commandStream, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(rootDeviceEnvironment);
+void MemorySynchronizationCommands<GfxFamily>::addBarrierWa(LinearStream &commandStream, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
+    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(rootDeviceEnvironment, postSyncMode);
     void *commandBuffer = commandStream.getSpace(requiredSize);
-    setBarrierWa(commandBuffer, gpuAddress, rootDeviceEnvironment);
+    setBarrierWa(commandBuffer, gpuAddress, rootDeviceEnvironment, postSyncMode);
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
         MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(&cmd);
@@ -330,6 +330,12 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffe
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
 
         MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, rootDeviceEnvironment);
+    } else if (releaseHelper && postSyncMode == PostSyncMode::timestamp && releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp()) {
+        PipeControlArgs additionalArgs = {};
+        additionalArgs.csStallOnly = true;
+
+        MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(commandsBuffer, additionalArgs);
+        commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
     }
 }
 
@@ -360,22 +366,25 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() {
 }
 
 template <typename GfxFamily>
-size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, bool postSyncWrite) {
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
 
     size_t size = getSizeForSingleBarrier();
-    size += getSizeForBarrierWa(rootDeviceEnvironment);
-    if (postSyncWrite) {
+    size += getSizeForBarrierWa(rootDeviceEnvironment, postSyncMode);
+    if (postSyncMode != PostSyncMode::noWrite) {
         size += getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
     }
     return size;
 }
 
 template <typename GfxFamily>
-size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment) {
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode) {
     size_t size = 0;
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         size = getSizeForSingleBarrier() +
                getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    } else if (releaseHelper && postSyncMode == PostSyncMode::timestamp && releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp()) {
+        size = getSizeForSingleBarrier();
     }
     return size;
 }

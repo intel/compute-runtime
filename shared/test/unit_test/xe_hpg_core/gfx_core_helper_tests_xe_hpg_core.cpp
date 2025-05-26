@@ -161,7 +161,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabl
     constexpr size_t bufferSize = 128u;
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, rootDeviceEnvironment, NEO::PostSyncMode::noWrite);
     EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
 }
 
@@ -179,7 +179,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabl
     constexpr size_t bufferSize = 128u;
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, rootDeviceEnvironment, NEO::PostSyncMode::noWrite);
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 

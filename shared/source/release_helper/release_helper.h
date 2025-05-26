@@ -64,6 +64,7 @@ class ReleaseHelper {
     virtual const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const = 0;
     virtual bool isNumRtStacksPerDssFixedValue() const = 0;
     virtual bool getFtrXe2Compression() const = 0;
+    virtual bool programmAdditionalStallPriorToBarrierWithTimestamp() const = 0;
     virtual uint32_t computeSlmValues(uint32_t slmSize, bool isHeapless) const = 0;
     virtual bool isBlitImageAllowedForDepthFormat() const = 0;
 
@@ -109,6 +110,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override;
     bool isNumRtStacksPerDssFixedValue() const override;
     bool getFtrXe2Compression() const override;
+    bool programmAdditionalStallPriorToBarrierWithTimestamp() const override;
     uint32_t computeSlmValues(uint32_t slmSize, bool isHeapless) const override;
     bool isBlitImageAllowedForDepthFormat() const override;
 

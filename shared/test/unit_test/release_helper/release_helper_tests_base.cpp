@@ -194,3 +194,12 @@ void ReleaseHelperTestsBase::whenIsBlitImageAllowedForDepthFormatCalledThenTrueR
         EXPECT_TRUE(releaseHelper->isBlitImageAllowedForDepthFormat());
     }
 }
+
+void ReleaseHelperTestsBase::whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp());
+    }
+}
