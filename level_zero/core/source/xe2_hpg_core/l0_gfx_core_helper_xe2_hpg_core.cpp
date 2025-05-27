@@ -34,6 +34,11 @@ uint32_t L0GfxCoreHelperHw<Family>::getGrfRegisterCount(uint32_t *regPtr) const 
     return 128;
 }
 
+template <>
+bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
+    return true;
+}
+
 #include "level_zero/core/source/helpers/l0_gfx_core_helper_factory_init.inl"
 
 template class L0GfxCoreHelperHw<Family>;

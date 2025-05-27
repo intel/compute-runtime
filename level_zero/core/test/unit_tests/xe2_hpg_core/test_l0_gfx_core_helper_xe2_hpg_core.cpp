@@ -21,10 +21,16 @@ namespace ult {
 using L0GfxCoreHelperTestXe2Hpg = Test<DeviceFixture>;
 
 HWTEST_EXCLUDE_PRODUCT(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenAskingForImageCompressionSupportThenReturnFalse, IGFX_XE2_HPG_CORE);
+HWTEST_EXCLUDE_PRODUCT(L0GfxCoreHelperTest, whenAlwaysAllocateEventInLocalMemCalledThenReturnFalse_IsNotXeHpcCore, IGFX_XE2_HPG_CORE);
 
 XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, givenL0GfxCoreHelperWhenGetRegsetTypeForLargeGrfDetectionIsCalledThenSrRegsetTypeIsRetuned) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU, l0GfxCoreHelper.getRegsetTypeForLargeGrfDetection());
+}
+
+XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, whenAlwaysAllocateEventInLocalMemCalledThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.alwaysAllocateEventInLocalMem());
 }
 
 XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, givenL0GfxCoreHelperWhenAskingForImageCompressionSupportThenReturnCorrectValue) {
