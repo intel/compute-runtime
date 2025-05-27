@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/aub/aub_subcapture.h"
 #include "shared/source/helpers/options.h"
-#include "shared/source/memory_manager/address_mapper.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
 
 #include "aubstream/aub_manager.h"
