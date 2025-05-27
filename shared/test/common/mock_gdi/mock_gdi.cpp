@@ -388,6 +388,8 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
         adapterInfo->GfxMemorySize = 2181038080;
         adapterInfo->SystemSharedMemory = 4249540608;
         adapterInfo->SystemVideoMemory = 0;
+        adapterInfo->DedicatedVideoMemory = 0x123467800;
+        adapterInfo->LMemBarSize = 0x123467A0;
         adapterInfo->GfxTimeStampFreq = 1;
 
         adapterInfo->GfxPartition.Standard.Base = gAdapterInfo.GfxPartition.Standard.Base;
@@ -405,6 +407,10 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
         adapterInfo->GfxPartition.Heap32[2].Limit = gAdapterInfo.GfxPartition.Heap32[2].Limit;
         adapterInfo->GfxPartition.Heap32[3].Base = gAdapterInfo.GfxPartition.Heap32[3].Base;
         adapterInfo->GfxPartition.Heap32[3].Limit = gAdapterInfo.GfxPartition.Heap32[3].Limit;
+
+        adapterInfo->SegmentId[0] = 0x12;
+        adapterInfo->SegmentId[1] = 0x34;
+        adapterInfo->SegmentId[2] = 0x56;
 
         adapterInfo->stAdapterBDF.Data = gAdapterBDF.Data;
         return STATUS_SUCCESS;

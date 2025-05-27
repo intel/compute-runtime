@@ -183,6 +183,8 @@ struct ADAPTER_INFO_KMD : ADAPTER_INFO_GMM { // NOLINT(readability-identifier-na
     GMM_GFX_PARTITIONING GfxPartition;       // NOLINT(readability-identifier-naming)
     ADAPTER_BDF stAdapterBDF;
     PLATFORM_KMD GfxPlatform; // NOLINT(readability-identifier-naming)
+    uint64_t LMemBarSize;     // NOLINT(readability-identifier-naming)
+    uint8_t SegmentId[3];     // NOLINT(readability-identifier-naming)
 };
 
 static constexpr COMMAND_BUFFER_HEADER initCommandBufferHeader(uint32_t umdContextType, uint32_t umdPatchList, uint32_t usesResourceStreamer, uint32_t perfTag) {

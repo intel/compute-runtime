@@ -233,6 +233,46 @@ TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoSucceedsThenDeviceCallbacksAr
     EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture);
 }
 
+class MockGmmMemoryWindows : public MockGmmMemoryBase {
+  public:
+    using MockGmmMemoryBase::MockGmmMemoryBase;
+    bool setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override {
+        for (int i = 0; i < 3; i++) {
+            segmentId[i] = deviceInfo->MsSegId[i];
+        }
+        adapterLocalMemory = deviceInfo->AdapterLocalMemory;
+        adapterCpuVisibleMemory = deviceInfo->AdapterCpuVisibleLocalMemory;
+        return MockGmmMemoryBase::setDeviceInfo(deviceInfo);
+    }
+
+    uint64_t adapterLocalMemory = 0;
+    uint64_t adapterCpuVisibleMemory = 0;
+    uint8_t segmentId[3]{};
+};
+
+TEST_F(Wddm20WithMockGdiDllTests, whenInitWddmThenAdapterInfoCapsArePassedToGmmLibViaSetDeviceInfo) {
+    uint8_t expectedSegmentId[3] = {0x12, 0x34, 0x56};
+    uint64_t expectedAdapterLocalMemory = 0x123467800u;
+    uint64_t expectedAdapterCpuVisibleMemory = 0x123467A0u;
+
+    wddm->segmentId[0] = 0u;
+    wddm->segmentId[1] = 0u;
+    wddm->segmentId[2] = 0u;
+    wddm->lmemBarSize = 0u;
+    wddm->dedicatedVideoMemory = 0u;
+
+    wddm->gmmMemory = std::make_unique<MockGmmMemoryWindows>(getGmmClientContext());
+    auto gmmMemory = static_cast<MockGmmMemoryWindows *>(wddm->getGmmMemory());
+    wddm->init();
+
+    EXPECT_EQ(1u, gmmMemory->setDeviceInfoCalled);
+    EXPECT_EQ(expectedSegmentId[0], gmmMemory->segmentId[0]);
+    EXPECT_EQ(expectedSegmentId[1], gmmMemory->segmentId[1]);
+    EXPECT_EQ(expectedSegmentId[2], gmmMemory->segmentId[2]);
+    EXPECT_EQ(expectedAdapterLocalMemory, gmmMemory->adapterLocalMemory);
+    EXPECT_EQ(expectedAdapterCpuVisibleMemory, gmmMemory->adapterCpuVisibleMemory);
+}
+
 class MockRegistryReaderWithDriverStorePath : public SettingsReader {
   public:
     MockRegistryReaderWithDriverStorePath(const char *driverStorePathArg) : driverStorePath(driverStorePathArg){};

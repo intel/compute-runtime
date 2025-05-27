@@ -46,6 +46,9 @@ bool Wddm::configureDeviceAddressSpace() {
     GMM_DEVICE_INFO deviceInfo{};
     deviceInfo.pGfxPartition = &gfxPartition;
     deviceInfo.pDeviceCb = &deviceCallbacks;
+    memcpy_s(deviceInfo.MsSegId, sizeof(deviceInfo.MsSegId), segmentId, sizeof(segmentId));
+    deviceInfo.AdapterLocalMemory = dedicatedVideoMemory;
+    deviceInfo.AdapterCpuVisibleLocalMemory = lmemBarSize;
     if (!gmmMemory->setDeviceInfo(&deviceInfo)) {
         return false;
     }

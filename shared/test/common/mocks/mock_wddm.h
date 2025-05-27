@@ -56,6 +56,7 @@ class WddmMock : public Wddm {
     using Wddm::hwDeviceId;
     using Wddm::isReadOnlyFlagFallbackAvailable;
     using Wddm::isReadOnlyFlagFallbackSupported;
+    using Wddm::lmemBarSize;
     using Wddm::mapGpuVirtualAddress;
     using Wddm::minAddress;
     using Wddm::pagingFenceAddress;
@@ -66,6 +67,7 @@ class WddmMock : public Wddm {
     using Wddm::populateIpVersion;
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
+    using Wddm::segmentId;
     using Wddm::setNewResourceBoundToPageTable;
     using Wddm::setPlatformSupportEvictIfNecessaryFlag;
     using Wddm::temporaryResources;

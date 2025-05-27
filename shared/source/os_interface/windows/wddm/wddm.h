@@ -271,6 +271,7 @@ class Wddm : public DriverModel {
 
     uint64_t systemSharedMemory = 0;
     uint64_t dedicatedVideoMemory = 0;
+    uint64_t lmemBarSize = 0;
 
     // Adapter information
     std::unique_ptr<PLATFORM_KMD> gfxPlatform;
@@ -308,6 +309,8 @@ class Wddm : public DriverModel {
     uint32_t timestampFrequency = 0u;
     uint32_t additionalAdapterInfoOptions = 0u;
     int32_t forceEvictOnlyIfNecessary = -1;
+
+    uint8_t segmentId[3]{};
 
     unsigned int enablePreemptionRegValue = 1;
 
