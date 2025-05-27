@@ -911,6 +911,89 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     context->freeMem(dstPtr);
 }
 
+HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyThenUpdateTaskCount, IsXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SplitBcsCopy.set(1);
+
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
+
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               testL0Device.get(),
+                                                                               &desc,
+                                                                               false,
+                                                                               NEO::EngineGroupType::copy,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
+
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 4u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 0u);
+
+    constexpr size_t alignment = 4096u;
+    constexpr size_t size = 8 * MemoryConstants::megaByte;
+    void *srcPtr;
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->allocDeviceMem(device->toHandle(),
+                            &deviceDesc,
+                            size, alignment, &srcPtr);
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
+    ultCsr->recordFlushedBatchBuffer = true;
+    int client;
+    ultCsr->registerClient(&client);
+
+    auto cmdStream = commandList0->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto csr2 = static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getCsr();
+    auto csr3 = static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getCsr();
+
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getCsr()->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getCsr()->peekTaskCount(), 0u);
+    EXPECT_EQ(csr2->peekTaskCount(), 1u);
+    EXPECT_EQ(csr3->peekTaskCount(), 1u);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    bool csr2TaskCountFound = false;
+    bool csr3TaskCountFound = false;
+
+    for (auto &cmd : cmdList) {
+        if (auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(cmd)) {
+            if (miFlushCmd->getDestinationAddress() == csr2->getTagAllocation()->getGpuAddress()) {
+                csr2TaskCountFound = true;
+            } else if (miFlushCmd->getDestinationAddress() == csr3->getTagAllocation()->getGpuAddress()) {
+                csr3TaskCountFound = true;
+            }
+        }
+    }
+
+    EXPECT_TRUE(csr2TaskCountFound);
+    EXPECT_TRUE(csr3TaskCountFound);
+
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
+}
+
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
