@@ -31,15 +31,9 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         executionEnvironment->calculateMaxOsContextCount();
 
         device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
-        memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
-        executionEnvironment->memoryManager.reset(memoryManager);
-        csr = &device->getGpgpuCommandStreamReceiver();
+        memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
 
-        auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto engineType = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment())[0].first;
-        auto osContext = memoryManager->createAndRegisterOsContext(csr, EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::regular},
-                                                                                                                     PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-        csr->setupContext(*osContext);
+        csr = &device->getGpgpuCommandStreamReceiver();
     }
 
     void tearDown() {
