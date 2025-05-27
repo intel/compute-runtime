@@ -71,6 +71,25 @@ struct CommandStreamReceiverHwTestXeHPAndLater : public ClDeviceFixture,
     }
 };
 
+struct CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw
+    : public CommandStreamReceiverHwTestXeHPAndLater {
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCsrHw<FamilyType>>();
+
+        CommandStreamReceiverHwTestXeHPAndLater::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        CommandStreamReceiverHwTestXeHPAndLater::TearDown();
+    }
+};
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenPreambleSentWhenL3ConfigRequestChangedThenDontProgramL3Register) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
@@ -781,13 +800,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, whenCreati
     EXPECT_TRUE(workPartitionAllocationStorageInfo.tileInstanced);
 }
 
-HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWhenSinglePartitionUsedForPostSyncBarrierThenExpectOnlyPostSyncCommands, IsAtLeastXeHpCore) {
+HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenStaticPartitionEnabledWhenSinglePartitionUsedForPostSyncBarrierThenExpectOnlyPostSyncCommands, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     auto &commandStreamCSR = commandStreamReceiver->getCS();
+    commandStreamCSR.replaceBuffer(commandStreamCSR.getCpuBase(), commandStreamCSR.getMaxAvailableSpace());
 
     TagNodeBase *tagNode = commandStreamReceiver->getTimestampPacketAllocator()->getTag();
     uint64_t gpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tagNode);
@@ -828,13 +847,13 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWh
     EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
 }
 
-HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionDisabledWhenMultiplePartitionsUsedForPostSyncBarrierThenExpectOnlyPostSyncCommands, IsAtLeastXeHpCore) {
+HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenStaticPartitionDisabledWhenMultiplePartitionsUsedForPostSyncBarrierThenExpectOnlyPostSyncCommands, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     auto &commandStreamCSR = commandStreamReceiver->getCS();
+    commandStreamCSR.replaceBuffer(commandStreamCSR.getCpuBase(), commandStreamCSR.getMaxAvailableSpace());
 
     TagNodeBase *tagNode = commandStreamReceiver->getTimestampPacketAllocator()->getTag();
     uint64_t gpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tagNode);
@@ -875,16 +894,16 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionDisabledW
     EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
 }
 
-HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWhenMultiplePartitionsUsedThenExpectImplicitScalingPostSyncBarrierWithoutSelfCleanup, IsAtLeastXeHpCore) {
+HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenStaticPartitionEnabledWhenMultiplePartitionsUsedThenExpectImplicitScalingPostSyncBarrierWithoutSelfCleanup, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     auto &commandStreamCSR = commandStreamReceiver->getCS();
+    commandStreamCSR.replaceBuffer(commandStreamCSR.getCpuBase(), commandStreamCSR.getMaxAvailableSpace());
 
     TagNodeBase *tagNode = commandStreamReceiver->getTimestampPacketAllocator()->getTag();
     uint64_t gpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tagNode);

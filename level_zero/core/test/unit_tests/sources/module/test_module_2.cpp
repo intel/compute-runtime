@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,14 +79,14 @@ TEST_F(ModuleTests, whenCreatingAutoGrfBuildOptionsThenOptionsParsedCorrectly) {
 }
 
 TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstructionCacheFlushInCsrThatUsedTheAllocation) {
+    EnvironmentWithCsrWrapper environment;
+    environment.setCsrType<MockCommandStreamReceiver>();
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
 
-    MockCommandStreamReceiver *mockCommandStreamReceiver = new MockCommandStreamReceiver(*neoMockDevice->executionEnvironment, neoMockDevice->getRootDeviceIndex(), neoMockDevice->getDeviceBitfield());
+    auto mockCommandStreamReceiver = static_cast<MockCommandStreamReceiver *>(&neoMockDevice->getGpgpuCommandStreamReceiver());
     mockCommandStreamReceiver->makeResidentParentCall = true;
-
-    neoMockDevice->resetCommandStreamReceiver(mockCommandStreamReceiver);
 
     MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
@@ -109,14 +109,14 @@ TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstru
 }
 
 TEST(ModuleDestroyTest, givenKernelImmutableDataWithNullIsaAllocationWhenIsModuleDestroyedThenRequiresInstructionCacheFlushIsNotSetInCsr) {
+    EnvironmentWithCsrWrapper environment;
+    environment.setCsrType<MockCommandStreamReceiver>();
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
 
-    MockCommandStreamReceiver *mockCommandStreamReceiver = new MockCommandStreamReceiver(*neoMockDevice->executionEnvironment, neoMockDevice->getRootDeviceIndex(), neoMockDevice->getDeviceBitfield());
+    auto mockCommandStreamReceiver = static_cast<MockCommandStreamReceiver *>(&neoMockDevice->getGpgpuCommandStreamReceiver());
     mockCommandStreamReceiver->makeResidentParentCall = true;
-
-    neoMockDevice->resetCommandStreamReceiver(mockCommandStreamReceiver);
 
     MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 

@@ -87,7 +87,7 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
     int32_t flushTaskStamp;
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     bool processEvictionCalled = false;
-    int32_t defaultExecStamp = 0;
+    int32_t defaultExecStamp;
 };
 
 template <typename GfxFamily>
@@ -108,6 +108,8 @@ class MockCsrAub : public MockCsrBase<GfxFamily> {
     CommandStreamReceiverType getType() const override {
         return CommandStreamReceiverType::aub;
     }
+
+    int32_t defaultExecStamp = 1;
 };
 
 template <typename GfxFamily>
@@ -191,6 +193,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
 
     bool slmUsedInLastFlushTask = false;
     TaskCountType lastTaskLevelToFlushTask = 0;
+    int32_t defaultExecStamp = 0;
 };
 
 template <typename GfxFamily>

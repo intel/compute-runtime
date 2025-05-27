@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,6 +64,24 @@ struct DebuggerClFixture
 
 using DebuggerCmdQTest = Test<DebuggerClFixture>;
 
+struct DebuggerCmdQTestWithMockCsr : public DebuggerCmdQTest {
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCsr<FamilyType>>();
+
+        DebuggerCmdQTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        DebuggerCmdQTest::TearDown();
+    }
+};
+
 HWTEST_F(DebuggerCmdQTest, GivenDebuggingEnabledWhenCommandQueueIsCreatedAndReleasedThenDebuggerL0IsNotified) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
     debuggerL0Hw->commandQueueCreatedCount = 0;
@@ -89,10 +107,8 @@ HWTEST_F(DebuggerCmdQTest, GivenDebuggingEnabledWhenInternalCommandQueueIsCreate
 }
 
 using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
-HWTEST2_F(DebuggerCmdQTest, GivenDebuggingEnabledWhenEnqueueingKernelThenDebugSurfaceIsResident, Gen12Plus) {
-    int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(mockCSR);
+HWTEST2_TEMPLATED_F(DebuggerCmdQTestWithMockCsr, GivenDebuggingEnabledWhenEnqueueingKernelThenDebugSurfaceIsResident, Gen12Plus) {
+    auto mockCSR = static_cast<MockCsr<FamilyType> *>(&device->getUltCommandStreamReceiver<FamilyType>());
 
     MockKernelWithInternals mockKernelWithInternals(*clDevice);
     auto mockKernel = mockKernelWithInternals.mockKernel;

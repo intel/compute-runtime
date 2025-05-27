@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,4 +80,23 @@ struct TimestampPacketTests : public ::testing::Test {
     std::unique_ptr<MockKernelWithInternals> kernel;
     MockCommandQueue *mockCmdQ;
     DebugManagerStateRestore restorer;
+};
+
+template <template <typename> class CsrType>
+struct TimestampPacketTestsWithMockCsrT : public TimestampPacketTests {
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<CsrType<FamilyType>>();
+
+        TimestampPacketTests::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        TimestampPacketTests::TearDown();
+    }
 };

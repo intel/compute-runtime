@@ -218,4 +218,47 @@ struct UltCommandStreamReceiverTest
     const size_t alignmentStream = 0x1000;
     bool heaplessStateEnabled = false;
 };
+
+template <typename CsrType>
+struct UltCommandStreamReceiverTestWithCsr
+    : public UltCommandStreamReceiverTest {
+  public:
+    void SetUp() override {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<CsrType>();
+
+        UltCommandStreamReceiverTest::SetUp();
+    }
+
+    void TearDown() override {
+        UltCommandStreamReceiverTest::TearDown();
+    }
+};
+
+template <template <typename> class CsrType>
+struct UltCommandStreamReceiverTestWithCsrT
+    : public UltCommandStreamReceiverTest {
+  public:
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<CsrType<FamilyType>>();
+        beforeDefStateFlag = debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get();
+        debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(1);
+
+        UltCommandStreamReceiverTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        UltCommandStreamReceiverTest::TearDown();
+        debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(beforeDefStateFlag);
+    }
+
+  private:
+    int32_t beforeDefStateFlag;
+};
 } // namespace NEO
