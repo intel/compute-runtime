@@ -107,7 +107,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
             bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation || kernel.isAnyKernelArgumentUsingZeroCopyMemory();
             bool flushL3AfterPostSyncForExternalAllocation = kernel.isUsingSharedObjArgs();
 
-            if (debugManager.flags.DisableFlushL3ForHostUsm.get() && flushL3AfterPostSyncForHostUsm) {
+            if (debugManager.flags.RedirectFlushL3HostUsmToExternal.get() && flushL3AfterPostSyncForHostUsm) {
                 flushL3AfterPostSyncForHostUsm = false;
                 flushL3AfterPostSyncForExternalAllocation = true;
             }

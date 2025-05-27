@@ -45,7 +45,7 @@ struct AppendFillMultiPacketEventFixture : public AppendFillFixture {
     void setUp() {
         debugManager.flags.UsePipeControlMultiKernelEventSync.set(usePipeControlMultiPacketEventSync);
         debugManager.flags.CompactL3FlushEventPacket.set(compactL3FlushEventPacket);
-        debugManager.flags.ForceL3FlushAfterPostSync.set(0);
+        debugManager.flags.EnableL3FlushAfterPostSync.set(0);
 
         if constexpr (multiTile == 1) {
             debugManager.flags.CreateMultipleSubDevices.set(2);

@@ -370,7 +370,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     auto isFlushL3ForExternalAllocationRequired = isFlushL3AfterPostSync && isKernelUsingExternalAllocation;
     auto isFlushL3ForHostUsmRequired = isFlushL3AfterPostSync && isKernelUsingSystemAllocation;
-    if (NEO::debugManager.flags.DisableFlushL3ForHostUsm.get() && isFlushL3ForHostUsmRequired) {
+
+    if (NEO::debugManager.flags.RedirectFlushL3HostUsmToExternal.get() && isFlushL3ForHostUsmRequired) {
         isFlushL3ForExternalAllocationRequired = true;
         isFlushL3ForHostUsmRequired = false;
     }
