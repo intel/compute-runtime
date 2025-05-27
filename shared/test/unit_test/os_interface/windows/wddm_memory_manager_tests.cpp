@@ -1454,10 +1454,11 @@ TEST_F(WddmMemoryManagerSimpleTest, givenLocalMemoryKernelIsaWithMemoryCopiedWhe
     memoryManager->freeGraphicsMemory(allocation);
     if (makeResidentPriorToLockRequired) {
         EXPECT_EQ(1u, mockTemporaryResources->removeResourceResult.called);
+        EXPECT_EQ(1u, mockTemporaryResources->evictResourceResult.called);
     } else {
         EXPECT_EQ(0u, mockTemporaryResources->removeResourceResult.called);
+        EXPECT_EQ(0u, mockTemporaryResources->evictResourceResult.called);
     }
-    EXPECT_EQ(0u, mockTemporaryResources->evictResourceResult.called);
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     DebugManagerStateRestore restorer;

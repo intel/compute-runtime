@@ -82,7 +82,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool verifyNTHandle(HANDLE handle);
     bool openNTHandle(const MemoryManager::OsHandleData &osHandleData, WddmAllocation *alloc);
     MOCKABLE_VIRTUAL void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size);
-    MOCKABLE_VIRTUAL void unlockResource(const D3DKMT_HANDLE &handle);
+    MOCKABLE_VIRTUAL void unlockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock);
     MOCKABLE_VIRTUAL void kmDafLock(D3DKMT_HANDLE handle);
     MOCKABLE_VIRTUAL bool isKmDafEnabled() const;
 

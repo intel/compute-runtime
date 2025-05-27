@@ -1136,7 +1136,7 @@ TEST_F(WddmLockWithMakeResidentTests, givenAllocationThatDoesntNeedMakeResidentB
     wddm->lockResource(ALLOCATION_HANDLE, false, 0x1000);
     EXPECT_TRUE(mockTemporaryResources->resourceHandles.empty());
     EXPECT_EQ(0u, wddm->makeResidentResult.called);
-    wddm->unlockResource(ALLOCATION_HANDLE);
+    wddm->unlockResource(ALLOCATION_HANDLE, false);
 }
 
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationThatNeedsMakeResidentBeforeLockWhenLockThenCallBlockingMakeResident) {

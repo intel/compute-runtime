@@ -979,13 +979,18 @@ void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPrio
     return lock2.pData;
 }
 
-void Wddm::unlockResource(const D3DKMT_HANDLE &handle) {
+void Wddm::unlockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) {
     D3DKMT_UNLOCK2 unlock2 = {};
 
     unlock2.hAllocation = handle;
     unlock2.hDevice = this->device;
 
     NTSTATUS status = getGdi()->unlock2(&unlock2);
+
+    if (applyMakeResidentPriorToLock) {
+        this->temporaryResources->evictResource(handle);
+    }
+
     if (status != STATUS_SUCCESS) {
         return;
     }

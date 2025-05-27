@@ -94,7 +94,7 @@ class WddmMock : public Wddm {
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
     bool waitOnGPU(D3DKMT_HANDLE context) override;
     void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size) override;
-    void unlockResource(const D3DKMT_HANDLE &handle) override;
+    void unlockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) override;
     void kmDafLock(D3DKMT_HANDLE handle) override;
     bool isKmDafEnabled() const override;
     void setKmDafEnabled(bool state);

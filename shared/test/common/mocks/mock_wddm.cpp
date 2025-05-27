@@ -226,10 +226,10 @@ void *WddmMock::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResident
     return ptr;
 }
 
-void WddmMock::unlockResource(const D3DKMT_HANDLE &handle) {
+void WddmMock::unlockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) {
     unlockResult.called++;
     unlockResult.success = true;
-    Wddm::unlockResource(handle);
+    Wddm::unlockResource(handle, applyMakeResidentPriorToLock);
 }
 
 void WddmMock::kmDafLock(D3DKMT_HANDLE handle) {

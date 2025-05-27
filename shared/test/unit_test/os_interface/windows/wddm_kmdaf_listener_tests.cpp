@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,7 @@ TEST_F(WddmKmDafListenerTest, givenInvalidAllocationWhenLockResourceFailsThenKmD
 }
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenUnlockResourceIsCalledThenKmDafListenerNotifyUnlockIsFedWithCorrectParams) {
-    wddmWithKmDafMock->unlockResource(ALLOCATION_HANDLE);
+    wddmWithKmDafMock->unlockResource(ALLOCATION_HANDLE, false);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->flags.ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.hAdapter);
@@ -103,7 +103,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenUnlockResourceIsCalledThenKmDafListen
     EXPECT_EQ(wddmWithKmDafMock->getGdi()->escape.mFunc, wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.pfnEscape);
 }
 TEST_F(WddmKmDafListenerTest, givenInvalidAllocationWhenUnlockResourceIsCalledThenKmDafListenerIsNotNotified) {
-    wddmWithKmDafMock->unlockResource(0);
+    wddmWithKmDafMock->unlockResource(0, false);
 
     EXPECT_FALSE(wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.ftrKmdDaf);
     EXPECT_EQ(0u, wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.hAdapter);
