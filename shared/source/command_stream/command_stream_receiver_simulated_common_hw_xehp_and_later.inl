@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,39 +14,6 @@
 #include "shared/source/memory_manager/physical_address_allocator.h"
 
 namespace NEO {
-
-template <typename GfxFamily>
-void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initGlobalMMIO() {
-    for (auto &mmioPair : AUBFamilyMapper<GfxFamily>::globalMMIO) {
-        stream->writeMMIO(mmioPair.first, mmioPair.second);
-    }
-
-    if (this->localMemoryEnabled) {
-        MMIOPair guCntl = {0x00101010, 0x00000080}; // GU_CNTL
-        stream->writeMMIO(guCntl.first, guCntl.second);
-
-        MMIOPair lmemCfg = {0x0000cf58, 0x80000000}; // LMEM_CFG
-        stream->writeMMIO(lmemCfg.first, lmemCfg.second);
-
-        MMIOPair tileAddrRange[] = {{0x00004900, 0x0001},
-                                    {0x00004904, 0x0001},
-                                    {0x00004908, 0x0001},
-                                    {0x0000490c, 0x0001}}; // XEHP_TILE_ADDR_RANGE
-
-        const uint32_t numberOfTiles = 4;
-        const uint32_t localMemorySizeGB = static_cast<uint32_t>(AubHelper::getPerTileLocalMemorySize(&this->peekHwInfo(), releaseHelper) / MemoryConstants::gigaByte);
-
-        uint32_t localMemoryBaseAddressInGB = 0x0;
-
-        for (uint32_t i = 0; i < numberOfTiles; i++) {
-            tileAddrRange[i].second |= localMemoryBaseAddressInGB << 1;
-            tileAddrRange[i].second |= localMemorySizeGB << 8;
-            stream->writeMMIO(tileAddrRange[i].first, tileAddrRange[i].second);
-
-            localMemoryBaseAddressInGB += localMemorySizeGB;
-        }
-    }
-}
 
 template <typename GfxFamily>
 uint64_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation) {
@@ -76,24 +43,4 @@ template <typename GfxFamily>
 const AubMemDump::LrcaHelper &CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getCsTraits(aub_stream::EngineType engineType) {
     return *AUBFamilyMapper<GfxFamily>::csTraits[engineType];
 }
-
-template <typename GfxFamily>
-void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initEngineMMIO() {
-    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[osContext->getEngineType()];
-    DEBUG_BREAK_IF(!mmioList);
-    for (auto &mmioPair : *mmioList) {
-        stream->writeMMIO(mmioPair.first, mmioPair.second);
-    }
-}
-
-template <typename GfxFamily>
-void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::submitLRCA(const MiContextDescriptorReg &contextDescriptor) {
-    auto mmioBase = getCsTraits(osContext->getEngineType()).mmioBase;
-    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2510), contextDescriptor.ulData[0]);
-    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2514), contextDescriptor.ulData[1]);
-
-    // Load our new exec list
-    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2550), 1);
-}
-
 } // namespace NEO

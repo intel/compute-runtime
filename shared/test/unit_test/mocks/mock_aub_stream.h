@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,16 +24,6 @@ struct MockAubStreamMockMmioWrite : AubMemDump::AubStream {
 
     void writeMMIOImpl(uint32_t offset, uint32_t value) override {
         mmioList.push_back(std::make_pair(offset, value));
-    }
-    bool isOnMmioList(const MMIOPair &mmio) {
-        bool mmioFound = false;
-        for (auto &mmioPair : mmioList) {
-            if (mmioPair.first == mmio.first && mmioPair.second == mmio.second) {
-                mmioFound = true;
-                break;
-            }
-        }
-        return mmioFound;
     }
 
     std::vector<std::pair<uint32_t, uint32_t>> mmioList;

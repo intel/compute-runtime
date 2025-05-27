@@ -23,11 +23,6 @@ constexpr uint32_t AUBCommandStreamReceiverHw<Family>::getMaskAndValueForPollFor
 }
 
 template <>
-void AUBCommandStreamReceiverHw<Family>::addContextToken(uint32_t dumpHandle) {
-    AUB::createContext(*stream, dumpHandle);
-}
-
-template <>
 void populateFactoryTable<AUBCommandStreamReceiverHw<Family>>() {
     extern AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[IGFX_MAX_CORE];
     UNRECOVERABLE_IF(!isInRange(gfxCore, aubCommandStreamReceiverFactory));

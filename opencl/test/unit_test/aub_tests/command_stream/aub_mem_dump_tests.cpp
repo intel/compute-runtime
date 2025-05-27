@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -187,40 +187,4 @@ HWTEST_F(AubMemDumpTests, GivenVcsThenExpectationsAreMet) {
 
 HWTEST_F(AubMemDumpTests, GivenVecsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_VECS);
-}
-
-TEST(AubMemDumpBasic, givenDebugOverrideMmioWhenMmioNotMatchThenDoNotAlterValue) {
-    DebugManagerStateRestore dbgRestore;
-
-    uint32_t dbgOffset = 0x1000;
-    uint32_t dbgValue = 0xDEAD;
-    debugManager.flags.AubDumpOverrideMmioRegister.set(static_cast<int32_t>(dbgOffset));
-    debugManager.flags.AubDumpOverrideMmioRegisterValue.set(static_cast<int32_t>(dbgValue));
-
-    uint32_t offset = 0x2000;
-    uint32_t value = 0x3000;
-    MMIOPair mmio = std::make_pair(offset, value);
-
-    MockAubFileStreamMockMmioWrite mockAubStream;
-    mockAubStream.writeMMIO(offset, value);
-    EXPECT_EQ(1u, mockAubStream.mmioList.size());
-    EXPECT_TRUE(mockAubStream.isOnMmioList(mmio));
-}
-
-TEST(AubMemDumpBasic, givenDebugOverrideMmioWhenMmioMatchThenAlterValue) {
-    DebugManagerStateRestore dbgRestore;
-    uint32_t dbgOffset = 0x2000;
-    uint32_t dbgValue = 0xDEAD;
-    MMIOPair dbgMmio = std::make_pair(dbgOffset, dbgValue);
-
-    debugManager.flags.AubDumpOverrideMmioRegister.set(static_cast<int32_t>(dbgOffset));
-    debugManager.flags.AubDumpOverrideMmioRegisterValue.set(static_cast<int32_t>(dbgValue));
-
-    uint32_t offset = 0x2000;
-    uint32_t value = 0x3000;
-
-    MockAubFileStreamMockMmioWrite mockAubStream;
-    mockAubStream.writeMMIO(offset, value);
-    EXPECT_EQ(1u, mockAubStream.mmioList.size());
-    EXPECT_TRUE(mockAubStream.isOnMmioList(dbgMmio));
 }

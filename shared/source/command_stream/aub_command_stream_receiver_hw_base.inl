@@ -308,24 +308,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResidentExternal(uint64_t gpu
         }
     }
 }
-
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) {
     UNRECOVERABLE_IF(!isEngineInitialized);
-
-    {
-        std::ostringstream str;
-        str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " size: " << std::dec << size;
-    }
-
-    AubHelperHw<GfxFamily> aubHelperHw(this->isLocalMemoryEnabled());
-
-    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
-        AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, entryBits,
-                                              aubHelperHw);
-    };
-
-    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, entryBits, walker, memoryBank);
 }
 
 template <typename GfxFamily>
@@ -497,44 +482,4 @@ template <typename GfxFamily>
 uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getDumpHandle() {
     return hashPtrToU32(this);
 }
-
-template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBufferAddress) {
-    typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
-
-    auto bufferSize = sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START);
-    AubHelperHw<GfxFamily> aubHelperHw(this->isLocalMemoryEnabled());
-
-    std::unique_ptr<void, std::function<void(void *)>> buffer(this->getMemoryManager()->alignedMallocWrapper(bufferSize, MemoryConstants::pageSize), [&](void *ptr) { this->getMemoryManager()->alignedFreeWrapper(ptr); });
-    LinearStream linearStream(buffer.get(), bufferSize);
-
-    uint32_t *header = static_cast<uint32_t *>(linearStream.getSpace(sizeof(uint32_t)));
-    *header = getGUCWorkQueueItemHeader();
-
-    MI_BATCH_BUFFER_START *miBatchBufferStartSpace = linearStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
-    DEBUG_BREAK_IF(bufferSize != linearStream.getUsed());
-    auto miBatchBufferStart = GfxFamily::cmdInitBatchBufferStart;
-    miBatchBufferStart.setBatchBufferStartAddress(AUB::ptrToPPGTT(buffer.get()));
-    miBatchBufferStart.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
-    *miBatchBufferStartSpace = miBatchBufferStart;
-
-    auto physBufferAddres = ppgtt->map(reinterpret_cast<uintptr_t>(buffer.get()), bufferSize,
-                                       this->getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()),
-                                       MemoryBanks::mainBank);
-
-    AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(buffer.get()), bufferSize, physBufferAddres,
-                             this->getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()),
-                             aubHelperHw);
-
-    AUB::addMemoryWrite(
-        *stream,
-        physBufferAddres,
-        buffer.get(),
-        bufferSize,
-        this->getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype));
-
-    PatchInfoData patchInfoData(batchBufferAddress, 0u, PatchInfoAllocationType::defaultType, reinterpret_cast<uintptr_t>(buffer.get()), sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START) - sizeof(uint64_t), PatchInfoAllocationType::gucStartMessage);
-    this->flatBatchBufferHelper->setPatchInfoData(patchInfoData);
-}
-
 } // namespace NEO

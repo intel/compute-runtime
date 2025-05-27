@@ -28,16 +28,6 @@ struct MockAubFileStreamMockMmioWrite : public AubMemDump::AubFileStream {
     void writeMMIOImpl(uint32_t offset, uint32_t value) override {
         mmioList.push_back(std::make_pair(offset, value));
     }
-    bool isOnMmioList(const MMIOPair &mmio) {
-        bool mmioFound = false;
-        for (auto &mmioPair : mmioList) {
-            if (mmioPair.first == mmio.first && mmioPair.second == mmio.second) {
-                mmioFound = true;
-                break;
-            }
-        }
-        return mmioFound;
-    }
 
     std::vector<std::pair<uint32_t, uint32_t>> mmioList;
 };

@@ -10,7 +10,6 @@ if(TESTS_GEN12LP)
                  ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_tests_gen12lp.inl
                  ${CMAKE_CURRENT_SOURCE_DIR}/coherency_tests_gen12lp.inl
                  ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_gen12lp.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_tests_gen12lp.inl
                  ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_gen12lp.inl
                  ${CMAKE_CURRENT_SOURCE_DIR}/excludes_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/gen12lp_shared_tests_wrapper.cpp

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -139,8 +139,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAub
     debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
     std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr->stream = stream.get();
 
     auto addressSpace = aubCsr->getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype);
 
@@ -154,50 +152,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAub
     debugManager.flags.AUBDumpForceAllToLocalMemory.set(false);
 
     std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr->stream = stream.get();
 
     auto addressSpace = aubCsr->getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype);
 
     EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, addressSpace);
 }
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenCCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
-    setUpImpl<FamilyType>();
-
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
-    AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    aubCsr.setupContext(osContext);
-
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr.stream = stream.get();
-
-    aubCsr.initEngineMMIO();
-
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0xB234, 0xA0000000u)));
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenRCSEnabledWhenEngineMmiosAreInitializedThenExpectL3ConfigMmioIsWritten) {
-    setUpImpl<FamilyType>();
-
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
-    AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    aubCsr.setupContext(osContext);
-
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr.stream = stream.get();
-
-    aubCsr.initEngineMMIO();
-
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0xB134, 0xA0000000u)));
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenLocaLMemoryBitWhenGetAddressSpaceFromPTEBitsIsCalledThenTraceLocalIsReturned) {
     setUpImpl<FamilyType>();
 
     std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr->stream = stream.get();
 
     uint64_t bits = BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::localMemoryBit);
     auto addressSpace = aubCsr->getAddressSpaceFromPTEBits(bits);
@@ -252,48 +215,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhys
 
     EXPECT_EQ(expectedBankSize, allocator->getBankSize());
     EXPECT_EQ(4u, allocator->getNumberOfBanks());
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenInitEngineMMIOIsCalledForGivenEngineTypeThenCorrespondingMmiosAreInitialized) {
-    setUpImpl<FamilyType>();
-
-    DebugManagerStateRestore debugRestorer;
-    MockOsContext rcsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
-    MockOsContext ccs0OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
-    MockOsContext ccs1OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS1, EngineUsage::regular}));
-    MockOsContext ccs2OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS2, EngineUsage::regular}));
-    MockOsContext ccs3OsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS3, EngineUsage::regular}));
-
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    EXPECT_NE(nullptr, aubCsr);
-
-    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
-    aubCsr->stream = stream.get();
-
-    aubCsr->setupContext(rcsOsContext);
-    aubCsr->initEngineMMIO();
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0002000 + 0x000058, 0x00000000)));
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0002000 + 0x00029c, 0xffff8280)));
-
-    aubCsr->setupContext(ccs0OsContext);
-    aubCsr->initEngineMMIO();
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000ce90, 0x00030003)));
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x1a000 + 0x000029c, 0xffff8280)));
-
-    aubCsr->setupContext(ccs1OsContext);
-    aubCsr->initEngineMMIO();
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000ce90, 0x00030003)));
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x1c000 + 0x000029c, 0xffff8280)));
-
-    aubCsr->setupContext(ccs2OsContext);
-    aubCsr->initEngineMMIO();
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000ce90, 0x00030003)));
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x1e000 + 0x000029c, 0xffff8280)));
-
-    aubCsr->setupContext(ccs3OsContext);
-    aubCsr->initEngineMMIO();
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x0000ce90, 0x00030003)));
-    EXPECT_TRUE(stream->isOnMmioList(MMIOPair(0x26000 + 0x000029c, 0xffff8280)));
 }
 
 template <class FamilyType>
