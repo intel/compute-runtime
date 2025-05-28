@@ -26,7 +26,7 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvir
     }
     size += sizeof(typename Family::STATE_COMPUTE_MODE);
     if (hasSharedHandles) {
-        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier();
+        size += MemorySynchronizationCommands<Family>::getSizeForStallingBarrier();
     }
     if (productHelper.is3DPipelineSelectWARequired() && isRcs) {
         size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(rootDeviceEnvironment));

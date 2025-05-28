@@ -586,7 +586,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     size_t additionalSize = 0u;
 
     if (isResolveDependenciesByPipeControlsEnabled) {
-        additionalSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
+        additionalSize = MemorySynchronizationCommands<FamilyType>::getSizeForStallingBarrier();
     }
 
     EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + additionalSize);

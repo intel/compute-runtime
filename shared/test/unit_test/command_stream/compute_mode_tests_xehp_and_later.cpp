@@ -70,7 +70,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     overrideComputeModeRequest<FamilyType>(false, true, true);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
+    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + MemorySynchronizationCommands<FamilyType>::getSizeForStallingBarrier();
     if (isBasicWARequired) {
         cmdsSize += +sizeof(PIPE_CONTROL);
     }

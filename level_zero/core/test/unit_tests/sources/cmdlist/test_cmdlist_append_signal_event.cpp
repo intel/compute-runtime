@@ -379,6 +379,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenInOrderImmediateCmdListWhenAppending
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using StallingBarrierType = typename FamilyType::StallingBarrierType;
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -446,7 +447,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenInOrderImmediateCmdListWhenAppending
 
     GenCmdList::iterator itorResolveCmd = itorBbStart;
     if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, neoDevice->getRootDeviceEnvironment())) {
-        itorResolveCmd = find<PIPE_CONTROL *>(cmdList.begin(), itorBbStart);
+        itorResolveCmd = find<StallingBarrierType *>(cmdList.begin(), itorBbStart);
     } else {
         itorResolveCmd = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), itorBbStart);
     }
