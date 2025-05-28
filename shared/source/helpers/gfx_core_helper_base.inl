@@ -684,7 +684,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::overrideMaxWorkGroupSize(uint32_t maxWG) co
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, bool isHwLocalGeneration, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return defaultMaxGroupSize;
 }
 
@@ -694,7 +694,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalGrfSize() const {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, bool isHwLocalIdGeneration, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+uint32_t GfxCoreHelperHw<GfxFamily>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return getThreadsPerWG(simd, totalWorkItems);
 }
 

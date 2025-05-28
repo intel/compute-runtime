@@ -929,7 +929,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
     generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, numGrf, rootDeviceEnvironment);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgsV0::getAlignedSize();
-    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, numGrf, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
+    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, numGrf, 3u, totalLocalSize, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
@@ -976,7 +976,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
     generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, numGrf, rootDeviceEnvironment);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgsV0::getAlignedSize();
-    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, numGrf, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
+    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, numGrf, 3u, totalLocalSize, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);

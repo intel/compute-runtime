@@ -73,7 +73,7 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
         }
 
         auto itemsInGroup = Math::computeTotalElementsCount(localWorkSize);
-        localIdsSize = static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(simdSize, grfSize, grfCount, 3u, itemsInGroup, isHwLocalIdGeneration, rootDeviceEnvironment));
+        localIdsSize = static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(simdSize, grfSize, grfCount, 3u, itemsInGroup, rootDeviceEnvironment));
         localIdsSize = alignUp(localIdsSize, MemoryConstants::cacheLineSize);
     }
     return implicitArgsStructSize + localIdsSize;

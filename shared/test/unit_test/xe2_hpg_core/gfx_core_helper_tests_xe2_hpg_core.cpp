@@ -807,23 +807,17 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenNumGrfAndSimdSizeWhenAdjus
     auto defaultMaxWorkGroupSize = 2048u;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    std::array<std::array<uint32_t, 4>, 12> values = {{
-        {GrfConfig::defaultGrfNumber, 16u, 0u, 1024u}, // Grf Size, SIMT Size, HW local-id generation, Max Num of threads
-        {GrfConfig::defaultGrfNumber, 16u, 1u, 1024u},
-        {GrfConfig::defaultGrfNumber, 32u, 1u, 1024u},
-        {GrfConfig::defaultGrfNumber, 32u, 0u, 2048u},
-        {GrfConfig::largeGrfNumber, 16u, 0u, 512u},
-        {GrfConfig::largeGrfNumber, 16u, 1u, 512u},
-        {GrfConfig::largeGrfNumber, 32u, 0u, 1024u},
-        {GrfConfig::largeGrfNumber, 32u, 1u, 1024u},
-        {GrfConfig::defaultGrfNumber, 1u, 1u, 32u},
-        {GrfConfig::defaultGrfNumber, 1u, 0u, 64u},
-        {GrfConfig::largeGrfNumber, 1u, 0u, 32u},
-        {GrfConfig::largeGrfNumber, 1u, 1u, 32u},
+    std::array<std::array<uint32_t, 3>, 6> values = {{
+        {GrfConfig::defaultGrfNumber, 16u, 1024u}, // Grf Size, SIMT Size, Max Num of threads
+        {GrfConfig::defaultGrfNumber, 32u, 1024u},
+        {GrfConfig::largeGrfNumber, 16u, 512u},
+        {GrfConfig::largeGrfNumber, 32u, 1024u},
+        {GrfConfig::defaultGrfNumber, 1u, 64u},
+        {GrfConfig::largeGrfNumber, 1u, 64u},
     }};
 
-    for (auto &[grfSize, simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.adjustMaxWorkGroupSize(grfSize, simtSize, isHwLocalIdGeneration, defaultMaxWorkGroupSize, rootDeviceEnvironment));
+    for (auto &[grfSize, simtSize, expectedNumThreadsPerThreadGroup] : values) {
+        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.adjustMaxWorkGroupSize(grfSize, simtSize, defaultMaxWorkGroupSize, rootDeviceEnvironment));
     }
 }
 
@@ -831,23 +825,17 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenParamsWhenCalculateNumThre
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto totalWgSize = 2048u;
-    std::array<std::array<uint32_t, 4>, 12> values = {{
-        {GrfConfig::defaultGrfNumber, 16u, 0u, 64u}, // Grf Size, SIMT Size, HW local-id generation, Max Num of threads
-        {GrfConfig::defaultGrfNumber, 16u, 1u, 64u},
-        {GrfConfig::defaultGrfNumber, 32u, 1u, 32u},
-        {GrfConfig::defaultGrfNumber, 32u, 0u, 64u},
-        {GrfConfig::defaultGrfNumber, 1u, 1u, 32u},
-        {GrfConfig::defaultGrfNumber, 1u, 0u, 64u},
-        {GrfConfig::largeGrfNumber, 16u, 0u, 32u},
-        {GrfConfig::largeGrfNumber, 16u, 1u, 32u},
-        {GrfConfig::largeGrfNumber, 32u, 0u, 32u},
-        {GrfConfig::largeGrfNumber, 32u, 1u, 32u},
-        {GrfConfig::largeGrfNumber, 1u, 0u, 32u},
-        {GrfConfig::largeGrfNumber, 1u, 1u, 32u},
+    std::array<std::array<uint32_t, 3>, 6> values = {{
+        {GrfConfig::defaultGrfNumber, 16u, 64u}, // Grf Size, SIMT Size, Max Num of threads
+        {GrfConfig::defaultGrfNumber, 32u, 32u},
+        {GrfConfig::defaultGrfNumber, 1u, 64u},
+        {GrfConfig::largeGrfNumber, 16u, 32u},
+        {GrfConfig::largeGrfNumber, 32u, 32u},
+        {GrfConfig::largeGrfNumber, 1u, 64u},
     }};
 
-    for (auto &[grfSize, simtSize, isHwLocalIdGeneration, expectedNumThdreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThdreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfSize, isHwLocalIdGeneration, rootDeviceEnvironment));
+    for (auto &[grfSize, simtSize, expectedNumThdreadsPerThreadGroup] : values) {
+        EXPECT_EQ(expectedNumThdreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfSize, rootDeviceEnvironment));
     }
 }
 

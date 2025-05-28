@@ -754,41 +754,26 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenNumGrfAndSimdSizeWhenAdjustingMax
     auto defaultMaxWorkGroupSize = 2048u;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    std::array<std::array<uint32_t, 4>, 30> values = {{
-        {128u, 16u, 0u, 1024u}, // Grf Size, SIMT Size, HW local-id generation, Max Num of threads
-        {128u, 16u, 1u, 1024u},
-        {128u, 32u, 1u, 1024u},
-        {128u, 32u, 0u, 2048u},
-        {160u, 16u, 0u, 768u},
-        {160u, 16u, 1u, 768u},
-        {160u, 32u, 1u, 1024u},
-        {160u, 32u, 0u, 1536u},
-        {192u, 16u, 0u, 640u},
-        {192u, 16u, 1u, 640u},
-        {192u, 32u, 1u, 1024u},
-        {192u, 32u, 0u, 1280u},
-        {256u, 16u, 0u, 512u},
-        {256u, 16u, 1u, 512u},
-        {256u, 32u, 1u, 1024u},
-        {256u, 32u, 0u, 1024u},
-        {512u, 16u, 0u, 256u},
-        {512u, 16u, 1u, 256u},
-        {512u, 32u, 1u, 512u},
-        {512u, 32u, 0u, 512u},
-        {128u, 1u, 1u, 32u},
-        {128u, 1u, 0u, 64u},
-        {160u, 1u, 1u, 32u},
-        {160u, 1u, 0u, 48u},
-        {192u, 1u, 1u, 32u},
-        {192u, 1u, 0u, 40u},
-        {256u, 1u, 1u, 32u},
-        {256u, 1u, 0u, 32u},
-        {512u, 1u, 1u, 16u},
-        {512u, 1u, 0u, 16u},
+    std::array<std::array<uint32_t, 3>, 15> values = {{
+        {128u, 16u, 1024u}, // Grf Size, SIMT Size, Max Num of threads
+        {128u, 32u, 1024u},
+        {160u, 16u, 768u},
+        {160u, 32u, 1024u},
+        {192u, 16u, 640u},
+        {192u, 32u, 1024u},
+        {256u, 16u, 512u},
+        {256u, 32u, 1024u},
+        {512u, 16u, 256u},
+        {512u, 32u, 512u},
+        {128u, 1u, 64u},
+        {160u, 1u, 48u},
+        {192u, 1u, 40u},
+        {256u, 1u, 32u},
+        {512u, 1u, 16u},
     }};
 
-    for (auto &[grfSize, simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.adjustMaxWorkGroupSize(grfSize, simtSize, isHwLocalIdGeneration, defaultMaxWorkGroupSize, rootDeviceEnvironment));
+    for (auto &[grfSize, simtSize, expectedNumThreadsPerThreadGroup] : values) {
+        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.adjustMaxWorkGroupSize(grfSize, simtSize, defaultMaxWorkGroupSize, rootDeviceEnvironment));
     }
 }
 
@@ -801,41 +786,26 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenParamsWhenCalculateNumThreadsPerT
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto totalWgSize = 2048u;
-    std::array<std::array<uint32_t, 4>, 30> values = {{
-        {128u, 16u, 0u, 64u}, // Grf Size, SIMT Size, HW local-id generation, Max Num of threads
-        {128u, 16u, 1u, 64u},
-        {128u, 32u, 1u, 32u},
-        {128u, 32u, 0u, 64u},
-        {128u, 1u, 1u, 32u},
-        {128u, 1u, 0u, 64u},
-        {160u, 16u, 0u, 48u},
-        {160u, 16u, 1u, 48u},
-        {160u, 32u, 1u, 32u},
-        {160u, 32u, 0u, 48u},
-        {160u, 1u, 1u, 32u},
-        {160u, 1u, 0u, 48u},
-        {192u, 16u, 0u, 40u},
-        {192u, 16u, 1u, 40u},
-        {192u, 32u, 1u, 32u},
-        {192u, 32u, 0u, 40u},
-        {192u, 1u, 1u, 32u},
-        {192u, 1u, 0u, 40u},
-        {256u, 16u, 0u, 32u},
-        {256u, 16u, 1u, 32u},
-        {256u, 32u, 1u, 32u},
-        {256u, 32u, 0u, 32u},
-        {256u, 1u, 1u, 32u},
-        {256u, 1u, 0u, 32u},
-        {512u, 16u, 0u, 16u},
-        {512u, 16u, 1u, 16u},
-        {512u, 32u, 1u, 16u},
-        {512u, 32u, 0u, 16u},
-        {512u, 1u, 1u, 16u},
-        {512u, 1u, 0u, 16u},
+    std::array<std::array<uint32_t, 3>, 15> values = {{
+        {128u, 16u, 64u}, // Grf Size, SIMT Size, Max Num of threads
+        {128u, 32u, 32u},
+        {128u, 1u, 64u},
+        {160u, 16u, 48u},
+        {160u, 32u, 32u},
+        {160u, 1u, 48u},
+        {192u, 16u, 40u},
+        {192u, 32u, 32u},
+        {192u, 1u, 40u},
+        {256u, 16u, 32u},
+        {256u, 32u, 32u},
+        {256u, 1u, 32u},
+        {512u, 16u, 16u},
+        {512u, 32u, 16u},
+        {512u, 1u, 16u},
     }};
 
-    for (auto &[grfSize, simtSize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfSize, isHwLocalIdGeneration, rootDeviceEnvironment));
+    for (auto &[grfSize, simtSize, expectedNumThreadsPerThreadGroup] : values) {
+        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfSize, rootDeviceEnvironment));
     }
 }
 
