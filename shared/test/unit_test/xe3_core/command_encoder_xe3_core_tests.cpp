@@ -206,7 +206,7 @@ XE3_CORETEST_F(Xe3CoreCommandEncoderTest, givenPipelinedEuThreadArbitrationPolic
     {
         kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
         EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
-        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, idd.getEuThreadSchedulingModeOverride());
+        EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN, idd.getEuThreadSchedulingModeOverride());
     }
 
     defaultPipelinedThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;

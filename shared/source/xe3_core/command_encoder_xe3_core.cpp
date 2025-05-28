@@ -153,7 +153,7 @@ void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorT
             pInterfaceDescriptor->setEuThreadSchedulingModeOverride(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
             break;
         default:
-            pInterfaceDescriptor->setEuThreadSchedulingModeOverride(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT);
+            pInterfaceDescriptor->setEuThreadSchedulingModeOverride(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
         }
     }
 }

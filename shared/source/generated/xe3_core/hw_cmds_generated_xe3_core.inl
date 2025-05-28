@@ -5408,7 +5408,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     } PREFERRED_SLM_ALLOCATION_SIZE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.EuThreadSchedulingModeOverride = EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT;
+        TheStructure.Common.EuThreadSchedulingModeOverride = EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN; // patched
         TheStructure.Common.FloatingPointMode = FLOATING_POINT_MODE_IEEE_754;
         TheStructure.Common.SingleProgramFlow = SINGLE_PROGRAM_FLOW_MULTIPLE;
         TheStructure.Common.DenormMode = DENORM_MODE_FTZ;
