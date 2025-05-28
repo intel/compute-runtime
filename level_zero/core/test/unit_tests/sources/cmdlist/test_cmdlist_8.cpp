@@ -1934,5 +1934,29 @@ HWTEST_F(CommandListCreate, givenNullptrPeerAllocationWhenGetDeviceCounterAllocF
     EXPECT_ANY_THROW(commandList->getDeviceCounterAllocForResidency(&counterDeviceAlloc));
 }
 
+HWTEST_F(CommandListCreate, givenCommandListWhenIsKernelUncachedMocsRequiredCalledThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableStateBaseAddressTracking.set(0);
+
+    auto commandList = std::make_unique<MockCommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    EXPECT_FALSE(commandList->isKernelUncachedMocsRequired(false));
+
+    auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[0];
+    auto deferMOCSToPatIndex = device->getProductHelper().deferMOCSToPatIndex(rootDeviceEnvironment->isWddmOnLinux());
+    EXPECT_EQ(!deferMOCSToPatIndex, commandList->isKernelUncachedMocsRequired(true));
+    EXPECT_TRUE(commandList->getContainsStatelessUncachedResource());
+}
+
+HWTEST_F(CommandListCreate, givenSbaTrackingEnabledWhenIsKernelUncachedMocsRequiredCalledThenReturnFalse) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableStateBaseAddressTracking.set(1);
+
+    auto commandList = std::make_unique<MockCommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    EXPECT_FALSE(commandList->isKernelUncachedMocsRequired(true));
+    EXPECT_TRUE(commandList->getContainsStatelessUncachedResource());
+}
+
 } // namespace ult
 } // namespace L0

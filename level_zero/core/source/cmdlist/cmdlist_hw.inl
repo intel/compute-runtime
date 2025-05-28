@@ -4757,4 +4757,16 @@ bool CommandListCoreFamily<gfxCoreFamily>::isAllocationImported(NEO::GraphicsAll
     return false;
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isKernelUncachedMocsRequired(bool kernelState) {
+    this->containsStatelessUncachedResource |= kernelState;
+    auto &productHelper = this->device->getNEODevice()->getProductHelper();
+    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+
+    if (this->stateBaseAddressTracking || productHelper.deferMOCSToPatIndex(rootDeviceEnvironment.isWddmOnLinux())) {
+        return false;
+    }
+    return this->containsStatelessUncachedResource;
+}
+
 } // namespace L0

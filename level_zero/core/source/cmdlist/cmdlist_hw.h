@@ -374,13 +374,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool isAllocationImported(NEO::GraphicsAllocation *gpuAllocation, NEO::SVMAllocsManager *svmManager) const;
     static constexpr bool checkIfAllocationImportedRequired();
 
-    bool isKernelUncachedMocsRequired(bool kernelState) {
-        this->containsStatelessUncachedResource |= kernelState;
-        if (this->stateBaseAddressTracking) {
-            return false;
-        }
-        return this->containsStatelessUncachedResource;
-    }
+    bool isKernelUncachedMocsRequired(bool kernelState);
 
     bool isUsingSystemAllocation(const NEO::AllocationType &allocType) const {
         return ((allocType == NEO::AllocationType::bufferHostMemory) ||

@@ -641,6 +641,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     using BaseClass::enableInOrderExecution;
     using BaseClass::encodeMiFlush;
     using BaseClass::getDeviceCounterAllocForResidency;
+    using BaseClass::isKernelUncachedMocsRequired;
     using BaseClass::ownedPrivateAllocations;
     using BaseClass::setAdditionalBlitProperties;
     using BaseClass::taskCountUpdateFenceRequired;
