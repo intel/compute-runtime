@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/release_helper/release_helper.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -105,6 +106,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         this->samplerDesc.pNext = nullptr;
     }
 
+    NEO::UsmMemAllocPool *usmPool = nullptr;
+
     if (!isImageView()) {
         if (lookupTable.isSharedHandle) {
             if (!lookupTable.sharedHandleType.isSupportedHandle) {
@@ -139,6 +142,15 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 if (usmAllocation == nullptr) {
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
+
+                if (this->device->getNEODevice()->getUsmMemAllocPool() &&
+                    this->device->getNEODevice()->getUsmMemAllocPool()->isInPool(lookupTable.imageProperties.pitchedPtr)) {
+                    usmPool = this->device->getNEODevice()->getUsmMemAllocPool();
+                    if (nullptr == usmPool->getPooledAllocationBasePtr(lookupTable.imageProperties.pitchedPtr)) {
+                        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                    }
+                }
+
                 allocation = usmAllocation->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
             }
         }
@@ -157,10 +169,14 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             imgInfo.rowPitch = imgInfo.imgDesc.imageWidth * imgInfo.surfaceFormat->imageElementSizeInBytes;
         }
         imgInfo.slicePitch = imgInfo.rowPitch * imgInfo.imgDesc.imageHeight;
-        imgInfo.size = allocation->getUnderlyingBufferSize();
         imgInfo.qPitch = 0;
-
-        UNRECOVERABLE_IF(imgInfo.offset != 0);
+        if (!isImageView()) {
+            imgInfo.size = allocation->getUnderlyingBufferSize();
+            if (usmPool) {
+                imgInfo.size = usmPool->getPooledAllocationSize(lookupTable.imageProperties.pitchedPtr);
+                imgInfo.offset = usmPool->getOffsetInPool(lookupTable.imageProperties.pitchedPtr);
+            }
+        }
     }
 
     if (this->bindlessImage) {
