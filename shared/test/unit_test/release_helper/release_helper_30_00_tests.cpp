@@ -48,10 +48,6 @@ TEST_F(ReleaseHelper3000Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreRe
     whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
 }
 
-TEST_F(ReleaseHelper3000Tests, whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnEnable10ThreadsPerEuDebugKey) {
-    whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnEnable10ThreadsPerEuDebugKey();
-}
-
 TEST_F(ReleaseHelper3000Tests, whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnOverrideNumThreadsPerEuDebugKey) {
     whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnOverrideNumThreadsPerEuDebugKey();
 }

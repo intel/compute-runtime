@@ -115,19 +115,6 @@ void ReleaseHelperTestsBase::whenGettingSupportedNumGrfsThenValuesUpTo256Returne
     }
 }
 
-void ReleaseHelperTestsBase::whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnEnable10ThreadsPerEuDebugKey() {
-    DebugManagerStateRestore restorer;
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        debugManager.flags.Enable10ThreadsPerEu.set(0);
-        EXPECT_EQ(8u, releaseHelper->getNumThreadsPerEu());
-        debugManager.flags.Enable10ThreadsPerEu.set(1);
-        EXPECT_EQ(10u, releaseHelper->getNumThreadsPerEu());
-    }
-}
-
 void ReleaseHelperTestsBase::whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnOverrideNumThreadsPerEuDebugKey() {
     DebugManagerStateRestore restorer;
     for (auto &revision : getRevisions()) {
