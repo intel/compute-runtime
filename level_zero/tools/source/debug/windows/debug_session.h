@@ -57,6 +57,10 @@ struct DebugSessionWindows : DebugSessionImp {
     ze_result_t interruptImp(uint32_t deviceIndex) override;
     ze_result_t acknowledgeEventImp(uint32_t seqNo, uint32_t eventType);
 
+    MOCKABLE_VIRTUAL ze_result_t interruptContextImp();
+    MOCKABLE_VIRTUAL ze_result_t resumeContextImp(uint64_t memoryHandle);
+    MOCKABLE_VIRTUAL ze_result_t continueExecutionImp(uint64_t memoryHandle);
+
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override;
     ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override;
     bool isVAElf(const zet_debug_memory_space_desc_t *desc, size_t size);

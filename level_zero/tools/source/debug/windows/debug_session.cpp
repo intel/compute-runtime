@@ -628,6 +628,17 @@ ze_result_t DebugSessionWindows::resumeImp(const std::vector<EuThread::ThreadId>
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
     printBitmask(bitmask.get(), bitmaskSize);
 
+    if (l0GfxCoreHelper.threadResumeRequiresUnlock()) {
+        uint64_t memoryHandle = allThreads[threads[0]]->getMemoryHandle();
+        auto result = resumeContextImp(memoryHandle);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+
+        result = continueExecutionImp(memoryHandle);
+        return result;
+    }
+
     KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_EU_CONTROL_CLR_ATT_BIT;
     escapeInfo.KmEuDbgL0EscapeInfo.EuControlClrAttBitParams.BitmaskArrayPtr = reinterpret_cast<uint64_t>(bitmask.get());
@@ -649,6 +660,10 @@ ze_result_t DebugSessionWindows::resumeImp(const std::vector<EuThread::ThreadId>
 }
 
 ze_result_t DebugSessionWindows::interruptImp(uint32_t deviceIndex) {
+    auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    if (l0GfxCoreHelper.threadResumeRequiresUnlock()) {
+        return interruptContextImp();
+    }
     KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_EU_CONTROL_INT_ALL;
 
@@ -664,6 +679,85 @@ ze_result_t DebugSessionWindows::interruptImp(uint32_t deviceIndex) {
     }
 
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_EU_CONTROL_INT_ALL - Success\n");
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionWindows::interruptContextImp() {
+
+    uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
+    {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        if (allContexts.empty()) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        memoryHandle = *allContexts.begin();
+    }
+    if (memoryHandle == EuThread::invalidHandle) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    KM_ESCAPE_INFO escapeInfo = {};
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_EU_CTRL_INTR_REQUEST;
+    escapeInfo.KmEuDbgL0EscapeInfo.EuControlParams.hContextHandle = memoryHandle;
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CTRL_INTR_REQUEST: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    if (DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CTRL_INTR_REQUEST: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_EU_CTRL_INTR_REQUEST - Success\n");
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionWindows::resumeContextImp(uint64_t memoryHandle) {
+
+    if (memoryHandle == DebugSessionWindows::invalidHandle) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    KM_ESCAPE_INFO escapeInfo = {};
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_EU_CTRL_INTR_RESUME;
+    escapeInfo.KmEuDbgL0EscapeInfo.EuControlParams.hContextHandle = memoryHandle;
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CTRL_INTR_RESUME: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    if (DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CTRL_INTR_RESUME: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_EU_CTRL_INTR_RESUME - Success\n");
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionWindows::continueExecutionImp(uint64_t memoryHandle) {
+    if (memoryHandle == DebugSessionWindows::invalidHandle) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    KM_ESCAPE_INFO escapeInfo = {};
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_EU_CTRL_CONT_EXECUTION;
+    escapeInfo.KmEuDbgL0EscapeInfo.EuControlParams.hContextHandle = memoryHandle;
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CTRL_CONT_EXECUTION: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    if (DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_EU_CTRL_CONT_EXECUTION: Failed - Status: 0x%llX EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_EU_CTRL_INTR_REQUEST - Success\n");
     return ZE_RESULT_SUCCESS;
 }
 
