@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,3 +61,9 @@ template void NEO::HardwareCommandsHelper<NEO::FamilyType>::programInlineData<NE
 template void NEO::HardwareCommandsHelper<NEO::FamilyType>::setInterfaceDescriptorOffset<NEO::FamilyType::GPGPU_WALKER>(
     FamilyType::GPGPU_WALKER *walkerCmd,
     uint32_t &interfaceDescriptorIndex);
+
+template NEO::FamilyType::DefaultWalkerType::InterfaceDescriptorType *
+NEO::HardwareCommandsHelper<NEO::FamilyType>::getInterfaceDescriptor<NEO::FamilyType::DefaultWalkerType::InterfaceDescriptorType>(
+    const NEO::IndirectHeap &,
+    uint64_t,
+    NEO::FamilyType::DefaultWalkerType::InterfaceDescriptorType *);

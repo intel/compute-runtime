@@ -1078,15 +1078,15 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhen
     delete[] mockDsh;
 }
 
-HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirectStateThenSurfaceStateIsCopiedToHeapAndCrossThreadDataIsCorrectlyPatched, IsAtLeastXeHpCore) {
+HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirectStateThenSurfaceStateIsCopiedToHeapAndCrossThreadDataIsCorrectlyPatched, IsHeapfulSupportedAndAtLeastXeHpCore) {
 
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using InterfaceDescriptorType = typename DefaultWalkerType::InterfaceDescriptorType;
+    using WalkerType = typename FamilyType::COMPUTE_WALKER;
+    using InterfaceDescriptorType = typename WalkerType::InterfaceDescriptorType;
 
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
     auto &commandStream = cmdQ.getCS(1024);
-    auto pWalkerCmd = static_cast<DefaultWalkerType *>(commandStream.getSpace(sizeof(DefaultWalkerType)));
+    auto pWalkerCmd = static_cast<WalkerType *>(commandStream.getSpace(sizeof(WalkerType)));
 
     // define kernel info
     std::unique_ptr<MockKernelInfo> pKernelInfo = std::make_unique<MockKernelInfo>();
@@ -1123,7 +1123,7 @@ HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirect
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(mockKernel);
 
     InterfaceDescriptorType interfaceDescriptorData;
-    HardwareCommandsHelper<FamilyType>::template sendIndirectState<DefaultWalkerType, InterfaceDescriptorType>(
+    HardwareCommandsHelper<FamilyType>::template sendIndirectState<WalkerType, InterfaceDescriptorType>(
         commandStream,
         dsh,
         ioh,

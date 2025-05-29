@@ -19,11 +19,12 @@ namespace NEO {
 using FamilyType = Gen12LpFamily;
 
 template <typename GfxFamily>
-typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *HardwareCommandsHelper<GfxFamily>::getInterfaceDescriptor(
+template <typename InterfaceDescriptorType>
+InterfaceDescriptorType *HardwareCommandsHelper<GfxFamily>::getInterfaceDescriptor(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
-    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
-    return static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getCpuBase(), (size_t)offsetInterfaceDescriptor));
+    InterfaceDescriptorType *inlineInterfaceDescriptor) {
+    return static_cast<InterfaceDescriptorType *>(ptrOffset(indirectHeap.getCpuBase(), (size_t)offsetInterfaceDescriptor));
 }
 
 template <typename GfxFamily>

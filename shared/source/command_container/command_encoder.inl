@@ -779,14 +779,15 @@ bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
 }
 
 template <typename Family>
-void EncodeDispatchKernelWithHeap<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernelWithHeap<Family>::adjustBindingTablePrefetch(InterfaceDescriptorType &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
     auto enablePrefetch = EncodeSurfaceState<Family>::doBindingTablePrefetch();
 
     if (enablePrefetch) {
-        interfaceDescriptor.setSamplerCount(static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>((samplerCount + 3) / 4));
+        interfaceDescriptor.setSamplerCount(static_cast<typename InterfaceDescriptorType::SAMPLER_COUNT>((samplerCount + 3) / 4));
         interfaceDescriptor.setBindingTableEntryCount(std::min(bindingTableEntryCount, 31u));
     } else {
-        interfaceDescriptor.setSamplerCount(INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT::SAMPLER_COUNT_NO_SAMPLERS_USED);
+        interfaceDescriptor.setSamplerCount(InterfaceDescriptorType::SAMPLER_COUNT::SAMPLER_COUNT_NO_SAMPLERS_USED);
         interfaceDescriptor.setBindingTableEntryCount(0u);
     }
 }

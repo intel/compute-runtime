@@ -198,7 +198,8 @@ struct EncodeDispatchKernelWithHeap {
     using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
     using BINDING_TABLE_STATE = GfxFamily::BINDING_TABLE_STATE;
-    static void adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount);
+    template <typename InterfaceDescriptorType>
+    static void adjustBindingTablePrefetch(InterfaceDescriptorType &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount);
 };
 
 template <typename GfxFamily>

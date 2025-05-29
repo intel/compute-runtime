@@ -43,10 +43,11 @@ struct HardwareCommandsHelper : public HardwareCommandsHelperBase<GfxFamily> {
     using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-    static INTERFACE_DESCRIPTOR_DATA *getInterfaceDescriptor(
+    template <typename InterfaceDescryptorType>
+    static InterfaceDescryptorType *getInterfaceDescriptor(
         const IndirectHeap &indirectHeap,
         uint64_t offsetInterfaceDescriptor,
-        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
+        InterfaceDescryptorType *inlineInterfaceDescriptor);
 
     inline static uint32_t additionalSizeRequiredDsh();
 
