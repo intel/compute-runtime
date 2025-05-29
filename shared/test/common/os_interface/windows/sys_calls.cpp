@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,8 @@ HANDLE createFileAResults[createFileAResultsCount] = {nullptr, nullptr, nullptr,
 
 size_t deleteFileACalled = 0u;
 const size_t deleteFilesCount = 4;
-std::string deleteFiles[deleteFilesCount];
+constexpr size_t deleteFilesMaxLength = 256;
+char deleteFiles[deleteFilesCount][deleteFilesMaxLength] = {{0}};
 
 HRESULT shGetKnownFolderPathResult = 0;
 extern const size_t shGetKnownFolderSetPathSize = 50;
@@ -204,7 +205,7 @@ HANDLE createFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 
 BOOL deleteFileA(LPCSTR lpFileName) {
     if (deleteFileACalled < deleteFilesCount) {
-        deleteFiles[deleteFileACalled] = std::string(lpFileName);
+        memcpy_s(deleteFiles[deleteFileACalled], deleteFilesMaxLength, lpFileName, strlen(lpFileName));
     }
     deleteFileACalled++;
     return TRUE;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,7 +112,7 @@ extern const size_t createFileAResultsCount;
 extern HANDLE createFileAResults[];
 
 extern size_t deleteFileACalled;
-extern std::string deleteFiles[];
+extern char deleteFiles[][256];
 
 extern bool callBaseReadFile;
 extern BOOL readFileResult;
@@ -185,7 +185,7 @@ struct CompilerCacheWindowsTest : public ::testing::Test {
             memset(&SysCalls::findNextFileAFileData[i], 0, sizeof(SysCalls::findNextFileAFileData[i]));
         }
         for (size_t i = 0; i < SysCalls::deleteFileACalled; i++) {
-            SysCalls::deleteFiles[i].~basic_string();
+            memset(SysCalls::deleteFiles[i], 0, sizeof(SysCalls::deleteFiles[0]));
         }
         for (size_t i = 0; i < SysCalls::createFileAResultsCount; i++) {
             SysCalls::createFileAResults[i] = nullptr;
@@ -248,8 +248,8 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteWhenEvictCache
 
     EXPECT_TRUE(result);
     EXPECT_EQ(2u, SysCalls::deleteFileACalled);
-    EXPECT_EQ(0, strcmp(deletedFiles[0].c_str(), "somePath\\cl_cache\\file_3.cl_cache"));
-    EXPECT_EQ(0, strcmp(deletedFiles[1].c_str(), "somePath\\cl_cache\\file_1.cl_cache"));
+    EXPECT_EQ(0, strcmp(deletedFiles[0], "somePath\\cl_cache\\file_3.cl_cache"));
+    EXPECT_EQ(0, strcmp(deletedFiles[1], "somePath\\cl_cache\\file_1.cl_cache"));
 }
 
 TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteAnd3CacheFilesAnd1DirectoryWhenEvictCacheIsCalledThenDeleteTwoOldestFilesSkippingDirectory) {
@@ -283,8 +283,8 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteAnd3CacheFiles
 
     EXPECT_TRUE(result);
     EXPECT_EQ(2u, SysCalls::deleteFileACalled);
-    EXPECT_EQ(0, strcmp(deletedFiles[0].c_str(), "somePath\\cl_cache\\file_3.cl_cache"));
-    EXPECT_EQ(0, strcmp(deletedFiles[1].c_str(), "somePath\\cl_cache\\file_0.cl_cache"));
+    EXPECT_EQ(0, strcmp(deletedFiles[0], "somePath\\cl_cache\\file_3.cl_cache"));
+    EXPECT_EQ(0, strcmp(deletedFiles[1], "somePath\\cl_cache\\file_0.cl_cache"));
 }
 
 TEST_F(CompilerCacheWindowsTest, givenEvictCacheWhenFileSearchFailedThenDebugMessageWithErrorIsPrinted) {
