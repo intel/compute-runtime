@@ -248,6 +248,7 @@ class IoctlHelper {
     virtual bool makeResidentBeforeLockNeeded() const { return false; }
     virtual bool hasContextFreqHint() { return false; }
     virtual void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) { return; }
+    virtual bool isSmallBarConfigAllowed() const = 0;
 
   protected:
     Drm &drm;
@@ -289,6 +290,7 @@ class IoctlHelperI915 : public IoctlHelper {
     uint32_t getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const override { return tileId; }
     bool hasContextFreqHint() override;
     void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) override;
+    bool isSmallBarConfigAllowed() const override { return true; }
 
   protected:
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);

@@ -134,6 +134,13 @@ TEST(IoctlHelperUpstreamTest, whenGettingVmBindAvailabilityThenFalseIsReturned) 
     EXPECT_FALSE(ioctlHelper.isImmediateVmBindRequired());
 }
 
+TEST(IoctlHelperUpstreamTest, whenGettingIfSmallBarConfigIsAllowedThenTrueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+    EXPECT_TRUE(ioctlHelper.isSmallBarConfigAllowed());
+}
+
 TEST(IoctlHelperUpstreamTest, whenChangingBufferBindingThenWaitIsNeverNeeded) {
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};

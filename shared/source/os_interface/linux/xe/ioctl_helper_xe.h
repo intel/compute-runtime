@@ -140,6 +140,7 @@ class IoctlHelperXe : public IoctlHelper {
     }
     uint32_t getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const override;
     bool makeResidentBeforeLockNeeded() const override;
+    bool isSmallBarConfigAllowed() const override { return false; }
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
