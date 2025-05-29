@@ -34,6 +34,8 @@ constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctiona
     if (flag)                         \
         NEO::printDebugString(flag, __VA_ARGS__);
 
+#define EMIT_WARNING(flag, ...) PRINT_DEBUG_STRING(flag, __VA_ARGS__)
+
 namespace NEO {
 template <DebugFunctionalityLevel debugLevel>
 class FileLogger;
