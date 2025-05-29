@@ -78,9 +78,11 @@ struct HelloWorldKernelFixture : public ProgramFixture {
             pProgram->getKernelInfosForKernel(pKernelName->c_str()),
             retVal);
 
+        EXPECT_EQ(CL_SUCCESS, retVal);
         pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(pDevice->getRootDeviceIndex()));
         EXPECT_NE(nullptr, pKernel);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        pKernel->isBuiltIn = true;
     }
 
     void setUp(ClDevice *pDevice, const char *kernelNameStr) {
@@ -122,6 +124,8 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(pDevice->getRootDeviceIndex()));
         EXPECT_NE(nullptr, pKernel);
         EXPECT_EQ(CL_SUCCESS, retVal);
+
+        pKernel->isBuiltIn = true;
     }
 
     void tearDown() {

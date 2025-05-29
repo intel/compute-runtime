@@ -114,6 +114,55 @@ TEST_F(PrintfHandlerTests, givenKernelWithImplicitArgsWhenPreparingPrintfHandler
 
     EXPECT_EQ(printfSurface->getGpuAddress(), pImplicitArgs->v0.printfBufferPtr);
 }
+TEST_F(PrintfHandlerTests, givenUserKernelWithoutPrintfButWithImplicitArgsWhenPreparingPrintfHandlerThenProperAddressIsPatchedInImplicitArgsStruct) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context(device.get());
+
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = device->getGfxCoreHelper().getMinimalSIMDSize();
+    pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+
+    MockProgram program{&context, false, toClDeviceVector(*device)};
+
+    uint64_t crossThread[10];
+    MockKernel kernel{&program, *pKernelInfo, *device};
+    kernel.setCrossThreadData(&crossThread, sizeof(uint64_t) * 10);
+    kernel.initialize();
+
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), &kernel);
+    auto printfHandler = std::unique_ptr<PrintfHandler>(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
+    ASSERT_NE(nullptr, printfHandler);
+    printfHandler->prepareDispatch(multiDispatchInfo);
+
+    auto printfSurface = printfHandler->getSurface();
+    ASSERT_NE(nullptr, printfSurface);
+
+    auto pImplicitArgs = kernel.getImplicitArgs();
+    ASSERT_NE(nullptr, pImplicitArgs);
+
+    EXPECT_EQ(printfSurface->getGpuAddress(), pImplicitArgs->v0.printfBufferPtr);
+}
+
+TEST_F(PrintfHandlerTests, givenBuiltinKernelWithoutPrintfButWithImplicitArgsWhenPreparingPrintfHandlerThenPrintfHandlerIsNotCreated) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context(device.get());
+
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = device->getGfxCoreHelper().getMinimalSIMDSize();
+    pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+
+    MockProgram program{&context, false, toClDeviceVector(*device)};
+
+    uint64_t crossThread[10];
+    MockKernel kernel{&program, *pKernelInfo, *device};
+    kernel.setCrossThreadData(&crossThread, sizeof(uint64_t) * 10);
+    kernel.initialize();
+    kernel.isBuiltIn = true;
+
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), &kernel);
+    auto printfHandler = std::unique_ptr<PrintfHandler>(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
+    EXPECT_EQ(nullptr, printfHandler);
+}
 
 HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutput) {
     HardwareInfo hwInfo = *defaultHwInfo;

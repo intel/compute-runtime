@@ -61,6 +61,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
             *pDevice,
             retVal);
 
+        pKernel->isBuiltIn = true;
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
