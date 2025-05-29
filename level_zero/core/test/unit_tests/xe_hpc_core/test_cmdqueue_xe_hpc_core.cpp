@@ -963,6 +963,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
+    auto csr0 = commandList0->getCsr(false);
     auto csr2 = static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getCsr();
     auto csr3 = static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getCsr();
 
@@ -974,6 +975,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
+    bool csr0TaskCountFound = false;
     bool csr2TaskCountFound = false;
     bool csr3TaskCountFound = false;
 
@@ -983,10 +985,13 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
                 csr2TaskCountFound = true;
             } else if (miFlushCmd->getDestinationAddress() == csr3->getTagAllocation()->getGpuAddress()) {
                 csr3TaskCountFound = true;
+            } else if (miFlushCmd->getDestinationAddress() == csr0->getTagAllocation()->getGpuAddress()) {
+                csr0TaskCountFound = true;
             }
         }
     }
 
+    EXPECT_TRUE(csr0TaskCountFound);
     EXPECT_TRUE(csr2TaskCountFound);
     EXPECT_TRUE(csr3TaskCountFound);
 
@@ -1121,7 +1126,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
 
     commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
-    EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
 
     directSubmission->relaxedOrderingEnabled = false;
 
