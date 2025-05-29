@@ -866,10 +866,6 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedT
 
     gEnvironment->igcPopDebugVars();
 }
-class SipKernelMock : public SipKernel {
-  public:
-    using SipKernel::selectSipClassType;
-};
 
 using DebugBuiltinSipTest = Test<DeviceFixture>;
 
@@ -882,23 +878,23 @@ TEST_F(DebugBuiltinSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFrom
 
     auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
     EXPECT_NE(nullptr, sipAllocation);
-    EXPECT_EQ(SipKernelMock::classType, SipClassType::builtins);
+    EXPECT_EQ(MockSipKernel::classType, SipClassType::builtins);
 
     SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(DebugBuiltinSipTest, givenDebugFlagForForceSipClassWhenInitSipKernelThenProperSipClassIsSet) {
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
-    VariableBackup sipClassBackup(&SipKernelMock::classType);
+    VariableBackup sipClassBackup(&MockSipKernel::classType);
     DebugManagerStateRestore restorer;
 
     debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::builtins));
     EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
-    EXPECT_EQ(SipKernelMock::classType, SipClassType::builtins);
+    EXPECT_EQ(MockSipKernel::classType, SipClassType::builtins);
 
     debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::hexadecimalHeaderFile));
     EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
-    EXPECT_EQ(SipKernelMock::classType, SipClassType::hexadecimalHeaderFile);
+    EXPECT_EQ(MockSipKernel::classType, SipClassType::hexadecimalHeaderFile);
 
     SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
@@ -945,8 +941,8 @@ HWTEST2_F(DebugExternalLibSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoa
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
     std::string fileName = "unk";
-    SipKernelMock::selectSipClassType(fileName, *pDevice);
-    EXPECT_EQ(SipKernelMock::classType, SipClassType::builtins);
+    MockSipKernel::selectSipClassType(fileName, *pDevice);
+    EXPECT_EQ(MockSipKernel::classType, SipClassType::builtins);
 }
 
 TEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibRetunsTrueWhenGetSipExternalLibInterfaceIsCalledThenNullptrReturned) {
