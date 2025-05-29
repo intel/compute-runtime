@@ -145,18 +145,13 @@ using MultiRootDeviceCommandStreamReceiverTests = CommandStreamReceiverFlushTask
 HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToEnqueueWithoutSubmissionThenCsIsWaitingForEventsFromPreviousDevices) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    EnvironmentWithCsrWrapper environment;
+    environment.setCsrType<MockCommandStreamReceiver>();
+
     auto deviceFactory = std::make_unique<UltClDeviceFactory>(4, 0);
     auto device1 = deviceFactory->rootDevices[1];
     auto device2 = deviceFactory->rootDevices[2];
     auto device3 = deviceFactory->rootDevices[3];
-
-    auto mockCsr1 = new MockCommandStreamReceiver(*device1->executionEnvironment, device1->getRootDeviceIndex(), device1->getDeviceBitfield());
-    auto mockCsr2 = new MockCommandStreamReceiver(*device2->executionEnvironment, device2->getRootDeviceIndex(), device2->getDeviceBitfield());
-    auto mockCsr3 = new MockCommandStreamReceiver(*device3->executionEnvironment, device3->getRootDeviceIndex(), device3->getDeviceBitfield());
-
-    device1->resetCommandStreamReceiver(mockCsr1);
-    device2->resetCommandStreamReceiver(mockCsr2);
-    device3->resetCommandStreamReceiver(mockCsr3);
 
     cl_device_id devices[] = {device1, device2, device3};
 

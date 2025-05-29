@@ -2770,14 +2770,27 @@ TEST_F(DeviceGetStatusTest, givenCallToDeviceGetStatusThenCorrectErrorCodeIsRetu
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
 }
 
-TEST_F(DeviceGetStatusTest, givenCallToDeviceGetStatusThenCorrectErrorCodeIsReturnedWhenGpuHangs) {
+struct DeviceGetStatusTestWithMockCsr : public DeviceGetStatusTest {
+
+    void SetUp() override {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCommandStreamReceiver>();
+
+        DeviceGetStatusTest::SetUp();
+    }
+
+    void TearDown() override {
+        DeviceGetStatusTest::TearDown();
+    }
+};
+
+TEST_F(DeviceGetStatusTestWithMockCsr, givenCallToDeviceGetStatusThenCorrectErrorCodeIsReturnedWhenGpuHangs) {
     ze_result_t res = device->getStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto mockCSR = new MockCommandStreamReceiver(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    auto mockCSR = static_cast<MockCommandStreamReceiver *>(&neoDevice->getGpgpuCommandStreamReceiver());
     mockCSR->isGpuHangDetectedReturnValue = true;
 
-    neoDevice->resetCommandStreamReceiver(mockCSR);
     res = device->getStatus();
 
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);

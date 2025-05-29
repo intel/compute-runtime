@@ -1066,7 +1066,26 @@ INSTANTIATE_TEST_SUITE_P(
     WddmCsrCompressionParameterizedTest,
     ::testing::Bool());
 
-HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontInitTranslationTable) {
+struct WddmCsrCompressionTestsWithMockWddmCsr : public WddmCsrCompressionTests {
+
+    void SetUp() override {}
+
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockWddmCsr<FamilyType>>();
+        WddmCsrCompressionTests::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        WddmCsrCompressionTests::TearDown();
+    }
+};
+
+HWTEST_TEMPLATED_F(WddmCsrCompressionTestsWithMockWddmCsr, givenDisabledCompressionWhenFlushingThenDontInitTranslationTable) {
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 2);
     setCompressionEnabled(false, false);
     myMockWddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
@@ -1075,9 +1094,8 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
 
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 1u));
 
-    auto mockWddmCsr = new MockWddmCsr<FamilyType>(*executionEnvironment, 1, device->getDeviceBitfield());
+    auto mockWddmCsr = static_cast<MockWddmCsr<FamilyType> *>(&device->getGpgpuCommandStreamReceiver());
     mockWddmCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    device->resetCommandStreamReceiver(mockWddmCsr);
 
     auto memoryManager = executionEnvironment->memoryManager.get();
     for (auto engine : memoryManager->getRegisteredEngines(device->getRootDeviceIndex())) {

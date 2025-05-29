@@ -128,13 +128,32 @@ struct EnqueueHandlerWithAubSubCaptureTests : public EnqueueHandlerTest {
     };
 };
 
-HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCaptureWhenSubCaptureIsNotActiveThenEnqueueIsMadeBlocking) {
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.AUBDumpSubCaptureMode.set(1);
+struct EnqueueHandlerWithAubSubCaptureTestsWithMockAubCsr : public EnqueueHandlerWithAubSubCaptureTests {
 
+    void SetUp() override {}
+
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockAubCsr<FamilyType>>();
+        debugManager.flags.AUBDumpSubCaptureMode.set(1);
+
+        EnqueueHandlerWithAubSubCaptureTests::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        EnqueueHandlerWithAubSubCaptureTests::TearDown();
+    }
+
+    DebugManagerStateRestore stateRestore;
+};
+
+HWTEST_TEMPLATED_F(EnqueueHandlerWithAubSubCaptureTestsWithMockAubCsr, givenEnqueueHandlerWithAubSubCaptureWhenSubCaptureIsNotActiveThenEnqueueIsMadeBlocking) {
     UnitTestSetter::disableHeaplessStateInit(stateRestore);
-    auto aubCsr = new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(aubCsr);
+    auto aubCsr = static_cast<MockAubCsr<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     AubSubCaptureCommon subCaptureCommon;
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::filter;
@@ -151,12 +170,8 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCapt
     EXPECT_TRUE(cmdQ.waitUntilCompleteCalled);
 }
 
-HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueMarkerWithAubSubCaptureWhenSubCaptureIsNotActiveThenEnqueueIsMadeBlocking) {
-    DebugManagerStateRestore stateRestore;
-    debugManager.flags.AUBDumpSubCaptureMode.set(1);
-
-    auto aubCsr = new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(aubCsr);
+HWTEST_TEMPLATED_F(EnqueueHandlerWithAubSubCaptureTestsWithMockAubCsr, givenEnqueueMarkerWithAubSubCaptureWhenSubCaptureIsNotActiveThenEnqueueIsMadeBlocking) {
+    auto aubCsr = static_cast<MockAubCsr<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     AubSubCaptureCommon subCaptureCommon;
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::filter;

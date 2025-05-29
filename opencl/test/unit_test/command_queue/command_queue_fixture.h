@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,6 +135,27 @@ struct CommandQueueHwTest
 
     cl_command_queue_properties properties;
     const HardwareInfo *pHwInfo = nullptr;
+};
+
+template <template <typename> class CsrType>
+struct CommandQueueHwTestWithCsrT
+    : public CommandQueueHwTest {
+
+    void SetUp() override {}
+
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<CsrType<FamilyType>>();
+        CommandQueueHwTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        CommandQueueHwTest::TearDown();
+    }
 };
 
 struct OOQueueHwTest : public ClDeviceFixture,
