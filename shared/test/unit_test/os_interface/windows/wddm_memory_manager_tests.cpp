@@ -86,6 +86,8 @@ class MockAllocateGraphicsMemoryWithAlignmentWddm : public MemoryManagerCreate<W
 
 class WddmMemoryManagerTests : public ::testing::Test {
   public:
+    static constexpr uint32_t rootDeviceIndex{0U};
+
     std::unique_ptr<VariableBackup<bool>> returnEmptyFilesVectorBackup;
 
     MockAllocateGraphicsMemoryWithAlignmentWddm *memoryManager = nullptr;
@@ -99,7 +101,7 @@ class WddmMemoryManagerTests : public ::testing::Test {
 
         memoryManager = new MockAllocateGraphicsMemoryWithAlignmentWddm(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
+        wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Wddm>());
     }
 
     void TearDown() override {
@@ -114,6 +116,9 @@ TEST_F(WddmMemoryManagerTests, GivenLocalMemoryAllocationModeReleaseKeyWhenWddmM
         debugManager.flags.NEO_LOCAL_MEMORY_ALLOCATION_MODE.set(releaseKeyVal);
         WddmMemoryManager memoryManager{*executionEnvironment};
         EXPECT_EQ(memoryManager.usmDeviceAllocationMode, toLocalMemAllocationMode(releaseKeyVal));
+        EXPECT_EQ(memoryManager.isLocalOnlyAllocationMode(), memoryManager.getGmmHelper(rootDeviceIndex)->isLocalOnlyAllocationMode());
+
+        memoryManager.getGmmHelper(rootDeviceIndex)->setLocalOnlyAllocationMode(false);
     }
 }
 

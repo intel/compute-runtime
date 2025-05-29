@@ -60,10 +60,15 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
         deferredDeleter = createDeferredDeleter();
     mallocRestrictions.minAddress = 0u;
 
+    usmDeviceAllocationMode = toLocalMemAllocationMode(debugManager.flags.NEO_LOCAL_MEMORY_ALLOCATION_MODE.get());
+
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         mallocRestrictions.minAddress = std::max(mallocRestrictions.minAddress, getWddm(rootDeviceIndex).getWddmMinAddress());
         getWddm(rootDeviceIndex).initGfxPartition(*getGfxPartition(rootDeviceIndex), rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh);
         isLocalMemoryUsedForIsa(rootDeviceIndex);
+        if (isLocalOnlyAllocationMode()) {
+            getGmmHelper(rootDeviceIndex)->setLocalOnlyAllocationMode(true);
+        }
     }
 
     alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage);
@@ -76,7 +81,6 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
         alignmentSelector.addCandidateAlignment(customAlignment, false, AlignmentSelector::anyWastage);
     }
     osMemory = OSMemory::create();
-    usmDeviceAllocationMode = toLocalMemAllocationMode(debugManager.flags.NEO_LOCAL_MEMORY_ALLOCATION_MODE.get());
 
     initialized = true;
 }

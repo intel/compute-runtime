@@ -80,7 +80,7 @@ class Gmm {
   protected:
     void applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed);
     void setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed);
-    bool extraMemoryFlagsRequired();
+    MOCKABLE_VIRTUAL bool extraMemoryFlagsRequired();
     void applyExtraMemoryFlags(const StorageInfo &storageInfo);
     void applyDebugOverrides();
     GmmHelper *gmmHelper = nullptr;

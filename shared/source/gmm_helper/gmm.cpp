@@ -398,11 +398,16 @@ void Gmm::applyMemoryFlags(const StorageInfo &storageInfo) {
         if (storageInfo.systemMemoryPlacement) {
             resourceParams.Flags.Info.NonLocalOnly = 1;
         } else {
-            if (extraMemoryFlagsRequired()) {
+            // `extraMemoryFlagsRequired()` is only virtual in tests where it is overriden by a mock for no better alternative
+            const bool extraFlagsRequired{extraMemoryFlagsRequired()}; // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
+            if (extraFlagsRequired) {
                 applyExtraMemoryFlags(storageInfo);
-            } else if (!storageInfo.isLockable) {
-                if (storageInfo.localOnlyRequired) {
-                    resourceParams.Flags.Info.LocalOnly = 1;
+            }
+            if (!extraFlagsRequired || gmmHelper->isLocalOnlyAllocationMode()) {
+                if (!storageInfo.isLockable) {
+                    if (storageInfo.localOnlyRequired) {
+                        resourceParams.Flags.Info.LocalOnly = 1;
+                    }
                 }
             }
         }

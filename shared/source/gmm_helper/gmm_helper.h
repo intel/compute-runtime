@@ -39,6 +39,8 @@ class GmmHelper {
     void setAddressWidth(uint32_t width) { addressWidth = width; };
 
     bool isValidCanonicalGpuAddress(uint64_t address);
+    void setLocalOnlyAllocationMode(bool value) { localOnlyAllocationModeEnabled = value; }
+    bool isLocalOnlyAllocationMode() { return localOnlyAllocationModeEnabled; }
 
     GmmClientContext *getClientContext() const;
 
@@ -53,5 +55,6 @@ class GmmHelper {
     uint32_t mocsL3Enabled = 0;
     uint32_t mocsUncached = 0;
     bool allResourcesUncached = false;
+    bool localOnlyAllocationModeEnabled = false;
 };
 } // namespace NEO

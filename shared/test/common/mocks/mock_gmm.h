@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {
 namespace MockGmmParams {
@@ -24,6 +25,8 @@ class MockGmm : public Gmm {
     using Gmm::setupImageResourceParams;
 
     MockGmm(GmmHelper *gmmHelper) : Gmm(gmmHelper, nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, GmmRequirements{true, false}){};
+
+    ADDMETHOD_NOBASE(extraMemoryFlagsRequired, bool, false, ());
 
     static std::unique_ptr<Gmm> queryImgParams(GmmHelper *gmmHelper, ImageInfo &imgInfo, bool preferCompression) {
         return std::unique_ptr<Gmm>(new Gmm(gmmHelper, imgInfo, {}, preferCompression));

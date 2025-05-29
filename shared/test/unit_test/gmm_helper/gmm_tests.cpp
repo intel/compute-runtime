@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -151,4 +151,26 @@ HWTEST_F(GmmTests, givenVariousCacheableDebugSettingsTheCacheableFieldIsProgramm
     EXPECT_TRUE(gmm2->resourceParams.Flags.Info.Cacheable);
 }
 
+HWTEST_F(GmmTests, givenGmmHelperWhenLocalOnlyAllocationModeSetThenRespectiveFlagForGmmResourceIsSet) {
+    auto *gmmHelper{getGmmHelper()};
+    gmmHelper->getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    gmmHelper->setLocalOnlyAllocationMode(true);
+
+    StorageInfo storageInfo{};
+    storageInfo.systemMemoryPlacement = false;
+    storageInfo.isLockable = false;
+    storageInfo.localOnlyRequired = true;
+
+    auto gmm = std::make_unique<MockGmm>(gmmHelper);
+
+    gmm->resourceParams.Flags.Info.LocalOnly = false;
+    gmm->extraMemoryFlagsRequiredResult = false;
+    gmm->applyMemoryFlags(storageInfo);
+    EXPECT_TRUE(gmm->resourceParams.Flags.Info.LocalOnly);
+
+    gmm->resourceParams.Flags.Info.LocalOnly = false;
+    gmm->extraMemoryFlagsRequiredResult = true;
+    gmm->applyMemoryFlags(storageInfo);
+    EXPECT_TRUE(gmm->resourceParams.Flags.Info.LocalOnly);
+}
 } // namespace NEO
