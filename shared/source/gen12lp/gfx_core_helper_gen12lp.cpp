@@ -60,7 +60,7 @@ bool GfxCoreHelperHw<GfxFamily>::makeResidentBeforeLockNeeded(bool precondition)
 }
 
 template <typename GfxFamily>
-inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const {
+inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return std::min(defaultMaxGroupSize, CommonConstants::maxWorkgroupSize);
 }
 

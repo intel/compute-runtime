@@ -96,10 +96,11 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bo
 }
 
 template <typename GfxFamily>
-inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const {
+inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     if (kernelDescriptor.kernelAttributes.simdSize != 32 && kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::largeGrfNumber) {
         defaultMaxGroupSize >>= 1;
     }
+    defaultMaxGroupSize = adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, defaultMaxGroupSize, rootDeviceEnvironment);
     return std::min(defaultMaxGroupSize, CommonConstants::maxWorkgroupSize);
 }
 

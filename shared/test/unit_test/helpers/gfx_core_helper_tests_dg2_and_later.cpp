@@ -64,22 +64,40 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1Cache
 using GfxCoreHelperWithLargeGrf = ::testing::Test;
 HWTEST2_F(GfxCoreHelperWithLargeGrf, givenLargeGrfAndSimdSmallerThan32WhenCalculatingMaxWorkGroupSizeThenReturnHalfOfDeviceDefault, IsWithinXeGfxFamily) {
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto defaultMaxGroupSize = 42u;
 
     NEO::KernelDescriptor kernelDescriptor{};
 
     kernelDescriptor.kernelAttributes.simdSize = 16;
     kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
-    EXPECT_EQ((defaultMaxGroupSize >> 1), gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
+    EXPECT_EQ((defaultMaxGroupSize >> 1), gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize, rootDeviceEnvironment));
 
     kernelDescriptor.kernelAttributes.simdSize = 32;
     kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize, rootDeviceEnvironment));
 
     kernelDescriptor.kernelAttributes.simdSize = 16;
     kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize, rootDeviceEnvironment));
+}
+
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCallCalculateMaxWorkGroupSizeThenMethodAdjustMaxWorkGroupSizeIsCalled, IsWithinXeGfxFamily) {
+    static bool isCalledAdjustMaxWorkGroupSize = false;
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+        uint32_t adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const override {
+            isCalledAdjustMaxWorkGroupSize = true;
+            return defaultMaxGroupSize;
+        }
+    };
+    MockGfxCoreHelper gfxCoreHelper;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    NEO::KernelDescriptor kernelDescriptor{};
+    auto defaultMaxGroupSize = 42u;
+    gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize, rootDeviceEnvironment);
+    EXPECT_TRUE(isCalledAdjustMaxWorkGroupSize);
 }
 
 using PipeControlHelperTestsDg2AndLater = ::testing::Test;

@@ -1514,18 +1514,20 @@ HWTEST2_F(GfxCoreHelperTest, givenLargeGrfIsNotSupportedWhenCalculatingMaxWorkGr
     auto defaultMaxGroupSize = 42u;
 
     NEO::KernelDescriptor kernelDescriptor{};
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     kernelDescriptor.kernelAttributes.simdSize = 16;
     kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize, rootDeviceEnvironment));
 
     kernelDescriptor.kernelAttributes.simdSize = 32;
     kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize, rootDeviceEnvironment));
 
     kernelDescriptor.kernelAttributes.simdSize = 16;
     kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize, rootDeviceEnvironment));
 }
 
 HWTEST_F(GfxCoreHelperTest, whenIsDynamicallyPopulatedisTrueThengetHighestEnabledSliceReturnsHighestEnabledSliceInfo) {

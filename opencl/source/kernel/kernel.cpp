@@ -2234,10 +2234,9 @@ bool Kernel::areMultipleSubDevicesInContext() const {
 void Kernel::reconfigureKernel() {
     const auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     const auto &gfxCoreHelper = this->getGfxCoreHelper();
-    auto maxWorkGroupSize = gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, this->maxKernelWorkGroupSize);
-    maxWorkGroupSize = static_cast<uint32_t>(kernelInfo.getMaxRequiredWorkGroupSize(maxWorkGroupSize));
+    auto &rootDeviceEnvironment = getDevice().getRootDeviceEnvironment();
 
-    this->maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, maxWorkGroupSize, getDevice().getRootDeviceEnvironment());
+    this->maxKernelWorkGroupSize = gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, this->maxKernelWorkGroupSize, rootDeviceEnvironment);
 
     this->containsStatelessWrites = kernelDescriptor.kernelAttributes.flags.usesStatelessWrites;
     this->systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
