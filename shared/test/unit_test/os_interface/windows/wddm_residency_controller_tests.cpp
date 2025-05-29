@@ -862,6 +862,23 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
 }
 
+TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenResidencyContainerIsCleared) {
+    MockWddmAllocation allocation1(gmmHelper);
+    MockWddmAllocation allocation2(gmmHelper);
+    MockWddmAllocation allocation3(gmmHelper);
+    MockWddmAllocation allocation4(gmmHelper);
+
+    wddm->makeResidentNumberOfBytesToTrim = 4 * 4096;
+    wddm->makeResidentStatus = false;
+
+    ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
+    bool requiresBlockingResidencyHandling = true;
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
+
+    EXPECT_FALSE(result);
+    EXPECT_EQ(residencyPack.size(), 0u);
+}
+
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenDontMarkTripleAllocationsAsResident) {
     MockWddmAllocation allocation1(gmmHelper);
     MockWddmAllocation allocation2(gmmHelper);

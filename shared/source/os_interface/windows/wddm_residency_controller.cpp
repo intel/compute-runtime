@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,8 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
                 residencyData->updateCompletionData(currentFence, this->osContextId);
             }
         }
+    } else {
+        allocationsForResidency.clear();
     }
 
     return result;
