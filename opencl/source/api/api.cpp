@@ -494,12 +494,12 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
         }
 
         DEBUG_BREAK_IF(numDevices <= 0);
-        cl_device_id device = nullptr;
+        std::vector<cl_device_id> devices(numDevices, nullptr);
 
-        retVal = clGetDeviceIDs(pPlatform, deviceType, 1, &device, nullptr);
+        retVal = clGetDeviceIDs(pPlatform, deviceType, numDevices, devices.data(), nullptr);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
 
-        ClDeviceVector deviceVector(&device, 1);
+        ClDeviceVector deviceVector(devices.data(), numDevices);
         context = Context::create<Context>(properties, deviceVector, funcNotify, userData, retVal);
     } while (false);
 

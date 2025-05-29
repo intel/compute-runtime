@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,7 +106,7 @@ TEST_F(ClCreateContextFromTypeTests, GivenNonDefaultPlatformWithInvalidIcdDispat
     EXPECT_EQ(nullptr, clContext);
 }
 
-TEST(clCreateContextFromTypeTest, GivenPlatformWithMultipleDevicesWhenCreatingContextFromTypeThenContextContainsOnlyOneDevice) {
+TEST(clCreateContextFromTypeTest, GivenPlatformWithMultipleDevicesWhenCreatingContextFromTypeThenContextContainsAllDevices) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleRootDevices.set(2);
 
@@ -121,8 +121,9 @@ TEST(clCreateContextFromTypeTest, GivenPlatformWithMultipleDevicesWhenCreatingCo
     ASSERT_NE(nullptr, context);
 
     auto pContext = castToObject<Context>(context);
-    EXPECT_EQ(1u, pContext->getNumDevices());
+    EXPECT_EQ(2u, pContext->getNumDevices());
     EXPECT_EQ(platform()->getClDevice(0), pContext->getDevice(0));
+    EXPECT_EQ(platform()->getClDevice(1), pContext->getDevice(1));
 
     retVal = clReleaseContext(context);
     ASSERT_EQ(CL_SUCCESS, retVal);
