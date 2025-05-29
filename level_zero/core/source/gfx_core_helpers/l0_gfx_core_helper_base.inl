@@ -13,10 +13,11 @@
 #include "shared/source/utilities/stackvec.h"
 #include "shared/source/utilities/tag_allocator.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+
+#include "copy_offload_mode.h"
 
 namespace L0 {
 

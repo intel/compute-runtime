@@ -8,6 +8,7 @@
 #pragma once
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include <level_zero/ze_api.h>
 
 namespace L0 {

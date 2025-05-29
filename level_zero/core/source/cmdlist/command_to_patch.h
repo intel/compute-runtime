@@ -1,0 +1,46 @@
+/*
+ * Copyright (C) 2025 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
+namespace L0 {
+
+struct CommandToPatch {
+    enum CommandType {
+        FrontEndState,
+        PauseOnEnqueueSemaphoreStart,
+        PauseOnEnqueueSemaphoreEnd,
+        PauseOnEnqueuePipeControlStart,
+        PauseOnEnqueuePipeControlEnd,
+        ComputeWalker,
+        SignalEventPostSyncPipeControl,
+        WaitEventSemaphoreWait,
+        TimestampEventPostSyncStoreRegMem,
+        CbEventTimestampPostSyncSemaphoreWait,
+        CbEventTimestampClearStoreDataImm,
+        CbWaitEventSemaphoreWait,
+        CbWaitEventLoadRegisterImm,
+        ComputeWalkerInlineDataScratch,
+        ComputeWalkerImplicitArgsScratch,
+        NoopSpace,
+        Invalid
+    };
+    void *pDestination = nullptr;
+    void *pCommand = nullptr;
+    size_t offset = 0;
+    CommandType type = Invalid;
+    size_t inOrderPatchListIndex = 0;
+    size_t patchSize = 0;
+    uint64_t baseAddress = 0;
+};
+
+using CommandToPatchContainer = std::vector<CommandToPatch>;
+} // namespace L0

@@ -214,6 +214,7 @@ if(BUILD_WITH_L0)
 
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist/cmdlist_extended${BRANCH_DIR_SUFFIX})
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist/definitions${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/driver/definitions${BRANCH_DIR_SUFFIX})
 
   # Create our shared library/DLL

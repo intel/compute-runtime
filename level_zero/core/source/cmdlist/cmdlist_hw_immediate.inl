@@ -27,6 +27,7 @@
 #include "shared/source/utilities/wait_util.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device_imp.h"

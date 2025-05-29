@@ -8,45 +8,15 @@
 #pragma once
 
 #include "shared/source/helpers/definitions/command_encoder_args.h"
-#include "shared/source/helpers/extendable_enum.h"
+
+#include "level_zero/core/source/cmdlist/command_to_patch.h"
+
+#include "cmdlist_launch_params_ext.h"
 
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 
 namespace L0 {
-struct CmdListKernelLaunchParamsExt;
-
-struct CommandToPatch {
-    enum CommandType {
-        FrontEndState,
-        PauseOnEnqueueSemaphoreStart,
-        PauseOnEnqueueSemaphoreEnd,
-        PauseOnEnqueuePipeControlStart,
-        PauseOnEnqueuePipeControlEnd,
-        ComputeWalker,
-        SignalEventPostSyncPipeControl,
-        WaitEventSemaphoreWait,
-        TimestampEventPostSyncStoreRegMem,
-        CbEventTimestampPostSyncSemaphoreWait,
-        CbEventTimestampClearStoreDataImm,
-        CbWaitEventSemaphoreWait,
-        CbWaitEventLoadRegisterImm,
-        ComputeWalkerInlineDataScratch,
-        ComputeWalkerImplicitArgsScratch,
-        NoopSpace,
-        Invalid
-    };
-    void *pDestination = nullptr;
-    void *pCommand = nullptr;
-    size_t offset = 0;
-    CommandType type = Invalid;
-    size_t inOrderPatchListIndex = 0;
-    size_t patchSize = 0;
-    uint64_t baseAddress = 0;
-};
-
-using CommandToPatchContainer = std::vector<CommandToPatch>;
 
 struct CmdListKernelLaunchParams {
     void *outWalker = nullptr;
@@ -54,7 +24,7 @@ struct CmdListKernelLaunchParams {
     void *hostPayloadBuffer = nullptr;
     CommandToPatch *outSyncCommand = nullptr;
     CommandToPatchContainer *outListCommands = nullptr;
-    CmdListKernelLaunchParamsExt *launchParamsExt = nullptr;
+    CmdListKernelLaunchParamsExt launchParamsExt{};
     size_t syncBufferPatchIndex = std::numeric_limits<size_t>::max();
     size_t regionBarrierPatchIndex = std::numeric_limits<size_t>::max();
     uint32_t externalPerThreadScratchSize[2] = {0U, 0U};
@@ -82,21 +52,4 @@ struct CmdListKernelLaunchParams {
     bool makeKernelCommandView = false;
     bool relaxedOrderingDispatch = false;
 };
-
-struct CmdListMemoryCopyParams {
-    bool relaxedOrderingDispatch = false;
-    bool forceDisableCopyOnlyInOrderSignaling = false;
-    bool copyOffloadAllowed = false;
-};
-
-struct CopyOffloadMode : ExtendableEnum {
-  public:
-    constexpr CopyOffloadMode(uint32_t val) : ExtendableEnum(val) {}
-};
-
-namespace CopyOffloadModes {
-static constexpr CopyOffloadMode disabled = 0;
-static constexpr CopyOffloadMode dualStream = 1;
-} // namespace CopyOffloadModes
-
 } // namespace L0

@@ -19,11 +19,13 @@
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
+#include "level_zero/core/source/cmdlist/command_to_patch.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/include/level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
+
+#include "copy_offload_mode.h"
 
 #include <map>
 #include <optional>
@@ -44,6 +46,8 @@ struct EventPool;
 struct Event;
 struct Kernel;
 struct CommandQueue;
+struct CmdListKernelLaunchParams;
+struct CmdListMemoryCopyParams;
 
 struct CmdListReturnPoint {
     NEO::StreamProperties configSnapshot;
