@@ -103,7 +103,7 @@ class DirectSubmissionHw {
     uint32_t getRelaxedOrderingQueueSize() const { return currentRelaxedOrderingQueueSize; }
 
   protected:
-    struct SemaphoreFenceHelper {
+    struct SemaphoreFenceHelper : public NonCopyableAndNonMovableClass {
         SemaphoreFenceHelper(const auto &directSubmission) : directSubmission(directSubmission) {
             if (directSubmission.sfenceMode >= DirectSubmissionSfenceMode::beforeSemaphoreOnly) {
                 if (!directSubmission.miMemFenceRequired && !directSubmission.pciBarrierPtr && !directSubmission.hwInfo->capabilityTable.isIntegratedDevice) {
