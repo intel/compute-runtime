@@ -41,6 +41,7 @@ enum class AILEnumeration : uint32_t {
     disableHostPtrTracking,
     enableLegacyPlatformName,
     disableDirectSubmission,
+    disableDirectSubmissionAllEngines,
     handleDivergentBarriers,
     disableBindlessAddressing,
 };
