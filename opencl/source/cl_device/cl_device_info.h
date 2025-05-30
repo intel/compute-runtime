@@ -146,6 +146,9 @@ struct ClDeviceInfo {
     cl_device_integer_dot_product_capabilities_khr                                integerDotCapabilities;
     cl_device_integer_dot_product_acceleration_properties_khr                     integerDotAccelerationProperties8Bit;
     cl_device_integer_dot_product_acceleration_properties_khr                     integerDotAccelerationProperties4x8BitPacked;
+    std::vector<const char*>                                                      spirvExtensions;
+    std::vector<const char*>                                                      spirvExtendedInstructionSets;
+    std::vector<cl_uint>                                                          spirvCapabilities;
 };
 // clang-format on
 

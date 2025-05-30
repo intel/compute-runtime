@@ -117,6 +117,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_spirv_subgroups ";
         extensions += "cl_khr_spirv_linkonce_odr ";
         extensions += "cl_khr_spirv_no_integer_wrap_decoration ";
+        extensions += "cl_khr_spirv_queries ";
 
         extensions += "cl_intel_unified_shared_memory ";
         if (hwInfo.capabilityTable.supportsImages) {

@@ -145,6 +145,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     void initializeExtensionsWithVersion();
     void initializeOpenclCAllVersions();
     void initializeILsWithVersion();
+    void initializeSpirvQueries();
     void initializeOsSpecificCaps();
     void initializeMaxPoolCount();
     void initGTPinHelper();
@@ -165,6 +166,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
 
     ClDeviceInfo deviceInfo = {};
     std::once_flag initializeExtensionsWithVersionOnce;
+    std::once_flag initializeSpirvQueriesOnce;
 
     std::vector<unsigned int> simultaneousInterops = {0};
     std::string compilerExtensions;

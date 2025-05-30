@@ -349,6 +349,27 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         src = getSharedDeviceInfo().threadsPerEUConfigs.begin();
         retSize = srcSize = (getSharedDeviceInfo().threadsPerEUConfigs.size() * sizeof(uint32_t));
         break;
+    case CL_DEVICE_SPIRV_EXTENSIONS_KHR:
+        std::call_once(initializeSpirvQueriesOnce, [this]() {
+            this->initializeSpirvQueries();
+        });
+        src = deviceInfo.spirvExtensions.data();
+        retSize = srcSize = deviceInfo.spirvExtensions.size() * sizeof(const char *);
+        break;
+    case CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR:
+        std::call_once(initializeSpirvQueriesOnce, [this]() {
+            this->initializeSpirvQueries();
+        });
+        src = deviceInfo.spirvExtendedInstructionSets.data();
+        retSize = srcSize = deviceInfo.spirvExtendedInstructionSets.size() * sizeof(const char *);
+        break;
+    case CL_DEVICE_SPIRV_CAPABILITIES_KHR:
+        std::call_once(initializeSpirvQueriesOnce, [this]() {
+            this->initializeSpirvQueries();
+        });
+        src = deviceInfo.spirvCapabilities.data();
+        retSize = srcSize = deviceInfo.spirvCapabilities.size() * sizeof(cl_uint);
+        break;
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize)) {
             if (false == getSharedDeviceInfo().imageSupport) {
