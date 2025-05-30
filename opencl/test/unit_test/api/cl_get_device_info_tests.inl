@@ -284,7 +284,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
     }
 }
 
-TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamWhenGettingDeviceInfoThenSpirv10To13IsReturned) {
+TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamWhenGettingDeviceInfoThenSpirv10To15IsReturned) {
     size_t paramRetSize = 0;
 
     cl_int retVal = clGetDeviceInfo(
@@ -306,7 +306,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamWhenGettingDeviceInfoThe
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_STREQ("SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ", paramValue.get());
+    EXPECT_STREQ("SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ", paramValue.get());
 }
 
 using matcherAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;

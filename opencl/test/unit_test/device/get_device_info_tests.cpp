@@ -539,7 +539,7 @@ TEST(GetDeviceInfo, GivenPreferredInteropsWhenGettingDeviceInfoThenCorrectValueI
 TEST(GetDeviceInfo, WhenQueryingIlsWithVersionThenProperValueIsReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    constexpr auto ilCount = 4;
+    constexpr auto ilCount = 6;
     cl_name_version ilsWithVersion[ilCount];
     size_t paramRetSize;
 
@@ -548,8 +548,9 @@ TEST(GetDeviceInfo, WhenQueryingIlsWithVersionThenProperValueIsReturned) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_name_version) * ilCount, paramRetSize);
     for (int i = 0; i < ilCount; i++) {
+        const unsigned minor = ilCount - i - 1;
         EXPECT_EQ(1u, CL_VERSION_MAJOR(ilsWithVersion[i].version));
-        EXPECT_GT(4u, CL_VERSION_MINOR(ilsWithVersion[i].version));
+        EXPECT_EQ(minor, CL_VERSION_MINOR(ilsWithVersion[i].version));
         EXPECT_EQ(0u, CL_VERSION_PATCH(ilsWithVersion[i].version));
         EXPECT_STREQ("SPIR-V", ilsWithVersion[i].name);
     }
