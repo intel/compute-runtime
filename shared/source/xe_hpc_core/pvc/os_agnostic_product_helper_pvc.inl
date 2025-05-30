@@ -84,7 +84,7 @@ bool ProductHelperHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo 
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return !PVC::isXlA0(hwInfo);
 }
 

@@ -93,7 +93,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
     auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
-    bool requiresMemorySynchronization = (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(rootDeviceEnvironment) > 0) ? true : false;
+    bool requiresMemorySynchronization = (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment) > 0) ? true : false;
 
     for (auto ftrLocalMemory : ::testing::Bool()) {
         LinearStream stream(buffer, 128);

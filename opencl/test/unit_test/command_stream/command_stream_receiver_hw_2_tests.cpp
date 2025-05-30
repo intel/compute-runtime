@@ -92,7 +92,7 @@ HWTEST_F(BcsTests, givenDebugCapabilityWhenEstimatingCommandSizeThenAddAllRequir
     constexpr size_t bltSize = (numberOfBlts * max2DBlitSize);
 
     waArgs.isWaRequired = true;
-    auto expectedSize = (cmdsSizePerBlit * numberOfBlts) + debugCommandsSize + (2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment())) +
+    auto expectedSize = (cmdsSizePerBlit * numberOfBlts) + debugCommandsSize + (2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment())) +
                         EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSize = alignUp(expectedSize, MemoryConstants::cacheLineSize);
 
@@ -123,7 +123,7 @@ HWTEST_F(BcsTests, givenRelaxedOrderingEnabledWhenEstimatingCommandSizeThenAddAl
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp);
 
     waArgs.isWaRequired = true;
-    auto expectedSize = cmdsSizePerBlit + (2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment())) +
+    auto expectedSize = cmdsSizePerBlit + (2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment())) +
                         EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END) +
                         TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(blitProperties.csrDependencies, true) + (2 * EncodeSetMMIO<FamilyType>::sizeREG);
     expectedSize = alignUp(expectedSize, MemoryConstants::cacheLineSize);

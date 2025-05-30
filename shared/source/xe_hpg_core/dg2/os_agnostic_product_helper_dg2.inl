@@ -65,7 +65,7 @@ uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo 
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
     return true;
 }
 

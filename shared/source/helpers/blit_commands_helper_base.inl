@@ -171,7 +171,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
     }
     waArgs.isWaRequired = true;
     size += BlitCommandsHelper<GfxFamily>::getWaCmdsSize(blitPropertiesContainer);
-    size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(rootDeviceEnvironment);
+    size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
     size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
     size += blitterDirectSubmission ? sizeof(typename GfxFamily::MI_BATCH_BUFFER_START) : sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
 

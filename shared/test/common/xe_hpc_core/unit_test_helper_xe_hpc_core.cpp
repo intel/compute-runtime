@@ -30,7 +30,7 @@ template <>
 bool UnitTestHelper<Family>::isAdditionalMiSemaphoreWaitRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo);
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }

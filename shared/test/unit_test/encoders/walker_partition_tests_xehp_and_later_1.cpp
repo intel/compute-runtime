@@ -1515,7 +1515,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
     size_t parsedOffset = 0;
 
-    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
 
     if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment)) {
         constexpr uint64_t zeroGpuAddress = 0;
@@ -1618,7 +1618,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     EXPECT_EQ(expectedData, finalSyncTileCountFieldStore->getDataDword0());
     parsedOffset += sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>);
 
-    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
 
     if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment)) {
         constexpr uint64_t zeroGpuAddress = 0;
@@ -1767,7 +1767,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     EXPECT_EQ(expectedData, finalSyncTileCountFieldAtomic->getOperand1DataDword0());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
-    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
 
     if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment)) {
         constexpr uint64_t zeroGpuAddress = 0;

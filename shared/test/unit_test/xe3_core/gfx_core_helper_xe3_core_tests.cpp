@@ -524,7 +524,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenGfxCoreHelperWhenAskedIfFenceAllo
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
@@ -532,14 +532,14 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDebugMemorySynchronizationCommand
     debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * 2 * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice * 2 * sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
 
-    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
@@ -548,7 +548,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenProgramGlobalFenceAsMiMemFenceCom
 
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDefaultMemorySynchronizationCommandsWhenAddingAdditionalSynchronizationThenMemoryFenceIsReleased) {
@@ -560,9 +560,9 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDefaultMemorySynchronizationComma
     uint8_t buffer[128] = {};
     LinearStream commandStream(buffer, 128);
 
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, false, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, NEO::FenceType::release, rootDeviceEnvironment);
 
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(rootDeviceEnvironment) > 0) {
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment) > 0) {
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(commandStream);
         EXPECT_EQ(1u, hwParser.cmdList.size());
@@ -585,7 +585,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDontProgramGlobalFenceAsMiMemFenc
     LinearStream commandStream(buffer, 128);
     uint64_t gpuAddress = 0x12345678;
 
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, false, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, NEO::FenceType::release, rootDeviceEnvironment);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream);
@@ -609,7 +609,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenProgramGlobalFenceAsMiMemFenceCom
     uint8_t buffer[128] = {};
     LinearStream commandStream(buffer, 128);
 
-    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, false, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, 0x0, NEO::FenceType::release, rootDeviceEnvironment);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream);
@@ -697,7 +697,7 @@ XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenIsBlitterForImage
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenAskingForGlobalFenceSupportThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_EQ(productHelper.isGlobalFenceInCommandStreamRequired(*defaultHwInfo), !defaultHwInfo->capabilityTable.isIntegratedDevice);
+    EXPECT_EQ(productHelper.isReleaseGlobalFenceInCommandStreamRequired(*defaultHwInfo), !defaultHwInfo->capabilityTable.isIntegratedDevice);
 }
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCallDeferMOCSToPatThenTrueIsReturned) {

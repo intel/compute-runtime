@@ -835,7 +835,7 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenS
         PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
         ASSERT_NE(nullptr, pipeControl);
         cmdItor++;
-        if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment) > 0) {
+        if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment) > 0) {
             cmdItor++;
         }
     }
@@ -882,7 +882,7 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenS
         PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
         ASSERT_NE(nullptr, pipeControl);
         cmdItor++;
-        if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment) > 0) {
+        if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment) > 0) {
             cmdItor++;
         }
     }
@@ -936,7 +936,7 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenS
         PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
         ASSERT_NE(nullptr, pipeControl);
         cmdItor++;
-        if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment) > 0) {
+        if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment) > 0) {
             cmdItor++;
         }
     }
@@ -949,7 +949,7 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenS
     EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
     cmdItor++;
 
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment) > 0) {
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment) > 0) {
         cmdItor++;
     }
 

@@ -63,14 +63,14 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenPrope
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
-    EXPECT_EQ(sizeof(typename FamilyType::MI_MEM_FENCE), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(sizeof(typename FamilyType::MI_MEM_FENCE), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
-    EXPECT_EQ(2 * sizeof(typename FamilyType::MI_MEM_FENCE), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(2 * sizeof(typename FamilyType::MI_MEM_FENCE), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue) {
@@ -132,9 +132,9 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenMemorySynchronizationCommandsWhenAddingSyn
             testInput.programGlobalFenceAsMiMemFenceCommandInCommandStream);
 
         LinearStream commandStream(buffer, 128);
-        auto synchronizationSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+        auto synchronizationSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
 
-        MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, false, rootDeviceEnvironment);
+        MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, NEO::FenceType::release, rootDeviceEnvironment);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(commandStream);

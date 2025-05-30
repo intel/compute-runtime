@@ -3305,7 +3305,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             }
 
             uint64_t baseAddr = event->getGpuAddress(this->device);
-            NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), baseAddr, false, rootDeviceEnvironment);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), baseAddr, NEO::FenceType::release, rootDeviceEnvironment);
             appendWriteKernelTimestamp(event, outTimeStampSyncCmds, beforeWalker, true, workloadPartition, copyOperation);
         }
 
@@ -4093,7 +4093,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         (allocType == NEO::AllocationType::bufferHostMemory) ||
         (allocType == NEO::AllocationType::externalHostPtr);
     if (isSystemMemoryUsed) {
-        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, rootDeviceEnvironment);
+        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, NEO::FenceType::acquire, rootDeviceEnvironment);
     }
 
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, isCopyOnly(false));
@@ -4618,7 +4618,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendCopyOperationFence(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation, bool copyEngineOperation) {
     if (this->copyOperationFenceSupported && isDeviceToHostBcsCopy(srcAllocation, dstAllocation, copyEngineOperation)) {
         if (isDeviceToHostCopyEventFenceRequired(signalEvent)) {
-            NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), 0, false, device->getNEODevice()->getRootDeviceEnvironment());
+            NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), 0, NEO::FenceType::release, device->getNEODevice()->getRootDeviceEnvironment());
             taskCountUpdateFenceRequired = false;
         } else {
             taskCountUpdateFenceRequired = true;

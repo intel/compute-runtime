@@ -476,7 +476,7 @@ bool ProductHelperHw<gfxProduct>::isCopyEngineSelectorEnabled(const HardwareInfo
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 
@@ -486,8 +486,8 @@ bool ProductHelperHw<gfxProduct>::isGlobalFenceInPostSyncRequired(const Hardware
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
-    return ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(hwInfo);
+bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
+    return ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(hwInfo);
 };
 
 template <PRODUCT_FAMILY gfxProduct>

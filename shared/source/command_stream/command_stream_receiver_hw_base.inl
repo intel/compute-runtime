@@ -1075,7 +1075,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
                                                      blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
 
             if (deviceToHostPostSyncFenceRequired) {
-                MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
+                MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), NEO::FenceType::release, peekRootDeviceEnvironment());
             }
 
             if (blitProperties.blitSyncProperties.isTimestampMode()) {
@@ -1108,7 +1108,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(commandStream);
 
     if (updateTag) {
-        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), NEO::FenceType::release, peekRootDeviceEnvironment());
         args.commandWithPostSync = true;
         args.waArgs.isWaRequired = true;
         args.notifyEnable = isUsedNotifyEnableForPostSync();
@@ -1121,7 +1121,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
             makeResident(*dummyAllocation);
         }
 
-        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), NEO::FenceType::release, peekRootDeviceEnvironment());
     }
     if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::AfterWorkload)) {
         BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
@@ -1195,7 +1195,7 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(bool 
     args.commandWithPostSync = true;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
 
-    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(peekRootDeviceEnvironment()) +
+    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, peekRootDeviceEnvironment()) +
                           EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
 
     if (initializeProlog) {
@@ -1209,7 +1209,7 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(bool 
         programHardwareContext(commandStream);
     }
 
-    NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, 0, false, peekRootDeviceEnvironment());
+    NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, 0, NEO::FenceType::release, peekRootDeviceEnvironment());
 
     EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, tagAllocation->getGpuAddress(), taskCount + 1, args);
 

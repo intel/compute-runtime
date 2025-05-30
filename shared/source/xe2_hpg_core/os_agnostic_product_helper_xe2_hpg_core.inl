@@ -19,7 +19,12 @@ bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+    return !hwInfo.capabilityTable.isIntegratedDevice;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
     return !hwInfo.capabilityTable.isIntegratedDevice;
 }
 

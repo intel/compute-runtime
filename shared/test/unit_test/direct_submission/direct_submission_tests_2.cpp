@@ -48,7 +48,7 @@ struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchB
         DirectSubmissionDispatchBufferTest::SetUp();
 
         auto &productHelper = pDevice->getProductHelper();
-        miMemFenceSupported = pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : productHelper.isGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo());
+        miMemFenceSupported = pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : productHelper.isAcquireGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo());
 
         auto &compilerProductHelper = pDevice->getCompilerProductHelper();
         heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
@@ -1014,7 +1014,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWor
 
         uint32_t expectedSfenceCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
         uint32_t expectedMfenceCount = 0u;
-        if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice && !pDevice->getProductHelper().isGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo()) && expectedSfenceCount > 0u) {
+        if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice && !pDevice->getProductHelper().isAcquireGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo()) && expectedSfenceCount > 0u) {
             --expectedSfenceCount;
             ++expectedMfenceCount;
         }
@@ -1044,7 +1044,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbu
 
         uint32_t expectedSfenceCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
         uint32_t expectedMfenceCount = 0u;
-        if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice && !directSubmission.pciBarrierPtr && !pDevice->getProductHelper().isGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo()) && expectedSfenceCount > 0u) {
+        if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice && !directSubmission.pciBarrierPtr && !pDevice->getProductHelper().isAcquireGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo()) && expectedSfenceCount > 0u) {
             --expectedSfenceCount;
             ++expectedMfenceCount;
         }

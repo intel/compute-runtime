@@ -139,9 +139,9 @@ class ProductHelper {
     virtual bool isFlushTaskAllowed() const = 0;
     virtual bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const = 0;
     virtual void adjustScratchSize(size_t &requiredScratchSize) const = 0;

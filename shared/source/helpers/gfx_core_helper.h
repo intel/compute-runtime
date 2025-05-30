@@ -10,6 +10,7 @@
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/device_hierarchy_mode.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/fence_type.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -509,9 +510,9 @@ struct MemorySynchronizationCommands {
         fence,
         none
     };
-    static void addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment);
-    static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment);
-    static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static bool getDcFlushEnable(bool isFlushPreferred, const RootDeviceEnvironment &rootDeviceEnvironment);
 
@@ -524,8 +525,8 @@ struct MemorySynchronizationCommands {
     static size_t getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode);
     static size_t getSizeForSingleBarrier();
     static size_t getSizeForSingleAdditionalSynchronizationForDirectSubmission(const RootDeviceEnvironment &rootDeviceEnvironment);
-    static size_t getSizeForSingleAdditionalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment);
-    static size_t getSizeForAdditonalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeForSingleAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeForAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForInstructionCacheFlush();
     static size_t getSizeForStallingBarrier();
 

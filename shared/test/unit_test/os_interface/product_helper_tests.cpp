@@ -617,9 +617,9 @@ HWTEST_F(ProductHelperTest, WhenFillingStateBaseAddressPropertiesSupportThenExpe
     EXPECT_EQ(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport(), stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress);
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsGlobalFenceInCommandStreamRequiredThenFalseIsReturned) {
+HWTEST_F(ProductHelperTest, givenProductHelperWhenisReleaseGlobalFenceInCommandStreamRequiredThenFalseIsReturned) {
 
-    EXPECT_FALSE(productHelper->isGlobalFenceInCommandStreamRequired(*defaultHwInfo));
+    EXPECT_FALSE(productHelper->isReleaseGlobalFenceInCommandStreamRequired(*defaultHwInfo));
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsSystolicModeConfigurabledThenFalseIsReturned) {

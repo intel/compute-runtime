@@ -408,7 +408,7 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pClDevice->getRootDeviceEnvironment()) > 0) {
         auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
         ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
         auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
@@ -449,7 +449,7 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pClDevice->getRootDeviceEnvironment()) > 0) {
         auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
         ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
         auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
@@ -490,7 +490,7 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pClDevice->getRootDeviceEnvironment()) > 0) {
         auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
         ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
         auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);

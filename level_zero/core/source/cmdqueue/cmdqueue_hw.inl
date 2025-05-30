@@ -484,7 +484,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
 
     linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(ctx.globalInit || this->forceBbStartJump);
     if (fenceRequired) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(device->getNEODevice()->getRootDeviceEnvironment());
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, device->getNEODevice()->getRootDeviceEnvironment());
     }
 
     NEO::EncodeDummyBlitWaArgs waArgs{false, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
@@ -1351,7 +1351,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncByMiFlushDw(bool is
     }
 
     if (fenceRequired) {
-        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(cmdStream, 0, false, device->getNEODevice()->getRootDeviceEnvironment());
+        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(cmdStream, 0, NEO::FenceType::release, device->getNEODevice()->getRootDeviceEnvironment());
     }
 
     uint64_t postSyncAddress = this->csr->getTagAllocation()->getGpuAddress();

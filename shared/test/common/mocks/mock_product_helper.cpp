@@ -288,7 +288,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isCopyEngineSelectorEnabled(const HardwareIn
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 

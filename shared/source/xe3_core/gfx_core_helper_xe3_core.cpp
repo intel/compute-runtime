@@ -114,10 +114,10 @@ aub_stream::MMIOList GfxCoreHelperHw<Family>::getExtraMmioList(const HardwareInf
 }
 
 template <>
-size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment) {
+size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = !productHelper.isGlobalFenceInCommandStreamRequired(hwInfo) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = (fenceType == FenceType::release && !productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo)) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
@@ -131,18 +131,18 @@ size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchron
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MI_MEM_FENCE = typename Family::MI_MEM_FENCE;
     using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = !productHelper.isGlobalFenceInCommandStreamRequired(hwInfo) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = (fenceType == FenceType::release && !productHelper.isReleaseGlobalFenceInCommandStreamRequired(hwInfo)) ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
     if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::fence) {
         MI_MEM_FENCE miMemFence = Family::cmdInitMemFence;
-        if (acquire) {
+        if (fenceType == NEO::FenceType::acquire) {
             miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE_FENCE);
         } else {
             miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE);
@@ -165,8 +165,8 @@ bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const RootDevice
 }
 
 template <>
-size_t MemorySynchronizationCommands<Family>::getSizeForAdditonalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return (debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1 ? 2 : 1) * getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+size_t MemorySynchronizationCommands<Family>::getSizeForAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return (debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1 ? 2 : 1) * getSizeForSingleAdditionalSynchronization(fenceType, rootDeviceEnvironment);
 }
 
 template <>
@@ -222,7 +222,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
             allocationData.flags.useSystemMemory = false;
         }
 
-        if (properties.allocationType == AllocationType::semaphoreBuffer && !rootDeviceEnvironment.getProductHelper().isGlobalFenceInDirectSubmissionRequired(hwInfo)) {
+        if (properties.allocationType == AllocationType::semaphoreBuffer && !rootDeviceEnvironment.getProductHelper().isAcquireGlobalFenceInDirectSubmissionRequired(hwInfo)) {
             allocationData.flags.useSystemMemory = true;
         }
     }

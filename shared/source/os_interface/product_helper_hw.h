@@ -80,9 +80,9 @@ class ProductHelperHw : public ProductHelper {
     bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const override;
     bool isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const override;
     bool isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const override;
-    bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;
+    bool isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const override;
-    bool isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const override;
+    bool isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const override;
     bool isTimestampWaitSupportedForQueues(bool heaplessEnabled) const override;
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
     void adjustScratchSize(size_t &requiredScratchSize) const override;

@@ -347,7 +347,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierWhenCreateDirectSubmissionAndMm
 
     EXPECT_EQ(nullptr, directSubmission.pciBarrierPtr);
     EXPECT_NE(DirectSubmissionSfenceMode::disabled, directSubmission.sfenceMode);
-    auto expectMiMemFence = device->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : device->getRootDeviceEnvironment().getHelper<ProductHelper>().isGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo());
+    auto expectMiMemFence = device->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : device->getRootDeviceEnvironment().getHelper<ProductHelper>().isAcquireGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo());
     EXPECT_EQ(directSubmission.miMemFenceRequired, expectMiMemFence);
 
     SysCalls::munmap(ptr, MemoryConstants::pageSize);
@@ -368,7 +368,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenPciBarrierDisabledWhenCreateDirectSubmiss
 
     EXPECT_EQ(nullptr, directSubmission.pciBarrierPtr);
     EXPECT_NE(DirectSubmissionSfenceMode::disabled, directSubmission.sfenceMode);
-    auto expectMiMemFence = device->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : device->getRootDeviceEnvironment().getHelper<ProductHelper>().isGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo());
+    auto expectMiMemFence = device->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : device->getRootDeviceEnvironment().getHelper<ProductHelper>().isAcquireGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo());
     EXPECT_EQ(directSubmission.miMemFenceRequired, expectMiMemFence);
 
     SysCalls::munmap(ptr, MemoryConstants::pageSize);

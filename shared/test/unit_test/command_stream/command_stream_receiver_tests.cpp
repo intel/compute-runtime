@@ -4595,7 +4595,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto heapless = commandStreamReceiver.heaplessModeEnabled;
     auto heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
 
-    bool additionalSyncCmd = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(commandStreamReceiver.peekRootDeviceEnvironment()) > 0;
+    bool additionalSyncCmd = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, commandStreamReceiver.peekRootDeviceEnvironment()) > 0;
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
     auto startOffset = commandStream.getUsed();
@@ -4690,7 +4690,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto heapless = commandStreamReceiver.heaplessModeEnabled;
     auto heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
 
-    bool additionalSyncCmd = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(commandStreamReceiver.peekRootDeviceEnvironment()) > 0;
+    bool additionalSyncCmd = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, commandStreamReceiver.peekRootDeviceEnvironment()) > 0;
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
     auto startOffset = commandStream.getUsed();

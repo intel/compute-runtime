@@ -67,7 +67,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         detectGpuHang = !!debugManager.flags.DirectSubmissionDetectGpuHang.get();
     }
 
-    miMemFenceRequired = productHelper.isGlobalFenceInDirectSubmissionRequired(*hwInfo);
+    miMemFenceRequired = productHelper.isAcquireGlobalFenceInDirectSubmissionRequired(*hwInfo);
 
     if (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() != -1) {
         miMemFenceRequired = debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get();
@@ -361,7 +361,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
     }
 
     if (miMemFenceRequired) {
-        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDirectSubmission(ringCommandStream, this->gpuVaForAdditionalSynchronizationWA, true, rootDeviceEnvironment);
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDirectSubmission(ringCommandStream, this->gpuVaForAdditionalSynchronizationWA, NEO::FenceType::acquire, rootDeviceEnvironment);
     }
 
     dispatchPrefetchMitigation();

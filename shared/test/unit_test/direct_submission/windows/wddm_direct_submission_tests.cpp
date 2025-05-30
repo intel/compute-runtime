@@ -1230,7 +1230,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenDebugFlagSetWhenUnblockPagingFenceSemaph
 
         uint32_t expectedSfenceCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
         uint32_t expectedMfenceCount = 0u;
-        if (!device->getHardwareInfo().capabilityTable.isIntegratedDevice && !directSubmission.pciBarrierPtr && !device->getProductHelper().isGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo()) && expectedSfenceCount > 0u) {
+        if (!device->getHardwareInfo().capabilityTable.isIntegratedDevice && !directSubmission.pciBarrierPtr && !device->getProductHelper().isAcquireGlobalFenceInDirectSubmissionRequired(device->getHardwareInfo()) && expectedSfenceCount > 0u) {
             --expectedSfenceCount;
             ++expectedMfenceCount;
         }

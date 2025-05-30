@@ -638,7 +638,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenDontProgramGlobalFenceAsMiMe
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
 
-    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
@@ -647,7 +647,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFen
 
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 }
 
 using ProductHelperTestXeHpcCore = Test<DeviceFixture>;
