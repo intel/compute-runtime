@@ -13,8 +13,6 @@
 #include <cstdint>
 #include <cstring>
 #include <igfxfmid.h>
-#include <type_traits>
-#include <variant>
 
 template <class T>
 struct CmdParse;
@@ -194,8 +192,6 @@ struct Xe3CoreFamily : public Xe3Core {
     static constexpr auto getPostSyncType() {
         return std::decay_t<POSTSYNC_DATA>{};
     }
-
-    using WalkerVariant = std::variant<COMPUTE_WALKER *>;
 };
 
 enum class MemoryCompressionState;

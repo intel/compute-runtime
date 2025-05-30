@@ -2051,7 +2051,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingFromAppendCop
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingCopyThenSignalInOrderAllocation) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     if (immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
@@ -2079,19 +2079,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeCont
     } else {
         EXPECT_EQ(cmdList.end(), sdiItor);
 
-        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-        std::visit([&immCmdList](auto &&walker) {
-            auto &postSync = walker->getPostSync();
+        auto walker = genCmdCast<WalkerType *>(*walkerItor);
 
-            using PostSyncType = std::decay_t<decltype(postSync)>;
+        auto &postSync = walker->getPostSync();
 
-            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-            EXPECT_EQ(1u, postSync.getImmediateData());
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
-        },
-                   walkerVariant);
+        using PostSyncType = std::decay_t<decltype(postSync)>;
+
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+        EXPECT_EQ(1u, postSync.getImmediateData());
+        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
     }
 
     context->freeMem(alloc);
@@ -2099,7 +2097,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeCont
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeControlAndAllocFlushWhenDispatchingCopyThenSignalInOrderAllocation) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -2143,19 +2142,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenEventWithRequiredPipeCont
         } else {
             EXPECT_EQ(cmdList.end(), sdiItor);
         }
-        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
+        auto walker = genCmdCast<WalkerType *>(*walkerItor);
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-        std::visit([gpuAddress, &dcFlushRequired](auto &&walker) {
-            auto &postSync = walker->getPostSync();
-            if (dcFlushRequired) {
-                EXPECT_NE(gpuAddress, postSync.getDestinationAddress());
-            } else {
-                EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
-            }
-        },
-                   walkerVariant);
+        auto &postSync = walker->getPostSync();
+        if (dcFlushRequired) {
+            EXPECT_NE(gpuAddress, postSync.getDestinationAddress());
+        } else {
+            EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
+        }
     }
 }
 
@@ -2606,7 +2602,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenAddingRela
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSyncAllocation) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     uint32_t counterOffset = 64;
@@ -2627,22 +2624,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-        std::visit([&immCmdList, counterOffset](auto &&walker) {
-            auto &postSync = walker->getPostSync();
+        auto walker = genCmdCast<WalkerType *>(*walkerItor);
 
-            using PostSyncType = std::decay_t<decltype(postSync)>;
+        auto &postSync = walker->getPostSync();
 
-            if (!immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
-                EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-                EXPECT_EQ(1u, postSync.getImmediateData());
-                EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, postSync.getDestinationAddress());
-            }
-        },
-                   walkerVariant);
+        using PostSyncType = std::decay_t<decltype(postSync)>;
+
+        if (!immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
+            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+            EXPECT_EQ(1u, postSync.getImmediateData());
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, postSync.getDestinationAddress());
+        }
     }
 
     auto offset = cmdStream->getUsed();
@@ -2655,39 +2650,37 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-        std::visit([&](auto &&walker) {
-            auto &postSync = walker->getPostSync();
-            using PostSyncType = std::decay_t<decltype(postSync)>;
+        auto walker = genCmdCast<WalkerType *>(*walkerItor);
 
-            if (isCompactEvent) {
-                EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSync.getOperation());
+        auto &postSync = walker->getPostSync();
+        using PostSyncType = std::decay_t<decltype(postSync)>;
 
-                auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
-                ASSERT_NE(cmdList.end(), pcItor);
-                auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+        if (isCompactEvent) {
+            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSync.getOperation());
 
-                uint64_t address = pcCmd->getAddressHigh();
-                address <<= 32;
-                address |= pcCmd->getAddress();
-                EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, address);
-                EXPECT_EQ(2u, pcCmd->getImmediateData());
+            auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
+            ASSERT_NE(cmdList.end(), pcItor);
+            auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
 
-                const bool textureFlushRequired = device->getProductHelper().isPostImageWriteFlushRequired() &&
-                                                  kernel->kernelImmData->getKernelInfo()->kernelDescriptor.kernelAttributes.hasImageWriteArg;
-                EXPECT_EQ(textureFlushRequired, pcCmd->getTextureCacheInvalidationEnable());
-            } else {
-                if (!immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
-                    EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-                    EXPECT_EQ(2u, postSync.getImmediateData());
-                    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, postSync.getDestinationAddress());
-                }
+            uint64_t address = pcCmd->getAddressHigh();
+            address <<= 32;
+            address |= pcCmd->getAddress();
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, address);
+            EXPECT_EQ(2u, pcCmd->getImmediateData());
+
+            const bool textureFlushRequired = device->getProductHelper().isPostImageWriteFlushRequired() &&
+                                              kernel->kernelImmData->getKernelInfo()->kernelDescriptor.kernelAttributes.hasImageWriteArg;
+            EXPECT_EQ(textureFlushRequired, pcCmd->getTextureCacheInvalidationEnable());
+        } else {
+            if (!immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
+                EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+                EXPECT_EQ(2u, postSync.getImmediateData());
+                EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, postSync.getDestinationAddress());
             }
-        },
-                   walkerVariant);
+        }
     }
 
     uint64_t *hostAddress = nullptr;
@@ -2710,7 +2703,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThenClearAndChainWithSyncAllocSignaling) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     if (immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
@@ -2740,22 +2733,19 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     auto eventBaseGpuVa = events[0]->getPacketAddress(device);
 
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
+    auto walker = genCmdCast<WalkerType *>(*walkerItor);
 
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-    std::visit([eventBaseGpuVa](auto &&walker) {
-        auto &postSync = walker->getPostSync();
-        using PostSyncType = std::decay_t<decltype(postSync)>;
+    auto &postSync = walker->getPostSync();
+    using PostSyncType = std::decay_t<decltype(postSync)>;
 
-        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
-        EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++walker);
-        ASSERT_EQ(nullptr, semaphoreCmd);
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(walker);
-        ASSERT_EQ(nullptr, sdiCmd);
-    },
-               walkerVariant);
+    EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
+    EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++walker);
+    ASSERT_EQ(nullptr, semaphoreCmd);
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(walker);
+    ASSERT_EQ(nullptr, sdiCmd);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenIoqAndPrefetchEnabledWhenKernelIsAppendedThenPrefetchIsBeforeIt, IsAtLeastXeHpcCore) {
@@ -2809,7 +2799,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenAskingIfSkipInOrderNonWalker
 
 HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventThenClearAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsAtLeastXeHpcCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
 
     class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> {
       public:
@@ -2884,24 +2874,21 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
             EXPECT_TRUE(sdiOffset < immCmdList->flushData[1]);
         }
 
-        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto eventBaseGpuVa = events[0]->getPacketAddress(device);
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-        std::visit([eventBaseGpuVa, &cmdStream, &immCmdList](auto &&walker) {
-            auto &postSync = walker->getPostSync();
-            using PostSyncType = std::decay_t<decltype(postSync)>;
+        auto walker = genCmdCast<WalkerType *>(*walkerItor);
+        auto &postSync = walker->getPostSync();
+        using PostSyncType = std::decay_t<decltype(postSync)>;
 
-            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
-            EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
+        EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
 
-            auto walkerOffset = ptrDiff(walker, cmdStream->getCpuBase());
-            EXPECT_TRUE(walkerOffset >= immCmdList->flushData[0]);
-            EXPECT_TRUE(walkerOffset < immCmdList->flushData[1]);
-        },
-                   walkerVariant);
+        auto walkerOffset = ptrDiff(walker, cmdStream->getCpuBase());
+        EXPECT_TRUE(walkerOffset >= immCmdList->flushData[0]);
+        EXPECT_TRUE(walkerOffset < immCmdList->flushData[1]);
     }
 
     {
@@ -3116,7 +3103,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenClearAndChainWithSyncAllocSignaling) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -3145,35 +3132,32 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
     EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
 
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(sdiItor, cmdList.end());
+    auto walkerItor = find<WalkerType *>(sdiItor, cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto eventBaseGpuVa = events[0]->getPacketAddress(device);
     auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
 
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-    std::visit([eventBaseGpuVa, eventEndGpuVa, &sdiCmd, &immCmdList](auto &&walker) {
-        auto &postSync = walker->getPostSync();
-        using PostSyncType = std::decay_t<decltype(postSync)>;
+    auto walker = genCmdCast<WalkerType *>(*walkerItor);
+    auto &postSync = walker->getPostSync();
+    using PostSyncType = std::decay_t<decltype(postSync)>;
 
-        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-        EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
+    EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+    EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
 
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++walker);
-        ASSERT_NE(nullptr, semaphoreCmd);
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++walker);
+    ASSERT_NE(nullptr, semaphoreCmd);
 
-        EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
+    EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
-        sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
-        ASSERT_NE(nullptr, sdiCmd);
+    sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
+    ASSERT_NE(nullptr, sdiCmd);
 
-        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
-        EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
-        EXPECT_EQ(1u, sdiCmd->getDataDword0());
-    },
-               walkerVariant);
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
+    EXPECT_EQ(1u, sdiCmd->getDataDword0());
 }
 
 HWTEST_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSynchronizeThenUseInOrderSync) {
@@ -3762,6 +3746,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderRegularCmdListWhen
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListThenDontPatch) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -3793,14 +3778,14 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, InOrderCmdListTests, givenImmediateEventWhenWaiti
 
     EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
 
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(semaphoreItor, cmdList.end());
+    auto walkerItor = find<WalkerType *>(semaphoreItor, cmdList.end());
 
     EXPECT_NE(cmdList.end(), walkerItor);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListThenDontPatch, IsAtLeastXeHpgCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -3831,7 +3816,7 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListT
 
     EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
 
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(semaphoreItor, cmdList.end());
+    auto walkerItor = find<WalkerType *>(semaphoreItor, cmdList.end());
 
     EXPECT_NE(cmdList.end(), walkerItor);
 }
@@ -3908,7 +3893,8 @@ HWTEST_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFrom
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDontSignalFromWalker) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -3930,16 +3916,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     while (cmdList.end() != walkerItor) {
         walkersFound++;
 
-        WalkerVariant walkerCmd = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-
-        std::visit([](auto &&walker) {
-            using WalkerType = std::decay_t<decltype(*walker)>;
-            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
-
-            auto &postSync = walker->getPostSync();
-            EXPECT_EQ(PostSyncType::OPERATION_NO_WRITE, postSync.getOperation());
-        },
-                   walkerCmd);
+        auto walker = genCmdCast<WalkerType *>(*walkerItor);
+        auto &postSync = walker->getPostSync();
+        EXPECT_EQ(PostSyncType::OPERATION_NO_WRITE, postSync.getOperation());
 
         walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++walkerItor, cmdList.end());
     }
@@ -3988,7 +3967,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingComputeCopyThenDontSingalFromSdi) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -4002,16 +3981,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-    std::visit([&immCmdList](auto &&walker) {
-        auto &postSync = walker->getPostSync();
+    auto walker = genCmdCast<WalkerType *>(*walkerItor);
+    auto &postSync = walker->getPostSync();
 
-        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
-    },
-               walkerVariant);
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
     EXPECT_EQ(cmdList.end(), sdiItor);
@@ -4020,7 +3996,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAllocFlushRequiredWhenProgrammingComputeCopyThenSignalFromSdi) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
@@ -4036,20 +4012,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAllocFlushRequiredWhenPro
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-    std::visit([&dcFlushRequired](auto &&walker) {
-        auto &postSync = walker->getPostSync();
+    auto walker = genCmdCast<WalkerType *>(*walkerItor);
+    auto &postSync = walker->getPostSync();
 
-        if (dcFlushRequired) {
-            EXPECT_EQ(0u, postSync.getDestinationAddress());
-        } else {
-            EXPECT_NE(0u, postSync.getDestinationAddress());
-        }
-    },
-               walkerVariant);
+    if (dcFlushRequired) {
+        EXPECT_EQ(0u, postSync.getDestinationAddress());
+    } else {
+        EXPECT_NE(0u, postSync.getDestinationAddress());
+    }
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
     auto gpuAddress = inOrderExecInfo->getBaseDeviceAddress();
@@ -4258,7 +4231,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithoutSplitThenSignalByWalker) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -4272,22 +4245,19 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-    std::visit([&immCmdList](auto &&walker) {
-        auto &postSync = walker->getPostSync();
-        using PostSyncType = std::decay_t<decltype(postSync)>;
+    auto walker = genCmdCast<WalkerType *>(*walkerItor);
+    auto &postSync = walker->getPostSync();
+    using PostSyncType = std::decay_t<decltype(postSync)>;
 
-        if (!immCmdList->inOrderAtomicSignalingEnabled) {
-            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-            EXPECT_EQ(1u, postSync.getImmediateData());
-        }
+    if (!immCmdList->inOrderAtomicSignalingEnabled) {
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+        EXPECT_EQ(1u, postSync.getImmediateData());
+    }
 
-        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
-    },
-               walkerVariant);
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
     EXPECT_EQ(cmdList.end(), sdiItor);
@@ -4516,7 +4486,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
 
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     immCmdList->inOrderExecInfo->addCounterValue(std::numeric_limits<uint32_t>::max() - 1);
@@ -4536,7 +4506,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
 
     ASSERT_NE(cmdList.end(), walkerItor);
 
@@ -4548,36 +4518,32 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     if (immCmdList->isQwordInOrderCounter()) {
         expectedCounter = std::numeric_limits<uint32_t>::max();
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-        std::visit([isCompactEvent, &semaphoreItor, &walkerItor, &immCmdList, &cmdList, expectedCounter](auto &&walker) {
-            auto &postSync = walker->getPostSync();
-            using PostSyncType = std::decay_t<decltype(postSync)>;
+        auto walker = genCmdCast<WalkerType *>(*walkerItor);
+        auto &postSync = walker->getPostSync();
+        using PostSyncType = std::decay_t<decltype(postSync)>;
 
-            if (isCompactEvent) {
+        if (isCompactEvent) {
 
-                auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
-                ASSERT_NE(cmdList.end(), pcItor);
-                auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
+            auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
+            ASSERT_NE(cmdList.end(), pcItor);
+            auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
 
-                uint64_t address = pcCmd->getAddressHigh();
-                address <<= 32;
-                address |= pcCmd->getAddress();
-                EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), address);
-                EXPECT_EQ(expectedCounter, pcCmd->getImmediateData());
+            uint64_t address = pcCmd->getAddressHigh();
+            address <<= 32;
+            address |= pcCmd->getAddress();
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), address);
+            EXPECT_EQ(expectedCounter, pcCmd->getImmediateData());
 
-                EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSync.getOperation());
-            } else {
-                EXPECT_EQ(cmdList.end(), semaphoreItor);
+            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSync.getOperation());
+        } else {
+            EXPECT_EQ(cmdList.end(), semaphoreItor);
 
-                if (!immCmdList->inOrderAtomicSignalingEnabled) {
-                    EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
-                    EXPECT_EQ(expectedCounter, postSync.getImmediateData());
-                }
-                EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+            if (!immCmdList->inOrderAtomicSignalingEnabled) {
+                EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+                EXPECT_EQ(expectedCounter, postSync.getImmediateData());
             }
-        },
-                   walkerVariant);
-
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+        }
     } else {
         offset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
         if (isCompactEvent) {

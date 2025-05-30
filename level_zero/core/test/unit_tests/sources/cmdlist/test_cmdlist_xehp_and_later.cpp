@@ -363,7 +363,9 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
     template <GFXCORE_FAMILY gfxCoreFamily>
     void testAppendLaunchKernelAndL3Flush(AppendKernelTestInput &input, TestExpectedValues &arg) {
         using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-        using WalkerVariant = typename FamilyType::WalkerVariant;
+        using WalkerType = typename FamilyType::DefaultWalkerType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
+        using OPERATION = typename PostSyncType::OPERATION;
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -406,17 +408,11 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         ASSERT_EQ(1u, itorWalkers.size());
         auto firstWalker = itorWalkers[0];
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*firstWalker);
-        std::visit([&arg, firstKernelEventAddress](auto &&walker) {
-            using WalkerType = std::decay_t<decltype(*walker)>;
-            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
-            using OPERATION = typename PostSyncType::OPERATION;
-            auto &postSync = walker->getPostSync();
+        auto walker = genCmdCast<WalkerType *>(*firstWalker);
+        auto &postSync = walker->getPostSync();
 
-            EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), postSync.getOperation());
-            EXPECT_EQ(firstKernelEventAddress, postSync.getDestinationAddress());
-        },
-                   walkerVariant);
+        EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), postSync.getOperation());
+        EXPECT_EQ(firstKernelEventAddress, postSync.getDestinationAddress());
 
         uint64_t l3FlushPostSyncAddress = event->getGpuAddress(input.device) + input.packetOffsetMul * event->getSinglePacketSize();
         if (input.useFirstEventPacketAddress) {
@@ -613,7 +609,9 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
     template <GFXCORE_FAMILY gfxCoreFamily>
     void testAppendKernel(ze_event_pool_flags_t eventPoolFlags) {
         using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-        using WalkerVariant = typename FamilyType::WalkerVariant;
+        using WalkerType = typename FamilyType::DefaultWalkerType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
+        using OPERATION = typename PostSyncType::OPERATION;
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
         auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -661,16 +659,10 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         ASSERT_EQ(1u, itorWalkers.size());
         auto firstWalker = itorWalkers[0];
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*firstWalker);
-        std::visit([expectedWalkerPostSyncOp](auto &&walker) {
-            using WalkerType = std::decay_t<decltype(*walker)>;
-            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
-            using OPERATION = typename PostSyncType::OPERATION;
-            auto &postSync = walker->getPostSync();
+        auto walker = genCmdCast<WalkerType *>(*firstWalker);
+        auto &postSync = walker->getPostSync();
 
-            EXPECT_EQ(static_cast<OPERATION>(expectedWalkerPostSyncOp), postSync.getOperation());
-        },
-                   walkerVariant);
+        EXPECT_EQ(static_cast<OPERATION>(expectedWalkerPostSyncOp), postSync.getOperation());
 
         uint32_t extraCleanupStoreDataImm = 0;
         if (multiTile == 1 && NEO::ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired()) {
@@ -2763,7 +2755,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 HWTEST2_F(CommandListAppendLaunchKernel,
           givenInOrderCmdListAndTimeStampEventWhenAppendingKernelAndEventWithOutCmdListSetThenStoreStoreDataImmClearAndSemapohreWaitPostSyncCommands,
           IsAtLeastXeHpCore) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
 
     Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -2811,16 +2803,12 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     ASSERT_EQ(additionalPatchCmdsSize, outCbEventCmds.size());
     auto eventBaseAddress = event->getGpuAddress(device);
 
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(launchParams.outWalker);
-    std::visit([eventBaseAddress](auto &&walker) {
-        using WalkerType = std::decay_t<decltype(*walker)>;
+    auto walker = genCmdCast<WalkerType *>(launchParams.outWalker);
 
-        if constexpr (!FamilyType::template isHeaplessMode<WalkerType>()) {
-            auto &postSync = walker->getPostSync();
-            EXPECT_EQ(eventBaseAddress, postSync.getDestinationAddress());
-        }
-    },
-               walkerVariant);
+    if constexpr (!FamilyType::template isHeaplessMode<WalkerType>()) {
+        auto &postSync = walker->getPostSync();
+        EXPECT_EQ(eventBaseAddress, postSync.getDestinationAddress());
+    }
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel,
@@ -2935,7 +2923,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 HWTEST2_F(CommandListAppendLaunchKernel,
           givenCmdListParamHasWalkerCpuBufferWhenAppendingKernelThenCopiedWalkerHasTheSameContentAsInGfxMemory,
           IsAtLeastXeHpCore) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
 
     Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -2967,13 +2955,9 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto computeWalkerList = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, computeWalkerList.size());
 
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*computeWalkerList[0]);
-    std::visit([&launchParams, &walkerBuffer](auto &&walker) {
-        using WalkerType = std::decay_t<decltype(*walker)>;
-        EXPECT_EQ(0, memcmp(walker, launchParams.cmdWalkerBuffer, sizeof(WalkerType)));
-        delete static_cast<WalkerType *>(walkerBuffer);
-    },
-               walkerVariant);
+    auto walker = genCmdCast<WalkerType *>(*computeWalkerList[0]);
+    EXPECT_EQ(0, memcmp(walker, launchParams.cmdWalkerBuffer, sizeof(WalkerType)));
+    delete static_cast<WalkerType *>(walkerBuffer);
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel,
@@ -3054,7 +3038,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughIohSpaceWhenLaunchingKern
 HWTEST2_F(CommandListAppendLaunchKernel,
           givenFlagMakeKernelCommandViewWhenAppendKernelWithSignalEventThenDispatchNoPostSyncInViewMemoryAndNoEventAllocationAddedToResidency,
           IsAtLeastXeHpCore) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
 
     Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -3090,13 +3074,10 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(launchParams.cmdWalkerBuffer);
-    std::visit([eventBaseAddress](auto &&walker) {
-        auto &postSync = walker->getPostSync();
+    auto walker = genCmdCast<WalkerType *>(launchParams.cmdWalkerBuffer);
+    auto &postSync = walker->getPostSync();
 
-        EXPECT_NE(eventBaseAddress, postSync.getDestinationAddress());
-    },
-               walkerVariant);
+    EXPECT_NE(eventBaseAddress, postSync.getDestinationAddress());
 
     auto &cmdlistResidency = commandList->getCmdContainer().getResidencyContainer();
 

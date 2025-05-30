@@ -216,8 +216,7 @@ HWTEST2_F(CommandListAppendRangesBarrierXe2AndLater, givenCallToAppendRangesBarr
 
 using CommandListXe2AndLaterPreemptionTest = Test<ModuleMutableCommandListFixture>;
 HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenAppendLaunchKernelWhenKernelFlagRequiresDisablePreemptionThenExpectInterfaceDescriptorDataDisablePreemption, Platforms) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
-
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     auto &container = commandList->getCmdContainer();
     auto &cmdListStream = *container.getCommandStream();
 
@@ -236,15 +235,11 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenAppendLaunchKernelWhenKerne
         ptrOffset(cmdListStream.getCpuBase(), sizeBefore),
         sizeAfter - sizeBefore));
 
-    auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(1u, walkerCmds.size());
-
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmds[0]);
-    std::visit([](auto &&walker) {
-        auto &idd = walker->getInterfaceDescriptor();
-        EXPECT_FALSE(idd.getThreadPreemption());
-    },
-               walkerVariant);
+    auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerCmds);
+    auto walker = genCmdCast<WalkerType *>(*walkerCmds);
+    auto &idd = walker->getInterfaceDescriptor();
+    EXPECT_FALSE(idd.getThreadPreemption());
 }
 
 HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
@@ -282,8 +277,7 @@ using InOrderCmdListTests = InOrderCmdListFixture;
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCreateThenL1IsNotFlushed, Platforms) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
-    using WalkerVariant = typename FamilyType::WalkerVariant;
-
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -295,14 +289,11 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCr
     auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-    std::visit([](auto &&walker) {
-        auto &postSync = walker->getPostSync();
+    auto walker = genCmdCast<WalkerType *>(*walkerItor);
+    auto &postSync = walker->getPostSync();
 
-        EXPECT_FALSE(postSync.getDataportPipelineFlush());
-        EXPECT_FALSE(postSync.getDataportSubsliceCacheFlush());
-    },
-               walkerVariant);
+    EXPECT_FALSE(postSync.getDataportPipelineFlush());
+    EXPECT_FALSE(postSync.getDataportSubsliceCacheFlush());
 }
 
 } // namespace ult

@@ -13,7 +13,6 @@
 #include <cstring>
 #include <igfxfmid.h>
 #include <type_traits>
-#include <variant>
 
 template <class T>
 struct CmdParse;
@@ -173,8 +172,6 @@ struct Gen12LpFamily : public Gen12Lp {
     static WalkerType getInitGpuWalker() {
         return cmdInitGpgpuWalker;
     }
-
-    using WalkerVariant = std::variant<GPGPU_WALKER *>;
 };
 
 } // namespace NEO

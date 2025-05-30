@@ -33,7 +33,8 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 
     template <typename FamilyType>
     void validatePartitionProgramming(uint64_t postSyncAddress, int32_t partitionCount) {
-        using WalkerVariant = typename FamilyType::WalkerVariant;
+        using WalkerType = typename FamilyType::DefaultWalkerType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
         uint32_t totalWorkgroupCount = 1u;
         uint32_t totalWorkItemsInWorkgroup = 1u;
         uint32_t totalWorkItemsCount = 1;
@@ -54,35 +55,29 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
         hwParser.parseCommands<FamilyType>(pCmdQ->getCS(0), 0);
         hwParser.findHardwareCommands<FamilyType>();
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+        auto walkerCmd = genCmdCast<WalkerType *>(*hwParser.itorWalker);
 
-        std::visit([&](auto &&walkerCmd) {
-            using WalkerType = std::decay_t<decltype(*walkerCmd)>;
-            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
+        EXPECT_EQ(0u, walkerCmd->getPartitionId());
 
-            EXPECT_EQ(0u, walkerCmd->getPartitionId());
+        if (partitionCount > 1) {
+            EXPECT_TRUE(walkerCmd->getWorkloadPartitionEnable());
+            EXPECT_EQ(partitionSize, walkerCmd->getPartitionSize());
+            EXPECT_EQ(partitionType, walkerCmd->getPartitionType());
+        } else {
+            EXPECT_FALSE(walkerCmd->getWorkloadPartitionEnable());
+            EXPECT_EQ(0u, walkerCmd->getPartitionSize());
+            EXPECT_EQ(0u, walkerCmd->getPartitionType());
+        }
 
-            if (partitionCount > 1) {
-                EXPECT_TRUE(walkerCmd->getWorkloadPartitionEnable());
-                EXPECT_EQ(partitionSize, walkerCmd->getPartitionSize());
-                EXPECT_EQ(partitionType, walkerCmd->getPartitionType());
-            } else {
-                EXPECT_FALSE(walkerCmd->getWorkloadPartitionEnable());
-                EXPECT_EQ(0u, walkerCmd->getPartitionSize());
-                EXPECT_EQ(0u, walkerCmd->getPartitionType());
-            }
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+        EXPECT_EQ(postSyncAddress, walkerCmd->getPostSync().getDestinationAddress());
 
-            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
-            EXPECT_EQ(postSyncAddress, walkerCmd->getPostSync().getDestinationAddress());
+        int notExpectedValue[] = {1, 1, 1, 1};
 
-            int notExpectedValue[] = {1, 1, 1, 1};
-
-            for (auto partitionId = 0; partitionId < debugManager.flags.ExperimentalSetWalkerPartitionCount.get(); partitionId++) {
-                expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(postSyncAddress), &notExpectedValue, sizeof(notExpectedValue));
-                postSyncAddress += 16; // next post sync needs to be right after the previous one
-            }
-        },
-                   walkerVariant);
+        for (auto partitionId = 0; partitionId < debugManager.flags.ExperimentalSetWalkerPartitionCount.get(); partitionId++) {
+            expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(postSyncAddress), &notExpectedValue, sizeof(notExpectedValue));
+            postSyncAddress += 16; // next post sync needs to be right after the previous one
+        }
 
         auto dstGpuAddress = addrToPtr(ptrOffset(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), dstBuffer->getOffset()));
         expectMemory<FamilyType>(dstGpuAddress, &totalWorkItemsCount, sizeof(uint32_t));

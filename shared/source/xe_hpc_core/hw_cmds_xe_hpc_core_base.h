@@ -16,7 +16,6 @@
 
 #include <cstring>
 #include <type_traits>
-#include <variant>
 
 template <class T>
 struct CmdParse;
@@ -171,8 +170,6 @@ struct XeHpcCoreFamily : public XeHpcCore {
     static constexpr auto getPostSyncType() {
         return std::decay_t<POSTSYNC_DATA>{};
     }
-
-    using WalkerVariant = std::variant<COMPUTE_WALKER *>;
 };
 
 } // namespace NEO

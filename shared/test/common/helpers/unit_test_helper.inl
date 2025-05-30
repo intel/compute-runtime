@@ -122,16 +122,6 @@ uint32_t UnitTestHelper<GfxFamily>::getMiLoadRegisterImmProgrammedCmdsCount(bool
 }
 
 template <typename GfxFamily>
-typename GfxFamily::WalkerVariant UnitTestHelper<GfxFamily>::getWalkerVariant(void *walkerItor) {
-    if (auto walker = genCmdCast<typename GfxFamily::DefaultWalkerType *>(walkerItor); walker) {
-        return walker;
-    }
-
-    UNRECOVERABLE_IF(true);
-    return {};
-}
-
-template <typename GfxFamily>
 size_t UnitTestHelper<GfxFamily>::getWalkerSize(bool isHeaplessEnabled) {
     using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
     return sizeof(DefaultWalkerType);

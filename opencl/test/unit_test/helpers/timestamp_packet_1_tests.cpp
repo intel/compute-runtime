@@ -417,7 +417,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenWriteWalkerStamp) {
     DebugManagerStateRestore restorer{};
     debugManager.flags.EnableL3FlushAfterPostSync.set(0);
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -431,21 +431,18 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     hwParser.findHardwareCommands<FamilyType>();
 
     auto it = hwParser.itorWalker;
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*it);
+    auto walker = genCmdCast<WalkerType *>(*it);
 
-    std::visit([&it, &hwParser, this](auto &&walker) {
-        ASSERT_NE(nullptr, walker);
-        if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment())) {
-            auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
-            EXPECT_NE(nullptr, pipeControl);
-        }
-        it = find<PIPE_CONTROL *>(++it, hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), it);
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        ASSERT_NE(nullptr, pipeControl);
-        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
-    },
-               walkerVariant);
+    ASSERT_NE(nullptr, walker);
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment())) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
+        EXPECT_NE(nullptr, pipeControl);
+    }
+    it = find<PIPE_CONTROL *>(++it, hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), it);
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
 }
 
 HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrThenAddSizeForSemaphores) {

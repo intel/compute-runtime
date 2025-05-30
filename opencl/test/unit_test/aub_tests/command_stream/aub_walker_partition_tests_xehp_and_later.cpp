@@ -54,7 +54,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetTo
 
     auto cmdPartitionCount = static_cast<uint32_t>(partitionCount);
 
-    using WalkerVariant = typename FamilyType::WalkerVariant;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using PARTITION_TYPE = typename WalkerType::PARTITION_TYPE;
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -66,20 +67,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetTo
     EXPECT_EQ(cmdPartitionCount + 1, walkersCount);
 
     for (auto &walkerCmd : walkerCmds) {
+        auto walker = genCmdCast<WalkerType *>(*walkerCmd);
+        auto cmdPartitionType = static_cast<PARTITION_TYPE>(partitionType);
 
-        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmd);
-
-        std::visit([&](auto &&walkerCmd) {
-            using WalkerType = std::decay_t<decltype(*walkerCmd)>;
-            using PARTITION_TYPE = typename WalkerType::PARTITION_TYPE;
-
-            auto cmdPartitionType = static_cast<PARTITION_TYPE>(partitionType);
-
-            EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionId());
-            EXPECT_EQ(cmdPartitionType, walkerCmd->getPartitionType());
-            EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionSize());
-        },
-                   walkerVariant);
+        EXPECT_EQ(cmdPartitionCount, walker->getPartitionId());
+        EXPECT_EQ(cmdPartitionType, walker->getPartitionType());
+        EXPECT_EQ(cmdPartitionCount, walker->getPartitionSize());
     }
 
     auto dstGpuAddress = addrToPtr(ptrOffset(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), dstBuffer->getOffset()));
