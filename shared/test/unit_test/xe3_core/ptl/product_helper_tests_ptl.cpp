@@ -5,18 +5,24 @@
  *
  */
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe3_core/hw_info_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "platforms.h"
+
+namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+}
 
 using namespace NEO;
 
@@ -112,4 +118,15 @@ PTLTEST_F(PtlProductHelper, givenResolveDependenciesByPipeControllsNotSupportedW
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, true, 2, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csrRelaxed));
+}
+
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
+    }
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
+    }
 }

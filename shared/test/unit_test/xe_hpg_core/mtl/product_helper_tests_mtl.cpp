@@ -5,17 +5,23 @@
  *
  */
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_mtl.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "platforms.h"
+
+namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+}
 
 using namespace NEO;
 
@@ -79,4 +85,15 @@ MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCach
 
     allocationData.type = AllocationType::buffer;
     EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
+}
+
+MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
+    }
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
+    }
 }

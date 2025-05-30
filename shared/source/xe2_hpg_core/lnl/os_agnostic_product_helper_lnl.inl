@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 
 #include "aubstream/product_family.h"
@@ -55,6 +56,11 @@ bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
 template <>
 bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
     return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
 } // namespace NEO

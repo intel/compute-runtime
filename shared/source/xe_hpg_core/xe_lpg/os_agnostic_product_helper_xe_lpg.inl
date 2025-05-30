@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -90,4 +91,8 @@ bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const Hard
     return false;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
+}
 } // namespace NEO
