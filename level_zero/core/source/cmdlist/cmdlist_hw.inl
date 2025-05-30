@@ -3870,7 +3870,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
         this->doubleSbaWa,                        // doubleSbaWa
         this->heaplessModeEnabled                 // heaplessModeEnabled
     };
-
+    auto offsetSbaCmd = container.getCommandStream()->getUsed();
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(encodeStateBaseAddressArgs);
 
     bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(this->internalUsage) && this->device->getL0Debugger();
@@ -3878,6 +3878,8 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
                                                                                  *this->device->getNEODevice(),
                                                                                  *container.getCommandStream(),
                                                                                  sba, (this->isFlushTaskSubmissionEnabled || this->dispatchCmdListBatchBufferAsPrimary));
+
+    programStateBaseAddressHook(offsetSbaCmd, sba.getSurfaceStateBaseAddressModifyEnable());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
