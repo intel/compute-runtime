@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/utilities/directory.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 #include "platforms.h"
 
 #include <algorithm>

@@ -11,7 +11,7 @@
 
 #include "cif/common/cif_main.h"
 #include "cif/import/library_api.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 

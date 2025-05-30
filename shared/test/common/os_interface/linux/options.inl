@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "common/gtsysinfo.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 #include "test_files_setup.h"
 
 namespace Os {

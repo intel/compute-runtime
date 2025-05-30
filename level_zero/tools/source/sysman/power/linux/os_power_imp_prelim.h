@@ -11,7 +11,7 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/power/os_power.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <memory>
 #include <string>

@@ -14,7 +14,7 @@
 #include "opencl/source/cl_device/cl_device_info.h"
 #include "opencl/source/helpers/base_object.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <mutex>
 #include <vector>

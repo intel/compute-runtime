@@ -51,6 +51,8 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64")
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/sse2neon)
   set(DISABLE_WDDM_LINUX TRUE)
 endif()
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/shared/source/gmm_helper/igfxfmid_wrapper/${BRANCH_DIR_SUFFIX}")
+
 message(STATUS "Host processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 message(STATUS "Target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "Neo target processor: ${NEO_TARGET_PROCESSOR}")

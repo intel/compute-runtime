@@ -11,7 +11,7 @@
 #include "level_zero/sysman/source/api/frequency/sysman_frequency_imp.h"
 #include "level_zero/sysman/source/api/frequency/sysman_os_frequency.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 namespace L0 {
 namespace Sysman {
 

@@ -11,7 +11,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/xe_hpg_core/hw_info.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <cstring>
 #include <type_traits>

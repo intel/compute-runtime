@@ -11,7 +11,7 @@
 #include "shared/source/helpers/kmd_notify_properties.h"
 
 #include "gtsysinfo.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 #include "sku_info.h"
 
 namespace NEO {

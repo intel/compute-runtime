@@ -31,7 +31,7 @@
 
 #include "encode_dispatch_kernel_args_ext.h"
 #include "encode_surface_state_args.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 namespace L0 {
 

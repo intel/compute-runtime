@@ -16,7 +16,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <array>
 #include <atomic>

@@ -16,7 +16,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 namespace NEO {
 enum class MemoryPool;

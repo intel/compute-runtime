@@ -17,7 +17,7 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 namespace L0 {
 

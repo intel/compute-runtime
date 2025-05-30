@@ -9,7 +9,7 @@
 
 #include <level_zero/zes_api.h>
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <map>
 #include <memory>

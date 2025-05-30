@@ -41,7 +41,7 @@
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/sharings/unified/unified_image.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 namespace NEO {
 

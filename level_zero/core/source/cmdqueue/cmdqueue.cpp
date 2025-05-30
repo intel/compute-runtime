@@ -31,7 +31,7 @@
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/kernel/kernel.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 namespace L0 {
 

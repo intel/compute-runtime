@@ -10,7 +10,7 @@
 
 #include "level_zero/tools/source/sysman/temperature/os_temperature.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <memory>
 

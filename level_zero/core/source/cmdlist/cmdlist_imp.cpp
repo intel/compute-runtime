@@ -28,8 +28,8 @@
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
-#include "igfxfmid.h"
 #include "log_manager.h"
+#include "neo_igfxfmid.h"
 
 #include <algorithm>
 

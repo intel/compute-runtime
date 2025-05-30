@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <string>
 

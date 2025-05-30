@@ -13,7 +13,7 @@
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <cinttypes>
 #include <cstddef>

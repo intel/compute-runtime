@@ -14,7 +14,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <algorithm>
 #include <fstream>

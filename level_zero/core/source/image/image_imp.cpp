@@ -22,7 +22,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image_formats.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 namespace L0 {
 ImageAllocatorFn imageFactory[IGFX_MAX_PRODUCT] = {};

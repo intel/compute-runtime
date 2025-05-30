@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 #include "gtest/gtest.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 namespace L0 {
 namespace Sysman {

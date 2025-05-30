@@ -15,7 +15,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "aubstream/aubstream.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <cstdint>
 #include <memory>

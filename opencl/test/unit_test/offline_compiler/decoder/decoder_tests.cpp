@@ -22,8 +22,8 @@
 
 #include "gtest/gtest.h"
 #include "igad.h"
-#include "igfxfmid.h"
 #include "mock/mock_decoder.h"
+#include "neo_igfxfmid.h"
 
 #include <array>
 #include <fstream>

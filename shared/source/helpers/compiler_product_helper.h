@@ -11,7 +11,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 #include "ocl_igc_interface/code_type.h"
 
 #include <memory>

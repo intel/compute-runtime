@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <RelocationInfo.h>
 #include <vector>

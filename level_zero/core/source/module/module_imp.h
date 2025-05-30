@@ -14,7 +14,7 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <list>
 #include <memory>

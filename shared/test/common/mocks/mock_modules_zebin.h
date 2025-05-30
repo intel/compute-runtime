@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/const_stringref.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <string>
 #include <vector>

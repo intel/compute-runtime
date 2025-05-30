@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 #include "hw_cmds.h"
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 #include "per_product_test_selector.h"
 #include "test_mode.h"
 

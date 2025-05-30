@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,8 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
-#include "igfxfmid.h"
 #include "memory_properties_flags.h"
+#include "neo_igfxfmid.h"
 
 #include <functional>
 

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <cstddef>
 #include <cstdint>

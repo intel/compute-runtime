@@ -9,7 +9,7 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <cstdint>
 #include <memory>

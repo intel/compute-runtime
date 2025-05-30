@@ -22,7 +22,7 @@
 #include "opencl/test/unit_test/offline_compiler/decoder/mock/mock_zebin_encoder.h"
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <fstream>
 #include <platforms.h>

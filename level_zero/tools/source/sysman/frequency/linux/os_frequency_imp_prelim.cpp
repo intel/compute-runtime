@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
-#include "igfxfmid.h"
+#include "neo_igfxfmid.h"
 
 #include <cmath>
 
