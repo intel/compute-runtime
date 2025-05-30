@@ -236,39 +236,24 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
 
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, PipeControlArgs &args) {
-    auto barrierSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
-    if (args.csStallOnly) {
-        barrierSize = MemorySynchronizationCommands<GfxFamily>::getSizeForStallingBarrier();
-    }
-    auto barrier = commandStream.getSpace(barrierSize);
+    auto barrier = commandStream.getSpace(MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier());
 
     setSingleBarrier(barrier, postSyncMode, gpuAddress, immediateData, args);
-}
-
-template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::setStallingBarrier(void *commandsBuffer, PipeControlArgs &args) {
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-
-    PIPE_CONTROL pipeControl = GfxFamily::cmdInitPipeControl;
-
-    pipeControl.setCommandStreamerStallEnable(true);
-    setBarrierExtraProperties(&pipeControl, args);
-    *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = pipeControl;
 }
 
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBuffer, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, PipeControlArgs &args) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    if (args.csStallOnly) {
-        setStallingBarrier(commandsBuffer, args);
-        return;
-    }
-
     PIPE_CONTROL pipeControl = GfxFamily::cmdInitPipeControl;
 
     pipeControl.setCommandStreamerStallEnable(true);
     setBarrierExtraProperties(&pipeControl, args);
+
+    if (args.csStallOnly) {
+        *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = pipeControl;
+        return;
+    }
 
     pipeControl.setConstantCacheInvalidationEnable(args.constantCacheInvalidationEnable);
     pipeControl.setInstructionCacheInvalidateEnable(args.instructionCacheInvalidateEnable);
@@ -350,7 +335,7 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffe
         additionalArgs.csStallOnly = true;
 
         MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(commandsBuffer, additionalArgs);
-        commandsBuffer = ptrOffset(commandsBuffer, getSizeForStallingBarrier());
+        commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
     }
 }
 
@@ -399,7 +384,7 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(const RootD
         size = getSizeForSingleBarrier() +
                getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
     } else if (releaseHelper && postSyncMode == PostSyncMode::timestamp && releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp()) {
-        size = getSizeForStallingBarrier();
+        size = getSizeForSingleBarrier();
     }
     return size;
 }
@@ -869,11 +854,6 @@ uint32_t GfxCoreHelperHw<Family>::getImplicitArgsVersion() const {
 template <typename Family>
 bool GfxCoreHelperHw<Family>::isCacheFlushPriorImageReadRequired() const {
     return false;
-}
-
-template <typename GfxFamily>
-size_t MemorySynchronizationCommands<GfxFamily>::getSizeForStallingBarrier() {
-    return sizeof(typename GfxFamily::StallingBarrierType);
 }
 
 template <typename Family>

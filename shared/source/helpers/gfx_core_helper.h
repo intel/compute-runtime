@@ -493,7 +493,6 @@ struct MemorySynchronizationCommands {
     static void setSingleBarrier(void *commandsBuffer, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, PipeControlArgs &args);
     static void addSingleBarrier(LinearStream &commandStream, PipeControlArgs &args);
     static void setSingleBarrier(void *commandsBuffer, PipeControlArgs &args);
-    static void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args);
 
     static void addBarrierWithPostSyncOperation(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args);
     static void setBarrierWithPostSyncOperation(void *&commandsBuffer, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args);
@@ -528,7 +527,6 @@ struct MemorySynchronizationCommands {
     static size_t getSizeForSingleAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForInstructionCacheFlush();
-    static size_t getSizeForStallingBarrier();
 
     static bool isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static bool isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
