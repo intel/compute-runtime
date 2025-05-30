@@ -3080,10 +3080,14 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredT
         }
 
         auto fences = findAll<typename FamilyType::MI_MEM_FENCE *>(cmdIterator, cmdList.end());
-        EXPECT_EQ(expectedFenceCount, fences.size());
 
-        if (fenceExpected) {
-            EXPECT_NE(miMemFence, nullptr);
+        if (pDevice->getProductHelper().isReleaseGlobalFenceInCommandStreamRequired(pDevice->getHardwareInfo())) {
+            EXPECT_EQ(expectedFenceCount, fences.size());
+            if (fenceExpected) {
+                EXPECT_NE(miMemFence, nullptr);
+            }
+        } else {
+            EXPECT_EQ(0u, fences.size());
         }
 
         return !::testing::Test::HasFailure();
