@@ -25,6 +25,7 @@
 #include "opencl/source/sharings/sharing_factory.h"
 
 #include "driver_version.h"
+#include "spirv/unified1/spirv.hpp"
 
 #include <iterator>
 #include <sstream>
@@ -429,6 +430,219 @@ void ClDevice::initializeILsWithVersion() {
             ilWithVersion.version = CL_MAKE_VERSION(majorVersion, minorVersion, 0);
             deviceInfo.ilsWithVersion.push_back(ilWithVersion);
         }
+    }
+}
+
+void ClDevice::initializeSpirvQueries() {
+    std::stringstream extStringStream{deviceExtensions};
+    std::vector<std::string> extVector{
+        std::istream_iterator<std::string>{extStringStream}, std::istream_iterator<std::string>{}};
+
+    std::stringstream ilsStringStream{device.getDeviceInfo().ilVersion};
+    std::vector<std::string> ilsVector{
+        std::istream_iterator<std::string>{ilsStringStream}, std::istream_iterator<std::string>{}};
+
+    deviceInfo.spirvCapabilities.reserve(64);
+
+    deviceInfo.spirvExtendedInstructionSets.push_back("OpenCL.std");
+
+    deviceInfo.spirvCapabilities.push_back(spv::CapabilityAddresses);
+    deviceInfo.spirvCapabilities.push_back(spv::CapabilityFloat16Buffer);
+    deviceInfo.spirvCapabilities.push_back(spv::CapabilityInt16);
+    deviceInfo.spirvCapabilities.push_back(spv::CapabilityInt8);
+    deviceInfo.spirvCapabilities.push_back(spv::CapabilityKernel);
+    deviceInfo.spirvCapabilities.push_back(spv::CapabilityLinkage);
+    deviceInfo.spirvCapabilities.push_back(spv::CapabilityVector16);
+
+    deviceInfo.spirvCapabilities.push_back(spv::CapabilityInt64);
+
+    if (getSharedDeviceInfo().imageSupport) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityImage1D);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityImageBasic);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityImageBuffer);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityLiteralSampler);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySampled1D);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySampledBuffer);
+    }
+
+    if (std::find(ilsVector.begin(), ilsVector.end(), "SPIR-V_1.6") != ilsVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityUniformDecoration);
+    }
+
+    if (deviceInfo.maxReadWriteImageArgs != 0) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityImageReadWrite);
+    }
+
+    if (deviceInfo.genericAddressSpaceSupport == CL_TRUE) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGenericPointer);
+    }
+
+    if (deviceInfo.maxNumOfSubGroups != 0 || deviceInfo.workGroupCollectiveFunctionsSupport == CL_TRUE) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroups);
+    }
+
+    if (deviceInfo.pipeSupport == CL_TRUE) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityPipes);
+    }
+
+    if (deviceInfo.deviceEnqueueSupport != 0) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityDeviceEnqueue);
+    }
+
+    if (deviceInfo.maxNumOfSubGroups != 0) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupDispatch);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_expect_assume") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityExpectAssumeKHR);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_extended_bit_ops") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_bit_instructions");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityBitInstructions);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_fp16") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityFloat16);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_fp64") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityFloat64);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_int64_base_atomics") != extVector.end() ||
+        std::find(extVector.begin(), extVector.end(), "cl_khr_int64_extended_atomics") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityInt64Atomics);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_integer_dot_product") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_integer_dot_product");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityDotProduct);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityDotProductInput4x8BitPacked);
+        if (deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR) {
+            deviceInfo.spirvCapabilities.push_back(spv::CapabilityDotProductInput4x8Bit);
+        }
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_kernel_clock") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_shader_clock");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityShaderClockKHR);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_mipmap_image") != extVector.end() &&
+        std::find(extVector.begin(), extVector.end(), "cl_khr_mipmap_image_writes") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityImageMipmap);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_spirv_linkonce_odr") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_linkonce_odr");
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_spirv_no_integer_wrap_decoration") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_no_integer_wrap_decoration");
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_ballot") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformBallot);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_clustered_reduce") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformClustered);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_named_barrier") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityNamedBarrier);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_non_uniform_arithmetic") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformArithmetic);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_non_uniform_vote") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniform);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformVote);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_rotate") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_subgroup_rotate");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformRotateKHR);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_shuffle") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformShuffle);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_subgroup_shuffle_relative") != extVector.end()) {
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupNonUniformShuffleRelative);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_khr_work_group_uniform_arithmetic") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_KHR_uniform_group_instructions");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityGroupUniformArithmeticKHR);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_ext_float_atomics") != extVector.end()) {
+        if (deviceInfo.singleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT)) {
+            deviceInfo.spirvCapabilities.push_back(spv::CapabilityAtomicFloat32AddEXT);
+        }
+        if (deviceInfo.singleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)) {
+            deviceInfo.spirvCapabilities.push_back(spv::CapabilityAtomicFloat32MinMaxEXT);
+        }
+        if (deviceInfo.halfFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT)) {
+            deviceInfo.spirvCapabilities.push_back(spv::CapabilityAtomicFloat16AddEXT);
+        }
+        if (deviceInfo.halfFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)) {
+            deviceInfo.spirvCapabilities.push_back(spv::CapabilityAtomicFloat16MinMaxEXT);
+        }
+        if (deviceInfo.doubleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT)) {
+            deviceInfo.spirvCapabilities.push_back(spv::CapabilityAtomicFloat64AddEXT);
+        }
+        if (deviceInfo.doubleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)) {
+            deviceInfo.spirvCapabilities.push_back(spv::CapabilityAtomicFloat64MinMaxEXT);
+        }
+        if (deviceInfo.singleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT) ||
+            deviceInfo.doubleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT)) {
+            deviceInfo.spirvExtensions.push_back("SPV_EXT_shader_atomic_float_add");
+        }
+        if (deviceInfo.singleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT) ||
+            deviceInfo.halfFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT) ||
+            deviceInfo.doubleFpAtomicCapabilities & (CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)) {
+            deviceInfo.spirvExtensions.push_back("SPV_EXT_shader_atomic_float_min_max");
+        }
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_intel_bfloat16_conversions") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_INTEL_bfloat16_conversion");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilityBFloat16ConversionINTEL);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_intel_spirv_device_side_avc_motion_estimation") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_INTEL_device_side_avc_motion_estimation");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupAvcMotionEstimationChromaINTEL);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupAvcMotionEstimationINTEL);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupAvcMotionEstimationIntraINTEL);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_intel_spirv_media_block_io") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_INTEL_media_block_io");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupImageMediaBlockIOINTEL);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_intel_spirv_subgroups") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_INTEL_subgroups");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupBufferBlockIOINTEL);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupImageBlockIOINTEL);
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupShuffleINTEL);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_intel_split_work_group_barrier") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_INTEL_split_barrier");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySplitBarrierINTEL);
+    }
+
+    if (std::find(extVector.begin(), extVector.end(), "cl_intel_subgroup_buffer_prefetch") != extVector.end()) {
+        deviceInfo.spirvExtensions.push_back("SPV_INTEL_subgroup_buffer_prefetch");
+        deviceInfo.spirvCapabilities.push_back(spv::CapabilitySubgroupBufferPrefetchINTEL);
     }
 }
 

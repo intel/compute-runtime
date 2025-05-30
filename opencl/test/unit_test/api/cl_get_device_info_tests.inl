@@ -309,6 +309,93 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamWhenGettingDeviceInfoThe
     EXPECT_STREQ("SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ", paramValue.get());
 }
 
+TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvExtensionsReturnsSpirvExtensions) {
+    size_t paramRetSize = 0;
+
+    cl_int retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_EXTENSIONS_KHR,
+        0,
+        nullptr,
+        &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    std::vector<const char *> spirvExtensions(paramRetSize / sizeof(const char *));
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_EXTENSIONS_KHR,
+        paramRetSize,
+        spirvExtensions.data(),
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    for (auto extension : spirvExtensions) {
+        EXPECT_EQ(0, std::strncmp(extension, "SPV_", 4));
+    }
+}
+
+TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvExtendedInstructionSetsReturnsSpirvExtendedInstructionSets) {
+    size_t paramRetSize = 0;
+
+    cl_int retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR,
+        0,
+        nullptr,
+        &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    std::vector<const char *> spirvExtendedInstructionSets(paramRetSize / sizeof(const char *));
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR,
+        paramRetSize,
+        spirvExtendedInstructionSets.data(),
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    bool found = paramRetSize == 0;
+    for (auto extinst : spirvExtendedInstructionSets) {
+        if (std::strcmp(extinst, "OpenCL.std") == 0) {
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
+TEST_F(clGetDeviceInfoTests, SpirvQueryForSpirvCapabilitiesReturnsSpirvCapabilities) {
+    size_t paramRetSize = 0;
+
+    cl_int retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_CAPABILITIES_KHR,
+        0,
+        nullptr,
+        &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    std::vector<cl_uint> spirvCapabilities(paramRetSize / sizeof(cl_uint));
+    retVal = clGetDeviceInfo(
+        testedClDevice,
+        CL_DEVICE_SPIRV_CAPABILITIES_KHR,
+        paramRetSize,
+        spirvCapabilities.data(),
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    constexpr cl_uint spirvCapabilityKernel = 6;
+
+    bool found = paramRetSize == 0;
+    for (auto cap : spirvCapabilities) {
+        if (cap == spirvCapabilityKernel) {
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
 using matcherAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;
 HWTEST2_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyIntelWhenCallClGetDeviceInfoThenProperArrayIsReturned, matcherAtMostGen12lp) {
     cl_device_info paramName = 0;
