@@ -16,15 +16,18 @@ namespace NEO {
 
 ISAPool::ISAPool(Device *device, bool isBuiltin, size_t storageSize)
     : BaseType(device->getMemoryManager(), nullptr), device(device), isBuiltin(isBuiltin) {
-    this->chunkAllocator.reset(new NEO::HeapAllocator(params.startingOffset, storageSize, MemoryConstants::pageSize, 0u));
-
     auto allocationType = isBuiltin ? NEO::AllocationType::kernelIsaInternal : NEO::AllocationType::kernelIsa;
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(),
-                                                                                   storageSize,
-                                                                                   allocationType,
-                                                                                   device->getDeviceBitfield()});
+    AllocationProperties allocProperties = {device->getRootDeviceIndex(),
+                                            storageSize,
+                                            allocationType,
+                                            device->getDeviceBitfield()};
+    allocProperties.isaPaddingIncluded = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
+    this->chunkAllocator.reset(new NEO::HeapAllocator(params.startingOffset,
+                                                      graphicsAllocation ? graphicsAllocation->getUnderlyingBufferSize() : 0u,
+                                                      MemoryConstants::pageSize,
+                                                      0u));
     this->mainStorage.reset(graphicsAllocation);
-
     this->mtx = std::make_unique<std::mutex>();
     this->stackVec.push_back(graphicsAllocation);
 }
@@ -70,29 +73,29 @@ ISAPoolAllocator::ISAPoolAllocator(Device *device) : device(device) {
  *
  * @return returns SharedIsaAllocation or nullptr if allocation didn't succeeded
  */
-SharedIsaAllocation *ISAPoolAllocator::requestGraphicsAllocationForIsa(bool isBuiltin, size_t size) {
+SharedIsaAllocation *ISAPoolAllocator::requestGraphicsAllocationForIsa(bool isBuiltin, size_t sizeWithPadding) {
     std::unique_lock lock(allocatorMtx);
 
     auto maxAllocationSize = getAllocationSize(isBuiltin);
 
-    if (size > maxAllocationSize) {
-        addNewBufferPool(ISAPool(device, isBuiltin, size));
+    if (sizeWithPadding > maxAllocationSize) {
+        addNewBufferPool(ISAPool(device, isBuiltin, sizeWithPadding));
     }
 
-    auto sharedIsaAllocation = tryAllocateISA(isBuiltin, size);
+    auto sharedIsaAllocation = tryAllocateISA(isBuiltin, sizeWithPadding);
     if (sharedIsaAllocation) {
         return sharedIsaAllocation;
     }
 
     drain();
 
-    sharedIsaAllocation = tryAllocateISA(isBuiltin, size);
+    sharedIsaAllocation = tryAllocateISA(isBuiltin, sizeWithPadding);
     if (sharedIsaAllocation) {
         return sharedIsaAllocation;
     }
 
     addNewBufferPool(ISAPool(device, isBuiltin, getAllocationSize(isBuiltin)));
-    return tryAllocateISA(isBuiltin, size);
+    return tryAllocateISA(isBuiltin, sizeWithPadding);
 }
 
 /**

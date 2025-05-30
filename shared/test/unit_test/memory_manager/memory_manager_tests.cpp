@@ -1588,6 +1588,35 @@ TEST(OsAgnosticMemoryManager, givenForcedSystemMemoryForIsaAndEnabledLocalMemory
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST(OsAgnosticMemoryManager, givenDifferentIsaPaddingIncludedFlagValuesWhenAllocatingGraphicsMemoryForIsaThenUnderlyingBufferSizeMatchesExpectation) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::kernelIsa) - 1));
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->featureTable.flags.ftrLocalMemory = true;
+    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    const auto isaPadding = gfxCoreHelper.getPaddingForISAAllocation();
+
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+
+    size_t kernelIsaSize = 4096;
+    AllocationProperties allocProperties = {0, kernelIsaSize, AllocationType::kernelIsa, 1};
+
+    for (auto isaPaddingIncluded : {false, true}) {
+        allocProperties.isaPaddingIncluded = isaPaddingIncluded;
+        auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(allocProperties);
+        ASSERT_NE(nullptr, allocation);
+
+        if (isaPaddingIncluded) {
+            EXPECT_EQ(kernelIsaSize, allocation->getUnderlyingBufferSize());
+        } else {
+            EXPECT_EQ(kernelIsaSize + isaPadding, allocation->getUnderlyingBufferSize());
+        }
+
+        memoryManager.freeGraphicsMemory(allocation);
+    }
+}
+
 class MemoryManagerWithAsyncDeleterTest : public ::testing::Test {
   public:
     MemoryManagerWithAsyncDeleterTest() : memoryManager(false, false){};

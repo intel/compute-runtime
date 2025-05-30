@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,6 +50,7 @@ struct AllocationProperties {
     bool makeGPUVaDifferentThanCPUPtr = false;
     uint32_t cacheRegion = 0;
     bool makeDeviceBufferLockable = false;
+    bool isaPaddingIncluded = false;
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          AllocationType allocationType, DeviceBitfield subDevicesBitfieldParam)

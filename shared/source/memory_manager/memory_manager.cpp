@@ -668,7 +668,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     allocationData.hostPtr = hostPtr;
-    if (GraphicsAllocation::isKernelIsaAllocationType(properties.allocationType)) {
+    if (GraphicsAllocation::isKernelIsaAllocationType(properties.allocationType) &&
+        !properties.isaPaddingIncluded) {
         allocationData.size = properties.size + helper.getPaddingForISAAllocation();
     } else {
         allocationData.size = properties.size;
