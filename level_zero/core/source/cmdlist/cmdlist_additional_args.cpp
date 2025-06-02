@@ -15,6 +15,9 @@ struct CmdListKernelLaunchParams;
 void CommandList::setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const {
 }
 
+void CommandList::setAdditionalDispatchKernelArgsFromKernel(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const Kernel *kernel) const {
+}
+
 ze_result_t CommandList::validateLaunchParams(const CmdListKernelLaunchParams &launchParams) const {
     return ZE_RESULT_SUCCESS;
 }

@@ -427,6 +427,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .makeCommandView = launchParams.makeKernelCommandView,
     };
     setAdditionalDispatchKernelArgsFromLaunchParams(dispatchKernelArgs, launchParams);
+    setAdditionalDispatchKernelArgsFromKernel(dispatchKernelArgs, kernel);
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
     launchParams.outWalker = dispatchKernelArgs.outWalkerPtr;

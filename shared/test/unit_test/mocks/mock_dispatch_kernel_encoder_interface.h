@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
         return requiredWalkGroupOrder;
     }
     uint32_t getNumThreadsPerThreadGroup() const override {
-        return 1;
+        return numThreadsPerThreadGroup;
     }
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return nullptr; }
@@ -42,6 +42,7 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     uint32_t groupSizes[3]{32, 1, 1};
     uint32_t requiredWalkGroupOrder = 0x0u;
     KernelDescriptor kernelDescriptor{};
+    uint32_t numThreadsPerThreadGroup = 1;
 
     mutable uint64_t samplerStateOffsetPassed = 0u;
 

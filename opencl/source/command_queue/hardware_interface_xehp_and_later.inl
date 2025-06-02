@@ -19,6 +19,8 @@
 
 #include "opencl/source/command_queue/hardware_interface_base.inl"
 
+#include "encode_dispatch_kernel_args_ext.h"
+
 namespace NEO {
 
 template <typename GfxFamily>
@@ -156,13 +158,18 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         scratchAddress,
         device);
 
+    EncodeKernelArgsExt argsExtended{};
+
     EncodeWalkerArgs encodeWalkerArgs{
+        .argsExtended = &argsExtended,
         .kernelExecutionType = kernel.getExecutionType(),
         .requiredDispatchWalkOrder = kernelAttributes.dispatchWalkOrder,
         .localRegionSize = kernelAttributes.localRegionSize,
         .maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads,
         .requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr,
         .hasSample = kernelInfo.kernelDescriptor.kernelAttributes.flags.hasSample};
+
+    HardwareInterfaceHelper::setEncodeWalkerArgsExt(encodeWalkerArgs, kernelInfo);
 
     EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
     EncodeDispatchKernel<GfxFamily>::template encodeWalkerPostSyncFields<WalkerType>(walkerCmd, rootDeviceEnvironment, encodeWalkerArgs);

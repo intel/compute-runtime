@@ -41,6 +41,7 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/flush.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}hardware_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.cpp

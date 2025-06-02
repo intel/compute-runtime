@@ -22,9 +22,14 @@ class Kernel;
 class LinearStream;
 class HwPerfCounter;
 class HwTimeStamps;
+class TagNodeBase;
+class TimestampPacketContainer;
 struct KernelOperation;
 struct MultiDispatchInfo;
 struct TimestampPacketDependencies;
+struct KernelInfo;
+struct EncodeWalkerArgs;
+struct HardwareInfo;
 
 template <class T>
 class TagNode;
@@ -48,6 +53,12 @@ struct HardwareInterfaceWalkerArgs {
     uint32_t interfaceDescriptorIndex = 0;
     bool isMainKernel = false;
     bool relaxedOrderingEnabled = false;
+};
+
+struct HardwareInterfaceHelper {
+    static void setEncodeWalkerArgsExt(
+        EncodeWalkerArgs &encodeWalkerArgs,
+        const KernelInfo &kernelInfo);
 };
 
 template <typename GfxFamily>
