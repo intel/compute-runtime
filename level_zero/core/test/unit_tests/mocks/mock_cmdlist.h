@@ -303,6 +303,7 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::currentDynamicStateBaseAddress;
     using BaseClass::currentIndirectObjectBaseAddress;
     using BaseClass::currentSurfaceStateBaseAddress;
+    using BaseClass::dcFlushSupport;
     using BaseClass::device;
     using BaseClass::dispatchCmdListBatchBufferAsPrimary;
     using BaseClass::doubleSbaWa;

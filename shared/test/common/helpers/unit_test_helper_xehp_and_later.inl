@@ -183,4 +183,10 @@ void *UnitTestHelper<GfxFamily>::getInitWalkerCmd(bool heapless) {
     return new COMPUTE_WALKER;
 }
 
+template <typename GfxFamily>
+template <typename WalkerType>
+uint64_t UnitTestHelper<GfxFamily>::getWalkerActivePostSyncAddress(WalkerType *walkerCmd) {
+    return walkerCmd->getPostSync().getDestinationAddress();
+}
+
 } // namespace NEO

@@ -51,4 +51,6 @@ bool UnitTestHelper<Family>::requiresTimestampPacketsInSystemMemory(HardwareInfo
 
 template struct UnitTestHelper<Family>;
 template struct UnitTestHelperWithHeap<Family>;
+
+template uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress<Family::COMPUTE_WALKER>(Family::COMPUTE_WALKER *walkerCmd);
 } // namespace NEO
