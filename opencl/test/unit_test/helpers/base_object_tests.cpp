@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -264,7 +264,7 @@ TEST(CastToBuffer, WhenCastingFromMemObjThenBehavesAsExpected) {
 
 TEST(CastToImage, WhenCastingFromMemObjThenBehavesAsExpected) {
     MockContext context;
-    auto image = Image2dHelper<>::create(&context);
+    auto image = Image2dHelperUlt<>::create(&context);
     MemObj *memObj = image;
     cl_mem clObj = image;
 

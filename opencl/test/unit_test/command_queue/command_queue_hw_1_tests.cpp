@@ -1480,7 +1480,7 @@ HWTEST_F(CommandQueueHwTest, givenDirectSubmissionAndSharedDisplayableImageWhenR
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
     ultCsr.directSubmission.reset(directSubmission);
 
-    auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context));
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(context));
     image->setSharingHandler(mockSharingHandler);
     image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage);
 

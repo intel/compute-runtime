@@ -100,7 +100,7 @@ struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBa
         BufferDefaults::context = context;
         Image2dDefaults::context = context;
         buffer.reset(BufferHelper<>::create());
-        image.reset(ImageHelper<Image2dDefaults>::create());
+        image.reset(ImageHelperUlt<Image2dDefaults>::create());
         ptr = static_cast<void *>(array);
         oldMemManager = pDevice->getExecutionEnvironment()->memoryManager.release();
         pDevice->injectMemoryManager(failMemManager.release());

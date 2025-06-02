@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubD
 
 HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDumpImageFormatIsNotSetThenImageShouldNotBeDumped) {
     MockContext context;
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&context));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
     auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -147,7 +147,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     debugManager.flags.AUBDumpImageFormat.set("BMP");
 
     MockContext context(pClDevice);
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&context));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
     auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -190,7 +190,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     debugManager.flags.AUBDumpImageFormat.set("TRE");
 
     MockContext context(pClDevice);
-    std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
     auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -230,7 +230,7 @@ HWTEST_F(AubAllocDumpTests, givenCompressedImageWritableWhenDumpAllocationIsCall
     debugManager.flags.AUBDumpImageFormat.set("TRE");
 
     MockContext context(pClDevice);
-    std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
     auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -249,7 +249,7 @@ HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWhenDumpAllocationIsCal
     debugManager.flags.AUBDumpImageFormat.set("TRE");
 
     MockContext context(pClDevice);
-    std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
     auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -266,7 +266,7 @@ HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWhenDumpAllocationIsCal
 
 HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWheGetDumpSurfaceIsCalledAndDumpFormatIsSpecifiedThenNullSurfaceInfoIsReturned) {
     MockContext context(pClDevice);
-    std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
     auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());

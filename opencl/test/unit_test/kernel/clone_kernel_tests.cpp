@@ -238,7 +238,7 @@ TEST_F(CloneKernelTest, givenArgImageWhenCloningKernelThenKernelInfoIsCorrect) {
     metaPayload.imgHeight = 0x8;
     metaPayload.imgDepth = 0xc;
 
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context.get()));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<>::create(context.get()));
     ASSERT_NE(nullptr, image);
 
     auto rootDeviceIndex = *context->getRootDeviceIndices().begin();

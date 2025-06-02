@@ -1632,7 +1632,7 @@ TEST_F(EventTest, givenCmdQueueWithoutProfilingWhenIsCpuProfilingIsCalledThenFal
 }
 
 TEST_F(EventTest, givenOutEventWhenBlockingEnqueueHandledOnCpuThenUpdateTaskCountAndFlushStampFromCmdQ) {
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&mockContext));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(&mockContext));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
     pCmdQ->flushStamp->setStamp(10);

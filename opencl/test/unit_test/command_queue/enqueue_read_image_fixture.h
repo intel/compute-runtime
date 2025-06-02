@@ -28,7 +28,7 @@ struct EnqueueReadImageTest : public CommandEnqueueFixture,
         CommandEnqueueFixture::setUp();
 
         context = new MockContext(pClDevice);
-        srcImage = Image2dHelper<>::create(context);
+        srcImage = Image2dHelperUlt<>::create(context);
         srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
         const auto &imageDesc = srcImage->getImageDesc();
         dstPtr = new float[imageDesc.image_width * imageDesc.image_height];

@@ -28,7 +28,7 @@ struct EnqueueCopyBufferToImageTest : public CommandEnqueueFixture,
         BufferDefaults::context = new MockContext(pClDevice);
         context = new MockContext(pClDevice);
         srcBuffer = BufferHelper<>::create(context);
-        dstImage = Image2dHelper<>::create(context);
+        dstImage = Image2dHelperUlt<>::create(context);
     }
 
     void TearDown() override {

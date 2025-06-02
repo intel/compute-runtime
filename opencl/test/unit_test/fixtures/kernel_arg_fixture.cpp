@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ void KernelImageArgTest::SetUp() {
     crossThreadData[0x20 / sizeof(uint32_t)] = 0x12344321;
     pKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 
-    image.reset(Image2dHelper<>::create(context.get()));
+    image.reset(Image2dHelperUlt<>::create(context.get()));
     ASSERT_NE(nullptr, image);
 }
 

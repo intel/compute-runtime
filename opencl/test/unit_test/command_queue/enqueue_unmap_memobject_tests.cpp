@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -249,7 +249,7 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenMemObjWhenUnmappingThenSetAubWritableBefor
     DebugManagerStateRestore restore;
     debugManager.flags.DisableZeroCopyForBuffers.set(true);
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(BufferDefaults::context));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<>::create(BufferDefaults::context));
 
     class MyMockCommandQueue : public MockCommandQueue {
       public:

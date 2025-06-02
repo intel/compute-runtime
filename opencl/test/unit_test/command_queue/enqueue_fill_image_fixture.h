@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ struct EnqueueFillImageTestFixture : public CommandEnqueueFixture {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
         CommandEnqueueFixture::setUp();
         context = new MockContext(pClDevice);
-        image = Image2dHelper<>::create(context);
+        image = Image2dHelperUlt<>::create(context);
     }
 
     void tearDown() {

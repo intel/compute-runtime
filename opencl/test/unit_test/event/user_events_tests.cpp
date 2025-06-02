@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -902,7 +902,7 @@ TEST_F(MockEventTests, GivenEnqueueReadImageWhenWaitingforEventThenSuccessIsRetu
     uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
 
-    auto image = clUniquePtr(Image2dHelper<>::create(this->context));
+    auto image = clUniquePtr(Image2dHelperUlt<>::create(this->context));
     ASSERT_NE(nullptr, image);
 
     auto retVal = EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,8 +43,8 @@ struct OOMCommandQueueImageTest : public ClDeviceFixture,
         context = new MockContext(pClDevice);
         CommandQueueFixture::setUp(context, pClDevice, 0);
 
-        srcImage = Image2dHelper<>::create(context);
-        dstImage = Image2dHelper<>::create(context);
+        srcImage = Image2dHelperUlt<>::create(context);
+        dstImage = Image2dHelperUlt<>::create(context);
 
         const auto &oomSetting = GetParam();
         auto oomSize = 10u;

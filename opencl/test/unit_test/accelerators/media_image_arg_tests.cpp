@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
         pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
         pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
 
-        srcImage = Image2dHelper<>::create(context);
+        srcImage = Image2dHelperUlt<>::create(context);
         ASSERT_NE(nullptr, srcImage);
     }
 

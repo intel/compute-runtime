@@ -321,7 +321,7 @@ TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeS
 
 TEST_F(PerformanceHintTest, GivenZeroCopyImageAndContextWhenCreateImageThenContextProvidesHintAboutAlignment) {
 
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(context));
     EXPECT_TRUE(image->isMemObjZeroCopy());
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_IMAGE_MEETS_ALIGNMENT_RESTRICTIONS], static_cast<cl_mem>(image.get()));
@@ -330,7 +330,7 @@ TEST_F(PerformanceHintTest, GivenZeroCopyImageAndContextWhenCreateImageThenConte
 
 TEST_F(PerformanceHintTest, GivenNonZeroCopyImageAndContextWhenCreateImageThenContextDoesntProvidesHintAboutAlignment) {
 
-    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
+    std::unique_ptr<Image> image(ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(context));
     EXPECT_FALSE(image->isMemObjZeroCopy());
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_IMAGE_MEETS_ALIGNMENT_RESTRICTIONS], static_cast<cl_mem>(image.get()));

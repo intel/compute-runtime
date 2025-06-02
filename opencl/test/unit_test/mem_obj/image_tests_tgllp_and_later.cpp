@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ struct ImageTestsTgllAndLater : ClDeviceFixture, testing::Test {
     void SetUp() override {
         ClDeviceFixture::setUp();
         context = std::make_unique<MockContext>(pClDevice);
-        srcImage = std::unique_ptr<Image>(Image3dHelper<>::create(context.get()));
+        srcImage = std::unique_ptr<Image>(Image3dHelperUlt<>::create(context.get()));
     }
 
     void TearDown() override {

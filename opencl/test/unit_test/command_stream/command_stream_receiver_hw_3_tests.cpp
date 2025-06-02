@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ HWTEST_F(BcsTests, given3dImageWhenBlitBufferIsCalledThenBlitCmdIsFoundZtimes) {
     auto hostAllocationPtr = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);
     void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
 
-    std::unique_ptr<Image> image(Image3dHelper<>::create(context.get()));
+    std::unique_ptr<Image> image(Image3dHelperUlt<>::create(context.get()));
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.srcPtr = hostPtr;
     builtinOpParams.dstMemObj = image.get();
@@ -68,7 +68,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenBlitBufferIsCalledThenBlitCmdIsFound) 
     auto hostAllocationPtr = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);
     void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
 
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get()));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get()));
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.dstPtr = hostPtr;
     builtinOpParams.srcMemObj = image.get();
@@ -97,7 +97,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsCorrect
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.image_width = 10;
     imgDesc.image_height = 12;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.srcPtr = hostPtr;
     builtinOpParams.srcMemObj = nullptr;
@@ -132,7 +132,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenBlitBufferIsCalledThenBlitCmdIsCorrect
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.image_width = 10u;
     imgDesc.image_height = 12u;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.dstPtr = hostPtr;
     builtinOpParams.srcMemObj = image.get();
@@ -163,8 +163,8 @@ HWTEST_F(BcsTests, givenImageToImageWhenBlitBufferIsCalledThenBlitCmdIsCorrectly
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.image_width = 10u;
     imgDesc.image_height = 12u;
-    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(context.get(), &imgDesc));
-    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(context.get(), &imgDesc));
 
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.srcMemObj = srcImage.get();

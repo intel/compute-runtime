@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ class ImageUnmapTest : public ::testing::Test {
     void SetUp() override {
         device = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context = std::make_unique<MockContext>(device.get());
-        image.reset(ImageHelper<ImageReadOnly<Image3dDefaults>>::create(context.get()));
+        image.reset(ImageHelperUlt<ImageReadOnly<Image3dDefaults>>::create(context.get()));
     }
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;

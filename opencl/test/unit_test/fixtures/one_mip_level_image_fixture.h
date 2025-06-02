@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ struct OneMipLevelImageFixture {
     Image *createImage() {
         cl_image_desc imageDesc = Image3dDefaults::imageDesc;
         imageDesc.num_mip_levels = 1;
-        return ImageHelper<Image3dDefaults>::create(&context, &imageDesc);
+        return ImageHelperUlt<Image3dDefaults>::create(&context, &imageDesc);
     }
 
     Buffer *createBuffer() {

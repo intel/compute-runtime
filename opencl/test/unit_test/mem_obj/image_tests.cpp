@@ -917,7 +917,7 @@ TEST_F(ImageTransfer, GivenNonZeroCopyImageWhenDataTransferedFromHostPtrToMemSto
     ModifyableImage::imageFormat.image_channel_data_type = CL_FLOAT;
 
     ModifyableImage::hostPtr = unalignedHostPtr;
-    Image *imageNonZeroCopy = ImageHelper<ImageUseHostPtr<ModifyableImage>>::create();
+    Image *imageNonZeroCopy = ImageHelperUlt<ImageUseHostPtr<ModifyableImage>>::create();
 
     ASSERT_NE(nullptr, imageNonZeroCopy);
 
@@ -953,7 +953,7 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchImageWhenDataIsTransferedFr
     createHostPtrs(imageSize);
 
     ModifyableImage::hostPtr = unalignedHostPtr;
-    Image *imageNonZeroCopy = ImageHelper<ImageUseHostPtr<ModifyableImage>>::create();
+    Image *imageNonZeroCopy = ImageHelperUlt<ImageUseHostPtr<ModifyableImage>>::create();
 
     ASSERT_NE(nullptr, imageNonZeroCopy);
 
@@ -1009,7 +1009,7 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchWithExtraBytes1DArrayImageW
     }
 
     ModifyableImage::hostPtr = unalignedHostPtr;
-    Image *imageNonZeroCopy = ImageHelper<ImageUseHostPtr<ModifyableImage>>::create();
+    Image *imageNonZeroCopy = ImageHelperUlt<ImageUseHostPtr<ModifyableImage>>::create();
 
     ASSERT_NE(nullptr, imageNonZeroCopy);
 
@@ -1205,7 +1205,7 @@ TEST_F(ImageCompressionTests, givenNonTiledImageAndVariousFlagsWhenCreatingAlloc
 
 TEST(ImageTest, givenImageWhenGettingCompressionOfImageThenCorrectValueIsReturned) {
     MockContext context;
-    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&context));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(&context));
     EXPECT_NE(nullptr, image);
 
     auto allocation = image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
@@ -1241,7 +1241,7 @@ HWTEST_F(ImageTests, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorre
         GTEST_SKIP();
     }
     MockContext ctx;
-    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(&ctx));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
     MemObjOffsetArray origin = {{4, 5, 6}};
@@ -1255,7 +1255,7 @@ HWTEST_F(ImageTests, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorre
 
 TEST(ImageTest, givenImageWhenAskedForMcsInfoThenDefaultValuesAreReturned) {
     MockContext ctx;
-    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(&ctx));
 
     auto mcsInfo = image->getMcsSurfaceInfo();
     EXPECT_EQ(0u, mcsInfo.multisampleCount);
@@ -1267,7 +1267,7 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectVal
     DebugManagerStateRestore restore;
     debugManager.flags.ForceLinearImages.set(true);
     MockContext ctx;
-    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(&ctx));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
     MemObjOffsetArray origin = {{4, 5, 6}};
@@ -1282,7 +1282,7 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectVal
 
 TEST(ImageTest, given1DArrayImageWhenAskedForPtrOffsetForMappingThenReturnCorrectValue) {
     MockContext ctx;
-    std::unique_ptr<Image> image(ImageHelper<Image1dArrayDefaults>::create(&ctx));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dArrayDefaults>::create(&ctx));
 
     MemObjOffsetArray origin = {{4, 5, 0}};
 
@@ -1298,7 +1298,7 @@ HWTEST_F(ImageTests, givenImageWhenAskedForPtrLengthForGpuMappingThenReturnCorre
         GTEST_SKIP();
     }
     MockContext ctx;
-    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(&ctx));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
     MemObjSizeArray region = {{4, 5, 6}};
@@ -1314,7 +1314,7 @@ TEST(ImageTest, givenImageWhenAskedForPtrLengthForCpuMappingThenReturnCorrectVal
     DebugManagerStateRestore restore;
     debugManager.flags.ForceLinearImages.set(true);
     MockContext ctx;
-    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(&ctx));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
     MemObjSizeArray region = {{4, 5, 6}};
@@ -1336,7 +1336,7 @@ TEST(ImageTest, givenMipMapImage3DWhenAskedForPtrOffsetForGpuMappingThenReturnOf
     imageDesc.image_depth = 5;
     imageDesc.num_mip_levels = 2;
 
-    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx, &imageDesc));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(&ctx, &imageDesc));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
     MemObjOffsetArray origin{{1, 1, 1}};
@@ -1357,7 +1357,7 @@ TEST(ImageTest, givenMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
     imageDesc.image_array_size = 5;
     imageDesc.num_mip_levels = 2;
 
-    std::unique_ptr<Image> image(ImageHelper<Image2dArrayDefaults>::create(&ctx, &imageDesc));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dArrayDefaults>::create(&ctx, &imageDesc));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
     MemObjOffsetArray origin{{1, 1, 1}};
@@ -1378,7 +1378,7 @@ TEST(ImageTest, givenNonMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThen
     imageDesc.image_array_size = 5;
     imageDesc.num_mip_levels = 1;
 
-    std::unique_ptr<Image> image(ImageHelper<Image2dArrayDefaults>::create(&ctx, &imageDesc));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dArrayDefaults>::create(&ctx, &imageDesc));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
     MemObjOffsetArray origin{{1, 1, 1}};
@@ -1398,7 +1398,7 @@ TEST(ImageTest, givenMipMapImage1DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
     imageDesc.image_array_size = 5;
     imageDesc.num_mip_levels = 2;
 
-    std::unique_ptr<Image> image(ImageHelper<Image1dArrayDefaults>::create(&ctx, &imageDesc));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dArrayDefaults>::create(&ctx, &imageDesc));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
     MemObjOffsetArray origin{{1, 1, 0}};
@@ -1502,7 +1502,7 @@ HWTEST_F(ImageDirectSubmissionTest, givenImageCreatedWhenDestrucedThenVerifyTask
     imageDesc.image_width = 1;
     imageDesc.image_height = 1;
 
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&ctx, &imageDesc));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(&ctx, &imageDesc));
     EXPECT_NE(nullptr, image);
     image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::image);
     image->getGraphicsAllocation(mockClDevice.getRootDeviceIndex())->updateTaskCount(taskCountReady, mockClDevice.getDefaultEngine().osContext->getContextId());
@@ -1681,7 +1681,7 @@ HWTEST_F(ImageTransformTest, givenSurfaceStateWhenTransformImage3dTo2dArrayIsCal
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     MockContext context;
-    auto image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(&context));
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(&context));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     surfaceState.setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D);
@@ -1695,7 +1695,7 @@ HWTEST_F(ImageTransformTest, givenSurfaceStateWhenTransformImage2dArrayTo3dIsCal
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     MockContext context;
-    auto image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(&context));
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(&context));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     surfaceState.setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
@@ -1707,7 +1707,7 @@ HWTEST_F(ImageTransformTest, givenSurfaceStateWhenTransformImage2dArrayTo3dIsCal
 
 HWTEST_F(ImageTransformTest, givenSurfaceBaseAddressAndUnifiedSurfaceWhenSetUnifiedAuxAddressCalledThenAddressIsSet) {
     MockContext context;
-    auto image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(&context));
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image3dDefaults>::create(&context));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -1731,7 +1731,7 @@ TEST(ImageTest, givenImageWhenFillRegionIsCalledThenProperRegionIsSet) {
 
     {
         size_t region[3] = {};
-        std::unique_ptr<Image> image(Image1dHelper<>::create(&context));
+        std::unique_ptr<Image> image(Image1dHelperUlt<>::create(&context));
 
         image->fillImageRegion(region);
 
@@ -1741,7 +1741,7 @@ TEST(ImageTest, givenImageWhenFillRegionIsCalledThenProperRegionIsSet) {
     }
     {
         size_t region[3] = {};
-        std::unique_ptr<Image> image(Image1dArrayHelper<>::create(&context));
+        std::unique_ptr<Image> image(Image1dArrayHelperUlt<>::create(&context));
 
         image->fillImageRegion(region);
 
@@ -1751,7 +1751,7 @@ TEST(ImageTest, givenImageWhenFillRegionIsCalledThenProperRegionIsSet) {
     }
     {
         size_t region[3] = {};
-        std::unique_ptr<Image> image(Image1dBufferHelper<>::create(&context));
+        std::unique_ptr<Image> image(Image1dBufferHelperUlt<>::create(&context));
 
         image->fillImageRegion(region);
 
@@ -1761,7 +1761,7 @@ TEST(ImageTest, givenImageWhenFillRegionIsCalledThenProperRegionIsSet) {
     }
     {
         size_t region[3] = {};
-        std::unique_ptr<Image> image(Image2dHelper<>::create(&context));
+        std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context));
 
         image->fillImageRegion(region);
 
@@ -1771,7 +1771,7 @@ TEST(ImageTest, givenImageWhenFillRegionIsCalledThenProperRegionIsSet) {
     }
     {
         size_t region[3] = {};
-        std::unique_ptr<Image> image(Image2dArrayHelper<>::create(&context));
+        std::unique_ptr<Image> image(Image2dArrayHelperUlt<>::create(&context));
 
         image->fillImageRegion(region);
 
@@ -1781,7 +1781,7 @@ TEST(ImageTest, givenImageWhenFillRegionIsCalledThenProperRegionIsSet) {
     }
     {
         size_t region[3] = {};
-        std::unique_ptr<Image> image(Image3dHelper<>::create(&context));
+        std::unique_ptr<Image> image(Image3dHelperUlt<>::create(&context));
 
         image->fillImageRegion(region);
 
@@ -1802,7 +1802,7 @@ TEST(ImageTest, givenMultiDeviceEnvironmentWhenReleaseImageFromBufferThenMainBuf
 
     cl_mem clBuffer = buffer;
     imageDesc.mem_object = clBuffer;
-    auto image = Image2dHelper<>::create(&context, &imageDesc);
+    auto image = Image2dHelperUlt<>::create(&context, &imageDesc);
     EXPECT_EQ(3u, buffer->getMultiGraphicsAllocation().getGraphicsAllocations().size());
     EXPECT_EQ(3u, image->getMultiGraphicsAllocation().getGraphicsAllocations().size());
 

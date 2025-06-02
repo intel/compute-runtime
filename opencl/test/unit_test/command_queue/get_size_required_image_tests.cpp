@@ -40,8 +40,8 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
         CommandEnqueueFixture::setUp();
 
-        srcImage = Image2dHelper<>::create(context);
-        dstImage = Image2dHelper<>::create(context);
+        srcImage = Image2dHelperUlt<>::create(context);
+        dstImage = Image2dHelperUlt<>::create(context);
 
         pDevice->setPreemptionMode(PreemptionMode::Disabled);
     }

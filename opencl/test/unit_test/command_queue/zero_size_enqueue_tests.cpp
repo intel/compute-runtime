@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -418,7 +418,7 @@ struct ZeroSizeEnqueueHandlerImageTest : ZeroSizeEnqueueHandlerTest {
 HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenReadingImageThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context));
     size_t memory[1];
     size_t origin[3] = {1024u, 1, 0};
 
@@ -455,7 +455,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenRead
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context));
     size_t memory[1];
     size_t origin[3] = {1024u, 1, 0};
     size_t zeroRegion[3] = {0, 0, 0};
@@ -475,7 +475,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenRead
 HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenWritingImageThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context));
     size_t memory[1];
     size_t origin[3] = {1024u, 1, 0};
 
@@ -512,7 +512,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenWrit
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context));
     size_t memory[1];
     size_t origin[3] = {1024u, 1, 0};
     size_t zeroRegion[3] = {0, 0, 0};
@@ -532,8 +532,8 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenWrit
 HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingImageThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
-    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(&context));
-    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(&context));
+    std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(&context));
     size_t srcOrigin[3] = {1024u, 1, 0};
     size_t dstOrigin[3] = {1024u, 1, 0};
 
@@ -570,8 +570,8 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenCopy
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;
-    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(&context));
-    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(&context));
+    std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(&context));
     size_t srcOrigin[3] = {1024u, 1, 0};
     size_t dstOrigin[3] = {1024u, 1, 0};
     size_t zeroRegion[3] = {0, 0, 0};
@@ -591,7 +591,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenCopy
 HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingImageToBufferThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
-    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(&context));
     std::unique_ptr<Buffer> dstBuffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1024u, nullptr, retVal));
     size_t srcOrigin[3] = {1024u, 1, 0};
 
@@ -628,7 +628,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenCopy
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;
-    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(&context));
     std::unique_ptr<Buffer> dstBuffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1024u, nullptr, retVal));
     size_t srcOrigin[3] = {1024u, 1, 0};
     size_t zeroRegion[3] = {0, 0, 0};
@@ -649,7 +649,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenCopy
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     std::unique_ptr<Buffer> srcBuffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1024u, nullptr, retVal));
-    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(&context));
     size_t dstOrigin[3] = {1024u, 1, 0};
 
     size_t zeroRegion000[3] = {0, 0, 0};
@@ -686,7 +686,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenCopy
 
     cl_event event;
     std::unique_ptr<Buffer> srcBuffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1024u, nullptr, retVal));
-    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(&context));
     size_t dstOrigin[3] = {1024u, 1, 0};
     size_t zeroRegion[3] = {0, 0, 0};
     mockCmdQ->enqueueCopyBufferToImage(srcBuffer.get(), dstImage.get(), 0, dstOrigin, zeroRegion, 0, nullptr, &event);
@@ -705,7 +705,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenCopy
 HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenFillingImageThenCommandMarkerShouldBeEnqueued) {
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context));
     size_t origin[3] = {1024u, 1, 1};
     int32_t fillColor[4] = {0xCC, 0xCC, 0xCC, 0xCC};
 
@@ -742,7 +742,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenFill
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context));
     size_t origin[3] = {1024u, 1, 1};
     int32_t fillColor[4] = {0xCC, 0xCC, 0xCC, 0xCC};
     size_t zeroRegion[3] = {0, 0, 0};

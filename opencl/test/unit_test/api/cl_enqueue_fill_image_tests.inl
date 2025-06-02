@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ using ClEnqueueFillImageTests = ApiTests;
 namespace ULT {
 
 TEST_F(ClEnqueueFillImageTests, GivenNullCommandQueueWhenFillingImageThenInvalidCommandQueueErrorIsReturned) {
-    auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {2, 2, 1};
@@ -56,7 +56,7 @@ TEST_F(ClEnqueueFillImageTests, GivenNullImageWhenFillingImageThenInvalidMemObje
 }
 
 TEST_F(ClEnqueueFillImageTests, GivenNullFillColorWhenFillingImageThenInvalidValueErrorIsReturned) {
-    auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {2, 2, 1};
 
@@ -74,7 +74,7 @@ TEST_F(ClEnqueueFillImageTests, GivenNullFillColorWhenFillingImageThenInvalidVal
 }
 
 TEST_F(ClEnqueueFillImageTests, GivenCorrectArgumentsWhenFillingImageThenSuccessIsReturned) {
-    auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {2, 2, 1};
@@ -93,7 +93,7 @@ TEST_F(ClEnqueueFillImageTests, GivenCorrectArgumentsWhenFillingImageThenSuccess
 }
 
 TEST_F(ClEnqueueFillImageTests, GivenQueueIncapableWhenFillingImageThenInvalidOperationReturned) {
-    auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {2, 2, 1};

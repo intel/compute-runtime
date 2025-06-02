@@ -25,7 +25,7 @@ struct EnqueueWriteImageTest : public CommandEnqueueFixture,
         CommandEnqueueFixture::setUp();
 
         context = new MockContext(pClDevice);
-        dstImage = Image2dHelper<>::create(context);
+        dstImage = Image2dHelperUlt<>::create(context);
         dstAllocation = dstImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
 
         const auto &imageDesc = dstImage->getImageDesc();

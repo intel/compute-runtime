@@ -1097,7 +1097,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStateles
 
     MockBuffer srcBuffer;
     srcBuffer.size = static_cast<size_t>(bigSize);
-    std ::unique_ptr<Image> pDstImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> pDstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pDstImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3dStateless, *pClDevice);
@@ -1129,7 +1129,7 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyBufferToImageHeaplessIsUsedTh
         GTEST_SKIP();
     }
     MockBuffer buffer;
-    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3dHeapless, *pClDevice);
@@ -1156,7 +1156,7 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToBufferHeaplessIsUsedTh
         GTEST_SKIP();
     }
     MockBuffer buffer;
-    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferHeapless, *pClDevice);
@@ -1182,8 +1182,8 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToImageHeaplessIsUsedThe
     if (!heaplessAllowed) {
         GTEST_SKIP();
     }
-    std ::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
-    std ::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(pContext));
+    std ::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
 
     ASSERT_NE(nullptr, srcImage.get());
     ASSERT_NE(nullptr, dstImage.get());
@@ -1208,8 +1208,8 @@ HWTEST_F(BuiltInTests, WhenBuilderCopyImageToImageIsUsedThenParamsAreCorrect) {
     USE_REAL_FILE_SYSTEM();
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-    std ::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
-    std ::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(pContext));
+    std ::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
 
     ASSERT_NE(nullptr, srcImage.get());
     ASSERT_NE(nullptr, dstImage.get());
@@ -1238,7 +1238,7 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderFillImageHeaplessIsUsedThenParams
         GTEST_SKIP();
     }
     MockBuffer fillColor;
-    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillImage3dHeapless, *pClDevice);
@@ -1260,7 +1260,7 @@ HWTEST_F(BuiltInTests, WhenBuilderFillImageIsUsedThenParamsAreCorrect) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     USE_REAL_FILE_SYSTEM();
     MockBuffer fillColor;
-    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> image(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillImage3d, *pClDevice);
@@ -1286,7 +1286,7 @@ HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderFillImage1dBufferHeaplessIsUsedTh
         GTEST_SKIP();
     }
     MockBuffer fillColor;
-    std ::unique_ptr<Image> image(Image1dBufferHelper<>::create(pContext));
+    std ::unique_ptr<Image> image(Image1dBufferHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillImage1dBufferHeapless, *pClDevice);
@@ -1308,7 +1308,7 @@ HWTEST_F(BuiltInTests, WhenBuilderFillImage1dBufferIsUsedThenParamsAreCorrect) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     USE_REAL_FILE_SYSTEM();
     MockBuffer fillColor;
-    std ::unique_ptr<Image> image(Image1dBufferHelper<>::create(pContext));
+    std ::unique_ptr<Image> image(Image1dBufferHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillImage1dBuffer, *pClDevice);
@@ -1337,7 +1337,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferSt
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
-    std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> pSrcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferStateless, *pClDevice);
@@ -1375,7 +1375,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
     dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
-    std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> pSrcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferStateless, *pClDevice);

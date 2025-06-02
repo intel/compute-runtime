@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,13 +40,13 @@ struct ValidateRegionAndOriginTests : public ::testing::TestWithParam<ImageEnque
     }
 
     static void copyImageWithCorrectSrc(MockCommandQueue *cmdQ, Image *dstImage, size_t *dstOrigin, size_t *region, int32_t &retVal) {
-        std::unique_ptr<Image> srcImage(ImageHelper<Image3dDefaults>::create(&cmdQ->getContext()));
+        std::unique_ptr<Image> srcImage(ImageHelperUlt<Image3dDefaults>::create(&cmdQ->getContext()));
         size_t srcOrigin[3] = {0, 0, 0};
         retVal = clEnqueueCopyImage(cmdQ, srcImage.get(), dstImage, srcOrigin, dstOrigin, region, 0, nullptr, nullptr);
     }
 
     static void copyImageWithCorrectDst(MockCommandQueue *cmdQ, Image *srcImage, size_t *srcOrigin, size_t *region, int32_t &retVal) {
-        std::unique_ptr<Image> dstImage(ImageHelper<Image3dDefaults>::create(&cmdQ->getContext()));
+        std::unique_ptr<Image> dstImage(ImageHelperUlt<Image3dDefaults>::create(&cmdQ->getContext()));
         size_t dstOrigin[3] = {0, 0, 0};
         retVal = clEnqueueCopyImage(cmdQ, srcImage, dstImage.get(), srcOrigin, dstOrigin, region, 0, nullptr, nullptr);
     }
@@ -71,7 +71,7 @@ struct ValidateRegionAndOriginTests : public ::testing::TestWithParam<ImageEnque
 };
 
 TEST_P(ValidateRegionAndOriginTests, givenAnyZeroRegionParamWhenEnqueueCalledThenReturnError) {
-    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(context.get()));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(context.get()));
     EXPECT_NE(nullptr, image.get());
 
     size_t origin[3] = {0, 0, 0};
@@ -94,7 +94,7 @@ TEST_P(ValidateRegionAndOriginTests, givenAnyZeroRegionParamWhenEnqueueCalledThe
 }
 
 TEST_P(ValidateRegionAndOriginTests, givenMaxImage2DFirstAndSecondRegionCoordinateAndAnyNonZeroFirstOrSecondOriginCoordinateWhenEnqueueCalledThenReturnError) {
-    std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(context.get()));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dDefaults>::create(context.get()));
     EXPECT_NE(nullptr, image.get());
 
     const auto &deviceInfo = context->getDevice(0)->getDevice().getDeviceInfo();
@@ -117,13 +117,13 @@ TEST_P(ValidateRegionAndOriginTests, givenSecondOriginCoordinateAndNotAllowedImg
     size_t region[3] = {1, 1, 1};
     size_t origin[3] = {0, 1, 0};
 
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context.get()));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(context.get()));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     auto image1dBufferDesc = Image1dDefaults::imageDesc;
     image1dBufferDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
-    image.reset(ImageHelper<Image1dDefaults>::create(context.get(), &image1dBufferDesc));
+    image.reset(ImageHelperUlt<Image1dDefaults>::create(context.get(), &image1dBufferDesc));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
@@ -132,21 +132,21 @@ TEST_P(ValidateRegionAndOriginTests, givenThirdOriginCoordinateAndNotAllowedImgT
     size_t region[3] = {1, 1, 1};
     size_t origin[3] = {0, 0, 1};
 
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context.get()));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(context.get()));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    image.reset(ImageHelper<Image2dDefaults>::create(context.get()));
+    image.reset(ImageHelperUlt<Image2dDefaults>::create(context.get()));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    image.reset(ImageHelper<Image1dArrayDefaults>::create(context.get()));
+    image.reset(ImageHelperUlt<Image1dArrayDefaults>::create(context.get()));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     auto image1dBufferDesc = Image1dDefaults::imageDesc;
     image1dBufferDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
-    image.reset(ImageHelper<Image1dDefaults>::create(context.get(), &image1dBufferDesc));
+    image.reset(ImageHelperUlt<Image1dDefaults>::create(context.get(), &image1dBufferDesc));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
@@ -155,13 +155,13 @@ TEST_P(ValidateRegionAndOriginTests, givenSecondRegionCoordinateAndNotAllowedImg
     size_t region[3] = {1, 2, 1};
     size_t origin[3] = {0, 0, 0};
 
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context.get()));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(context.get()));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     auto image1dBufferDesc = Image1dDefaults::imageDesc;
     image1dBufferDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
-    image.reset(ImageHelper<Image1dDefaults>::create(context.get(), &image1dBufferDesc));
+    image.reset(ImageHelperUlt<Image1dDefaults>::create(context.get(), &image1dBufferDesc));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
@@ -170,21 +170,21 @@ TEST_P(ValidateRegionAndOriginTests, givenThirdRegionCoordinateAndNotAllowedImgT
     size_t region[3] = {1, 1, 2};
     size_t origin[3] = {0, 0, 0};
 
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context.get()));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(context.get()));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    image.reset(ImageHelper<Image2dDefaults>::create(context.get()));
+    image.reset(ImageHelperUlt<Image2dDefaults>::create(context.get()));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    image.reset(ImageHelper<Image1dArrayDefaults>::create(context.get()));
+    image.reset(ImageHelperUlt<Image1dArrayDefaults>::create(context.get()));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     auto image1dBufferDesc = Image1dDefaults::imageDesc;
     image1dBufferDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
-    image.reset(ImageHelper<Image1dDefaults>::create(context.get(), &image1dBufferDesc));
+    image.reset(ImageHelperUlt<Image1dDefaults>::create(context.get(), &image1dBufferDesc));
     GetParam()(cmdQ.get(), image.get(), origin, &region[0], retVal);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }

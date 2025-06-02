@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -274,7 +274,7 @@ HWTEST_F(SamplerSetArgTest, GivenNewSamplerObjectWhensSetKernelArgIsCalledThenDe
 }
 
 HWTEST_F(SamplerSetArgTest, GivenIncorrentSamplerObjectWhenSetKernelArgSamplerIsCalledThenLeaveRefcountAsIs) {
-    auto notSamplerObj = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context));
+    auto notSamplerObj = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(context));
 
     auto pNotSampler = castToObject<Image>(notSamplerObj.get());
     auto refCountBefore = pNotSampler->getRefInternalCount();

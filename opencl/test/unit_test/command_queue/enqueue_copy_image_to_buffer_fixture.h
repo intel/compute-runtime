@@ -26,7 +26,7 @@ struct EnqueueCopyImageToBufferTest : public CommandEnqueueFixture,
         CommandEnqueueFixture::setUp();
         BufferDefaults::context = new MockContext(pClDevice);
         context = new MockContext(pClDevice);
-        srcImage = Image2dHelper<>::create(context);
+        srcImage = Image2dHelperUlt<>::create(context);
         dstBuffer = BufferHelper<>::create(context);
     }
 

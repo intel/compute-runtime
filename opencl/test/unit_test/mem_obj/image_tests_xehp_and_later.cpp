@@ -37,7 +37,7 @@ using XeHPAndLaterImageTests = ::testing::Test;
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, WhenAppendingSurfaceStateParamsThenDoNothing) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
-    auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(&context));
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(&context));
     auto surfaceStateBefore = FamilyType::cmdInitRenderSurfaceState;
     auto surfaceStateAfter = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
@@ -53,7 +53,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenCompressionEnabledWhen
     MockContext context;
     auto mockGmmClient = static_cast<MockGmmClientContext *>(context.getDevice(0)->getRootDeviceEnvironment().getGmmClientContext());
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
-    auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(&context));
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
     mockGmmClient->capturedFormat = GMM_FORMAT_INVALID;
@@ -175,7 +175,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
 
     auto pClDevice = context.getDevice(0);
 
@@ -214,7 +214,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetAuxParamsForMultisamp
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
 
     auto pClDevice = context.getDevice(0);
 
@@ -248,7 +248,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithUnifiedMcsWhenSetAuxParamsForMul
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
 
     auto pClDevice = context.getDevice(0);
 
@@ -273,7 +273,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWhenSetAuxParamsForMultisa
     MockContext context;
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
 
     auto pClDevice = context.getDevice(0);
 
@@ -291,7 +291,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithDepthFormatWhenSetAuxP
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     cl_image_format imgFormat = {CL_DEPTH, CL_FLOAT};
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc, &imgFormat));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc, &imgFormat));
 
     auto pClDevice = context.getDevice(0);
 
@@ -311,7 +311,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithNotDepthFormatWhenSetA
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     cl_image_format imgFormat = {CL_RGBA, CL_FLOAT};
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc, &imgFormat));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc, &imgFormat));
 
     auto pClDevice = context.getDevice(0);
 
@@ -331,7 +331,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithTypelessSurfaceStateFo
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     cl_image_format imgFormat = {CL_DEPTH, CL_FLOAT};
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc, &imgFormat));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc, &imgFormat));
 
     auto pClDevice = context.getDevice(0);
 
@@ -354,7 +354,7 @@ HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenClearColorParamet
     EXPECT_EQ(0u, surfaceState.getClearColorAddress());
     EXPECT_EQ(0u, surfaceState.getClearColorAddressHigh());
 
-    std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelper<Image2dDefaults>::create(&context)));
+    std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(&context)));
     auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
     gmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = 1;
     EncodeSurfaceState<FamilyType>::setClearColorParams(&surfaceState, gmm);
@@ -395,7 +395,7 @@ HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenCanonicalAddresFo
     EXPECT_THROW(surfaceState.setClearColorAddressHigh(static_cast<uint32_t>(canonicalAddress >> 32)), std::exception);
     surfaceState.setSurfaceBaseAddress(canonicalAddress);
 
-    std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelper<Image2dDefaults>::create(&context)));
+    std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(&context)));
 
     auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
     gmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = 1;
@@ -413,7 +413,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMediaCompressionWhenAppendingNewAllocatio
     auto hwInfo = defaultHwInfo.get();
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
@@ -440,7 +440,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingNewAllocationThen
     auto hwInfo = defaultHwInfo.get();
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
@@ -476,7 +476,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenNoCompressionWhenProgramingImageSurfaceSt
     MockContext context;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     surfaceState.setMemoryCompressionEnable(true);
     surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
@@ -491,7 +491,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenNoCompressionWhenProgramingImageSurfaceSt
 struct XeHPAndLaterImageHelperTests : ::testing::Test {
     void SetUp() override {
         context = std::make_unique<MockContext>();
-        image.reset(ImageHelper<Image2dDefaults>::create(context.get()));
+        image.reset(ImageHelperUlt<Image2dDefaults>::create(context.get()));
         mockGmmResourceInfo = static_cast<MockGmmResourceInfo *>(image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo.get());
         gmmClientContext = static_cast<MockGmmClientContext *>(context->getDevice(0)->getGmmHelper()->getClientContext());
     }
@@ -609,7 +609,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenAuxCapableIsNotSetThenPr
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
 
     auto pClDevice = context.getDevice(0);
 

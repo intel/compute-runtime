@@ -143,8 +143,8 @@ TEST(MemObjHelper, givenParentMemObjAndHostPtrFlagsWhenValidatingMemoryPropertie
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
 
     MockContext context{deviceFactory.rootDevices[0]};
-    auto image = clUniquePtr(Image1dHelper<>::create(&context));
-    auto imageWithAccessFlagsUnrestricted = clUniquePtr(ImageHelper<Image1dWithAccessFlagsUnrestricted>::create(&context));
+    auto image = clUniquePtr(Image1dHelperUlt<>::create(&context));
+    auto imageWithAccessFlagsUnrestricted = clUniquePtr(ImageHelperUlt<Image1dWithAccessFlagsUnrestricted>::create(&context));
 
     cl_mem_flags hostPtrFlags[] = {CL_MEM_USE_HOST_PTR, CL_MEM_ALLOC_HOST_PTR, CL_MEM_COPY_HOST_PTR};
 

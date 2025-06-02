@@ -200,7 +200,7 @@ TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingBufferThenEventsAreComplet
 }
 
 TEST_F(IOQTaskTestsMt, GivenMultipleThreadsWhenMappingImageThenEventsAreCompleted) {
-    auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(context));
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(context));
 
     auto userEvent = clCreateUserEvent(pContext, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);

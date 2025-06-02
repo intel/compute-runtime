@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -157,7 +157,7 @@ TEST_F(DispatchInfoTest, WhenMultiDispatchInfoIsCreatedThenItIsEmpty) {
 TEST_F(DispatchInfoTest, GivenRedescribedSurfacesWhenCreatingMultiDispatchInfoThenRedescribedSurfacesSizeisOne) {
     MultiDispatchInfo multiDispatchInfo;
 
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(pContext));
+    auto image = std::unique_ptr<Image>(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, image);
 
     auto imageRedescribed = image->redescribe();

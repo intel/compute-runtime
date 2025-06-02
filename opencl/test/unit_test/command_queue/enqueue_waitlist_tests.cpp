@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,8 +56,8 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
         EnqueueWaitlistFixture::setUp();
         buffer = BufferHelper<>::create();
         bufferNonZeroCopy = new UnalignedBuffer(BufferDefaults::context, &bufferNonZeroCopyAlloc);
-        image = Image1dHelper<>::create(BufferDefaults::context);
-        imageNonZeroCopy = ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(BufferDefaults::context);
+        image = Image1dHelperUlt<>::create(BufferDefaults::context);
+        imageNonZeroCopy = ImageHelperUlt<ImageUseHostPtr<Image1dDefaults>>::create(BufferDefaults::context);
     }
 
     void TearDown() override {

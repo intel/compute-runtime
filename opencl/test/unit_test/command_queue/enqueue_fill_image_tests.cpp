@@ -221,7 +221,7 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImage1dBufferThenCorrectBuitInIsSelect
     VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
 
     std::unique_ptr<Image> image1dBuffer;
-    image1dBuffer.reset(Image1dBufferHelper<>::create(context));
+    image1dBuffer.reset(Image1dBufferHelperUlt<>::create(context));
     VariableBackup<Image *> imageBackup(&image, image1dBuffer.get());
 
     mockCmdQ->storeMultiDispatchInfo = true;
@@ -241,7 +241,7 @@ HWTEST_F(EnqueueFillImageTest, givenHeaplessWhenFillingImage1dBufferThenCorrectB
     VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
 
     std::unique_ptr<Image> image1dBuffer;
-    image1dBuffer.reset(Image1dBufferHelper<>::create(context));
+    image1dBuffer.reset(Image1dBufferHelperUlt<>::create(context));
     VariableBackup<Image *> imageBackup(&image, image1dBuffer.get());
 
     mockCmdQ->storeMultiDispatchInfo = true;

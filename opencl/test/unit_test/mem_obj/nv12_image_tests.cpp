@@ -391,7 +391,7 @@ HWTEST_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSet
     cl_image_format imageFormat = Image2dDefaults::imageFormat;
     imageFormat.image_channel_order = CL_NV12_INTEL;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
-    std::unique_ptr<Image> image{Image2dHelper<>::create(&context, &imageDesc, &imageFormat)};
+    std::unique_ptr<Image> image{Image2dHelperUlt<>::create(&context, &imageDesc, &imageFormat)};
     image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
 
     image->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());

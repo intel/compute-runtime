@@ -1849,7 +1849,7 @@ HWTEST_F(BcsTestsImages, givenImage1DWhenSetBlitPropertiesForImageIsCalledThenVa
     imgDesc.image_width = 10u;
     imgDesc.image_height = 0u;
     imgDesc.image_depth = 0u;
-    std::unique_ptr<Image> image(Image1dHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image1dHelperUlt<>::create(context.get(), &imgDesc));
     size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     size_t expectedRowPitch = image->getImageDesc().image_row_pitch;
     size_t expectedSlicePitch = image->getImageDesc().image_slice_pitch;
@@ -1892,7 +1892,7 @@ HWTEST_F(BcsTestsImages, givenImage1DBufferWhenSetBlitPropertiesForImageIsCalled
     cl_image_format imgFormat{};
     imgFormat.image_channel_order = CL_RGBA;
     imgFormat.image_channel_data_type = CL_UNSIGNED_INT8;
-    std::unique_ptr<Image> image(Image1dHelper<>::create(context.get(), &imgDesc, &imgFormat));
+    std::unique_ptr<Image> image(Image1dHelperUlt<>::create(context.get(), &imgDesc, &imgFormat));
     size_t originalBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
 
     BlitProperties initBlitProperties{};
@@ -1956,7 +1956,7 @@ HWTEST_F(BcsTestsImages, givenImage2DArrayWhenSetBlitPropertiesForImageIsCalledT
     imgDesc.image_array_size = 4u;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
 
-    std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image2dArrayHelperUlt<>::create(context.get(), &imgDesc));
     size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     size_t expectedRowPitch = image->getImageDesc().image_row_pitch;
     size_t expectedSlicePitch = image->getImageDesc().image_slice_pitch;
@@ -1982,7 +1982,7 @@ HWTEST_F(BcsTestsImages, givenImage2DArrayWhenSetBlitPropertiesForImageIsCalledT
 
 HWTEST_F(BcsTestsImages, givenImageWithSurfaceOffsetWhenSetBlitPropertiesForImageIsCalledThenGpuAddressIsCorrect) {
     cl_image_desc imgDesc = Image1dDefaults::imageDesc;
-    std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image2dArrayHelperUlt<>::create(context.get(), &imgDesc));
 
     uint64_t surfaceOffset = 0x01000;
     image->setSurfaceOffsets(surfaceOffset, 0, 0, 0);
@@ -2001,7 +2001,7 @@ HWTEST_F(BcsTestsImages, givenImageWithSurfaceOffsetWhenSetBlitPropertiesForImag
 
 HWTEST_F(BcsTestsImages, givenImageWithPlaneSetWhenAdjustBlitPropertiesForImageIsCalledThenPlaneIsCorrect) {
     cl_image_desc imgDesc = Image1dDefaults::imageDesc;
-    std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image2dArrayHelperUlt<>::create(context.get(), &imgDesc));
 
     BlitProperties blitProperties{};
     EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.dstPlane);
@@ -2040,7 +2040,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesA
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.image_width = 10u;
     imgDesc.image_height = 12u;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.srcPtr = hostPtr;
     builtinOpParams.srcMemObj = nullptr;
@@ -2081,7 +2081,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenConstructPropertiesIsCalledThenValuesA
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.image_width = 10u;
     imgDesc.image_height = 12u;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.dstPtr = hostPtr;
     builtinOpParams.srcMemObj = image.get();
@@ -2120,7 +2120,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWithInputRowSlicePitchesWhenConstructPrope
     void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.srcPtr = hostPtr;
     builtinOpParams.srcMemObj = nullptr;
@@ -2153,7 +2153,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWithInputRowSlicePitchesWhenConstructPrope
     void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get(), &imgDesc));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get(), &imgDesc));
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.dstPtr = hostPtr;
     builtinOpParams.srcMemObj = image.get();
@@ -2189,7 +2189,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsFound) 
     auto hostAllocationPtr = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);
     void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
 
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get()));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get()));
     BuiltinOpParams builtinOpParams{};
     builtinOpParams.srcPtr = hostPtr;
     builtinOpParams.dstMemObj = image.get();
@@ -2217,7 +2217,7 @@ HWTEST_F(BcsTests, given1DTiledArrayImageWhenConstructPropertiesThenImageTransfo
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
 
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get()));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get()));
     auto oldGmm = std::unique_ptr<Gmm>(image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getDefaultGmm());
     image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->setGmm(gmmSrc.release(), 0);
     BuiltinOpParams builtinOpParams{};
@@ -2244,7 +2244,7 @@ HWTEST_F(BcsTests, given1DNotTiledArrayImageWhenConstructPropertiesThenImageNotT
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
 
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get()));
+    std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get()));
     auto oldGmm = std::unique_ptr<Gmm>(image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getDefaultGmm());
     image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->setGmm(gmmSrc.release(), 0);
     BuiltinOpParams builtinOpParams{};

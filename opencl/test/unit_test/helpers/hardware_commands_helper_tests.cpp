@@ -65,9 +65,9 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenProgramInterfaceDescrip
     GPGPU_WALKER walkerCmd{};
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
-    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
+    std::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, srcImage.get());
-    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
+    std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d,
@@ -142,9 +142,9 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
-    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
+    std::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, srcImage.get());
-    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
+    std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d,
@@ -305,9 +305,9 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenAllocatingIndirectState
 
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
-    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
+    std::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, srcImage.get());
-    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
+    std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d,
@@ -496,7 +496,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, whenSendingIndirectStateThe
 
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
-    std::unique_ptr<Image> img(Image2dHelper<>::create(pContext));
+    std::unique_ptr<Image> img(Image2dHelperUlt<>::create(pContext));
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d,
                                                                             cmdQ.getClDevice());
@@ -590,7 +590,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenSendingIndirectStateThe
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
-    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
+    std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3d,
