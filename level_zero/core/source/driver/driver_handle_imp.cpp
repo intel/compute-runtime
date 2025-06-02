@@ -370,7 +370,9 @@ void DriverHandleImp::initHostUsmAllocPool() {
 void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device) {
     const uint64_t minServicedSize = 0u;
     const uint64_t maxServicedSize = 1 * MemoryConstants::megaByte;
-    bool enabled = NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() && device.getProductHelper().isDeviceUsmPoolAllocatorSupported();
+    bool enabled = NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
+                   device.getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
+                   nullptr == device.getL0Debugger();
     uint64_t poolSize = 2 * MemoryConstants::megaByte;
 
     if (NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {

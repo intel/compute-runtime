@@ -197,6 +197,11 @@ void MemoryExportImportWSLTest::SetUp() {
 }
 
 void MemoryExportImportWSLTest::TearDown() {
+    // cleanup pool before restoring memory manager
+    for (auto device : driverHandle->devices) {
+        device->getNEODevice()->cleanupUsmAllocationPool();
+        device->getNEODevice()->resetUsmAllocationPool(nullptr);
+    }
     driverHandle->setMemoryManager(prevMemoryManager);
     delete currMemoryManager;
 }

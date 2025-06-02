@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -39,7 +40,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
             executionEnvironment->rootDeviceEnvironments[i]->productHelper.reset(mockProductHelpers[i]);
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
-            if (1 == deviceUsmPoolFlag) {
+            if constexpr (deviceUsmPoolFlag > 0) {
                 mockProductHelpers[i]->isDeviceUsmPoolAllocatorSupportedResult = true;
             }
         }
@@ -257,16 +258,33 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFro
 
 using AllocUsmDeviceDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1>;
 
-TEST_F(AllocUsmDeviceDefaultMemoryTest, givenDeviceWhenCallingAllocDeviceMemThenDoNotUsePool) {
-    EXPECT_EQ(nullptr, l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
-    void *ptr = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(l0Devices[0], &deviceDesc, 1u, 0u, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-    EXPECT_EQ(nullptr, l0Devices[0]->getNEODevice()->getUsmMemAllocPool());
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+TEST_F(AllocUsmDeviceDefaultMemoryTest, givenDeviceWhenCallingInitDeviceUsmAllocPoolThenInitIfEnabled) {
+    auto neoDevice = l0Devices[0]->getNEODevice();
+    {
+        neoDevice->cleanupUsmAllocationPool();
+        neoDevice->resetUsmAllocationPool(nullptr);
+        executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(nullptr);
+        mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
+        driverHandle->initDeviceUsmAllocPool(*neoDevice);
+        EXPECT_NE(nullptr, neoDevice->getUsmMemAllocPool());
+    }
+    {
+        neoDevice->cleanupUsmAllocationPool();
+        neoDevice->resetUsmAllocationPool(nullptr);
+        executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(nullptr);
+        mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = false;
+        driverHandle->initDeviceUsmAllocPool(*neoDevice);
+        EXPECT_EQ(nullptr, neoDevice->getUsmMemAllocPool());
+    }
+    {
+        auto debuggerL0 = DebuggerL0::create(neoDevice);
+        neoDevice->cleanupUsmAllocationPool();
+        neoDevice->resetUsmAllocationPool(nullptr);
+        executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(debuggerL0.release());
+        mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
+        driverHandle->initDeviceUsmAllocPool(*neoDevice);
+        EXPECT_EQ(nullptr, neoDevice->getUsmMemAllocPool());
+    }
 }
 
 using AllocUsmDeviceDisabledMemoryTest = AllocUsmPoolMemoryTest<-1, 0>;
