@@ -9,6 +9,8 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_walk_order.h"
@@ -80,10 +82,13 @@ XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenDebugVariableSetwhenProgramingStat
     auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(buffer);
 
     constexpr uint64_t gpuVa = 0x100000;
-    constexpr uint32_t mocsIndexForL3 = (2 << 1);
     constexpr size_t numCachelines = 3;
 
     const GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, gpuVa, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+
+    auto rootDeviceEnv = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+    auto usage = CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, rootDeviceEnv->getProductHelper(), rootDeviceEnv->getHardwareInfo());
+    uint32_t mocs = rootDeviceEnv->getGmmHelper()->getMOCS(usage);
 
     static constexpr std::array<uint32_t, 7> expectedSizes = {{
         MemoryConstants::cacheLineSize - 1,
@@ -113,7 +118,7 @@ XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenDebugVariableSetwhenProgramingStat
             EXPECT_EQ(statePrefetchCmd[i].getAddress(), gpuVa + (i * MemoryConstants::pageSize64k));
             EXPECT_FALSE(statePrefetchCmd[i].getKernelInstructionPrefetch());
             EXPECT_FALSE(statePrefetchCmd[i].getParserStall());
-            EXPECT_EQ(mocsIndexForL3, statePrefetchCmd[i].getMemoryObjectControlState());
+            EXPECT_EQ(mocs, statePrefetchCmd[i].getMemoryObjectControlState());
 
             if (programmedSize > expectedSize) {
                 // cacheline alignemnt

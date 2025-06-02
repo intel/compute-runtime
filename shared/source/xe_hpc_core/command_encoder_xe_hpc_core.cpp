@@ -16,6 +16,7 @@
 #include "shared/source/command_container/command_encoder_xe_hpg_core_and_xe_hpc.inl"
 #include "shared/source/command_container/command_encoder_xehp_and_later.inl"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -76,7 +77,6 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 template <>
 void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using STATE_PREFETCH = typename Family::STATE_PREFETCH;
-    constexpr uint32_t mocsIndexForL3 = (2 << 1);
 
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
@@ -86,6 +86,9 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
     if (!prefetch) {
         return;
     }
+
+    auto usage = CacheSettingsHelper::getGmmUsageType(graphicsAllocation.getAllocationType(), false, productHelper, &hwInfo);
+    uint32_t mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(usage);
 
     uint64_t gpuVa = graphicsAllocation.getGpuAddress() + offset;
 
@@ -101,7 +104,7 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
 
         cmd.setAddress(gpuVa);
         cmd.setPrefetchSize(prefetchSize);
-        cmd.setMemoryObjectControlState(mocsIndexForL3);
+        cmd.setMemoryObjectControlState(mocs);
         cmd.setKernelInstructionPrefetch(GraphicsAllocation::isIsaAllocationType(graphicsAllocation.getAllocationType()));
 
         if (debugManager.flags.ForceCsStallForStatePrefetch.get() == 1) {
