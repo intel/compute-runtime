@@ -40,6 +40,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     ze_result_t getPowerPropertiesExtFromPmt(zes_power_ext_properties_t *pExtPoperties, zes_power_domain_t powerDomain) override;
     ze_result_t getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) override;
 
+    // Firmware
+    bool isLateBindingSupported() override;
+
     // Pmt
     std::map<unsigned long, std::map<std::string, uint32_t>> *getGuidToKeyOffsetMap() override;
 

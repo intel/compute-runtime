@@ -105,6 +105,10 @@ struct MockFirmwareInterface : public FirmwareInterface {
         }
     }
 
+    void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) override {
+        fwTypes.insert(fwTypes.end(), lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end());
+    }
+
     MockFirmwareInterface() = default;
 
     ADDMETHOD_NOBASE(fwDeviceInit, ze_result_t, ZE_RESULT_SUCCESS, ());

@@ -9,10 +9,13 @@
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util_imp.h"
 
+#include <algorithm>
+
 static std::vector<std ::string> deviceSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
 static constexpr uint8_t eccStateNone = 0xFF;
 constexpr uint8_t maxGfspHeciOutBuffer = UINT8_MAX;
 constexpr uint8_t maxGfspHeciInBuffer = 4;
+static std::vector<std ::string> lateBindingFirmwareTypes = {"FanTable", "VRConfig"};
 
 namespace L0 {
 namespace Sysman {
@@ -339,6 +342,9 @@ ze_result_t FirmwareUtilImp::flashFirmware(std::string fwType, void *pImage, uin
     if (fwType == deviceSupportedFirmwareTypes[2]) { // PSC
         return fwFlashIafPsc(pImage, size);
     }
+    if (std::find(lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end(), fwType) != lateBindingFirmwareTypes.end()) { // FanTable and VRConfig
+        return fwFlashLateBinding(pImage, size, fwType);
+    }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -372,6 +378,10 @@ void FirmwareUtilImp::getDeviceSupportedFwTypes(std::vector<std::string> &fwType
     if (ret == IGSC_SUCCESS) {
         fwTypes.push_back(deviceSupportedFirmwareTypes[2]);
     }
+}
+
+void FirmwareUtilImp::getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) {
+    fwTypes.insert(fwTypes.end(), lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end());
 }
 
 ze_result_t FirmwareUtilImp::getFwVersion(std::string fwType, std::string &firmwareVersion) {

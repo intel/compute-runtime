@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,9 @@ ze_result_t LinuxFirmwareImp::getFirmwareVersion(std::string fwType, zes_firmwar
         }
         strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, pscVersion.c_str(), ZES_STRING_PROPERTY_SIZE - 1);
         return result;
+    }
+    if (std::find(lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end(), fwType) != lateBindingFirmwareTypes.end()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     ze_result_t result = pFwInterface->getFwVersion(fwType, fwVersion);
     if (result == ZE_RESULT_SUCCESS) {

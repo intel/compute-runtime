@@ -11,8 +11,15 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/utilities/directory.h"
 
+#include <map>
+
 namespace L0 {
 namespace Sysman {
+static const std::map<std::string, csc_late_binding_type> lateBindingTypeToEnumMap = {
+    {"FanTable", CSC_LATE_BINDING_TYPE_FAN_TABLE},
+    {"VRConfig", CSC_LATE_BINDING_TYPE_VR_CONFIG},
+};
+
 const std::string fwDeviceInitByDevice = "igsc_device_init_by_device_info";
 const std::string fwDeviceGetDeviceInfo = "igsc_device_get_device_info";
 const std::string fwDeviceFwVersion = "igsc_device_fw_version";
@@ -26,6 +33,7 @@ const std::string fwDeviceOpromUpdate = "igsc_device_oprom_update";
 const std::string fwDeviceOpromVersion = "igsc_device_oprom_version";
 const std::string fwDevicePscVersion = "igsc_device_psc_version";
 const std::string fwDeviceClose = "igsc_device_close";
+const std::string fwDeviceUpdateLateBindingConfig = "igsc_device_update_late_binding_config";
 
 pIgscDeviceInitByDevice deviceInitByDevice;
 pIgscDeviceGetDeviceInfo deviceGetDeviceInfo;
@@ -40,6 +48,7 @@ pIgscDeviceOpromUpdate deviceOpromUpdate;
 pIgscDeviceOpromVersion deviceOpromVersion;
 pIgscDevicePscVersion deviceGetPscVersion;
 pIgscDeviceClose deviceClose;
+pIgscDeviceUpdateLateBindingConfig deviceUpdateLateBindingConfig;
 
 bool FirmwareUtilImp::loadEntryPoints() {
     bool ok = getSymbolAddr(fwDeviceInitByDevice, deviceInitByDevice);
@@ -55,6 +64,7 @@ bool FirmwareUtilImp::loadEntryPoints() {
     ok = ok && getSymbolAddr(fwDeviceOpromVersion, deviceOpromVersion);
     ok = ok && getSymbolAddr(fwDevicePscVersion, deviceGetPscVersion);
     ok = ok && getSymbolAddr(fwDeviceClose, deviceClose);
+    ok = ok && getSymbolAddr(fwDeviceUpdateLateBindingConfig, deviceUpdateLateBindingConfig);
     ok = ok && loadEntryPointsExt();
 
     return ok;
@@ -191,6 +201,19 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
         retCode = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_CODE, opromImg, firmwareFlashProgressFunc, this);
     }
     if ((retData != IGSC_SUCCESS) && (retCode != IGSC_SUCCESS)) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t FirmwareUtilImp::fwFlashLateBinding(void *pImage, uint32_t size, std::string fwType) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
+    uint32_t lateBindingFlashStatus = 0;
+    int ret = deviceUpdateLateBindingConfig(&fwDeviceHandle, lateBindingTypeToEnumMap.at(fwType), CSC_LATE_BINDING_FLAGS_IS_PERSISTENT_MASK, static_cast<uint8_t *>(pImage), static_cast<size_t>(size), &lateBindingFlashStatus);
+    if (ret != IGSC_SUCCESS || lateBindingFlashStatus != CSC_LATE_BINDING_STATUS_SUCCESS) {
+        if (ret == IGSC_ERROR_BUSY) {
+            return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+        }
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return ZE_RESULT_SUCCESS;

@@ -982,6 +982,11 @@ bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
     return true;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isLateBindingSupported() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

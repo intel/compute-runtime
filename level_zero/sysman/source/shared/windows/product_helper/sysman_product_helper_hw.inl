@@ -193,5 +193,10 @@ bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isLateBindingSupported() {
+    return false;
+}
+
 } // namespace Sysman
 } // namespace L0

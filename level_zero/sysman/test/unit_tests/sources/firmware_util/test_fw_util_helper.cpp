@@ -18,6 +18,7 @@ namespace L0 {
 extern L0::Sysman::pIgscIfrGetStatusExt L0::Sysman::deviceIfrGetStatusExt;
 extern L0::Sysman::pIgscIfrRunMemPPRTest L0::Sysman::deviceIfrRunMemPPRTest;
 extern L0::Sysman::pIgscGfspHeciCmd gfspHeciCmd;
+extern L0::Sysman::pIgscDeviceUpdateLateBindingConfig deviceUpdateLateBindingConfig;
 
 namespace Sysman {
 namespace ult {
@@ -981,6 +982,83 @@ TEST(FwGetSupportedFwTypesTest, GivenFirmwareUtilAndOnlyOpromCodeSupportedWhenCa
     pFwUtilImp->getDeviceSupportedFwTypes(fwTypes);
     EXPECT_EQ(fwTypes.size(), 2u);
 
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwFlashLateBindingTest, GivenFirmwareUtilImpAndLateBindingIsSupportedWhenCallingFlashFirmwareThenCallSucceeds) {
+    VariableBackup<decltype(L0::Sysman::deviceUpdateLateBindingConfig)> mockDeviceUpdateLateBindingConfig(&L0::Sysman::deviceUpdateLateBindingConfig, [](struct igsc_device_handle *handle, uint32_t type, uint32_t flags, uint8_t *payload, size_t payloadSize, uint32_t *status) -> int {
+        *status = CSC_LATE_BINDING_STATUS_SUCCESS;
+        return IGSC_SUCCESS;
+    });
+
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+    memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
+
+    for (auto type : lateBindingFirmwareTypes) {
+        auto ret = pFwUtilImp->flashFirmware(type, (void *)testImage, ZES_STRING_PROPERTY_SIZE);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    }
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwFlashLateBindingTest, GivenFirmwareUtilImpAndLateBindingIsSupportedWhenCallingFlashFirmwareAndIgscIsBusyThenCallFailsWithProperReturnCode) {
+    VariableBackup<decltype(L0::Sysman::deviceUpdateLateBindingConfig)> mockDeviceUpdateLateBindingConfig(&L0::Sysman::deviceUpdateLateBindingConfig, [](struct igsc_device_handle *handle, uint32_t type, uint32_t flags, uint8_t *payload, size_t payloadSize, uint32_t *status) -> int {
+        *status = CSC_LATE_BINDING_STATUS_SUCCESS;
+        return IGSC_ERROR_BUSY;
+    });
+
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+    memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
+
+    for (auto type : lateBindingFirmwareTypes) {
+        auto ret = pFwUtilImp->flashFirmware(type, (void *)testImage, ZES_STRING_PROPERTY_SIZE);
+        EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, ret);
+    }
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwFlashLateBindingTest, GivenFirmwareUtilImpAndLateBindingIsSupportedWhenCallingFlashFirmwareAndStatusRetunedIsInvalidThenCallFailsWithProperReturnCode) {
+    VariableBackup<decltype(L0::Sysman::deviceUpdateLateBindingConfig)> mockDeviceUpdateLateBindingConfig(&L0::Sysman::deviceUpdateLateBindingConfig, [](struct igsc_device_handle *handle, uint32_t type, uint32_t flags, uint8_t *payload, size_t payloadSize, uint32_t *status) -> int {
+        *status = CSC_LATE_BINDING_STATUS_TIMEOUT;
+        return IGSC_SUCCESS;
+    });
+
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+    memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
+
+    for (auto type : lateBindingFirmwareTypes) {
+        auto ret = pFwUtilImp->flashFirmware(type, (void *)testImage, ZES_STRING_PROPERTY_SIZE);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    }
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwFlashLateBindingTest, GivenFirmwareUtilImpAndLateBindingIsSupportedWhenCallingGetLateBindingSupportedFwTypesThenProperFwTypesAreReturned) {
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
+    std::vector<std ::string> deviceSupportedFwTypes = {};
+    pFwUtilImp->getLateBindingSupportedFwTypes(deviceSupportedFwTypes);
+    EXPECT_EQ(deviceSupportedFwTypes.size(), lateBindingFirmwareTypes.size());
+    for (auto type : deviceSupportedFwTypes) {
+        EXPECT_NE(std::find(lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end(), type), lateBindingFirmwareTypes.end());
+    }
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
     delete pFwUtilImp;

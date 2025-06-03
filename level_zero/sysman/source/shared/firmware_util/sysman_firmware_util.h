@@ -17,6 +17,8 @@
 
 namespace L0 {
 namespace Sysman {
+static std::vector<std ::string> lateBindingFirmwareTypes = {"FanTable", "VRConfig"};
+
 class FirmwareUtil {
   public:
     static FirmwareUtil *create(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function);
@@ -34,6 +36,7 @@ class FirmwareUtil {
     virtual ze_result_t fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) = 0;
     virtual void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) = 0;
     virtual void fwGetMemoryHealthIndicator(zes_mem_health_t *health) = 0;
+    virtual void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) = 0;
     virtual ~FirmwareUtil() = default;
 };
 } // namespace Sysman

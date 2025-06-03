@@ -19,9 +19,9 @@ namespace ult {
 constexpr uint32_t mockHandleCount = 2;
 const std::string mockFwVersion("DG01->0->2026");
 const std::string mockOpromVersion("OPROM CODE VERSION:123_OPROM DATA VERSION:456");
-std::vector<std::string> mockSupportedFwTypes = {"GSC", "OptionROM"};
-std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};
-std::string mockEmpty = {};
+const std::vector<std::string> mockSupportedFwTypes = {"GSC", "OptionROM"};
+const std::string mockUnknownVersion("unknown");
+const std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};
 
 struct FirmwareInterface : public L0::Sysman::FirmwareUtil {
 
@@ -53,6 +53,10 @@ struct FirmwareInterface : public L0::Sysman::FirmwareUtil {
         fwTypes = mockSupportedFwTypes;
     }
 
+    void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) override {
+        fwTypes.insert(fwTypes.end(), lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end());
+    }
+
     ADDMETHOD_NOBASE(fwDeviceInit, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getFlashFirmwareProgress, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCompletionPercent));
     ADDMETHOD_NOBASE(flashFirmware, ze_result_t, ZE_RESULT_SUCCESS, (std::string fwType, void *pImage, uint32_t size));
@@ -70,6 +74,40 @@ struct FirmwareInterface : public L0::Sysman::FirmwareUtil {
 class PublicWddmFirmwareImp : public L0::Sysman::WddmFirmwareImp {
   public:
     using WddmFirmwareImp::pFwInterface;
+};
+
+class ZesFirmwareFixture : public SysmanDeviceFixture {
+
+  protected:
+    zes_firmware_handle_t hSysmanFirmware = {};
+    std::unique_ptr<FirmwareInterface> pMockFwInterface;
+    L0::Sysman::FirmwareUtil *pFwUtilInterfaceOld = nullptr;
+
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+
+        pFwUtilInterfaceOld = pWddmSysmanImp->pFwUtilInterface;
+        pMockFwInterface.reset(new FirmwareInterface);
+        pWddmSysmanImp->pFwUtilInterface = pMockFwInterface.get();
+        for (const auto &handle : pSysmanDeviceImp->pFirmwareHandleContext->handleList) {
+            delete handle;
+        }
+        pSysmanDeviceImp->pFirmwareHandleContext->handleList.clear();
+    }
+    void TearDown() override {
+        pWddmSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
+        SysmanDeviceFixture::TearDown();
+    }
+    void initFirmware() {
+        uint32_t count = 0;
+        ze_result_t result = zesDeviceEnumFirmwares(pSysmanDevice->toHandle(), &count, nullptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+    std::vector<zes_firmware_handle_t> getFirmwareHandles(uint32_t count) {
+        std::vector<zes_firmware_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumFirmwares(pSysmanDevice->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        return handles;
+    }
 };
 
 } // namespace ult

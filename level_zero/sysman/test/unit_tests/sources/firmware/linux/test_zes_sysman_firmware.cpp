@@ -8,6 +8,8 @@
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/firmware/linux/mock_zes_sysman_firmware.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -356,6 +358,61 @@ HWTEST2_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareC
     size_t pSize;
     char *pFirmwareLog = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFirmwareGetConsoleLogs(handles[1], &pSize, pFirmwareLog));
+}
+
+HWTEST2_F(ZesSysmanFirmwareFixture, GivenComponentCountZeroAndLateBindingIsSupportedThenWhenCallingZesFirmwareGetProperCountIsReturned, IsBMG) {
+    constexpr uint32_t mockFwHandlesCount = 5;
+    std::vector<zes_firmware_handle_t> firmwareHandle{};
+    uint32_t count = 0;
+
+    ze_result_t result = zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockFwHandlesCount);
+
+    uint32_t testCount = count + 1;
+
+    result = zesDeviceEnumFirmwares(device->toHandle(), &testCount, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(testCount, count);
+
+    firmwareHandle.resize(count);
+    result = zesDeviceEnumFirmwares(device->toHandle(), &count, firmwareHandle.data());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockFwHandlesCount);
+}
+
+HWTEST2_F(ZesSysmanFirmwareFixture, GivenValidLateBindingFirmwareHandleWhenFlashingFirmwareThenSuccessIsReturned, IsBMG) {
+    constexpr uint32_t mockFwHandlesCount = 5;
+    initFirmware();
+
+    auto handles = getFirmwareHandles(mockFwHandlesCount);
+    for (auto handle : handles) {
+        zes_firmware_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handle, &properties));
+        if (std::find(lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end(), properties.name) != lateBindingFirmwareTypes.end()) {
+            uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
+            memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareFlash(handle, (void *)testImage, ZES_STRING_PROPERTY_SIZE));
+        }
+    }
+}
+
+HWTEST2_F(ZesSysmanFirmwareFixture, GivenValidLateBindingFirmwareHandleWhenGettingFirmwarePropertiesThenValidVersionIsReturned, IsBMG) {
+
+    constexpr uint32_t mockFwHandlesCount = 5;
+    initFirmware();
+
+    auto handles = getFirmwareHandles(mockFwHandlesCount);
+    for (auto handle : handles) {
+        zes_firmware_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handle, &properties));
+        if (std::find(lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end(), properties.name) != lateBindingFirmwareTypes.end()) {
+            EXPECT_STREQ(mockUnknownVersion.c_str(), properties.version);
+        }
+    }
 }
 
 } // namespace ult

@@ -27,6 +27,9 @@ void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes,
     if (pFwInterface != nullptr) {
         auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
         pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, supportedFwTypes);
+        if (pSysmanProductHelper->isLateBindingSupported()) {
+            pFwInterface->getLateBindingSupportedFwTypes(supportedFwTypes);
+        }
     }
 }
 

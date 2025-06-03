@@ -1086,6 +1086,11 @@ bool SysmanProductHelperHw<gfxProduct>::isEccConfigurationSupported() {
     return true;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isLateBindingSupported() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

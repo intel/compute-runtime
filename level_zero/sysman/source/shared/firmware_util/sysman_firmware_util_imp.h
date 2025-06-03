@@ -49,6 +49,12 @@ typedef int (*pIgscDeviceOpromVersion)(struct igsc_device_handle *handle,
                                        struct igsc_oprom_version *version);
 
 typedef int (*pIgscDeviceClose)(struct igsc_device_handle *handle);
+typedef int (*pIgscDeviceUpdateLateBindingConfig)(struct igsc_device_handle *handle,
+                                                  uint32_t type,
+                                                  uint32_t flags,
+                                                  uint8_t *payload,
+                                                  size_t payloadSize,
+                                                  uint32_t *status);
 typedef int (*pIgscIfrGetStatusExt)(struct igsc_device_handle *handle,
                                     uint32_t *supportedTests,
                                     uint32_t *hwCapabilities,
@@ -101,6 +107,7 @@ extern pIgscImageOpromType imageOpromType;
 extern pIgscDeviceOpromUpdate deviceOpromUpdate;
 extern pIgscDeviceOpromVersion deviceOpromVersion;
 extern pIgscDeviceClose deviceClose;
+extern pIgscDeviceUpdateLateBindingConfig deviceUpdateLateBindingConfig;
 extern pIgscIfrGetStatusExt deviceIfrGetStatusExt;
 extern pIgscDevicePscVersion deviceGetPscVersion;
 extern pIgscIafPscUpdate iafPscUpdate;
@@ -166,6 +173,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableAndNonMovableClass 
     ze_result_t fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) override;
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
     void fwGetMemoryHealthIndicator(zes_mem_health_t *health) override;
+    void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) override;
 
     static int fwUtilLoadFlags;
     static std::string fwUtilLibraryName;
@@ -183,6 +191,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableAndNonMovableClass 
     ze_result_t fwFlashGSC(void *pImage, uint32_t size);
     ze_result_t fwFlashOprom(void *pImage, uint32_t size);
     ze_result_t fwFlashIafPsc(void *pImage, uint32_t size);
+    ze_result_t fwFlashLateBinding(void *pImage, uint32_t size, std::string fwType);
     ze_result_t fwCallGetstatusExt(uint32_t &supportedTests, uint32_t &ifrApplied, uint32_t &prevErrors, uint32_t &pendingReset);
 
     std::string fwDevicePath{};
