@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ struct DirectSubmissionProperties {
     bool useRootDevice = false;
     bool useInternal = false;
     bool useLowPriority = false;
+    bool operator==(const DirectSubmissionProperties &) const = default;
 };
 
 using EngineDirectSubmissionInitVec = std::vector<std::pair<aub_stream::EngineType, DirectSubmissionProperties>>;
@@ -31,6 +32,7 @@ struct DirectSubmissionProperyEngines {
         }
     }
     DirectSubmissionProperties data[aub_stream::NUM_ENGINES] = {};
+    bool operator==(const DirectSubmissionProperyEngines &) const = default;
 };
 
 } // namespace NEO
