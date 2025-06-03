@@ -3,4 +3,6 @@ components:
     version: 'dev-5963'
   xe_kmd:
     version: 'dev-1900'
+  ipldt:
+    revision: da4289f1337ea22a24507f4c4f8cbcfe4ae4a891
 version: '1'
