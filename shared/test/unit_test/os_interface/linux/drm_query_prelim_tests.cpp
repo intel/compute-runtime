@@ -488,7 +488,23 @@ TEST(DrmBufferObjectTestPrelim, givenContextWhenQueryingVmIdThenIoctlIsCalled) {
     EXPECT_EQ(static_cast<uint32_t>(drm.storedRetValForVmId), vmId);
 }
 
-TEST(DrmBufferObjectTestPrelim, givenBufferObjectMarkedForCaptureWhenBindingThenCaptureFlagIsSet) {
+TEST(DrmBufferObjectTestPrelim, givenBufferObjectMarkedForCaptureAndDebuggerEnabledWhenBindingThenCaptureFlagIsSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    BufferObjectMock bo(0, &drm, 3, 1, 0, 1);
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized(false);
+    bo.markForCapture();
+
+    bo.bind(&osContext, 0, false);
+    ASSERT_TRUE(drm.context.receivedVmBind);
+    EXPECT_TRUE(drm.context.receivedVmBind->flags & DrmPrelimHelper::getCaptureVmBindFlag());
+}
+
+TEST(DrmBufferObjectTestPrelim, givenBufferObjectMarkedForCaptureAndDebuggerNotEnabledWhenBindingThenCaptureFlagIsNotSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
@@ -500,7 +516,7 @@ TEST(DrmBufferObjectTestPrelim, givenBufferObjectMarkedForCaptureWhenBindingThen
 
     bo.bind(&osContext, 0, false);
     ASSERT_TRUE(drm.context.receivedVmBind);
-    EXPECT_TRUE(drm.context.receivedVmBind->flags & DrmPrelimHelper::getCaptureVmBindFlag());
+    EXPECT_FALSE(drm.context.receivedVmBind->flags & DrmPrelimHelper::getCaptureVmBindFlag());
 }
 
 TEST(DrmBufferObjectTestPrelim, givenNoActiveDirectSubmissionAndForceUseImmediateExtensionWhenBindingThenImmediateFlagIsSetAndExtensionListIsNotNull) {
