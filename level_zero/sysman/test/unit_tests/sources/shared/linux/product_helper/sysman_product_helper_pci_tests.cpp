@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,8 +36,8 @@ constexpr uint64_t mockRxPacketCounterLsbOffset = telem3OffsetValue + 296;
 constexpr uint64_t mockRxPacketCounterMsbOffset = telem3OffsetValue + 292;
 constexpr uint64_t mockTxPacketCounterLsbOffset = telem3OffsetValue + 304;
 constexpr uint64_t mockTxPacketCounterMsbOffset = telem3OffsetValue + 300;
-constexpr uint64_t mockTimestampLsbOffset = telem3OffsetValue + 372;
-constexpr uint64_t mockTimestampMsbOffset = telem3OffsetValue + 368;
+constexpr uint64_t mockTimestampLsbOffset = telem3OffsetValue + 368;
+constexpr uint64_t mockTimestampMsbOffset = telem3OffsetValue + 372;
 
 constexpr uint32_t mockRxCounterLsb = 0xA2u;
 constexpr uint32_t mockRxCounterMsb = 0xF5u;

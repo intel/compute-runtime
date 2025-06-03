@@ -1120,10 +1120,10 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
         } else if (fd == 6) {
             switch (offset) {
             case 368:
-                memcpy(buf, &timeStampUpper, count);
+                memcpy(buf, &timeStampLower, count);
                 break;
             case 372:
-                memcpy(buf, &timeStampLower, count);
+                memcpy(buf, &timeStampUpper, count);
                 break;
             case 376:
                 memcpy(buf, &readCounterUpper32Bit, count);
