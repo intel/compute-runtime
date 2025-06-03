@@ -1825,10 +1825,9 @@ void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
 }
 
 void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
-    if (allocation && getDrm(allocation->getRootDeviceIndex()).getIoctlHelper()->resourceRegistrationEnabled()) {
+    if (allocation) {
         auto drmAllocation = static_cast<DrmAllocation *>(allocation);
         drmAllocation->registerBOBindExtHandle(&getDrm(drmAllocation->getRootDeviceIndex()));
-
         if (isAllocationTypeToCapture(drmAllocation->getAllocationType())) {
             drmAllocation->markForCapture();
         }

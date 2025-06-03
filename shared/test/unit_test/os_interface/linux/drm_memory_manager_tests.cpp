@@ -4663,28 +4663,6 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationNotEnabledWhenRegisteringBin
     EXPECT_EQ(DrmResourceClass::maxSize, drm.registeredClass);
 }
 
-TEST(DrmMemoryManager, givenTrackedAllocationTypeAndDisabledRegistrationInDrmWhenAllocatingThenRegisterBoBindExtHandleIsNotCalled) {
-    const uint32_t rootDeviceIndex = 0u;
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
-
-    auto mockDrm = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
-
-    EXPECT_FALSE(mockDrm->resourceRegistrationEnabled());
-
-    mockDrm->registeredDataSize = 0;
-
-    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::system4KBPages);
-
-    memoryManager->registerAllocationInOs(&allocation);
-
-    EXPECT_FALSE(allocation.registerBOBindExtHandleCalled);
-    EXPECT_EQ(DrmResourceClass::maxSize, mockDrm->registeredClass);
-}
-
 TEST(DrmMemoryManager, givenResourceRegistrationEnabledAndAllocTypeToCaptureWhenRegisteringAllocationInOsThenItIsMarkedForCapture) {
     const uint32_t rootDeviceIndex = 0u;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
