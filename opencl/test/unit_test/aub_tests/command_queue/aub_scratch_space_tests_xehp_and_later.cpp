@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKer
             sumEven += (i + valEven);
         }
 
-        dstBuffer = alignedMalloc(expectedMemorySize, 0x1000);
+        dstBuffer = clHostMemAllocINTEL(this->context, nullptr, expectedMemorySize, 0, &retVal);
         ASSERT_NE(nullptr, dstBuffer);
         memset(dstBuffer, 0, expectedMemorySize);
 
@@ -76,9 +76,12 @@ struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKer
             }
         }
 
-        kernels[kernelIdx]->setArgSvm(0, expectedMemorySize, dstBuffer, nullptr, 0u);
-        dstAllocation = createHostPtrAllocationFromSvmPtr(dstBuffer, expectedMemorySize);
+        const auto svmManager = context->getSVMAllocsManager();
+        auto svmData = svmManager->getSVMAlloc(dstBuffer);
+        auto svmAllocs = &svmData->gpuAllocations;
+        auto allocId = svmData->getAllocId();
 
+        kernels[kernelIdx]->setArgSvmAlloc(0, dstBuffer, svmAllocs->getDefaultGraphicsAllocation(), allocId);
         kernels[kernelIdx]->setArgSvm(1, expectedMemorySize, srcBuffer, nullptr, 0u);
         srcAllocation = createHostPtrAllocationFromSvmPtr(srcBuffer, expectedMemorySize);
 
@@ -99,7 +102,7 @@ struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKer
             srcBuffer = nullptr;
         }
         if (dstBuffer) {
-            alignedFree(dstBuffer);
+            clMemFreeINTEL(this->context, dstBuffer);
             dstBuffer = nullptr;
         }
 
