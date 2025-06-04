@@ -2764,9 +2764,12 @@ HWTEST2_F(InOrderCmdListTests, givenIoqAndPrefetchEnabledWhenKernelIsAppendedThe
     auto firstPrefetchIterator = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), firstPrefetchIterator);
 
+    auto heapSize = alignUp(kernel->getIndirectSize(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize;
+
     auto firstPrefetch = genCmdCast<STATE_PREFETCH *>(*firstPrefetchIterator);
     ASSERT_NE(nullptr, firstPrefetch);
     EXPECT_EQ(heapAddress, firstPrefetch->getAddress());
+    EXPECT_EQ(heapSize, firstPrefetch->getPrefetchSize());
 
     EXPECT_FALSE(firstPrefetch->getKernelInstructionPrefetch());
 

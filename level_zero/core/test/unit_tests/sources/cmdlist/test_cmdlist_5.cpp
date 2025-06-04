@@ -317,6 +317,10 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
             return;
         }
+
+        uint32_t getIndirectSize() const override {
+            return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
+        }
     };
     struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
 
@@ -401,6 +405,10 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         }
         void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
             return;
+        }
+
+        uint32_t getIndirectSize() const override {
+            return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
         }
     };
     struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
@@ -493,6 +501,10 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
         }
         void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
             return;
+        }
+
+        uint32_t getIndirectSize() const override {
+            return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
         }
 
         NEO::GraphicsAllocation *index0Allocation = nullptr;

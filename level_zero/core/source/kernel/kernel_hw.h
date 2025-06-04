@@ -132,6 +132,20 @@ struct KernelHw : public KernelImp {
             requiredWorkgroupOrder,
             kernelDescriptor.kernelAttributes.simdSize);
     }
+
+    uint32_t getIndirectSize() const override {
+        uint32_t totalPayloadSize = getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
+
+        if (getKernelDescriptor().kernelAttributes.flags.passInlineData) {
+            if (totalPayloadSize > GfxFamily::DefaultWalkerType::getInlineDataSize()) {
+                totalPayloadSize -= GfxFamily::DefaultWalkerType::getInlineDataSize();
+            } else {
+                totalPayloadSize = 0;
+            }
+        }
+
+        return totalPayloadSize;
+    }
 };
 
 } // namespace L0

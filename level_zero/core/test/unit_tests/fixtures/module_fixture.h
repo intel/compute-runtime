@@ -109,6 +109,10 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
         }
         void setCrossThreadData(uint32_t dataSize);
+
+        uint32_t getIndirectSize() const override {
+            return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
+        }
     };
 
     void setUp();

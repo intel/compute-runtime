@@ -186,6 +186,8 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
         return value;
     }
 
+    virtual uint32_t getIndirectSize() const = 0;
+
   protected:
     uint32_t maxWgCountPerTileCcs = 0;
     uint32_t maxWgCountPerTileRcs = 0;

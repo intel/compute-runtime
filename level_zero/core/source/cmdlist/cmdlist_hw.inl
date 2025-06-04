@@ -417,7 +417,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         auto kernel = Kernel::fromHandle(kernelHandle);
         NEO::LinearStream &cmdStream = *commandContainer.getCommandStream();
         auto heap = commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
-        NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *heap->getGraphicsAllocation(), kernel->getCrossThreadDataSize(), heap->getUsed(), device->getNEODevice()->getRootDeviceEnvironment());
+        NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *heap->getGraphicsAllocation(), kernel->getIndirectSize(), heap->getUsed(), device->getNEODevice()->getRootDeviceEnvironment());
         NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *kernel->getIsaAllocation(), static_cast<uint32_t>(kernel->getImmutableData()->getIsaSize()), kernel->getIsaOffsetInParentAllocation(), device->getNEODevice()->getRootDeviceEnvironment());
     }
 

@@ -85,6 +85,10 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
 
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
 
+    uint32_t getIndirectSize() const override {
+        return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
+    }
+
     WhiteBox() : ::L0::KernelImp(nullptr) {}
 };
 
@@ -142,6 +146,10 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
         } else {
             return BaseClass::setArgumentValue(argIndex, argSize, pArgValue);
         }
+    }
+
+    uint32_t getIndirectSize() const override {
+        return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
     }
 
     WhiteBox<::L0::KernelImmutableData> immutableData;
