@@ -12,6 +12,7 @@
 #include "shared/source/utilities/const_stringref.h"
 
 #include <array>
+#include <cstring>
 #include <optional>
 
 namespace NEO::Zebin::ZeInfo {
@@ -663,7 +664,43 @@ inline constexpr OffsetT offset = -1;
 inline constexpr BtiValueT btiValue = -1;
 } // namespace Defaults
 
-struct PayloadArgumentBaseT {
+struct PayloadArgElasticPtrBaseT;
+struct PayloadArgumentBaseT;
+struct PayloadArgumentExtT;
+PayloadArgumentExtT *allocatePayloadArgumentExt();
+void freePayloadArgumentExt(PayloadArgumentExtT *);
+void copyPayloadArgumentExt(PayloadArgumentExtT *&, const PayloadArgElasticPtrBaseT &);
+
+struct PayloadArgElasticPtrBaseT {
+    PayloadArgElasticPtrBaseT() {
+        pPayArgExt = allocatePayloadArgumentExt();
+    }
+    ~PayloadArgElasticPtrBaseT() {
+        freePayloadArgumentExt(pPayArgExt);
+    }
+    PayloadArgElasticPtrBaseT(const PayloadArgElasticPtrBaseT &src) {
+        copyPayloadArgumentExt(pPayArgExt, src);
+    }
+    PayloadArgElasticPtrBaseT &operator=(const PayloadArgElasticPtrBaseT &rhs) {
+        if (this != &rhs) {
+            copyPayloadArgumentExt(pPayArgExt, rhs);
+        }
+        return *this;
+    }
+    PayloadArgElasticPtrBaseT(PayloadArgElasticPtrBaseT &&src) noexcept : pPayArgExt(src.pPayArgExt) {
+        src.pPayArgExt = nullptr;
+    }
+    PayloadArgElasticPtrBaseT &operator=(PayloadArgElasticPtrBaseT &&rhs) noexcept {
+        if (this != &rhs) {
+            this->pPayArgExt = rhs.pPayArgExt;
+            rhs.pPayArgExt = nullptr;
+        }
+        return *this;
+    }
+    PayloadArgumentExtT *pPayArgExt = nullptr;
+};
+
+struct PayloadArgumentBaseT : PayloadArgElasticPtrBaseT {
     ArgTypeT argType = argTypeUnknown;
     OffsetT offset = Defaults::offset;
     SourceOffseT sourceOffset = Defaults::sourceOffset;

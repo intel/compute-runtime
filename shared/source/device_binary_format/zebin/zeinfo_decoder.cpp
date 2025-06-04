@@ -1107,7 +1107,8 @@ DecodeError readZeInfoPayloadArguments(const Yaml::YamlParser &parser, const Yam
         for (const auto &payloadArgumentMemberNd : parser.createChildrenRange(payloadArgumentNd)) {
             auto key = parser.readKey(payloadArgumentMemberNd);
             if (Tags::Kernel::PayloadArgument::argType == key) {
-                validPayload &= readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.argType, context, outErrReason);
+                validPayload &= readZeInfoArgTypeNameCheckedExt(parser, payloadArgumentMemberNd, payloadArgMetadata) ||
+                                readZeInfoEnumChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.argType, context, outErrReason);
             } else if (Tags::Kernel::PayloadArgument::argIndex == key) {
                 validPayload &= parser.readValueChecked(payloadArgumentMemberNd, payloadArgMetadata.argIndex);
                 outMaxPayloadArgumentIndex = std::max<int32_t>(outMaxPayloadArgumentIndex, payloadArgMetadata.argIndex);
@@ -1207,6 +1208,9 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
 
     switch (src.argType) {
     default:
+        if (DecodeError::success == populateKernelPayloadArgumentExt(dst, src, outErrReason)) {
+            return DecodeError::success;
+        }
         outErrReason.append("DeviceBinaryFormat::zebin : Invalid arg type in cross thread data section in context of : " + kernelName + ".\n");
         return DecodeError::invalidBinary; // unsupported
 
