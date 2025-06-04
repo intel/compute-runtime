@@ -2299,6 +2299,34 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetToZeroWhenA
     EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), *tag0Data);
 }
 
+HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetToZeroWhenAssigningAdditionalTimestampNodeThenDoNotClear) {
+    DebugManagerStateRestore restorer;
+    auto eventPool = createEvents<FamilyType>(2, true);
+
+    auto cmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto tag0 = device->getInOrderTimestampAllocator()->getTag();
+
+    auto tag0Data = const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(tag0->getContextEndAddress(0)));
+
+    *tag0Data = 123;
+
+    tag0->returnTag();
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 128, 128, &deviceAlloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    uint32_t hostCopyData = 0;
+    size_t copySize = 2 * BlitterConstants::maxBlitWidth + BlitterConstants::maxBlitHeight + 1;
+    debugManager.flags.ClearStandaloneInOrderTimestampAllocation.set(0);
+    auto ret = cmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, copySize, events[0]->toHandle(), 0, nullptr, copyParams);
+    EXPECT_EQ(ret, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), *tag0Data);
+    context->freeMem(deviceAlloc);
+}
 HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignalingWhenPassedNonProfilingEventThenNotAssignAllocation, IsAtLeastXeHpCore) {
 
     DebugManagerStateRestore restorer;

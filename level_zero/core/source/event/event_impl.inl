@@ -833,7 +833,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();
-    this->resetAdditionalTimestampNode(nullptr, 0);
+    this->resetAdditionalTimestampNode(nullptr, 0, true);
     return ZE_RESULT_SUCCESS;
 }
 

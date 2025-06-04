@@ -2819,7 +2819,7 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWithBlitAdditionalPropert
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
-    event->resetAdditionalTimestampNode(blitTagAllocator.getTag(), 1);
+    event->resetAdditionalTimestampNode(blitTagAllocator.getTag(), 1, false);
 
     event->setPacketsInUse(2u);
 
@@ -3918,9 +3918,9 @@ HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeMul
     auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
     ASSERT_NE(event, nullptr);
 
-    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
+    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1, false);
 
-    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
+    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1, false);
     EXPECT_EQ(1u, event->additionalTimestampNode.size());
 }
 
@@ -3930,10 +3930,10 @@ HWTEST_F(EventTests, givenRegularEventWhenCallingResetAdditionalTimestampNodeWit
     auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
     ASSERT_NE(event, nullptr);
 
-    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1);
+    event->resetAdditionalTimestampNode(eventTagAllocator.getTag(), 1, false);
     EXPECT_EQ(1u, event->additionalTimestampNode.size());
 
-    event->resetAdditionalTimestampNode(nullptr, 0);
+    event->resetAdditionalTimestampNode(nullptr, 0, false);
     EXPECT_EQ(0u, event->additionalTimestampNode.size());
 }
 

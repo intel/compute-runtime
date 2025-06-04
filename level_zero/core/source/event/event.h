@@ -327,7 +327,7 @@ struct Event : _ze_event_handle_t {
     void setExternalInterruptId(uint32_t interruptId) { externalInterruptId = interruptId; }
 
     void resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount);
-    void resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount);
+    void resetAdditionalTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount, bool resetAggregatedEvent);
 
     bool hasInOrderTimestampNode() const { return !inOrderTimestampNode.empty(); }
 

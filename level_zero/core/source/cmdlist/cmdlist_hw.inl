@@ -4454,6 +4454,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
 
             this->commandContainer.addToResidencyContainer(tag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex()));
             signalEvent->resetInOrderTimestampNode(tag, this->partitionCount);
+            signalEvent->resetAdditionalTimestampNode(nullptr, this->partitionCount, false);
         }
     }
 

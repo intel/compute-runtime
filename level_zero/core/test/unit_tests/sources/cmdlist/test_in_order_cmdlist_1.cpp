@@ -5503,11 +5503,14 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
 
     auto node0 = device->getDeviceInOrderCounterAllocator()->getTag();
 
-    event->resetAdditionalTimestampNode(node0, 1);
+    event->resetAdditionalTimestampNode(node0, 1, false);
 
     auto node1 = device->getDeviceInOrderCounterAllocator()->getTag();
-    event->resetAdditionalTimestampNode(node1, 1);
+    event->resetAdditionalTimestampNode(node1, 1, false);
     EXPECT_EQ(2u, event->additionalTimestampNode.size());
+
+    event->resetAdditionalTimestampNode(nullptr, 1, true);
+    EXPECT_EQ(0u, event->additionalTimestampNode.size());
 
     context->freeMem(devAddress);
 }
@@ -5991,6 +5994,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenStandaloneEventAndCopyOnl
     zeEventDestroy(eHandle1);
     zeEventDestroy(eHandle2);
     context->freeMem(hostAddress);
+}
+
+HWTEST_F(InOrderCmdListTests, givenCounterBasedEventAndAdditionalTimestampNodeAndResetCalledThenVectorIsCleared) {
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    auto node0 = device->getDeviceInOrderCounterAllocator()->getTag();
+
+    events[0]->resetAdditionalTimestampNode(node0, 1, false);
+    EXPECT_EQ(1u, events[0]->additionalTimestampNode.size());
+
+    events[0]->resetAdditionalTimestampNode(nullptr, 1, true);
+    EXPECT_EQ(0u, events[0]->additionalTimestampNode.size());
 }
 
 HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAndValueThenReturnCorrectValues) {
