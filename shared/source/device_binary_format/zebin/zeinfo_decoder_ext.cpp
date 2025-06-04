@@ -17,6 +17,10 @@ void readZeInfoValueCheckedExtra(const NEO::Yaml::YamlParser &parser, const NEO:
     encounterUnknownZeInfoAttribute(entry.str(), outErrReason, outWarning, error);
 }
 
+bool readZeInfoArgTypeNameCheckedExt(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &payloadArgumentMemberNd, KernelPayloadArgBaseT &outKernelPayArg) {
+    return false;
+}
+
 namespace Types::Kernel::ExecutionEnv {
 ExecutionEnvExt *allocateExecEnvExt() {
     return nullptr;
@@ -26,6 +30,18 @@ void freeExecEnvExt(ExecutionEnvExt *envExt) {
 } // namespace Types::Kernel::ExecutionEnv
 
 void populateKernelExecutionEnvironmentExt(KernelDescriptor &dst, const KernelExecutionEnvBaseT &execEnv, const Types::Version &srcZeInfoVersion) {
+}
+
+namespace Types::Kernel::PayloadArgument {
+PayloadArgumentExtT *allocatePayloadArgumentExt() {
+    return nullptr;
+}
+void freePayloadArgumentExt(PayloadArgumentExtT *pPayArgExt) {
+}
+} // namespace Types::Kernel::PayloadArgument
+
+DecodeError populateKernelPayloadArgumentExt(NEO::KernelDescriptor &dst, const KernelPayloadArgBaseT &src, std::string &outErrReason) {
+    return DecodeError::unhandledBinary;
 }
 
 } // namespace NEO::Zebin::ZeInfo

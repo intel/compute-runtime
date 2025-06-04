@@ -663,7 +663,19 @@ inline constexpr OffsetT offset = -1;
 inline constexpr BtiValueT btiValue = -1;
 } // namespace Defaults
 
-struct PayloadArgumentBaseT {
+struct PayloadArgumentExtT;
+PayloadArgumentExtT *allocatePayloadArgumentExt();
+void freePayloadArgumentExt(PayloadArgumentExtT *);
+
+struct PayloadArgumentBaseT final {
+    PayloadArgumentBaseT() {
+        pPayArgExt = allocatePayloadArgumentExt();
+    }
+    ~PayloadArgumentBaseT() {
+        freePayloadArgumentExt(pPayArgExt);
+    }
+    PayloadArgumentExtT *pPayArgExt = nullptr;
+
     ArgTypeT argType = argTypeUnknown;
     OffsetT offset = Defaults::offset;
     SourceOffseT sourceOffset = Defaults::sourceOffset;

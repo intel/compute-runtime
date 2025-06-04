@@ -10,6 +10,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_decoder_ext.h"
 #include "shared/source/device_binary_format/zebin/zeinfo_enum_lookup.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -2387,6 +2388,17 @@ kernels:
     EXPECT_EQ(16U, kernelDescriptor->kernelMetadata.requiredSubGroupSize);
     EXPECT_EQ(8U, kernelDescriptor->kernelMetadata.requiredThreadGroupDispatchSize);
     EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.isInvalid);
+}
+
+TEST(BaseKernelDescriptorAndPayloadArgumentPoinetrsExt, givenKernelDescriptorAndPayloadArgWhenProperlyCreatedThenExtraFieldsSetToNullPtr) {
+    NEO::KernelDescriptor kd;
+    NEO::Zebin::ZeInfo::KernelPayloadArgBaseT arg;
+
+    if (nullptr != kd.kernelDescriptorExt) {
+        EXPECT_NE(nullptr, arg.pPayArgExt);
+    } else {
+        EXPECT_EQ(nullptr, arg.pPayArgExt);
+    }
 }
 
 TEST(PopulateKernelSourceAttributes, GivenInvalidKernelAttributeWhenPopulatingKernelSourceAttributesThenKernelIsInvalidFlagIsSet) {
