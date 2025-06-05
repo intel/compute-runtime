@@ -1404,7 +1404,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    if (!this->handleCounterBasedEventOperations(signalEvent)) {
+    if (!this->handleCounterBasedEventOperations(signalEvent, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -1777,7 +1777,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
         dcFlush = this->getDcFlushRequired(signalEvent->isSignalScope());
     }
 
-    if (!this->handleCounterBasedEventOperations(signalEvent)) {
+    if (!this->handleCounterBasedEventOperations(signalEvent, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

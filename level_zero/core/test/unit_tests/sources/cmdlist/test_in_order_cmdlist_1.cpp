@@ -423,6 +423,21 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCmdListWhenAppendQ
     context->freeMem(deviceMem);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCmdListWhenAppendCbTimestampEventWithSkipAddToResidencyFlagThenEventAllocationNotAddedToResidency) {
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    launchParams.omitAddingEventResidency = true;
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    auto eventAllocation = events[0]->getAllocation(this->device);
+
+    auto &cmdlistResidency = regularCmdList->getCmdContainer().getResidencyContainer();
+    auto eventAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), eventAllocation);
+    EXPECT_EQ(eventAllocationIt, cmdlistResidency.end());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimestampThenEnsureItsCompletion) {
     struct MyMockEvent : public L0::EventImp<uint64_t> {
         using BaseClass = L0::EventImp<uint64_t>;
@@ -2927,8 +2942,8 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>;
         using BaseClass::BaseClass;
 
-        bool handleCounterBasedEventOperations(L0::Event *signalEvent) override {
-            auto ret = BaseClass::handleCounterBasedEventOperations(signalEvent);
+        bool handleCounterBasedEventOperations(L0::Event *signalEvent, bool skipAddingEventToResidency) override {
+            auto ret = BaseClass::handleCounterBasedEventOperations(signalEvent, skipAddingEventToResidency);
             usedEvent = signalEvent;
             auto hostAddr = reinterpret_cast<uint32_t *>(usedEvent->getCompletionFieldHostAddress());
             *hostAddr = 0x123;

@@ -95,7 +95,7 @@ struct BcsSplit {
 
         auto signalEvent = Event::fromHandle(hSignalEvent);
 
-        if (!cmdList->handleCounterBasedEventOperations(signalEvent)) {
+        if (!cmdList->handleCounterBasedEventOperations(signalEvent, false)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 

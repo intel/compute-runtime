@@ -441,7 +441,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         }
     }
 
-    if (!handleCounterBasedEventOperations(event)) {
+    if (!handleCounterBasedEventOperations(event, launchParams.omitAddingEventResidency)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -495,7 +495,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
-    if (!handleCounterBasedEventOperations(event)) {
+    if (!handleCounterBasedEventOperations(event, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -541,7 +541,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
-    if (!handleCounterBasedEventOperations(event)) {
+    if (!handleCounterBasedEventOperations(event, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -709,7 +709,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    if (!handleCounterBasedEventOperations(signalEvent)) {
+    if (!handleCounterBasedEventOperations(signalEvent, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -1567,7 +1567,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
         return ret;
     }
 
-    if (!handleCounterBasedEventOperations(signalEvent)) {
+    if (!handleCounterBasedEventOperations(signalEvent, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -1616,7 +1616,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
         return ret;
     }
 
-    if (!handleCounterBasedEventOperations(signalEvent)) {
+    if (!handleCounterBasedEventOperations(signalEvent, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -1822,7 +1822,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
     }
 
-    if (!handleCounterBasedEventOperations(signalEvent)) {
+    if (!handleCounterBasedEventOperations(signalEvent, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -2297,7 +2297,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     appendSynchronizedDispatchInitializationSection();
 
-    if (!handleCounterBasedEventOperations(signalEvent)) {
+    if (!handleCounterBasedEventOperations(signalEvent, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -2528,7 +2528,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
             return ret;
         }
 
-        if (!handleCounterBasedEventOperations(signalEvent)) {
+        if (!handleCounterBasedEventOperations(signalEvent, false)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
@@ -2798,7 +2798,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     auto event = Event::fromHandle(hEvent);
     event->resetKernelCountAndPacketUsedCount();
 
-    if (!handleCounterBasedEventOperations(event)) {
+    if (!handleCounterBasedEventOperations(event, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -3332,7 +3332,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    if (!handleCounterBasedEventOperations(signalEvent)) {
+    if (!handleCounterBasedEventOperations(signalEvent, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -3923,7 +3923,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         signalEvent = Event::fromHandle(hSignalEvent);
     }
 
-    if (!handleCounterBasedEventOperations(signalEvent)) {
+    if (!handleCounterBasedEventOperations(signalEvent, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -4064,7 +4064,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         handleInOrderImplicitDependencies(false, false);
     }
 
-    if (!handleCounterBasedEventOperations(signalEvent)) {
+    if (!handleCounterBasedEventOperations(signalEvent, false)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -4410,7 +4410,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::hasInOrderDependencies() const {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Event *signalEvent) {
+bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Event *signalEvent, bool skipAddingEventToResidency) {
     if (!signalEvent) {
         return true;
     }
@@ -4452,7 +4452,9 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         if (signalEvent->isUsingContextEndOffset()) {
             auto tag = device->getInOrderTimestampAllocator()->getTag();
 
-            this->commandContainer.addToResidencyContainer(tag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex()));
+            if (skipAddingEventToResidency == false) {
+                this->commandContainer.addToResidencyContainer(tag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex()));
+            }
             signalEvent->resetInOrderTimestampNode(tag, this->partitionCount);
             signalEvent->resetAdditionalTimestampNode(nullptr, this->partitionCount, false);
         }
