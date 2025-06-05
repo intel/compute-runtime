@@ -72,6 +72,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::disablePatching;
     using BaseClass::dispatchCmdListBatchBufferAsPrimary;
     using BaseClass::doubleSbaWa;
+    using BaseClass::duplicatedInOrderCounterStorageEnabled;
     using BaseClass::enablePatching;
     using BaseClass::engineGroupType;
     using BaseClass::estimateBufferSizeMultiTileBarrier;
