@@ -108,7 +108,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
         return *this;
     }
 
-    StackVec(StackVec &&rhs) {
+    StackVec(StackVec &&rhs) noexcept {
         onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
         if (rhs.usesDynamicMem()) {
             this->dynamicMem = rhs.dynamicMem;
@@ -122,7 +122,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
         rhs.clear();
     }
 
-    StackVec &operator=(StackVec &&rhs) {
+    StackVec &operator=(StackVec &&rhs) noexcept {
         if (this == &rhs) {
             return *this;
         }

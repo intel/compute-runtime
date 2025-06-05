@@ -31,7 +31,7 @@ TimestampPool::TimestampPool(Device *device, size_t poolSize)
     this->mtx = std::make_unique<std::mutex>();
 }
 
-TimestampPool::TimestampPool(TimestampPool &&pool) : BaseType(std::move(pool)) {
+TimestampPool::TimestampPool(TimestampPool &&pool) noexcept : BaseType(std::move(pool)) {
     mtx.reset(pool.mtx.release());
     this->stackVec = std::move(pool.stackVec);
     this->device = pool.device;

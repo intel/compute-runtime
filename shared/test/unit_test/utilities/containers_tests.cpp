@@ -1410,7 +1410,7 @@ TEST(StackVec, WhenResizingThenElementsAreCorrectlyManaged) {
             this->data = new int[100];
         }
 
-        Element(Element &&rhs) {
+        Element(Element &&rhs) noexcept {
             this->v = rhs.v;
             this->data = rhs.data;
             rhs.data = nullptr;
@@ -1423,7 +1423,7 @@ TEST(StackVec, WhenResizingThenElementsAreCorrectlyManaged) {
             return *this;
         }
 
-        Element &operator=(Element &&rhs) {
+        Element &operator=(Element &&rhs) noexcept {
             this->v = rhs.v;
             delete[] this->data;
             this->data = rhs.data;

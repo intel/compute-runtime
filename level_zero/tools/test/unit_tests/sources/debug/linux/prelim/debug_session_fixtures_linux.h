@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,7 +107,7 @@ struct MockIoctlHandlerI915 : public L0::ult::MockIoctlHandler {
         EuControlArg() : euControlBitmask(nullptr) {
             memset(&euControl, 0, sizeof(euControl));
         }
-        EuControlArg(EuControlArg &&in) : euControl(in.euControl), euControlBitmask(std::move(in.euControlBitmask)), euControlBitmaskSize(in.euControlBitmaskSize){};
+        EuControlArg(EuControlArg &&in) noexcept : euControl(in.euControl), euControlBitmask(std::move(in.euControlBitmask)), euControlBitmaskSize(in.euControlBitmaskSize){};
         prelim_drm_i915_debug_eu_control euControl = {};
         std::unique_ptr<uint8_t[]> euControlBitmask;
         size_t euControlBitmaskSize = 0;

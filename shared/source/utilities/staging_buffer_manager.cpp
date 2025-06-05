@@ -24,7 +24,7 @@ StagingBuffer::StagingBuffer(void *baseAddress, size_t size) : baseAddress(baseA
     this->allocator = std::make_unique<HeapAllocator>(castToUint64(baseAddress), size, MemoryConstants::pageSize, 0u);
 }
 
-StagingBuffer::StagingBuffer(StagingBuffer &&other) : baseAddress(other.baseAddress) {
+StagingBuffer::StagingBuffer(StagingBuffer &&other) noexcept : baseAddress(other.baseAddress) {
     this->allocator.reset(other.allocator.release());
 }
 

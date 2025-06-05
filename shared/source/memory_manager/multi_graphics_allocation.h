@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class MultiGraphicsAllocation {
   public:
     MultiGraphicsAllocation(uint32_t maxRootDeviceIndex);
     MultiGraphicsAllocation(const MultiGraphicsAllocation &multiGraphicsAllocation);
-    MultiGraphicsAllocation(MultiGraphicsAllocation &&);
+    MultiGraphicsAllocation(MultiGraphicsAllocation &&) noexcept;
     MultiGraphicsAllocation &operator=(const MultiGraphicsAllocation &) = delete;
     MultiGraphicsAllocation &operator=(MultiGraphicsAllocation &&) = delete;
     ~MultiGraphicsAllocation();

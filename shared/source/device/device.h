@@ -61,7 +61,7 @@ using CsrContainer = std::vector<std::unique_ptr<CommandStreamReceiver>>;
 
 struct SecondaryContexts : NEO::NonCopyableAndNonMovableClass {
     SecondaryContexts() = default;
-    SecondaryContexts(SecondaryContexts &&in) {
+    SecondaryContexts(SecondaryContexts &&in) noexcept {
         this->engines = std::move(in.engines);
         this->regularCounter = in.regularCounter.load();
         this->highPriorityCounter = in.highPriorityCounter.load();

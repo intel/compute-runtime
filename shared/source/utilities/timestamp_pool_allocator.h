@@ -30,7 +30,7 @@ class TimestampPool : public AbstractBuffersPool<TimestampPool, GraphicsAllocati
     TimestampPool(const TimestampPool &) = delete;
     TimestampPool &operator=(const TimestampPool &) = delete;
 
-    TimestampPool(TimestampPool &&pool);
+    TimestampPool(TimestampPool &&pool) noexcept;
     TimestampPool &operator=(TimestampPool &&) = delete;
 
     ~TimestampPool() override;

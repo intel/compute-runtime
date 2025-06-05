@@ -31,7 +31,7 @@ using ChunkTransferBufferFunc = std::function<int32_t(void *, size_t, size_t)>;
 class StagingBuffer : NEO::NonCopyableClass {
   public:
     StagingBuffer(void *baseAddress, size_t size);
-    StagingBuffer(StagingBuffer &&other);
+    StagingBuffer(StagingBuffer &&other) noexcept;
     StagingBuffer &operator=(StagingBuffer &&other) noexcept = delete;
 
     void *getBaseAddress() const {

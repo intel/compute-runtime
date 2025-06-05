@@ -61,7 +61,7 @@ class DirectSubmissionController {
 
   protected:
     struct DirectSubmissionState {
-        DirectSubmissionState(DirectSubmissionState &&other) {
+        DirectSubmissionState(DirectSubmissionState &&other) noexcept {
             isStopped = other.isStopped.load();
             taskCount = other.taskCount.load();
         }

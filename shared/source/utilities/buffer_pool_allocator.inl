@@ -29,7 +29,7 @@ AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(Me
 }
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
-AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool)
+AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool) noexcept
     : memoryManager{bufferPool.memoryManager},
       mainStorage{std::move(bufferPool.mainStorage)},
       chunkAllocator{std::move(bufferPool.chunkAllocator)},

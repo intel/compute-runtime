@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ struct MockGlobalSysCallRestorer {
     }
     MockGlobalSysCallRestorer(const MockGlobalSysCallRestorer &rhs) = delete;
     MockGlobalSysCallRestorer &operator=(const MockGlobalSysCallRestorer &rhs) = delete;
-    MockGlobalSysCallRestorer(MockGlobalSysCallRestorer &&rhs)
+    MockGlobalSysCallRestorer(MockGlobalSysCallRestorer &&rhs) noexcept
         : globalClb(rhs.globalClb), globalClbData(rhs.globalClbData) {
         callbackPrev = rhs.callbackPrev;
         callbackData = rhs.callbackData;

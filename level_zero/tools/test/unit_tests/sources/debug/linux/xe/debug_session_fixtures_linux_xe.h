@@ -133,7 +133,7 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
         EuControlArg() : euControlBitmask(nullptr) {
             memset(&euControl, 0, sizeof(euControl));
         }
-        EuControlArg(EuControlArg &&in) : euControl(in.euControl), euControlBitmask(std::move(in.euControlBitmask)), euControlBitmaskSize(in.euControlBitmaskSize){};
+        EuControlArg(EuControlArg &&in) noexcept : euControl(in.euControl), euControlBitmask(std::move(in.euControlBitmask)), euControlBitmaskSize(in.euControlBitmaskSize){};
         NEO::EuDebugEuControl euControl = {};
         std::unique_ptr<uint8_t[]> euControlBitmask;
         size_t euControlBitmaskSize = 0;

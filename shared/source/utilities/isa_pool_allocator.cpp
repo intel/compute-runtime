@@ -32,7 +32,7 @@ ISAPool::ISAPool(Device *device, bool isBuiltin, size_t storageSize)
     this->stackVec.push_back(graphicsAllocation);
 }
 
-ISAPool::ISAPool(ISAPool &&pool) : BaseType(std::move(pool)) {
+ISAPool::ISAPool(ISAPool &&pool) noexcept : BaseType(std::move(pool)) {
     this->isBuiltin = pool.isBuiltin;
     mtx.reset(pool.mtx.release());
     this->stackVec = std::move(pool.stackVec);
