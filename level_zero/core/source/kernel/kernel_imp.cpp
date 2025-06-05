@@ -375,19 +375,23 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     patchWorkgroupSizeInCrossThreadData(groupSizeX, groupSizeY, groupSizeZ);
 
     auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
-    auto remainderSimdLanes = itemsInGroup & (simdSize - 1u);
-    threadExecutionMask = static_cast<uint32_t>(maxNBitValue(remainderSimdLanes));
-    if (!threadExecutionMask) {
-        threadExecutionMask = static_cast<uint32_t>(maxNBitValue((isSimd1(simdSize)) ? 32 : simdSize));
-    }
-    evaluateIfRequiresGenerationOfLocalIdsByRuntime(kernelDescriptor);
-
     auto grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
     auto neoDevice = module->getDevice()->getNEODevice();
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
     this->numThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(
         simdSize, static_cast<uint32_t>(itemsInGroup), grfCount, rootDeviceEnvironment);
+
+    if (auto wgSizeRet = validateWorkgroupSize(); wgSizeRet != ZE_RESULT_SUCCESS) {
+        return wgSizeRet;
+    }
+
+    auto remainderSimdLanes = itemsInGroup & (simdSize - 1u);
+    threadExecutionMask = static_cast<uint32_t>(maxNBitValue(remainderSimdLanes));
+    if (!threadExecutionMask) {
+        threadExecutionMask = static_cast<uint32_t>(maxNBitValue((isSimd1(simdSize)) ? 32 : simdSize));
+    }
+    evaluateIfRequiresGenerationOfLocalIdsByRuntime(kernelDescriptor);
 
     if (kernelRequiresGenerationOfLocalIdsByRuntime) {
         auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
