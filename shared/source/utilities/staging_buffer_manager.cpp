@@ -395,12 +395,12 @@ bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, co
     if (usmDstData) {
         isUsedByOsContext = usmDstData->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex())->isUsedByOsContext(osContextId);
     }
-    return this->isValidForStaging(device, srcPtr, size, hasDependencies) && hostToUsmCopy && (isUsedByOsContext || size <= chunkSize);
+    return hostToUsmCopy && (isUsedByOsContext || size <= chunkSize) && this->isValidForStaging(device, srcPtr, size, hasDependencies);
 }
 
 bool StagingBufferManager::isValidForStagingTransfer(const Device &device, const void *ptr, size_t size, bool hasDependencies) {
     auto nonUsmPtr = ptr != nullptr && svmAllocsManager->getSVMAlloc(ptr) == nullptr;
-    return this->isValidForStaging(device, ptr, size, hasDependencies) && nonUsmPtr;
+    return nonUsmPtr && this->isValidForStaging(device, ptr, size, hasDependencies);
 }
 
 // Common checks for usm, buffers and images
@@ -412,8 +412,7 @@ bool StagingBufferManager::isValidForStaging(const Device &device, const void *p
     auto isIntegrated = device.getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice;
     auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
     bool sizeWithinThreshold = osInterface ? osInterface->isSizeWithinThresholdForStaging(size, isIntegrated) : true;
-    auto detectedHostPtr = this->registerHostPtr(ptr);
-    return stagingCopyEnabled && !hasDependencies && !detectedHostPtr && sizeWithinThreshold;
+    return stagingCopyEnabled && !hasDependencies && sizeWithinThreshold && !this->registerHostPtr(ptr);
 }
 
 void StagingBufferManager::clearTrackedChunks() {
