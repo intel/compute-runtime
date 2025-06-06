@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ namespace ult {
 
 TEST(PrintfHandler, whenPrintfBufferIscreatedThenCorrectAllocationTypeIsUsed) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
 
     auto allocation = PrintfHandler::createPrintfBuffer(&l0Device);
     EXPECT_EQ(NEO::AllocationType::printfSurface, allocation->getAllocationType());

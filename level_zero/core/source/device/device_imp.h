@@ -76,7 +76,6 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
 
     ze_result_t systemBarrier() override;
     ze_result_t synchronize() override;
-    void *getExecEnvironment() override;
     BuiltinFunctionsLib *getBuiltinFunctionsLib() override;
     uint32_t getMOCS(bool l3enabled, bool l1enabled) override;
     const NEO::GfxCoreHelper &getGfxCoreHelper() override;
@@ -129,7 +128,6 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     uint32_t getPhysicalSubDeviceId();
 
     bool isSubdevice = false;
-    void *execEnvironment = nullptr;
     std::unique_ptr<BuiltinFunctionsLib> builtins;
     std::unique_ptr<MetricDeviceContext> metricContext;
     std::unique_ptr<CacheReservation> cacheReservation;

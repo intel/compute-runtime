@@ -159,7 +159,7 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithSingleSliceT
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
@@ -213,7 +213,7 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithMultipleSlic
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
@@ -264,7 +264,7 @@ TEST(DebugSessionLinuxi915Test, GivenDeviceWithSingleSliceWhenCallingAreRequeste
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
 
@@ -374,7 +374,7 @@ TEST(DebugSessionLinuxi915Test, GivenRootDebugSessionWhenCreateTileSessionCalled
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     struct DebugSession : public DebugSessionLinuxi915 {
         using DebugSessionLinuxi915::createTileSession;
@@ -396,7 +396,7 @@ TEST(DebugSessionLinuxi915Test, GivenRootLinuxSessionWhenCallingTileSepcificFunc
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
@@ -413,7 +413,7 @@ TEST(DebugSessionLinuxi915Test, GivenContextStateSaveAreaBindInfoWhenGettingCSSA
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
@@ -973,7 +973,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenReadingEventThenResultNotReadyIsR
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoDevice);
     auto mockSession = new MockDebugSessionLinuxi915(config, &deviceImp, 10);
     mockSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
     deviceImp.debugSession.reset(mockSession);

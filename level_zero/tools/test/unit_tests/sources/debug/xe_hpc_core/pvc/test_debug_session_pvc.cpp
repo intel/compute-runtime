@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ PVCTEST_F(PVCDebugSession, givenPVCRevId3WhenGettingPerThreadScratchOffsetThenPe
     hwInfo.platform.usRevId = 3;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    L0::ult::MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    L0::ult::MockDeviceImp deviceImp(neoDevice);
     auto debugSession = std::make_unique<L0::ult::DebugSessionMock>(zet_debug_config_t{0x1234}, &deviceImp);
 
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);

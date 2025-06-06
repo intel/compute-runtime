@@ -105,7 +105,7 @@ HWTEST_F(ExternalSemaphoreMTTest, givenSemaphoreSignalOperationEventWhenExternal
     externalSemaphore->neoExternalSemaphore = std::make_unique<MockNEOExternalSemaphore>();
 
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
-    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     driverHandleImp->setMemoryManager(mockMemoryManager.get());
     l0Device->setDriverHandle(driverHandleImp.get());
@@ -134,7 +134,7 @@ HWTEST_F(ExternalSemaphoreMTTest, givenHostSynchronizeFailsWhenExternalSemaphore
     externalSemaphore->neoExternalSemaphore = std::make_unique<MockNEOExternalSemaphore>();
 
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
-    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     driverHandleImp->setMemoryManager(mockMemoryManager.get());
     l0Device->setDriverHandle(driverHandleImp.get());
@@ -164,7 +164,7 @@ HWTEST_F(ExternalSemaphoreMTTest, givenHostSynchronizeFailsWhenExternalSemaphore
 HWTEST_F(ExternalSemaphoreMTTest, givenNEOExternalSemaphoreWhenAppendWaitExternalSemaphoresExpIsCalledThenExpectedSemaphoreStateIsReturned) {
     auto externalSemaphore = std::make_unique<ExternalSemaphoreImp>();
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
-    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice);
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
 
     externalSemaphore->neoExternalSemaphore = std::make_unique<MockNEOExternalSemaphore>();

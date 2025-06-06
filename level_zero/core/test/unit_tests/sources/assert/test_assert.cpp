@@ -33,7 +33,7 @@ using CommandListImmediateWithAssert = Test<DeviceFixture>;
 
 TEST(KernelAssert, GivenKernelWithAssertWhenDestroyedThenAssertIsChecked) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
 
     auto assertHandler = new MockAssertHandler(neoDevice);
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
@@ -52,7 +52,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenDestroyedThenAssertIsChecked) {
 
 TEST(KernelAssert, GivenKernelWithAssertWhenNoModuleAssignedAndKernelDestroyedThenAssertIsNotChecked) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
 
     auto assertHandler = new MockAssertHandler(neoDevice);
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
@@ -68,7 +68,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenNoModuleAssignedAndKernelDestroyedTh
 
 TEST(KernelAssert, GivenKernelWithAssertWhenNoAssertHandlerOnDestroyThenDestructorDoesNotCrash) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
 
     Mock<Module> module(&l0Device, nullptr, ModuleType::user);
 
@@ -82,7 +82,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenNoAssertHandlerOnDestroyThenDestruct
 
 TEST(KernelAssert, GivenKernelWithAssertWhenSettingAssertBufferThenAssertBufferIsAddedToResidencyAndCrossThreadDataPatched) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
 
     auto assertHandler = new MockAssertHandler(neoDevice);
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
@@ -107,7 +107,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenSettingAssertBufferThenAssertBufferI
 
 TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThenImplicitArgsAssertBufferPtrIsSet) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
 
     auto assertHandler = new MockAssertHandler(neoDevice);
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
@@ -146,7 +146,7 @@ TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThe
 
 TEST(KernelAssert, GivenNoAssertHandlerWhenKernelWithAssertSetsAssertBufferThenAssertHandlerIsCreated) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
 
     Mock<Module> module(&l0Device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
@@ -164,7 +164,7 @@ TEST(KernelAssert, GivenNoAssertHandlerWhenKernelWithAssertSetsAssertBufferThenA
 
 TEST(CommandListAssertTest, GivenCmdListWhenKernelWithAssertAppendedThenHasKernelWithAssertIsSetTrue) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
     ze_result_t returnValue;
 
     Mock<Module> module(&l0Device, nullptr, ModuleType::user);
@@ -185,7 +185,7 @@ TEST(CommandListAssertTest, GivenCmdListWhenKernelWithAssertAppendedThenHasKerne
 
 TEST(CommandListAssertTest, GivenCmdListWithAppendedAssertKernelWhenResetThenKernelWithAssertAppendedIsFalse) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
     ze_result_t returnValue;
 
     std::unique_ptr<ult::WhiteBox<L0::CommandListImp>> commandList(ult::CommandList::whiteboxCast(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily,

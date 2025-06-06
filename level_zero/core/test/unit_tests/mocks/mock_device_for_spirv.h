@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class MockDeviceForSpv : public MockDeviceImp {
     std::unique_ptr<L0::Module> mockModulePtr;
 
   public:
-    MockDeviceForSpv(NEO::Device *device, NEO::ExecutionEnvironment *ex, L0::DriverHandleImp *driverHandle) : MockDeviceImp(device, ex) {
+    MockDeviceForSpv(NEO::Device *device, L0::DriverHandleImp *driverHandle) : MockDeviceImp(device) {
         this->driverHandle = driverHandle;
         wasModuleCreated = false;
     }

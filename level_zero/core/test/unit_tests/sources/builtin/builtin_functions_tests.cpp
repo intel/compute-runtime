@@ -50,7 +50,7 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
 
     void setUp() {
         DeviceFixture::setUp();
-        mockDevicePtr = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
+        mockDevicePtr = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), driverHandle.get()));
         mockBuiltinFunctionsLibImpl.reset(new MockBuiltinFunctionsLibImpl(mockDevicePtr.get(), neoDevice->getBuiltIns()));
         mockBuiltinFunctionsLibImpl->ensureInitCompletion();
         EXPECT_TRUE(mockBuiltinFunctionsLibImpl->initAsyncComplete);

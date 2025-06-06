@@ -93,7 +93,7 @@ HWTEST_F(ContextCreateCommandQueueTest, givenRootDeviceAndImplicitScalingDisable
     subDevice0.getRegularEngineGroups().back().engines.resize(1);
     subDevice0.getRegularEngineGroups().back().engines[0].commandStreamReceiver = &rootDevice.getGpgpuCommandStreamReceiver();
     auto ordinal = static_cast<uint32_t>(subDevice0.getRegularEngineGroups().size() - 1);
-    MockDeviceImp l0RootDevice(&rootDevice, rootDevice.getExecutionEnvironment());
+    MockDeviceImp l0RootDevice(&rootDevice);
 
     l0RootDevice.driverHandle = driverHandle.get();
 
@@ -870,7 +870,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenP
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
-    NEO::ExecutionEnvironment *execEnv = static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment());
+    NEO::ExecutionEnvironment *execEnv = neoDevice->getExecutionEnvironment();
     std::unique_ptr<ScratchSpaceController> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(device->getRootDeviceIndex(),
                                                                                                                          *execEnv,
                                                                                                                          *csr.getInternalAllocationStorage());
@@ -927,7 +927,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
-    NEO::ExecutionEnvironment *execEnv = static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment());
+    NEO::ExecutionEnvironment *execEnv = neoDevice->getExecutionEnvironment();
     std::unique_ptr<ScratchSpaceController> scratchController = std::make_unique<MockScratchSpaceControllerXeHPAndLater>(device->getRootDeviceIndex(),
                                                                                                                          *execEnv,
                                                                                                                          *csr.getInternalAllocationStorage());

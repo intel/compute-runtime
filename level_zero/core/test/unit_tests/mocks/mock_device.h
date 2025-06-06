@@ -53,7 +53,6 @@ struct MockDevice : public Device {
     ADDMETHOD_NOBASE(synchronize, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getRootDevice, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t * phRootDevice));
     // Runtime internal methods
-    ADDMETHOD_NOBASE(getExecEnvironment, void *, nullptr, ());
     ADDMETHOD_NOBASE_REFRETURN(getGfxCoreHelper, NEO::GfxCoreHelper &, ());
     ADDMETHOD_NOBASE_REFRETURN(getL0GfxCoreHelper, L0GfxCoreHelper &, ());
     ADDMETHOD_NOBASE_REFRETURN(getProductHelper, NEO::ProductHelper &, ());
@@ -114,9 +113,8 @@ struct MockDeviceImp : public L0::DeviceImp {
     using Base::subDeviceCopyEngineGroups;
     using Base::syncDispatchTokenAllocation;
 
-    MockDeviceImp(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
+    MockDeviceImp(NEO::Device *device) {
         device->incRefInternal();
-        Base::execEnvironment = execEnv;
         Base::neoDevice = device;
         Base::allocationsForReuse = std::make_unique<NEO::AllocationsList>();
     }

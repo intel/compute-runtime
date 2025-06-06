@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupI
     hwInfo.featureTable.flags.ftrCCSNode = false;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice);
 
     uint32_t count = 0;
     ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
@@ -36,7 +36,7 @@ HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndCCSThenTwoQueueGroupsAr
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice);
 
     uint32_t count = 0;
     ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
@@ -51,7 +51,7 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterSupportAndCCSThenThreeQueueGroupsAr
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.featureTable.ftrBcsInfo.set(0);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice);
 
     uint32_t count = 0;
     ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
@@ -110,7 +110,7 @@ HWTEST2_F(DeviceCopyQueueGroupXeHpgCoreTest,
     hwInfo.featureTable.ftrBcsInfo.set(0);
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice);
 
     uint32_t count = 0;
     ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);

@@ -266,7 +266,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
         &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
 
     auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0);
-    MockDeviceImp device(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp device(neoMockDevice);
     device.driverHandle = driverHandle.get();
 
     auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device.getHwInfo());

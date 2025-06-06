@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ void DebugSessionRegistersAccessV3::setUp() {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
-    deviceImp = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
+    deviceImp = std::make_unique<MockDeviceImp>(neoDevice);
 
     session = std::make_unique<MockDebugSession>(config, deviceImp.get(), true, 3);
 
@@ -36,7 +36,7 @@ void DebugSessionRegistersAccess::setUp() {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
-    deviceImp = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
+    deviceImp = std::make_unique<MockDeviceImp>(neoDevice);
 
     session = std::make_unique<MockDebugSession>(config, deviceImp.get());
 

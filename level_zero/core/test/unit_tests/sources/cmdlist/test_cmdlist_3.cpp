@@ -215,7 +215,7 @@ class DeviceHostPtrFailMock : public MockDeviceImp {
 };
 
 HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationCalledWithInvalidPtrThenNullptrReturned) {
-    auto failDevice = std::make_unique<DeviceHostPtrFailMock>(device->getNEODevice(), execEnv);
+    auto failDevice = std::make_unique<DeviceHostPtrFailMock>(device->getNEODevice());
     failDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(failDevice.get(), NEO::EngineGroupType::copy, 0u);
@@ -1499,7 +1499,7 @@ class MyDeviceMock : public MockDeviceImp {
 };
 
 HWTEST_F(CommandListCreateTests, givenHostPtrAllocAllocWhenInternalMemCreatedThenNewAllocAddedToDealocationContainer) {
-    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::internalHostMemory>>(device->getNEODevice(), execEnv);
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::internalHostMemory>>(device->getNEODevice());
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
@@ -1514,7 +1514,7 @@ HWTEST_F(CommandListCreateTests, givenHostPtrAllocAllocWhenInternalMemCreatedThe
 }
 
 HWTEST_F(CommandListCreateTests, givenHostPtrAllocAllocWhenExternalMemCreatedThenNewAllocAddedToHostPtrMap) {
-    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice(), execEnv);
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice());
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
@@ -1529,7 +1529,7 @@ HWTEST_F(CommandListCreateTests, givenHostPtrAllocAllocWhenExternalMemCreatedThe
 }
 
 HWTEST_F(CommandListCreateWithBcs, givenHostPtrAllocAllocAndImmediateCmdListWhenExternalMemCreatedThenNewAllocAddedToInternalAllocationStorage) {
-    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice(), execEnv);
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice());
     myDevice->neoDevice = device->getNEODevice();
     CommandStreamReceiver *csr = neoDevice->getInternalCopyEngine() ? neoDevice->getInternalCopyEngine()->commandStreamReceiver : neoDevice->getInternalEngine().commandStreamReceiver;
     ze_command_queue_desc_t desc = {};
@@ -1552,7 +1552,7 @@ HWTEST_F(CommandListCreateWithBcs, givenHostPtrAllocAllocAndImmediateCmdListWhen
 }
 
 HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationWhenInternalMemWithinDifferentAllocThenReturnNewAlloc) {
-    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::internalHostMemory>>(device->getNEODevice(), execEnv);
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::internalHostMemory>>(device->getNEODevice());
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
@@ -1566,7 +1566,7 @@ HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationWhenInternalMemWithinD
     commandList->commandContainer.getDeallocationContainer().clear();
 }
 HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationWhenExternalMemWithinDifferentAllocThenReturnPreviouslyAllocatedMem) {
-    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice(), execEnv);
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice());
     myDevice->neoDevice = device->getNEODevice();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);

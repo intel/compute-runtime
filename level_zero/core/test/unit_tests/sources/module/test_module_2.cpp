@@ -88,7 +88,7 @@ TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstru
     auto mockCommandStreamReceiver = static_cast<MockCommandStreamReceiver *>(&neoMockDevice->getGpgpuCommandStreamReceiver());
     mockCommandStreamReceiver->makeResidentParentCall = true;
 
-    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice);
 
     auto module = new MockModule{&deviceImp, nullptr, ModuleType::user};
     module->translationUnit.reset(new MockModuleTranslationUnit{&deviceImp});
@@ -118,7 +118,7 @@ TEST(ModuleDestroyTest, givenKernelImmutableDataWithNullIsaAllocationWhenIsModul
     auto mockCommandStreamReceiver = static_cast<MockCommandStreamReceiver *>(&neoMockDevice->getGpgpuCommandStreamReceiver());
     mockCommandStreamReceiver->makeResidentParentCall = true;
 
-    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    MockDeviceImp deviceImp(neoMockDevice);
 
     auto module = new MockModule{&deviceImp, nullptr, ModuleType::user};
     module->translationUnit.reset(new MockModuleTranslationUnit{&deviceImp});
