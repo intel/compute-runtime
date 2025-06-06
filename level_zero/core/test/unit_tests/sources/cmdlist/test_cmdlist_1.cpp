@@ -15,6 +15,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -868,7 +869,8 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     NEO::CpuPageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
@@ -878,7 +880,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidDeviceMemPtrAndPageFaultHandlerA
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
-    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string output = capture.getCapturedStdout(); // stop capturing
 
     std::string expectedString = "UMD transferred shared allocation";
     uint32_t occurrences = 0u;

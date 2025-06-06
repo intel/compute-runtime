@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
@@ -857,11 +858,12 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingTimestampFrequencyThenCaptur
 
     int frequency = 0;
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     int ret = drm.getTimestampFrequency(frequency);
     debugManager.flags.PrintIoctlEntries.set(false);
-    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string outputString = capture.getCapturedStdout(); // stop capturing
 
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1000, frequency);
@@ -879,10 +881,11 @@ TEST(DrmTest, givenPrintIoctlDebugFlagNotSetWhenGettingTimestampFrequencyThenCap
 
     int frequency = 0;
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     int ret = drm.getTimestampFrequency(frequency);
-    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string outputString = capture.getCapturedStdout(); // stop capturing
 
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1000, frequency);
@@ -900,11 +903,12 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingOATimestampFrequencyThenCapt
 
     int frequency = 0;
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     int ret = drm.getOaTimestampFrequency(frequency);
     debugManager.flags.PrintIoctlEntries.set(false);
-    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string outputString = capture.getCapturedStdout(); // stop capturing
 
     EXPECT_EQ(0, ret);
     EXPECT_EQ(123456, frequency);
@@ -1560,10 +1564,11 @@ TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcess
     std::string expectedString = std::string(buf.get());
 
     ::testing::internal::CaptureStderr();
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     EXPECT_THROW(drm.isGpuHangDetected(mockOsContextLinux), std::runtime_error);
     auto stderrString = ::testing::internal::GetCapturedStderr();
-    auto stdoutString = ::testing::internal::GetCapturedStdout();
+    auto stdoutString = capture.getCapturedStdout();
     EXPECT_EQ(expectedString, stderrString);
     EXPECT_EQ(expectedString, stdoutString);
 }

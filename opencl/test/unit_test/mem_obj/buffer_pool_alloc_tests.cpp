@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -563,13 +564,14 @@ TEST_F(AggregatedSmallBuffersEnabledTestFailPoolInit, givenAggregatedSmallBuffer
 using AggregatedSmallBuffersEnabledTestDoNotRunSetup = AggregatedSmallBuffersTestTemplate<1, false, false>;
 
 TEST_F(AggregatedSmallBuffersEnabledTestDoNotRunSetup, givenAggregatedSmallBuffersEnabledWhenPoolInitializedThenPerformanceHintsNotProvided) {
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     debugManager.flags.PrintDriverDiagnostics.set(1);
     setUpImpl();
     EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     EXPECT_FALSE(poolAllocator->bufferPools.empty());
     EXPECT_NE(context->driverDiagnostics, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 }
 

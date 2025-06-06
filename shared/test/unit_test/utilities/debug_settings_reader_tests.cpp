@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_settings_reader.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -85,17 +86,19 @@ TEST(SettingsReader, GivenRegKeyWhenCreatingOsReaderThenReaderIsCreated) {
 
 TEST(SettingsReader, GivenTrueWhenPrintingDebugStringThenPrintsToOutput) {
     int i = 4;
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     PRINT_DEBUG_STRING(true, stdout, "testing error %d", i);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
 }
 
 TEST(SettingsReader, GivenFalseWhenPrintingDebugStringThenNoOutput) {
     int i = 4;
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     PRINT_DEBUG_STRING(false, stderr, "Error String %d", i);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STREQ(output.c_str(), "");
 }
 } // namespace SettingsReaderTests

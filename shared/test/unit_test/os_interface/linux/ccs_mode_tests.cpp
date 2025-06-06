@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -242,13 +243,14 @@ TEST_F(CcsModeTest, GivenValidCcsModeAndOpenSysCallFailsWithNoPermissionsWhenCon
 
     DebugManagerStateRestore restorer;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     testing::internal::CaptureStderr();
 
     debugManager.flags.ZEX_NUMBER_OF_CCS.set("2");
     executionEnvironment->configureCcsMode();
 
-    std::string stdOutString = testing::internal::GetCapturedStdout();
+    std::string stdOutString = capture.getCapturedStdout();
     std::string stdErrString = testing::internal::GetCapturedStderr();
     std::string expectedOutput = "No read and write permissions for /sys/class/drm/card0/gt/gt0/ccs_mode, System administrator needs to grant permissions to allow modification of this file from user space\n";
 
@@ -281,13 +283,14 @@ TEST_F(CcsModeTest, GivenValidCcsModeAndOpenSysCallFailsWithNoAccessWhenConfigur
 
     DebugManagerStateRestore restorer;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     testing::internal::CaptureStderr();
 
     debugManager.flags.ZEX_NUMBER_OF_CCS.set("2");
     executionEnvironment->configureCcsMode();
 
-    std::string stdOutString = testing::internal::GetCapturedStdout();
+    std::string stdOutString = capture.getCapturedStdout();
     std::string stdErrString = testing::internal::GetCapturedStderr();
     std::string expectedOutput = "No read and write permissions for /sys/class/drm/card0/gt/gt0/ccs_mode, System administrator needs to grant permissions to allow modification of this file from user space\n";
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/numa_library.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
@@ -359,11 +360,12 @@ TEST_F(MultiTileMemoryInfoPrelimTest, whenDebugVariablePrintMemoryRegionSizeIsSe
 
     setupMemoryInfo(regionInfo, 0);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::mainBank);
     EXPECT_EQ(16 * MemoryConstants::gigaByte, regionSize);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput("Memory type: 0, memory instance: 1, region size: 17179869184\n");
     EXPECT_EQ(expectedOutput, output);
 }

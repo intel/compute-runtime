@@ -39,6 +39,7 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
@@ -64,6 +65,8 @@
 #include <chrono>
 #include <functional>
 #include <limits>
+
+StreamCapture capture;
 
 namespace NEO {
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
@@ -1738,11 +1741,12 @@ TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingN
 
     csr.useNewResourceImplicitFlush = true;
     csr.newResources = false;
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     csr.checkForNewResources(10u, GraphicsAllocation::objectNotUsed, mockAllocation);
     EXPECT_TRUE(csr.newResources);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_STREQ("New resource detected of type 0\n", output.c_str());
 }
@@ -1761,11 +1765,12 @@ TEST(CommandStreamReceiverSimpleTest, givenPrintfTagAllocationAddressFlagEnabled
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
     csr.setupContext(*osContext);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     csr.initializeTagAllocation();
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_NE(0u, output.size());
 
     char expectedStr[128];
@@ -2537,12 +2542,13 @@ HWTEST_F(CommandStreamReceiverTest, givenMultipleActivePartitionsWhenWaitLogIsEn
     waitParams.waitTimeout = std::numeric_limits<int64_t>::max();
     constexpr TaskCountType taskCount = 1;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     WaitStatus status = csr.waitForCompletionWithTimeout(waitParams, taskCount);
     EXPECT_EQ(WaitStatus::ready, status);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     std::stringstream expectedOutput;
 
@@ -2570,12 +2576,13 @@ HWTEST_F(CommandStreamReceiverTest, givenAubCsrWhenLogWaitingForCompletionEnable
     WaitParams waitParams;
     waitParams.waitTimeout = std::numeric_limits<int64_t>::max();
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     WaitStatus status = csr.waitForCompletionWithTimeout(waitParams, 0);
     EXPECT_EQ(WaitStatus::ready, status);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     std::string expectedOutput1 = "Aub dump wait for task count";
     std::string expectedOutput2 = "Aub dump wait completed";

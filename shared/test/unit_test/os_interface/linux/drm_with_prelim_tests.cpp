@@ -17,6 +17,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
@@ -221,13 +222,14 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingThenGet
     debugManager.flags.NumberOfBOChunks.set(2);
     size_t allocSize = 2 * MemoryConstants::pageSize64k;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     uint32_t getNumOfChunks = 2;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     ioctlHelper->createGemExt(memClassInstance, allocSize, handle, 0, {}, -1, true, getNumOfChunks, std::nullopt, std::nullopt, std::nullopt);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput("GEM_CREATE_EXT BO-1 with BOChunkingSize 65536, chunkingParamRegion.param.data 65536, numOfChunks 2\n");
     EXPECT_EQ(expectedOutput, output);
     EXPECT_EQ(2u, getNumOfChunks);
@@ -250,14 +252,15 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
     DebugManagerStateRestore stateRestore;
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     uint32_t numOfChunks = 0;
     ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt, std::nullopt);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, param: 0x1000000010001, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT has returned: 0 BO-1 with size: 1024\n");
     EXPECT_EQ(expectedOutput, output);
 }

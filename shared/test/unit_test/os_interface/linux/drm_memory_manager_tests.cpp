@@ -22,6 +22,7 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
@@ -101,23 +102,24 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDebugFlagSetWhenUsingMmapFunctions
 
     MockDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     size_t len = 2;
     off_t offset = 6;
     void *ptr = reinterpret_cast<void *>(0x1234);
     void *retPtr = memoryManager.mmapFunction(ptr, len, 3, 4, 5, offset);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     char expected1[256] = {};
 
     sprintf(expected1, "mmap(%p, %zu, %d, %d, %d, %ld) = %p, errno: %d \n", ptr, len, 3, 4, 5, offset, retPtr, errno);
 
     EXPECT_NE(std::string::npos, output.find(expected1));
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     int retVal = memoryManager.munmapFunction(retPtr, len);
 
-    output = testing::internal::GetCapturedStdout();
+    output = capture.getCapturedStdout();
     char expected2[256] = {};
 
     sprintf(expected2, "munmap(%p, %zu) = %d, errno: %d \n", retPtr, len, retVal, errno);
@@ -1138,12 +1140,13 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPrintBOCreateDestroyResultIsSetAndA
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, AllocationType::externalHostPtr, rootDeviceIndex);
     ASSERT_NE(nullptr, bo);
 
     debugManager.flags.PrintBOCreateDestroyResult.set(false);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     size_t idx = output.find("Created new BO with GEM_USERPTR, handle: BO-");
     size_t expectedValue = 0;
     EXPECT_EQ(expectedValue, idx);
@@ -4281,7 +4284,8 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
 
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto allocation = memoryManger.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
     ASSERT_NE(nullptr, allocation);
 
@@ -4294,7 +4298,7 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
 
     memoryManger.freeGraphicsMemory(allocation);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(expectedOutput.str(), output);
 }

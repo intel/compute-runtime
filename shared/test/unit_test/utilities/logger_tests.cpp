@@ -14,6 +14,7 @@
 #include "shared/source/utilities/logger_neo_only.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "gtest/gtest.h"
@@ -543,10 +544,11 @@ TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenF
 
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     logAllocation(fileLogger, &graphicsAllocation, nullptr);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput = "Created Graphics Allocation of type COMMAND_BUFFER\n";
 
     EXPECT_STREQ(output.c_str(), expectedOutput.c_str());
@@ -566,10 +568,11 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     logAllocation(fileLogger, &graphicsAllocation, nullptr);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput = "Created Graphics Allocation of type COMMAND_BUFFER\n";
 
     EXPECT_STREQ(output.c_str(), expectedOutput.c_str());

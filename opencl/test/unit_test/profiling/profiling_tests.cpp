@@ -10,6 +10,7 @@
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
@@ -624,7 +625,8 @@ HWTEST_F(ProfilingTests, givenDebugFlagSetWhenWaitingForTimestampThenPrint) {
     queue->timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
     auto container = queue->timestampPacketContainer.get();
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     Range<CopyEngineState> copyEngineStates;
     WaitStatus status;
@@ -633,13 +635,13 @@ HWTEST_F(ProfilingTests, givenDebugFlagSetWhenWaitingForTimestampThenPrint) {
 
     queue->waitForTimestamps(copyEngineStates, status, container, nullptr);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_NE(output.npos, output.find("Waiting for TS 0x"));
     EXPECT_NE(output.npos, output.find("Waiting for TS completed"));
     EXPECT_EQ(output.npos, output.find("Waiting for TS failed"));
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
 
     auto &csr = static_cast<UltCommandStreamReceiver<FamilyType> &>(queue->getGpgpuCommandStreamReceiver());
     csr.forceReturnGpuHang = true;
@@ -647,7 +649,7 @@ HWTEST_F(ProfilingTests, givenDebugFlagSetWhenWaitingForTimestampThenPrint) {
     node->storage = 1;
     queue->waitForTimestamps(copyEngineStates, status, container, nullptr);
 
-    output = testing::internal::GetCapturedStdout();
+    output = capture.getCapturedStdout();
 
     EXPECT_NE(output.npos, output.find("Waiting for TS 0x"));
     EXPECT_EQ(output.npos, output.find("Waiting for TS completed"));
@@ -658,20 +660,20 @@ HWTEST_F(ProfilingTests, givenDebugFlagSetWhenWaitingForTimestampThenPrint) {
 
     event.timestampPacketContainer->add(node.get());
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     node->failCountdown = 2;
     node->storage = 1;
     event.areTimestampsCompleted();
 
-    output = testing::internal::GetCapturedStdout();
+    output = capture.getCapturedStdout();
 
     EXPECT_NE(output.npos, output.find("Checking TS 0x"));
     EXPECT_EQ(output.npos, output.find("TS ready"));
     EXPECT_NE(output.npos, output.find("TS not ready"));
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     event.areTimestampsCompleted();
-    output = testing::internal::GetCapturedStdout();
+    output = capture.getCapturedStdout();
 
     EXPECT_NE(output.npos, output.find("Checking TS 0x"));
     EXPECT_NE(output.npos, output.find("TS ready"));
@@ -1463,7 +1465,8 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWh
 TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCalcProfilingDataThenTimeStampsArePrinted) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintTimestampPacketContents.set(true);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
     auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
@@ -1483,7 +1486,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCa
 
     ev->calcProfilingData();
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::stringstream expected;
 
     expected << "Timestamp 0, cmd type: " << ev->getCommandType() << ", ";

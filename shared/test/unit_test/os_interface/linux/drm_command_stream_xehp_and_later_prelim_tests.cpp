@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture_prelim.h"
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
@@ -464,7 +465,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
     const std::string engineUsage = EngineHelpers::engineUsageToString(csr->getOsContext().getEngineUsage());
@@ -477,7 +479,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
     for (uint32_t contextIndex = 0; contextIndex < drmContextIds.size(); contextIndex++) {
         expectedValue << SysCalls::getProcessId() << ": Drm Submission of contextIndex: " << contextIndex << ", with context id " << drmContextIds[contextIndex] << "\n";
     }
-    EXPECT_STREQ(::testing::internal::GetCapturedStdout().c_str(), expectedValue.str().c_str());
+    EXPECT_STREQ(capture.getCapturedStdout().c_str(), expectedValue.str().c_str());
 }
 
 struct DrmImplicitScalingCommandStreamTest : ::testing::Test {

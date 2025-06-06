@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
@@ -376,14 +377,15 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPri
 
     auto ioctlHelper = drm->getIoctlHelper();
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     uint32_t numOfChunks = 0;
     ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt, false);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: 0 BO-1 with size: 1024\n");
     EXPECT_EQ(expectedOutput, output);
 }
@@ -438,7 +440,8 @@ TEST(IoctlHelperTestsUpstream, givenSetPatSupportedWhenCreateGemExtWithDebugFlag
     MockIoctlHelperUpstream mockIoctlHelper{*drm};
 
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     uint32_t handle = 0;
     mockIoctlHelper.isSetPatSupported = true;
@@ -447,7 +450,7 @@ TEST(IoctlHelperTestsUpstream, givenSetPatSupportedWhenCreateGemExtWithDebugFlag
     uint64_t patIndex = 5;
     mockIoctlHelper.createGemExt(memClassInstance, 1024, handle, patIndex, {}, -1, false, numOfChunks, std::nullopt, std::nullopt, false);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0, pat index: 5 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS with EXT_SET_PAT has returned: 0 BO-1 with size: 1024\n");
     EXPECT_EQ(expectedOutput, output);
 }
@@ -461,17 +464,18 @@ TEST(IoctlHelperUpstreamTest, whenDetectExtSetPatSupportIsCalledWithDebugFlagThe
     MockIoctlHelperUpstream mockIoctlHelper{*drm};
 
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     mockIoctlHelper.overrideGemCreateExtReturnValue = 0;
     mockIoctlHelper.detectExtSetPatSupport();
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput("EXT_SET_PAT support is: enabled\n");
     EXPECT_EQ(expectedOutput, output);
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     mockIoctlHelper.overrideGemCreateExtReturnValue = -1;
     mockIoctlHelper.detectExtSetPatSupport();
-    output = testing::internal::GetCapturedStdout();
+    output = capture.getCapturedStdout();
     expectedOutput = "EXT_SET_PAT support is: disabled\n";
     EXPECT_EQ(expectedOutput, output);
 }

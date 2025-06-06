@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
@@ -721,10 +722,11 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
 HWTEST2_F(BlitTests, whenPrintImageBlitBlockCopyCommandIsCalledThenCmdDetailsAreNotPrintedToStdOutput, BlitPlatforms) {
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     NEO::BlitCommandsHelper<FamilyType>::printImageBlitBlockCopyCommand(bltCmd, 0);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput("");
     EXPECT_EQ(expectedOutput, output);
 }

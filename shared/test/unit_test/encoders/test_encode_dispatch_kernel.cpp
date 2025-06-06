@@ -18,6 +18,7 @@
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
@@ -1111,9 +1112,10 @@ HWTEST2_F(EncodeDispatchKernelTest, givenPrintKernelDispatchParametersWhenEncodi
 
     DebugManagerStateRestore restore;
     debugManager.flags.PrintKernelDispatchParameters.set(true);
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
-    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string outputString = capture.getCapturedStdout(); // stop capturing
 
     EXPECT_NE(std::string::npos, outputString.find("kernel"));
     EXPECT_NE(std::string::npos, outputString.find("grfCount"));

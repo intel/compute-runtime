@@ -8,7 +8,7 @@
 #include "shared/offline_compiler/source/decoder/binary_decoder.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
-#include "shared/test/common/helpers/stdout_capture.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/test_files.h"
 
 #include "opencl/test/unit_test/offline_compiler/environment.h"
@@ -51,7 +51,7 @@ TEST(EncoderTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenError
         constexpr auto suppressMessages{false};
         MockEncoder encoder{suppressMessages};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         const auto result = encoder.validateInput(args);
         const auto output{capture.getCapturedStdout()};
@@ -113,7 +113,7 @@ TEST(EncoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValid
 
     encoder.mockArgHelper->hasOutput = true;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = encoder.validateInput(args);
     const auto output{capture.getCapturedStdout()};
@@ -129,7 +129,7 @@ TEST(EncoderTests, GivenMissingPTMFileWhenEncodingThenErrorIsReturnedAndLogIsPri
     constexpr auto suppressMessages{false};
     MockEncoder encoder{suppressMessages};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = encoder.encode();
     const auto output{capture.getCapturedStdout()};

@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -169,7 +170,8 @@ TEST_F(MockProductHelperTestLinux, givenDebugFlagSetWhenConfiguringHwInfoThenPri
     DebugManagerStateRestore restore;
     debugManager.flags.PrintIoctlEntries.set(true);
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
     int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
 
@@ -178,7 +180,7 @@ TEST_F(MockProductHelperTestLinux, givenDebugFlagSetWhenConfiguringHwInfoThenPri
     }};
 
     debugManager.flags.PrintIoctlEntries.set(false);
-    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string output = capture.getCapturedStdout(); // stop capturing
     for (const auto &expectedString : expectedStrings) {
         EXPECT_NE(std::string::npos, output.find(expectedString));
     }

@@ -14,6 +14,7 @@
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -129,7 +130,8 @@ TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentRead
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNoPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     FullyEnabledTestDebugManager debugManager;
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
@@ -160,7 +162,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNoPrefixWhenCalling
 #undef DECLARE_DEBUG_VARIABLE
 
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: TbxServer = 192.168.0.1"));
@@ -170,7 +172,8 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithNoPrefixWhenCalling
 }
 
 TEST(DebugSettingsManager, DISABLED_givenPrintDebugSettingsEnabledWithNeoPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     FullyEnabledTestDebugManager debugManager;
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
@@ -201,7 +204,7 @@ TEST(DebugSettingsManager, DISABLED_givenPrintDebugSettingsEnabledWithNeoPrefixW
 #undef DECLARE_DEBUG_VARIABLE
 
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_TbxServer = 192.168.0.1"));
@@ -211,7 +214,8 @@ TEST(DebugSettingsManager, DISABLED_givenPrintDebugSettingsEnabledWithNeoPrefixW
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithLevelZeroPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     FullyEnabledTestDebugManager debugManager;
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
@@ -242,7 +246,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithLevelZeroPrefixWhen
 #undef DECLARE_DEBUG_VARIABLE
 
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_L0_TbxServer = 192.168.0.1"));
@@ -252,7 +256,8 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithLevelZeroPrefixWhen
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithOclPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     FullyEnabledTestDebugManager debugManager;
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
@@ -283,7 +288,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithOclPrefixWhenCallin
 #undef DECLARE_DEBUG_VARIABLE
 
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_OCL_TbxServer = 192.168.0.1"));
@@ -293,7 +298,8 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithOclPrefixWhenCallin
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithMixedPrefixWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     FullyEnabledTestDebugManager debugManager;
 
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
@@ -324,7 +330,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithMixedPrefixWhenCall
 #undef DECLARE_DEBUG_VARIABLE
 
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: NEO_L0_TbxServer = 192.168.0.1"));
@@ -334,7 +340,8 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWithMixedPrefixWhenCall
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledOnDisabledDebugManagerWhenCallingDumpFlagsThenFlagsAreNotWrittenToDumpFile) {
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     FullyDisabledTestDebugManager debugManager;
     debugManager.flags.PrintDebugSettings.set(true);
 
@@ -342,7 +349,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledOnDisabledDebugManagerW
     debugManager.dumpFlags();
     std::remove(FullyDisabledTestDebugManager::settingsDumpFileName);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_EQ(0u, output.size());
 }
 
@@ -414,9 +421,10 @@ TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCall
 
     std::remove(logFile);
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     PRINT_DEBUGGER_LOG(stdout, "test %s", "log");
-    auto output = ::testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
     auto logFileExists = fileExists(logFile);
@@ -440,10 +448,11 @@ TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCal
     auto logFile = NEO::fileLoggerInstance().getLogFileName();
     std::remove(logFile);
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     PRINT_DEBUGGER_LOG(stdout, "test %s", "log");
 
-    auto output = ::testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
     auto logFileExists = fileExists(logFile);
@@ -489,9 +498,10 @@ TEST(DebugSettingsManager, GivenLogsEnabledWhenLogCacheOperationCalledThenString
 }
 
 TEST(DebugLog, WhenLogDebugStringCalledThenNothingIsPrintedToStdout) {
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     logDebugString("test log");
-    auto output = ::testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 }
 

@@ -21,7 +21,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_file_io.h"
-#include "shared/test/common/helpers/stdout_capture.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_library.h"
@@ -106,7 +106,7 @@ TEST_F(OclocApiTest, WhenGoodArgsAreGivenThenSuccessIsReturned) {
         gEnvironment->devicePrefix.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -159,7 +159,7 @@ TEST_F(OclocApiTest, GivenQuietModeAndValidArgumentsWhenRunningOclocThenSuccessI
         gEnvironment->devicePrefix.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -270,7 +270,8 @@ TEST(OclocApiTests, GivenNoQueryWhenQueryingThenErrorIsReturned) {
         "ocloc",
         "query"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -288,7 +289,8 @@ TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
         "query",
         "unknown_query"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -305,7 +307,8 @@ TEST(OclocApiTests, givenNoAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {
         "ocloc",
         "ids"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -323,7 +326,8 @@ TEST(OclocApiTests, givenUnknownAcronymWhenIdsCommandIsInvokeThenErrorIsReported
         "ids",
         "unk"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -390,7 +394,7 @@ TEST_F(OclocApiTest, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
         family.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -427,7 +431,7 @@ TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {
         gEnvironment->devicePrefix.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -465,7 +469,7 @@ TEST(OclocApiTests, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrintedThenB
         "-options", "-D DEBUG -cl-kernel-arg-info", "-internal_options", "-internalOption1 -internal-option-2"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -507,7 +511,7 @@ TEST(OclocApiTests, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotes
         "-options", "-options", "-internal_options", "-internalOption"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -639,7 +643,7 @@ TEST(OclocApiTests, GivenHelpParameterWhenDecodingThenHelpMsgIsPrintedAndSuccess
         "--help"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -663,7 +667,7 @@ TEST(OclocApiTests, GivenNonExistingFileWhenDecodingThenAbortIsCalled) {
         "test_files/created"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto retVal = oclocInvoke(argc, argv,
                                     0, nullptr, nullptr, nullptr,
@@ -682,7 +686,7 @@ TEST(OclocApiTests, GivenMissingFileNameWhenDecodingThenErrorIsReturned) {
         "-file"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto retVal = oclocInvoke(argc, argv,
                                     0, nullptr, nullptr, nullptr,
@@ -767,7 +771,7 @@ TEST_F(OclocApiTest, GivenOnlySpirVWithMultipleDevicesWhenCompilingThenFirstDevi
         }
     }
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -818,7 +822,7 @@ TEST(OclocApiTests, GivenHelpParameterWhenEncodingThenHelpMsgIsPrintedAndSuccess
         "--help"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -851,7 +855,7 @@ TEST(OclocApiTests, GivenMissingDumpFileNameWhenEncodingThenErrorIsReturned) {
         "-dump"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto retVal = oclocInvoke(argc, argv,
                                     0, nullptr, nullptr, nullptr,
@@ -888,7 +892,7 @@ TEST(OclocApiTests, GivenValidArgumentsAndMissingPtmFileWhenEncodingThenErrorIsR
         "test_files/binary_gen.bin"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto retVal = oclocInvoke(argc, argv,
                                     0, nullptr, nullptr, nullptr,
@@ -907,7 +911,7 @@ TEST(OclocApiTests, GiveMultiCommandHelpArgumentsWhenInvokingOclocThenHelpIsPrin
         "--help"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto retVal = oclocInvoke(argc, argv,
                                     0, nullptr, nullptr, nullptr,
@@ -942,7 +946,7 @@ TEST(OclocApiTests, GivenNonexistentFileWhenValidateIsInvokedThenErrorIsPrinted)
         "some_special_nonexistent_file.gen"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -961,7 +965,7 @@ TEST(OclocApiTests, GivenCommandWithoutArgsWhenOclocIsInvokedThenHelpIsPrinted) 
         "ocloc"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -982,7 +986,7 @@ TEST(OclocApiTests, GivenHelpArgumentWhenOclocIsInvokedThenHelpIsPrinted) {
 
         unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         int retVal = oclocInvoke(argc, argv,
                                  0, nullptr, nullptr, nullptr,
@@ -1002,7 +1006,7 @@ TEST(OclocApiTests, GivenHelpParameterWhenLinkingThenHelpMsgIsPrintedAndSuccessI
         "--help"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -1020,7 +1024,7 @@ TEST(OclocApiTests, GivenInvalidParameterWhenLinkingThenErrorIsReturned) {
         "--dummy_param"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -1040,7 +1044,8 @@ TEST(OclocApiTests, GivenInvalidCommandLineWhenConcatenatingThenErrorIsReturned)
         "ocloc",
         "concat"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -1091,7 +1096,8 @@ TEST(OclocApiTests, GivenValidCommandLineAndFatBinariesWhenConcatenatingThenNewF
         "-out",
         "catFatBinary.ar"};
     unsigned int argc = sizeof(argv) / sizeof(argv[0]);
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              2, sourcesData, sourcesLen, sourcesName,
@@ -1175,7 +1181,7 @@ TEST_F(OclocApiTest, GivenVerboseModeWhenCompilingThenPrintCommandLine) {
         "-v"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
@@ -1233,7 +1239,8 @@ struct OclocFallbackTests : ::testing::Test {
                                       &numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
             return retVal;
         } else {
-            StdoutCapture capture;
+
+            StreamCapture capture;
             capture.captureStdout();
             testing::internal::CaptureStderr();
 

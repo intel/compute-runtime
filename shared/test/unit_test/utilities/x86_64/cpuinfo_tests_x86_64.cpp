@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/mocks/mock_cpuid_functions.h"
 
@@ -83,9 +84,10 @@ TEST_F(CpuInfoTest, GivenPrintCpuFlagsEnabledWhenGettingVirtualAddressSizeThenCp
 
     CpuInfo testCpuInfo;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto addressSize = testCpuInfo.getVirtualAddressSize();
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(36u, addressSize);
     std::string expectedString = "CPUFlags:\nCLFlush: 1 Avx2: 1 WaitPkg: 1\nVirtual Address Size 36\n";

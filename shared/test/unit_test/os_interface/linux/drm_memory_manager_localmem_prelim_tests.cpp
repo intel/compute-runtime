@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
@@ -2032,7 +2033,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
     mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(0u,
                                                                                             nullptr,
                                                                                             AllocationType::buffer,
@@ -2045,7 +2047,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
                                                                                             false));
     EXPECT_NE(nullptr, bo);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 65536, param: 0x1000000010001, memory class: 1, memory instance: 256 }\nGEM_CREATE_EXT has returned: 0 BO-1 with size: 65536\n");
     EXPECT_EQ(expectedOutput, output);
 }
@@ -2072,7 +2074,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
 
     EXPECT_NE(nullptr, ptr);
@@ -2081,7 +2084,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
 
     unifiedMemoryManager.freeSVMAlloc(ptr);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     auto idx = output.find("Performing GEM_CREATE_EXT with { size: 2097152, param: 0x1000000010001, memory class: 0, memory instance: 1, memory class: 1, memory instance: 256 }\n\
 GEM_CREATE_EXT has returned: 0 BO-1 with size: 2097152\n");
 
@@ -2722,7 +2725,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestPrelim,
     size_t size = 4096u;
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::bufferHostMemory, false, {});
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, true, true, nullptr);
     ASSERT_NE(nullptr, graphicsAllocation);
 
@@ -2747,7 +2751,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestPrelim,
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_EQ(expectedOutput.str(), output);
 }

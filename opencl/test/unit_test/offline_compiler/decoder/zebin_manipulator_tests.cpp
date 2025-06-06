@@ -10,7 +10,7 @@
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/product_config_helper.h"
-#include "shared/test/common/helpers/stdout_capture.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -214,7 +214,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenInvalidInputWhenValidatingInputT
                                      "asm/disasm",
                                      "-unknown_arg"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     const auto output{capture.getCapturedStdout()};
@@ -229,7 +229,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenMissingFileWhenValidatingInputTh
                                      "-dump",
                                      "./dump/"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     const auto output{capture.getCapturedStdout()};
@@ -244,7 +244,8 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenMissingSecondPartOfTheArgumentWh
                                      "-arg"};
     for (const auto halfArg : {"-file", "-device", "-dump"}) {
         args[2] = halfArg;
-        StdoutCapture capture;
+
+        StreamCapture capture;
         capture.captureStdout();
         auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
         const auto output{capture.getCapturedStdout()};
@@ -261,7 +262,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenValidArgsButDumpNotSpecifiedWhen
                                      "-file",
                                      "binary.bin"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     const auto output{capture.getCapturedStdout()};

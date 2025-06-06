@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/xe_hpc_core/pvc/product_configs_pvc.h"
 
@@ -49,9 +50,10 @@ PVCTEST_F(PvcOfflineCompilerTests, givenPvcDeviceAndRevisionIdValueWhenInitHwInf
         deviceIDStr << "0x" << std::hex << deviceID;
         deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(config.value);
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
-        std::string output = testing::internal::GetCapturedStdout();
+        std::string output = capture.getCapturedStdout();
         expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: " << deviceStr << "\n";
 
         EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
@@ -76,9 +78,10 @@ PVCTEST_F(PvcOfflineCompilerTests, givenPvcXtVgDeviceAndRevisionIdValueWhenInitH
     deviceIDStr << "0x" << std::hex << deviceID;
     deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(config.value);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: " << deviceStr << "\n";
 
     EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());

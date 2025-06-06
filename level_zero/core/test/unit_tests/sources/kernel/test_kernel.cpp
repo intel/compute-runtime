@@ -26,6 +26,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -3873,9 +3874,10 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
         printfAllocation[0] = 8;
         printfAllocation[1] = 0;
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &deviceImp, true);
-        std::string output = testing::internal::GetCapturedStdout();
+        std::string output = capture.getCapturedStdout();
 
         auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::internal);
         if (bcsEngine) {
@@ -3937,10 +3939,11 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
         printfAllocation[0] = 8;
         printfAllocation[1] = 0;
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         testing::internal::CaptureStderr();
         PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &deviceImp, true);
-        std::string output = testing::internal::GetCapturedStdout();
+        std::string output = capture.getCapturedStdout();
         std::string error = testing::internal::GetCapturedStderr();
 
         EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
@@ -3975,9 +3978,10 @@ TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsa
     printfAllocation[0] = 8;
     printfAllocation[1] = 0;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     kernel->printPrintfOutput(false);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STREQ(expectedString.c_str(), output.c_str());
 }
 
@@ -4003,9 +4007,10 @@ TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsa
     printfAllocation[0] = 8;
     printfAllocation[1] = 0;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     kernel->printPrintfOutput(false);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STREQ("", output.c_str());
 }
 
@@ -4031,9 +4036,10 @@ TEST_F(KernelPatchtokensPrintfStringMapTests, givenKernelWithPrintfStringsMapUsa
     printfAllocation[0] = 8;
     printfAllocation[1] = 0;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     kernel->printPrintfOutput(false);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STREQ(expectedString.c_str(), output.c_str());
 }
 

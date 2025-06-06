@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/windows/gdi_interface_logging.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -106,9 +107,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenAdapterFro
                    << " 0x" << param.AdapterLuid.LowPart
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_OPENADAPTERFROMLUID *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -116,9 +118,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenAdapterFro
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_OPENADAPTERFROMLUID *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -130,9 +132,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCloseAdapterTh
                    << "D3DKMT_CLOSEADAPTER"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_CLOSEADAPTER *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -140,9 +143,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCloseAdapterTh
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_CLOSEADAPTER *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -154,9 +157,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingQueryAdapterIn
                    << "D3DKMT_QUERYADAPTERINFO"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_QUERYADAPTERINFO *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -164,9 +168,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingQueryAdapterIn
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_QUERYADAPTERINFO *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -184,9 +188,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingEscapeThenExpe
                    << " Flags 0x" << std::hex << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_ESCAPE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -194,9 +199,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingEscapeThenExpe
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_ESCAPE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -208,9 +213,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateDeviceTh
                    << "D3DKMT_CREATEDEVICE"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_CREATEDEVICE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -218,9 +224,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateDeviceTh
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_CREATEDEVICE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -232,9 +238,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingDestroyDeviceT
                    << "D3DKMT_DESTROYDEVICE"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_DESTROYDEVICE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -242,9 +249,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingDestroyDeviceT
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_DESTROYDEVICE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -261,9 +268,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateContextT
                    << " Flags 0x" << std::hex << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_CREATECONTEXT *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -271,9 +279,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateContextT
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_CREATECONTEXT *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -285,9 +293,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingDestroyContext
                    << "D3DKMT_DESTROYCONTEXT"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_DESTROYCONTEXT *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     status = 0xC00001;
@@ -296,9 +305,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingDestroyContext
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_DESTROYCONTEXT *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -313,9 +322,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateAllocati
                    << std::hex << flagsValue
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_CREATEALLOCATION *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -323,9 +333,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateAllocati
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_CREATEALLOCATION *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -337,9 +347,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenResourceTh
                    << "D3DKMT_OPENRESOURCE"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_OPENRESOURCE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -347,9 +358,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenResourceTh
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_OPENRESOURCE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -361,9 +372,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingQueryResourceI
                    << "D3DKMT_QUERYRESOURCEINFO"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_QUERYRESOURCEINFO *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -371,9 +383,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingQueryResourceI
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_QUERYRESOURCEINFO *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -387,9 +399,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateSynchron
                    << param.Info.Type
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_CREATESYNCHRONIZATIONOBJECT *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -397,9 +410,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateSynchron
                    << std::hex << status
                    << " " << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_CREATESYNCHRONIZATIONOBJECT *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -411,19 +424,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingDestroySynchro
                    << "D3DKMT_DESTROYSYNCHRONIZATIONOBJECT"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -437,19 +450,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingSignalSynchron
                    << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECT *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECT *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -461,19 +474,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingWaitForSynchro
                    << "D3DKMT_WAITFORSYNCHRONIZATIONOBJECT"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST_FROM_WDK_10_0_18328_0 D3DKMT_WAITFORSYNCHRONIZATIONOBJECT *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST_FROM_WDK_10_0_18328_0 D3DKMT_WAITFORSYNCHRONIZATIONOBJECT *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -489,19 +502,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateSynchron
                    << " Info Flags 0x" << std::hex << param.Info.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -515,19 +528,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingGetDeviceState
                    << param.StateType
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_GETDEVICESTATE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_GETDEVICESTATE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -545,9 +558,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingMakeResidentTh
                    << " Flags 0x" << std::hex << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DDDI_MAKERESIDENT *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -557,9 +571,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingMakeResidentTh
                    << " NumBytesToTrim 0x" << std::hex << param.NumBytesToTrim
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DDDI_MAKERESIDENT *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -576,9 +590,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingEvictThenExpec
                    << " Flags 0x" << std::hex << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_EVICT *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -587,9 +602,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingEvictThenExpec
                    << " NumBytesToTrim 0x" << std::hex << param.NumBytesToTrim
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_EVICT *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -603,19 +618,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingWaitForSynchro
                    << std::hex << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -629,19 +644,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingSignalSynchron
                    << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -653,19 +668,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingWaitForSynchro
                    << "D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -677,19 +692,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingSignalSynchron
                    << "D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMGPU"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMGPU *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMGPU *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -703,19 +718,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreatePagingQu
                    << param.Priority
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_CREATEPAGINGQUEUE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_CREATEPAGINGQUEUE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -727,19 +742,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingDestroyPagingQ
                    << "D3DDDI_DESTROYPAGINGQUEUE"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DDDI_DESTROYPAGINGQUEUE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DDDI_DESTROYPAGINGQUEUE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -753,19 +768,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingLock2ThenExpec
                    << std::hex << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_LOCK2 *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_LOCK2 *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -777,19 +792,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingUnlock2ThenExp
                    << "D3DKMT_UNLOCK2"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_UNLOCK2 *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_UNLOCK2 *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -801,19 +816,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingInvalidateCach
                    << "D3DKMT_INVALIDATECACHE"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_INVALIDATECACHE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_INVALIDATECACHE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -835,9 +850,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingMapGpuVirtualA
                    << " SizeInPages 0x" << param.SizeInPages
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DDDI_MAPGPUVIRTUALADDRESS *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -847,9 +863,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingMapGpuVirtualA
                    << " PagingFenceValue " << std::dec << param.PagingFenceValue
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DDDI_MAPGPUVIRTUALADDRESS *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -873,9 +889,10 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingReserveGpuVirt
                    << " ReservationType " << std::dec << param.ReservationType
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DDDI_RESERVEGPUVIRTUALADDRESS *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
@@ -885,9 +902,9 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingReserveGpuVirt
                    << " PagingFenceValue " << std::dec << param.PagingFenceValue
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DDDI_RESERVEGPUVIRTUALADDRESS *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -903,19 +920,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingFreeGpuVirtual
                    << " Size 0x" << param.Size
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_FREEGPUVIRTUALADDRESS *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_FREEGPUVIRTUALADDRESS *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -927,19 +944,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingUpdateGpuVirtu
                    << "D3DKMT_UPDATEGPUVIRTUALADDRESS"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_UPDATEGPUVIRTUALADDRESS *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_UPDATEGPUVIRTUALADDRESS *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -957,19 +974,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateContextV
                    << " ClientHint " << std::dec << param.ClientHint
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_CREATECONTEXTVIRTUAL *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_CREATECONTEXTVIRTUAL *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -995,19 +1012,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingSubmitCommandT
                    << " Header MonitorFenceValue 0x" << cmdBufferHeader.MonitorFenceValue
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_SUBMITCOMMAND *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_SUBMITCOMMAND *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1021,19 +1038,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenSyncObject
                    << std::hex << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1045,19 +1062,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenSyncObject
                    << "D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1072,19 +1089,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingDestroyAllocat
                    << std::hex << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_DESTROYALLOCATION2 *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_DESTROYALLOCATION2 *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1096,19 +1113,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingRegisterTrimNo
                    << "D3DKMT_REGISTERTRIMNOTIFICATION"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_REGISTERTRIMNOTIFICATION *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_REGISTERTRIMNOTIFICATION *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1120,19 +1137,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingUnregisterTrim
                    << "D3DKMT_UNREGISTERTRIMNOTIFICATION"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_UNREGISTERTRIMNOTIFICATION *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_UNREGISTERTRIMNOTIFICATION *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1144,19 +1161,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenResourceFr
                    << "D3DKMT_OPENRESOURCEFROMNTHANDLE"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_OPENRESOURCEFROMNTHANDLE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_OPENRESOURCEFROMNTHANDLE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1168,19 +1185,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingQueryResourceF
                    << "D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1194,19 +1211,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCreateHwQueueT
                    << std::hex << param.Flags.Value
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<D3DKMT_CREATEHWQUEUE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<D3DKMT_CREATEHWQUEUE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1218,19 +1235,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingDestroyHwQueue
                    << "D3DKMT_DESTROYHWQUEUE"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_DESTROYHWQUEUE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_DESTROYHWQUEUE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1242,19 +1259,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingSubmitCommandT
                    << "D3DKMT_SUBMITCOMMANDTOHWQUEUE"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_SUBMITCOMMANDTOHWQUEUE *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_SUBMITCOMMANDTOHWQUEUE *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1266,19 +1283,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingSetAllocationP
                    << "D3DKMT_SETALLOCATIONPRIORITY"
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_SETALLOCATIONPRIORITY *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_SETALLOCATIONPRIORITY *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
@@ -1292,19 +1309,19 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingSetContextSche
                    << param.Priority
                    << std::endl;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     GdiLogging::logEnter<CONST D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *>(&param);
-    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    std::string logEnterStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
 
     expectedOutput.str(std::string());
     expectedOutput << logExitBegin
                    << std::hex << status
                    << " " << std::endl;
-
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     GdiLogging::logExit<CONST D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *>(status, &param);
-    std::string logExitStr = testing::internal::GetCapturedStdout();
+    std::string logExitStr = capture.getCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 

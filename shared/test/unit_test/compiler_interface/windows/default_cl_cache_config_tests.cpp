@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -281,9 +282,10 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenPrintDebugMessagesWhenCacheIsEnable
     DWORD getFileAttributesResultMock = FILE_ATTRIBUTE_DIRECTORY;
     VariableBackup<DWORD> pathExistsMockBackup(&NEO::SysCalls::getFileAttributesResult, getFileAttributesResultMock);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_TRUE(cacheConfig.enabled);
     EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult\\directory\\\n\n");

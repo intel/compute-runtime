@@ -20,7 +20,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/stdout_capture.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 
@@ -337,7 +337,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeTooExtensiveWhenProdu
             "-device",
             target};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = capture.getCapturedStdout();
@@ -398,7 +398,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfProductsWhenFatBinar
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -437,7 +437,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoVersionsOfProductConfigsWhenF
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -471,7 +471,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsAcronymsWithoutDashesWhe
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -510,7 +510,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputNameOptionWhenBuildi
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -550,7 +550,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildin
             "-device",
             acronymsTarget};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = capture.getCapturedStdout();
@@ -580,7 +580,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildin
             "-device",
             acronymsTarget};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = capture.getCapturedStdout();
@@ -691,7 +691,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfReleasesWhenFatBinar
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -733,7 +733,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfFamiliesWhenFatBinar
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -776,7 +776,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWhenFatBinary
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -815,7 +815,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWithoutDashes
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -905,7 +905,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeWithOneFamilyBeingGen
             "-device",
             acronymsTarget};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
         auto output = capture.getCapturedStdout();
@@ -952,7 +952,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesClosedRangeWhenFatBinary
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -986,7 +986,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWhenFatBinar
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1024,7 +1024,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWithoutDashe
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1059,7 +1059,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToProductWhenFatBinaryB
         "-device",
         acronymsTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1202,7 +1202,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWhenFatBinar
         "-device",
         releasesTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1235,7 +1235,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForNotCompiledDevic
         enabledProductsAcronyms[2].str(),
         "deviceOptions"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     [[maybe_unused]] int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1280,7 +1280,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForCompiledDeviceAn
         enabledProductsAcronyms[0].str(),
         "deviceOptions"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     [[maybe_unused]] int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1333,7 +1333,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceOptionsForMultipleDevicesS
         productsForDeviceOptions.str().c_str(),
         "deviceOptions"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     [[maybe_unused]] int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1374,7 +1374,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToReleaseWhenFatBinaryB
         "-device",
         releasesTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1560,7 +1560,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromFamilyWhenFatBinary
         "-device",
         familiesTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1602,7 +1602,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToFamilyWhenFatBinaryBu
         "-device",
         familiesTarget};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1750,7 +1750,7 @@ TEST_F(OclocFatBinaryTest, givenDeviceFlagWithoutConsecutiveArgumentWhenBuilding
         "ocloc",
         "-device"};
 
-    ::StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = buildFatBinary(args, &mockArgHelper);
     const auto output{capture.getCapturedStdout()};
@@ -1775,7 +1775,7 @@ TEST_F(OclocFatBinaryTest, givenFlagsWhichRequireMoreArgsWithoutThemWhenBuilding
             devices,
             flag};
 
-        ::StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         const auto result = buildFatBinary(args, &mockArgHelper);
         const auto output{capture.getCapturedStdout()};
@@ -1945,7 +1945,7 @@ TEST_F(OclocFatBinaryTest, givenEmptyFileWhenAppendingGenericIrThenInvalidFileIs
     mockArgHelperFilesMap[emptyFile] = "";
     mockArgHelper.shouldLoadDataFromFileReturnZeroSize = true;
 
-    ::StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto errorCode{appendGenericIr(ar, emptyFile, &mockArgHelper, dummyOptions)};
     const auto output{capture.getCapturedStdout()};
@@ -1960,7 +1960,7 @@ TEST_F(OclocFatBinaryTest, givenInvalidIrFileWhenAppendingGenericIrThenInvalidFi
     std::string dummyOptions{"-cl-opt-disable "};
     mockArgHelperFilesMap[dummyFile] = "This is not IR!";
 
-    ::StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto errorCode{appendGenericIr(ar, dummyFile, &mockArgHelper, dummyOptions)};
     const auto output{capture.getCapturedStdout()};
@@ -2019,7 +2019,7 @@ TEST_F(OclocTest, givenPreviousCompilationSuccessAndFailingBuildWhenBuildingFatb
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
-    ::StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const int previousReturnValue{OCLOC_SUCCESS};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
@@ -2066,7 +2066,7 @@ TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLo
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
-    ::StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const int previousReturnValue{OCLOC_SUCCESS};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
@@ -2080,7 +2080,7 @@ TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLo
 }
 
 TEST_F(OclocTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsNotPrinted) {
-    ::StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
 
     const std::vector<std::string> argv = {
@@ -2120,7 +2120,7 @@ TEST_F(OclocTest, givenListOfDeprecatedAcronymsThenUseThemAsIs) {
         return;
     }
 
-    ::StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
 
     std::vector<std::string> argv = {
@@ -2180,7 +2180,7 @@ TEST_F(OclocTest, givenListOfGenericAcronymsThenUseThemAsIs) {
         GTEST_SKIP();
     }
 
-    ::StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
 
     std::vector<std::string> argv = {
@@ -2252,7 +2252,7 @@ TEST_F(OclocTest, givenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrint
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
     const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
-    ::StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const int previousReturnValue{OCLOC_SUCCESS};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);

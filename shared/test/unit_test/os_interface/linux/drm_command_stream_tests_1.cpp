@@ -27,6 +27,7 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
@@ -219,7 +220,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
     const std::string engineUsage = EngineHelpers::engineUsageToString(csr->getOsContext().getEngineUsage());
@@ -228,7 +230,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
                   << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong()
                   << ", EngineId: " << csr->getOsContext().getEngineType()
                   << " (" << engineType << ", " << engineUsage << ")\n";
-    EXPECT_TRUE(hasSubstr(::testing::internal::GetCapturedStdout(), expectedValue.str()));
+    EXPECT_TRUE(hasSubstr(capture.getCapturedStdout(), expectedValue.str()));
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdToAllExecBuffersAndObjects) {
@@ -1128,11 +1130,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitWhenPrint
     residency.push_back(&allocation1);
     residency.push_back(&allocation2);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     EXPECT_EQ(SubmissionStatus::success, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->printBOsForSubmit(residency, cmdBuffer));
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     std::vector<BufferObject *> bos;
     allocation1.makeBOsResident(&csr->getOsContext(), 0, &bos, true, false);
@@ -1166,11 +1169,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailur
     residency.push_back(&allocation1);
     residency.push_back(&allocation2);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     EXPECT_EQ(SubmissionStatus::outOfHostMemory, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->printBOsForSubmit(residency, cmdBuffer));
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_TRUE(output.empty());
 }
 
@@ -1191,10 +1195,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenPrintBOsForSubmitAndFailur
     residency.push_back(&allocation1);
     residency.push_back(&allocation2);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     EXPECT_EQ(SubmissionStatus::outOfHostMemory, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->printBOsForSubmit(residency, cmdBuffer));
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_TRUE(output.empty());
 }

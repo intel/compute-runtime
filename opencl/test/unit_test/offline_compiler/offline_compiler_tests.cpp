@@ -24,7 +24,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/stdout_capture.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compiler_cache.h"
 #include "shared/test/common/mocks/mock_compilers.h"
@@ -259,7 +259,7 @@ TEST_F(MultiCommandTests, GivenMissingTextFileWithArgsWhenBuildingMultiCommandTh
         "-q",
     };
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal, oclocArgHelperWithoutInput.get()));
     std::string output = capture.getCapturedStdout();
@@ -288,7 +288,8 @@ TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFi
 
     int numOfBuild = 4;
     createFileWithArgs(singleArgs, numOfBuild);
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal, oclocArgHelperWithoutInput.get()));
     std::string output = capture.getCapturedStdout();
@@ -345,7 +346,7 @@ TEST(MultiCommandWhiteboxTest, GivenVerboseModeWhenShowingResultsThenLogsArePrin
     mockMultiCommand.retValues = {OCLOC_SUCCESS, OCLOC_INVALID_FILE};
     mockMultiCommand.quiet = false;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = mockMultiCommand.showResults();
     const auto output = capture.getCapturedStdout();
@@ -376,7 +377,7 @@ TEST(MultiCommandWhiteboxTest, GivenVerboseModeAndDefinedOutputFilenameAndDirect
     const auto singleArgsCopy{singleArgs};
     const size_t buildId{0};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockMultiCommand.addAdditionalOptionsToSingleCommandLine(singleArgs, buildId);
     const auto output = capture.getCapturedStdout();
@@ -393,7 +394,7 @@ TEST(MultiCommandWhiteboxTest, GivenHelpArgumentsWhenInitializingThenHelpIsPrint
 
     const auto args{singleArgs};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = mockMultiCommand.initialize(args);
     const auto output = capture.getCapturedStdout();
@@ -426,7 +427,7 @@ TEST(MultiCommandWhiteboxTest, GivenCommandLineWithApostrophesWhenSplittingLineI
     std::vector<std::string> outputArgs{};
     const std::size_t numberOfBuild{0};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = mockMultiCommand.splitLineInSeparateArgs(outputArgs, commandLine, numberOfBuild);
     const auto output = capture.getCapturedStdout();
@@ -451,7 +452,7 @@ TEST(MultiCommandWhiteboxTest, GivenCommandLineWithMissingApostropheWhenSplittin
     std::vector<std::string> outputArgs{};
     const std::size_t numberOfBuild{0};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = mockMultiCommand.splitLineInSeparateArgs(outputArgs, commandLine, numberOfBuild);
     const auto output = capture.getCapturedStdout();
@@ -485,7 +486,7 @@ TEST(MultiCommandWhiteboxTest, GivenTwoValidCommandLinesAndVerboseModeWhenRunnin
     mockMultiCommand.lines.push_back(validLine);
     mockMultiCommand.lines.push_back(validLine);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockMultiCommand.runBuilds("ocloc");
     const auto output = capture.getCapturedStdout();
@@ -516,7 +517,7 @@ TEST(MultiCommandWhiteboxTest, GivenArgsWithQuietModeAndEmptyMulticommandFileWhe
         "commands.txt",
         "-q"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = mockMultiCommand.initialize(args);
     const auto output = capture.getCapturedStdout();
@@ -539,7 +540,7 @@ TEST(MultiCommandWhiteboxTest, GivenInvalidArgsWhenInitializingThenErrorIsReturn
         "commands.txt",
         "-invalid_option"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = mockMultiCommand.initialize(args);
     const auto output = capture.getCapturedStdout();
@@ -621,7 +622,7 @@ TEST_F(MockOfflineCompilerTests, givenDeviceIdValueWhenInitHwInfoThenCorrectValu
     mockOfflineCompiler.deviceName = deviceIDStr.str();
     EXPECT_FALSE(mockOfflineCompiler.deviceName.empty());
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
     std::string output = capture.getCapturedStdout();
@@ -658,7 +659,7 @@ TEST_F(MockOfflineCompilerTests, givenDeviceIdAndRevisionIdValueWhenInitHwInfoTh
     mockOfflineCompiler.revisionId = 0x0;
     EXPECT_FALSE(mockOfflineCompiler.deviceName.empty());
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
     std::string output = capture.getCapturedStdout();
@@ -919,7 +920,7 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionOnQueryThenSuccessIsReturned) {
         "query",
         "--help"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = OfflineCompiler::query(argv.size(), argv, oclocArgHelperWithoutInput.get());
     std::string output = capture.getCapturedStdout();
@@ -936,7 +937,7 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionOnIdsThenSuccessIsReturned) {
             "ids",
             helpFlag.str()};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
         std::string output = capture.getCapturedStdout();
@@ -976,7 +977,8 @@ TEST_F(OfflineCompilerTests, givenFamilyAcronymWhenIdsCommandIsInvokeThenSuccess
         familyAcronym};
 
     std::stringstream expectedOutput;
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
     std::string output = capture.getCapturedStdout();
@@ -1010,7 +1012,8 @@ TEST_F(OfflineCompilerTests, givenReleaseAcronymWhenIdsCommandIsInvokeThenSucces
         releaseAcronym.str()};
 
     std::stringstream expectedOutput;
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
     std::string output = capture.getCapturedStdout();
@@ -1044,7 +1047,8 @@ TEST_F(OfflineCompilerTests, givenProductAcronymWhenIdsCommandIsInvokeThenSucces
         productAcronym.str()};
 
     std::stringstream expectedOutput;
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = OfflineCompiler::queryAcronymIds(argv.size(), argv, oclocArgHelperWithoutInput.get());
     std::string output = capture.getCapturedStdout();
@@ -1094,7 +1098,7 @@ TEST_F(OfflineCompilerTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsin
 
         MockOfflineCompiler mockOfflineCompiler{};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         const auto result = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
         const auto output{capture.getCapturedStdout()};
@@ -1165,7 +1169,7 @@ TEST_F(OfflineCompilerTests, givenIncorrectConfigFlagWhenParsingCommandLineThenE
 
     MockOfflineCompiler mockOfflineCompiler{};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
     const auto output{capture.getCapturedStdout()};
@@ -1214,7 +1218,7 @@ TEST_F(OfflineCompilerTests, Given32BitModeFlagAnd64BitModeFlagWhenParsingThenEr
 
     MockOfflineCompiler mockOfflineCompiler{};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
     const auto output{capture.getCapturedStdout()};
@@ -1485,7 +1489,8 @@ TEST_F(OfflineCompilerTests, givenProperDeviceIdHexAsDeviceArgumentThenSuccessIs
         deviceString.str()};
 
     oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(pOfflineCompiler->getHardwareInfo().platform.usDeviceID, deviceId);
@@ -1509,7 +1514,7 @@ TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdHexThenInvalidDeviceIsReturne
         "-device",
         "0x0"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -1526,7 +1531,8 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWithMissingRevisionValueWhenIn
         clCopybufferFilename.c_str(),
         "-device",
         "9.1."};
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1542,7 +1548,8 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWithInvalidPatternThenInvalidD
         clCopybufferFilename.c_str(),
         "-device",
         "9.1.."};
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1558,7 +1565,8 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWithMissingMajorValueWhenInval
         clCopybufferFilename.c_str(),
         "-device",
         ".1.2"};
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1574,7 +1582,8 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenInvalidRevisionValueIsPass
         clCopybufferFilename.c_str(),
         "-device",
         "9.0.a"};
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1590,7 +1599,8 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenInvalidMinorValueIsPassedT
         clCopybufferFilename.c_str(),
         "-device",
         "9.a"};
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1606,7 +1616,8 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenPassedValuesAreOutOfRangeT
         clCopybufferFilename.c_str(),
         "-device",
         "256.350"};
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1622,7 +1633,8 @@ TEST_F(OfflineCompilerTests, givenDeviceIpVersionWhenPassedValueNotExistThenInva
         clCopybufferFilename.c_str(),
         "-device",
         "1234"};
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1659,7 +1671,8 @@ TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdWithIncorrectHexPatternThenIn
         clCopybufferFilename.c_str(),
         "-device",
         "0xnonexist"};
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = capture.getCapturedStdout();
@@ -1854,7 +1867,7 @@ TEST_F(OfflineCompilerTests, givenValidArgumentsAndFclInitFailureWhenInitIsPerfo
     mockOfflineCompiler.mockFclFacade->shouldFailLoadingOfFclLib = true;
     mockOfflineCompiler.uniqueHelper->filesMap = filesMap;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
     EXPECT_EQ(OCLOC_SUCCESS, initResult);
@@ -1885,7 +1898,8 @@ TEST_F(OfflineCompilerTests, givenValidArgumentsAndIgcInitFailureWhenInitIsPerfo
     std::string libName = "invalidigc.so";
     auto igcNameGuard = NEO::pushIgcDllName(libName.c_str());
     mockOfflineCompiler.mockIgcFacade->shouldFailLoadingOfIgcLib = true;
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
     EXPECT_EQ(OCLOC_SUCCESS, initResult);
@@ -2193,7 +2207,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     retVal = pOfflineCompiler->build();
     std::string output = capture.getCapturedStdout();
@@ -2236,7 +2250,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuild
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     retVal = pOfflineCompiler->build();
     std::string output = capture.getCapturedStdout();
@@ -2279,7 +2293,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceIpVersionValueThenBu
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     retVal = pOfflineCompiler->build();
     std::string output = capture.getCapturedStdout();
@@ -2498,7 +2512,7 @@ TEST_F(OfflineCompilerTests, WhenFclNotNeededThenDontLoadIt) {
     MockOfflineCompiler offlineCompiler;
     offlineCompiler.uniqueHelper->filesMap = filesMap;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     auto ret = offlineCompiler.initialize(argv.size(), argv, true);
     EXPECT_EQ(OCLOC_SUCCESS, ret);
@@ -2620,7 +2634,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsR
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     retVal = pOfflineCompiler->build();
@@ -2639,7 +2653,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFlagWhenBuildingThenInvalidCommandLineE
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     std::string output = capture.getCapturedStdout();
@@ -2656,7 +2670,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidOptionsWhenBuildingThenInvalidCommandLi
         "-file",
     };
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argvA.size(), argvA, true, retVal, oclocArgHelperWithoutInput.get());
     std::string output = capture.getCapturedStdout();
@@ -2691,7 +2705,7 @@ TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenInvalidDevic
         "-device",
         "foobar"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     std::string output = capture.getCapturedStdout();
@@ -2730,7 +2744,8 @@ TEST_F(OfflineCompilerTests, GivenInvalidKernelWhenBuildingThenBuildProgramFailu
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     gEnvironment->SetInputFileName("invalid_file_name");
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
 
     retVal = pOfflineCompiler->build();
@@ -2939,7 +2954,7 @@ TEST(OfflineCompilerTest, WhenParsingCmdLineThenOptionsAreReadCorrectly) {
 
     auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     std::string output = capture.getCapturedStdout();
@@ -2975,7 +2990,7 @@ TEST(OfflineCompilerTest, GivenUnsupportedDeviceWhenInitHardwareInfoThenInvalidD
     auto deviceName = "unk";
     std::stringstream resString;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     auto retVal = mockOfflineCompiler->initHardwareInfo(deviceName);
     EXPECT_EQ(retVal, OCLOC_INVALID_DEVICE);
@@ -3138,7 +3153,7 @@ TEST(OfflineCompilerTest, GivenValidParamWhenGettingHardwareInfoThenSuccessIsRet
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
 
     EXPECT_EQ(CL_INVALID_DEVICE, mockOfflineCompiler->initHardwareInfo("invalid"));
@@ -3508,7 +3523,7 @@ TEST(OfflineCompilerTest, givenLlvmInputOptionPassedWhenCmdLineParsedThenInputFi
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     std::string output = capture.getCapturedStdout();
@@ -3532,7 +3547,7 @@ TEST(OfflineCompilerTest, givenSpirvInputOptionPassedWhenCmdLineParsedThenInputF
 
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     std::string output = capture.getCapturedStdout();
@@ -3792,7 +3807,7 @@ TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreApp
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     std::string output = capture.getCapturedStdout();
@@ -3814,7 +3829,7 @@ TEST(OfflineCompilerTest, givenOptionsWhenCmdLineParsedThenOptionsAreAppendedToO
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     std::string output = capture.getCapturedStdout();
@@ -3874,7 +3889,7 @@ TEST_F(OfflineCompilerTests, givenDeviceOptionsWithDeprecatedDeviceAcronymWhenCm
         deviceName.c_str(),
         "devOptions"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
     const auto result = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
@@ -3912,7 +3927,8 @@ TEST_F(OfflineCompilerTests, givenUnknownDeviceAcronymInDeviceOptionsWhenParsing
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
     mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     const std::string output = capture.getCapturedStdout();
@@ -3938,7 +3954,7 @@ TEST(OfflineCompilerTest, givenDeviceOptionsInWrongFormatWhenCmdLineParsedThenDe
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     std::string output = capture.getCapturedStdout();
@@ -4111,7 +4127,7 @@ TEST(OfflineCompilerTest, givenDeviceOptionsForMultipleDevicesSeparatedByCommasW
         productForDeviceOptions1.c_str(),
         "devOptions2"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto result = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     const std::string output = capture.getCapturedStdout();
@@ -4140,7 +4156,8 @@ TEST_F(OfflineCompilerTests, givenDashOOptionWhenCmdLineParsedThenBinaryOutputNa
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
     mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     auto retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     std::string output = capture.getCapturedStdout();
@@ -4173,7 +4190,8 @@ TEST_F(OfflineCompilerTests, givenDashOAndOtherInvalidOptionsWhenCmdLineParsedTh
         ASSERT_NE(nullptr, mockOfflineCompiler);
 
         mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
-        StdoutCapture capture;
+
+        StreamCapture capture;
         capture.captureStdout();
         auto retVal = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
         std::string output = capture.getCapturedStdout();
@@ -4199,7 +4217,8 @@ TEST_F(OfflineCompilerTests, givenDashOAndOtherInvalidOptionsWhenCmdLineParsedTh
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
     mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     auto retVal = mockOfflineCompiler->parseCommandLine(argv2.size(), argv2);
     std::string output = capture.getCapturedStdout();
@@ -4278,7 +4297,7 @@ __kernel void shouldfail(global ushort *dst) {
             "-device",
             gEnvironment->devicePrefix.c_str()};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
         EXPECT_NE(retVal, OCLOC_SUCCESS);
@@ -4303,7 +4322,7 @@ __kernel void shouldfail(global ushort *dst) {
             "-device",
             gEnvironment->devicePrefix.c_str()};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
         EXPECT_NE(retVal, OCLOC_SUCCESS);
@@ -4332,7 +4351,7 @@ __kernel void shouldfail(global ushort *dst) {
             "-device",
             gEnvironment->devicePrefix.c_str()};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
         EXPECT_NE(retVal, OCLOC_SUCCESS);
@@ -4818,7 +4837,7 @@ TEST_F(OfflineCompilerTests, whenDetectedPotentialInputTypeMismatchThenEmitsWarn
         int caseNum = 0;
         for (auto &c : cases) {
 
-            StdoutCapture capture;
+            StreamCapture capture;
             capture.captureStdout();
 
             ocloc.inputCodeType = IGC::CodeType::oclC;
@@ -5019,7 +5038,7 @@ TEST_F(OfflineCompilerTests, givenFormatFlagWithUnknownFormatPassedThenPrintWarn
         "--format",
         "banana"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = ocloc.initialize(argvUnknownFormatEnforced.size(), argvUnknownFormatEnforced);
     const auto output = capture.getCapturedStdout();
@@ -5063,7 +5082,7 @@ TEST_F(OfflineCompilerTests, GivenStatefulAddressModeWhenInvalidArgsPAssedThenEr
         "-stateful_address_mode",
         "wrong"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = ocloc.initialize(argvA.size(), argvA);
     ASSERT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
@@ -5102,7 +5121,8 @@ TEST_F(OfflineCompilerTests, GivenInvalidHeaplessModeOptionWhenOclocArgsAreParse
         gEnvironment->devicePrefix.c_str(),
         "-heapless_mode",
         "invalid"};
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = ocloc.parseCommandLine(args.size(), args);
     EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
@@ -5123,7 +5143,8 @@ TEST_F(OfflineCompilerTests, GivenValidHeaplessModeOptionWhenOclocArgsAreParsedT
             gEnvironment->devicePrefix.c_str(),
             "-heapless_mode",
             heaplessMode};
-        StdoutCapture capture;
+
+        StreamCapture capture;
         capture.captureStdout();
         int retVal = ocloc.parseCommandLine(args.size(), args);
         EXPECT_EQ(OCLOC_SUCCESS, retVal);
@@ -5168,7 +5189,8 @@ TEST(OclocArgHelperTest, GivenOutputSuppressMessagesAndSaveItToFile) {
     EXPECT_TRUE(helper->messagePrinter.isSuppressed());
 
     ConstStringRef printMsg = "Hello world!";
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     helper->printf(printMsg.data());
     std::string capturedStdout = capture.getCapturedStdout();
@@ -5258,7 +5280,8 @@ TEST(OclocArgHelperTest, GivenNoOutputPrintMessages) {
                                          nullptr, nullptr, nullptr, nullptr);
     EXPECT_FALSE(helper.messagePrinter.isSuppressed());
     ConstStringRef printMsg = "Hello world!";
-    StdoutCapture capture;
+
+    StreamCapture capture;
     capture.captureStdout();
     helper.printf(printMsg.data());
     std::string capturedStdout = capture.getCapturedStdout();
@@ -5571,7 +5594,7 @@ __kernel void CopyBuffer(__global unsigned int *src, __global unsigned int *dst)
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
     std::string output = capture.getCapturedStdout();
@@ -5623,7 +5646,7 @@ __kernel void CopyBuffer(__global unsigned int *src, __global unsigned int *dst)
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
     std::string output = capture.getCapturedStdout();

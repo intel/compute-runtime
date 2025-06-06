@@ -25,6 +25,7 @@
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
@@ -2007,10 +2008,11 @@ TEST_F(DeviceTest, givenPrintGlobalTimestampIsSetWhenGetGlobalTimestampIsCalledT
     capabilityTable.timestampValidBits = 36;
     capabilityTable.kernelTimestampValidBits = 32;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     // Considering kernelTimestampValidBits(32)
     auto gpuTimeStamp = cpuDeviceTime->mockGpuTimeInNs & 0xFFFFFFFF;
     const std::string expectedString("Host timestamp in ns : 0 | Device timestamp in ns : " +
@@ -2038,10 +2040,11 @@ TEST_F(DeviceTest, givenPrintGlobalTimestampIsSetAnd64bitTimestampWhenGetGlobalT
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     const std::string expectedString("Host timestamp in ns : 0 | Device timestamp in ns : " +
                                      std::to_string(static_cast<uint64_t>(neoDevice->getProfilingTimerResolution()) *
                                                     cpuDeviceTime->mockGpuTimeInNs) +

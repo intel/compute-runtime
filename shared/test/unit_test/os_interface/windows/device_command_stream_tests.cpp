@@ -26,6 +26,7 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -242,7 +243,8 @@ TEST_F(WddmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndices)
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
@@ -256,7 +258,7 @@ TEST_F(WddmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndices)
     auto osContextWin = static_cast<OsContextWin *>(&csr->getOsContext());
 
     expectedValue << SysCalls::getProcessId() << ": Wddm Submission with context handle " << osContextWin->getWddmContextHandle() << " and HwQueue handle " << osContextWin->getHwQueue().handle << "\n";
-    EXPECT_STREQ(::testing::internal::GetCapturedStdout().c_str(), expectedValue.str().c_str());
+    EXPECT_STREQ(capture.getCapturedStdout().c_str(), expectedValue.str().c_str());
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }

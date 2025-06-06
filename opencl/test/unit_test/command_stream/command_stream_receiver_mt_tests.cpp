@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -35,7 +36,8 @@ struct CommandStreamReceiverMtTest : public ClDeviceFixture,
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenSettingFlagProgressThenFunctionAsksTwiceForConfirmation) {
     DebugManagerStateRestore restore;
     debugManager.flags.PauseOnEnqueue.set(0);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
@@ -80,7 +82,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenSettingFlagProgre
     }
     EXPECT_EQ(2u, confirmationCounter);
 
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(output, std::string("Debug break: Press enter to start workload")));
     EXPECT_TRUE(hasSubstr(output, std::string("Debug break: Workload ended, press enter to continue")));
     mockCSR->userPauseConfirmation->join();
@@ -91,7 +93,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadBeforeWalkerOnlyWhenS
     DebugManagerStateRestore restore;
     debugManager.flags.PauseOnEnqueue.set(0);
     debugManager.flags.PauseOnGpuMode.set(0);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
@@ -123,7 +126,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadBeforeWalkerOnlyWhenS
 
     EXPECT_EQ(1u, confirmationCounter);
 
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(output, std::string("Debug break: Press enter to start workload")));
     EXPECT_FALSE(hasSubstr(output, std::string("Debug break: Workload ended, press enter to continue")));
     mockCSR->userPauseConfirmation->join();
@@ -134,7 +137,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadAfterWalkerOnlyWhenSe
     DebugManagerStateRestore restore;
     debugManager.flags.PauseOnEnqueue.set(0);
     debugManager.flags.PauseOnGpuMode.set(1);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
@@ -166,7 +170,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadAfterWalkerOnlyWhenSe
 
     EXPECT_EQ(1u, confirmationCounter);
 
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_FALSE(hasSubstr(output, std::string("Debug break: Press enter to start workload")));
     EXPECT_TRUE(hasSubstr(output, std::string("Debug break: Workload ended, press enter to continue")));
     mockCSR->userPauseConfirmation->join();
@@ -176,7 +180,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadAfterWalkerOnlyWhenSe
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachEnqueueWhenSettingFlagProgressThenFunctionAsksMultipleTimesForConfirmation) {
     DebugManagerStateRestore restore;
     debugManager.flags.PauseOnEnqueue.set(-2);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
@@ -253,7 +258,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachEnqueueWhenSett
 
     EXPECT_EQ(4u, confirmationCounter);
 
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(output, std::string("Debug break: Press enter to start workload")));
     EXPECT_TRUE(hasSubstr(output, std::string("Debug break: Workload ended, press enter to continue")));
     mockCSR->userPauseConfirmation->join();
@@ -263,7 +268,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachEnqueueWhenSett
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachBlitWhenSettingFlagProgressThenFunctionAsksMultipleTimesForConfirmation) {
     DebugManagerStateRestore restore;
     debugManager.flags.PauseOnBlitCopy.set(-2);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
@@ -340,7 +346,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachBlitWhenSetting
 
     EXPECT_EQ(4u, confirmationCounter);
 
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(output, std::string("Debug break: Press enter to start workload")));
     EXPECT_TRUE(hasSubstr(output, std::string("Debug break: Workload ended, press enter to continue")));
     mockCSR->userPauseConfirmation->join();
@@ -350,7 +356,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadOnEachBlitWhenSetting
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenTerminatingAtFirstStageThenFunctionEndsCorrectly) {
     DebugManagerStateRestore restore;
     debugManager.flags.PauseOnEnqueue.set(0);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
@@ -368,7 +375,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenTerminatingAtFirs
     }
 
     EXPECT_EQ(0u, confirmationCounter);
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.length());
     mockCSR->userPauseConfirmation->join();
     mockCSR->userPauseConfirmation.reset();
@@ -377,7 +384,8 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenTerminatingAtFirs
 HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenTerminatingAtSecondStageThenFunctionEndsCorrectly) {
     DebugManagerStateRestore restore;
     debugManager.flags.PauseOnEnqueue.set(0);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int32_t executionStamp = 0;
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
@@ -404,7 +412,7 @@ HWTEST_F(CommandStreamReceiverMtTest, givenDebugPauseThreadWhenTerminatingAtSeco
         *mockCSR->debugPauseStateAddress = DebugPauseState::terminate;
     }
 
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(output, std::string("Debug break: Press enter to start workload")));
     EXPECT_FALSE(hasSubstr(output, std::string("Debug break: Workload ended, press enter to continue")));
     EXPECT_EQ(1u, confirmationCounter);

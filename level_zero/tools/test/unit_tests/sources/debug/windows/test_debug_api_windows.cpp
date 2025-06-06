@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_debug.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
@@ -920,11 +921,12 @@ TEST_F(DebugApiWindowsTest, givenEscapeReturnTimeoutWhenReadAndHandleEventCalled
 
     auto session = std::make_unique<MockDebugSessionWindows>(config, device);
     session->wddm = mockWddm;
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     mockWddm->numEvents = 1;
     mockWddm->eventQueue[0].escapeReturnStatus = DBGUMD_RETURN_READ_EVENT_TIMEOUT_EXPIRED;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->readAndHandleEvent(100));
-    auto errorMessage = ::testing::internal::GetCapturedStdout();
+    auto errorMessage = capture.getCapturedStdout();
     EXPECT_EQ(std::string(""), errorMessage);
 }
 

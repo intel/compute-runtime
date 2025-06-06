@@ -16,6 +16,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
@@ -681,9 +682,10 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
 
     pOutEvent->release();
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     userEvent->setStatus(CL_COMPLETE);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_STREQ("test", output.c_str());
 }
@@ -726,9 +728,10 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndI
 
     pOutEvent->release();
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     userEvent->setStatus(CL_COMPLETE);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_STREQ("", output.c_str());
 }

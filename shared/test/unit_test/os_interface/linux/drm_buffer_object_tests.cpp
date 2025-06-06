@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
@@ -177,11 +178,12 @@ TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueTh
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
     BufferObject *boArray[1] = {bo.get()};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto ret = bo->pin(boArray, 1, osContext.get(), 0, 1);
     EXPECT_EQ(0, ret);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     auto idx = output.find("drm_i915_gem_execbuffer2 {");
     size_t expectedValue = 29;
     EXPECT_EQ(expectedValue, idx);
@@ -198,11 +200,12 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
     DebugManagerStateRestore stateRestore;
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     bool result = bo->close();
     EXPECT_EQ(true, result);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     size_t idx = output.find("Calling gem close on handle: BO-");
     size_t expectedValue = 0;
     EXPECT_EQ(expectedValue, idx);
@@ -217,21 +220,23 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
         MockBufferObjectHandleWrapper sharedBoHandleWrapper = bo->acquireSharedOwnershipOfBoHandle();
         EXPECT_TRUE(bo->isBoHandleShared());
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
         bool result = bo->close();
         EXPECT_EQ(true, result);
 
-        std::string output = testing::internal::GetCapturedStdout();
+        std::string output = capture.getCapturedStdout();
         size_t idx = output.find("Skipped closing BO-");
         size_t expectedValue = 0u;
         EXPECT_EQ(expectedValue, idx);
     }
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     bool result = bo->close();
     EXPECT_EQ(true, result);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     size_t idx = output.find("Calling gem close on handle: BO-");
     size_t expectedValue = 0;
     EXPECT_EQ(expectedValue, idx);
@@ -243,11 +248,12 @@ TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundI
     debugManager.flags.PrintExecutionBuffer.set(true);
     ExecObject execObjectsStorage = {};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
     EXPECT_EQ(0, ret);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     auto idx = output.find("drm_i915_gem_execbuffer2 {");
     size_t expectedValue = 29;
     EXPECT_EQ(expectedValue, idx);
@@ -520,22 +526,24 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     auto osContext = engines[contextId].osContext;
     osContext->ensureContextInitialized(false);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     bo.bind(osContext, 0, false);
     EXPECT_TRUE(bo.bindInfo[contextId][0]);
 
-    std::string bindOutput = testing::internal::GetCapturedStdout();
+    std::string bindOutput = capture.getCapturedStdout();
     std::stringstream expected;
     expected << "bind BO-0 to VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: 0\n";
     EXPECT_STREQ(bindOutput.c_str(), expected.str().c_str()) << bindOutput;
     expected.str("");
-    testing::internal::CaptureStdout();
+
+    capture.captureStdout();
 
     bo.unbind(osContext, 0);
     EXPECT_FALSE(bo.bindInfo[contextId][0]);
 
-    std::string unbindOutput = testing::internal::GetCapturedStdout();
+    std::string unbindOutput = capture.getCapturedStdout();
     expected << "unbind BO-0 from VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: 0\n";
     EXPECT_STREQ(unbindOutput.c_str(), expected.str().c_str()) << unbindOutput;
 }

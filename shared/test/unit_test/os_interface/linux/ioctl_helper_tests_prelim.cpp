@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
@@ -503,7 +504,8 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
 TEST(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMemPolicyThenMemPolicyExtensionsIsAdded) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.PrintBOCreateDestroyResult.set(true);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -519,7 +521,7 @@ TEST(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMemPolic
     mockIoctlHelper.initialize();
     auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, memPolicyMode, memPolicy, false);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedSubstring("memory policy:");
     EXPECT_EQ(0, ret);
     EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedMemPolicy);

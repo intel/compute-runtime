@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -74,12 +75,13 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenDebugFlagSetWhenCreatingGm
     DebugManagerStateRestore restore;
     debugManager.flags.PrintGmmCompressionParams.set(true);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto gmm = std::make_unique<MockGmm>(getGmmHelper());
     auto &flags = gmm->resourceParams.Flags;
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     char expectedStr[512] = {};

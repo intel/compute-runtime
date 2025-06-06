@@ -13,7 +13,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/helpers/mock_file_io.h"
-#include "shared/test/common/helpers/stdout_capture.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 
 #include "environment.h"
@@ -211,7 +211,7 @@ TEST_F(OfflineLinkerTest, GivenUnknownArgumentWhenParsingThenErrorIsReported) {
         "link",
         "-some_new_unknown_command"};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
     const auto result = mockOfflineLinker.initialize(argv.size(), argv);
@@ -236,7 +236,7 @@ TEST_F(OfflineLinkerTest, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingTh
         mockOclocIgcFacade = std::make_unique<MockOclocIgcFacade>(&mockArgHelper);
         MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
 
-        StdoutCapture capture;
+        StreamCapture capture;
         capture.captureStdout();
         const auto result = mockOfflineLinker.parseCommand(argv.size(), argv);
         const auto output{capture.getCapturedStdout()};
@@ -252,7 +252,7 @@ TEST_F(OfflineLinkerTest, GivenCommandWithoutInputFilesWhenVerificationIsPerform
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
     mockOfflineLinker.inputFilenames = {};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto verificationResult = mockOfflineLinker.verifyLinkerCommand();
     const auto output{capture.getCapturedStdout()};
@@ -272,7 +272,7 @@ TEST_F(OfflineLinkerTest, GivenCommandWithEmptyFilenameWhenVerificationIsPerform
 
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto verificationResult = mockOfflineLinker.initialize(argv.size(), argv);
     const auto output{capture.getCapturedStdout()};
@@ -296,7 +296,7 @@ TEST_F(OfflineLinkerTest, GivenCommandWithNonexistentInputFileWhenVerificationIs
     const auto parsingResult = mockOfflineLinker.parseCommand(argv.size(), argv);
     ASSERT_EQ(OCLOC_SUCCESS, parsingResult);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto verificationResult = mockOfflineLinker.verifyLinkerCommand();
     const auto output{capture.getCapturedStdout()};
@@ -322,7 +322,7 @@ TEST_F(OfflineLinkerTest, GivenCommandWithInvalidOutputFormatWhenVerificationIsP
     const auto parsingResult = mockOfflineLinker.parseCommand(argv.size(), argv);
     ASSERT_EQ(OCLOC_SUCCESS, parsingResult);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto verificationResult = mockOfflineLinker.verifyLinkerCommand();
     const auto output{capture.getCapturedStdout()};
@@ -349,7 +349,7 @@ TEST_F(OfflineLinkerTest, GivenValidCommandWhenVerificationIsPerformedThenSucces
     const auto parsingResult = mockOfflineLinker.parseCommand(argv.size(), argv);
     ASSERT_EQ(OCLOC_SUCCESS, parsingResult);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto verificationResult = mockOfflineLinker.verifyLinkerCommand();
     const auto output{capture.getCapturedStdout()};
@@ -371,7 +371,7 @@ TEST_F(OfflineLinkerTest, GivenEmptyFileWhenLoadingInputFilesThenErrorIsReturned
 
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto initializationResult = mockOfflineLinker.initialize(argv.size(), argv);
     const auto output{capture.getCapturedStdout()};
@@ -391,7 +391,7 @@ TEST_F(OfflineLinkerTest, GivenValidFileWithUnknownFormatWhenLoadingInputFilesTh
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
     mockOfflineLinker.inputFilenames.push_back(filename);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto readingResult = mockOfflineLinker.loadInputFilesContent();
     const auto output{capture.getCapturedStdout()};
@@ -413,7 +413,7 @@ TEST_F(OfflineLinkerTest, GivenValidFilesWithValidFormatsWhenLoadingInputFilesTh
     mockOfflineLinker.inputFilenames.push_back(firstFilename);
     mockOfflineLinker.inputFilenames.push_back(secondFilename);
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto readingResult = mockOfflineLinker.loadInputFilesContent();
     const auto output{capture.getCapturedStdout()};
@@ -453,7 +453,7 @@ TEST_F(OfflineLinkerTest, GivenValidFilesWhenInitializationIsSuccessfulThenLinkM
 
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto initializationResult = mockOfflineLinker.initialize(argv.size(), argv);
     const auto output{capture.getCapturedStdout()};
@@ -560,7 +560,7 @@ TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndFailingIGCWhenLlvmBcOutp
     mockOfflineLinker.outputFormat = IGC::CodeType::llvmBc;
     mockOfflineLinker.operationMode = OperationMode::linkFiles;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto linkingResult{mockOfflineLinker.execute()};
     const auto output{capture.getCapturedStdout()};
@@ -592,7 +592,7 @@ TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndIGCSignalingSuccessButRe
     mockOfflineLinker.outputFormat = IGC::CodeType::llvmBc;
     mockOfflineLinker.operationMode = OperationMode::linkFiles;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto linkingResult{mockOfflineLinker.execute()};
     const auto output{capture.getCapturedStdout()};
@@ -624,7 +624,7 @@ TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndInvalidTranslationOutput
     mockOfflineLinker.outputFormat = IGC::CodeType::llvmBc;
     mockOfflineLinker.operationMode = OperationMode::linkFiles;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto linkingResult{mockOfflineLinker.execute()};
     const auto output{capture.getCapturedStdout()};
@@ -639,7 +639,7 @@ TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndInvalidTranslationOutput
 TEST_F(OfflineLinkerTest, GivenUninitializedLinkerWhenExecuteIsInvokedThenErrorIsIssued) {
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto executionResult{mockOfflineLinker.execute()};
     const auto output{capture.getCapturedStdout()};
@@ -652,7 +652,7 @@ TEST_F(OfflineLinkerTest, GivenHelpRequestWhenExecuteIsInvokedThenHelpIsPrinted)
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
     mockOfflineLinker.operationMode = OperationMode::showHelp;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto executionResult{mockOfflineLinker.execute()};
     const auto output{capture.getCapturedStdout()};
@@ -665,7 +665,7 @@ TEST_F(OfflineLinkerTest, GivenInvalidOperationModeWhenExecuteIsInvokedThenError
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
     mockOfflineLinker.operationMode = static_cast<OperationMode>(7); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto executionResult{mockOfflineLinker.execute()};
     const auto output{capture.getCapturedStdout()};
@@ -701,7 +701,7 @@ TEST_F(OfflineLinkerTest, GivenEmptyHwInfoTableWhenInitializationIsPerformedThen
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
     mockOfflineLinker.shouldReturnEmptyHardwareInfoTable = true;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto initializationResult = mockOfflineLinker.initialize(argv.size(), argv);
     const auto output{capture.getCapturedStdout()};
@@ -730,7 +730,7 @@ TEST_F(OfflineLinkerTest, GivenMissingIgcLibraryWhenInitializationIsPerformedThe
     mockOclocIgcFacade->shouldFailLoadingOfIgcLib = true;
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto initializationResult = mockOfflineLinker.initialize(argv.size(), argv);
     const auto output{capture.getCapturedStdout()};

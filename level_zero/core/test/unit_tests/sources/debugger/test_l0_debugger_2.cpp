@@ -9,6 +9,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -111,7 +112,8 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggerLogsDisabledWhenCommandListIsSy
     NEO::debugManager.flags.DebuggerLogBitmask.set(0);
 
     EXPECT_NE(nullptr, device->getL0Debugger());
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -119,7 +121,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggerLogsDisabledWhenCommandListIsSy
 
     commandList->executeCommandListImmediate(false);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     size_t pos = output.find("Debugger: SBA");
     EXPECT_EQ(std::string::npos, pos);
 

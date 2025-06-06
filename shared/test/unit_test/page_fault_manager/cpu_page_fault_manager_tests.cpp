@@ -9,6 +9,7 @@
 #include "shared/source/page_fault_manager/tbx_page_fault_manager.h"
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
@@ -191,11 +192,12 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainWithPr
     EXPECT_EQ(pageFaultManager->memoryData.size(), 3u);
     pageFaultManager->memoryData.at(alloc3).domain = CpuPageFaultManager::AllocationDomain::gpu;
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(unifiedMemoryManager.get());
 
-    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string output = capture.getCapturedStdout(); // stop capturing
 
     std::string expectedString = "UMD transferred shared allocation";
     uint32_t occurrences = 0u;
@@ -391,11 +393,12 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainWithPrint
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     pageFaultManager->moveAllocationToGpuDomain(alloc);
 
-    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string output = capture.getCapturedStdout(); // stop capturing
 
     std::string expectedString = "UMD transferred shared allocation";
     uint32_t occurrences = 0u;
@@ -587,7 +590,8 @@ TEST_F(PageFaultManagerTest, whenVerifyingPagefaultWithPrintUsmSharedMigrationDe
 
     pageFaultManager->moveAllocationToGpuDomain(alloc);
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
@@ -596,7 +600,7 @@ TEST_F(PageFaultManagerTest, whenVerifyingPagefaultWithPrintUsmSharedMigrationDe
 
     pageFaultManager->verifyAndHandlePageFault(alloc, true);
 
-    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string output = capture.getCapturedStdout(); // stop capturing
 
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 1);
@@ -626,7 +630,8 @@ TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultWithPrintUsmSharedMig
     pageFaultManager->insertAllocation(alloc, 10, unifiedMemoryManager.get(), nullptr, memoryProperties);
     pageFaultManager->moveAllocationToGpuDomain(alloc);
 
-    testing::internal::CaptureStdout(); // start capturing
+    StreamCapture capture;
+    capture.captureStdout(); // start capturing
 
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 0);
@@ -635,7 +640,7 @@ TEST_F(PageFaultManagerTest, givenTbxWhenVerifyingPagefaultWithPrintUsmSharedMig
 
     pageFaultManager->verifyAndHandlePageFault(alloc, true);
 
-    std::string output = testing::internal::GetCapturedStdout(); // stop capturing
+    std::string output = capture.getCapturedStdout(); // stop capturing
 
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 1);

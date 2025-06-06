@@ -25,6 +25,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -705,14 +706,15 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintBuffersWh
     FlushStampTracker flushStamp(true);
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     auto pos = output.find("Ring buffer 0");
     EXPECT_TRUE(pos != std::string::npos);

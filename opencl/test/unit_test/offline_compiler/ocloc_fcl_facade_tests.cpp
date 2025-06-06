@@ -11,7 +11,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/stdout_capture.h"
+#include "shared/test/common/helpers/stream_capture.h"
 
 #include "mock/mock_ocloc_fcl_facade.h"
 
@@ -23,7 +23,7 @@ TEST_F(OclocFclFacadeTest, GivenMissingFclLibraryWhenPreparingFclThenFailureIsRe
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldFailLoadingOfFclLib = true;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
     const auto output{capture.getCapturedStdout()};
@@ -41,7 +41,7 @@ TEST_F(OclocFclFacadeTest, GivenFailingLoadingOfFclSymbolsWhenPreparingFclThenFa
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldFailLoadingOfFclCreateMainFunction = true;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
     const auto output{capture.getCapturedStdout()};
@@ -57,7 +57,7 @@ TEST_F(OclocFclFacadeTest, GivenFailingCreationOfFclMainWhenPreparingFclThenFail
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldFailCreationOfFclMain = true;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
     const auto output{capture.getCapturedStdout()};
@@ -77,7 +77,7 @@ TEST_F(OclocFclFacadeTest, GivenIncompatibleFclInterfacesWhenPreparingFclThenFai
     mockFclFacade.isFclInterfaceCompatibleReturnValue = false;
     mockFclFacade.getIncompatibleInterfaceReturnValue = "SomeImportantInterface";
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
     const auto output{capture.getCapturedStdout()};
@@ -93,7 +93,7 @@ TEST_F(OclocFclFacadeTest, GivenFailingCreationOfFclDeviceContextWhenPreparingFc
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldFailCreationOfFclDeviceContext = true;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
     const auto output{capture.getCapturedStdout()};
@@ -109,7 +109,7 @@ TEST_F(OclocFclFacadeTest, GivenNoneErrorsSetAndNotPopulateFclInterfaceWhenPrepa
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldPopulateFclInterfaceReturnValue = false;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
     const auto output{capture.getCapturedStdout()};
@@ -125,7 +125,7 @@ TEST_F(OclocFclFacadeTest, GivenPopulateFclInterfaceAndInvalidFclDeviceContextWh
     mockFclFacade.shouldPopulateFclInterfaceReturnValue = true;
     mockFclFacade.shouldReturnInvalidFclPlatformHandle = true;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
     const auto output{capture.getCapturedStdout()};
@@ -143,7 +143,7 @@ TEST_F(OclocFclFacadeTest, GivenPopulateFclInterfaceWhenPreparingFclThenSuccessI
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
     mockFclFacade.shouldPopulateFclInterfaceReturnValue = true;
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
     const auto output{capture.getCapturedStdout()};
@@ -158,7 +158,7 @@ TEST_F(OclocFclFacadeTest, GivenPopulateFclInterfaceWhenPreparingFclThenSuccessI
 TEST_F(OclocFclFacadeTest, GivenNoneErrorsSetWhenPreparingFclThenSuccessIsReported) {
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
     const auto output{capture.getCapturedStdout()};
@@ -174,7 +174,7 @@ TEST_F(OclocFclFacadeTest, GivenNoneErrorsSetWhenPreparingFclThenSuccessIsReport
 TEST_F(OclocFclFacadeTest, GivenInitializedFclWhenGettingIncompatibleInterfaceThenEmptyStringIsReturned) {
     MockOclocFclFacade mockFclFacade{&mockArgHelper};
 
-    StdoutCapture capture;
+    StreamCapture capture;
     capture.captureStdout();
     const auto fclPreparationResult{mockFclFacade.initialize(hwInfo)};
     const auto output{capture.getCapturedStdout()};

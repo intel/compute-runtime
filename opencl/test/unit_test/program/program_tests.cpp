@@ -34,6 +34,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/mock_file_io.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -3088,7 +3089,8 @@ using ProgramBinTest = Test<ProgramSimpleFixture>;
 TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramThenProcessingTimeIsPrinted) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintProgramBinaryProcessingTime.set(true);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
@@ -3096,7 +3098,7 @@ TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramT
         pProgram->getDevices(),
         nullptr);
 
-    auto output = testing::internal::GetCapturedStdout();
+    auto output = capture.getCapturedStdout();
     EXPECT_FALSE(output.compare(0, 14, "Elapsed time: "));
     EXPECT_EQ(CL_SUCCESS, retVal);
 }

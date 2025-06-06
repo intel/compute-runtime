@@ -11,6 +11,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 
 #include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -364,7 +365,8 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenHintI
 
     auto context = Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(
         context,
         CL_MEM_READ_ONLY,
@@ -372,7 +374,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenHintI
         nullptr,
         retVal));
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_EQ('\n', output[0]);
 
@@ -389,7 +391,8 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsAndBadHintLevelWhenAction
 
     auto context = Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto buffer = Buffer::create(
         context,
         CL_MEM_READ_ONLY,
@@ -397,7 +400,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsAndBadHintLevelWhenAction
         nullptr,
         retVal);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
     buffer->release();
@@ -441,13 +444,14 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     mockKernel.mockKernel->auxTranslationRequired = true;
     mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ARGUMENT_AUX_TRANSLATION],
              mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), 0, mockKernel.mockKernel->getKernelInfo().getExtendedMetadata(0).argName.c_str());
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
@@ -476,13 +480,14 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     mockKernel.mockKernel->auxTranslationRequired = true;
     mockKernel.mockKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ARGUMENT_AUX_TRANSLATION],
              mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), 0, mockKernel.mockKernel->getKernelInfo().getExtendedMetadata(0).argName.c_str());
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_TRUE(containsHint(expectedHint, userData));
 
@@ -505,13 +510,14 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ALLOCATION_AUX_TRANSLATION],
              mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), ptr, 128);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_TRUE(containsHint(expectedHint, userData));
 
@@ -543,13 +549,14 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     allocData.device = &pDevice->getDevice();
     context->getSVMAllocsManager()->insertSVMAlloc(allocData);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ALLOCATION_AUX_TRANSLATION],
              mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), ptr, 128);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_TRUE(containsHint(expectedHint, userData));
 
@@ -581,11 +588,12 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
     mockKernel.mockKernel->auxTranslationRequired = true;
     mockKernel.mockKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
     delete gfxAllocation.getDefaultGmm();
@@ -611,11 +619,12 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     mockKernel.mockKernel->auxTranslationRequired = true;
     mockKernel.mockKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
     delete gfxAllocation.getDefaultGmm();
@@ -635,11 +644,12 @@ TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNull
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->setArgSvmAlloc(0, nullptr, nullptr, 0u);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 }
 
@@ -658,10 +668,11 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
     delete gfxAllocation.getDefaultGmm();

@@ -18,6 +18,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
@@ -455,10 +456,11 @@ HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsC
     blitProperties.srcSize = {1, 1, 1};
     blitProperties.dstSize = {1, 1, 1};
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::stringstream expectedOutput;
     expectedOutput << "Slice index: 0\n"
                    << "ColorDepth: 0\n"

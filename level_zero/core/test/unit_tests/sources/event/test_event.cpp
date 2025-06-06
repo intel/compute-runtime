@@ -12,6 +12,7 @@
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -2753,9 +2754,10 @@ HWTEST_F(TimestampEventCreate, givenFlagPrintCalculatedTimestampsWhenCallQueryKe
 
     event->hostAddressFromPool = &data;
     ze_kernel_timestamp_result_t result = {};
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     event->queryKernelTimestamp(&result);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::stringstream expected;
     expected << "globalStartTS: " << result.global.kernelStart << ", "
              << "globalEndTS: " << result.global.kernelEnd << ", "
@@ -2785,9 +2787,10 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenFlagPrintTimestampPacketConten
     auto packedCount = 2u;
     event->setPacketsInUse(packedCount);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     event->queryKernelTimestamp(&results);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::stringstream expected;
 
     for (uint32_t i = 0; i < packedCount; i++) {
@@ -2894,9 +2897,10 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenFlagPrintTimestampPacketContents
     event->setPacketsInUse(packedCount);
 
     ze_kernel_timestamp_result_t results;
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     event->queryKernelTimestamp(&results);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::stringstream expected;
     auto i = 0u;
     for (uint32_t kernelId = 0u; kernelId < kernelCount; kernelId++) {
@@ -4313,7 +4317,8 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenSynchronizeBeforeReset) 
 
     *reinterpret_cast<uint32_t *>(event->hostAddressFromPool) = Event::STATE_SIGNALED;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     EXPECT_EQ(0u, event->hostSynchronizeCalled);
 
@@ -4321,7 +4326,7 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenSynchronizeBeforeReset) 
 
     EXPECT_EQ(1u, event->hostSynchronizeCalled);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     std::string expectedOutput("");
     EXPECT_EQ(expectedOutput, output);
 }
@@ -4335,7 +4340,8 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenPrintLogAndSynchronizeBe
     {
         event->failOnNextQueryStatus = false;
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
 
         EXPECT_EQ(0u, event->hostSynchronizeCalled);
 
@@ -4343,7 +4349,7 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenPrintLogAndSynchronizeBe
 
         EXPECT_EQ(1u, event->hostSynchronizeCalled);
 
-        std::string output = testing::internal::GetCapturedStdout();
+        std::string output = capture.getCapturedStdout();
         std::string expectedOutput("");
         EXPECT_EQ(expectedOutput, output);
     }
@@ -4351,7 +4357,8 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenPrintLogAndSynchronizeBe
     {
         event->failOnNextQueryStatus = true;
 
-        testing::internal::CaptureStdout();
+        StreamCapture capture;
+        capture.captureStdout();
 
         EXPECT_EQ(1u, event->hostSynchronizeCalled);
 
@@ -4359,7 +4366,7 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenPrintLogAndSynchronizeBe
 
         EXPECT_EQ(2u, event->hostSynchronizeCalled);
 
-        std::string output = testing::internal::GetCapturedStdout();
+        std::string output = capture.getCapturedStdout();
         char expectedStr[128] = {};
         snprintf(expectedStr, 128, "\nzeEventHostReset: Event %p not ready. Calling zeEventHostSynchronize.", event.get());
 

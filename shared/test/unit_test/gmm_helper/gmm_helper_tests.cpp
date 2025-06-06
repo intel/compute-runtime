@@ -13,6 +13,7 @@
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
@@ -549,7 +550,8 @@ TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingResourceThenPrintCompression
     DebugManagerStateRestore restore;
     debugManager.flags.PrintGmmCompressionParams.set(true);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     StorageInfo storageInfo;
     GmmRequirements gmmRequirements{};
@@ -558,7 +560,7 @@ TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingResourceThenPrintCompression
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
     auto &flags = gmm->resourceParams.Flags;
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     char expectedStr[512] = {};
@@ -578,14 +580,15 @@ TEST_F(GmmHelperTests, givenDebugFlagSetWhenCreatingImageResourceThenPrintCompre
     imgDesc.imageHeight = 17;
     imgDesc.imageDepth = 17;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     auto gmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
     auto &flags = gmm->resourceParams.Flags;
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     char expectedStr[512] = {};

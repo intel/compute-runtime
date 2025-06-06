@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/test/common/helpers/stdout_capture.h"
+#include "shared/test/common/helpers/stream_capture.h"
 
 #include <string>
 
@@ -36,7 +36,7 @@ class StdoutCapturer {
     }
 
   private:
-    StdoutCapture capture;
+    StreamCapture capture;
     bool outputAcquired{false};
 };
 

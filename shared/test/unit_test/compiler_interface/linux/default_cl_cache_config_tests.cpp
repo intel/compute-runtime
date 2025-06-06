@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
@@ -36,9 +37,10 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenPrintDebugMessagesWhenCacheIsEnabledThe
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
 
     EXPECT_TRUE(cacheConfig.enabled);
     EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult\\directory\\\n\n");

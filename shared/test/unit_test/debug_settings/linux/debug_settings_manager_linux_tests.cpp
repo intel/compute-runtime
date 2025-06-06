@@ -8,6 +8,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/utilities/debug_file_reader.h"
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_settings_reader.h"
@@ -41,7 +42,8 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerAndMockEnvVariableWhenCreate
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsAndDebugKeysReadEnabledOnDisabledDebugManagerWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     FullyDisabledTestDebugManager debugManager;
     debugManager.flags.PrintDebugSettings.set(true);
     debugManager.flags.LoopAtDriverInit.set(true);
@@ -66,7 +68,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsAndDebugKeysReadEnabledOnDisab
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
     std::remove(FullyDisabledTestDebugManager::settingsDumpFileName);
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     ASSERT_NE(0u, output.size());
 
     EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: TbxServer = 192.168.0.1"));

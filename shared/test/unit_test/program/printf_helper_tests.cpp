@@ -8,6 +8,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/print_formatter.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_kernel_info.h"
 
@@ -1009,9 +1010,10 @@ TEST_F(PrintFormatterTest, GivenTypeSmallerThan4BThenItIsReadAs4BValue) {
 }
 
 TEST(printToStdoutTest, GivenStringWhenPrintingToStdoutThenOutputOccurs) {
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     printToStdout("test");
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STREQ("test", output.c_str());
 }
 

@@ -15,6 +15,7 @@
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -563,7 +564,8 @@ TEST_F(InternalsEventTest, GivenSubmitCommandTrueWhenSubmittingCommandsThenRefAp
 TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOutput) {
     MockCommandQueue mockCmdQueue(mockContext, pClDevice, nullptr, false);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     MockEvent<Event> event(&mockCmdQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
@@ -606,7 +608,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     EXPECT_EQ(mockCmdQueue.getHeaplessStateInitEnabled() ? 2u : 1u, mockCmdQueue.latestTaskCountWaited);
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STREQ("test", output.c_str());
     EXPECT_FALSE(surface->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
 }
@@ -615,7 +617,8 @@ TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWit
     MockCommandQueue mockCmdQueue(mockContext, pClDevice, nullptr, false);
     mockCmdQueue.waitUntilCompleteReturnValue = WaitStatus::gpuHang;
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     MockEvent<Event> event(&mockCmdQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
@@ -657,14 +660,15 @@ TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWit
     event.submitCommand(false);
     EXPECT_EQ(Event::executionAbortedDueToGpuHang, event.peekExecutionStatus());
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STREQ("test", output.c_str());
 }
 
 TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWithPrintfWhenSubmittedThenEventIsAbortedAndHangIsReported) {
     MockCommandQueue mockCmdQueue(mockContext, pClDevice, nullptr, false);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     MockEvent<Event> event(&mockCmdQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
@@ -706,7 +710,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWi
     event.submitCommand(false);
     EXPECT_EQ(Event::executionAbortedDueToGpuHang, event.peekExecutionStatus());
 
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_TRUE(output.empty());
 }
 
