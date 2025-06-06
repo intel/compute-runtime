@@ -414,6 +414,11 @@ struct CommandListCoreFamily : public CommandListImp {
     void dispatchInOrderPostOperationBarrier(Event *signalOperation, bool dcFlushRequired, bool copyOperation);
     NEO::GraphicsAllocation *getDeviceCounterAllocForResidency(NEO::GraphicsAllocation *counterDeviceAlloc);
     bool isHighPriorityImmediateCmdList() const;
+    void prefetchKernelMemory(NEO::LinearStream &cmdStream, const Kernel &kernel, const NEO::GraphicsAllocation &ioh, size_t iohOffset, CommandToPatchContainer *outListCommands, uint64_t cmdId);
+    virtual void addKernelIsaMemoryPrefetchPadding(NEO::LinearStream &cmdStream, const Kernel &kernel, uint64_t cmdId) {}
+    virtual void addKernelIndirectDataMemoryPrefetchPadding(NEO::LinearStream &cmdStream, const Kernel &kernel, uint64_t cmdId) {}
+    virtual uint64_t getPrefetchCmdId() const { return std::numeric_limits<uint64_t>::max(); }
+    virtual uint32_t getIohSizeForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace) const;
 
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 

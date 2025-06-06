@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwT
     mockKernelInfo->heapInfo.kernelHeapSize = MemoryConstants::pageSize;
     kernelInfo = mockKernelInfo;
 
-    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto ptr = reinterpret_cast<void *>(0x1234000);
     isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
                                                                 1u /*num gmms*/,
                                                                 NEO::AllocationType::kernelIsa,

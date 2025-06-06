@@ -395,6 +395,37 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programL3(bool isSLMused) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStream &cmdStream, const Kernel &kernel, const NEO::GraphicsAllocation &ioh, size_t iohOffset, CommandToPatchContainer *outListCommands, uint64_t cmdId) {
+    if (NEO::debugManager.flags.EnableMemoryPrefetch.get() != 1) {
+        return;
+    }
+
+    auto &rootExecEnv = device->getNEODevice()->getRootDeviceEnvironment();
+
+    auto currentCmdStreamPtr = cmdStream.getSpace(0);
+    auto cmdStreamOffset = cmdStream.getUsed();
+
+    NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, ioh, kernel.getIndirectSize(), iohOffset, rootExecEnv);
+    addKernelIndirectDataMemoryPrefetchPadding(cmdStream, kernel, cmdId);
+
+    NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *kernel.getIsaAllocation(), kernel.getImmutableData()->getIsaSize(), kernel.getIsaOffsetInParentAllocation(), rootExecEnv);
+    addKernelIsaMemoryPrefetchPadding(cmdStream, kernel, cmdId);
+
+    if (outListCommands) {
+        auto &prefetchToPatch = outListCommands->emplace_back();
+        prefetchToPatch.type = CommandToPatch::PrefetchKernelMemory;
+        prefetchToPatch.pDestination = currentCmdStreamPtr;
+        prefetchToPatch.patchSize = cmdStream.getUsed() - cmdStreamOffset;
+        prefetchToPatch.offset = iohOffset;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+uint32_t CommandListCoreFamily<gfxCoreFamily>::getIohSizeForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace) const {
+    return kernel.getIndirectSize() + reserveExtraSpace;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_handle_t kernelHandle,
                                                                      const ze_group_count_t &threadGroupDimensions,
                                                                      ze_event_handle_t hEvent,
@@ -413,13 +444,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
             callId);
     }
 
-    if (NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1) {
-        auto kernel = Kernel::fromHandle(kernelHandle);
-        NEO::LinearStream &cmdStream = *commandContainer.getCommandStream();
-        auto heap = commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
-        NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *heap->getGraphicsAllocation(), kernel->getIndirectSize(), heap->getUsed(), device->getNEODevice()->getRootDeviceEnvironment());
-        NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *kernel->getIsaAllocation(), static_cast<uint32_t>(kernel->getImmutableData()->getIsaSize()), kernel->getIsaOffsetInParentAllocation(), device->getNEODevice()->getRootDeviceEnvironment());
-    }
+    auto kernel = Kernel::fromHandle(kernelHandle);
+    auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(*kernel, launchParams.reserveExtraPayloadSpace), GfxFamily::indirectDataAlignment);
+
+    prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, *ioh->getGraphicsAllocation(), ioh->getUsed(), launchParams.outListCommands, getPrefetchCmdId());
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, launchParams.outListCommands, launchParams.relaxedOrderingDispatch, true, true, launchParams.omitAddingWaitEventsResidency, false);
     if (ret) {
@@ -445,8 +473,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto res = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), threadGroupDimensions,
-                                            event, launchParams);
+    auto res = appendLaunchKernelWithParams(kernel, threadGroupDimensions, event, launchParams);
 
     if (!launchParams.skipInOrderNonWalkerSignaling) {
         handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event) && !(event && event->isCounterBased() && event->isUsingContextEndOffset()), false);

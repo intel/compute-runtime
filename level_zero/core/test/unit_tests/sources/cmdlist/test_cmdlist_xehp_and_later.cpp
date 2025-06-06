@@ -2997,6 +2997,51 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     EXPECT_EQ(expectedSize, ioh->getUsed());
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughIohSpaceWhenLaunchingKernelThenReallocateBeforePrefetch, IsAtLeastXeHpcCore) {
+    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableMemoryPrefetch.set(1);
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+    kernel.descriptor.kernelAttributes.flags.passInlineData = false;
+    kernel.perThreadDataSizeForWholeThreadGroup = 0;
+    kernel.crossThreadDataSize = 64;
+    kernel.crossThreadData = std::make_unique<uint8_t[]>(kernel.crossThreadDataSize);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &commandContainer = commandList->getCmdContainer();
+    auto cmdStream = commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.reserveExtraPayloadSpace = 1024;
+
+    auto ioh = commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+    ioh->getSpace(ioh->getMaxAvailableSpace() - (launchParams.reserveExtraPayloadSpace + kernel.getIndirectSize() + 1));
+
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ioh = commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+    auto prefetchList = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(prefetchList, cmdList.end());
+
+    auto statePrefetch = genCmdCast<STATE_PREFETCH *>(*prefetchList);
+    ASSERT_NE(nullptr, statePrefetch);
+
+    EXPECT_EQ(ioh->getGraphicsAllocation()->getGpuAddress(), statePrefetch->getAddress());
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel,
           givenFlagMakeKernelCommandViewWhenAppendKernelWithSignalEventThenDispatchNoPostSyncInViewMemoryAndNoEventAllocationAddedToResidency,
           IsAtLeastXeHpCore) {

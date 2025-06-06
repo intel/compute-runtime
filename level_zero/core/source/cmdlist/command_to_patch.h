@@ -31,6 +31,7 @@ struct CommandToPatch {
         ComputeWalkerInlineDataScratch,
         ComputeWalkerImplicitArgsScratch,
         NoopSpace,
+        PrefetchKernelMemory,
         Invalid
     };
     void *pDestination = nullptr;
