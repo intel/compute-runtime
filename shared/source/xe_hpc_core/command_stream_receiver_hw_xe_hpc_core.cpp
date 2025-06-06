@@ -102,27 +102,35 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
     blitCmd.setDestinationMOCS(mocs);
     blitCmd.setSourceMOCS(mocs);
 
-    if (dstAllocation->isCompressionEnabled()) {
-        auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
-        blitCmd.setDestinationCompressible(MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-        blitCmd.setCompressionFormat(compressionFormat);
+    if (dstAllocation) {
+        if (dstAllocation->isCompressionEnabled()) {
+            auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
+            auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+            blitCmd.setDestinationCompressible(MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
+            blitCmd.setCompressionFormat(compressionFormat);
+        }
     }
-    if (srcAllocation->isCompressionEnabled()) {
-        auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
-        blitCmd.setSourceCompressible(MEM_COPY::SOURCE_COMPRESSIBLE::SOURCE_COMPRESSIBLE_COMPRESSIBLE);
-        blitCmd.setCompressionFormat(compressionFormat);
+    if (srcAllocation) {
+        if (srcAllocation->isCompressionEnabled()) {
+            auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
+            auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+            blitCmd.setSourceCompressible(MEM_COPY::SOURCE_COMPRESSIBLE::SOURCE_COMPRESSIBLE_COMPRESSIBLE);
+            blitCmd.setCompressionFormat(compressionFormat);
+        }
     }
 
     if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (!MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
-            blitCmd.setSourceCompressible(MEM_COPY::SOURCE_COMPRESSIBLE::SOURCE_COMPRESSIBLE_COMPRESSIBLE);
-            blitCmd.setCompressionFormat(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
+        if (srcAllocation) {
+            if (!MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
+                blitCmd.setSourceCompressible(MEM_COPY::SOURCE_COMPRESSIBLE::SOURCE_COMPRESSIBLE_COMPRESSIBLE);
+                blitCmd.setCompressionFormat(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
+            }
         }
-        if (!MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
-            blitCmd.setDestinationCompressible(MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-            blitCmd.setCompressionFormat(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
+        if (dstAllocation) {
+            if (!MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
+                blitCmd.setDestinationCompressible(MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
+                blitCmd.setCompressionFormat(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
+            }
         }
     }
 

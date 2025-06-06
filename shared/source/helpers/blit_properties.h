@@ -47,6 +47,9 @@ struct BlitSyncProperties {
 
 struct BlitProperties {
     static BlitProperties constructPropertiesForMemoryFill(GraphicsAllocation *dstAllocation, size_t size, uint32_t *pattern, size_t patternSize, size_t offset);
+
+    static BlitProperties constructPropertiesForSystemMemoryFill(uint64_t dstPtr, size_t size, uint32_t *pattern, size_t patternSize, size_t offset);
+
     static BlitProperties constructPropertiesForReadWrite(BlitterConstants::BlitDirection blitDirection,
                                                           CommandStreamReceiver &commandStreamReceiver,
                                                           GraphicsAllocation *memObjAllocation,
@@ -61,6 +64,11 @@ struct BlitProperties {
                                                      const Vec3<size_t> &dstOffset, const Vec3<size_t> &srcOffset, Vec3<size_t> copySize,
                                                      size_t srcRowPitch, size_t srcSlicePitch,
                                                      size_t dstRowPitch, size_t dstSlicePitch, GraphicsAllocation *clearColorAllocation);
+
+    static BlitProperties constructPropertiesForSystemCopy(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation, uint64_t dstPtr, uint64_t srcPtr,
+                                                           const Vec3<size_t> &dstOffset, const Vec3<size_t> &srcOffset, Vec3<size_t> copySize,
+                                                           size_t srcRowPitch, size_t srcSlicePitch,
+                                                           size_t dstRowPitch, size_t dstSlicePitch, GraphicsAllocation *clearColorAllocation);
 
     static BlitProperties constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
                                                                GraphicsAllocation *allocation, GraphicsAllocation *clearColorAllocation);

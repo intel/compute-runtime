@@ -319,7 +319,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const B
     uint64_t offset = blitProperties.dstOffset.x;
     while (sizeToFill != 0) {
         auto tmpCmd = blitCmd;
-        tmpCmd.setDestinationBaseAddress(ptrOffset(blitProperties.dstAllocation->getGpuAddress(), static_cast<size_t>(offset)));
+        tmpCmd.setDestinationBaseAddress(ptrOffset(blitProperties.dstGpuAddress, static_cast<size_t>(offset)));
         uint64_t height = 0;
         uint64_t width = 0;
         if (sizeToFill <= maxWidth) {
@@ -338,7 +338,9 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const B
         tmpCmd.setDestinationY2CoordinateBottom(static_cast<uint32_t>(height));
         tmpCmd.setDestinationPitch(static_cast<uint32_t>(width * patternSize));
 
-        appendBlitMemoryOptionsForFillBuffer(blitProperties.dstAllocation, tmpCmd, rootDeviceEnvironment);
+        if (blitProperties.dstAllocation) {
+            appendBlitMemoryOptionsForFillBuffer(blitProperties.dstAllocation, tmpCmd, rootDeviceEnvironment);
+        }
         appendBlitFillCommand(blitProperties, tmpCmd);
 
         if (useAdditionalBlitProperties && (firstCommand || lastCommand)) {

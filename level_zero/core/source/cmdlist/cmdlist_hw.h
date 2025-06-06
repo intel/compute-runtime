@@ -343,7 +343,7 @@ struct CommandListCoreFamily : public CommandListImp {
     void appendDispatchOffsetRegister(bool workloadPartitionEvent, bool beforeProfilingCmds);
     size_t estimateBufferSizeMultiTileBarrier(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint32_t bufferRowPitch, uint32_t bufferSlicePitch, const ze_image_region_t *region);
-    MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocationData(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
+    MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocationData(Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
     size_t getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation);
     uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData);
     void handlePostSubmissionState();

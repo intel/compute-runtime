@@ -168,16 +168,34 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
 
     uint8_t compressionFormat = 0;
 
-    if (dstAllocation->isCompressionEnabled()) {
-        auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
-    } else if (srcAllocation->isCompressionEnabled()) {
-        auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    if (dstAllocation) {
+        if (dstAllocation->isCompressionEnabled()) {
+            auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
+            compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+        }
+    }
+    if (compressionFormat == 0) {
+        if (srcAllocation) {
+            if (srcAllocation->isCompressionEnabled()) {
+                auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
+                compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+            }
+        }
     }
 
     if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (!MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool()) || !MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
+        bool enable = false;
+        if (srcAllocation) {
+            if (!MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
+                enable = true;
+            }
+        }
+        if (dstAllocation) {
+            if (!MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
+                enable = true;
+            }
+        }
+        if (enable) {
             compressionFormat = static_cast<uint8_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
         }
     }

@@ -34,7 +34,7 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
 
     using BaseClass::getAllocationOffsetForAppendBlitFill;
 
-    AlignedAllocationData getAlignedAllocationData(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
+    AlignedAllocationData getAlignedAllocationData(L0::Device *device, bool sharedSystemEnabled, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
         return {0, 0, nullptr, true};
     }
     ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
@@ -83,6 +83,26 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillToNotDe
     void *ptr = reinterpret_cast<void *>(0x1234);
     auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ret, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillToSharedSystemUsmThenSuccessReturned) {
+    MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+
+    sharedSystemMemCapabilities = 0xf; // enables return true for Device::areSharedSystemAllocationsAllowed()
+
+    uint8_t pattern = 1;
+    size_t size = 0x1000;
+    void *ptr = malloc(size); // reinterpret_cast<void *>(0x1234);
+    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ret, ZE_RESULT_SUCCESS);
+    free(ptr);
 }
 
 using MemFillPlatforms = IsGen12LP;

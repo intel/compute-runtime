@@ -36,6 +36,24 @@ HWTEST2_F(BlitTests, givenOneBytePatternWhenFillPatternWithBlitThenCommandIsProg
     EXPECT_NE(cmdList.end(), itor);
 }
 
+HWTEST2_F(BlitTests, givenOneBytePatternWhenFillPatternWithSystemMemoryBlitThenCommandIsProgrammed, IsPVC) {
+    using MEM_SET = typename FamilyType::MEM_SET;
+    uint32_t pattern = 1;
+    void *dstPtr = malloc(4);
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+
+    auto blitProperties = BlitProperties::constructPropertiesForSystemMemoryFill(reinterpret_cast<uint64_t>(dstPtr), sizeof(uint32_t), &pattern, sizeof(uint8_t), 0);
+
+    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
+    auto itor = find<MEM_SET *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    free(dstPtr);
+}
+
 HWTEST2_F(BlitTests, givenDeviceWithoutDefaultGmmWhenAppendBlitCommandsForVillBufferThenDstCompressionDisabled, IsPVC) {
     using MEM_SET = typename FamilyType::MEM_SET;
     uint32_t pattern = 1;

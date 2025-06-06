@@ -432,6 +432,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForcePostSyncL1Flush, -1, "-1: default (do nothi
 DECLARE_DEBUG_VARIABLE(int32_t, AllowNotZeroForCompressedOnWddm, -1, "-1: default (do nothing), 0: do not set AllowNotZeroed for compressed resources, 1: set AllowNotZeroed for compressed resources");
 DECLARE_DEBUG_VARIABLE(int32_t, ForceWddmHugeChunkSizeMB, -1, "-1: default (do nothing), >0: set given huge chunk size in MegaBytes for WDDM");
 DECLARE_DEBUG_VARIABLE(int64_t, ForceGmmSystemMemoryBufferForAllocations, 0, "0: default, >0: (bitmask) for given Allocation Types, force GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER gmm resource type");
+DECLARE_DEBUG_VARIABLE(int32_t, EmitMemAdvisePriorToCopyForNonUsm, -1, "Enable Memadvise to system memory for copy/fill with shared system input: -1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, TreatNonUsmForTransfersAsSharedSystem, -1, "-1: default, 0: import non-usm as external host ptr on copy/fill (legacy mode), 1: treat non usm on copy/fill as shared system usm")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")

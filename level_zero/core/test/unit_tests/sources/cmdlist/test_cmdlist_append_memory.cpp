@@ -328,6 +328,40 @@ HWTEST_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCopy
     commandList->cmdQImmediate = nullptr;
 }
 
+HWTEST_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCopySharedSystemUsmThenSuccessIsReturned) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(1);
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    commandList->device = device;
+    commandList->cmdQImmediate = queue.get();
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+
+    sharedSystemMemCapabilities = 0xf;
+
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, queue->executeCommandListsCalled);
+    EXPECT_EQ(1u, queue->synchronizeCalled);
+
+    commandList->cmdQImmediate = nullptr;
+}
+
 HWTEST_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCopyWithInvalidEventThenInvalidArgumentErrorIsReturned) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -367,6 +401,37 @@ HWTEST_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemor
     EXPECT_EQ(0u, queue->synchronizeCalled);
     EXPECT_EQ(0u, commandList->commandContainer.getResidencyContainer().size());
     commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
+}
+
+HWTEST2_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineAndSharedSystemUsmThenSuccessIsReturned, IsNotXeHpgCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.set(-1);
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    commandList->device = device;
+    commandList->cmdQImmediate = queue.get();
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+
+    sharedSystemMemCapabilities = 0xf;
+
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, queue->executeCommandListsCalled);
+    EXPECT_EQ(0u, queue->synchronizeCalled);
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenProgramCmdStreamWithFlushTask) {

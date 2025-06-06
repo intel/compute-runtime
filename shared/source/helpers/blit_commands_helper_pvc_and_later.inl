@@ -47,13 +47,15 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(con
     blitCmd.setDestinationMOCS(mocs);
 
     uint32_t compressionFormat = 0;
-    if (blitProperties.dstAllocation->isCompressionEnabled()) {
-        auto resourceFormat = blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        compressionFormat = static_cast<uint32_t>(rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat));
+
+    if (blitProperties.dstAllocation) {
+        if (blitProperties.dstAllocation->isCompressionEnabled()) {
+            auto resourceFormat = blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
+            compressionFormat = static_cast<uint32_t>(rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat));
+        }
+
+        appendBlitMemSetCompressionFormat(&blitCmd, blitProperties.dstAllocation, compressionFormat);
     }
-
-    appendBlitMemSetCompressionFormat(&blitCmd, blitProperties.dstAllocation, compressionFormat);
-
     blitCmd.setFillData(*blitProperties.fillPattern);
 
     const bool useAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties();
@@ -64,7 +66,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(con
     bool firstCommand = true;
     while (sizeToFill != 0) {
         auto tmpCmd = blitCmd;
-        tmpCmd.setDestinationStartAddress(ptrOffset(blitProperties.dstAllocation->getGpuAddress(), static_cast<size_t>(offset)));
+        tmpCmd.setDestinationStartAddress(ptrOffset(blitProperties.dstGpuAddress, static_cast<size_t>(offset)));
         uint64_t height = 0;
         uint64_t width = 0;
         if (sizeToFill <= maxBlitSetWidth) {
