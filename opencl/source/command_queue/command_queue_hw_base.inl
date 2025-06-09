@@ -137,7 +137,9 @@ bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
     if (debugManager.flags.ForceCacheFlushForBcs.get() != -1) {
         return !!debugManager.flags.ForceCacheFlushForBcs.get();
     }
-    return true;
+
+    const auto &productHelper = this->device->getProductHelper();
+    return productHelper.isDcFlushAllowed();
 }
 
 template <typename TSPacketType>

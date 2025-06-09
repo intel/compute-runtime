@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,13 +27,6 @@ void populateFactoryTable<CommandQueueHw<Family>>() {
     commandQueueFactory[gfxCore] = CommandQueueHw<Family>::create;
 }
 
-template <>
-bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
-    if (debugManager.flags.ForceCacheFlushForBcs.get() != -1) {
-        return !!debugManager.flags.ForceCacheFlushForBcs.get();
-    }
-    return false;
-}
 } // namespace NEO
 
 template class NEO::CommandQueueHw<NEO::Family>;

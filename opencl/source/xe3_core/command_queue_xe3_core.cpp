@@ -27,16 +27,6 @@ void populateFactoryTable<CommandQueueHw<Family>>() {
     commandQueueFactory[gfxCore] = CommandQueueHw<Family>::create;
 }
 
-template <>
-bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
-    if (debugManager.flags.ForceCacheFlushForBcs.get() != -1) {
-        return !!debugManager.flags.ForceCacheFlushForBcs.get();
-    }
-
-    const auto &productHelper = this->device->getProductHelper();
-    return productHelper.isDcFlushAllowed();
-}
-
 } // namespace NEO
 
 template class NEO::CommandQueueHw<NEO::Family>;

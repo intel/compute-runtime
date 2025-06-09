@@ -196,10 +196,32 @@ HWTEST_F(CommandQueueHwTest, GivenCommandQueueWhenItIsCreatedThenInitDirectSubmi
     }
 }
 
-HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnTrue) {
-    auto pHwQ = static_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
+HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenAskingForCacheFlushOnBcsThenReturnCorrectValue) {
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(clDevice.get());
 
-    EXPECT_TRUE(pHwQ->isCacheFlushForBcsRequired());
+    cl_int retVal = CL_SUCCESS;
+    auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(&context, clDevice.get(), nullptr, false, retVal));
+    auto commandQueueHw = static_cast<CommandQueueHw<FamilyType> *>(commandQueue.get());
+
+    const auto &productHelper = clDevice->getProductHelper();
+    EXPECT_EQ(productHelper.isDcFlushAllowed(), commandQueueHw->isCacheFlushForBcsRequired());
+}
+
+HWTEST_F(CommandQueueHwTest, givenDebugFlagSetWhenCheckingBcsCacheFlushRequirementThenReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(clDevice.get());
+
+    cl_int retVal = CL_SUCCESS;
+    auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(&context, clDevice.get(), nullptr, false, retVal));
+    auto commandQueueHw = static_cast<CommandQueueHw<FamilyType> *>(commandQueue.get());
+
+    debugManager.flags.ForceCacheFlushForBcs.set(0);
+    EXPECT_FALSE(commandQueueHw->isCacheFlushForBcsRequired());
+
+    debugManager.flags.ForceCacheFlushForBcs.set(1);
+    EXPECT_TRUE(commandQueueHw->isCacheFlushForBcsRequired());
 }
 
 HWTEST_F(CommandQueueHwTest, givenBlockedMapBufferCallWhenMemObjectIsPassedToCommandThenItsRefCountIsBeingIncreased) {

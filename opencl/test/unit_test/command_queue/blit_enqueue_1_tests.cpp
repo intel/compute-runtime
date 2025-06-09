@@ -1235,16 +1235,6 @@ HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenGpuHangOnFlushBcsTaskAndBlockedQu
     abortedEvent->release();
 }
 
-HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenDebugFlagSetWhenCheckingBcsCacheFlushRequirementThenReturnCorrectValue) {
-    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
-
-    debugManager.flags.ForceCacheFlushForBcs.set(0);
-    EXPECT_FALSE(mockCommandQueue->isCacheFlushForBcsRequired());
-
-    debugManager.flags.ForceCacheFlushForBcs.set(1);
-    EXPECT_TRUE(mockCommandQueue->isCacheFlushForBcsRequired());
-}
-
 using BlitEnqueueTaskCountTests = BlitEnqueueTests<1>;
 
 HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, whenWaitUntilCompletionCalledThenWaitForSpecificBcsTaskCount) {
