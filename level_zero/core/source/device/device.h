@@ -95,7 +95,6 @@ struct Device : _ze_device_handle_t {
 
     virtual ~Device() = default;
 
-    virtual void *getExecEnvironment() = 0;
     virtual BuiltinFunctionsLib *getBuiltinFunctionsLib() = 0;
     virtual uint32_t getMOCS(bool l3enabled, bool l1enabled) = 0;
     virtual uint32_t getMaxNumHwThreads() const = 0;

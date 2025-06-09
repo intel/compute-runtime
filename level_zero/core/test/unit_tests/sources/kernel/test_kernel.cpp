@@ -3845,7 +3845,7 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
+        MockDeviceImp deviceImp(device.get());
 
         auto kernelInfo = std::make_unique<KernelInfo>();
         kernelInfo->heapInfo.kernelHeapSize = 1;
@@ -3905,7 +3905,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
             GTEST_SKIP();
         }
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
+        MockDeviceImp deviceImp(device.get());
 
         auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
         bcsCsr->callBaseFlushBcsTask = false;
@@ -4343,7 +4343,7 @@ TEST(KernelImmutableDataTest, givenBindlessKernelWhenInitializingImmDataThenSshT
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
+        MockDeviceImp deviceImp(device.get());
 
         auto kernelInfo = std::make_unique<KernelInfo>();
         kernelInfo->heapInfo.kernelHeapSize = 1;

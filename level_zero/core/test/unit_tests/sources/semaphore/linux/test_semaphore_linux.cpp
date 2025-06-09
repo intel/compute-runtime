@@ -46,7 +46,7 @@ class DrmSemaphoreFixture : public DeviceFixture {
 using DrmExternalSemaphoreTest = Test<DrmSemaphoreFixture>;
 
 HWTEST_F(DrmExternalSemaphoreTest, givenDriverModelDrmWhenImportExternalSemaphoreExpIsCalledThenUnsupportedFeatureIsReturned) {
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
     ze_external_semaphore_ext_desc_t desc = {};
     ze_external_semaphore_ext_handle_t hSemaphore;
     int fd = 0;

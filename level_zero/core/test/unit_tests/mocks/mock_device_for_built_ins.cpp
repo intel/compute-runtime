@@ -21,9 +21,6 @@ ze_result_t MockDeviceForBuiltinTests::MockModuleForBuiltinTests::createKernel(c
     return ZE_RESULT_SUCCESS;
 }
 
-MockDeviceForBuiltinTests::MockDeviceForBuiltinTests(NEO::Device *device) : MockDeviceImp(device, device->getExecutionEnvironment()) {
-}
-
 ze_result_t MockDeviceForBuiltinTests::createModule(const ze_module_desc_t *desc,
                                                     ze_module_handle_t *module,
                                                     ze_module_build_log_handle_t *buildLog, ModuleType type) {

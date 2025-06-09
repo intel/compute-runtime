@@ -2962,7 +2962,7 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
 
     auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
 
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice);
     l0Device.setDriverHandle(device->getDriverHandle());
 
     auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
