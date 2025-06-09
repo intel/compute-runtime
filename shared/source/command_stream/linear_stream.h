@@ -48,6 +48,8 @@ class LinearStream : NEO::NonCopyableAndNonMovableClass {
         return reinterpret_cast<Cmd *>(ptr);
     }
 
+    void ensureContinuousSpace(size_t size);
+
   protected:
     size_t sizeUsed = 0;
     size_t maxAvailableSpace{0};
@@ -66,15 +68,19 @@ inline void LinearStream::setGpuBase(uint64_t gpuAddress) {
     gpuBase = gpuAddress;
 }
 
+inline void LinearStream::ensureContinuousSpace(size_t size) {
+    if (cmdContainer && (getAvailableSpace() < (batchBufferEndSize + size))) {
+        UNRECOVERABLE_IF(sizeUsed + batchBufferEndSize > maxAvailableSpace);
+        cmdContainer->closeAndAllocateNextCommandBuffer();
+    }
+}
+
 inline void *LinearStream::getSpace(size_t size) {
     if (size == 0u) {
         return ptrOffset(buffer, sizeUsed);
     }
 
-    if (cmdContainer != nullptr && getAvailableSpace() < batchBufferEndSize + size) {
-        UNRECOVERABLE_IF(sizeUsed + batchBufferEndSize > maxAvailableSpace);
-        cmdContainer->closeAndAllocateNextCommandBuffer();
-    }
+    ensureContinuousSpace(size);
     UNRECOVERABLE_IF(sizeUsed + size > maxAvailableSpace);
     UNRECOVERABLE_IF(reinterpret_cast<int64_t>(buffer) == 0);
     auto memory = ptrOffset(buffer, sizeUsed);

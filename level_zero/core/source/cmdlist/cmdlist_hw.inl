@@ -396,7 +396,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programL3(bool isSLMused) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStream &cmdStream, const Kernel &kernel, const NEO::GraphicsAllocation &ioh, size_t iohOffset, CommandToPatchContainer *outListCommands, uint64_t cmdId) {
-    if (NEO::debugManager.flags.EnableMemoryPrefetch.get() != 1) {
+    if (!kernelMemoryPrefetchEnabled()) {
         return;
     }
 
@@ -447,6 +447,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     auto kernel = Kernel::fromHandle(kernelHandle);
     auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(*kernel, launchParams.reserveExtraPayloadSpace), GfxFamily::indirectDataAlignment);
 
+    ensureCmdBufferSpaceForPrefetch();
     prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, *ioh->getGraphicsAllocation(), ioh->getUsed(), launchParams.outListCommands, getPrefetchCmdId());
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, launchParams.outListCommands, launchParams.relaxedOrderingDispatch, true, true, launchParams.omitAddingWaitEventsResidency, false);

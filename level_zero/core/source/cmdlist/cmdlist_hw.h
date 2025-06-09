@@ -419,6 +419,8 @@ struct CommandListCoreFamily : public CommandListImp {
     virtual void addKernelIndirectDataMemoryPrefetchPadding(NEO::LinearStream &cmdStream, const Kernel &kernel, uint64_t cmdId) {}
     virtual uint64_t getPrefetchCmdId() const { return std::numeric_limits<uint64_t>::max(); }
     virtual uint32_t getIohSizeForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace) const;
+    virtual void ensureCmdBufferSpaceForPrefetch() {}
+    bool kernelMemoryPrefetchEnabled() const { return NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1; }
 
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
