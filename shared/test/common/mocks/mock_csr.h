@@ -29,13 +29,13 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
                 ExecutionEnvironment &executionEnvironment,
                 uint32_t rootDeviceIndex,
                 const DeviceBitfield deviceBitfield)
-        : BaseUltCsrClass(executionEnvironment, rootDeviceIndex, deviceBitfield), executionStamp(&execStamp), flushTaskStamp(-1) {
+        : BaseUltCsrClass(executionEnvironment, rootDeviceIndex, deviceBitfield), executionStamp(&execStamp) {
     }
 
     MockCsrBase(ExecutionEnvironment &executionEnvironment,
                 uint32_t rootDeviceIndex,
                 const DeviceBitfield deviceBitfield)
-        : BaseUltCsrClass(executionEnvironment, rootDeviceIndex, deviceBitfield), executionStamp(&defaultExecStamp), flushTaskStamp(-1) {
+        : BaseUltCsrClass(executionEnvironment, rootDeviceIndex, deviceBitfield), executionStamp(&defaultExecStamp) {
     }
 
     void makeResident(GraphicsAllocation &gfxAllocation) override {
@@ -84,10 +84,10 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
     ResidencyContainer madeResidentGfxAllocations;
     ResidencyContainer madeNonResidentGfxAllocations;
     int32_t *executionStamp;
-    int32_t flushTaskStamp;
+    int32_t flushTaskStamp = -1;
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     bool processEvictionCalled = false;
-    int32_t defaultExecStamp;
+    int32_t defaultExecStamp = 0;
 };
 
 template <typename GfxFamily>
@@ -104,12 +104,12 @@ class MockCsrAub : public MockCsrBase<GfxFamily> {
     MockCsrAub(ExecutionEnvironment &executionEnvironment,
                uint32_t rootDeviceIndex,
                const DeviceBitfield deviceBitfield)
-        : MockCsrBase<GfxFamily>(MockCsrBase<GfxFamily>::defaultExecStamp, executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+        : MockCsrBase<GfxFamily>(MockCsrBase<GfxFamily>::defaultExecStamp, executionEnvironment, rootDeviceIndex, deviceBitfield) {
+        this->defaultExecStamp = 1;
+    }
     CommandStreamReceiverType getType() const override {
         return CommandStreamReceiverType::aub;
     }
-
-    int32_t defaultExecStamp = 1;
 };
 
 template <typename GfxFamily>
@@ -193,7 +193,6 @@ class MockCsr : public MockCsrBase<GfxFamily> {
 
     bool slmUsedInLastFlushTask = false;
     TaskCountType lastTaskLevelToFlushTask = 0;
-    int32_t defaultExecStamp = 0;
 };
 
 template <typename GfxFamily>
