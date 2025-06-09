@@ -3446,7 +3446,14 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     if (ssh) {
         EXPECT_EQ(oldGfxHeapAllocation, ssh->getGraphicsAllocation());
     }
-    EXPECT_EQ(usedBefore, cmdListStream.getUsed());
+
+    size_t prefetchSize = 0;
+    if (commandList->kernelMemoryPrefetchEnabled()) {
+        prefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->getIndirectSize(), device->getNEODevice()->getRootDeviceEnvironment()) +
+                       NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->getImmutableData()->getIsaSize(), device->getNEODevice()->getRootDeviceEnvironment());
+    }
+
+    EXPECT_EQ(usedBefore + prefetchSize, cmdListStream.getUsed());
 }
 
 } // namespace ult

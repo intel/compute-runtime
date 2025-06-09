@@ -2908,6 +2908,9 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppending
         }
 
         auto itor = cmdList.begin();
+
+        UnitTestHelper<FamilyType>::skipStatePrefetch(itor);
+
         if (hasDependencySemaphore) {
             auto nPartition = std::min(immCmdList->inOrderExecInfo->getNumDevicePartitionsToWait(), partitionCount);
             for (uint32_t i = 0; i < nPartition; i++) {
@@ -3527,6 +3530,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingF
     ASSERT_EQ(2u + (ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired() ? 1 : 0), semaphores.size());
 
     auto itor = cmdList.begin();
+    UnitTestHelper<FamilyType>::skipStatePrefetch(itor);
 
     // implicit dependency
     auto gpuAddress = immCmdList2->inOrderExecInfo->getBaseDeviceAddress();
@@ -3582,6 +3586,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
                                                           (cmdStream->getUsed() - offset)));
 
         auto itor = cmdList.begin();
+        UnitTestHelper<FamilyType>::skipStatePrefetch(itor);
+
         if (immCmdList->isQwordInOrderCounter()) {
             std::advance(itor, 2);
         }

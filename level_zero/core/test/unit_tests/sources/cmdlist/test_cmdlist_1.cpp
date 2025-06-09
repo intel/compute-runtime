@@ -2143,7 +2143,10 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
         cmdStream->getUsed() - offset));
 
     // init registers
-    auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*genCmdList.begin());
+    auto iter = genCmdList.begin();
+    UnitTestHelper<FamilyType>::skipStatePrefetch(iter);
+
+    auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*iter);
     ASSERT_NE(nullptr, lrrCmd);
     lrrCmd++;
     lrrCmd++;

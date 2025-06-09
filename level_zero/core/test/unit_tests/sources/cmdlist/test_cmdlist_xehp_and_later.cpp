@@ -2741,12 +2741,14 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     ASSERT_NE(0u, storeRegMemList.size());
     ASSERT_NE(0u, outStoreRegMemCmdList.size());
 
-    ASSERT_EQ(storeRegMemList.size(), outStoreRegMemCmdList.size());
+    size_t additionalPatchCmdsSize = commandList->kernelMemoryPrefetchEnabled() ? 1 : 0;
+
+    ASSERT_EQ(storeRegMemList.size(), outStoreRegMemCmdList.size() - additionalPatchCmdsSize);
 
     for (size_t i = 0; i < storeRegMemList.size(); i++) {
         MI_STORE_REGISTER_MEM *storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*storeRegMemList[i]);
 
-        auto &cmdToPatch = outStoreRegMemCmdList[i];
+        auto &cmdToPatch = outStoreRegMemCmdList[i + additionalPatchCmdsSize];
         EXPECT_EQ(CommandToPatch::TimestampEventPostSyncStoreRegMem, cmdToPatch.type);
         MI_STORE_REGISTER_MEM *outStoreRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(cmdToPatch.pDestination);
         ASSERT_NE(nullptr, outStoreRegMem);
@@ -2804,7 +2806,9 @@ HWTEST2_F(CommandListAppendLaunchKernel,
         ptrOffset(cmdStream->getCpuBase(), commandStreamOffset),
         cmdStream->getUsed() - commandStreamOffset));
 
-    ASSERT_EQ(0u, outCbEventCmds.size());
+    size_t additionalPatchCmdsSize = commandList->kernelMemoryPrefetchEnabled() ? 1 : 0;
+
+    ASSERT_EQ(additionalPatchCmdsSize, outCbEventCmds.size());
     auto eventBaseAddress = event->getGpuAddress(device);
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(launchParams.outWalker);
@@ -2878,8 +2882,9 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto inOrderAllocation = event->getInOrderExecInfo()->getDeviceCounterAllocation();
 
     size_t expectedLoadRegImmCount = FamilyType::isQwordInOrderCounter ? 2 : 0;
+    size_t additionalPatchCmdsSize = commandList->kernelMemoryPrefetchEnabled() ? 1 : 0;
 
-    size_t expectedWaitCmds = 1 + expectedLoadRegImmCount;
+    size_t expectedWaitCmds = 1 + expectedLoadRegImmCount + additionalPatchCmdsSize;
     ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());
 
     auto loadRegImmList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -2889,27 +2894,31 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 
     size_t outCbWaitEventCmdsIndex = 0;
     for (; outCbWaitEventCmdsIndex < expectedLoadRegImmCount; outCbWaitEventCmdsIndex++) {
-        EXPECT_EQ(CommandToPatch::CbWaitEventLoadRegisterImm, outCbWaitEventCmds[outCbWaitEventCmdsIndex].type);
-        ASSERT_NE(nullptr, outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination);
-        ASSERT_EQ(*loadRegImmList[outCbWaitEventCmdsIndex], outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination);
-        auto loadRegImmCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination);
+        auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex + additionalPatchCmdsSize];
+
+        EXPECT_EQ(CommandToPatch::CbWaitEventLoadRegisterImm, cmd.type);
+        ASSERT_NE(nullptr, cmd.pDestination);
+        ASSERT_EQ(*loadRegImmList[outCbWaitEventCmdsIndex], cmd.pDestination);
+        auto loadRegImmCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(cmd.pDestination);
         ASSERT_NE(nullptr, loadRegImmCmd);
-        EXPECT_EQ(0u, outCbWaitEventCmds[outCbWaitEventCmdsIndex].inOrderPatchListIndex);
+        EXPECT_EQ(0u, cmd.inOrderPatchListIndex);
         auto registerNumber = 0x2600 + (4 * outCbWaitEventCmdsIndex);
-        EXPECT_EQ(registerNumber, outCbWaitEventCmds[outCbWaitEventCmdsIndex].offset);
+        EXPECT_EQ(registerNumber, cmd.offset);
     }
 
-    EXPECT_EQ(CommandToPatch::CbWaitEventSemaphoreWait, outCbWaitEventCmds[outCbWaitEventCmdsIndex].type);
-    ASSERT_NE(nullptr, outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination);
-    ASSERT_EQ(*semaphoreWaitList[0], outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination);
-    auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination);
+    auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex + additionalPatchCmdsSize];
+
+    EXPECT_EQ(CommandToPatch::CbWaitEventSemaphoreWait, cmd.type);
+    ASSERT_NE(nullptr, cmd.pDestination);
+    ASSERT_EQ(*semaphoreWaitList[0], cmd.pDestination);
+    auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd.pDestination);
     ASSERT_NE(nullptr, semaphoreWaitCmd);
-    EXPECT_EQ(eventCompletionAddress + outCbWaitEventCmds[outCbWaitEventCmdsIndex].offset, semaphoreWaitCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(eventCompletionAddress + cmd.offset, semaphoreWaitCmd->getSemaphoreGraphicsAddress());
 
     if (FamilyType::isQwordInOrderCounter) {
-        EXPECT_EQ(std::numeric_limits<size_t>::max(), outCbWaitEventCmds[outCbWaitEventCmdsIndex].inOrderPatchListIndex);
+        EXPECT_EQ(std::numeric_limits<size_t>::max(), cmd.inOrderPatchListIndex);
     } else {
-        EXPECT_EQ(0u, outCbWaitEventCmds[outCbWaitEventCmdsIndex].inOrderPatchListIndex);
+        EXPECT_EQ(0u, cmd.inOrderPatchListIndex);
     }
 
     auto &residencyContainer = commandContainer.getResidencyContainer();

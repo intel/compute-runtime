@@ -135,6 +135,7 @@ struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
     static size_t getWalkerSize(bool isHeaplessEnabled);
     template <typename WalkerType>
     static uint64_t getWalkerActivePostSyncAddress(WalkerType *walkerCmd);
+    static void skipStatePrefetch(GenCmdList::iterator &iter);
 
     static bool isHeaplessAllowed();
 };

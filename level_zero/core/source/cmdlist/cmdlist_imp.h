@@ -48,6 +48,7 @@ struct CommandListImp : public CommandList {
     NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
     void enableCopyOperationOffload();
     void setInterruptEventsCsr(NEO::CommandStreamReceiver &csr);
+    virtual bool kernelMemoryPrefetchEnabled() const = 0;
 
   protected:
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;

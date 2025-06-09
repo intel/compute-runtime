@@ -882,6 +882,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
 }
 
 HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectReturnPointsAndBbEndProgramming, FrontEndMultiReturnMatcher) {
+    debugManager.flags.EnableMemoryPrefetch.set(0);
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
@@ -1296,6 +1297,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 
 HWTEST2_F(FrontEndMultiReturnCommandListTest,
           givenFrontEndTrackingCmdListIsExecutedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectFrontEndProgrammingInCmdQueue, FrontEndMultiReturnMatcher) {
+    debugManager.flags.EnableMemoryPrefetch.set(0);
     using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;

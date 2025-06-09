@@ -223,6 +223,9 @@ uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress(WalkerType *walk
     return 0;
 }
 
+template <>
+void UnitTestHelper<Family>::skipStatePrefetch(GenCmdList::iterator &iter) {}
+
 template struct UnitTestHelper<Family>;
 template struct UnitTestHelperWithHeap<Family>;
 

@@ -49,6 +49,9 @@ bool UnitTestHelper<Family>::requiresTimestampPacketsInSystemMemory(HardwareInfo
     return true;
 }
 
+template <>
+void UnitTestHelper<Family>::skipStatePrefetch(GenCmdList::iterator &iter) {}
+
 template struct UnitTestHelper<Family>;
 template struct UnitTestHelperWithHeap<Family>;
 

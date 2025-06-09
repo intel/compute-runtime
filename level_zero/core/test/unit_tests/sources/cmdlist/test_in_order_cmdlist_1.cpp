@@ -6330,24 +6330,29 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeAndNoopWaitEve
 
     size_t expectedLoadRegImmCount = FamilyType::isQwordInOrderCounter ? 2 : 0;
 
-    size_t expectedWaitCmds = 1 + expectedLoadRegImmCount;
+    size_t additionalPatchCmdsSize = regularCmdList->kernelMemoryPrefetchEnabled() ? 1 : 0;
+    size_t expectedWaitCmds = 1 + expectedLoadRegImmCount + additionalPatchCmdsSize;
     ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());
 
     size_t outCbWaitEventCmdsIndex = 0;
     for (; outCbWaitEventCmdsIndex < expectedLoadRegImmCount; outCbWaitEventCmdsIndex++) {
-        EXPECT_EQ(CommandToPatch::CbWaitEventLoadRegisterImm, outCbWaitEventCmds[outCbWaitEventCmdsIndex].type);
-        auto registerNumber = 0x2600 + (4 * outCbWaitEventCmdsIndex);
-        EXPECT_EQ(registerNumber, outCbWaitEventCmds[outCbWaitEventCmdsIndex].offset);
+        auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex + additionalPatchCmdsSize];
 
-        ASSERT_NE(nullptr, outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination);
-        auto memCmpRet = memcmp(outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination, noopedLriBuffer, sizeof(MI_LOAD_REGISTER_IMM));
+        EXPECT_EQ(CommandToPatch::CbWaitEventLoadRegisterImm, cmd.type);
+        auto registerNumber = 0x2600 + (4 * outCbWaitEventCmdsIndex);
+        EXPECT_EQ(registerNumber, cmd.offset);
+
+        ASSERT_NE(nullptr, cmd.pDestination);
+        auto memCmpRet = memcmp(cmd.pDestination, noopedLriBuffer, sizeof(MI_LOAD_REGISTER_IMM));
         EXPECT_EQ(0, memCmpRet);
     }
 
-    EXPECT_EQ(CommandToPatch::CbWaitEventSemaphoreWait, outCbWaitEventCmds[outCbWaitEventCmdsIndex].type);
+    auto &cmd = outCbWaitEventCmds[outCbWaitEventCmdsIndex + additionalPatchCmdsSize];
 
-    ASSERT_NE(nullptr, outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination);
-    auto memCmpRet = memcmp(outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination, noopedSemWaitBuffer, sizeof(MI_SEMAPHORE_WAIT));
+    EXPECT_EQ(CommandToPatch::CbWaitEventSemaphoreWait, cmd.type);
+
+    ASSERT_NE(nullptr, cmd.pDestination);
+    auto memCmpRet = memcmp(cmd.pDestination, noopedSemWaitBuffer, sizeof(MI_SEMAPHORE_WAIT));
     EXPECT_EQ(0, memCmpRet);
 }
 

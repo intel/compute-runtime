@@ -35,4 +35,11 @@ bool UnitTestHelper<GfxFamily>::isAdditionalSynchronizationRequired() {
     return true;
 }
 
+template <typename GfxFamily>
+void UnitTestHelper<GfxFamily>::skipStatePrefetch(GenCmdList::iterator &iter) {
+    while (genCmdCast<typename GfxFamily::STATE_PREFETCH *>(*iter)) {
+        iter++;
+    }
+}
+
 } // namespace NEO

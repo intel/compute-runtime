@@ -355,6 +355,8 @@ struct MockCommandList : public CommandList {
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE_VOIDRETURN(patchInOrderCmds, (void));
 
+    ADDMETHOD_CONST_NOBASE(kernelMemoryPrefetchEnabled, bool, false, (void));
+
     ADDMETHOD_NOBASE(appendLaunchKernel, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_kernel_handle_t kernelHandle,
                       const ze_group_count_t &threadGroupDimensions,
