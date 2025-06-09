@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -82,7 +82,7 @@ if(TARGET igdrcl_aub_tests)
 
   unset(GTEST_OUTPUT)
   if(DEFINED GTEST_OUTPUT_DIR)
-    set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ocl_${product}_${revision_id}_aub_tests_results.json")
+    set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ocl-${product}-${revision_id}-aub_tests-results.json")
   endif()
 
   add_custom_command(
@@ -106,7 +106,7 @@ if(TARGET ze_intel_gpu_aub_tests)
 
   unset(GTEST_OUTPUT)
   if(DEFINED GTEST_OUTPUT_DIR)
-    set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ze_intel_gpu_${product}_${revision_id}_aub_tests_results.json")
+    set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ze_intel_gpu-${product}-${revision_id}-aub_tests-results.json")
   endif()
 
   add_custom_command(
