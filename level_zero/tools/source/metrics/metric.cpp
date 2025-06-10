@@ -121,6 +121,7 @@ ze_result_t MetricDeviceContext::metricGroupGet(uint32_t *pCount, zet_metric_gro
             }
         }
     }
+
     *pCount = availableCount;
     return result;
 }
