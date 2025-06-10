@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -161,10 +161,17 @@ if(UNIX)
   endif()
 
   if(NEO__IGC_FOUND)
-    list(APPEND _external_package_dependencies_debian "intel-igc-opencl-2(=${NEO__IGC_VERSION})")
-    list(APPEND _external_package_dependencies_rpm "intel-igc-opencl-2 = ${NEO__IGC_VERSION}")
-    list(APPEND _igc_package_dependencies_debian "intel-igc-opencl-2(=${NEO__IGC_VERSION})")
-    list(APPEND _igc_package_dependencies_rpm "intel-igc-opencl-2 = ${NEO__IGC_VERSION}")
+    string(REPLACE "." ";" NEO__IGC_VERSION_list ${NEO__IGC_VERSION})
+    list(GET NEO__IGC_VERSION_list 0 NEO__IGC_VERSION_MAJOR)
+    list(GET NEO__IGC_VERSION_list 1 NEO__IGC_VERSION_MINOR)
+    math(EXPR NEO__IGC_VERSION_MINOR_UPPER "${NEO__IGC_VERSION_MINOR} + 3")
+    set(NEO__IGC_VERSION_LOWER "${NEO__IGC_VERSION_MAJOR}.${NEO__IGC_VERSION_MINOR}")
+    set(NEO__IGC_VERSION_UPPER "${NEO__IGC_VERSION_MAJOR}.${NEO__IGC_VERSION_MINOR_UPPER}")
+
+    list(APPEND _external_package_dependencies_debian "intel-igc-opencl-2 (>=${NEO__IGC_VERSION_LOWER}), intel-igc-opencl-2 (<<${NEO__IGC_VERSION_UPPER})")
+    list(APPEND _external_package_dependencies_rpm "intel-igc-opencl-2 >= ${NEO__IGC_VERSION_LOWER}, intel-igc-opencl-2 < ${NEO__IGC_VERSION_UPPER}")
+    list(APPEND _igc_package_dependencies_debian "intel-igc-opencl-2 (>=${NEO__IGC_VERSION_LOWER}), intel-igc-opencl-2 (<<${NEO__IGC_VERSION_UPPER})")
+    list(APPEND _igc_package_dependencies_rpm "intel-igc-opencl-2 >= ${NEO__IGC_VERSION_LOWER}, intel-igc-opencl-2 < ${NEO__IGC_VERSION_UPPER}")
   else()
     list(APPEND _external_package_dependencies_debian "intel-igc-opencl-2")
     list(APPEND _external_package_dependencies_rpm "intel-igc-opencl-2")

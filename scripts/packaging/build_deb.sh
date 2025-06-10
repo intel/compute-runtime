@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -90,17 +90,26 @@ if [ -z "${BRANCH_SUFFIX}" ]; then
     if [ ! -z "${GMM_DEVEL_VERSION}" ]; then
         perl -pi -e "s/^ libigdgmm-dev(?=,|$)/ libigdgmm-dev (>=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
     fi
-    IGC_CORE_VERSION=$(apt-cache policy intel-igc-core-2 | grep Installed | cut -f2- -d ':' | xargs)
-    if [ ! -z "${IGC_CORE_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-core-2(?=,|$)/ intel-igc-core-2 (=$IGC_CORE_VERSION)/" "$BUILD_DIR/debian/control"
+    IGC_CORE_VERSION_LOWER=$(apt-cache policy intel-igc-core-2 | grep Installed | cut -f2- -d ':' | cut -f1-2 -d'.' | xargs)
+    if [ ! -z "${IGC_CORE_VERSION_LOWER}" ]; then
+        IGC_CORE_VERSION_MAJOR="${IGC_CORE_VERSION_LOWER%%.*}"
+        IGC_CORE_VERSION_MINOR="${IGC_CORE_VERSION_LOWER##*.}"
+        IGC_CORE_VERSION_UPPER="${IGC_CORE_VERSION_MAJOR}.$((IGC_CORE_VERSION_MINOR + 3))"
+        perl -pi -e "s/^ intel-igc-core-2(?=,|$)/ intel-igc-core-2 (>=$IGC_CORE_VERSION_LOWER), intel-igc-core-2 (<<$IGC_CORE_VERSION_UPPER)/" "$BUILD_DIR/debian/control"
     fi
-    IGC_VERSION=$(apt-cache policy intel-igc-opencl-2 | grep Installed | cut -f2- -d ':' | xargs)
-    if [ ! -z "${IGC_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-opencl-2(?=,|$)/ intel-igc-opencl-2 (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
+    IGC_VERSION_LOWER=$(apt-cache policy intel-igc-opencl-2 | grep Installed | cut -f2- -d ':' | cut -f1-2 -d'.' | xargs)
+    if [ ! -z "${IGC_VERSION_LOWER}" ]; then
+        IGC_VERSION_MAJOR="${IGC_VERSION_LOWER%%.*}"
+        IGC_VERSION_MINOR="${IGC_VERSION_LOWER##*.}"
+        IGC_VERSION_UPPER="${IGC_VERSION_MAJOR}.$((IGC_VERSION_MINOR + 3))"
+        perl -pi -e "s/^ intel-igc-opencl-2(?=,|$)/ intel-igc-opencl-2 (>=$IGC_VERSION_LOWER), intel-igc-opencl-2 (<<$IGC_VERSION_UPPER)/" "$BUILD_DIR/debian/control"
     fi
-    IGC_DEVEL_VERSION=$(apt-cache policy intel-igc-opencl-devel | grep Installed | cut -f2- -d ':' | xargs)
-    if [ ! -z "${IGC_DEVEL_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-opencl-devel(?=,|$)/ intel-igc-opencl-devel (=$IGC_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+    IGC_DEVEL_VERSION_LOWER=$(apt-cache policy intel-igc-opencl-devel | grep Installed | cut -f2- -d ':' | cut -f1-2 -d'.' | xargs)
+    if [ ! -z "${IGC_DEVEL_VERSION_LOWER}" ]; then
+        IGC_DEVEL_VERSION_MAJOR="${IGC_DEVEL_VERSION_LOWER%%.*}"
+        IGC_DEVEL_VERSION_MINOR="${IGC_DEVEL_VERSION_LOWER##*.}"
+        IGC_DEVEL_VERSION_UPPER="${IGC_DEVEL_VERSION_MAJOR}.$((IGC_DEVEL_VERSION_MINOR + 3))"
+        perl -pi -e "s/^ intel-igc-opencl-devel(?=,|$)/ intel-igc-opencl-devel (>=$IGC_DEVEL_VERSION_LOWER), intel-igc-opencl-devel (<<$IGC_DEVEL_VERSION_UPPER)/" "$BUILD_DIR/debian/control"
     fi
 fi
 
