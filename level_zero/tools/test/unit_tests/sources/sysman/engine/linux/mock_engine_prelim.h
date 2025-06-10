@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,6 +116,11 @@ struct MockEnginePmuInterfaceImpPrelim : public PmuInterfaceImp {
     int32_t mockErrorNumber = -ENOSPC;
     int32_t mockPerfEventOpenFailAtCount = 1;
     uint64_t mockTimestamp = 87654321;
+    static uint32_t engineConfigIndex;
+    std::vector<uint64_t> mockSingleEngineConfigs = {
+        __PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(0),
+        PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 0),
+        __PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(0)};
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
 
@@ -157,7 +162,7 @@ struct MockEnginePmuInterfaceImpPrelim : public PmuInterfaceImp {
     int64_t pmuInterfaceOpen(uint64_t config, int group, uint32_t format) override {
 
         if (group > -1 && MockEngineNeoDrmPrelim::mockQuerySingleEngineInstance == true) {
-            uint64_t testConfig = PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 0);
+            auto testConfig = mockSingleEngineConfigs[engineConfigIndex++];
             EXPECT_EQ(config, testConfig);
         }
         return PmuInterfaceImp::pmuInterfaceOpen(config, group, format);
