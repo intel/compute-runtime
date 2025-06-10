@@ -20,7 +20,7 @@ bool ProductHelperHw<gfxProduct>::deferMOCSToPatIndex(bool isWddmOnLinux) const 
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
-    return false;
+    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

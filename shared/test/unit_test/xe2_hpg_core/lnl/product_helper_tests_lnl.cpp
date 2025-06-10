@@ -114,6 +114,10 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCallIsCachingOnCpuAvailableThe
     EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
 }
 
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
+}
+
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;

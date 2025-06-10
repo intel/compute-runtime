@@ -9,6 +9,7 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -304,7 +305,16 @@ BuiltinFunctionsLibImpl::BuiltinFunctionsLibImpl(Device *device, NEO::BuiltIns *
         this->initAsyncComplete = false;
 
         auto initFunc = [this]() {
-            this->initBuiltinKernel(Builtin::fillBufferImmediate);
+            const auto &compilerProductHelper = this->device->getCompilerProductHelper();
+
+            if (compilerProductHelper.isHeaplessModeEnabled(this->device->getHwInfo())) {
+                this->initBuiltinKernel(Builtin::fillBufferImmediateStatelessHeapless);
+            } else if (compilerProductHelper.isForceToStatelessRequired()) {
+                this->initBuiltinKernel(Builtin::fillBufferImmediateStateless);
+            } else {
+                this->initBuiltinKernel(Builtin::fillBufferImmediate);
+            }
+
             this->initAsync.store(true);
         };
 
