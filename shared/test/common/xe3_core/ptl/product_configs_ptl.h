@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 namespace AOT_PTL {
 inline constexpr AOT::PRODUCT_CONFIG productConfigs[] = {

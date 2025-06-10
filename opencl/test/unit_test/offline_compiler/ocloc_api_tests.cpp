@@ -29,7 +29,7 @@
 #include "environment.h"
 #include "gtest/gtest.h"
 #include "hw_cmds_default.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 #include <algorithm>
 #include <array>

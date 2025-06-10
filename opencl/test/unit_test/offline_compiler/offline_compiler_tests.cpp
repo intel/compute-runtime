@@ -41,7 +41,7 @@
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_multi_command.h"
 #include "mock/mock_offline_compiler.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 #include <algorithm>
 #include <array>
@@ -591,7 +591,7 @@ TEST_F(MockOfflineCompilerTests, givenDeviceIdsFromDevicesFileWhenInitHwInfoThen
         mockOfflineCompiler.deviceConfig = AOT::UNKNOWN_ISA;
         std::stringstream deviceIDStr;
         deviceIDStr << "0x" << std::hex << deviceId;
-        EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.initHardwareInfo(deviceIDStr.str()));
+        EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.initHardwareInfo(deviceIDStr.str())) << deviceIDStr.str();
         EXPECT_NE(mockOfflineCompiler.deviceConfig, AOT::UNKNOWN_ISA);
     }
 }
@@ -1332,7 +1332,7 @@ TEST_F(OfflineCompilerTests, givenDeviceHexIdAndDeviceOptionsInGeneralWhenCmdLin
         };
 
         if (addFirstMatchingAcronym(AOT::deviceAcronyms) ||
-            addFirstMatchingAcronym(AOT::rtlIdAcronyms) ||
+            addFirstMatchingAcronym(AOT::getRtlIdAcronyms()) ||
             addFirstMatchingAcronym(AOT::genericIdAcronyms)) {
             break;
         }

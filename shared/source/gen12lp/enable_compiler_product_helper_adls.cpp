@@ -14,7 +14,7 @@
 #include "shared/source/helpers/compiler_product_helper_product_config_default.inl"
 #include "shared/source/helpers/compiler_product_helper_tgllp_and_later.inl"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 namespace NEO {
 template <>

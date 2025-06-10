@@ -15,7 +15,7 @@
 #include "opencl/test/unit_test/offline_compiler/mock/mock_offline_compiler.h"
 
 #include "device_ids_configs_ptl.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 using namespace NEO;
 

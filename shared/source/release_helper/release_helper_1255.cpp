@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/release_helper/release_helper_base.inl"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 #include "release_definitions.h"
 
 namespace NEO {

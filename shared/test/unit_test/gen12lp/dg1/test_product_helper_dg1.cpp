@@ -16,7 +16,7 @@
 
 #include "aubstream/product_family.h"
 #include "hw_cmds.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 using namespace NEO;
 

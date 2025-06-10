@@ -13,7 +13,7 @@
 #include "shared/source/helpers/compiler_product_helper_xe_hp_and_later.inl"
 #include "shared/source/helpers/compiler_product_helper_xe_hpc_and_later.inl"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 namespace NEO {
 template <>

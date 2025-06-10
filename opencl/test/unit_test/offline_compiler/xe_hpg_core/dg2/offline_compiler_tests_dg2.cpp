@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "opencl/test/unit_test/offline_compiler/ocloc_fatbinary_tests.h"
 #include "opencl/test/unit_test/offline_compiler/ocloc_product_config_tests.h"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 namespace NEO {
 
 inline constexpr AOT::PRODUCT_CONFIG productConfigs[] = {

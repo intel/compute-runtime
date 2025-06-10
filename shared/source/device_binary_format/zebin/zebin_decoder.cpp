@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@
 #include "shared/source/program/program_info.h"
 #include "shared/source/utilities/logger.h"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 namespace NEO {
 template <>
@@ -45,8 +45,8 @@ bool isZebin(ArrayRef<const uint8_t> binary) {
 
 bool isTargetProductConfigCompatibleWithProductConfig(const AOT::PRODUCT_CONFIG &targetDeviceProductConfig,
                                                       const AOT::PRODUCT_CONFIG &productConfig) {
-    auto compatProdConfPairItr = AOT::compatibilityMapping.find(productConfig);
-    if (compatProdConfPairItr != AOT::compatibilityMapping.end()) {
+    auto compatProdConfPairItr = AOT::getCompatibilityMapping().find(productConfig);
+    if (compatProdConfPairItr != AOT::getCompatibilityMapping().end()) {
         for (auto &compatibleConfig : compatProdConfPairItr->second)
             if (targetDeviceProductConfig == compatibleConfig)
                 return true;

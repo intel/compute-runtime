@@ -27,7 +27,7 @@
 #include "environment.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_offline_compiler.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -195,10 +195,10 @@ TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronym
 
         if (!acronym.empty()) {
             getProductsAcronymsForTarget<AOT::RELEASE>(outRelease, device.release, argHelper.get());
-            EXPECT_TRUE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end());
+            EXPECT_TRUE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end()) << acronym.str();
 
             getProductsAcronymsForTarget<AOT::FAMILY>(outFamily, device.family, argHelper.get());
-            EXPECT_TRUE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end());
+            EXPECT_TRUE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end()) << acronym.str();
 
             device.deviceAcronyms.clear();
             device.rtlIdAcronyms.clear();
@@ -206,10 +206,10 @@ TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronym
             outFamily.clear();
 
             getProductsAcronymsForTarget<AOT::RELEASE>(outRelease, device.release, argHelper.get());
-            EXPECT_FALSE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end());
+            EXPECT_FALSE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end()) << acronym.str();
 
             getProductsAcronymsForTarget<AOT::FAMILY>(outFamily, device.family, argHelper.get());
-            EXPECT_FALSE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end());
+            EXPECT_FALSE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end()) << acronym.str();
         }
     }
 }
@@ -996,7 +996,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWhenFatBinar
         resString << "Build succeeded for : " << product.str() + ".\n";
     }
 
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    EXPECT_STREQ(output.c_str(), resString.str().c_str()) << ConstStringRef(" ").join(argv);
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWithoutDashesWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
@@ -1127,7 +1127,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFullRangeWhenGetProductsForRange
         GTEST_SKIP();
     }
     auto product = aotInfos[0].aotConfig.value;
-    uint32_t productTo = AOT::CONFIG_MAX_PLATFORM;
+    uint32_t productTo = AOT::getConfixMaxPlatform();
     --productTo;
     auto got = NEO::getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), oclocArgHelperWithoutInput.get());
 
@@ -1165,7 +1165,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOnlyRtlIdAcronymsForConfigWhenGe
     std::string tmpStr("tmp");
     aotInfo.rtlIdAcronyms.push_back(ConstStringRef(tmpStr));
 
-    uint32_t productTo = AOT::CONFIG_MAX_PLATFORM;
+    uint32_t productTo = AOT::getConfixMaxPlatform();
     --productTo;
     auto acronyms = NEO::getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), oclocArgHelperWithoutInput.get());
 

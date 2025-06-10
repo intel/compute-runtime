@@ -22,8 +22,8 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/utilities/directory.h"
 
+#include "neo_aot_platforms.h"
 #include "neo_igfxfmid.h"
-#include "platforms.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -204,7 +204,7 @@ std::vector<ConstStringRef> getProductForOpenRange(ConstStringRef openRange, Ocl
             ++productFrom;
             return getProductsForRange(productFrom, static_cast<unsigned int>(product), argHelper);
         } else {
-            unsigned int productTo = AOT::CONFIG_MAX_PLATFORM;
+            unsigned int productTo = AOT::getConfixMaxPlatform();
             --productTo;
             return getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), argHelper);
         }

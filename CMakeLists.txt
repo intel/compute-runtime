@@ -52,6 +52,7 @@ elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64")
   set(DISABLE_WDDM_LINUX TRUE)
 endif()
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/shared/source/gmm_helper/igfxfmid_wrapper/${BRANCH_DIR_SUFFIX}")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/shared/source/device_binary_format/aot_platforms/${BRANCH_DIR_SUFFIX}")
 
 message(STATUS "Host processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 message(STATUS "Target processor: ${CMAKE_SYSTEM_PROCESSOR}")

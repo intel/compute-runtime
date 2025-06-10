@@ -25,7 +25,7 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 #include <numeric>
 #include <vector>
@@ -6700,11 +6700,11 @@ TEST(ValidateTargetDeviceTests, givenDeviceInCompatModeWhenValidatingTargetDevic
                                             productConfigToCompare,
                                             targetMetadata);
 
-            auto prodConfCompatPairItr = AOT::compatibilityMapping.find(productConfigToCompare);
+            auto prodConfCompatPairItr = AOT::getCompatibilityMapping().find(productConfigToCompare);
 
             if (targetDevice.aotConfig.value == productConfigToCompare) {
                 EXPECT_TRUE(res);
-            } else if (prodConfCompatPairItr != AOT::compatibilityMapping.end()) {
+            } else if (prodConfCompatPairItr != AOT::getCompatibilityMapping().end()) {
                 auto prodConfVec = prodConfCompatPairItr->second;
                 auto found = std::find(prodConfVec.begin(), prodConfVec.end(), currentDevice.second);
                 if (found != prodConfVec.end()) {

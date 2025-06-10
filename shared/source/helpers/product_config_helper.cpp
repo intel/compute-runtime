@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 #include "device_ids_configs.h"
 #include "hw_cmds.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 ProductConfigHelper::ProductConfigHelper() : deviceAotInfo({
 #define DEVICE_CONFIG(productConfig, hwConfig, deviceIds, family, release) {{AOT::productConfig}, &NEO::hwConfig::hwInfo, &NEO::deviceIds, AOT::family, AOT::release, {}, {}},
@@ -304,7 +304,7 @@ void ProductConfigHelper::initialize() {
             }
         }
 
-        for (const auto &[acronym, value] : AOT::rtlIdAcronyms) {
+        for (const auto &[acronym, value] : AOT::getRtlIdAcronyms()) {
             if (value == device.aotConfig.value) {
                 device.rtlIdAcronyms.push_back(NEO::ConstStringRef(acronym));
             }
@@ -324,8 +324,8 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromAcronym(const std::
         return deviceAcronymIt->second;
     }
 
-    auto rtlIdAcronymIt = std::find_if(AOT::rtlIdAcronyms.begin(), AOT::rtlIdAcronyms.end(), findMapAcronymWithoutDash(device));
-    if (rtlIdAcronymIt != AOT::rtlIdAcronyms.end()) {
+    auto rtlIdAcronymIt = std::find_if(AOT::getRtlIdAcronyms().begin(), AOT::getRtlIdAcronyms().end(), findMapAcronymWithoutDash(device));
+    if (rtlIdAcronymIt != AOT::getRtlIdAcronyms().end()) {
         return rtlIdAcronymIt->second;
     }
 

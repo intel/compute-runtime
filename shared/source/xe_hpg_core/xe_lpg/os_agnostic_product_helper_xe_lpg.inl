@@ -13,7 +13,7 @@
 #include "shared/source/os_interface/product_helper.h"
 
 #include "aubstream/product_family.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 namespace NEO {
 

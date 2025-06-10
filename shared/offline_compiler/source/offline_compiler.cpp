@@ -33,8 +33,8 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 
+#include "neo_aot_platforms.h"
 #include "offline_compiler_ext.h"
-#include "platforms.h"
 
 #include <iomanip>
 #include <iterator>

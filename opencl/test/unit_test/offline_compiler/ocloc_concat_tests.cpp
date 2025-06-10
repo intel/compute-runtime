@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_ocloc_concat.h"
-#include "platforms.h"
+#include "neo_aot_platforms.h"
 
 #include <array>
 
