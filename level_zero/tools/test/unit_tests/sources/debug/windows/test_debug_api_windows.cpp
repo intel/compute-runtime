@@ -627,7 +627,7 @@ TEST_F(DebugApiWindowsTest, givenInvalidTopologyDebugAttachCalledThenUnsupported
     auto mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
@@ -646,7 +646,7 @@ TEST_F(DebugApiWindowsTest, givenSubDeviceWhenDebugAttachCalledThenUnsupportedEr
     config.pid = 0x1234;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     deviceImp.isSubdevice = true;
 
     auto mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);

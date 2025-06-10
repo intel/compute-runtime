@@ -60,7 +60,7 @@ XE2_HPG_CORETEST_F(Xe2KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThre
 
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice);
+        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
@@ -83,7 +83,7 @@ XE2_HPG_CORETEST_F(Xe2KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThre
     }
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice);
+        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;

@@ -1462,6 +1462,8 @@ ze_result_t DeviceImp::activateMetricGroupsDeferred(uint32_t count,
     return status;
 }
 
+void *DeviceImp::getExecEnvironment() { return execEnvironment; }
+
 BuiltinFunctionsLib *DeviceImp::getBuiltinFunctionsLib() { return builtins.get(); }
 
 uint32_t DeviceImp::getMOCS(bool l3enabled, bool l1enabled) {
@@ -1540,6 +1542,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
 
+    device->execEnvironment = (void *)neoDevice->getExecutionEnvironment();
     device->allocationsForReuse = std::make_unique<NEO::AllocationsList>();
     bool platformImplicitScaling = gfxCoreHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
     device->implicitScalingCapable = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), platformImplicitScaling);

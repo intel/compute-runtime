@@ -592,7 +592,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
 
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
 
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -662,7 +662,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
 
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
 
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -736,7 +736,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
 
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
 
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
@@ -821,7 +821,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
 
     {
         device->incRefInternal();
-        MockDeviceImp deviceImp(device.get());
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
 
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);

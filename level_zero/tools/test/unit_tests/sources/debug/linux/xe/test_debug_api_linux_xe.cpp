@@ -2820,7 +2820,7 @@ TEST(DebugSessionLinuxXeTest, GivenRootDebugSessionWhenCreateTileSessionCalledTh
     auto mockDrm = new DrmMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
-    MockDeviceImp deviceImp(neoDevice);
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     struct DebugSession : public DebugSessionLinuxXe {
         using DebugSessionLinuxXe::createTileSession;
         using DebugSessionLinuxXe::DebugSessionLinuxXe;

@@ -22,7 +22,7 @@ void DebugSessionRegistersAccessV3::setUp() {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
-    deviceImp = std::make_unique<MockDeviceImp>(neoDevice);
+    deviceImp = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
 
     session = std::make_unique<MockDebugSession>(config, deviceImp.get(), true, 3);
 
@@ -36,7 +36,7 @@ void DebugSessionRegistersAccess::setUp() {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
-    deviceImp = std::make_unique<MockDeviceImp>(neoDevice);
+    deviceImp = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
 
     session = std::make_unique<MockDebugSession>(config, deviceImp.get());
 

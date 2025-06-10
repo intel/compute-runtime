@@ -16,7 +16,7 @@ namespace ult {
 
 TEST(PrintfHandler, whenPrintfBufferIscreatedThenCorrectAllocationTypeIsUsed) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-    MockDeviceImp l0Device(neoDevice);
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto allocation = PrintfHandler::createPrintfBuffer(&l0Device);
     EXPECT_EQ(NEO::AllocationType::printfSurface, allocation->getAllocationType());

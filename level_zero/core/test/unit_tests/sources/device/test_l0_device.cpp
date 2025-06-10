@@ -906,7 +906,7 @@ TEST_F(DeviceTest, whenCreatingDeviceThenCreateInOrderCounterAllocatorOnDemandAn
         auto hostAllocator = new MockHostTagAllocator(0, neoMockDevice->getMemoryManager(), destructorId);
         auto tsAllocator = new MockTsAllocator(0, neoMockDevice->getMemoryManager(), destructorId);
 
-        MockDeviceImp deviceImp(neoMockDevice);
+        MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
         deviceImp.deviceInOrderCounterAllocator.reset(deviceAllocator);
         deviceImp.hostInOrderCounterAllocator.reset(hostAllocator);
         deviceImp.inOrderTimestampAllocator.reset(tsAllocator);
@@ -926,7 +926,7 @@ HWTEST_F(DeviceTest, givenTsAllocatorWhenGettingNewTagThenDoInitialize) {
     auto *neoMockDevice = new NEO::MockDevice(executionEnvironment, rootDeviceIndex);
     neoMockDevice->createDeviceImpl();
 
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     auto allocator = deviceImp.getInOrderTimestampAllocator();
 
@@ -1058,7 +1058,7 @@ HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHint
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
 
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*neoMockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     raii.mockProductHelper->threadArbPolicies = {ThreadArbitrationPolicy::AgeBased,
@@ -1089,7 +1089,7 @@ HWTEST2_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingScheduling
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
 
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*neoMockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     raii.mockProductHelper->threadArbPolicies = {ThreadArbitrationPolicy::NotPresent};
@@ -3734,7 +3734,7 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenQueryPeerStatsCalledThen
 
 TEST_F(MultipleDevicesTest, givenDeviceFailsAppendMemoryCopyThenCanAccessPeerReturnsFalse) {
     struct MockDeviceFail : public MockDeviceImp {
-        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice()) {
+        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             this->driverHandle = device->getDriverHandle();
             this->commandList.appendMemoryCopyResult = ZE_RESULT_ERROR_UNKNOWN;
         }
@@ -3796,7 +3796,7 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
                 override { return ZE_RESULT_ERROR_UNKNOWN; }
         };
 
-        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice()) {
+        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             this->driverHandle = device->getDriverHandle();
         }
 
@@ -3856,7 +3856,7 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFa
                 override { return ZE_RESULT_ERROR_UNKNOWN; }
         };
 
-        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice()) {
+        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             this->driverHandle = device->getDriverHandle();
         }
 
@@ -3918,7 +3918,7 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthNonZeroAndDevic
             }
         };
 
-        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice()) {
+        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
             this->driverHandle = device->getDriverHandle();
         }
 
@@ -4726,7 +4726,7 @@ HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlag
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
                                                                                               rootDeviceIndex);
-    MockDeviceImp deviceImp(neoMockDevice);
+    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
     RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*neoMockDevice->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
@@ -4803,7 +4803,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingLowPriorityCsrThenCorr
     {
         MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment{&hwInfo};
         auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, rootDeviceIndex);
-        MockDeviceImp deviceImp(neoMockDevice);
+        MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
         NEO::CommandStreamReceiver *lowPriorityCsr = nullptr;
         auto result = deviceImp.getCsrForLowPriority(&lowPriorityCsr, false);
@@ -4887,7 +4887,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
     {
         MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment{&hwInfo};
         auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, rootDeviceIndex);
-        MockDeviceImp deviceImp(neoMockDevice);
+        MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
         NEO::CommandStreamReceiver *highPriorityCsr = nullptr;
         NEO::CommandStreamReceiver *highPriorityCsr2 = nullptr;
@@ -5043,7 +5043,7 @@ HWTEST2_F(DeviceTest, givenHpCopyEngineWhenGettingHighPriorityCsrThenCorrectCsrA
     {
         MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment{&hwInfo};
         auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, rootDeviceIndex);
-        MockDeviceImp deviceImp(neoMockDevice);
+        MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
         NEO::CommandStreamReceiver *highPriorityCsr = nullptr;
 
@@ -6701,7 +6701,7 @@ class Mock2DTransposeDevice : public MockDeviceImp {
 
 TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreFalseThenFlagsIndicateSupportsNeither) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
-    Mock2DTransposeDevice<false, false> deviceImp(neoMockDevice);
+    Mock2DTransposeDevice<false, false> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
@@ -6716,7 +6716,7 @@ TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreFalseThenFlagsIndi
 
 TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreFalseThenFlagsIndicateSupportLoad) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
-    Mock2DTransposeDevice<true, false> deviceImp(neoMockDevice);
+    Mock2DTransposeDevice<true, false> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
@@ -6731,7 +6731,7 @@ TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreFalseThenFlagsIndic
 
 TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreTrueThenFlagsIndicateSupportStore) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
-    Mock2DTransposeDevice<false, true> deviceImp(neoMockDevice);
+    Mock2DTransposeDevice<false, true> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
@@ -6746,7 +6746,7 @@ TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreTrueThenFlagsIndic
 
 TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreTrueThenFlagsIndicateSupportBoth) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
-    Mock2DTransposeDevice<true, true> deviceImp(neoMockDevice);
+    Mock2DTransposeDevice<true, true> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};

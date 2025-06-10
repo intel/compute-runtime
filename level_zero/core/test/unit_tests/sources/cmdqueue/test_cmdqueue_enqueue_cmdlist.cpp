@@ -549,7 +549,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandLi
     MockCsr *pMockCsr = new MockCsr{*pNeoDevice->getExecutionEnvironment(), pNeoDevice->getRootDeviceIndex(), pNeoDevice->getDeviceBitfield()};
     pNeoDevice->resetCommandStreamReceiver(pMockCsr);
 
-    MockDeviceImp device{pNeoDevice};
+    MockDeviceImp device{pNeoDevice, pNeoDevice->getExecutionEnvironment()};
     auto pCommandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>{&device, pMockCsr, &desc};
     pCommandQueue->initialize(false, false, false);
 

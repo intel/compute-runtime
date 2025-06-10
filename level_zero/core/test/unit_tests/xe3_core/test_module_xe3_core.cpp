@@ -61,7 +61,7 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
 
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice);
+        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = 128u;
@@ -85,7 +85,7 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
     }
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice);
+        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = 160u;
@@ -108,7 +108,7 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
     }
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice);
+        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = 192u;
@@ -131,7 +131,7 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
     }
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice);
+        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = 256u;
@@ -154,7 +154,7 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
     }
     {
         NEO::Device *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
-        MockDeviceImp l0Device(mockNeoDevice);
+        MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
 
         Mock<KernelImp> kernel;
         kernel.descriptor.kernelAttributes.numGrfRequired = 512u;
