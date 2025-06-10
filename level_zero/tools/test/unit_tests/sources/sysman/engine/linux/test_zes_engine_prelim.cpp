@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ constexpr uint32_t handleComponentCount = 13u;
 constexpr uint32_t handleCountForMultiDeviceFixture = 7u;
 
 bool MockEngineNeoDrmPrelim::mockQuerySingleEngineInstance = false;
+uint32_t MockEnginePmuInterfaceImpPrelim::engineConfigIndex = 0u;
 
 class ZesEngineFixturePrelim : public SysmanDeviceFixture {
   protected:
@@ -104,6 +105,7 @@ TEST_F(ZesEngineFixturePrelim, GivenDeviceHandleAndSingleEngineInstanceIsQueried
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, numHandles);
     MockEngineNeoDrmPrelim::mockQuerySingleEngineInstance = false;
+    MockEnginePmuInterfaceImpPrelim::engineConfigIndex = 0u;
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {

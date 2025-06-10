@@ -126,14 +126,20 @@ ze_result_t SysmanKmdInterfaceI915Prelim::getEngineActivityFdListAndConfigPair(z
         config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY_TICKS(gtId);
         break;
     default:
-        auto engineClass = engineGroupToEngineClass.find(engineGroup);
-        config = PRELIM_I915_PMU_ENGINE_BUSY_TICKS(engineClass->second, engineInstance);
+        auto i915EngineClass = engineGroupToEngineClass.find(engineGroup);
+        config = PRELIM_I915_PMU_ENGINE_BUSY_TICKS(i915EngineClass->second, engineInstance);
         break;
     }
 
     int64_t fd[2];
-    auto i915EngineClass = engineGroupToEngineClass.find(engineGroup);
-    configPair = std::make_pair(config, PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance));
+
+    if (isGroupEngineHandle(engineGroup)) {
+        configPair = std::make_pair(config, __PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(gtId));
+    } else {
+        auto i915EngineClass = engineGroupToEngineClass.find(engineGroup);
+        configPair = std::make_pair(config, PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance));
+    }
+
     fd[0] = pPmuInterface->pmuInterfaceOpen(configPair.first, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
     if (fd[0] < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
