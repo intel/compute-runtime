@@ -564,7 +564,43 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
                              bufferExpected, bufferSize);
 }
 
+using AUBSimpleAtomicTest = Test<AUBSimpleArgNonUniformFixture>;
+
+HWTEST_F(AUBSimpleAtomicTest, givenKernelWithAtomicWhenExecutedThenExpectAtomicValueIsCorrect) {
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {64, 1, 1};
+    size_t localWorkSize[3] = {32, 1, 1};
+    cl_uint numEventsInWaitList = 0;
+    cl_event *eventWaitList = nullptr;
+    cl_event *event = nullptr;
+
+    initializeExpectedMemory(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
+
+    auto retVal = this->pCmdQ->enqueueKernel(
+        this->kernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    pCmdQ->finish();
+    expectMemory<FamilyType>(bufferGpuAddress, this->expectedMemory, sizeWrittenMemory - sizeof(int));
+
+    size_t testGlobalMax = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
+    int maxId = static_cast<int>(testGlobalMax);
+    int *expectedData = static_cast<int *>(ptrOffset(bufferGpuAddress, sizeWrittenMemory - sizeof(int)));
+
+    expectMemory<FamilyType>(expectedData, &maxId, sizeof(int));
+}
+
 using AUBSimpleArgNonUniformTest = Test<AUBSimpleArgNonUniformFixture>;
+
 HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
 
     cl_uint workDim = 1;
