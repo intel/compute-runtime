@@ -67,7 +67,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
     bool canDisable() override;
 
   protected:
-    void cacheMetricGroup();
+    ze_result_t cacheMetricGroup();
     bool isEnabled = false;
 
     const MetricDeviceContext &metricDeviceContext;
