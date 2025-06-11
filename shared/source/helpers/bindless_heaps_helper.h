@@ -104,6 +104,7 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
     bool isMultiOsContextCapable = false;
     bool reservedMemoryInitialized = false;
     bool useReservedMemory = false;
+    bool heaplessEnabled = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<BindlessHeapsHelper>);

@@ -36,6 +36,7 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
     using BaseClass::globalBindlessDsh;
     using BaseClass::growHeap;
     using BaseClass::heapFrontWindow;
+    using BaseClass::heaplessEnabled;
     using BaseClass::heapRegular;
     using BaseClass::initializeReservedMemory;
     using BaseClass::isMultiOsContextCapable;
