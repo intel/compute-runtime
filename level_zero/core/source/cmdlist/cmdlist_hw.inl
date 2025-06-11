@@ -395,7 +395,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programL3(bool isSLMused) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStream &cmdStream, const Kernel &kernel, const NEO::GraphicsAllocation &ioh, size_t iohOffset, CommandToPatchContainer *outListCommands, uint64_t cmdId) {
+void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStream &cmdStream, const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, size_t iohOffset, CommandToPatchContainer *outListCommands, uint64_t cmdId) {
     if (!kernelMemoryPrefetchEnabled()) {
         return;
     }
@@ -405,7 +405,7 @@ void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStrea
     auto currentCmdStreamPtr = cmdStream.getSpace(0);
     auto cmdStreamOffset = cmdStream.getUsed();
 
-    NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, ioh, kernel.getIndirectSize(), iohOffset, rootExecEnv);
+    NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *iohAllocation, kernel.getIndirectSize(), iohOffset, rootExecEnv);
     addKernelIndirectDataMemoryPrefetchPadding(cmdStream, kernel, cmdId);
 
     NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *kernel.getIsaAllocation(), kernel.getImmutableData()->getIsaSize(), kernel.getIsaOffsetInParentAllocation(), rootExecEnv);
@@ -448,7 +448,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(*kernel, launchParams.reserveExtraPayloadSpace), GfxFamily::indirectDataAlignment);
 
     ensureCmdBufferSpaceForPrefetch();
-    prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, *ioh->getGraphicsAllocation(), ioh->getUsed(), launchParams.outListCommands, getPrefetchCmdId());
+    prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, ioh->getGraphicsAllocation(), ioh->getUsed(), launchParams.outListCommands, getPrefetchCmdId());
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, launchParams.outListCommands, launchParams.relaxedOrderingDispatch, true, true, launchParams.omitAddingWaitEventsResidency, false);
     if (ret) {
