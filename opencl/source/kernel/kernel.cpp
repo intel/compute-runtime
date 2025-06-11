@@ -1793,7 +1793,7 @@ void Kernel::unsetArg(uint32_t argIndex) {
 }
 
 bool Kernel::hasPrintfOutput() const {
-    return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf || (pImplicitArgs && !isBuiltIn);
+    return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf;
 }
 
 void Kernel::resetSharedObjectsPatchAddresses() {

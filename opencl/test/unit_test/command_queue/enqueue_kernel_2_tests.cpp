@@ -688,7 +688,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     EXPECT_STREQ("test", output.c_str());
 }
 
-HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisabledAndImplicitArgsBlockedByEventWhenEventUnblockedThenNoOutputPrinted) {
+HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndImplicitArgsBlockedByEventWhenEventUnblockedThenNoOutputPrinted) {
     auto userEvent = makeReleaseable<UserEvent>(context);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -722,7 +722,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisabledAndI
 
     auto pOutEvent = castToObject<Event>(outEvent);
 
-    EXPECT_NE(nullptr, static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler());
+    EXPECT_EQ(nullptr, static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler());
 
     pOutEvent->release();
 
