@@ -251,6 +251,7 @@ struct KernelImp : Kernel {
     virtual void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) = 0;
     void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
     uint32_t getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const;
+    ze_result_t validateWorkgroupSize() const;
 
     const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;
