@@ -81,7 +81,8 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
     : executionEnvironment(programArg->getExecutionEnvironment()),
       program(programArg),
       clDevice(clDeviceArg),
-      kernelInfo(kernelInfoArg) {
+      kernelInfo(kernelInfoArg),
+      isBuiltIn(programArg->getIsBuiltIn()) {
     program->retain();
     program->retainForKernel();
     auto &deviceInfo = getDevice().getDevice().getDeviceInfo();

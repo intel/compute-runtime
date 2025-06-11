@@ -87,7 +87,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
 
     bool kernelSystemAllocation = false;
-    if (kernel.isBuiltIn) {
+    if (kernel.isBuiltInKernel()) {
         kernelSystemAllocation = kernel.getDestinationAllocationInSystemMemory();
     } else {
         kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();

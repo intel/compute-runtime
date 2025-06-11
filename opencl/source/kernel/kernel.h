@@ -287,8 +287,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
 
     uint32_t allBufferArgsStateful = CL_TRUE;
 
-    bool isBuiltIn = false;
-
     KernelExecutionType getExecutionType() const {
         return executionType;
     }
@@ -394,6 +392,9 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     const GfxCoreHelper &getGfxCoreHelper() const {
         return getDevice().getGfxCoreHelper();
     }
+    bool isBuiltInKernel() const {
+        return isBuiltIn;
+    }
 
   protected:
     Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
@@ -477,6 +478,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     bool anyKernelArgumentUsingSystemMemory = false;
     bool anyKernelArgumentUsingZeroCopyMemory = false;
     bool isDestinationAllocationInSystemMemory = false;
+    bool isBuiltIn = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Kernel>);
