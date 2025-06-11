@@ -70,26 +70,6 @@ class MockCommandStreamReceiverHW : public UltCommandStreamReceiver<FamilyType> 
             device);
     }
 
-    CompletionStamp flushTaskStateless(
-        LinearStream &commandStream,
-        size_t commandStreamStart,
-        const IndirectHeap *dsh,
-        const IndirectHeap *ioh,
-        const IndirectHeap *ssh,
-        TaskCountType taskLevel,
-        DispatchFlags &dispatchFlags,
-        Device &device) override {
-        stream = &commandStream;
-        return UltCommandStreamReceiver<FamilyType>::flushTaskStateless(
-            commandStream,
-            commandStreamStart,
-            dsh,
-            ioh,
-            ssh,
-            taskLevel,
-            dispatchFlags,
-            device);
-    }
     LinearStream *stream = nullptr;
 };
 

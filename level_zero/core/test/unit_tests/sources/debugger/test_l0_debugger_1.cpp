@@ -764,7 +764,9 @@ HWTEST_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppend
     returnValue = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    ASSERT_EQ(0u, debugSurfaceState->getSurfaceBaseAddress());
+    if (!commandList->isHeaplessStateInitEnabled()) {
+        ASSERT_EQ(0u, debugSurfaceState->getSurfaceBaseAddress());
+    }
 
     kernelImmData->isaGraphicsAllocation.reset(nullptr);
     commandList->destroy();

@@ -964,24 +964,15 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stdout, "preemption = %d.\n", static_cast<int>(dispatchFlags.preemptionMode));
 
-    CompletionStamp completionStamp = getHeaplessStateInitEnabled() ? csr.flushTaskStateless(
-                                                                          commandStream,
-                                                                          commandStreamStart,
-                                                                          dsh,
-                                                                          ioh,
-                                                                          &getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
-                                                                          taskLevel,
-                                                                          dispatchFlags,
-                                                                          getDevice())
-                                                                    : csr.flushTask(
-                                                                          commandStream,
-                                                                          commandStreamStart,
-                                                                          dsh,
-                                                                          ioh,
-                                                                          &getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
-                                                                          taskLevel,
-                                                                          dispatchFlags,
-                                                                          getDevice());
+    CompletionStamp completionStamp = csr.flushTask(
+        commandStream,
+        commandStreamStart,
+        dsh,
+        ioh,
+        &getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
+        taskLevel,
+        dispatchFlags,
+        getDevice());
 
     if (isHandlingBarrier) {
         clearLastBcsPackets();
@@ -1193,24 +1184,15 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             dispatchFlags.csrDependencies.makeResident(getGpgpuCommandStreamReceiver());
         }
 
-        completionStamp = getHeaplessStateInitEnabled() ? getGpgpuCommandStreamReceiver().flushTaskStateless(
-                                                              *commandStream,
-                                                              commandStreamStart,
-                                                              &getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
-                                                              &getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
-                                                              &getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
-                                                              taskLevel,
-                                                              dispatchFlags,
-                                                              getDevice())
-                                                        : getGpgpuCommandStreamReceiver().flushTask(
-                                                              *commandStream,
-                                                              commandStreamStart,
-                                                              &getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
-                                                              &getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
-                                                              &getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
-                                                              taskLevel,
-                                                              dispatchFlags,
-                                                              getDevice());
+        completionStamp = getGpgpuCommandStreamReceiver().flushTask(
+            *commandStream,
+            commandStreamStart,
+            &getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),
+            &getIndirectHeap(IndirectHeap::Type::indirectObject, 0u),
+            &getIndirectHeap(IndirectHeap::Type::surfaceState, 0u),
+            taskLevel,
+            dispatchFlags,
+            getDevice());
 
         if (isHandlingBarrier) {
             clearLastBcsPackets();

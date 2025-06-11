@@ -121,6 +121,9 @@ HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSli
     auto mockCsr = new TestedDrmCommandStreamReceiver<FamilyType>(*mdevice->executionEnvironment, rootDeviceIndex, 1);
     mockCsr->flushInternalCallBase = false;
     mdevice->resetCommandStreamReceiver(mockCsr);
+    if (mockCsr->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
 
     cl_command_queue cmdQ = clCreateCommandQueueWithProperties(context.get(), clDevice, properties, &retVal);
 

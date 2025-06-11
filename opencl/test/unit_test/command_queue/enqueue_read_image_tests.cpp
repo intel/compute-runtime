@@ -167,12 +167,7 @@ struct CreateAllocationForHostSurfaceCsr : public CommandStreamReceiverHw<GfxFam
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
-        return CompletionStamp{0u, 0u, static_cast<FlushStamp>(0u)};
-    }
 
-    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
-                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         return CompletionStamp{0u, 0u, static_cast<FlushStamp>(0u)};
     }
 };

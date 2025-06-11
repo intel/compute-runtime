@@ -3198,7 +3198,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfHostMemoryFailureOnFlushWhenFlus
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
 
     auto completionStamp = commandStreamReceiver.flushTask(commandStream,
-                                                           0,
+                                                           64,
                                                            &dsh,
                                                            &ioh,
                                                            nullptr,
@@ -3214,7 +3214,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfDeviceMemoryFailureOnFlushWhenFl
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
 
     auto completionStamp = commandStreamReceiver.flushTask(commandStream,
-                                                           0,
+                                                           64,
                                                            &dsh,
                                                            &ioh,
                                                            nullptr,
@@ -3231,7 +3231,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFailedFailureOnFlushWhenFlushingTaskT
     commandStreamReceiver.flushReturnValue = SubmissionStatus::failed;
 
     auto completionStamp = commandStreamReceiver.flushTask(commandStream,
-                                                           0,
+                                                           64,
                                                            &dsh,
                                                            &ioh,
                                                            nullptr,
@@ -3346,7 +3346,7 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTaskCalledThenSetPassNumClients) 
     commandStreamReceiver.registerClient(&client2);
 
     commandStreamReceiver.flushTask(commandStream,
-                                    0,
+                                    64,
                                     &dsh,
                                     &ioh,
                                     nullptr,
@@ -5284,6 +5284,10 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperW
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
+    if (commandStreamReceiver.heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
+
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice, pDevice->getNumGenericSubDevices() > 1);
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
@@ -5538,6 +5542,9 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenFlushHeapStorageRequiresRecyclingTagW
 
 HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushTaskCalledThenDispachEpilogueCommandsIntoEpilogueStream) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
 
     GraphicsAllocation *commandBuffer = commandStreamReceiver.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver.getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
@@ -5971,7 +5978,7 @@ HWTEST_F(CommandStreamReceiverHwHeaplessTest, whenHeaplessCommandStreamReceiverF
 
     LinearStream commandStream(0, 0);
 
-    EXPECT_ANY_THROW(csr->flushTaskStateless(commandStream, 0, nullptr, nullptr, nullptr, 0, csr->recordedDispatchFlags, *pDevice));
+    EXPECT_ANY_THROW(csr->flushTaskHeapless(commandStream, 0, nullptr, nullptr, nullptr, 0, csr->recordedDispatchFlags, *pDevice));
     EXPECT_ANY_THROW(csr->programHeaplessProlog(*pDevice));
     EXPECT_ANY_THROW(csr->programStateBaseAddressHeapless(*pDevice, commandStream));
     EXPECT_ANY_THROW(csr->programComputeModeHeapless(*pDevice, commandStream));

@@ -443,7 +443,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests,
     retVal = clReleaseMemObject(buffer);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverThenRoundRobinPolicyIsSelected) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverThenRoundRobinPolicyIsSelected, IsAtMostXe3Core) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
@@ -516,6 +516,7 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, WhenFlushi
 
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     commandStreamReceiver->heaplessModeEnabled = false;
+    commandStreamReceiver->heaplessStateInitEnabled = false;
 
     commandStreamReceiver->setRequiredScratchSizes(1024, 0); // whatever > 0
 
@@ -652,6 +653,7 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, whenScratc
 
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     commandStreamReceiver->heaplessModeEnabled = false;
+    commandStreamReceiver->heaplessStateInitEnabled = false;
     auto scratchController = new MockScratchController(pDevice->getRootDeviceIndex(), *pDevice->executionEnvironment, *commandStreamReceiver->getInternalAllocationStorage());
     commandStreamReceiver->scratchSpaceController.reset(scratchController);
 
@@ -690,6 +692,7 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, whenPrivat
     UnitTestSetter::disableHeapless(restorer);
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     commandStreamReceiver->heaplessModeEnabled = false;
+    commandStreamReceiver->heaplessStateInitEnabled = false;
     auto scratchController = new MockScratchController(pDevice->getRootDeviceIndex(), *pDevice->executionEnvironment, *commandStreamReceiver->getInternalAllocationStorage());
     commandStreamReceiver->scratchSpaceController.reset(scratchController);
 
@@ -1219,6 +1222,10 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenComma
     auto csr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     auto csr2 = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
+    if (csr->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
+
     MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
     csr->pageTableManager.reset(pageTableManager);
     MockGmmPageTableMngr *pageTableManager2 = new MockGmmPageTableMngr();
@@ -1385,6 +1392,9 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenNullP
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCommandStreamReceiverWhenInitializingPageTableManagerRegisterFailsThenPageTableManagerIsNotInitialized) {
     auto csr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
+    if (csr->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
 
     MockGmmPageTableMngr *pageTableManager = new MockGmmPageTableMngr();
     csr->pageTableManager.reset(pageTableManager);

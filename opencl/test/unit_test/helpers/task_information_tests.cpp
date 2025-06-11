@@ -228,13 +228,23 @@ class MockCsr1 : public CommandStreamReceiverHw<GfxFamily> {
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap *dsh, const IndirectHeap *ioh,
                               const IndirectHeap *ssh, TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+        if (this->getHeaplessStateInitEnabled()) {
+            return flushTaskHeapless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+        } else {
+            return flushTaskHeapful(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+        }
+    }
+
+    CompletionStamp flushTaskHeapless(LinearStream &commandStream, size_t commandStreamStart,
+                                      const IndirectHeap *dsh, const IndirectHeap *ioh,
+                                      const IndirectHeap *ssh, TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         passedDispatchFlags = dispatchFlags;
         return CompletionStamp();
     }
 
-    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
-                                       const IndirectHeap *dsh, const IndirectHeap *ioh,
-                                       const IndirectHeap *ssh, TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+    CompletionStamp flushTaskHeapful(LinearStream &commandStream, size_t commandStreamStart,
+                                     const IndirectHeap *dsh, const IndirectHeap *ioh,
+                                     const IndirectHeap *ssh, TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         passedDispatchFlags = dispatchFlags;
         return CompletionStamp();
     }

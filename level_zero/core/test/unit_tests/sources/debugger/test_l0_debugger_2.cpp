@@ -222,7 +222,13 @@ HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSh
             break;
         }
     }
-    EXPECT_TRUE(gpr15Found);
+
+    if (csr.getHeaplessStateInitEnabled()) {
+        EXPECT_FALSE(gpr15Found);
+    } else {
+        EXPECT_TRUE(gpr15Found);
+    }
+
     commandList->destroy();
 }
 

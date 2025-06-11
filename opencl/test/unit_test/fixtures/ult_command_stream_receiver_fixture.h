@@ -99,12 +99,7 @@ struct UltCommandStreamReceiverTest
                                     const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                                     TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) {
 
-        if (reinterpret_cast<UltCommandStreamReceiver<GfxFamily> *>(&commandStreamReceiver)->heaplessStateInitialized) {
-            return commandStreamReceiver.flushTaskStateless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
-
-        } else {
-            return commandStreamReceiver.flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
-        }
+        return commandStreamReceiver.flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
 
     template <typename CommandStreamReceiverType>
@@ -114,35 +109,19 @@ struct UltCommandStreamReceiverTest
                               bool requiresCoherency = false,
                               bool lowPriority = false) {
 
-        if (commandStreamReceiver.heaplessStateInitialized) {
-            flushTaskFlags.blocking = block;
-            flushTaskFlags.lowPriority = lowPriority;
-            flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+        flushTaskFlags.blocking = block;
+        flushTaskFlags.lowPriority = lowPriority;
+        flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
 
-            return commandStreamReceiver.flushTaskStateless(
-                commandStream,
-                startOffset,
-                &dsh,
-                &ioh,
-                &ssh,
-                taskLevel,
-                flushTaskFlags,
-                *pDevice);
-        } else {
-            flushTaskFlags.blocking = block;
-            flushTaskFlags.lowPriority = lowPriority;
-            flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
-
-            return commandStreamReceiver.flushTask(
-                commandStream,
-                startOffset,
-                &dsh,
-                &ioh,
-                &ssh,
-                taskLevel,
-                flushTaskFlags,
-                *pDevice);
-        }
+        return commandStreamReceiver.flushTask(
+            commandStream,
+            startOffset,
+            &dsh,
+            &ioh,
+            &ssh,
+            taskLevel,
+            flushTaskFlags,
+            *pDevice);
     }
 
     template <typename CommandStreamReceiverType>

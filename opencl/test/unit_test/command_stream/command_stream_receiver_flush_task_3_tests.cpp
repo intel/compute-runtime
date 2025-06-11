@@ -48,6 +48,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
+    if (mockCsr->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
+
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
@@ -252,12 +256,14 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
 
     auto lastbbEndPtr = lastBatchBuffer->batchBuffer.endCmdPtr;
 
+    auto flushCalledCountBeforeFlush = mockCsr->flushCalledCount;
+
     mockCsr->flushBatchedSubmissions();
 
     auto batchBufferStart = genCmdCast<MI_BATCH_BUFFER_START *>(bbEndLocation);
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_EQ(lastBatchBufferAddress, batchBufferStart->getBatchBufferStartAddress());
-    EXPECT_EQ(1u, mockCsr->flushCalledCount);
+    EXPECT_EQ(flushCalledCountBeforeFlush + 1u, mockCsr->flushCalledCount);
     EXPECT_EQ(mockCsr->recordedCommandBuffer->batchBuffer.endCmdPtr, lastbbEndPtr);
 }
 
@@ -271,6 +277,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
+    mockCsr->heaplessStateInitialized = true;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -485,6 +492,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
     mockCsr->flushCalledCount = 0;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -495,6 +503,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.blocking = true;
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+    auto flushCalledCountBeforeFlush = mockCsr->flushCalledCount;
 
     mockCsr->flushTask(commandStream,
                        0,
@@ -505,12 +514,13 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(1u, mockCsr->flushCalledCount);
+    EXPECT_EQ(flushCalledCountBeforeFlush + 1u, mockCsr->flushCalledCount);
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 }
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenBufferToFlushWhenFlushTaskCalledThenUpdateFlushStamp) {
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
+    mockCsr->heaplessStateInitialized = true;
 
     commandStream.getSpace(1);
     EXPECT_EQ(0u, mockCsr->flushCalledCount);
@@ -546,6 +556,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
@@ -577,6 +588,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenUpdat
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
@@ -732,6 +744,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -773,6 +786,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenEnqueueI
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -814,6 +828,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenSusbsequ
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -882,6 +897,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -930,13 +946,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
                    givenCsrInBatchingModeWhenTwoTasksArePassedWithTheSameLevelThenThereIsNoPipeControlBetweenThemAfterFlush) {
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
-
+    MI_NOOP *pCmd = static_cast<MI_NOOP *>(commandStream.getSpace(sizeof(MI_NOOP)));
+    *pCmd = FamilyType::cmdInitNoop;
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
+
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -994,11 +1015,14 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
 
     // make sure they are not the same
     EXPECT_NE(cmdList.end(), itorBatchBufferStartFirst);
-    EXPECT_NE(cmdList.end(), itorBatchBufferStartSecond);
-    EXPECT_NE(itorBatchBufferStartFirst, itorBatchBufferStartSecond);
-
-    auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(itorBatchBufferStartFirst, itorBatchBufferStartSecond);
-    EXPECT_EQ(itorPipeControl, itorBatchBufferStartSecond);
+    if (mockCsr->getHeaplessStateInitEnabled()) {
+        EXPECT_EQ(cmdList.end(), itorBatchBufferStartSecond);
+    } else {
+        EXPECT_NE(cmdList.end(), itorBatchBufferStartSecond);
+        EXPECT_NE(itorBatchBufferStartFirst, itorBatchBufferStartSecond);
+        auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(itorBatchBufferStartFirst, itorBatchBufferStartSecond);
+        EXPECT_EQ(itorPipeControl, itorBatchBufferStartSecond);
+    }
 
     // first pipe control is nooped, second pipe control is untouched
     auto noop1 = genCmdCast<typename FamilyType::MI_NOOP *>(ppc);
@@ -1590,20 +1614,23 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
 
     auto itorBatchBufferStartFirst = find<typename FamilyType::MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
     auto itorBatchBufferStartSecond = find<typename FamilyType::MI_BATCH_BUFFER_START *>(++itorBatchBufferStartFirst, cmdList.end());
-    auto itorBatchBufferStartThird = find<typename FamilyType::MI_BATCH_BUFFER_START *>(++itorBatchBufferStartSecond, cmdList.end());
 
     // make sure they are not the same
     EXPECT_NE(cmdList.end(), itorBatchBufferStartFirst);
     EXPECT_NE(cmdList.end(), itorBatchBufferStartSecond);
-    EXPECT_NE(cmdList.end(), itorBatchBufferStartThird);
     EXPECT_NE(itorBatchBufferStartFirst, itorBatchBufferStartSecond);
-    EXPECT_NE(itorBatchBufferStartThird, itorBatchBufferStartSecond);
 
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(itorBatchBufferStartFirst, itorBatchBufferStartSecond);
     EXPECT_EQ(itorPipeControl, itorBatchBufferStartSecond);
 
-    itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(itorBatchBufferStartSecond, itorBatchBufferStartThird);
-    EXPECT_EQ(itorPipeControl, itorBatchBufferStartThird);
+    if (!mockCsr->getHeaplessStateInitEnabled()) {
+        auto itorBatchBufferStartThird = find<typename FamilyType::MI_BATCH_BUFFER_START *>(++itorBatchBufferStartSecond, cmdList.end());
+        EXPECT_NE(cmdList.end(), itorBatchBufferStartThird);
+        EXPECT_NE(itorBatchBufferStartThird, itorBatchBufferStartSecond);
+
+        itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(itorBatchBufferStartSecond, itorBatchBufferStartThird);
+        EXPECT_EQ(itorPipeControl, itorBatchBufferStartThird);
+    }
 
     // first pipe control is nooped, second pipe control is untouched
     auto noop1 = genCmdCast<typename FamilyType::MI_NOOP *>(ppc);
@@ -1618,7 +1645,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
     EXPECT_NE(nullptr, ppcAfterChange);
 }
 
-typedef UltCommandStreamReceiverTest CommandStreamReceiverCleanupTests;
+using CommandStreamReceiverCleanupTests = UltCommandStreamReceiverTest;
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenTemporaryAndReusableAllocationsArePresentThenCleanupResourcesOnlyCleansThoseAboveLatestFlushTaskLevel) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto memoryManager = pDevice->getMemoryManager();
@@ -1660,11 +1687,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenTemporaryAndReusableAl
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispatchFlagsWithThrottleSetToLowWhenFlushTaskIsCalledThenThrottleIsSetInBatchBuffer) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
+    commandStream.getSpace(16u);
 
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1691,11 +1720,13 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispa
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispatchFlagsWithThrottleSetToMediumWhenFlushTaskIsCalledThenThrottleIsSetInBatchBuffer) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
+    commandStream.getSpace(16u);
 
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1738,11 +1769,13 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenComma
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispatchFlagsWithThrottleSetToHighWhenFlushTaskIsCalledThenThrottleIsSetInBatchBuffer) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
+    commandStream.getSpace(16u);
 
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1819,11 +1852,13 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenEpilogu
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispatchFlagsWithNewSliceCountWhenFlushTaskThenNewSliceCountIsSet) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
+    commandStream.getSpace(16u);
 
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1867,14 +1902,6 @@ class UltCommandStreamReceiverForDispatchFlags : public UltCommandStreamReceiver
         savedDispatchFlags = dispatchFlags;
         return BaseClass::flushTask(commandStream, commandStreamStart,
                                     dsh, ioh, ssh, taskLevel, dispatchFlags, device);
-    }
-
-    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
-                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
-        savedDispatchFlags = dispatchFlags;
-        return BaseClass::flushTaskStateless(commandStream, commandStreamStart,
-                                             dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
 
     DispatchFlags savedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -1993,7 +2020,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenPerDssBackBufferIsAllocatedThe
     EXPECT_EQ(nullptr, commandStreamReceiver.perDssBackedBuffer);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, whenPerDssBackBufferProgrammingEnabledThenAllocationIsCreated) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, whenPerDssBackBufferProgrammingEnabledThenAllocationIsCreated, IsAtMostXe3Core) {
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();

@@ -63,10 +63,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
-    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
-                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
-
     void addPipeControlFlushTaskIfNeeded(LinearStream &commandStreamCSR, TaskCountType taskLevel);
 
     CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart, const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) override;
@@ -209,6 +205,14 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override;
 
   protected:
+    CompletionStamp flushTaskHeapful(LinearStream &commandStream, size_t commandStreamStart,
+                                     const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                     TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
+
+    CompletionStamp flushTaskHeapless(LinearStream &commandStream, size_t commandStreamStart,
+                                      const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                      TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
+
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs);
     void programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config);

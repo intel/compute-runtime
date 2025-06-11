@@ -41,6 +41,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::CommandStreamReceiver;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::gpuHangCheckPeriod;
+    using CommandStreamReceiver::heaplessStateInitEnabled;
     using CommandStreamReceiver::heaplessStateInitialized;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::internalAllocationStorage;
@@ -131,7 +132,17 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         DispatchFlags &dispatchFlags,
         Device &device) override;
 
-    CompletionStamp flushTaskStateless(
+    CompletionStamp flushTaskHeapless(
+        LinearStream &commandStream,
+        size_t commandStreamStart,
+        const IndirectHeap *dsh,
+        const IndirectHeap *ioh,
+        const IndirectHeap *ssh,
+        TaskCountType taskLevel,
+        DispatchFlags &dispatchFlags,
+        Device &device) override;
+
+    CompletionStamp flushTaskHeapful(
         LinearStream &commandStream,
         size_t commandStreamStart,
         const IndirectHeap *dsh,
@@ -340,6 +351,8 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::feSupportFlags;
     using CommandStreamReceiver::globalFenceAllocation;
+    using CommandStreamReceiver::heaplessModeEnabled;
+    using CommandStreamReceiver::heaplessStateInitEnabled;
     using CommandStreamReceiver::heaplessStateInitialized;
     using CommandStreamReceiver::heapStorageRequiresRecyclingTag;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
@@ -396,19 +409,6 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
         auto completionStamp = CommandStreamReceiverHw<GfxFamily>::flushTask(commandStream, commandStreamStart,
                                                                              dsh, ioh, ssh, taskLevel, dispatchFlags, device);
 
-        storeCommandStream(commandStream, commandStreamStart);
-
-        return completionStamp;
-    }
-
-    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
-                                       const IndirectHeap *dsh, const IndirectHeap *ioh,
-                                       const IndirectHeap *ssh, TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
-        passedDispatchFlags = dispatchFlags;
-
-        recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));
-        auto completionStamp = CommandStreamReceiverHw<GfxFamily>::flushTaskStateless(commandStream, commandStreamStart,
-                                                                                      dsh, ioh, ssh, taskLevel, dispatchFlags, device);
         storeCommandStream(commandStream, commandStreamStart);
 
         return completionStamp;

@@ -25,7 +25,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
 }
 
 template <typename GfxFamily>
-CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskStateless(
+CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
     LinearStream &commandStream, size_t commandStreamStart,
     const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
     TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) {

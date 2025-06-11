@@ -61,6 +61,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::dcFlushSupport;
     using BaseClass::directSubmission;
     using BaseClass::dshState;
+    using BaseClass::flushTaskHeapful;
+    using BaseClass::flushTaskHeapless;
     using BaseClass::getCmdSizeForExceptions;
     using BaseClass::getCmdSizeForHeaplessPrologue;
     using BaseClass::getCmdSizeForPrologue;
@@ -125,6 +127,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
     using BaseClass::CommandStreamReceiver::gsbaFor32BitProgrammed;
     using BaseClass::CommandStreamReceiver::heaplessModeEnabled;
+    using BaseClass::CommandStreamReceiver::heaplessStateInitEnabled;
     using BaseClass::CommandStreamReceiver::heaplessStateInitialized;
     using BaseClass::CommandStreamReceiver::immWritePostSyncWriteOffset;
     using BaseClass::CommandStreamReceiver::initDirectSubmission;
@@ -226,15 +229,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         recordedSsh = ssh;
         this->lastFlushedCommandStream = &commandStream;
         return BaseClass::flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
-    }
-
-    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
-                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
-                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
-        recordedDispatchFlags = dispatchFlags;
-        recordedSsh = ssh;
-        this->lastFlushedCommandStream = &commandStream;
-        return BaseClass::flushTaskStateless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
 
     CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream,

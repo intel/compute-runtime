@@ -299,6 +299,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
 
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    if (commandStreamReceiver->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
+
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
@@ -489,9 +493,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, GivenBlockingWhenFlushingTaskThenPipeControlProgrammedCorrectly) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver->heaplessStateInitialized = true;
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
     // Configure the CSR to not need to submit any state or commands
@@ -501,6 +506,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Gi
     auto blocking = true;
     auto &commandStreamTask = commandQueue.getCS(1024);
     auto &commandStreamCSR = commandStreamReceiver->getCS();
+    auto sizeUsedBeforeFlushCSR = commandStreamCSR.getUsed();
+
     commandStreamReceiver->streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -520,7 +527,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Gi
 
     // Verify that taskCS got modified, while csrCS remained intact
     EXPECT_GT(commandStreamTask.getUsed(), 0u);
-    EXPECT_EQ(0u, commandStreamCSR.getUsed());
+    EXPECT_EQ(sizeUsedBeforeFlushCSR, commandStreamCSR.getUsed());
 
     // Parse command list to verify that PC got added to taskCS
     cmdList.clear();
@@ -530,7 +537,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Gi
 
     // Parse command list to verify that PC wasn't added to csrCS
     cmdList.clear();
-    parseCommands<FamilyType>(commandStreamCSR, 0);
+    parseCommands<FamilyType>(commandStreamCSR, sizeUsedBeforeFlushCSR);
     auto numberOfPC = getCommandsList<PIPE_CONTROL>().size();
     EXPECT_EQ(0u, numberOfPC);
 }
@@ -540,6 +547,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     auto &commandStream = commandQueue.getCS(4096u);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    mockCsr->heaplessStateInitialized = true;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     configureCSRtoNonDirtyState<FamilyType>(true);
@@ -585,7 +593,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(0u, mockCsr->flushCalledCount);
+    EXPECT_EQ(mockCsr->getHeaplessStateInitEnabled() ? 1u : 0u, mockCsr->flushCalledCount);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 
@@ -603,6 +611,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -613,8 +622,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     dispatchFlags.guardCommandBufferWithPipeControl = true;
 
     mockCsr->streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
-
-    commandStream.getSpace(4);
 
     mockCsr->flushTask(commandStream,
                        4,
@@ -669,6 +676,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenNothingToFlushWhenFlushTaskCalledThenDontFlushStamp) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    mockCsr->heaplessStateInitialized = true;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     configureCSRtoNonDirtyState<FamilyType>(true);

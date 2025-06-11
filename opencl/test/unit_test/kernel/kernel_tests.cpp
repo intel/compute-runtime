@@ -839,11 +839,27 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         TaskCountType taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override {
+        if (getHeaplessStateInitEnabled()) {
+            return flushTaskHeapless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+        } else {
+            return flushTaskHeapful(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+        }
+    }
+
+    CompletionStamp flushTaskHeapful(
+        LinearStream &commandStream,
+        size_t commandStreamStart,
+        const IndirectHeap *dsh,
+        const IndirectHeap *ioh,
+        const IndirectHeap *ssh,
+        TaskCountType taskLevel,
+        DispatchFlags &dispatchFlags,
+        Device &device) override {
         CompletionStamp cs = {};
         return cs;
     }
 
-    CompletionStamp flushTaskStateless(
+    CompletionStamp flushTaskHeapless(
         LinearStream &commandStream,
         size_t commandStreamStart,
         const IndirectHeap *dsh,

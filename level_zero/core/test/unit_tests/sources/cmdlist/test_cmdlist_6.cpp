@@ -107,22 +107,17 @@ HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCo
 }
 
 using CommandListExecuteImmediate = Test<DeviceFixture>;
-HWTEST_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported) {
+HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtMostXe3Core) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseImmediateFlushTask.set(0);
-    UnitTestSetter::disableHeaplessStateInit(restorer);
-    auto &compilerProductHelper = device->getCompilerProductHelper();
+
     auto &productHelper = device->getProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
 
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
-    if (commandListImmediate.isHeaplessStateInitEnabled()) {
-        GTEST_SKIP();
-    }
 
     auto &currentCsrStreamProperties = commandListImmediate.getCsr(false)->getStreamProperties();
 
@@ -147,11 +142,9 @@ HWTEST_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlush
     int expectedDisableEuFusion = frontEndPropertiesSupport.disableEuFusion ? 1 : -1;
     expectedDisableOverdispatch = frontEndPropertiesSupport.disableOverdispatch ? expectedDisableOverdispatch : -1;
 
-    if (heaplessEnabled == false) {
-        EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
-        EXPECT_EQ(expectedDisableEuFusion, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
-        EXPECT_EQ(expectedDisableOverdispatch, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
-    }
+    EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
+    EXPECT_EQ(expectedDisableEuFusion, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
+    EXPECT_EQ(expectedDisableOverdispatch, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
 
     EXPECT_EQ(expectedLargeGrfMode, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
     EXPECT_EQ(expectedThreadArbitrationPolicy, currentCsrStreamProperties.stateComputeMode.threadArbitrationPolicy.value);
@@ -171,11 +164,9 @@ HWTEST_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlush
     expectedDisableOverdispatch = frontEndPropertiesSupport.disableOverdispatch ? 0 : -1;
     expectedDisableEuFusion = frontEndPropertiesSupport.disableEuFusion ? 0 : -1;
 
-    if (heaplessEnabled == false) {
-        EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
-        EXPECT_EQ(expectedDisableEuFusion, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
-        EXPECT_EQ(expectedDisableOverdispatch, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
-    }
+    EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
+    EXPECT_EQ(expectedDisableEuFusion, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
+    EXPECT_EQ(expectedDisableOverdispatch, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
 
     EXPECT_EQ(expectedLargeGrfMode, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
     EXPECT_EQ(expectedThreadArbitrationPolicy, currentCsrStreamProperties.stateComputeMode.threadArbitrationPolicy.value);

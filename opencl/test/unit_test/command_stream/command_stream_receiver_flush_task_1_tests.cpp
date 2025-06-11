@@ -186,6 +186,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
     debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::MidThread));
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto &mockCsr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    if (mockCsr.getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
+
     mockCsr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr.useNewResourceImplicitFlush = false;
     mockCsr.useGpuIdleImplicitFlush = false;
@@ -222,7 +227,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
     SipKernel::freeSipKernels(&mockDevice->getRootDeviceEnvironmentRef(), mockDevice->getMemoryManager());
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident, IsAtMostXe3Core) {
     EnvironmentWithCsrWrapper environment;
     environment.setCsrType<MockCsrHw2<FamilyType>>();
     DebugManagerStateRestore dbgRestorer;
@@ -1055,7 +1060,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenFlu
     commandStream.getSpace(sizeof(typename FamilyType::MI_NOOP));
 
     flushTask(commandStreamReceiver);
-    EXPECT_EQ(1, commandStreamReceiver.flushCount);
+    EXPECT_EQ(commandStreamReceiver.getHeaplessStateInitEnabled() + 1, commandStreamReceiver.flushCount);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBothCsWhenFlushingTaskThenChainWithBatchBufferStart) {
@@ -1301,6 +1306,9 @@ struct CommandStreamReceiverFlushTaskTestsWithMockCsrHw2DebugFlag : public UltCo
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2DebugFlag, givenDispatchFlagsWhenCallFlushTaskThenThreadArbitrationPolicyIsSetProperly) {
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
+    if (mockCsr->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
@@ -1349,6 +1357,9 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
 
 HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemoryCompressionStateApplicableWhenFlushTaskIsCalledThenUpdateLastMemoryCompressionState) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (mockCsr.getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);

@@ -400,6 +400,24 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     DispatchFlags &dispatchFlags,
     Device &device) {
 
+    if (this->getHeaplessStateInitEnabled()) {
+        return flushTaskHeapless(commandStreamTask, commandStreamStartTask, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+    } else {
+        return flushTaskHeapful(commandStreamTask, commandStreamStartTask, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+    }
+}
+
+template <typename GfxFamily>
+CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
+    LinearStream &commandStreamTask,
+    size_t commandStreamStartTask,
+    const IndirectHeap *dsh,
+    const IndirectHeap *ioh,
+    const IndirectHeap *ssh,
+    TaskCountType taskLevel,
+    DispatchFlags &dispatchFlags,
+    Device &device) {
+
     DEBUG_BREAK_IF(&commandStreamTask == &commandStream);
     DEBUG_BREAK_IF(!(dispatchFlags.preemptionMode == PreemptionMode::Disabled ? device.getPreemptionMode() == PreemptionMode::Disabled : true));
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
