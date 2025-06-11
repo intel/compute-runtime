@@ -165,9 +165,9 @@ ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pend
             *pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
             return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    return ZE_RESULT_ERROR_UNINITIALIZED;
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t FirmwareUtilImp::fwGetEccAvailable(ze_bool_t *pAvailable) {
@@ -197,9 +197,9 @@ ze_result_t FirmwareUtilImp::fwGetEccAvailable(ze_bool_t *pAvailable) {
             }
             return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    return ZE_RESULT_ERROR_UNINITIALIZED;
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t FirmwareUtilImp::fwGetEccConfigurable(ze_bool_t *pConfigurable) {
@@ -229,9 +229,9 @@ ze_result_t FirmwareUtilImp::fwGetEccConfigurable(ze_bool_t *pConfigurable) {
             }
             return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    return ZE_RESULT_ERROR_UNINITIALIZED;
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t FirmwareUtilImp::fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) {
@@ -266,9 +266,9 @@ ze_result_t FirmwareUtilImp::fwSetEccConfig(uint8_t newState, uint8_t *currentSt
             *pendingState = outBuf[GfspHeciConstants::SetEccCmd8BytePostition::responsePendingState];
             return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_ERROR_UNINITIALIZED;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    return ZE_RESULT_ERROR_UNINITIALIZED;
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t FirmwareUtilImp::fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) {

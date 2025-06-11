@@ -63,14 +63,16 @@ ze_result_t EccImp::getEccState(zes_device_ecc_properties_t *pState) {
         }
     }
 
-    uint8_t currentState = 0;
-    uint8_t pendingState = 0;
+    uint8_t currentState = 0xff;
+    uint8_t pendingState = 0xff;
     ze_result_t result = pFwInterface->fwGetEccConfig(&currentState, &pendingState);
+
+    pState->currentState = getEccState(currentState);
+    pState->pendingState = getEccState(pendingState);
+
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    pState->currentState = getEccState(currentState);
-    pState->pendingState = getEccState(pendingState);
 
     pState->pendingAction = ZES_DEVICE_ACTION_WARM_CARD_RESET;
     if (pState->currentState == pState->pendingState) {
@@ -96,6 +98,8 @@ ze_result_t EccImp::setEccState(const zes_device_ecc_desc_t *newState, zes_devic
         state = eccStateEnable;
     } else if (newState->state == ZES_DEVICE_ECC_STATE_DISABLED) {
         state = eccStateDisable;
+    } else if (newState->state == ZES_DEVICE_ECC_STATE_UNAVAILABLE) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Invalid ecc enumeration and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INVALID_ENUMERATION);
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;

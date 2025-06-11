@@ -266,9 +266,9 @@ TEST(FwEccTest, GivenFwEccConfigCallFailsWhenCallingFirmwareUtilSetAndGetEccThen
     uint8_t pendingState = 0;
     uint8_t newState = 0;
     auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
     ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
     delete pFwUtilImp;
@@ -327,9 +327,9 @@ TEST(LinuxFwEccTest, GivenGetProcAddrCallFailsWhenFirmwareUtilChecksEccGetAndSet
     uint8_t pendingState = 0;
     uint8_t newState = 0;
     auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
     ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
     delete pFwUtilImp;
@@ -626,7 +626,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd9AndCmd16AreUnsupportedWhenCallingFwGetEccAvail
     ze_bool_t pAvailable;
     auto ret = pFwUtilImp->fwGetEccAvailable(&pAvailable);
     EXPECT_FALSE(pAvailable);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
@@ -717,7 +717,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd9AndCmd16AreUnsupportedWhenCallingFwGetEccConfi
     ze_bool_t pConfigurable;
     auto ret = pFwUtilImp->fwGetEccConfigurable(&pConfigurable);
     EXPECT_FALSE(pConfigurable);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
@@ -784,17 +784,17 @@ TEST(LinuxFwEccTest, GivenUnavailableHeciFunctionPointersWhenCallingEccMethodsTh
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
 
     ze_bool_t pAvailable;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pFwUtilImp->fwGetEccAvailable(&pAvailable));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFwUtilImp->fwGetEccAvailable(&pAvailable));
 
     ze_bool_t pConfigurable;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pFwUtilImp->fwGetEccConfigurable(&pConfigurable));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFwUtilImp->fwGetEccConfigurable(&pConfigurable));
 
     uint8_t currentState;
     uint8_t pendingState;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pFwUtilImp->fwGetEccConfig(&currentState, &pendingState));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFwUtilImp->fwGetEccConfig(&currentState, &pendingState));
 
     uint8_t newState = 1;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState));
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
@@ -840,7 +840,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd15IsSupportedThenWhenCallingFwSetEccConfigAndFw
     uint8_t pendingState;
     uint8_t newState = 1;
     auto ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
@@ -861,7 +861,7 @@ TEST(LinuxFwEccTest, GivenHeciSetCommandsAreNotSupportedThenWhenCallingFwSetEccC
     uint8_t pendingState;
     uint8_t newState = 1;
     auto ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, ret);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
