@@ -208,6 +208,7 @@ class ProductHelperHw : public ProductHelper {
     bool useAdditionalBlitProperties() const override;
     bool isNonCoherentTimestampsModeEnabled() const override;
     bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const override;
+    bool isPidFdOrSocketForIpcSupported() const override;
 
     ~ProductHelperHw() override = default;
 

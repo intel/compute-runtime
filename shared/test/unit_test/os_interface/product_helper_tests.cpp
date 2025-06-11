@@ -1184,3 +1184,21 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingIsResourceUncachedForC
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingPreferredWorkgroupCountPerSubsliceThenZeroReturned) {
     EXPECT_EQ(0u, productHelper->getPreferredWorkgroupCountPerSubslice());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWithDebugKeyWhenPidFdOrSocketForIpcIsSupportedThenExpectedValueReturned) {
+    DebugManagerStateRestore restore;
+
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+    EXPECT_TRUE(productHelper->isPidFdOrSocketForIpcSupported());
+
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(0);
+    EXPECT_FALSE(productHelper->isPidFdOrSocketForIpcSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSupportedThenFalseReturned, IsAtLeastXe2HpgCore) {
+    EXPECT_FALSE(productHelper->isPidFdOrSocketForIpcSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSupportedThenFalseReturned, IsBeforeXe2HpgCore) {
+    EXPECT_FALSE(productHelper->isPidFdOrSocketForIpcSupported());
+}

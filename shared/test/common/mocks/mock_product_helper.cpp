@@ -488,6 +488,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isNonCoherentTimestampsModeEnabled() const {
     return false;
 }
 
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isPidFdOrSocketForIpcSupported() const {
+    return false;
+}
+
 } // namespace NEO
 
 #include "shared/source/os_interface/product_helper.inl"
