@@ -9,9 +9,7 @@
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
-#include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/context/context.h"
 
@@ -24,31 +22,15 @@ namespace ULT {
 void verifyDevices(cl_program pProgram, size_t expectedNumDevices, cl_device_id *expectedDevices);
 
 TEST_F(ClGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
-    USE_REAL_FILE_SYSTEM();
-
     cl_program pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
+    MockZebinWrapper zebin{pContext->getDevice(0)->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
-
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sources,
-        &sourceSize,
+        sampleKernelSrcs,
+        &sampleKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -98,28 +80,10 @@ TEST_F(ClGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledT
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingForSpecificDevicesThenOnlySpecificDevicesAndTheirSubDevicesReportBuildStatus) {
-    USE_REAL_FILE_SYSTEM();
+using ClGetProgramBuildInfoMultiDeviceTest = Test<FixtureWithMockZebin>;
 
+TEST_F(ClGetProgramBuildInfoMultiDeviceTest, givenMultiDeviceProgramWhenCompilingForSpecificDevicesThenOnlySpecificDevicesAndTheirSubDevicesReportBuildStatus) {
     cl_program pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
-
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
-
     MockUnrestrictiveContextMultiGPU context;
     cl_int retVal = CL_INVALID_PROGRAM;
 
@@ -127,7 +91,7 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingForSpecificD
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -177,28 +141,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingForSpecificD
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
-    USE_REAL_FILE_SYSTEM();
-
+TEST_F(ClGetProgramBuildInfoMultiDeviceTest, givenMultiDeviceProgramWhenCompilingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
     cl_program pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
-
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
-
     MockUnrestrictiveContextMultiGPU context;
     cl_int retVal = CL_INVALID_PROGRAM;
 
@@ -206,7 +150,7 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingWithoutInput
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -289,28 +233,8 @@ TEST_F(ClGetProgramBuildInfoTests, givenInvalidDeviceInputWhenGetProgramBuildInf
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingForSpecificDevicesThenOnlySpecificDevicesReportBuildStatus) {
-    USE_REAL_FILE_SYSTEM();
-
+TEST_F(ClGetProgramBuildInfoMultiDeviceTest, givenMultiDeviceProgramWhenLinkingForSpecificDevicesThenOnlySpecificDevicesReportBuildStatus) {
     MockProgram *pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
-
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
-
     MockUnrestrictiveContextMultiGPU context;
     cl_int retVal = CL_INVALID_PROGRAM;
 
@@ -318,7 +242,7 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingForSpecificDev
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
         retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -377,28 +301,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingForSpecificDev
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
-    USE_REAL_FILE_SYSTEM();
-
+TEST_F(ClGetProgramBuildInfoMultiDeviceTest, givenMultiDeviceProgramWhenLinkingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
     MockProgram *pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
-
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
-
     MockUnrestrictiveContextMultiGPU context;
     cl_int retVal = CL_INVALID_PROGRAM;
 
@@ -406,7 +310,7 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingWithoutInputDe
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
         retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -466,28 +370,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingWithoutInputDe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDevicesThenOnlySpecificDevicesAndTheirSubDevicesReportBuildStatus) {
-    USE_REAL_FILE_SYSTEM();
-
+TEST_F(ClGetProgramBuildInfoMultiDeviceTest, givenMultiDeviceProgramWhenBuildingForSpecificDevicesThenOnlySpecificDevicesAndTheirSubDevicesReportBuildStatus) {
     MockProgram *pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
-
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
-
     MockUnrestrictiveContextMultiGPU context;
     cl_int retVal = CL_INVALID_PROGRAM;
 
@@ -495,7 +379,7 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDe
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
         retVal);
 
     EXPECT_NE(nullptr, pProgram);
@@ -550,28 +434,8 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingForSpecificDe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
-    USE_REAL_FILE_SYSTEM();
-
+TEST_F(ClGetProgramBuildInfoMultiDeviceTest, givenMultiDeviceProgramWhenBuildingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
     MockProgram *pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
-
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
-
     MockUnrestrictiveContextMultiGPU context;
     cl_int retVal = CL_INVALID_PROGRAM;
 
@@ -579,7 +443,7 @@ TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenBuildingWithoutInputD
         &context,
         1,
         sources,
-        &sourceSize,
+        &sourceKernelSize,
         retVal);
 
     EXPECT_NE(nullptr, pProgram);

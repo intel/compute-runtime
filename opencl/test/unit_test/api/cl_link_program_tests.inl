@@ -22,7 +22,7 @@ using ClLinkProgramTests = ApiTests;
 
 TEST_F(ClLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
     zebin.setAsMockCompilerReturnedBinary();
 
     pProgram = clCreateProgramWithSource(
@@ -72,7 +72,7 @@ TEST_F(ClLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturn
 
 TEST_F(ClLinkProgramTests, GivenCreateLibraryOptionWhenLinkingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
     zebin.setAsMockCompilerReturnedBinary();
 
     pProgram = clCreateProgramWithSource(
@@ -229,7 +229,7 @@ TEST_F(ClLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
 
 TEST_F(ClLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidValueErrorIsReturned) {
     cl_program pProgram = nullptr;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
     zebin.setAsMockCompilerReturnedBinary();
 
     pProgram = clCreateProgramWithSource(
@@ -277,7 +277,7 @@ TEST_F(ClLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidVa
 
 TEST_F(ClLinkProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsInvoked) {
     cl_program pProgram = nullptr;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
     zebin.setAsMockCompilerReturnedBinary();
 
     pProgram = clCreateProgramWithSource(
@@ -330,7 +330,7 @@ TEST_F(ClLinkProgramTests, GivenValidCallbackInputWhenLinkProgramThenCallbackIsI
 
 TEST_F(ClLinkProgramTests, givenMultiDeviceProgramWhenLinkingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
     cl_program pProgram = nullptr;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
     zebin.setAsMockCompilerReturnedBinary();
 
     pProgram = clCreateProgramWithSource(

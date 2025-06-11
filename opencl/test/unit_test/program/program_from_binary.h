@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/helpers/file_io.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
@@ -30,36 +30,31 @@ struct ProgramFromBinaryFixture : public ClDeviceFixture,
     using ContextFixture::setUp;
 
     void SetUp() override {
-        ProgramFromBinaryFixture::setUp("CopyBuffer_simd32", "CopyBuffer");
+        ProgramFromBinaryFixture::setUp();
     }
-    void setUp(const char *binaryFileName, const char *kernelName) {
-        USE_REAL_FILE_SYSTEM();
-        this->binaryFileName = binaryFileName;
-        this->kernelName = kernelName;
+    void setUp() {
         ClDeviceFixture::setUp();
-
+        zebinPtr = std::make_unique<MockZebinWrapper<>>(pClDevice->getHardwareInfo());
+        this->kernelName = zebinPtr->kernelName;
         cl_device_id device = pClDevice;
         ContextFixture::setUp(1, &device);
         ProgramFixture::setUp();
 
-        if (options.size())
-            createProgramFromBinary(pContext, pContext->getDevices(), binaryFileName, options);
-        else
-            createProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
+        createProgramFromBinary(pContext, pContext->getDevices(), zebinPtr->binaries.data(), zebinPtr->binarySizes.data());
+        knownSourceSize = zebinPtr->binarySizes[0];
+        knownSource = std::make_unique<char[]>(knownSourceSize);
+        std::copy(zebinPtr->binaries[0], zebinPtr->binaries[0] + knownSourceSize, knownSource.get());
     }
 
     void TearDown() override {
         knownSource.reset();
+        zebinPtr.reset();
         ProgramFixture::tearDown();
         ContextFixture::tearDown();
         ClDeviceFixture::tearDown();
     }
 
-    void setOptions(std::string &optionsIn) {
-        options = optionsIn;
-    }
-
-    const char *binaryFileName = nullptr;
+    std::unique_ptr<MockZebinWrapper<>> zebinPtr;
     const char *kernelName = nullptr;
     cl_int retVal = CL_SUCCESS;
     std::string options;
@@ -76,7 +71,6 @@ class ProgramSimpleFixture : public ClDeviceFixture,
 
   public:
     void setUp() {
-        USE_REAL_FILE_SYSTEM();
         ClDeviceFixture::setUp();
 
         cl_device_id device = pClDevice;

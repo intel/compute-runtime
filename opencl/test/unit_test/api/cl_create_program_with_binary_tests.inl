@@ -23,7 +23,7 @@ namespace ULT {
 TEST_F(ClCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgramWithBinaryThenProgramIsCreatedAndSuccessIsReturned) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
@@ -55,7 +55,7 @@ TEST_F(ClCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgram
 TEST_F(ClCreateProgramWithBinaryTests, GivenInvalidInputWhenCreatingProgramWithBinaryThenInvalidValueErrorIsReturned) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
-    MockZebinWrapper<2> zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper<2> zebin{pDevice->getHardwareInfo()};
 
     zebin.binaries[1] = nullptr;
 
@@ -107,7 +107,7 @@ TEST_F(ClCreateProgramWithBinaryTests, GivenInvalidInputWhenCreatingProgramWithB
 TEST_F(ClCreateProgramWithBinaryTests, GivenDeviceNotAssociatedWithContextWhenCreatingProgramWithBinaryThenInvalidDeviceErrorIsReturned) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
     MockClDevice invalidDevice(new MockDevice());
 
     cl_device_id devicesForProgram[] = {&invalidDevice};
@@ -192,13 +192,13 @@ TEST_F(ClCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramW
 }
 
 TEST_F(ClCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBuildIsCalledThenReturnSuccess) {
-    USE_REAL_FILE_SYSTEM();
-
     const uint32_t spirv[16] = {0x03022307};
     cl_int err = CL_INVALID_VALUE;
     cl_program program = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);
     EXPECT_EQ(CL_SUCCESS, err);
     EXPECT_NE(nullptr, program);
+    MockZebinWrapper zebin{*defaultHwInfo};
+    zebin.setAsMockCompilerReturnedBinary();
     err = clBuildProgram(program, 0, nullptr, "", nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, err);
     err = clBuildProgram(program, 0, nullptr, "", nullptr, nullptr);

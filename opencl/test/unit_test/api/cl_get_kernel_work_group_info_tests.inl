@@ -14,8 +14,6 @@ using namespace NEO;
 namespace ULT {
 
 TEST_P(ClGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkGroupInfoThenSuccessIsReturned) {
-    USE_REAL_FILE_SYSTEM();
-
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
         kernel,
@@ -30,7 +28,6 @@ TEST_P(ClGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkG
 }
 
 TEST_F(ClGetKernelWorkGroupInfoTest, GivenInvalidDeviceWhenGettingWorkGroupInfoFromSingleDeviceKernelThenInvalidDeviceErrorIsReturned) {
-
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
         pMultiDeviceKernel,
@@ -44,7 +41,6 @@ TEST_F(ClGetKernelWorkGroupInfoTest, GivenInvalidDeviceWhenGettingWorkGroupInfoF
 }
 
 TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFromSingleDeviceKernelThenSuccessIsReturned) {
-
     size_t paramValueSizeRet;
     auto retVal = clGetKernelWorkGroupInfo(
         pMultiDeviceKernel,
@@ -58,8 +54,6 @@ TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
 }
 
 TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFromMultiDeviceKernelThenInvalidDeviceErrorIsReturned) {
-    USE_REAL_FILE_SYSTEM();
-
     size_t paramValueSizeRet;
     MockUnrestrictiveContext context;
     auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());

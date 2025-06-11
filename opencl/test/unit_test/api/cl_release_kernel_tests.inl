@@ -26,7 +26,7 @@ TEST_F(ClReleaseKernelTests, GivenRetainedKernelWhenReleasingKernelThenKernelIsC
     cl_kernel kernel = nullptr;
     cl_program program = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     program = clCreateProgramWithBinary(
         pContext,
@@ -44,7 +44,7 @@ TEST_F(ClReleaseKernelTests, GivenRetainedKernelWhenReleasingKernelThenKernelIsC
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    kernel = clCreateKernel(program, "CopyBuffer", &retVal);
+    kernel = clCreateKernel(program, zebin.kernelName, &retVal);
 
     EXPECT_NE(nullptr, kernel);
     ASSERT_EQ(CL_SUCCESS, retVal);

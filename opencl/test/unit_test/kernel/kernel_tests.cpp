@@ -61,7 +61,7 @@ class KernelTests : public ProgramFromBinaryFixture {
 
   protected:
     void SetUp() override {
-        ProgramFromBinaryFixture::setUp("CopyBuffer_simd32", "CopyBuffer");
+        ProgramFromBinaryFixture::setUp();
         ASSERT_NE(nullptr, pProgram);
         ASSERT_EQ(CL_SUCCESS, retVal);
 

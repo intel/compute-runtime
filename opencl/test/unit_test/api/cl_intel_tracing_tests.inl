@@ -1217,7 +1217,8 @@ struct IntelClLinkProgramTracingTest : public IntelTracingTest, PlatformFixture 
 };
 
 TEST_F(IntelClLinkProgramTracingTest, givenLinkProgramCallTracingWhenInvokingCallbackThenPointersFromCallAndCallbackPointToTheSameAddress) {
-    USE_REAL_FILE_SYSTEM();
+    MockZebinWrapper zebin{*defaultHwInfo};
+    zebin.setAsMockCompilerReturnedBinary();
 
     call();
     EXPECT_EQ(1u, enterCount);

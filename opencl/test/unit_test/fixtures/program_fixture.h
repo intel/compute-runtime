@@ -52,6 +52,8 @@ class ProgramFixture {
     void createProgramWithSource(Context *pContext,
                                  const std::string &sourceFileName);
 
+    void createProgramWithSource(Context *pContext);
+
   protected:
     void setUp() {
     }

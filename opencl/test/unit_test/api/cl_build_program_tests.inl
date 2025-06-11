@@ -34,7 +34,7 @@ namespace ULT {
 
 TEST_F(ClBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
     zebin.setAsMockCompilerReturnedBinary();
 
     pProgram = clCreateProgramWithSource(
@@ -72,7 +72,7 @@ TEST_F(ClBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenP
 TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
@@ -104,7 +104,7 @@ HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreating
     debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
@@ -136,7 +136,7 @@ HWTEST2_F(ClBuildProgramTests, GivenFailBuildProgramAndBinaryGeneratedByNgenAsIn
     debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     zebin.getFlags().generatorId = 0u; // ngen generated
 
@@ -171,7 +171,7 @@ TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMu
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
     const size_t numBinaries = 6;
-    MockZebinWrapper<6u> zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper<6u> zebin{pDevice->getHardwareInfo()};
 
     cl_device_id devicesForProgram[] = {context.pRootDevice0, context.pSubDevice00, context.pSubDevice01, context.pRootDevice1, context.pSubDevice10, context.pSubDevice11};
 
@@ -204,7 +204,7 @@ TEST_F(ClBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithBinaryForMu
 TEST_F(ClBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOptionsIsCalledThenStoredOptionsAreUsed) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
@@ -300,7 +300,7 @@ TEST_F(ClBuildProgramTests, GivenNullAsInputWhenCreatingProgramThenInvalidProgra
 TEST_F(ClBuildProgramTests, GivenInvalidCallbackInputWhenBuildProgramThenInvalidValueErrorIsReturned) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
@@ -331,7 +331,7 @@ TEST_F(ClBuildProgramTests, GivenInvalidCallbackInputWhenBuildProgramThenInvalid
 TEST_F(ClBuildProgramTests, GivenValidCallbackInputWhenBuildProgramThenCallbackIsInvoked) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
@@ -365,7 +365,7 @@ TEST_F(ClBuildProgramTests, GivenValidCallbackInputWhenBuildProgramThenCallbackI
 
 TEST_F(ClBuildProgramTests, givenProgramWhenBuildingForInvalidDevicesInputThenInvalidDeviceErrorIsReturned) {
     cl_program pProgram = nullptr;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
     zebin.setAsMockCompilerReturnedBinary();
 
     pProgram = clCreateProgramWithSource(
@@ -427,16 +427,12 @@ TEST_F(ClBuildProgramTests, givenProgramWhenBuildingForInvalidDevicesInputThenIn
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clBuildProgramTests, givenMultiDeviceProgramWithCreatedKernelWhenBuildingThenInvalidOperationErrorIsReturned) {
+using ClBuildProgramMultiDeviceTests = Test<FixtureWithMockZebin>;
+
+TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithCreatedKernelWhenBuildingThenInvalidOperationErrorIsReturned) {
     MockSpecializedContext context;
     cl_program pProgram = nullptr;
     cl_int retVal = CL_INVALID_PROGRAM;
-    MockZebinWrapper zebin(context.getDevice(0)->getHardwareInfo(), 32);
-    zebin.setAsMockCompilerReturnedBinary();
-
-    const char *sourceKernel = "example_kernel(){}";
-    size_t sourceKernelSize = std::strlen(sourceKernel) + 1;
-    const char *sources[1] = {sourceKernel};
 
     pProgram = clCreateProgramWithSource(
         &context,
@@ -461,7 +457,7 @@ TEST(clBuildProgramTests, givenMultiDeviceProgramWithCreatedKernelWhenBuildingTh
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    auto kernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -492,16 +488,10 @@ TEST(clBuildProgramTests, givenMultiDeviceProgramWithCreatedKernelWhenBuildingTh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelsWhenBuildingThenInvalidOperationErrorIsReturned) {
+TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithCreatedKernelsWhenBuildingThenInvalidOperationErrorIsReturned) {
     MockSpecializedContext context;
     cl_program pProgram = nullptr;
     cl_int retVal = CL_INVALID_PROGRAM;
-    MockZebinWrapper zebin(context.getDevice(0)->getHardwareInfo(), 32);
-    zebin.setAsMockCompilerReturnedBinary();
-
-    const char *sourceKernel = "example_kernel(){}";
-    size_t sourceKernelSize = std::strlen(sourceKernel) + 1;
-    const char *sources[1] = {sourceKernel};
 
     pProgram = clCreateProgramWithSource(
         &context,
@@ -564,15 +554,9 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithCreatedKernelsWhenBuildingTh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWhenCreatingKernelThenProgramAndKernelDevicesMatchAndSuccessIsReturned) {
+TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWhenCreatingKernelThenProgramAndKernelDevicesMatchAndSuccessIsReturned) {
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
-    MockZebinWrapper zebin(context.getDevice(0)->getHardwareInfo(), 32);
-    zebin.setAsMockCompilerReturnedBinary();
-
-    const char *sourceKernel = "example_kernel(){}";
-    size_t sourceKernelSize = std::strlen(sourceKernel) + 1;
-    const char *sources[1] = {sourceKernel};
 
     cl_int retVal = CL_INVALID_PROGRAM;
     pProgram = clCreateProgramWithSource(
@@ -598,7 +582,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_kernel pKernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    cl_kernel pKernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     MultiDeviceKernel *kernel = castToObject<MultiDeviceKernel>(pKernel);
@@ -613,16 +597,10 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWithCreatedKernelWhenBuildingProgramForSecondDeviceThenInvalidOperationReturned) {
+TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceWithCreatedKernelWhenBuildingProgramForSecondDeviceThenInvalidOperationReturned) {
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
     cl_int retVal = CL_INVALID_PROGRAM;
-    MockZebinWrapper zebin(context.getDevice(0)->getHardwareInfo(), 32);
-    zebin.setAsMockCompilerReturnedBinary();
-
-    const char *sourceKernel = "example_kernel(){}";
-    size_t sourceKernelSize = std::strlen(sourceKernel) + 1;
-    const char *sources[1] = {sourceKernel};
 
     pProgram = clCreateProgramWithSource(
         &context,
@@ -646,7 +624,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_kernel kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    cl_kernel kernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clBuildProgram(
@@ -670,7 +648,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    kernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseKernel(kernel);
@@ -679,16 +657,10 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForSingleDeviceW
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForMultipleDevicesSeparatelyWithCreatedKernelThenProgramAndKernelDevicesMatch) {
+TEST_F(ClBuildProgramMultiDeviceTests, givenMultiDeviceProgramWithProgramBuiltForMultipleDevicesSeparatelyWithCreatedKernelThenProgramAndKernelDevicesMatch) {
     MockUnrestrictiveContextMultiGPU context;
     cl_program pProgram = nullptr;
     cl_int retVal = CL_INVALID_PROGRAM;
-    MockZebinWrapper zebin(context.getDevice(0)->getHardwareInfo(), 32);
-    zebin.setAsMockCompilerReturnedBinary();
-
-    const char *sourceKernel = "example_kernel(){}";
-    size_t sourceKernelSize = std::strlen(sourceKernel) + 1;
-    const char *sources[1] = {sourceKernel};
 
     pProgram = clCreateProgramWithSource(
         &context,
@@ -721,7 +693,7 @@ TEST(clBuildProgramTest, givenMultiDeviceProgramWithProgramBuiltForMultipleDevic
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_kernel pKernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    cl_kernel pKernel = clCreateKernel(pProgram, zebinPtr->kernelName, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     MultiDeviceKernel *kernel = castToObject<MultiDeviceKernel>(pKernel);

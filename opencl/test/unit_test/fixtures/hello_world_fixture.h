@@ -59,7 +59,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         CommandStreamFixture::setUp(pCmdQ);
         ASSERT_NE(nullptr, pCS);
         IndirectHeapFixture::setUp(pCmdQ);
-        KernelFixture::setUp(pClDevice, kernelFilename, kernelName);
+        KernelFixture::setUp(pClDevice);
         ASSERT_NE(nullptr, pKernel);
 
         auto retVal = CL_INVALID_VALUE;

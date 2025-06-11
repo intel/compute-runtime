@@ -32,7 +32,7 @@ TEST_F(ClCloneKernelTests, GivenValidKernelWhenCloningKernelThenSuccessIsReturne
     cl_kernel pClonedKernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
@@ -58,7 +58,7 @@ TEST_F(ClCloneKernelTests, GivenValidKernelWhenCloningKernelThenSuccessIsReturne
 
     pSourceKernel = clCreateKernel(
         pProgram,
-        "CopyBuffer",
+        zebin.kernelName,
         &retVal);
 
     EXPECT_NE(nullptr, pSourceKernel);

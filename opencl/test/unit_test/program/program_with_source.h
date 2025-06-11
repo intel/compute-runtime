@@ -8,9 +8,8 @@
 #pragma once
 
 #include "shared/source/compiler_interface/compiler_interface.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
+#include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
@@ -32,35 +31,26 @@ class ProgramFromSourceTest : public ContextFixture,
 
   protected:
     void SetUp() override {
-        USE_REAL_FILE_SYSTEM();
-        sourceFileName = "CopyBuffer_simd16.cl";
-        binaryFileName = "CopyBuffer_simd16";
-        kernelName = "CopyBuffer";
-        kbHelper = new KernelBinaryHelper(binaryFileName);
-
         PlatformFixture::setUp();
+        zebinPtr = std::make_unique<MockZebinWrapper<>>(pPlatform->getClDevice(0)->getHardwareInfo());
+
         cl_device_id device = pPlatform->getClDevice(0);
         rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
         ContextFixture::setUp(1, &device);
         ProgramFixture::setUp();
 
-        createProgramWithSource(
-            pContext,
-            sourceFileName);
+        createProgramWithSource(pContext);
     }
 
     void TearDown() override {
         knownSource.reset();
+        zebinPtr.reset();
         ProgramFixture::tearDown();
         ContextFixture::tearDown();
         PlatformFixture::tearDown();
-        delete kbHelper;
     }
 
-    KernelBinaryHelper *kbHelper = nullptr;
-    const char *sourceFileName = nullptr;
-    const char *binaryFileName = nullptr;
-    const char *kernelName = nullptr;
+    std::unique_ptr<MockZebinWrapper<>> zebinPtr;
     cl_int retVal = CL_SUCCESS;
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
 };

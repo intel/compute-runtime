@@ -21,7 +21,7 @@ namespace ULT {
 
 TEST_F(ClGetKernelInfoTests, GivenValidParamsWhenGettingKernelInfoThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
     zebin.setAsMockCompilerReturnedBinary();
 
     pProgram = clCreateProgramWithSource(
@@ -44,7 +44,7 @@ TEST_F(ClGetKernelInfoTests, GivenValidParamsWhenGettingKernelInfoThenSuccessIsR
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    cl_kernel kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    cl_kernel kernel = clCreateKernel(pProgram, zebin.kernelName, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     size_t paramValueSizeRet;

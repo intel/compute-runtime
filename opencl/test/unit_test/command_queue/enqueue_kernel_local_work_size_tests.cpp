@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/helpers/compiler_product_helper.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
@@ -31,17 +33,25 @@ TEST_F(EnqueueKernelLocalWorkSize, GivenNullLwsInWhenEnqueuingKernelThenSuccessI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-struct EnqueueKernelRequiredWorkSize : public HelloWorldTest<HelloWorldFixtureFactory> {
-    typedef HelloWorldTest<HelloWorldFixtureFactory> Parent;
-
+struct EnqueueKernelRequiredWorkSize : public HelloWorldKernelFixture,
+                                       public CommandQueueHwFixture,
+                                       public ClDeviceFixture,
+                                       public ::testing::Test {
     void SetUp() override {
-        Parent::kernelFilename = "required_work_group";
-        Parent::kernelName = "CopyBuffer";
-        Parent::SetUp();
+        ClDeviceFixture::setUp();
+        CommandQueueHwFixture::setUp(pClDevice, 0);
+        MockZebinWrapper<>::Descriptor desc{};
+        auto productHelper = NEO::CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
+        desc.isStateless = productHelper->isForceToStatelessRequired();
+        desc.userAttributes["reqd_work_group_size"] = "[ 8, 2, 2 ]";
+        desc.execEnv["required_work_group_size"] = "[ 8, 2, 2 ]";
+        HelloWorldKernelFixture::setUp(pClDevice, desc);
     }
 
     void TearDown() override {
-        Parent::TearDown();
+        HelloWorldKernelFixture::tearDown();
+        CommandQueueHwFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 };
 

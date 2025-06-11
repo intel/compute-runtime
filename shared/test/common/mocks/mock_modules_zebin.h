@@ -16,6 +16,7 @@
 
 #include "neo_igfxfmid.h"
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -265,8 +266,52 @@ kernels:
 };
 
 template <NEO::Elf::ElfIdentifierClass numBits>
-struct ZebinCopyBufferSimdModule {
-    ZebinCopyBufferSimdModule(const NEO::HardwareInfo &hwInfo, uint8_t simdSize);
+struct ZebinCopyBufferModule {
+    struct KernelTags {
+        KernelTags(const char *section) : section(section) {}
+
+        KernelTags(const char *section, std::map<std::string, std::string> vars) : section(section), vars(vars) {}
+
+        std::string &operator[](NEO::ConstStringRef strRef) {
+            return vars[strRef.str()];
+        }
+
+        std::string &operator[](const char *str) {
+            return vars[str];
+        }
+
+        std::string toZeInfoYaml() const {
+            std::stringstream os;
+            if (vars.empty()) {
+                return "";
+            }
+            os << "\n    " << section << ":";
+            for (const auto &[var, value] : vars) {
+                if (!value.empty()) {
+                    os << "\n      " << var << ": " << value;
+                }
+            }
+            return os.str();
+        }
+
+        const char *section;
+        std::map<std::string, std::string> vars;
+    };
+
+    struct BindingTableIndex {
+        uint8_t btiValue;
+        uint8_t argIndex;
+    };
+
+    struct Descriptor {
+        KernelTags execEnv{"execution_env", {{"simd_size", "32"}, {"grf_count", "128"}, {"inline_data_payload_size", "32"}, {"offset_to_skip_per_thread_data_load", "192"}}};
+        KernelTags userAttributes{"user_attributes"};
+        std::vector<BindingTableIndex> bindingTableIndices{{0, 0}, {1, 1}};
+        bool isStateless = false;
+    };
+
+    ZebinCopyBufferModule(const NEO::HardwareInfo &hwInfo, Descriptor copyBufferDesc);
+    ZebinCopyBufferModule(const NEO::HardwareInfo &hwInfo) : ZebinCopyBufferModule(hwInfo, Descriptor{}) {}
     inline size_t getLocalIdSize(const NEO::HardwareInfo &hwInfo, uint8_t simdSize) {
         return alignUp(simdSize * sizeof(uint16_t), hwInfo.capabilityTable.grfSize) * 3;
     }
@@ -276,62 +321,36 @@ struct ZebinCopyBufferSimdModule {
     size_t zeInfoSize;
     std::string zeInfoCopyBufferSimdPlaceholder = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
 kernels:
-  - name:            CopyBuffer
-    execution_env:
-      disable_mid_thread_preemption: true
-      grf_count:       128
-      has_no_stateless_write: true
-      inline_data_payload_size: 32
-      offset_to_skip_per_thread_data_load: 192
-      required_sub_group_size: %d
-      simd_size:       %d
-      subgroup_independent_forward_progress: true
+  - name:            CopyBuffer%s%s
     payload_arguments:
-      - arg_type:        global_id_offset
+      - arg_type:        indirect_data_pointer
         offset:          0
-        size:            12
-      - arg_type:        local_size
-        offset:          12
-        size:            12
+        size:            8
+      - arg_type:        scratch_pointer
+        offset:          8
+        size:            8
       - arg_type:        arg_bypointer
-        offset:          0
-        size:            0
+        offset:          16
+        size:            8
         arg_index:       0
-        addrmode:        stateful
+        addrmode:        %s
         addrspace:       global
         access_type:     readwrite
       - arg_type:        buffer_address
-        offset:          32
+        offset:          24
         size:            8
         arg_index:       0
       - arg_type:        arg_bypointer
-        offset:          0
-        size:            0
+        offset:          32
+        size:            8
         arg_index:       1
-        addrmode:        stateful
+        addrmode:        %s
         addrspace:       global
         access_type:     readwrite
       - arg_type:        buffer_address
         offset:          40
         size:            8
-        arg_index:       1
-      - arg_type:        buffer_offset
-        offset:          48
-        size:            4
         arg_index:       0
-      - arg_type:        buffer_offset
-        offset:          52
-        size:            4
-        arg_index:       1
-    per_thread_payload_arguments:
-      - arg_type:        local_id
-        offset:          0
-        size:            %d
-    binding_table_indices:
-      - bti_value:       0
-        arg_index:       0
-      - bti_value:       1
-        arg_index:       1
 )===";
 };
 

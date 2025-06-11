@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
@@ -56,7 +55,6 @@ class ProgramDataTestBase : public testing::Test,
     void buildAndDecodeProgramPatchList();
 
     void SetUp() override {
-        USE_REAL_FILE_SYSTEM();
         PlatformFixture::setUp();
         pClDevice = pPlatform->getClDevice(0);
         rootDeviceIndex = pClDevice->getRootDeviceIndex();
@@ -65,9 +63,7 @@ class ProgramDataTestBase : public testing::Test,
         ContextFixture::setUp(1, &device);
         ProgramFixture::setUp();
 
-        createProgramWithSource(
-            pContext,
-            "CopyBuffer_simd16.cl");
+        createProgramWithSource(pContext);
     }
 
     void TearDown() override {
@@ -572,9 +568,6 @@ TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuff
 }
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantBufferPatchTokensAreReadThenConstantPointerOffsetIsPatchedWith32bitPointer) {
-    createProgramWithSource(pContext, "CopyBuffer_simd16.cl");
-    ASSERT_NE(nullptr, pProgram);
-
     MockProgram *prog = pProgram;
 
     // simulate case when constant surface was not allocated
@@ -619,9 +612,6 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
 }
 
 TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPointerPatchTokensAreReadThenGlobalPointerOffsetIsPatchedWith32bitPointer) {
-    createProgramWithSource(pContext, "CopyBuffer_simd16.cl");
-    ASSERT_NE(nullptr, pProgram);
-
     MockProgram *prog = pProgram;
 
     // simulate case when constant surface was not allocated

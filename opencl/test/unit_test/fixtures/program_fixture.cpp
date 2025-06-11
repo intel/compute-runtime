@@ -17,6 +17,28 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
+
+void ProgramFixture::createProgramWithSource(Context *pContext) {
+    cleanup();
+    cl_int retVal = CL_SUCCESS;
+
+    const char *sampleKernel = "example_kernel(){}";
+    knownSourceSize = std::strlen(sampleKernel) + 1;
+    knownSource = std::make_unique<char[]>(knownSourceSize);
+    std::copy(sampleKernel, sampleKernel + knownSourceSize, knownSource.get());
+
+    const char *sources[1] = {knownSource.get()};
+    pProgram = Program::create<MockProgram>(
+        pContext,
+        1,
+        sources,
+        &knownSourceSize,
+        retVal);
+
+    ASSERT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+}
+
 void ProgramFixture::createProgramWithSource(Context *pContext,
                                              const std::string &sourceFileName) {
     USE_REAL_FILE_SYSTEM();

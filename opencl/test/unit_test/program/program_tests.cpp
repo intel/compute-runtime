@@ -19,7 +19,6 @@
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -32,7 +31,6 @@
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -268,7 +266,6 @@ TEST_F(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingNumKern
     size_t paramValueSize = sizeof(paramValue);
     size_t paramValueSizeRet = 0;
 
-    createProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
     MockProgram *p = pProgram;
     p->setBuildStatus(CL_BUILD_NONE);
 
@@ -319,7 +316,6 @@ TEST_F(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingKernelN
     size_t paramValueSize = sizeof(size_t *);
     size_t paramValueSizeRet = 0;
 
-    createProgramFromBinary(pContext, pContext->getDevices(), binaryFileName);
     MockProgram *p = pProgram;
     p->setBuildStatus(CL_BUILD_NONE);
 
@@ -731,14 +727,9 @@ TEST_F(MinimumProgramFixture, givenApplicationContextMarkedAsNonZebinWhenBuildin
 }
 
 TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
-    USE_REAL_FILE_SYSTEM();
+    zebinPtr->setAsMockCompilerLoadedFile("copybuffer.bin");
 
-    KernelBinaryHelper kbHelper(binaryFileName, true);
     auto device = pPlatform->getClDevice(0);
-
-    createProgramWithSource(
-        pContext,
-        sourceFileName);
 
     // Order of following microtests is important - do not change.
     // Add new microtests at end.
@@ -769,20 +760,14 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
 
     // fail build - linked code is corrupted and cannot be postprocessed
     auto p3 = std::make_unique<FailingGenBinaryProgram>(toClDeviceVector(*device));
-    std::string testFile;
-    size_t sourceSize;
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl"); // source file
-    auto pSourceBuffer = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSourceBuffer);
-    p3->sourceCode = pSourceBuffer.get();
+    p3->sourceCode = "example_kernel(){}";
     p3->createdFrom = Program::CreatedFrom::source;
     retVal = p3->build(p3->getDevices(), nullptr);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
     p3.reset(nullptr);
 
     // build successfully - build kernel and write it to Kernel Cache
+    zebinPtr->setAsMockCompilerReturnedBinary();
     pMockProgram->clearOptions();
     std::string receivedInternalOptions;
 
@@ -835,9 +820,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
 }
 
 TEST_F(ProgramFromSourceTest, GivenDuplicateOptionsWhenCreatingWithSourceThenBuildSucceeds) {
-    USE_REAL_FILE_SYSTEM();
-    KernelBinaryHelper kbHelper(binaryFileName, false);
-
+    zebinPtr->setAsMockCompilerReturnedBinary();
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -855,7 +838,7 @@ TEST_F(ProgramFromSourceTest, GivenDuplicateOptionsWhenCreatingWithSourceThenBui
 }
 
 TEST_F(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAndExtraExtensionsAreNotAdded) {
-    USE_REAL_FILE_SYSTEM();
+    zebinPtr->setAsMockCompilerReturnedBinary();
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -873,8 +856,7 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesAndExtraExtensionsA
 }
 
 TEST_F(ProgramFromSourceTest, givenFp64EmulationEnabledWhenBuildingProgramThenExtraExtensionsAreAdded) {
-    USE_REAL_FILE_SYSTEM();
-
+    zebinPtr->setAsMockCompilerReturnedBinary();
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = static_cast<ClDevice *>(devices[0]);
     pClDevice->getExecutionEnvironment()->setFP64EmulationEnabled();
@@ -891,8 +873,7 @@ TEST_F(ProgramFromSourceTest, givenFp64EmulationEnabledWhenBuildingProgramThenEx
 }
 
 TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC20ThenExtraExtensionsAreAdded) {
-    USE_REAL_FILE_SYSTEM();
-
+    zebinPtr->setAsMockCompilerReturnedBinary();
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -913,8 +894,7 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC20ThenExtraExtension
 }
 
 TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdded) {
-    USE_REAL_FILE_SYSTEM();
-
+    zebinPtr->setAsMockCompilerReturnedBinary();
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -937,8 +917,7 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
 }
 
 TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAddedOnlyOnce) {
-    USE_REAL_FILE_SYSTEM();
-
+    zebinPtr->setAsMockCompilerReturnedBinary();
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pClDevice = pContext->getDevice(0);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -1033,18 +1012,16 @@ TEST_F(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesAreAd
 }
 
 TEST_F(ProgramFromSourceTest, GivenDumpZEBinWhenBuildingProgramFromSourceThenZebinIsDumped) {
-    USE_REAL_FILE_SYSTEM();
     DebugManagerStateRestore restorer;
     debugManager.flags.DumpZEBin.set(1);
-
-    KernelBinaryHelper kbHelper(binaryFileName, true);
-
-    createProgramWithSource(
-        pContext,
-        sourceFileName);
+    zebinPtr->setAsMockCompilerReturnedBinary();
 
     std::string fileName = "dumped_zebin_module.elf";
     EXPECT_FALSE(virtualFileExists(fileName));
+
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+        return NULL;
+    });
 
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1082,29 +1059,23 @@ class Callback {
 std::map<const void *, uint32_t> Callback::watchList;
 
 TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramThenKernelHashesAreDifferent) {
-    USE_REAL_FILE_SYSTEM();
-
-    KernelBinaryHelper kbHelper(binaryFileName, true);
-
     auto rootDeviceIndex = pContext->getDevice(0)->getRootDeviceIndex();
 
-    createProgramWithSource(
-        pContext,
-        sourceFileName);
+    zebinPtr->setAsMockCompilerReturnedBinary();
 
     Callback callback;
 
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash1 = pProgram->getCachedFileName();
-    auto kernel1 = pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex);
+    auto kernel1 = pProgram->getKernelInfo(zebinPtr->kernelName, rootDeviceIndex);
     Callback::watch(kernel1);
     EXPECT_NE(nullptr, kernel1);
 
     retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::fastRelaxedMath.data());
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash2 = pProgram->getCachedFileName();
-    auto kernel2 = pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex);
+    auto kernel2 = pProgram->getKernelInfo(zebinPtr->kernelName, rootDeviceIndex);
     EXPECT_NE(nullptr, kernel2);
     EXPECT_NE(hash1, hash2);
     Callback::unwatch(kernel1);
@@ -1113,7 +1084,7 @@ TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::finiteMathOnly.data());
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash3 = pProgram->getCachedFileName();
-    auto kernel3 = pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex);
+    auto kernel3 = pProgram->getKernelInfo(zebinPtr->kernelName, rootDeviceIndex);
     EXPECT_NE(nullptr, kernel3);
     EXPECT_NE(hash1, hash3);
     EXPECT_NE(hash2, hash3);
@@ -1126,7 +1097,7 @@ TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash4 = pProgram->getCachedFileName();
-    auto kernel4 = pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex);
+    auto kernel4 = pProgram->getKernelInfo(zebinPtr->kernelName, rootDeviceIndex);
     EXPECT_NE(nullptr, kernel4);
     EXPECT_EQ(hash3, hash4);
     Callback::unwatch(kernel3);
@@ -1136,7 +1107,7 @@ TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash5 = pProgram->getCachedFileName();
-    auto kernel5 = pProgram->getKernelInfo("CopyBuffer", rootDeviceIndex);
+    auto kernel5 = pProgram->getKernelInfo(zebinPtr->kernelName, rootDeviceIndex);
     EXPECT_NE(nullptr, kernel5);
     EXPECT_EQ(hash1, hash5);
     Callback::unwatch(kernel4);
@@ -1150,12 +1121,6 @@ TEST_F(ProgramFromSourceTest, GivenEmptyProgramWhenCreatingProgramThenInvalidVal
 }
 
 TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
-    USE_REAL_FILE_SYSTEM();
-
-    createProgramWithSource(
-        pContext,
-        sourceFileName);
-
     cl_program inputHeaders;
     const char *headerIncludeNames = "";
     cl_program nullprogram = nullptr;
@@ -1193,15 +1158,11 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // compile successfully kernel with header
-    std::string testFile;
-    size_t sourceSize;
     MockProgram *p3; // header Program object
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl"); // header source file
-    auto pSourceBuffer = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSourceBuffer);
-    const char *sources[1] = {pSourceBuffer.get()};
+    const char *source = "example_kernel(){}";
+    size_t sourceSize = std::strlen(source) + 1;
+    const char *sources[1] = {source};
+    zebinPtr->setAsMockCompilerLoadedFile("copybuffer.bin");
     p3 = Program::create<MockProgram>(pContext, 1, sources, &sourceSize, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, p3);
@@ -1274,7 +1235,8 @@ TEST_F(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHave
 }
 
 TEST_F(ProgramTests, GivenFlagsWhenLinkingProgramThenBuildOptionsHaveBeenApplied) {
-    USE_REAL_FILE_SYSTEM();
+    MockZebinWrapper zebin{pClDevice->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
 
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
@@ -1306,17 +1268,13 @@ TEST_F(ProgramTests, GivenFlagsWhenLinkingProgramThenBuildOptionsHaveBeenApplied
 }
 
 TEST_F(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccessIsReturned) {
-    USE_REAL_FILE_SYSTEM();
-
-    std::string testFile;
-    size_t sourceSize = 0;
-
     Program *p;
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSourceBuffer = loadDataFromFile(testFile.c_str(), sourceSize);
-    const char *sources[1] = {pSourceBuffer.get()};
-    EXPECT_NE(nullptr, pSourceBuffer);
+    const char *source = R"===(
+example_kernel() {
+    line
+}
+)===";
+    const char *sources[1] = {source};
 
     // According to spec: If lengths is NULL, all strings in the strings argument are considered null-terminated.
     p = Program::create(pContext, 1, sources, nullptr, retVal);
@@ -1325,12 +1283,13 @@ TEST_F(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccess
     delete p;
 
     // According to spec: If an element in lengths is zero, its accompanying string is null-terminated.
+    const size_t sourceSize = 0;
     p = Program::create(pContext, 1, sources, &sourceSize, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, p);
     delete p;
 
-    std::stringstream dataStream(pSourceBuffer.get());
+    std::stringstream dataStream(source);
     std::string line;
     std::vector<const char *> lines;
     while (std::getline(dataStream, line, '\n')) {
@@ -1360,15 +1319,10 @@ TEST_F(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccess
 }
 
 TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
-    USE_REAL_FILE_SYSTEM();
-
-    createProgramWithSource(
-        pContext,
-        sourceFileName);
-
     cl_program program = pProgram;
     cl_program nullprogram = nullptr;
     cl_program invprogram = (cl_program)pContext;
+    zebinPtr->setAsMockCompilerLoadedFile("copybuffer.bin");
 
     // Order of following microtests is important - do not change.
     // Add new microtests at end.
@@ -1425,13 +1379,13 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     p2.reset(nullptr);
 
     // link successfully
+    zebinPtr->setAsMockCompilerReturnedBinary();
     retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST_F(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectErrorIsReturned) {
-    USE_REAL_FILE_SYSTEM();
-
+    zebinPtr->setAsMockCompilerLoadedFile("copybuffer.bin");
     cl_program program = pProgram;
 
     // Order of following microtests is important - do not change.
@@ -1862,8 +1816,6 @@ TEST_F(ProgramTests, givenSkipLastExplicitArgWhenContainsStatefulAccessIsCalledT
 }
 
 TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledThenCorrectResultIsReturned) {
-    USE_REAL_FILE_SYSTEM();
-
     DebugManagerStateRestore restorer;
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
 
@@ -1908,7 +1860,7 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
                                                                        {CL_BUILD_PROGRAM_FAILURE, true, true, 1},
                                                                        {CL_SUCCESS, true, false, 1}}};
 
-    for (auto &[expectedResult, isStatefulAccess, isIgcGenerated, debuyKey] : testParams) {
+    for (auto &[expectedResult, isStatefulAccess, isIgcGenerated, debugKey] : testParams) {
 
         if (!compilerProductHelper.isForceToStatelessRequired()) {
             expectedResult = CL_SUCCESS;
@@ -1919,8 +1871,12 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         program.createdFrom = Program::CreatedFrom::source;
         program.isGeneratedByIgc = isIgcGenerated;
         program.setAddressingMode(isStatefulAccess);
-        debugManager.flags.FailBuildProgramWithStatefulAccess.set(debuyKey);
-        if (isStatefulAccess && debuyKey == -1 && isIgcGenerated == true) {
+        MockZebinWrapper<>::Descriptor desc{};
+        desc.isStateless = true;
+        MockZebinWrapper zebin{*defaultHwInfo, desc};
+        zebin.setAsMockCompilerReturnedBinary();
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(debugKey);
+        if (isStatefulAccess && debugKey == -1 && isIgcGenerated == true) {
             if (compilerProductHelper.failBuildProgramWithStatefulAccessPreference() == true) {
                 expectedResult = CL_BUILD_PROGRAM_FAILURE;
             }
@@ -1935,6 +1891,10 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         programWithBuiltIn.irBinary.reset(new char[16]);
         programWithBuiltIn.irBinarySize = 16;
         programWithBuiltIn.setAddressingMode(true);
+        MockZebinWrapper<>::Descriptor desc{};
+        desc.isStateless = true;
+        MockZebinWrapper zebin{*defaultHwInfo, desc};
+        zebin.setAsMockCompilerReturnedBinary();
         debugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
         EXPECT_EQ(CL_SUCCESS, programWithBuiltIn.build(toClDeviceVector(*pClDevice), nullptr));
     }
@@ -2193,8 +2153,6 @@ TEST_F(ProgramTests, givenExistingGlobalSurfacesWhenProcessGenBinaryThenCleanupT
 }
 
 TEST_F(ProgramTests, GivenNoCompilerInterfaceRootDeviceEnvironmentWhenRebuildingBinaryThenOutOfHostMemoryErrorIsReturned) {
-    USE_REAL_FILE_SYSTEM();
-
     auto pDevice = pContext->getDevice(0);
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
@@ -2203,15 +2161,9 @@ TEST_F(ProgramTests, GivenNoCompilerInterfaceRootDeviceEnvironmentWhenRebuilding
     auto program = std::make_unique<MockProgram>(toClDeviceVector(*pDevice));
     EXPECT_NE(nullptr, program);
 
-    // Load a binary program file
-    std::string filePath;
-    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd16_", ".bin");
-    size_t binarySize = 0;
-    auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
-    EXPECT_NE(0u, binarySize);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
-    // Create program from loaded binary
-    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *pClDevice);
+    cl_int retVal = program->createProgramFromBinary(zebin.binaries[0], zebin.binarySizes[0], *pClDevice);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Ask to rebuild program from its IR binary - it should fail (no Compiler Interface)
@@ -2445,8 +2397,6 @@ TEST(isValidSpirvBinary, whenBinaryDoesNotContainLllvMagicThenBinaryIsNotValidLL
 }
 
 TEST_F(ProgramTests, WhenLinkingTwoValidSpirvProgramsThenValidProgramIsReturned) {
-    USE_REAL_FILE_SYSTEM();
-
     const uint32_t spirv[16] = {0x03022307};
     cl_int errCode = CL_SUCCESS;
 
@@ -2463,6 +2413,8 @@ TEST_F(ProgramTests, WhenLinkingTwoValidSpirvProgramsThenValidProgramIsReturned)
     EXPECT_EQ(CL_SUCCESS, errCode);
 
     cl_program linkNodes[] = {node1, node2};
+    MockZebinWrapper zebin{*defaultHwInfo};
+    zebin.setAsMockCompilerReturnedBinary();
     errCode = prog->link(prog->getDevices(), nullptr, 2, linkNodes);
     EXPECT_EQ(CL_SUCCESS, errCode);
 
@@ -2518,8 +2470,8 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
 }
 
 TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildIsCalledThenRebuildWarningIsIssued) {
-    USE_REAL_FILE_SYSTEM();
-
+    MockZebinWrapper zebin{pClDevice->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
     const auto program{clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)))};
     uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
     program->irBinary = makeCopy(spirv, sizeof(spirv));
@@ -2536,8 +2488,8 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildIsCalledThenRebuildWarningI
 }
 
 TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildIsCalledButSuppressFlagIsEnabledThenRebuildWarningIsNotIssued) {
-    USE_REAL_FILE_SYSTEM();
-
+    MockZebinWrapper zebin{pClDevice->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
     const auto program{clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)))};
     uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
     program->irBinary = makeCopy(spirv, sizeof(spirv));
@@ -2557,8 +2509,8 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildIsCalledButSuppressFlagIsEn
 }
 
 TEST_F(ProgramTests, givenProgramWithSpirvWhenRecompileIsCalledThenRebuildWarningIsIssued) {
-    USE_REAL_FILE_SYSTEM();
-
+    MockZebinWrapper zebin{pClDevice->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
     const auto program{clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)))};
     uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
     program->irBinary = makeCopy(spirv, sizeof(spirv));
@@ -2575,8 +2527,8 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRecompileIsCalledThenRebuildWarnin
 }
 
 TEST_F(ProgramTests, givenProgramWithSpirvWhenRecompileIsCalledButSuppressFlagIsEnabledThenRebuildWarningIsNotIssued) {
-    USE_REAL_FILE_SYSTEM();
-
+    MockZebinWrapper zebin{pClDevice->getHardwareInfo()};
+    zebin.setAsMockCompilerReturnedBinary();
     const auto program{clUniquePtr(new MockProgram(toClDeviceVector(*pClDevice)))};
     uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
     program->irBinary = makeCopy(spirv, sizeof(spirv));
@@ -3109,31 +3061,46 @@ struct DebugDataGuard {
     DebugDataGuard(const DebugDataGuard &) = delete;
     DebugDataGuard(DebugDataGuard &&) = delete;
 
-    DebugDataGuard() {
+    DebugDataGuard(bool mockZebin) : useMockZebin(mockZebin) {
         for (size_t n = 0; n < sizeof(mockDebugData); n++) {
             mockDebugData[n] = (char)n;
         }
 
         auto vars = NEO::getIgcDebugVars();
+        if (useMockZebin) {
+            zebinPtr = std::make_unique<MockZebinWrapper<>>(*defaultHwInfo);
+            vars.binaryToReturn = const_cast<unsigned char *>(zebinPtr->binaries[0]);
+            vars.binaryToReturnSize = sizeof(unsigned char) * zebinPtr->binarySizes[0];
+            NEO::setFclDebugVars(vars);
+        }
         vars.debugDataToReturn = mockDebugData;
         vars.debugDataToReturnSize = sizeof(mockDebugData);
         NEO::setIgcDebugVars(vars);
     }
 
+    DebugDataGuard() : DebugDataGuard(false) {}
+
     ~DebugDataGuard() {
         auto vars = NEO::getIgcDebugVars();
+        if (useMockZebin) {
+            vars.binaryToReturn = nullptr;
+            vars.binaryToReturnSize = 0;
+        }
         vars.debugDataToReturn = nullptr;
         vars.debugDataToReturnSize = 0;
         NEO::setIgcDebugVars(vars);
+        if (useMockZebin) {
+            NEO::setFclDebugVars(vars);
+        }
     }
 
+    bool useMockZebin = false;
+    std::unique_ptr<MockZebinWrapper<>> zebinPtr;
     char mockDebugData[32];
 };
 
 TEST_F(ProgramBinTest, GivenBuildWithDebugDataThenBuildDataAvailableViaGetInfo) {
-    USE_REAL_FILE_SYSTEM();
-
-    DebugDataGuard debugDataGuard;
+    DebugDataGuard debugDataGuard{true};
 
     const char *sourceCode = "__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
     pProgram = Program::create<MockProgram>(
@@ -3220,9 +3187,7 @@ TEST_F(ProgramBinTest, givenNoDebugDataAvailableThenDebugDataIsNotAvailableViaGe
 }
 
 TEST_F(ProgramBinTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsStoredInProgram) {
-    USE_REAL_FILE_SYSTEM();
-
-    DebugDataGuard debugDataGuard;
+    DebugDataGuard debugDataGuard{true};
 
     const char *sourceCode = "__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
     pProgram = Program::create<MockProgram>(
@@ -3280,8 +3245,8 @@ class MockCompilerInterfaceWithGtpinParam : public CompilerInterface {
 };
 
 TEST_F(ProgramBinTest, GivenSourceKernelWhenLinkingProgramThenGtpinInitInfoIsPassed) {
-    USE_REAL_FILE_SYSTEM();
-
+    MockZebinWrapper zebin{*defaultHwInfo};
+    zebin.setAsMockCompilerReturnedBinary();
     void *pIgcInitPtr = reinterpret_cast<void *>(0x1234);
     gtpinSetIgcInit(pIgcInitPtr);
     const char *sourceCode = "__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
@@ -3349,26 +3314,14 @@ TEST(ProgramCallbackTest, whenInvokeCallbackIsCalledThenFunctionIsProperlyInvoke
 }
 
 TEST(BuildProgramTest, givenMultiDeviceProgramWhenBuildingThenStoreAndProcessBinaryOnlyOncePerRootDevice) {
-    USE_REAL_FILE_SYSTEM();
-
     MockProgram *pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
 
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
+    MockZebinWrapper zebin{*defaultHwInfo};
+    zebin.setAsMockCompilerReturnedBinary();
 
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
+    const char *source = "example_kernel(){}";
+    size_t sourceSize = std::strlen(source) + 1;
+    const char *sources[1] = {source};
 
     MockUnrestrictiveContextMultiGPU context;
     cl_int retVal = CL_INVALID_PROGRAM;
@@ -3409,26 +3362,14 @@ TEST(BuildProgramTest, givenMultiDeviceProgramWhenBuildingThenStoreAndProcessBin
 }
 
 TEST(BuildProgramTest, givenMultiDeviceProgramWhenBuildingThenStoreKernelInfoPerEachRootDevice) {
-    USE_REAL_FILE_SYSTEM();
-
     MockProgram *pProgram = nullptr;
-    std::unique_ptr<char[]> pSource = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
 
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
+    MockZebinWrapper zebin{*defaultHwInfo};
+    zebin.setAsMockCompilerReturnedBinary();
 
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-
-    pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
-
-    const char *sources[1] = {pSource.get()};
+    const char *source = "example_kernel(){}";
+    size_t sourceSize = std::strlen(source) + 1;
+    const char *sources[1] = {source};
 
     MockUnrestrictiveContextMultiGPU context;
     cl_int retVal = CL_INVALID_PROGRAM;

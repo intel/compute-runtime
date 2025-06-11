@@ -23,7 +23,7 @@ TEST_F(ClCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThen
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
@@ -49,7 +49,7 @@ TEST_F(ClCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThen
 
     kernel = clCreateKernel(
         pProgram,
-        "CopyBuffer",
+        zebin.kernelName,
         &retVal);
 
     EXPECT_NE(nullptr, kernel);
@@ -66,7 +66,7 @@ TEST_F(ClCreateKernelTests, GivenInvalidKernelNameWhenCreatingNewKernelThenInval
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    MockZebinWrapper zebin(pDevice->getHardwareInfo(), 32);
+    MockZebinWrapper zebin{pDevice->getHardwareInfo()};
 
     pProgram = clCreateProgramWithBinary(
         pContext,
