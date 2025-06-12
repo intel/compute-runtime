@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2024 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -26,6 +26,7 @@ set(NEO_CORE_RELEASE_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_2004.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3000.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3001.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3003.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe2_hpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3_lpg.inl

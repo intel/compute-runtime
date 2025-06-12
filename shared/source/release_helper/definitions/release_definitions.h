@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ enum class ReleaseType {
     release2004,
     release3000,
     release3001,
+    release3003,
 };
 
 } // namespace NEO

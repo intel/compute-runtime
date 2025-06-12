@@ -60,3 +60,26 @@ PTLTEST_F(PtlOfflineCompilerTests, givenPtlUDeviceIdValueWhenInitHwInfoThenCorre
         EXPECT_EQ(mockOfflineCompiler.deviceConfig, ptlConfig.value);
     }
 }
+
+PTLTEST_F(PtlOfflineCompilerTests, givenWclDeviceIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
+    MockOfflineCompiler mockOfflineCompiler;
+    HardwareIpVersion ptlConfig = AOT::WCL_A0;
+
+    std::string deviceStr;
+    for (const auto &deviceID : wclDeviceIds) {
+        std::stringstream deviceIDStr, expectedOutput;
+
+        deviceIDStr << "0x" << std::hex << deviceID;
+        deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(ptlConfig.value);
+
+        StreamCapture capture;
+        capture.captureStdout();
+        mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
+        std::string output = capture.getCapturedStdout();
+        expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: " << deviceStr << "\n";
+
+        EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
+        EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usDeviceID, deviceID);
+        EXPECT_EQ(mockOfflineCompiler.deviceConfig, ptlConfig.value);
+    }
+}
