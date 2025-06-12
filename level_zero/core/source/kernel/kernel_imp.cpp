@@ -599,7 +599,9 @@ ze_result_t KernelImp::setArgImmediate(uint32_t argIndex, size_t argSize, const 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle_t argVal) {
+ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle_t argVal, bool isPacked) {
+    const uint32_t bindlessSlot = isPacked ? NEO::BindlessImageSlot::packedImage : NEO::BindlessImageSlot::redescribedImage;
+
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescImage>();
     if (argVal == nullptr) {
         argumentsResidencyContainer[argIndex] = nullptr;
@@ -622,7 +624,7 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
             auto ssInHeap = image->getBindlessSlot();
             auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
             // redescribed image's surface state is after image's implicit args and sampler
-            uint64_t bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * NEO::BindlessImageSlot::redescribedImage;
+            uint64_t bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * bindlessSlot;
             uint32_t patchSize = this->heaplessEnabled ? 8u : 4u;
             uint64_t patchValue = this->heaplessEnabled
                                       ? bindlessSlotOffset + bindlessHeapsHelper->getGlobalHeapsBase()
@@ -630,15 +632,15 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
 
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), patchSize, patchValue);
 
-            image->copyRedescribedSurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage), 0u);
+            image->copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize * bindlessSlot), 0u, bindlessSlot, false);
             isBindlessOffsetSet[argIndex] = true;
         } else {
             usingSurfaceStateHeap[argIndex] = true;
             auto ssPtr = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
-            image->copyRedescribedSurfaceStateToSSH(ssPtr, 0u);
+            image->copySurfaceStateToSSH(ssPtr, 0u, bindlessSlot, false);
         }
     } else {
-        image->copyRedescribedSurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful);
+        image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful, bindlessSlot, false);
     }
     argumentsResidencyContainer[argIndex] = image->getAllocation();
 
@@ -832,17 +834,17 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
 
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), patchSize, patchValue);
 
-            image->copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, isMediaBlockImage);
-            image->copyImplicitArgsSurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u);
+            image->copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, NEO::BindlessImageSlot::image, isMediaBlockImage);
+            image->copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false);
 
             isBindlessOffsetSet[argIndex] = true;
         } else {
             usingSurfaceStateHeap[argIndex] = true;
             auto ssPtr = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
-            image->copySurfaceStateToSSH(ssPtr, 0u, isMediaBlockImage);
+            image->copySurfaceStateToSSH(ssPtr, 0u, NEO::BindlessImageSlot::image, isMediaBlockImage);
         }
     } else {
-        image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful, isMediaBlockImage);
+        image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful, NEO::BindlessImageSlot::image, isMediaBlockImage);
     }
 
     argumentsResidencyContainer[argIndex] = image->getAllocation();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,10 @@ struct ImageCoreFamily : public ImageImp {
     using ImageImp::bindlessImage;
 
     ze_result_t initialize(Device *device, const ze_image_desc_t *desc) override;
-    void copySurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset, bool isMediaBlockArg) override;
-    void copyRedescribedSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) override;
-    void copyImplicitArgsSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) override;
+    void copySurfaceStateToSSH(void *surfaceStateHeap,
+                               uint32_t surfaceStateOffset,
+                               uint32_t bindlessSlot,
+                               bool isMediaBlockArg) override;
     bool isMediaFormat(const ze_image_format_layout_t layout) {
         if (layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_NV12 ||
             layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P010 ||
@@ -53,6 +54,7 @@ struct ImageCoreFamily : public ImageImp {
     RENDER_SURFACE_STATE surfaceState;
     RENDER_SURFACE_STATE implicitArgsSurfaceState;
     RENDER_SURFACE_STATE redescribedSurfaceState;
+    RENDER_SURFACE_STATE packedSurfaceState;
 };
 
 template <uint32_t gfxProductFamily>

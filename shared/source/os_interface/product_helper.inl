@@ -1086,7 +1086,13 @@ bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isPackedCopyFormatSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const {
     return defaultValue;
 }
+
 } // namespace NEO

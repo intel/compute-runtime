@@ -11,6 +11,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/image_helper.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/built_ins/built_ins.inl"
@@ -874,6 +875,33 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBui
         // Redescribe images to be byte-copies
         auto srcImageRedescribed = srcImage->redescribe();
         auto dstImageRedescribed = dstImage->redescribe();
+
+        auto srcImageDescriptor = Image::convertDescriptor(srcImage->getImageDesc());
+        auto srcSurfaceFormatInfo = srcImage->getSurfaceFormatInfo();
+        SurfaceOffsets srcSurfaceOffsets;
+        srcImage->getSurfaceOffsets(srcSurfaceOffsets);
+        ImageInfo srcImgInfo;
+        srcImgInfo.imgDesc = srcImageDescriptor;
+        srcImgInfo.surfaceFormat = &srcSurfaceFormatInfo.surfaceFormat;
+        srcImgInfo.xOffset = srcSurfaceOffsets.xOffset;
+
+        auto dstImageDescriptor = Image::convertDescriptor(dstImage->getImageDesc());
+        auto dstSurfaceFormatInfo = dstImage->getSurfaceFormatInfo();
+        SurfaceOffsets dstSurfaceOffsets;
+        dstImage->getSurfaceOffsets(dstSurfaceOffsets);
+        ImageInfo dstImgInfo;
+        dstImgInfo.imgDesc = dstImageDescriptor;
+        dstImgInfo.surfaceFormat = &dstSurfaceFormatInfo.surfaceFormat;
+        dstImgInfo.xOffset = dstSurfaceOffsets.xOffset;
+
+        const auto *srcAllocation = srcImage->getGraphicsAllocation(clDevice.getRootDeviceIndex());
+        const auto *dstAllocation = dstImage->getGraphicsAllocation(clDevice.getRootDeviceIndex());
+
+        if (ImageHelper::areImagesCompatibleWithPackedFormat(clDevice.getProductHelper(), srcImgInfo, dstImgInfo, srcAllocation, dstAllocation, operationParams.size.x)) {
+            srcImageRedescribed->setIsPackedFormat(true);
+            dstImageRedescribed->setIsPackedFormat(true);
+        }
+
         multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(srcImageRedescribed)); // life range same as mdi's
         multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(dstImageRedescribed)); // life range same as mdi's
 

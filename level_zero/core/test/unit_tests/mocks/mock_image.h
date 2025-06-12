@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ struct WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>
     ~WhiteBox() override {}
 
     using BaseClass::implicitArgsSurfaceState;
+    using BaseClass::packedSurfaceState;
     using BaseClass::redescribedSurfaceState;
     using BaseClass::surfaceState;
     using BaseClass::ImageImp::imageFromBuffer;

@@ -98,8 +98,8 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_kernel_properties_t * pKernelProperties))
 
     ADDMETHOD(setArgRedescribedImage, ze_result_t, true, ZE_RESULT_SUCCESS,
-              (uint32_t argIndex, ze_image_handle_t argVal),
-              (argIndex, argVal));
+              (uint32_t argIndex, ze_image_handle_t argVal, bool isPacked),
+              (argIndex, argVal, isPacked));
 
     Mock();
     ~Mock() override;

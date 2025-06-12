@@ -270,6 +270,7 @@ class ProductHelper {
     virtual bool isExposingSubdevicesAllowed() const = 0;
     virtual bool useAdditionalBlitProperties() const = 0;
     virtual bool isNonCoherentTimestampsModeEnabled() const = 0;
+    virtual bool isPackedCopyFormatSupported() const = 0;
     virtual bool isPidFdOrSocketForIpcSupported() const = 0;
 
     virtual bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const = 0;

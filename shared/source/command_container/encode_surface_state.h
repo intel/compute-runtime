@@ -22,6 +22,7 @@ struct HardwareInfo;
 struct PipeControlArgs;
 struct PipelineSelectArgs;
 struct RootDeviceEnvironment;
+struct ImageInfo;
 
 union SurfaceStateBufferLength {
     uint32_t length;
@@ -72,6 +73,7 @@ struct EncodeSurfaceState {
     static void setPitchForScratch(R_SURFACE_STATE *surfaceState, uint32_t pitch, const ProductHelper &productHelper);
     static uint32_t getPitchForScratchInBytes(R_SURFACE_STATE *surfaceState, const ProductHelper &productHelper);
     static bool shouldProgramAuxForMcs(bool isAuxCapable, bool hasMcsSurface);
+    static void convertSurfaceStateToPacked(R_SURFACE_STATE *surfaceState, ImageInfo &imgInfo);
 };
 
 } // namespace NEO

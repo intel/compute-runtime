@@ -209,6 +209,7 @@ class Image : public MemObj {
 
     static bool validateHandleType(MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem);
     void setAs3DUavOrRtvImage(bool isUavOrRtv);
+    void setIsPackedFormat(bool isPackedFormat) { this->isPackedFormat = isPackedFormat; }
 
   protected:
     Image(Context *context,
@@ -249,6 +250,7 @@ class Image : public MemObj {
     uint32_t mipCount = 1;
     GMM_YUV_PLANE_ENUM plane = GMM_NO_PLANE;
     bool is3DUAVOrRTV = false;
+    bool isPackedFormat = false;
 
     static bool isValidSingleChannelFormat(const cl_image_format *imageFormat);
     static bool isValidIntensityFormat(const cl_image_format *imageFormat);

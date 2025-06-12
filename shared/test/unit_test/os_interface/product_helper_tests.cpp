@@ -1181,6 +1181,10 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallingIsResourceUncachedForC
     }
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenisPackedCopyFormatSupportedThenCorrectValueIsReturned, IsAtMostXe3Core) {
+    EXPECT_FALSE(productHelper->isPackedCopyFormatSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingPreferredWorkgroupCountPerSubsliceThenZeroReturned) {
     EXPECT_EQ(0u, productHelper->getPreferredWorkgroupCountPerSubslice());
 }
