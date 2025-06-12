@@ -47,6 +47,7 @@ enum PRODUCT_CONFIG : uint32_t {
     BMG_G21_A0 = 0x05004000,
     BMG_G21_A1_RESERVED = 0x05004001,
     BMG_G21_B0_RESERVED = 0x05004004,
+    BMG_G31_A0 = 0x05008000,
     LNL_A0 = 0x05010000,
     LNL_A1 = 0x05010001,
     LNL_B0 = 0x05010004,
@@ -54,6 +55,7 @@ enum PRODUCT_CONFIG : uint32_t {
     PTL_H_B0 = 0x07800004,
     PTL_U_A0 = 0x07804000,
     PTL_U_A1 = 0x07804001,
+    WCL_A0 = 0x0780c000,
     CONFIG_MAX_PLATFORM
 };
 
@@ -175,6 +177,7 @@ inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_BMG
     {"bmg-g21", BMG_G21_A0},
+    {"bmg-g31", BMG_G31_A0},
 #endif
 #ifdef SUPPORT_AOT_LNL
     {"lnl-m", LNL_B0},
@@ -182,6 +185,9 @@ inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
 #ifdef SUPPORT_AOT_PTL
     {"ptl-h", PTL_H_B0},
     {"ptl-u", PTL_U_A0},
+#endif
+#ifdef SUPPORT_AOT_WCL
+    {"wcl", WCL_A0},
 #endif
 };
 
@@ -219,6 +225,7 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
     {"bmg-g21-a0", BMG_G21_A0},
     {"bmg-g21-a1", BMG_G21_A0},
     {"bmg-g21-b0", BMG_G21_A0},
+    {"bmg-g31-a0", BMG_G31_A0},
 #endif
 #ifdef SUPPORT_AOT_LNL
     {"lnl-a0", LNL_A0},
@@ -230,6 +237,9 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
     {"ptl-h-b0", PTL_H_B0},
     {"ptl-u-a0", PTL_U_A0},
     {"ptl-u-a1", PTL_U_A1},
+#endif
+#ifdef SUPPORT_AOT_WCL
+    {"wcl-a0", WCL_A0},
 #endif
 };
 
