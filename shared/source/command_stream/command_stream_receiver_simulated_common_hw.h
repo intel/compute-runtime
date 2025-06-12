@@ -76,12 +76,12 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
 
     struct EngineInfo {
         void *pLRCA;
-        uint32_t ggttLRCA;
         void *pGlobalHWStatusPage;
-        uint32_t ggttHWSP;
         void *pRingBuffer;
-        uint32_t ggttRingBuffer;
         size_t sizeRingBuffer;
+        uint32_t ggttLRCA;
+        uint32_t ggttHWSP;
+        uint32_t ggttRingBuffer;
         uint32_t tailRingBuffer;
     } engineInfo = {};
 };
