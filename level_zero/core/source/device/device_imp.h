@@ -33,7 +33,6 @@ class CacheReservation;
 struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     DeviceImp();
     ze_result_t getStatus() override;
-    ze_result_t submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_t *value);
     MOCKABLE_VIRTUAL ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth);
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
     ze_result_t createCommandList(const ze_command_list_desc_t *desc,
@@ -181,6 +180,8 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     std::optional<uint32_t> tryGetCopyEngineOrdinal() const;
 
   protected:
+    ze_result_t queryPeerAccess(DeviceImp *peerDevice);
+    bool submitCopyForP2P(DeviceImp *hPeerDevice, ze_result_t &result);
     ze_result_t getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);
     ze_result_t getGlobalTimestampsUsingOsInterface(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);
     const char *getDeviceMemoryName();

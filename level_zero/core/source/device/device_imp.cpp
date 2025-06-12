@@ -94,11 +94,8 @@ ze_result_t DeviceImp::getStatus() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
-    DeviceImp *pPeerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
-    uint32_t peerRootDeviceIndex = pPeerDevice->getNEODevice()->getRootDeviceIndex();
-    *value = false;
-
+bool DeviceImp::submitCopyForP2P(DeviceImp *peerDevice, ze_result_t &ret) {
+    auto canAccessPeer = false;
     ze_command_list_handle_t commandList = nullptr;
     ze_command_list_desc_t listDescriptor = {};
     listDescriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
@@ -116,7 +113,7 @@ ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_
     queueDescriptor.ordinal = 0;
     queueDescriptor.index = 0;
 
-    auto ret = this->createInternalCommandList(&listDescriptor, &commandList);
+    ret = this->createInternalCommandList(&listDescriptor, &commandList);
     UNRECOVERABLE_IF(ret != ZE_RESULT_SUCCESS);
     ret = this->createInternalCommandQueue(&queueDescriptor, &commandQueue);
     UNRECOVERABLE_IF(ret != ZE_RESULT_SUCCESS);
@@ -146,7 +143,7 @@ ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_
     peerDeviceDesc.pNext = nullptr;
 
     contextImp->allocDeviceMem(this->toHandle(), &deviceDesc, 8, 1, &memory);
-    contextImp->allocDeviceMem(hPeerDevice, &peerDeviceDesc, 8, 1, &peerMemory);
+    contextImp->allocDeviceMem(peerDevice->toHandle(), &peerDeviceDesc, 8, 1, &peerMemory);
 
     CmdListMemoryCopyParams memoryCopyParams = {};
     ret = L0::CommandList::fromHandle(commandList)->appendMemoryCopy(peerMemory, memory, 8, nullptr, 0, nullptr, memoryCopyParams);
@@ -155,12 +152,10 @@ ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_
     if (ret == ZE_RESULT_SUCCESS) {
         ret = L0::CommandQueue::fromHandle(commandQueue)->executeCommandLists(1, &commandList, nullptr, true, nullptr, nullptr);
         if (ret == ZE_RESULT_SUCCESS) {
-            this->crossAccessEnabledDevices[peerRootDeviceIndex] = true;
-            pPeerDevice->crossAccessEnabledDevices[this->getNEODevice()->getRootDeviceIndex()] = true;
 
             ret = L0::CommandQueue::fromHandle(commandQueue)->synchronize(std::numeric_limits<uint64_t>::max());
             if (ret == ZE_RESULT_SUCCESS) {
-                *value = true;
+                canAccessPeer = true;
             }
         }
     }
@@ -172,43 +167,57 @@ ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
     L0::Context::fromHandle(context)->destroy();
 
-    if (ret == ZE_RESULT_ERROR_DEVICE_LOST) {
-        return ZE_RESULT_ERROR_DEVICE_LOST;
+    if (ret != ZE_RESULT_ERROR_DEVICE_LOST) {
+        ret = ZE_RESULT_SUCCESS;
     }
 
-    return ZE_RESULT_SUCCESS;
+    return canAccessPeer;
 }
 
 ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
-    *value = false;
-
     DeviceImp *pPeerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
     uint32_t peerRootDeviceIndex = pPeerDevice->getNEODevice()->getRootDeviceIndex();
+    auto rootDeviceIndex = getRootDeviceIndex();
+
+    auto retVal = ZE_RESULT_SUCCESS;
 
     if (NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get() != -1) {
         *value = !!NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get();
-        return ZE_RESULT_SUCCESS;
+        return retVal;
     }
 
-    if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) != this->crossAccessEnabledDevices.end()) {
-        *value = this->crossAccessEnabledDevices[peerRootDeviceIndex];
-        return ZE_RESULT_SUCCESS;
-    }
-
-    if (this->getNEODevice()->getRootDeviceIndex() == peerRootDeviceIndex) {
+    if (rootDeviceIndex == peerRootDeviceIndex) {
         *value = true;
-        return ZE_RESULT_SUCCESS;
+        return retVal;
     }
+
+    auto lock = static_cast<DriverHandleImp *>(driverHandle)->obtainPeerAccessQueryLock();
+    if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) == this->crossAccessEnabledDevices.end()) {
+        retVal = queryPeerAccess(pPeerDevice);
+    }
+    *value = this->crossAccessEnabledDevices[peerRootDeviceIndex];
+    return retVal;
+}
+
+ze_result_t DeviceImp::queryPeerAccess(DeviceImp *peerDevice) {
+    auto retVal = ZE_RESULT_SUCCESS;
+    auto rootDeviceIndex = getRootDeviceIndex();
+    auto peerRootDeviceIndex = peerDevice->getRootDeviceIndex();
+
+    auto setPeerAccess = [&](bool value) {
+        this->crossAccessEnabledDevices[peerRootDeviceIndex] = value;
+        peerDevice->crossAccessEnabledDevices[rootDeviceIndex] = value;
+    };
 
     uint32_t latency = std::numeric_limits<uint32_t>::max();
     uint32_t bandwidth = 0;
-    ze_result_t res = queryFabricStats(pPeerDevice, latency, bandwidth);
+    ze_result_t res = queryFabricStats(peerDevice, latency, bandwidth);
     if (res == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE || bandwidth == 0) {
-        return submitCopyForP2P(hPeerDevice, value);
+        setPeerAccess(submitCopyForP2P(peerDevice, retVal));
+    } else {
+        setPeerAccess(true);
     }
-
-    *value = true;
-    return ZE_RESULT_SUCCESS;
+    return retVal;
 }
 
 ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,

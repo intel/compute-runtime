@@ -125,6 +125,10 @@ struct DriverHandleImp : public DriverHandle {
     void initHostUsmAllocPool();
     void initDeviceUsmAllocPool(NEO::Device &device);
 
+    std::unique_lock<std::mutex> obtainPeerAccessQueryLock() {
+        return std::unique_lock<std::mutex>(peerAccessQueryMutex);
+    }
+
     std::unique_ptr<HostPointerManager> hostPointerManager;
 
     std::mutex sharedMakeResidentAllocationsLock;
@@ -174,6 +178,7 @@ struct DriverHandleImp : public DriverHandle {
     // not based on the lifetime of the object of a class.
     std::unordered_map<std::thread::id, std::string> errorDescs;
     std::mutex errorDescsMutex;
+    std::mutex peerAccessQueryMutex;
     int setErrorDescription(const std::string &str) override;
     ze_result_t getErrorDescription(const char **ppString) override;
     ze_result_t clearErrorDescription() override;
