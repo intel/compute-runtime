@@ -374,8 +374,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
             ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::surfaceState);
         }
 
-        if (this->device->getL0Debugger()) {
-            UNRECOVERABLE_IF(!NEO::Debugger::isDebugEnabled(this->internalUsage));
+        if (this->device->getL0Debugger() && NEO::Debugger::isDebugEnabled(this->internalUsage)) {
             csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
             csr->makeResident(*this->device->getDebugSurface());
             if (this->device->getNEODevice()->getBindlessHeapsHelper()) {

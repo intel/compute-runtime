@@ -49,7 +49,7 @@ ze_result_t CommandListImp::destroy() {
         static_cast<DeviceImp *>(this->device)->bcsSplit.releaseResources();
     }
 
-    if (isImmediateType() && this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
+    if (this->cmdQImmediate && this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
         this->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
@@ -207,14 +207,13 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         }
 
         auto &productHelper = device->getProductHelper();
+        commandList->isFlushTaskSubmissionEnabled = gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper);
+        if (NEO::debugManager.flags.EnableFlushTaskSubmission.get() != -1) {
+            commandList->isFlushTaskSubmissionEnabled = !!NEO::debugManager.flags.EnableFlushTaskSubmission.get();
+        }
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Flush Task for Immediate command list : %s\n", commandList->isFlushTaskSubmissionEnabled ? "Enabled" : "Disabled");
 
         if (!internalUsage) {
-            commandList->isFlushTaskSubmissionEnabled = gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper);
-            if (NEO::debugManager.flags.EnableFlushTaskSubmission.get() != -1) {
-                commandList->isFlushTaskSubmissionEnabled = !!NEO::debugManager.flags.EnableFlushTaskSubmission.get();
-            }
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Flush Task for Immediate command list : %s\n", commandList->isFlushTaskSubmissionEnabled ? "Enabled" : "Disabled");
-
             auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
             bool enabledCmdListSharing = !NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && commandList->isFlushTaskSubmissionEnabled;
             commandList->immediateCmdListHeapSharing = L0GfxCoreHelper::enableImmediateCmdListHeapSharing(rootDeviceEnvironment, enabledCmdListSharing);

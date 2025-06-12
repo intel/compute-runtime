@@ -810,14 +810,20 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
 
     auto pageFaultCmdQueue = whiteboxCast(CommandList::whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
 
+    auto pageFaultCsr = pageFaultCmdQueue->getCsr();
+    auto &pageFaultCsrStream = pageFaultCsr->getCS(0);
+    auto pageFaultCsrStreamBefore = pageFaultCsrStream.getUsed();
+
     auto sizeBefore = commandQueue->commandStream.getUsed();
     auto pageFaultSizeBefore = pageFaultCmdQueue->commandStream.getUsed();
     auto handle = commandList->toHandle();
     commandQueue->executeCommandLists(1, &handle, nullptr, true, nullptr, nullptr);
     auto sizeAfter = commandQueue->commandStream.getUsed();
     auto pageFaultSizeAfter = pageFaultCmdQueue->commandStream.getUsed();
+    auto pageFaultCsrStreamAfter = pageFaultCsrStream.getUsed();
     EXPECT_LT(sizeBefore, sizeAfter);
-    EXPECT_LT(pageFaultSizeBefore, pageFaultSizeAfter);
+    EXPECT_EQ(pageFaultSizeBefore, pageFaultSizeAfter);
+    EXPECT_LT(pageFaultCsrStreamBefore, pageFaultCsrStreamAfter);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(commandQueue->commandStream.getCpuBase(), 0),
@@ -827,6 +833,11 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
 
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(pageFaultCmdQueue->commandStream.getCpuBase(), 0),
                                              pageFaultSizeAfter);
+    count = findAll<CFE_STATE *>(commands.begin(), commands.end()).size();
+    EXPECT_EQ(0u, count);
+
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(pageFaultCsrStream.getCpuBase(), 0),
+                                             pageFaultCsrStreamAfter);
     count = findAll<CFE_STATE *>(commands.begin(), commands.end()).size();
     EXPECT_EQ(1u, count);
 
