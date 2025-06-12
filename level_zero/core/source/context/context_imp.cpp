@@ -516,7 +516,7 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
             ipcHandleIterator->second->refcnt -= 1;
             if (ipcHandleIterator->second->refcnt == 0 || nullptr == usmPool) {
                 auto *memoryManager = driverHandle->getMemoryManager();
-                memoryManager->closeInternalHandle(ipcHandleIterator->second->ipcData.handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
+                memoryManager->closeInternalHandle(ipcHandleIterator->second->handle, ipcHandleIterator->second->handleId, ipcHandleIterator->second->alloc);
                 delete ipcHandleIterator->second;
                 this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator->first);
             }
@@ -735,7 +735,7 @@ void ContextImp::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, u
         handleTracking->alloc = graphicsAllocation;
         handleTracking->refcnt = 1;
         handleTracking->ptr = ptrAddress;
-        handleTracking->ipcData = ipcData;
+        handleTracking->handle = handle;
         this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
     }
 }
