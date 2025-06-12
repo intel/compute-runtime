@@ -131,6 +131,7 @@ for more details.
 
 * [Contribution guidelines](https://github.com/intel/compute-runtime/blob/master/CONTRIBUTING.md)
 * [Programmers Guide](https://github.com/intel/compute-runtime/blob/master/programmers-guide/PROGRAMMERS_GUIDE.md)
+* [Issue Submission Guide](https://github.com/intel/compute-runtime/blob/master/ISSUE_SUBMISSION_GUIDE.md)
 * [Frequently Asked Questions](https://github.com/intel/compute-runtime/blob/master/FAQ.md)
 
 ### Level Zero specific
