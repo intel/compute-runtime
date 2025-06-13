@@ -122,9 +122,6 @@ TEST_F(IoctlHelperXeGemCreateExtTests, givenIoctlHelperXeWhenCallingGemCreateExt
 }
 
 TEST_F(IoctlHelperXeGemCreateExtTests, givenIoctlHelperXeWhenCallingGemCreateExtWithOnlySystemRegionAndCoherencyThenWriteBackCPUCachingIsUsed) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeferBacking.set(1);
-
     MemRegionsVec memRegions = {systemMemory};
     bool isCoherent = true;
 
@@ -133,10 +130,24 @@ TEST_F(IoctlHelperXeGemCreateExtTests, givenIoctlHelperXeWhenCallingGemCreateExt
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING), (drm->createParamsFlags & DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING));
 }
 
+TEST_F(IoctlHelperXeGemCreateExtTests, givenIoctlHelperXeAndDeferBackingIsDisabledWhenCallingGemCreateExtThenVerifyGemCreateFlagsAreNotSet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(0);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    MemRegionsVec memRegions = {systemMemory};
+    bool isCoherent = true;
+
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, allocSize, handle, patIndex, std::nullopt, pairHandle, isChunked, numOfChunks, std::nullopt, std::nullopt, isCoherent));
+    EXPECT_EQ(0u, drm->createParamsFlags);
+}
+
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenProperValuesSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(0);
-    debugManager.flags.EnableDeferBacking.set(1);
+    debugManager.flags.EnableDeferBacking.set(0);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
@@ -155,7 +166,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThe
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm->createParamsSize);
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING), (drm->createParamsFlags & DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING));
+    EXPECT_EQ(0u, drm->createParamsFlags);
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm->createParamsCpuCaching);
     EXPECT_EQ(1u, drm->createParamsPlacement);
 
@@ -167,7 +178,6 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThe
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZeroThenProperValuesSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(0);
-    debugManager.flags.EnableDeferBacking.set(1);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
@@ -198,7 +208,6 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZero
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenProperValuesSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(1);
-    debugManager.flags.EnableDeferBacking.set(1);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
@@ -2889,11 +2898,20 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionAndSharedSystemUsmSupportD
     EXPECT_FALSE(drm->hasPageFaultSupport());
 }
 
-TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingFlagSetToTrueWhenMakeResidentBeforeLockNeededIsCalledThenVerifyTrueIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeferBacking.set(1);
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenMakeResidentBeforeLockNeededIsCalledThenVerifyTrueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
     EXPECT_TRUE(xeIoctlHelper->makeResidentBeforeLockNeeded());
+}
+
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingFlagSetToFalseWhenMakeResidentBeforeLockNeededIsCalledThenVerifyTrueIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(0);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    EXPECT_FALSE(xeIoctlHelper->makeResidentBeforeLockNeeded());
 }
