@@ -173,7 +173,6 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) override;
 
     ze_result_t queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
-    ze_result_t setDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
     uint32_t getEventMaxPacketCount() const override;
     uint32_t getEventMaxKernelCount() const override;
     uint32_t queryDeviceNodeMask();
