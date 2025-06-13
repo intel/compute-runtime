@@ -23,6 +23,7 @@ set(NEO_CORE_RELEASE_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1271.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1274.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_2001.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_2002.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_2004.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3000.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3001.cpp
@@ -34,7 +35,7 @@ set(NEO_CORE_RELEASE_HELPER
 
 set_property(GLOBAL APPEND PROPERTY NEO_CORE_ENABLE_RELEASE_HELPER
              ${CMAKE_CURRENT_SOURCE_DIR}/enable_release_helper_xe.cpp
-             ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_release_helper_xe2.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}/enable_release_helper_xe2.cpp
              ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_release_helper_xe3.cpp
 )
 set_property(GLOBAL APPEND PROPERTY NEO_CORE_RELEASE_HELPER ${NEO_CORE_RELEASE_HELPER})

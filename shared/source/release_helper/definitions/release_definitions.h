@@ -19,6 +19,7 @@ enum class ReleaseType {
     release1271,
     release1274,
     release2001,
+    release2002,
     release2004,
     release3000,
     release3001,

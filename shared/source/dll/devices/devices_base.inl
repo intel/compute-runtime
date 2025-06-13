@@ -31,6 +31,10 @@ DEVICE(0xE211, BmgHwConfig)
 DEVICE(0xE212, BmgHwConfig)
 DEVICE(0xE215, BmgHwConfig)
 DEVICE(0xE216, BmgHwConfig)
+DEVICE(0xE220, BmgHwConfig)
+DEVICE(0xE221, BmgHwConfig)
+DEVICE(0xE222, BmgHwConfig)
+DEVICE(0xE223, BmgHwConfig)
 #endif
 #ifdef SUPPORT_LNL
 NAMEDDEVICE(0x6420, LnlHwConfig, "Intel(R) Graphics")
