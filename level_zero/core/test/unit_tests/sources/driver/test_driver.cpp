@@ -34,6 +34,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl.h"
@@ -193,6 +194,7 @@ TEST_F(DriverVersionTest, givenExternalAllocatorWhenCallingGetExtensionPropertie
     NEO::debugManager.flags.UseBindlessMode.set(1);
     NEO::debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
 
     auto hwInfo = *NEO::defaultHwInfo;
     NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
@@ -411,9 +413,11 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenNTHandleWhenCreatingHostMemor
 }
 
 HWTEST_F(ImportNTHandleWithMockMemoryManager, whenCallingCreateGraphicsAllocationFromMultipleSharedHandlesFromOsAgnosticMemoryManagerThenNullptrIsReturned) {
+    L0UltHelper::cleanupUsmAllocPools(driverHandle.get());
     delete driverHandle->svmAllocsManager;
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get());
+    L0UltHelper::initUsmAllocPools(driverHandle.get());
 
     std::vector<osHandle> handles{6, 7};
     AllocationProperties properties = {device->getRootDeviceIndex(),

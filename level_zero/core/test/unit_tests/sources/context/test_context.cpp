@@ -26,6 +26,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -393,9 +394,11 @@ struct ContextHostAllocTests : public ::testing::Test {
         ze_result_t res = driverHandle->initialize(std::move(devices));
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
+        L0UltHelper::cleanupUsmAllocPools(driverHandle.get());
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
         currSvmAllocsManager = new SVMAllocsManagerContextMock(driverHandle->memoryManager);
         driverHandle->svmAllocsManager = currSvmAllocsManager;
+        L0UltHelper::initUsmAllocPools(driverHandle.get());
 
         zeDevices.resize(numberOfDevicesInContext);
         driverHandle->getDevice(&numberOfDevicesInContext, zeDevices.data());
@@ -407,6 +410,7 @@ struct ContextHostAllocTests : public ::testing::Test {
     }
 
     void TearDown() override {
+        L0UltHelper::cleanupUsmAllocPools(driverHandle.get());
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }

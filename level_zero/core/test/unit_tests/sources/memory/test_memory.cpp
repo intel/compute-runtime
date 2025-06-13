@@ -33,6 +33,7 @@
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/source/module/module.h"
+#include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -40,7 +41,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/driver_experimental/zex_memory.h"
-
 namespace L0 {
 namespace ult {
 
@@ -495,13 +495,19 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsExpected
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_DEVICE);
     EXPECT_EQ(deviceHandle, device->toHandle());
-    EXPECT_EQ(memoryProperties.id,
-              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
-
+    auto usmPool = device->getNEODevice()->getUsmMemAllocPool();
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
     EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
+
+    if (usmPool &&
+        usmPool->isInPool(ptr)) {
+        EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
+    } else {
+        EXPECT_EQ(memoryProperties.id,
+                  context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
+    }
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -525,13 +531,18 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsExpectedPr
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
-    EXPECT_EQ(memoryProperties.id,
-              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
-
+    auto usmPool = &driverHandle->usmHostMemAllocPool;
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
     EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
+
+    if (usmPool->isInPool(ptr)) {
+        EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
+    } else {
+        EXPECT_EQ(memoryProperties.id,
+                  context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
+    }
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -2334,8 +2345,9 @@ struct ContextRelaxedSizeMock : public ContextImp {
 
 struct MemoryRelaxedSizeTests : public ::testing::Test {
     void SetUp() override {
-        // disable usm device pooling, used svm manager mock does not make svmData
+        // disable usm pooling, used svm manager mock does not create svmData
         debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        debugManager.flags.EnableHostUsmAllocationPool.set(0);
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
@@ -5125,6 +5137,7 @@ struct AllocHostMemoryTest : public ::testing::Test {
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemThenAllocateGraphicsMemoryWithPropertiesIsCalledTheNumberOfTimesOfRootDevices) {
+    driverHandle->usmHostMemAllocPool.cleanup();
     void *ptr = nullptr;
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
@@ -5142,7 +5155,7 @@ TEST_F(AllocHostMemoryTest,
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationThenNullIsReturned) {
-
+    L0UltHelper::cleanupUsmAllocPools(driverHandle.get());
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
 
@@ -5160,7 +5173,7 @@ TEST_F(AllocHostMemoryTest,
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationWithHostPointerThenNullIsReturned) {
-
+    driverHandle->usmHostMemAllocPool.cleanup();
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
 

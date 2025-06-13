@@ -60,6 +60,7 @@ template <typename T>
 struct DeviceFixtureWithCustomMemoryManager : public DeviceFixture {
     void setUp() {
         debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        debugManager.flags.EnableHostUsmAllocationPool.set(0);
         auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
         memoryManager = new T(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);

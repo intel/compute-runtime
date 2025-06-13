@@ -35,6 +35,7 @@ struct L0DebuggerWindowsFixture {
     void setUp() {
         debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
         debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        debugManager.flags.EnableHostUsmAllocationPool.set(0);
         executionEnvironment = new NEO::ExecutionEnvironment;
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
         executionEnvironment->prepareRootDeviceEnvironments(1);
