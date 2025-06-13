@@ -528,9 +528,9 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
 
     lockCSR.unlock();
     ze_result_t status = ZE_RESULT_SUCCESS;
-    if (cmdQ == this->cmdQImmediate || cmdQ == this->cmdQImmediateCopyOffload) {
-        cmdQ->setTaskCount(completionStamp.taskCount);
+    cmdQ->setTaskCount(completionStamp.taskCount);
 
+    if (cmdQ == this->cmdQImmediate || cmdQ == this->cmdQImmediateCopyOffload) {
         if (this->isSyncModeQueue) {
             status = hostSynchronize(std::numeric_limits<uint64_t>::max(), true);
         }
@@ -1251,15 +1251,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     }
 
     if (inputRet == ZE_RESULT_SUCCESS) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            if (signalEvent && (NEO::debugManager.flags.TrackNumCsrClientsOnSyncPoints.get() != 0)) {
-                signalEvent->setLatestUsedCmdQueue(queue);
-            }
-            inputRet = executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, copyOffloadSubmission, requireTaskCountUpdate,
-                                                                outerLock, outerLockForIndirect);
-        } else {
-            inputRet = executeCommandListImmediate(performMigration);
+        if (signalEvent && (NEO::debugManager.flags.TrackNumCsrClientsOnSyncPoints.get() != 0)) {
+            signalEvent->setLatestUsedCmdQueue(queue);
         }
+        inputRet = executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, copyOffloadSubmission, requireTaskCountUpdate,
+                                                            outerLock, outerLockForIndirect);
     }
 
     this->latestFlushIsHostVisible = !this->dcFlushSupport;

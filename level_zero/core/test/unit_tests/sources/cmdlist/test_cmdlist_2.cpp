@@ -617,25 +617,6 @@ HWTEST_F(CommandListAppend, givenCommandListAnd2dBufferWhenMemoryCopyRegionCalle
     EXPECT_GT(cmdList.appendMemoryCopyKernel2dCalledTimes, 0u);
 }
 
-HWTEST2_F(CommandListAppend, givenImmediateCommandListWithFlushTaskEnabledWhenAppendingMemoryCopyRegionThenSuccessIsReturned, IsAtLeastXeHpCore) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
-
-    ze_command_queue_desc_t queueDesc = {};
-    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
-
-    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.cmdQImmediate = queue.get();
-    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
-    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-    void *dstPtr = reinterpret_cast<void *>(0x2345);
-    ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
-    ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
-    auto result = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
 HWTEST_F(CommandListAppend, givenCopyOnlyCommandListWhenAppendMemoryFillCalledThenAppendBlitFillCalled) {
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -1668,29 +1649,17 @@ struct MockL0GfxCoreHelperSupportsCmdListHeapSharingHw : L0::L0GfxCoreHelperHw<G
     bool platformSupportsCmdListHeapSharing() const override { return true; }
 };
 
-HWTEST_F(CommandListCreateTests, givenPlatformSupportsSharedHeapsWhenImmediateCmdListCreatedWithFlushTaskSetThenSharedHeapsFollowsTheSameSetting) {
+HWTEST_F(CommandListCreateTests, givenPlatformSupportsSharedHeapsWhenImmediateCmdListCreatedThenSharedHeapsFollowsTheSameSetting) {
     MockL0GfxCoreHelperSupportsCmdListHeapSharingHw<FamilyType> mockL0GfxCoreHelperSupport{};
     std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelperSupport));
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
-
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     std::unique_ptr<L0::ult::CommandList> commandListImmediate(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue)));
     ASSERT_NE(nullptr, commandListImmediate);
 
-    EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
-
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
-
-    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue)));
-    ASSERT_NE(nullptr, commandListImmediate);
-
-    EXPECT_FALSE(commandListImmediate->isFlushTaskSubmissionEnabled);
-    EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
 
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
     l0GfxCoreHelperBackup.release();
@@ -1701,28 +1670,21 @@ struct MockL0GfxCoreHelperNoSupportsCmdListHeapSharingHw : L0::L0GfxCoreHelperHw
     bool platformSupportsCmdListHeapSharing() const override { return false; }
 };
 
-HWTEST_F(CommandListCreateTests, givenPlatformNotSupportsSharedHeapsWhenImmediateCmdListCreatedWithFlushTaskSetThenSharedHeapsIsNotEnabled) {
+HWTEST_F(CommandListCreateTests, givenPlatformNotSupportsSharedHeapsWhenImmediateCmdListCreatedThenSharedHeapsIsNotEnabled) {
     MockL0GfxCoreHelperNoSupportsCmdListHeapSharingHw<FamilyType> mockL0GfxCoreHelperNoSupport;
     std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelperNoSupport));
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
-
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     std::unique_ptr<L0::ult::CommandList> commandListImmediate(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue)));
     ASSERT_NE(nullptr, commandListImmediate);
 
-    EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
-
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue)));
     ASSERT_NE(nullptr, commandListImmediate);
 
-    EXPECT_FALSE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_FALSE(commandListImmediate->immediateCmdListHeapSharing);
 
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);

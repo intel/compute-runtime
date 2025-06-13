@@ -120,11 +120,7 @@ struct BcsSplit {
             auto eventHandle = this->events.subcopy[subcopyEventIndex + i]->toHandle();
             result = appendCall(localDstPtr, localSrcPtr, localSize, eventHandle);
 
-            if (cmdList->flushTaskSubmissionEnabled()) {
-                cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, true, cmdQsForSplit[i], nullptr, nullptr);
-            } else {
-                cmdList->executeCommandListImmediateImpl(performMigration, cmdQsForSplit[i]);
-            }
+            cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, true, cmdQsForSplit[i], nullptr, nullptr);
 
             eventHandles.push_back(eventHandle);
 

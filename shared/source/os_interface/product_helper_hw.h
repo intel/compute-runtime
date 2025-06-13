@@ -76,7 +76,6 @@ class ProductHelperHw : public ProductHelper {
     bool isDcFlushAllowed() const override;
     uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const override;
     bool getUuid(NEO::DriverModel *driverModel, uint32_t subDeviceCount, uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override;
-    bool isFlushTaskAllowed() const override;
     bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const override;
     bool isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const override;
     bool isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const override;

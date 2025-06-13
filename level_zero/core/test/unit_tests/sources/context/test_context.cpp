@@ -998,9 +998,6 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
-
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
                                                                                device,
                                                                                &desc,
@@ -1050,9 +1047,6 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(productFamily,
                                                                                        device,
@@ -1114,9 +1108,6 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
                                                                                device,

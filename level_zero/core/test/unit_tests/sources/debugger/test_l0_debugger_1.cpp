@@ -337,9 +337,6 @@ HWTEST_P(L0DebuggerParameterizedTests, givenEnabledDebuggingWhenIsaTypeAllocated
 using L0DebuggerSimpleTest = Test<DeviceFixture>;
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediateCommandListToInvokeNonKernelOperationsThenSuccessIsReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
-
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -400,73 +397,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     context->freeMem(dstPtr);
 }
 
-HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmediateCommandListToInvokeNonKernelOperationsThenSuccessIsReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
-
-    void *dstPtr = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &dstPtr);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
-    ASSERT_NE(nullptr, commandList);
-    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
-
-    EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_TRUE(commandList->isImmediateType());
-    EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
-    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
-
-    ze_event_handle_t event = nullptr;
-
-    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    ASSERT_NE(nullptr, eventPool);
-
-    eventPool->createEvent(&eventDesc, &event);
-
-    std::unique_ptr<Event> eventObject(static_cast<Event *>(L0::Event::fromHandle(event)));
-    ASSERT_NE(nullptr, eventObject->csrs[0]);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
-
-    returnValue = commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
-    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-
-    returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
-    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-
-    returnValue = commandList->appendSignalEvent(event, false);
-    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-
-    returnValue = eventObject->hostSignal(false);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
-
-    returnValue = commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr);
-    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-
-    returnValue = commandList->appendEventReset(event);
-    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-
-    context->freeMem(dstPtr);
-}
-
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryFillWithDeviceMemoryThenSuccessIsReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -487,32 +418,6 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediate
 }
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryFillThenSuccessIsReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
-
-    void *dstPtr = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &dstPtr);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    int pattern = 1;
-
-    ze_command_queue_desc_t queueDesc = {};
-    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
-    CmdListMemoryCopyParams copyParams = {};
-    result = commandList->appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 4096u, nullptr, 0, nullptr, copyParams);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    context->freeMem(dstPtr);
-    commandList->destroy();
-}
-
-HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendMemoryFillThenSuccessIsReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
-
     void *dstPtr = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -533,9 +438,6 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForImmediat
 }
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForRegularCommandListForAppendMemoryFillThenSuccessIsReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
-
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
@@ -567,69 +469,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledForRegularCo
     commandQueue->destroy();
 }
 
-HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForRegularCommandListForAppendMemoryFillThenSuccessIsReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
-
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue);
-
-    ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle()};
-    const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
-
-    void *dstPtr = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4096u, &dstPtr);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    int pattern = 1;
-    CmdListMemoryCopyParams copyParams = {};
-    auto commandList = CommandList::fromHandle(commandLists[0]);
-    result = commandList->appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 4096u, nullptr, 0, nullptr, copyParams);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    commandList->close();
-
-    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    commandQueue->synchronize(0);
-
-    context->freeMem(dstPtr);
-    commandList->destroy();
-
-    commandQueue->destroy();
-}
-
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
-
-    size_t size = (sizeof(uint32_t) * 4);
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
-    ASSERT_NE(nullptr, commandList);
-
-    NEO::GraphicsAllocation srcPtr(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
-                                   reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
-                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    NEO::GraphicsAllocation dstPtr(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
-                                   reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
-                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-
-    auto result = commandList->appendPageFaultCopy(&dstPtr, &srcPtr, 0x100, false);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    commandList->destroy();
-}
-
-HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
-
     size_t size = (sizeof(uint32_t) * 4);
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -711,7 +551,7 @@ HWTEST_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppend
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
+
     NEO::debugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
     NEO::debugManager.flags.UseImmediateFlushTask.set(0);
     NEO::debugManager.flags.SelectCmdListHeapAddressModel.set(0);
@@ -723,7 +563,6 @@ HWTEST_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppend
     auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
     EXPECT_TRUE(commandList->immediateCmdListHeapSharing);
 
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
@@ -776,7 +615,7 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
+
     NEO::debugManager.flags.UseImmediateFlushTask.set(1);
     NEO::debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
 

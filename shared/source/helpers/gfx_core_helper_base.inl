@@ -636,11 +636,6 @@ void GfxCoreHelperHw<GfxFamily>::encodeBatchBufferStart(void *cmdBuffer, uint64_
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isPlatformFlushTaskEnabled(const ProductHelper &productHelper) const {
-    return productHelper.isFlushTaskAllowed();
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
     if (debugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return debugManager.flags.ExperimentalCopyThroughLock.get() == 1;

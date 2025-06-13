@@ -524,7 +524,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopySetZeroWhenCreateImmediate
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyWithSizeLessThanFourMBThenDoNotSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -574,7 +573,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromHostToHostThenDoNotSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -623,7 +621,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediat
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.SplitBcsCopyHostptr.set(0);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -669,7 +666,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediat
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.SplitBcsCopyHostptr.set(0);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -714,7 +710,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediat
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromNonUsmHostToHostThenDoSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -759,7 +754,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromHostToNonUsmHostThenDoSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -804,7 +798,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromDeviceToDeviceThenDoNotSplit, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -900,8 +893,8 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 1u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getCsr()->peekTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getCsr()->peekTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getCsr()->peekTaskCount(), 1u);
@@ -1049,8 +1042,8 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndImmediate
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 1u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getCsr()->peekTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getCsr()->peekTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getCsr()->peekTaskCount(), 1u);
@@ -1117,8 +1110,8 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 1u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getCsr()->peekTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getCsr()->peekTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getCsr()->peekTaskCount(), 1u);
@@ -1185,8 +1178,8 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchS
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 1u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getCsr()->peekTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getCsr()->peekTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getCsr()->peekTaskCount(), 1u);
@@ -1212,7 +1205,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchS
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyD2HThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -1262,7 +1254,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyH2DThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -1312,7 +1303,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyRegionThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -1365,7 +1355,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -1435,7 +1424,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -1501,7 +1489,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -1572,7 +1559,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAllocateNewEventsForSplitThenEventsAreManagedProperly, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -1631,7 +1617,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenObtainEventsForSplitThenReuseEventsIfMarkerIsSignaled, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -1710,7 +1695,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenOOMAndObtainEventsForSplitThenNulloptIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -1761,7 +1745,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingPageFaultCopyThenSuccessIsReturned, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;

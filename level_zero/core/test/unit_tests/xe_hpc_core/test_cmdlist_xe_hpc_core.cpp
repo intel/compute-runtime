@@ -1302,7 +1302,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore,
 
 using CreateCommandListXeHpcTest = Test<DeviceFixture>;
 
-HWTEST2_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandListCreatedThenHeapSharingEnabledWithFlushTask, IsXeHpcCore) {
+HWTEST2_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandListCreatedThenHeapSharingEnabled, IsXeHpcCore) {
     std::unique_ptr<L0::ult::CommandList> commandListImmediate;
 
     auto &hwInfo = device->getHwInfo();
@@ -1318,8 +1318,7 @@ HWTEST2_F(CreateCommandListXeHpcTest, givenXeHpcPlatformsWhenImmediateCommandLis
     ze_result_t returnValue;
     commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
-    EXPECT_EQ(commandListImmediate->isFlushTaskSubmissionEnabled, commandListImmediate->immediateCmdListHeapSharing);
+    EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
 }
 
 HWTEST2_F(CreateCommandListXeHpcTest, whenDestroyImmediateCommandListThenGlobalAllocationListFilledWithCommandBuffer, IsXeHpcCore) {

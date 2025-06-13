@@ -2107,7 +2107,6 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
 
     std::unique_ptr<WhiteBox<L0::CommandListImp>> cmdList;
     cmdList.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, engineGroupType, returnValue)));
-    cmdList->isFlushTaskSubmissionEnabled = true;
     cmdList->enableInOrderExecution();
     uint64_t *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(), cmdList->inOrderExecInfo->getAllocationOffset());
     for (uint32_t i = 0; i < cmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
@@ -2158,9 +2157,6 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
 }
 
 TEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppendBarrierThenAppendBarrierReturnsDeviceLost) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
@@ -2206,9 +2202,6 @@ TEST_F(CommandListCreateTests, givenSplitBcsSizeWhenCreateCommandListThenProperS
 }
 
 HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAndAppendingSignalEventsThenDeviceLostIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
@@ -2272,8 +2265,6 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenThereIsNoEnoughSpace
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    whiteBoxCmdList->isFlushTaskSubmissionEnabled = true;
-
     EXPECT_EQ(device, commandList->getDevice());
     EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
@@ -2322,9 +2313,6 @@ TEST_F(CommandListCreateTests, givenCreatingRegularCommandlistAndppendCommandLis
 }
 
 HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAndAppendingEventResetThenDeviceLostIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
@@ -2388,9 +2376,6 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAnd
 }
 
 HWTEST_F(CommandListCreateTests, GivenImmediateCommandListWithFlushTaskCreatedThenNumIddPerBlockIsOne) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
@@ -2411,9 +2396,6 @@ HWTEST_F(CommandListCreateTests, GivenImmediateCommandListWithFlushTaskCreatedTh
 }
 
 HWTEST_F(CommandListCreateTests, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWhenCreatingImmediateCommandListAndAppendingWaitOnEventsThenDeviceLostIsReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
-
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 

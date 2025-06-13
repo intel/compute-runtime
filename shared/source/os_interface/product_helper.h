@@ -136,7 +136,6 @@ class ProductHelper {
     virtual bool isDcFlushAllowed() const = 0;
     virtual uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const = 0;
     virtual bool getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const = 0;
-    virtual bool isFlushTaskAllowed() const = 0;
     virtual bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const = 0;

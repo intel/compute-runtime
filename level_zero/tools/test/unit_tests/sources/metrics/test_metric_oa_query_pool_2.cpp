@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -224,10 +224,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndCompletionEventWhenAppendM
 }
 
 TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefaultModeAndFlushTaskEnabledAndCompletionEventWhenAppendMetricQueryBeginAndEndIsCalledThenReturnSuccess) {
-    DebugManagerStateRestore restorer;
-
     ze_result_t returnValue;
-    debugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;
@@ -297,10 +294,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
 }
 
 TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefaultModeAndFlushTaskDisabledAndCompletionEventWhenAppendMetricQueryBeginAndEndIsCalledThenReturnSuccess) {
-    DebugManagerStateRestore restorer;
-
     ze_result_t returnValue;
-    debugManager.flags.EnableFlushTaskSubmission.set(0);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_DEFAULT;

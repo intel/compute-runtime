@@ -461,11 +461,6 @@ bool ProductHelperHw<gfxProduct>::getUuid(NEO::DriverModel *driverModel, const u
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isFlushTaskAllowed() const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
     return getPipelineSelectPropertySystolicModeSupport();
 }

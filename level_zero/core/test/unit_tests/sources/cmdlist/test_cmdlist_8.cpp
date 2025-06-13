@@ -1483,7 +1483,6 @@ struct ImmediateCommandListHostSynchronize : public Test<DeviceFixture> {
         auto cmdList = std::make_unique<MockCommandListImmediateHw<gfxCoreFamily>>();
         cmdList->cmdQImmediate = commandQueue;
         cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-        cmdList->isFlushTaskSubmissionEnabled = true;
         cmdList->isSyncModeQueue = false;
 
         return cmdList;
@@ -1547,7 +1546,6 @@ HWTEST_F(ImmediateCommandListHostSynchronize, givenFlushTaskSubmissionIsDisabled
 
     auto cmdList = createCmdList<FamilyType::gfxCoreFamily>(csr);
     cmdList->copyThroughLockedPtrEnabled = true;
-    cmdList->isFlushTaskSubmissionEnabled = false;
 
     EXPECT_EQ(cmdList->hostSynchronize(0), ZE_RESULT_SUCCESS);
 

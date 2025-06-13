@@ -304,16 +304,12 @@ struct CommandList : _ze_command_list_handle_t {
     bool isMemoryPrefetchRequested() const {
         return performMemoryPrefetch;
     }
-    bool storeExternalPtrAsTemporary() const {
-        return isImmediateType() && (this->isFlushTaskSubmissionEnabled || isCopyOnly(false));
-    }
 
     enum class CommandListType : uint32_t {
         typeRegular = 0u,
         typeImmediate = 1u
     };
 
-    virtual ze_result_t executeCommandListImmediate(bool performMigration) = 0;
     virtual ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) = 0;
     virtual ~CommandList();
 
@@ -382,10 +378,6 @@ struct CommandList : _ze_command_list_handle_t {
 
     bool isRequiredQueueUncachedMocs() const {
         return requiresQueueUncachedMocs;
-    }
-
-    bool flushTaskSubmissionEnabled() const {
-        return isFlushTaskSubmissionEnabled;
     }
 
     Device *getDevice() const {
@@ -519,7 +511,6 @@ struct CommandList : _ze_command_list_handle_t {
     int32_t defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent;
     uint32_t maxLocalSubRegionSize = 0;
 
-    bool isFlushTaskSubmissionEnabled = false;
     bool isSyncModeQueue = false;
     bool isTbxMode = false;
     bool commandListSLMEnabled = false;

@@ -1116,7 +1116,6 @@ HWTEST_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCa
         mockCmdQs.emplace_back(std::make_unique<Mock<CommandQueue>>(inputDevice, csr, &desc));
 
         cmdList->cmdQImmediate = mockCmdQs[createdCmdLists].get();
-        cmdList->isFlushTaskSubmissionEnabled = true;
         cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
         cmdList->initialize(inputDevice, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);

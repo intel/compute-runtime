@@ -278,11 +278,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::getUuid(NEO::DriverModel *driverModel, const
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isFlushTaskAllowed() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const {
     return true;
 }

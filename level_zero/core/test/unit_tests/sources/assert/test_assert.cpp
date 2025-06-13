@@ -273,7 +273,6 @@ HWTEST_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsyn
 
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = false;
@@ -302,7 +301,6 @@ HWTEST_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSync
     Mock<KernelImp> kernel;
     kernel.module = &module;
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = true;
@@ -342,7 +340,6 @@ HWTEST_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynchr
     csr.returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
 
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = true;

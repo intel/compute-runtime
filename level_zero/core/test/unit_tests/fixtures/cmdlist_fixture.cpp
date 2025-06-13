@@ -130,7 +130,6 @@ void ModuleMutableCommandListFixture::setUpImpl() {
 
     commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false)));
     commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue)));
-    commandListImmediate->isFlushTaskSubmissionEnabled = true;
 
     mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
@@ -170,7 +169,7 @@ void FrontEndCommandListFixtureInit::setUp(int32_t dispatchCmdBufferPrimary) {
 
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(dispatchCmdBufferPrimary);
     debugManager.flags.EnableFrontEndTracking.set(1);
-    debugManager.flags.EnableFlushTaskSubmission.set(1);
+
     ModuleMutableCommandListFixture::setUp(REVISION_B);
 }
 
@@ -276,7 +275,6 @@ void CommandListGlobalHeapsFixtureInit::tearDown() {
 void ImmediateCmdListSharedHeapsFixture::setUp() {
     constexpr uint32_t storeAllocations = 4;
 
-    debugManager.flags.EnableFlushTaskSubmission.set(1);
     debugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
     debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
     debugManager.flags.SetAmountOfReusableAllocations.set(storeAllocations);

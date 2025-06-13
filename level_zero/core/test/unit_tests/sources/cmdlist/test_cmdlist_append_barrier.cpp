@@ -578,7 +578,6 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
-    immediateCommandList->isFlushTaskSubmissionEnabled = true;
     immediateCommandList->cmdQImmediate = queue.get();
     ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -667,7 +666,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 }
 
 HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
-          givenMultiTileImmediateCommandListNotUsingFlushTaskWhenAppendingBarrierThenExpectSecondaryBufferStart, IsAtLeastXeHpCore) {
+          givenMultiTileImmediateCommandListUsingFlushTaskWhenAppendingBarrierThenExpectNonSecondaryBufferStart, IsAtLeastXeHpCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     ze_command_queue_desc_t queueDesc = {};
@@ -677,7 +676,6 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCommandList->cmdQImmediate = queue.get();
-    immediateCommandList->isFlushTaskSubmissionEnabled = false;
     ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, immediateCommandList->partitionCount);
@@ -699,7 +697,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     auto itorBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorBbStart);
     auto cmdBbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*itorBbStart);
-    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, cmdBbStart->getSecondLevelBatchBuffer());
+    EXPECT_NE(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, cmdBbStart->getSecondLevelBatchBuffer());
 }
 
 } // namespace ult

@@ -319,11 +319,12 @@ HWTEST_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCopy
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
+    auto taskCountBefore = queue->getTaskCount();
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(1u, queue->executeCommandListsCalled);
-    EXPECT_EQ(1u, queue->synchronizeCalled);
+    EXPECT_EQ(0u, queue->executeCommandListsCalled);
+    EXPECT_GT(queue->getTaskCount(), taskCountBefore);
 
     commandList->cmdQImmediate = nullptr;
 }
@@ -352,12 +353,12 @@ HWTEST_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCopy
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
 
     sharedSystemMemCapabilities = 0xf;
-
+    auto taskCountBefore = queue->getTaskCount();
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(1u, queue->executeCommandListsCalled);
-    EXPECT_EQ(1u, queue->synchronizeCalled);
+    EXPECT_EQ(0u, queue->executeCommandListsCalled);
+    EXPECT_GT(queue->getTaskCount(), taskCountBefore);
 
     commandList->cmdQImmediate = nullptr;
 }
@@ -383,6 +384,7 @@ HWTEST_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCopy
 HWTEST_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenSuccessIsReturned) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    queue->isCopyOnlyCommandQueue = true;
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
@@ -394,11 +396,12 @@ HWTEST_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemor
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
+    auto taskCountBefore = queue->getTaskCount();
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(1u, queue->executeCommandListsCalled);
-    EXPECT_EQ(0u, queue->synchronizeCalled);
+    EXPECT_EQ(0u, queue->executeCommandListsCalled);
+    EXPECT_GT(queue->getTaskCount(), taskCountBefore);
     EXPECT_EQ(0u, commandList->commandContainer.getResidencyContainer().size());
     commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
@@ -411,6 +414,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCop
 
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    queue->isCopyOnlyCommandQueue = true;
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
@@ -426,20 +430,18 @@ HWTEST2_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCop
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
 
     sharedSystemMemCapabilities = 0xf;
-
+    auto taskCountBefore = queue->getTaskCount();
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(1u, queue->executeCommandListsCalled);
-    EXPECT_EQ(0u, queue->synchronizeCalled);
+    EXPECT_EQ(0u, queue->executeCommandListsCalled);
+    EXPECT_GT(queue->getTaskCount(), taskCountBefore);
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenProgramCmdStreamWithFlushTask) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
     bool heaplessStateInit = ultCsr->heaplessStateInitialized;
@@ -451,7 +453,6 @@ HWTEST_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemor
 
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
-    commandList->isFlushTaskSubmissionEnabled = true;
     commandList->device = device;
     commandList->isSyncModeQueue = false;
     commandList->cmdQImmediate = cmdQueue.get();
@@ -540,8 +541,6 @@ HWTEST_F(AppendMemoryCopyTests, givenSyncImmediateCommandListWhenAppendingMemory
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
     bool heaplessStateInit = ultCsr->heaplessStateInitialized;
@@ -555,7 +554,6 @@ HWTEST_F(AppendMemoryCopyTests, givenSyncImmediateCommandListWhenAppendingMemory
 
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
-    commandList->isFlushTaskSubmissionEnabled = true;
     commandList->device = device;
     commandList->isSyncModeQueue = true;
     commandList->cmdQImmediate = cmdQueue.get();
@@ -643,6 +641,7 @@ HWTEST_F(AppendMemoryCopyTests, givenSyncImmediateCommandListWhenAppendingMemory
 HWTEST_F(AppendMemoryCopyTests, givenSyncModeImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenSuccessIsReturned) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    queue->isCopyOnlyCommandQueue = true;
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
@@ -654,12 +653,12 @@ HWTEST_F(AppendMemoryCopyTests, givenSyncModeImmediateCommandListWhenAppendingMe
     commandList->isSyncModeQueue = true;
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-
+    auto taskCountBefore = queue->getTaskCount();
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(1u, queue->executeCommandListsCalled);
-    EXPECT_EQ(1u, queue->synchronizeCalled);
+    EXPECT_EQ(0u, queue->executeCommandListsCalled);
+    EXPECT_GT(queue->getTaskCount(), taskCountBefore);
 
     commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
@@ -667,6 +666,7 @@ HWTEST_F(AppendMemoryCopyTests, givenSyncModeImmediateCommandListWhenAppendingMe
 HWTEST_F(AppendMemoryCopyTests, givenImmediateCommandListWhenAppendingMemoryCopyThenNBlitsIsSuccessfullyCalculated) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    queue->isCopyOnlyCommandQueue = true;
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
@@ -906,7 +906,6 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhe
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
-    cmdList.isFlushTaskSubmissionEnabled = true;
 
     constexpr size_t allocSize = 4096;
     void *buffer = nullptr;
@@ -966,7 +965,6 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWithDummyBlitWaWhenCopyMemo
 
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
-    cmdList.isFlushTaskSubmissionEnabled = true;
 
     constexpr size_t allocSize = 4096;
     void *buffer = nullptr;
@@ -1049,24 +1047,20 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
 
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdListRegular;
     cmdListRegular.initialize(device, NEO::EngineGroupType::copy, 0u);
-    cmdListRegular.isFlushTaskSubmissionEnabled = true;
 
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdListRegularInOrder;
     cmdListRegularInOrder.initialize(device, NEO::EngineGroupType::copy, 0u);
-    cmdListRegularInOrder.isFlushTaskSubmissionEnabled = true;
     cmdListRegularInOrder.enableInOrderExecution();
 
     auto queue1 = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
     auto queue2 = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
 
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdListImmediate;
-    cmdListImmediate.isFlushTaskSubmissionEnabled = true;
     cmdListImmediate.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdListImmediate.cmdQImmediate = queue1.get();
     cmdListImmediate.initialize(device, NEO::EngineGroupType::copy, 0u);
 
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdListImmediateInOrder;
-    cmdListImmediateInOrder.isFlushTaskSubmissionEnabled = true;
     cmdListImmediateInOrder.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdListImmediateInOrder.cmdQImmediate = queue2.get();
     cmdListImmediateInOrder.initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -1183,7 +1177,6 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenAppendMemAdviseWithRegularAndHeapLessC
 
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
-    cmdList.isFlushTaskSubmissionEnabled = true;
 
     constexpr size_t allocSize = 1;
     void *deviceBuffer = nullptr;
@@ -1240,7 +1233,6 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProg
 
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
-    cmdList.isFlushTaskSubmissionEnabled = true;
 
     constexpr size_t allocSize = 1;
     void *hostBuffer = nullptr;
@@ -1354,7 +1346,6 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhe
     queue->isCopyOnlyCommandQueue = true;
 
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
 

@@ -48,7 +48,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass = CommandListCoreFamily<gfxCoreFamily>;
     using BaseClass::BaseClass;
     using BaseClass::copyThroughLockedPtrEnabled;
-    using BaseClass::executeCommandListImmediate;
     using BaseClass::getCopyOffloadModeForOperation;
     using BaseClass::getCsr;
     using BaseClass::isCopyOffloadEnabled;

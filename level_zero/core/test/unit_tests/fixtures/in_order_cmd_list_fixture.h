@@ -188,7 +188,6 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         mockCmdQs.emplace_back(std::make_unique<Mock<CommandQueue>>(device, csr, &desc));
 
         cmdList->cmdQImmediate = mockCmdQs[createdCmdLists].get();
-        cmdList->isFlushTaskSubmissionEnabled = true;
         cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
         cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);

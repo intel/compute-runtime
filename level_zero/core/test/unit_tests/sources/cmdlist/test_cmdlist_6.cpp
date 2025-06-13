@@ -385,7 +385,6 @@ HWTEST_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrier
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -394,33 +393,7 @@ HWTEST_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrier
     result = cmdList.appendMemoryRangesBarrier(numRanges, &rangeSizes,
                                                ranges, nullptr, 0,
                                                nullptr);
-    EXPECT_EQ(0u, cmdList.executeCommandListImmediateCalledCount);
     EXPECT_EQ(1u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-HWTEST_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrierNotUsingFlushTaskThenExpectCorrectExecuteCall) {
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    uint32_t numRanges = 1;
-    const size_t rangeSizes = 1;
-    const char *rangesBuffer[rangeSizes];
-    const void **ranges = reinterpret_cast<const void **>(&rangesBuffer[0]);
-
-    ze_command_queue_desc_t queueDesc = {};
-    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
-
-    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
-    cmdList.isFlushTaskSubmissionEnabled = false;
-    cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
-    cmdList.cmdQImmediate = queue.get();
-    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    result = cmdList.appendMemoryRangesBarrier(numRanges, &rangeSizes,
-                                               ranges, nullptr, 0,
-                                               nullptr);
-    EXPECT_EQ(1u, cmdList.executeCommandListImmediateCalledCount);
-    EXPECT_EQ(0u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -1220,7 +1193,6 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
     auto &cmdContainer = commandListImmediate->commandContainer;
 
-    EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
 
     EXPECT_EQ(1u, cmdContainer.getNumIddPerBlock());
@@ -2975,7 +2947,6 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
 
     ze_result_t returnValue;
     commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, &l0Device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue)));
-    commandListImmediate->isFlushTaskSubmissionEnabled = true;
     commandListImmediate->heaplessModeEnabled = true;
 
     const ze_group_count_t groupCount{1, 1, 1};

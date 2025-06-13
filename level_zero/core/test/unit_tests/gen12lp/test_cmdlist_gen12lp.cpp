@@ -99,12 +99,12 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenImmediateListAndExecutionSuccessWhenApp
     cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->cmdQImmediate = queue.get();
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList->executeCommandListImmediateReturnValue = ZE_RESULT_SUCCESS;
+    cmdList->executeCommandListImmediateWithFlushTaskReturnValue = ZE_RESULT_SUCCESS;
 
     result = cmdList->appendMemoryRangesBarrier(numRanges, &rangeSizes,
                                                 ranges, nullptr, 0,
                                                 nullptr);
-    EXPECT_EQ(1u, cmdList->executeCommandListImmediateCalledCount);
+    EXPECT_EQ(1u, cmdList->executeCommandListImmediateWithFlushTaskCalledCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList->destroy();
@@ -125,12 +125,12 @@ HWTEST2_F(CommandListCreateGen12Lp, GivenImmediateListAndGpuFailureWhenAppending
     cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->cmdQImmediate = queue.get();
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList->executeCommandListImmediateReturnValue = ZE_RESULT_ERROR_DEVICE_LOST;
+    cmdList->executeCommandListImmediateWithFlushTaskReturnValue = ZE_RESULT_ERROR_DEVICE_LOST;
 
     result = cmdList->appendMemoryRangesBarrier(numRanges, &rangeSizes,
                                                 ranges, nullptr, 0,
                                                 nullptr);
-    EXPECT_EQ(1u, cmdList->executeCommandListImmediateCalledCount);
+    EXPECT_EQ(1u, cmdList->executeCommandListImmediateWithFlushTaskCalledCount);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 
     cmdList->destroy();

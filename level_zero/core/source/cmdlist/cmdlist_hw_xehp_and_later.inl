@@ -449,7 +449,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         addPatchScratchAddressInImplicitArgs(commandsToPatch, dispatchKernelArgs, kernelDescriptor, kernelNeedsImplicitArgs);
     }
 
-    if (!this->isFlushTaskSubmissionEnabled) {
+    if (!isImmediateType()) {
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
     }
 
@@ -638,7 +638,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiTileBarrier(NEO::Device &n
                                                                      0,
                                                                      0,
                                                                      !isImmediateType(),
-                                                                     !(this->isFlushTaskSubmissionEnabled || this->dispatchCmdListBatchBufferAsPrimary));
+                                                                     !(isImmediateType() || this->dispatchCmdListBatchBufferAsPrimary));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

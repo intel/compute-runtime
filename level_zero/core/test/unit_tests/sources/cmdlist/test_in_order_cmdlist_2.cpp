@@ -3762,7 +3762,6 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
 struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
     void SetUp() override {
         NEO::debugManager.flags.SplitBcsCopy.set(1);
-        NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
         hwInfoBackup = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -3793,7 +3792,6 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
         desc.ordinal = static_cast<uint32_t>(device->getNEODevice()->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
         cmdList->isBcsSplitNeeded = bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, &desc, cmdList->getCsr(false));
-        cmdList->isFlushTaskSubmissionEnabled = false;
 
         return cmdList;
     }

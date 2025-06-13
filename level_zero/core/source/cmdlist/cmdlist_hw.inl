@@ -93,7 +93,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
 
     if (!this->stateBaseAddressTracking && !this->heaplessStateInitEnabled) {
-        if (!this->isFlushTaskSubmissionEnabled) {
+        if (!isImmediateType()) {
             programStateBaseAddress(commandContainer, false);
         }
     }
@@ -288,8 +288,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         this->partitionCount = static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
     }
 
-    if (this->isFlushTaskSubmissionEnabled) {
-        commandContainer.setFlushTaskUsedForImmediate(this->isFlushTaskSubmissionEnabled);
+    if (isImmediateType()) {
+        commandContainer.setFlushTaskUsedForImmediate(true);
         commandContainer.setNumIddPerBlock(1);
         this->setupFlushMethod(rootDeviceEnvironment);
     }
@@ -302,7 +302,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
 
     auto createSecondaryCmdBufferInHostMem = isImmediateType() &&
-                                             this->isFlushTaskSubmissionEnabled &&
                                              !device->isImplicitScalingCapable() &&
                                              getCsr(false) &&
                                              getCsr(false)->isAnyDirectSubmissionEnabled() &&
@@ -346,37 +345,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
 
     return returnType;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmediate(bool performMigration) {
-    return executeCommandListImmediateImpl(performMigration, this->cmdQImmediate);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmediateImpl(bool performMigration, L0::CommandQueue *cmdQImmediate) {
-    CommandListCoreFamily<gfxCoreFamily>::close();
-    ze_command_list_handle_t immediateHandle = this->toHandle();
-
-    this->commandContainer.removeDuplicatesFromResidencyContainer();
-    const auto commandListExecutionResult = cmdQImmediate->executeCommandLists(1, &immediateHandle, nullptr, performMigration, nullptr, nullptr);
-    if (commandListExecutionResult == ZE_RESULT_ERROR_DEVICE_LOST) {
-        return commandListExecutionResult;
-    }
-
-    if (this->isCopyOnly(false) && !this->isSyncModeQueue && !this->isTbxMode) {
-        this->commandContainer.currentLinearStreamStartOffsetRef() = this->commandContainer.getCommandStream()->getUsed();
-        this->handlePostSubmissionState();
-    } else {
-        const auto synchronizationResult = cmdQImmediate->synchronize(std::numeric_limits<uint64_t>::max());
-        if (synchronizationResult == ZE_RESULT_ERROR_DEVICE_LOST) {
-            return synchronizationResult;
-        }
-
-        this->reset();
-    }
-
-    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3643,7 +3611,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect) {
-    if (this->isFlushTaskSubmissionEnabled) {
+    if (isImmediateType()) {
         updateStreamPropertiesForFlushTaskDispatchFlags(kernel, isCooperative, threadGroupDimensions, isIndirect);
     } else {
         updateStreamPropertiesForRegularCommandLists(kernel, isCooperative, threadGroupDimensions, isIndirect);
@@ -3974,7 +3942,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
     NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
                                                                                  *this->device->getNEODevice(),
                                                                                  *container.getCommandStream(),
-                                                                                 sba, (this->isFlushTaskSubmissionEnabled || this->dispatchCmdListBatchBufferAsPrimary));
+                                                                                 sba, (isImmediateType() || this->dispatchCmdListBatchBufferAsPrimary));
 
     programStateBaseAddressHook(offsetSbaCmd, sba.getSurfaceStateBaseAddressModifyEnable());
 }

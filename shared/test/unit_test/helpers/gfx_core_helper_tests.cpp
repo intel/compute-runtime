@@ -1315,12 +1315,6 @@ HWTEST_F(GfxCoreHelperTest, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngi
     }
 }
 
-HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper));
-}
-
 struct CoherentWANotNeeded {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {

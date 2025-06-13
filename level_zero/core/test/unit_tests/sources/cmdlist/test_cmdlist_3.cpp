@@ -1382,26 +1382,6 @@ HWTEST2_F(CommandListCreateWithBcs,
     EXPECT_TRUE(commandList->isCopyOnly(false));
 }
 
-HWTEST2_F(CommandListCreateWithBcs, givenForceFlushTaskEnabledWhenCreatingCommandListUsingLinkedCopyThenFlushTaskModeUsed, IsAtLeastXeHpCore) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
-
-    const ze_command_queue_desc_t queueDesc = {};
-    bool internalEngine = false;
-
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                              device,
-                                                                              &queueDesc,
-                                                                              internalEngine,
-                                                                              NEO::EngineGroupType::linkedCopy,
-                                                                              returnValue));
-    ASSERT_NE(nullptr, commandList);
-
-    EXPECT_TRUE(commandList->isCopyOnly(false));
-    EXPECT_TRUE(commandList->flushTaskSubmissionEnabled());
-}
-
 HWTEST_F(CommandListCreateTests, whenGettingCommandsToPatchThenCorrectValuesAreReturned) {
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     EXPECT_EQ(&commandList->requiredStreamState, &commandList->getRequiredStreamState());

@@ -1351,8 +1351,6 @@ void CmdListLargeGrfFixture::testBody() {
 
 template <typename FamilyType>
 void TbxImmediateCommandListFixture::setUpT() {
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
-
     ModuleImmutableDataFixture::setUp();
 
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =

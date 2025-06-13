@@ -809,15 +809,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQue
     kernelAttributes.flags.usesSyncBuffer = true;
     kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
-    auto &productHelper = device->getProductHelper();
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto engineGroupType = NEO::EngineGroupType::compute;
-    if (productHelper.isCooperativeEngineSupported(*defaultHwInfo)) {
-        engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative, *defaultHwInfo);
-    }
-    pCommandList->initialize(device, engineGroupType, 0u);
-    pCommandList->isFlushTaskSubmissionEnabled = true;
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> pCommandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::cooperativeCompute, result));
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -839,7 +833,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQue
 
     void *alloc;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
+    result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     auto eventHandle = event->toHandle();
 
@@ -974,34 +968,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernels
     launchParams.isCooperative = false;
     result = pCommandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelWithImmediateListWithoutFlushTaskUnrecoverableIsCalled, IsWithinXeGfxFamily) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
-    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-
-    createKernel();
-
-    ze_result_t returnValue;
-    ze_command_queue_desc_t queueDesc = {};
-    std::unique_ptr<L0::ult::CommandList> commandList(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue)));
-
-    auto &commandContainer = commandList->getCmdContainer();
-    const auto stream = commandContainer.getCommandStream();
-
-    Vec3<size_t> groupCount{1, 1, 1};
-    auto sizeLeftInStream = sizeof(MI_BATCH_BUFFER_END);
-    auto available = stream->getAvailableSpace();
-    stream->getSpace(available - sizeLeftInStream);
-
-    const uint32_t threadGroupDimensions[3] = {1, 1, 1};
-
-    auto dispatchKernelArgs = CommandEncodeStatesFixture::createDefaultDispatchKernelArgs(device->getNEODevice(), kernel.get(), threadGroupDimensions, false);
-    dispatchKernelArgs.postSyncArgs.dcFlushEnable = commandList->getDcFlushRequired(true);
-
-    EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(commandContainer, dispatchKernelArgs), std::exception);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenReturnErrorInvalidArgument) {
@@ -1229,7 +1195,6 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
 
     auto immediateCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
-    immediateCmdList->isFlushTaskSubmissionEnabled = true;
     immediateCmdList->cmdQImmediate = queue.get();
     auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

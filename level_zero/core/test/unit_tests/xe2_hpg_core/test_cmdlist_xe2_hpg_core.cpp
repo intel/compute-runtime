@@ -348,7 +348,6 @@ HWTEST2_F(CommandListAppendLaunchKernelXe2HpgCoreDebugger, givenDebuggingEnabled
     ze_group_count_t groupCount{128, 1, 1};
     auto immediateCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
-    immediateCmdList->isFlushTaskSubmissionEnabled = false;
     immediateCmdList->cmdQImmediate = queue.get();
     auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
