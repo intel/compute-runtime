@@ -402,7 +402,7 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::validateDispatchFlags(bool
 bool AppendFillFixture::MockDriverFillHandle::findAllocationDataForRange(const void *buffer,
                                                                          size_t size,
                                                                          NEO::SvmAllocationData *&allocData) {
-    if ((size >= 15) && (size <= 17)) {
+    if (forceFalseFromfindAllocationDataForRange) {
         return false;
     }
     mockAllocation.reset(new NEO::MockGraphicsAllocation(const_cast<void *>(buffer), size));

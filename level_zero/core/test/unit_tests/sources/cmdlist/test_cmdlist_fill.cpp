@@ -121,6 +121,8 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWithSharedSystemUsmAndMemAdviseThe
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
     sharedSystemMemCapabilities = 0xf;
 
+    driverHandle->forceFalseFromfindAllocationDataForRange = true;
+
     int pattern = 0;
     const size_t size = 17;
     uint8_t *ptr = new uint8_t[size];
@@ -141,6 +143,8 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWithSharedSystemUsmAndNoMemAdviseT
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
     sharedSystemMemCapabilities = 0xf;
+
+    driverHandle->forceFalseFromfindAllocationDataForRange = true;
 
     int pattern = 0;
     const size_t size = 17;
@@ -163,6 +167,8 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWithSharedSystemUsmAndTreatNonUsmF
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
     sharedSystemMemCapabilities = 0xf;
 
+    driverHandle->forceFalseFromfindAllocationDataForRange = true;
+
     int pattern = 0;
     const size_t size = 17;
     uint8_t *ptr = new uint8_t[size];
@@ -183,6 +189,8 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWithSharedSystemUsmAndNoDebugFlags
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
     sharedSystemMemCapabilities = 0xf;
+
+    driverHandle->forceFalseFromfindAllocationDataForRange = true;
 
     int pattern = 0;
     const size_t size = 17;

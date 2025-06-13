@@ -218,6 +218,7 @@ class AppendFillFixture : public DeviceFixture {
                                         NEO::SvmAllocationData *&allocData) override;
 
         const uint32_t rootDeviceIndex = 0u;
+        bool forceFalseFromfindAllocationDataForRange = false;
         std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
         NEO::SvmAllocationData data{rootDeviceIndex};
     };
