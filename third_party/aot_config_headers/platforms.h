@@ -261,9 +261,9 @@ inline const std::map<std::string, PRODUCT_CONFIG> genericIdAcronyms = {
 inline const std::map<PRODUCT_CONFIG, std::vector<PRODUCT_CONFIG>> compatibilityMapping = {
     {DG2_G10_C0, {DG2_G11_B1, DG2_G12_A0}},
     {MTL_U_B0, {MTL_H_B0}},
-    {BMG_G21_A0, {LNL_B0}},
-    {BMG_G21_A1_RESERVED, {BMG_G21_A0, LNL_B0}},
-    {BMG_G21_B0_RESERVED, {BMG_G21_A0, LNL_B0}},
+    {BMG_G21_A0, {BMG_G31_A0, LNL_B0}},
+    {BMG_G21_A1_RESERVED, {BMG_G21_A0, BMG_G31_A0, LNL_B0}},
+    {BMG_G21_B0_RESERVED, {BMG_G21_A0, BMG_G31_A0, LNL_B0}},
     {PTL_H_B0, {PTL_U_A0}},
 };
 } // namespace AOT
