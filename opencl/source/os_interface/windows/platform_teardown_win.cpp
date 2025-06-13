@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,11 @@ using namespace NEO;
 
 BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) { // NOLINT(readability-identifier-naming)
     if (fdwReason == DLL_PROCESS_DETACH) {
-        globalPlatformTeardown();
+        /* If lpvReserved is non-NULL with DLL_PROCESS_DETACH, the process is terminating,
+         * cleanup should be skipped according to the DllMain spec. */
+        if (!lpvReserved) {
+            globalPlatformTeardown();
+        }
     }
     if (fdwReason == DLL_PROCESS_ATTACH) {
         globalPlatformSetup();
