@@ -1596,6 +1596,166 @@ HWTEST_F(CommandQueueHwTest, GivenBuiltinKernelWhenBuiltinDispatchInfoBuilderIsP
     EXPECT_EQ(builder.paramsToUse.kernel, dispatchInfo->getKernel());
 }
 
+struct ImageTextureCacheFlushTest : public CommandQueueHwBlitTest<false> {
+    void SetUp() override {
+        REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+        MockExecutionEnvironment mockExecutionEnvironment{};
+        auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+        if (!productHelper.isBlitterForImagesSupported() || !productHelper.blitEnqueuePreferred(false)) {
+            GTEST_SKIP();
+        }
+
+        CommandQueueHwBlitTest<false>::SetUp();
+        debugManager.flags.ForceCacheFlushForBcs.set(0);
+    }
+
+    void TearDown() override {
+        if (IsSkipped()) {
+            return;
+        }
+
+        CommandQueueHwBlitTest<false>::TearDown();
+    }
+
+    template <typename FamilyType>
+    void submitKernel(bool usingImages) {
+        MockKernelWithInternals kernelInternals(*pClDevice, context);
+        kernelInternals.mockKernel->usingImages = usingImages;
+        Kernel *kernel = kernelInternals.mockKernel;
+        MockMultiDispatchInfo multiDispatchInfo(pClDevice, kernel);
+        auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
+        auto enqueueResult = mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr, 0, false, multiDispatchInfo, 0, nullptr, nullptr);
+        EXPECT_EQ(CL_SUCCESS, enqueueResult);
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+HWTEST_F(ImageTextureCacheFlushTest, givenTextureCacheFlushNotRequiredWhenEnqueueWriteImageThenNoCacheFlushSubmitted) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    if (pCmdQ->getTimestampPacketContainer() == nullptr) {
+        GTEST_SKIP();
+    }
+
+    std::unique_ptr<Image> dstImage(ImageHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(context));
+    auto imageDesc = dstImage->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
+    char ptr[1] = {};
+
+    submitKernel<FamilyType>(false);
+
+    auto cmdQStart = pCmdQ->getCS(0).getUsed();
+    auto status = pCmdQ->enqueueWriteImage(dstImage.get(),
+                                           CL_FALSE,
+                                           origin,
+                                           region,
+                                           0,
+                                           0,
+                                           ptr,
+                                           nullptr,
+                                           0,
+                                           0,
+                                           nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    LinearStream &cmdQStream = pCmdQ->getCS(0);
+    HardwareParse ccsHwParser;
+    ccsHwParser.parseCommands<FamilyType>(cmdQStream, cmdQStart);
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+    EXPECT_TRUE(pipeControls.empty());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+}
+
+HWTEST_F(ImageTextureCacheFlushTest, givenTextureCacheFlushRequiredWhenEnqueueReadImageThenNoCacheFlushSubmitted) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    if (pCmdQ->getTimestampPacketContainer() == nullptr) {
+        GTEST_SKIP();
+    }
+
+    std::unique_ptr<Image> srcImage(ImageHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(context));
+    auto imageDesc = srcImage->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
+    char ptr[1] = {};
+
+    submitKernel<FamilyType>(true);
+
+    auto cmdQStart = pCmdQ->getCS(0).getUsed();
+    auto status = pCmdQ->enqueueReadImage(srcImage.get(),
+                                          CL_FALSE,
+                                          origin,
+                                          region,
+                                          0,
+                                          0,
+                                          ptr,
+                                          nullptr,
+                                          0,
+                                          0,
+                                          nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    LinearStream &cmdQStream = pCmdQ->getCS(0);
+    HardwareParse ccsHwParser;
+    ccsHwParser.parseCommands<FamilyType>(cmdQStream, cmdQStart);
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+    EXPECT_TRUE(pipeControls.empty());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+}
+
+HWTEST_F(ImageTextureCacheFlushTest, givenTextureCacheFlushRequiredWhenEnqueueWriteImageThenCacheFlushSubmitted) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    if (pCmdQ->getTimestampPacketContainer() == nullptr) {
+        GTEST_SKIP();
+    }
+
+    std::unique_ptr<Image> dstImage(ImageHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(context));
+    auto imageDesc = dstImage->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
+    char ptr[1] = {};
+
+    submitKernel<FamilyType>(true);
+
+    auto cmdQStart = pCmdQ->getCS(0).getUsed();
+    auto status = pCmdQ->enqueueWriteImage(dstImage.get(),
+                                           CL_FALSE,
+                                           origin,
+                                           region,
+                                           0,
+                                           0,
+                                           ptr,
+                                           nullptr,
+                                           0,
+                                           0,
+                                           nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    LinearStream &cmdQStream = pCmdQ->getCS(0);
+    HardwareParse ccsHwParser;
+    ccsHwParser.parseCommands<FamilyType>(cmdQStream, cmdQStart);
+
+    bool isPipeControlWithTextureCacheFlush = false;
+    auto pipeControls = findAll<PIPE_CONTROL *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+    EXPECT_FALSE(pipeControls.empty());
+    for (auto pipeControlIter : pipeControls) {
+        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIter);
+        if (0u == pipeControlCmd->getImmediateData() &&
+            PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA == pipeControlCmd->getPostSyncOperation() &&
+            pipeControlCmd->getTextureCacheInvalidationEnable()) {
+            isPipeControlWithTextureCacheFlush = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(isPipeControlWithTextureCacheFlush);
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+}
+
 HWTEST_F(IoqCommandQueueHwBlitTest, givenImageWithHostPtrWhenCreateImageThenStopRegularBcs) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto &engine = pDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);

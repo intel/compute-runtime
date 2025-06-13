@@ -108,6 +108,7 @@ class MockKernel : public Kernel {
     using Kernel::hasDirectStatelessAccessToHostMemory;
     using Kernel::hasDirectStatelessAccessToSharedBuffer;
     using Kernel::hasIndirectStatelessAccessToHostMemory;
+    using Kernel::implicitArgsVersion;
     using Kernel::isBuiltIn;
     using Kernel::isUnifiedMemorySyncRequired;
     using Kernel::kernelArgHandlers;
@@ -128,11 +129,10 @@ class MockKernel : public Kernel {
     using Kernel::preferredWkgMultipleOffset;
     using Kernel::privateSurface;
     using Kernel::setInlineSamplers;
-    using Kernel::unifiedMemoryControls;
-
-    using Kernel::implicitArgsVersion;
     using Kernel::slmSizes;
     using Kernel::slmTotalSize;
+    using Kernel::unifiedMemoryControls;
+    using Kernel::usingImages;
 
     MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg)
         : Kernel(programArg, kernelInfoArg, clDeviceArg) {

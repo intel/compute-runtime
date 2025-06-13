@@ -411,6 +411,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     size_t calculateHostPtrSizeForImage(const size_t *region, size_t rowPitch, size_t slicePitch, Image *image) const;
 
+    bool isCacheFlushForImageRequired(cl_int cmdType) const {
+        return this->isCacheFlushOnNextBcsWriteRequired && this->isImageWriteOperation(cmdType);
+    }
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);
@@ -439,6 +443,18 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                 commandType == CL_COMMAND_SVM_MAP ||
                 printfHandler ||
                 isTextureCacheFlushNeeded(commandType));
+    }
+
+    bool isImageWriteOperation(cl_command_type commandType) const {
+        switch (commandType) {
+        case CL_COMMAND_WRITE_IMAGE:
+        case CL_COMMAND_COPY_IMAGE:
+        case CL_COMMAND_FILL_IMAGE:
+        case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
+            return true;
+        default:
+            return false;
+        }
     }
 
     MOCKABLE_VIRTUAL bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const;
@@ -505,6 +521,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     std::array<BcsTimestampPacketContainers, bcsInfoMaskSize> bcsTimestampPacketContainers;
     bool stallingCommandsOnNextFlushRequired = false;
     bool dcFlushRequiredOnStallingCommandsOnNextFlush = false;
+    bool isCacheFlushOnNextBcsWriteRequired = false;
     bool splitBarrierRequired = false;
     bool gpgpuCsrClientRegistered = false;
     bool heaplessModeEnabled = false;

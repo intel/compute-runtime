@@ -596,6 +596,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
 
     if (commandStream) {
         if (timestampPacketDependencies.cacheFlushNodes.peekNodes().size() > 0) {
+            this->isCacheFlushOnNextBcsWriteRequired = false;
             auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]);
             PipeControlArgs args;
             args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, device->getRootDeviceEnvironment());
@@ -830,7 +831,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     auto systolicPipelineSelectMode = false;
     Kernel *kernel = nullptr;
     bool auxTranslationRequired = false;
-
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
             kernel = dispatchInfo.getKernel();
@@ -846,6 +846,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         if (kernel->hasUncacheableStatelessArgs()) {
             anyUncacheableArgs = true;
         }
+        this->isCacheFlushOnNextBcsWriteRequired |= kernel->usesImages();
     }
     UNRECOVERABLE_IF(kernel == nullptr);
 
@@ -1448,9 +1449,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     if (!blockQueue && this->getContext().getRootDeviceIndices().size() > 1) {
         migratedMemory = migrateMultiGraphicsAllocationsIfRequired(multiDispatchInfo.peekBuiltinOpParams(), bcsCsr);
     }
-
-    auto gpgpuSubmission = isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies, csrDeps.containsCrossEngineDependency);
-    if ((isCacheFlushForBcsRequired() || NEO::EnqueueProperties::Operation::dependencyResolveOnGpu == latestSentEnqueueType) && gpgpuSubmission) {
+    auto textureCacheFlushRequired = isCacheFlushForImageRequired(cmdType);
+    auto gpgpuSubmission = isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies, csrDeps.containsCrossEngineDependency, textureCacheFlushRequired);
+    if (gpgpuSubmission && (isCacheFlushForBcsRequired() || NEO::EnqueueProperties::Operation::dependencyResolveOnGpu == latestSentEnqueueType || textureCacheFlushRequired)) {
         timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
     }
 

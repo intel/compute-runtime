@@ -450,7 +450,7 @@ HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsTextureCacheFlushNeededThenRe
     MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
     auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    std::set<cl_command_type> typesToFlush = {CL_COMMAND_COPY_IMAGE, CL_COMMAND_WRITE_IMAGE, CL_COMMAND_FILL_IMAGE,
+    std::set<cl_command_type> typesToFlush = {CL_COMMAND_COPY_IMAGE, CL_COMMAND_WRITE_IMAGE, CL_COMMAND_FILL_IMAGE, CL_COMMAND_COPY_BUFFER_TO_IMAGE,
                                               CL_COMMAND_READ_IMAGE, CL_COMMAND_COPY_IMAGE_TO_BUFFER};
     for (auto operation = CL_COMMAND_NDRANGE_KERNEL; operation < CL_COMMAND_SVM_MIGRATE_MEM; operation++) {
         if (typesToFlush.find(operation) != typesToFlush.end()) {
@@ -3480,11 +3480,11 @@ HWTEST_F(CommandQueueTests, GivenOOQCommandQueueWhenIsGpgpuSubmissionForBcsRequi
     mockCmdQ->overrideIsCacheFlushForBcsRequired.returnValue = true;
     TimestampPacketDependencies dependencies{};
     auto containsCrossEngineDependency = false;
-    EXPECT_TRUE(mockCmdQ->isGpgpuSubmissionForBcsRequired(false, dependencies, containsCrossEngineDependency));
+    EXPECT_TRUE(mockCmdQ->isGpgpuSubmissionForBcsRequired(false, dependencies, containsCrossEngineDependency, false));
 
     mockCmdQ->setOoqEnabled();
-    EXPECT_FALSE(mockCmdQ->isGpgpuSubmissionForBcsRequired(false, dependencies, containsCrossEngineDependency));
+    EXPECT_FALSE(mockCmdQ->isGpgpuSubmissionForBcsRequired(false, dependencies, containsCrossEngineDependency, false));
 
     containsCrossEngineDependency = true;
-    EXPECT_TRUE(mockCmdQ->isGpgpuSubmissionForBcsRequired(false, dependencies, containsCrossEngineDependency));
+    EXPECT_TRUE(mockCmdQ->isGpgpuSubmissionForBcsRequired(false, dependencies, containsCrossEngineDependency, false));
 }

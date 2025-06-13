@@ -71,10 +71,10 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
 
     auto &commandQueueHw = static_cast<CommandQueueHw<GfxFamily> &>(commandQueue);
     auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
-
+    auto isCacheFlushForBcs = commandQueueHw.isCacheFlushForBcsRequired();
     if (blitEnqueue) {
         size_t expectedSizeCS = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
-        if (commandQueueHw.isCacheFlushForBcsRequired()) {
+        if (isCacheFlushForBcs || commandQueueHw.isCacheFlushForImageRequired(eventType)) {
             expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, NEO::PostSyncMode::immediateData);
         }
 
@@ -84,8 +84,8 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     for (auto &dispatchInfo : multiDispatchInfo) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, dispatchInfo.getKernel(), dispatchInfo);
         size_t kernelObjAuxCount = multiDispatchInfo.getKernelObjsForAuxTranslation() != nullptr ? multiDispatchInfo.getKernelObjsForAuxTranslation()->size() : 0;
-        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(kernelObjAuxCount, rootDeviceEnvironment, commandQueueHw.isCacheFlushForBcsRequired());
-        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(kernelObjAuxCount, rootDeviceEnvironment, commandQueueHw.isCacheFlushForBcsRequired());
+        expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(kernelObjAuxCount, rootDeviceEnvironment, isCacheFlushForBcs);
+        expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(kernelObjAuxCount, rootDeviceEnvironment, isCacheFlushForBcs);
     }
 
     auto relaxedOrderingEnabled = commandQueue.getGpgpuCommandStreamReceiver().directSubmissionRelaxedOrderingEnabled();

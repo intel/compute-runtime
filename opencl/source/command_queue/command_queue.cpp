@@ -976,11 +976,10 @@ TaskCountType CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineTyp
 
 bool CommandQueue::isTextureCacheFlushNeeded(uint32_t commandType) const {
     auto isDirectSubmissionEnabled = getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled();
-    switch (commandType) {
-    case CL_COMMAND_COPY_IMAGE:
-    case CL_COMMAND_WRITE_IMAGE:
-    case CL_COMMAND_FILL_IMAGE:
+    if (this->isImageWriteOperation(commandType)) {
         return isDirectSubmissionEnabled;
+    }
+    switch (commandType) {
     case CL_COMMAND_READ_IMAGE:
     case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
         return isDirectSubmissionEnabled && getDevice().getGfxCoreHelper().isCacheFlushPriorImageReadRequired();
