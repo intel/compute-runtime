@@ -627,7 +627,7 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
             uint64_t bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * bindlessSlot;
             uint32_t patchSize = this->heaplessEnabled ? 8u : 4u;
             uint64_t patchValue = this->heaplessEnabled
-                                      ? bindlessSlotOffset + bindlessHeapsHelper->getGlobalHeapsBase()
+                                      ? bindlessSlotOffset
                                       : gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
 
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), patchSize, patchValue);
@@ -829,7 +829,7 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
             auto bindlessSlotOffset = ssInHeap->surfaceStateOffset;
             uint32_t patchSize = this->heaplessEnabled ? 8u : 4u;
             uint64_t patchValue = this->heaplessEnabled
-                                      ? bindlessSlotOffset + bindlessHeapsHelper->getGlobalHeapsBase()
+                                      ? bindlessSlotOffset
                                       : gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
 
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), patchSize, patchValue);

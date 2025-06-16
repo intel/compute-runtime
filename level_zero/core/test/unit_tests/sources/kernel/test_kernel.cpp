@@ -3174,7 +3174,7 @@ HWTEST2_F(SetKernelArg, givenHeaplessWhenPatchingImageWithBindlessEnabledCorrect
         auto patchLocation = ptrOffset(ctd, imageArg.bindless);
         uint64_t bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * NEO::BindlessImageSlot::redescribedImage;
         uint64_t expectedPatchValue = kernel->heaplessEnabled
-                                          ? bindlessSlotOffset + bindlessHeapsHelper->getGlobalHeapsBase()
+                                          ? bindlessSlotOffset
                                           : gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
 
         if (kernel->heaplessEnabled) {
