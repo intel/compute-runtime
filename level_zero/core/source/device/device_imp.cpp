@@ -837,17 +837,13 @@ ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_propert
         static_cast<ze_memory_access_cap_flags_t>(productHelper.getSingleDeviceSharedMemCapabilities(isKmdMigrationAvailable));
 
     pMemAccessProperties->sharedCrossDeviceAllocCapabilities = {};
-    if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAccessSupported) {
-        pMemAccessProperties->sharedCrossDeviceAllocCapabilities = ZE_MEMORY_ACCESS_CAP_FLAG_RW;
-
-        if (isKmdMigrationAvailable &&
-            memoryManager->hasPageFaultsEnabled(*this->getNEODevice()) &&
-            NEO::debugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.get() == 1) {
-            pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT;
-            if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported) {
-                pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC;
-            }
-        }
+    if (isKmdMigrationAvailable &&
+        memoryManager->hasPageFaultsEnabled(*this->getNEODevice()) &&
+        NEO::debugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.get() == 1) {
+        pMemAccessProperties->sharedCrossDeviceAllocCapabilities = ZE_MEMORY_ACCESS_CAP_FLAG_RW |
+                                                                   ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT |
+                                                                   ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC |
+                                                                   ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC;
     }
 
     pMemAccessProperties->sharedSystemAllocCapabilities =
