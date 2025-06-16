@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,6 +73,8 @@ class AubManager {
 
     virtual bool releaseHardwareContext(HardwareContext *context) { return false; };
     virtual HardwareContext *createHardwareContext2(const CreateHardwareContext2Params &params, uint32_t device, uint32_t engine, uint32_t flags) { return nullptr; };
+
+    virtual void setCCSMode(uint32_t ccsCount) {}
 };
 
 } // namespace aub_stream
