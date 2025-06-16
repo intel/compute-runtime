@@ -2389,6 +2389,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     launchParams.isKernelSplitOperation = (fillArguments.leftRemainingBytes > 0 || fillArguments.rightRemainingBytes > 0);
     bool singlePipeControlPacket = eventSignalPipeControl(launchParams.isKernelSplitOperation, dcFlush);
+    launchParams.pipeControlSignalling = (signalEvent && singlePipeControlPacket) || getDcFlushRequired(dstAllocation.needsFlush);
 
     appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false, isCopyOnly(false));
 
@@ -2536,7 +2537,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     bool nonWalkerInOrderCmdChaining = false;
     if (this->isInOrderExecutionEnabled()) {
-        if (launchParams.isKernelSplitOperation) {
+        if (launchParams.isKernelSplitOperation || launchParams.pipeControlSignalling) {
             dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnly(false));
             appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
         } else {
