@@ -19,6 +19,7 @@ TEST(EngineNodeHelperTest, givenValidEngineUsageWhenGettingStringRepresentationT
     EXPECT_EQ(std::string{"Regular"}, EngineHelpers::engineUsageToString(EngineUsage::regular));
     EXPECT_EQ(std::string{"Internal"}, EngineHelpers::engineUsageToString(EngineUsage::internal));
     EXPECT_EQ(std::string{"LowPriority"}, EngineHelpers::engineUsageToString(EngineUsage::lowPriority));
+    EXPECT_EQ(std::string{"HighPriority"}, EngineHelpers::engineUsageToString(EngineUsage::highPriority));
     EXPECT_EQ(std::string{"Cooperative"}, EngineHelpers::engineUsageToString(EngineUsage::cooperative));
 }
 

@@ -21,6 +21,8 @@ std::string engineUsageToString(EngineUsage usage) {
         return "Regular";
     case EngineUsage::lowPriority:
         return "LowPriority";
+    case EngineUsage::highPriority:
+        return "HighPriority";
     case EngineUsage::internal:
         return "Internal";
     case EngineUsage::cooperative:
