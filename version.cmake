@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -76,6 +76,11 @@ endif()
 
 if(NOT DEFINED NEO_VERSION_HOTFIX)
   set(NEO_VERSION_HOTFIX 0)
+endif()
+
+if(NEO_VERSION_BUILD MATCHES "^([0-9]+)\\.([0-9]+)$")
+  set(NEO_VERSION_BUILD "${CMAKE_MATCH_1}")
+  set(NEO_VERSION_HOTFIX "${CMAKE_MATCH_2}")
 endif()
 
 # OpenCL package version
