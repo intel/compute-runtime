@@ -1082,7 +1082,7 @@ bool ModuleImp::linkBinary() {
         isFullyLinked = true;
         return true;
     }
-    Linker linker(*linkerInput);
+    Linker linker(*linkerInput, type == ModuleType::user);
     Linker::SegmentInfo globals;
     Linker::SegmentInfo constants;
     Linker::SegmentInfo exportedFunctions;
@@ -1165,12 +1165,8 @@ bool ModuleImp::linkBinary() {
         }
         isFullyLinked = false;
         return LinkingStatus::linkedPartially == linkStatus;
-    } else if (type != ModuleType::builtin) {
-        copyPatchedSegments(isaSegmentsForPatching);
     } else {
-        for (auto &kernelDescriptor : kernelDescriptors) {
-            kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
-        }
+        copyPatchedSegments(isaSegmentsForPatching);
     }
 
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->symbols));

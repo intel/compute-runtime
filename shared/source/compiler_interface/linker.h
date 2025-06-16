@@ -227,7 +227,11 @@ struct Linker {
     using ExternalFunctionsT = std::vector<ExternalFunctionInfo>;
 
     Linker(const LinkerInput &data)
-        : data(data) {
+        : Linker(data, true) {
+    }
+
+    Linker(const LinkerInput &data, bool userModule)
+        : data(data), userModule(userModule) {
     }
 
     LinkingStatus link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo,
@@ -269,6 +273,7 @@ struct Linker {
 
     /* <ISA segment id> to <implicit args relocation address to patch, relocation type> */
     std::unordered_map<uint32_t, StackVec<std::pair<void *, RelocationInfo::Type>, 2>> pImplicitArgsRelocationAddresses;
+    bool userModule = true;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<LinkerInput>);
