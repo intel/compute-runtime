@@ -41,7 +41,7 @@ void MetricContextFixture::setUp() {
     // Mock metrics library.
     mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricSource));
     mockMetricsLibrary->setMockedApi(&mockMetricsLibraryApi);
-    mockMetricsLibrary->handle = new MockOsLibrary();
+    mockMetricsLibrary->handle = std::make_unique<MockOsLibrary>();
 
     //  Mock metric enumeration.
     mockMetricEnumeration = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricSource));
@@ -56,7 +56,6 @@ void MetricContextFixture::setUp() {
 void MetricContextFixture::tearDown() {
 
     // Restore original metrics library
-    delete mockMetricsLibrary->handle;
     mockMetricsLibrary->setMockedApi(nullptr);
     mockMetricsLibrary.reset();
 
@@ -106,7 +105,7 @@ void MetricMultiDeviceFixture::setUp() {
     // Mock metrics library.
     mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricSource));
     mockMetricsLibrary->setMockedApi(&mockMetricsLibraryApi);
-    mockMetricsLibrary->handle = new MockOsLibrary();
+    mockMetricsLibrary->handle = std::make_unique<MockOsLibrary>();
 
     //  Mock metric enumeration.
     mockMetricEnumeration = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricSource));
@@ -126,7 +125,7 @@ void MetricMultiDeviceFixture::setUp() {
 
         mockMetricsLibrarySubDevices[i] = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricsSubDeviceContext));
         mockMetricsLibrarySubDevices[i]->setMockedApi(&mockMetricsLibraryApi);
-        mockMetricsLibrarySubDevices[i]->handle = new MockOsLibrary();
+        mockMetricsLibrarySubDevices[i]->handle = std::make_unique<MockOsLibrary>();
 
         metricsSubDeviceContext.setInitializationState(ZE_RESULT_SUCCESS);
         deviceImp.subDevices[i]->getMetricDeviceContext().setMetricsCollectionAllowed(true);
@@ -146,7 +145,6 @@ void MetricMultiDeviceFixture::tearDown() {
         mockMetricEnumerationSubDevices[i]->setMockedApi(nullptr);
         mockMetricEnumerationSubDevices[i].reset();
 
-        delete mockMetricsLibrarySubDevices[i]->handle;
         mockMetricsLibrarySubDevices[i]->setMockedApi(nullptr);
         mockMetricsLibrarySubDevices[i].reset();
     }
@@ -155,7 +153,6 @@ void MetricMultiDeviceFixture::tearDown() {
     mockMetricsLibrarySubDevices.clear();
 
     // Restore original metrics library
-    delete mockMetricsLibrary->handle;
     mockMetricsLibrary->setMockedApi(nullptr);
     mockMetricsLibrary.reset();
 

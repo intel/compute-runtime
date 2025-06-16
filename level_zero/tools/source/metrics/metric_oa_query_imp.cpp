@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -179,7 +179,7 @@ void MetricsLibrary::release() {
 
 bool MetricsLibrary::load() {
     // Load library.
-    handle = NEO::OsLibrary::loadFunc({getFilename()});
+    handle.reset(NEO::OsLibrary::loadFunc({getFilename()}));
 
     // Load exported functions.
     if (handle) {

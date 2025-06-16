@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,7 +97,7 @@ struct MetricsLibrary {
     ClientGen getGenType(const NEO::GfxCoreHelper &gfxCoreHelper) const;
 
   protected:
-    NEO::OsLibrary *handle = nullptr;
+    std::unique_ptr<NEO::OsLibrary> handle;
     OaMetricSourceImp &metricSource;
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
     bool isWorkloadPartitionEnabled = false;
