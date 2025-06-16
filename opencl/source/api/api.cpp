@@ -5191,11 +5191,13 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
     if (argValue != nullptr) {
         auto svmData = svmManager->getSVMAlloc(argValue);
         if (svmData == nullptr) {
-            for (const auto &pDevice : multiDeviceKernel->getDevices()) {
-                if ((pDevice->getHardwareInfo().capabilityTable.sharedSystemMemCapabilities == 0) || (debugManager.flags.EnableSharedSystemUsmSupport.get() == 0)) {
-                    retVal = CL_INVALID_ARG_VALUE;
-                    TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
-                    return retVal;
+            if (debugManager.flags.DetectIncorrectPointersOnSetArgCalls.get() == 1) {
+                for (const auto &pDevice : multiDeviceKernel->getDevices()) {
+                    if ((pDevice->getHardwareInfo().capabilityTable.sharedSystemMemCapabilities == 0) || (debugManager.flags.EnableSharedSystemUsmSupport.get() == 0)) {
+                        retVal = CL_INVALID_ARG_VALUE;
+                        TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
+                        return retVal;
+                    }
                 }
             }
         } else {
