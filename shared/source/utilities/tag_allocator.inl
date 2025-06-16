@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/sys_calls_common.h"
@@ -257,6 +258,7 @@ size_t TagNode<TagType>::getSinglePacketSize() const {
 template <typename TagType>
 void TagNode<TagType>::assignDataToAllTimestamps([[maybe_unused]] uint32_t packetIndex, [[maybe_unused]] const void *source) {
     if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
+        UNRECOVERABLE_IF(packetIndex >= tagForCpuAccess->getPacketCount());
         return tagForCpuAccess->assignDataToAllTimestamps(packetIndex, source);
     } else {
         UNRECOVERABLE_IF(true);

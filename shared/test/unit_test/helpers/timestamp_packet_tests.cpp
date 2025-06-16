@@ -31,7 +31,7 @@ void setTagToReadyState(TagNodeBase *tagNode) {
 
     typename FamilyType::TimestampPacketType zeros[4] = {};
 
-    for (uint32_t i = 0; i < TimestampPacketConstants::preferredPacketCount; i++) {
+    for (uint32_t i = 0; i < FamilyType::timestampPacketCount; i++) {
         tagNode->assignDataToAllTimestamps(i, zeros);
     }
     tagNode->setPacketsUsed(packetsUsed);
@@ -316,6 +316,21 @@ HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingAllocatorThenU
 
         debugManager.flags.OverrideTimestampPacketSize.set(12);
         EXPECT_ANY_THROW(csr.getTimestampPacketAllocator());
+    }
+}
+
+HWTEST_F(DeviceTimestampPacketTests, givenTagAllocatorForTimstampAndQueryPacketCountThenResultIsCorrect) {
+    OsContext &osContext = *executionEnvironment->memoryManager->getRegisteredEngines(mockRootDeviceIndex)[0].osContext;
+    {
+        using TimestampPacketType = typename FamilyType::TimestampPacketType;
+        using TimestampPacketsT = NEO::TimestampPackets<TimestampPacketType, FamilyType::timestampPacketCount>;
+        CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0, osContext.getDeviceBitfield());
+        csr.setupContext(osContext);
+
+        auto allocator = csr.getTimestampPacketAllocator();
+        auto tag = static_cast<NEO::TagNode<TimestampPacketsT> *>(allocator->getTag());
+        uint32_t packetCount = tag->tagForCpuAccess->getPacketCount();
+        EXPECT_EQ(FamilyType::timestampPacketCount, packetCount);
     }
 }
 

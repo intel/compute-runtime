@@ -65,6 +65,10 @@ class TimestampPackets : public TagTypeBase {
     void const *getContextEndAddress(uint32_t packetIndex) const { return static_cast<void const *>(&packets[packetIndex].contextEnd); }
     void const *getContextStartAddress(uint32_t packetIndex) const { return static_cast<void const *>(&packets[packetIndex].contextStart); }
 
+    uint32_t getPacketCount() const {
+        return packetCount;
+    }
+
   protected:
     struct alignas(1) Packet {
         TSize contextStart = TimestampPacketConstants::initValue;

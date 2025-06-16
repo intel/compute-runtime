@@ -445,7 +445,7 @@ struct CommandStreamReceiverTagTests : public ::testing::Test {
 
         typename FamilyType::TimestampPacketType zeros[4] = {};
 
-        for (uint32_t i = 0; i < TimestampPacketConstants::preferredPacketCount; i++) {
+        for (uint32_t i = 0; i < FamilyType::timestampPacketCount; i++) {
             tag->assignDataToAllTimestamps(i, zeros);
         }
 
