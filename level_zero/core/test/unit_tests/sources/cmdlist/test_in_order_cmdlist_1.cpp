@@ -4248,7 +4248,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     constexpr size_t size = 128 * sizeof(uint32_t);
-    auto data = allocHostMem(size);
+    auto data = allocDeviceMem(size);
 
     immCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, copyParams);
 
@@ -4274,6 +4274,38 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
     EXPECT_EQ(cmdList.end(), sdiItor);
+
+    context->freeMem(data);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithoutSplitAndWithEventThenDoNotSignalByWalker) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    immCmdList->dcFlushSupport = true;
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocDeviceMem(size);
+    auto eventPool = createEvents<FamilyType>(1, true);
+    immCmdList->appendMemoryFill(data, data, 1, size, events[0]->toHandle(), 0, nullptr, copyParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<WalkerType *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto walker = genCmdCast<WalkerType *>(*walkerItor);
+    auto &postSync = walker->getPostSync();
+    using PostSyncType = std::decay_t<decltype(postSync)>;
+
+    if (!immCmdList->inOrderAtomicSignalingEnabled) {
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_NO_WRITE, postSync.getOperation());
+        EXPECT_EQ(0u, postSync.getImmediateData());
+    }
+
+    EXPECT_EQ(0u, postSync.getDestinationAddress());
 
     context->freeMem(data);
 }

@@ -1897,7 +1897,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     EXPECT_NE(nullptr, regularCmdList->inOrderExecInfo.get());
 
     constexpr size_t size = 128 * sizeof(uint32_t);
-    auto data = allocHostMem(size);
+    auto data = allocDeviceMem(size);
 
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
 
