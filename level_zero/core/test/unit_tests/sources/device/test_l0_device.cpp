@@ -2823,63 +2823,43 @@ TEST_F(DeviceTests, WhenGettingMemoryAccessPropertiesThenSuccessIsReturned) {
     EXPECT_EQ(expectedSharedSystemAllocCapabilities, properties.sharedSystemAllocCapabilities);
 }
 
-template <bool p2pAccess, bool p2pAtomicAccess>
-struct MultipleSubDevicesP2PFixture : public ::testing::Test {
-    void SetUp() override {
-        debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-
-        auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
-
-        auto hardwareInfo = *NEO::defaultHwInfo;
-        hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccess;
-        hardwareInfo.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccess;
-
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
-        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-
-        auto deviceFactory = std::make_unique<NEO::UltDeviceFactory>(1, numSubDevices, *executionEnvironment.release());
-        auto rootDevice = deviceFactory->rootDevices[0];
-        EXPECT_NE(nullptr, rootDevice);
-        EXPECT_EQ(numSubDevices, rootDevice->getNumSubDevices());
-
-        auto driverHandle = std::make_unique<DriverHandleImp>();
-
-        ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), rootDevice, false, &returnValue));
-        EXPECT_NE(nullptr, device);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-        auto deviceImp = static_cast<DeviceImp *>(device.get());
-        EXPECT_EQ(numSubDevices, deviceImp->numSubDevices);
-
-        EXPECT_EQ(ZE_RESULT_SUCCESS, deviceImp->subDevices[0]->getP2PProperties(deviceImp->subDevices[1], &p2pProperties));
-    }
+TEST(MultipleSubDevicesP2PTest, whenGettingP2PPropertiesBetweenSubDevicesThenPeerAccessIsAvailable) {
 
     DebugManagerStateRestore restorer;
     ze_device_p2p_properties_t p2pProperties = {};
     static constexpr uint32_t numSubDevices = 2;
-};
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
 
-using MultipleSubDevicesP2PNoAccessTest = MultipleSubDevicesP2PFixture<false, false>;
-TEST_F(MultipleSubDevicesP2PNoAccessTest, bar) {
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-}
+    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
 
-using MultipleSubDevicesP2POnlyAccessTest = MultipleSubDevicesP2PFixture<true, false>;
-TEST_F(MultipleSubDevicesP2POnlyAccessTest, bar) {
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-}
+    auto hardwareInfo = *NEO::defaultHwInfo;
 
-using MultipleSubDevicesP2PAccessAndAtomicsTest = MultipleSubDevicesP2PFixture<true, true>;
-TEST_F(MultipleSubDevicesP2PAccessAndAtomicsTest, bar) {
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    auto deviceFactory = std::make_unique<NEO::UltDeviceFactory>(1, numSubDevices, *executionEnvironment.release());
+    auto rootDevice = deviceFactory->rootDevices[0];
+    EXPECT_NE(nullptr, rootDevice);
+    EXPECT_EQ(numSubDevices, rootDevice->getNumSubDevices());
+
+    auto driverHandle = std::make_unique<DriverHandleImp>();
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), rootDevice, false, &returnValue));
+    EXPECT_NE(nullptr, device);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+    EXPECT_EQ(numSubDevices, deviceImp->numSubDevices);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceImp->subDevices[0]->getP2PProperties(deviceImp->subDevices[1], &p2pProperties));
+
     EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
     EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-template <bool p2pAccessDevice0, bool p2pAtomicAccessDevice0, bool p2pAccessDevice1, bool p2pAtomicAccessDevice1>
+template <bool p2pAccess, bool p2pAtomicAccessDevice0, bool p2pAtomicAccessDevice1>
 struct MultipleDevicesP2PFixture : public ::testing::Test {
     void SetUp() override {
 
@@ -2891,12 +2871,12 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
 
         NEO::HardwareInfo hardwareInfo = *NEO::defaultHwInfo;
 
-        hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccessDevice0;
+        hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccess;
         hardwareInfo.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccessDevice0;
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
-        hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccessDevice1;
+        hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccess;
         hardwareInfo.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccessDevice1;
         executionEnvironment->rootDeviceEnvironments[1]->setHwInfoAndInitHelpers(&hardwareInfo);
         executionEnvironment->rootDeviceEnvironments[1]->initGmm();
@@ -2920,6 +2900,8 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
             context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
+        static_cast<L0::DeviceImp *>(driverHandle->devices[0])->crossAccessEnabledDevices[1] = p2pAccess;
+        static_cast<L0::DeviceImp *>(driverHandle->devices[1])->crossAccessEnabledDevices[0] = p2pAccess;
     }
 
     DebugManagerStateRestore restorer;
@@ -2932,7 +2914,7 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
     const uint32_t numSubDevices = 2u;
 };
 
-using MemoryAccessPropertieP2PAccess0Atomic0 = MultipleDevicesP2PFixture<0, 0, 0, 0>;
+using MemoryAccessPropertieP2PAccess0Atomic0 = MultipleDevicesP2PFixture<0, 0, 0>;
 TEST_F(MemoryAccessPropertieP2PAccess0Atomic0, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingNoAccessSupportThenNoSupportIsReturned) {
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
@@ -2943,7 +2925,7 @@ TEST_F(MemoryAccessPropertieP2PAccess0Atomic0, WhenCallingGetMemoryAccessPropert
     EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
 }
 
-using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
+using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0>;
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAccessSupportThenSupportIsReturned) {
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
@@ -2955,7 +2937,7 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropert
     EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
 }
 
-using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
+using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0>;
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PWithoutRecoverablePageFaultsThenSupportIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableRecoverablePageFaults.set(0);
@@ -2971,7 +2953,7 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropert
     EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
 }
 
-using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
+using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0>;
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PWithoutKmdMigrationThenSupportIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableRecoverablePageFaults.set(1);
@@ -2987,7 +2969,7 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropert
     EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
 }
 
-using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
+using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0>;
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic0,
        WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndConcurrentAccessSupportThenBasicSupportIsReturned) {
     DebugManagerStateRestore restorer;
@@ -3004,7 +2986,7 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic0,
     EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
 }
 
-using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
+using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0>;
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic0,
        WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndConcurrentAccessSupportAndEnableCrossP2PSharedAccessKeyThenSupportIsReturned) {
     DebugManagerStateRestore restorer;
@@ -3022,7 +3004,7 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic0,
     EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
 }
 
-using MemoryAccessPropertieP2PAccess1Atomic1 = MultipleDevicesP2PFixture<1, 1, 0, 0>;
+using MemoryAccessPropertieP2PAccess1Atomic1 = MultipleDevicesP2PFixture<1, 1, 0>;
 TEST_F(MemoryAccessPropertieP2PAccess1Atomic1,
        WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndAtomicAccessSupportThenBasicSupportIsReturned) {
     DebugManagerStateRestore restorer;
@@ -3056,7 +3038,7 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic1,
     EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
 }
 
-using MultipleDevicesP2PDevice0Access0Atomic0Device1Access0Atomic0Test = MultipleDevicesP2PFixture<0, 0, 0, 0>;
+using MultipleDevicesP2PDevice0Access0Atomic0Device1Access0Atomic0Test = MultipleDevicesP2PFixture<0, 0, 0>;
 TEST_F(MultipleDevicesP2PDevice0Access0Atomic0Device1Access0Atomic0Test, WhenCallingGetP2PPropertiesWithBothDevicesHavingNoAccessSupportThenNoSupportIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -3104,31 +3086,7 @@ TEST_F(MultipleDevicesP2PDevice0Access0Atomic0Device1Access0Atomic0Test, WhenCal
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-using MultipleDevicesP2PDevice0Access0Atomic0Device1Access1Atomic0Test = MultipleDevicesP2PFixture<0, 0, 1, 0>;
-TEST_F(MultipleDevicesP2PDevice0Access0Atomic0Device1Access1Atomic0Test, WhenCallingGetP2PPropertiesWithOnlyOneDeviceHavingAccessSupportThenNoSupportIsReturned) {
-    L0::Device *device0 = driverHandle->devices[0];
-    L0::Device *device1 = driverHandle->devices[1];
-
-    ze_device_p2p_properties_t p2pProperties = {};
-    device0->getP2PProperties(device1, &p2pProperties);
-
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-}
-
-using MultipleDevicesP2PDevice0Access1Atomic0Device1Access0Atomic0Test = MultipleDevicesP2PFixture<1, 0, 0, 0>;
-TEST_F(MultipleDevicesP2PDevice0Access1Atomic0Device1Access0Atomic0Test, WhenCallingGetP2PPropertiesWithOnlyFirstDeviceHavingAccessSupportThenNoSupportIsReturned) {
-    L0::Device *device0 = driverHandle->devices[0];
-    L0::Device *device1 = driverHandle->devices[1];
-
-    ze_device_p2p_properties_t p2pProperties = {};
-    device0->getP2PProperties(device1, &p2pProperties);
-
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-}
-
-using MultipleDevicesP2PDevice0Access1Atomic0Device1Access1Atomic0Test = MultipleDevicesP2PFixture<1, 0, 1, 0>;
+using MultipleDevicesP2PDevice0Access1Atomic0Device1Access1Atomic0Test = MultipleDevicesP2PFixture<1, 0, 0>;
 TEST_F(MultipleDevicesP2PDevice0Access1Atomic0Device1Access1Atomic0Test, WhenCallingGetP2PPropertiesWithBothDevicesHavingAccessSupportThenSupportIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -3140,7 +3098,7 @@ TEST_F(MultipleDevicesP2PDevice0Access1Atomic0Device1Access1Atomic0Test, WhenCal
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-using MultipleDevicesP2PDevice0Access1Atomic0Device1Access1Atomic1Test = MultipleDevicesP2PFixture<1, 0, 1, 1>;
+using MultipleDevicesP2PDevice0Access1Atomic0Device1Access1Atomic1Test = MultipleDevicesP2PFixture<1, 0, 1>;
 TEST_F(MultipleDevicesP2PDevice0Access1Atomic0Device1Access1Atomic1Test, WhenCallingGetP2PPropertiesWithBothDevicesHavingAccessSupportAndOnlyOneWithAtomicThenSupportIsReturnedOnlyForAccess) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -3152,7 +3110,7 @@ TEST_F(MultipleDevicesP2PDevice0Access1Atomic0Device1Access1Atomic1Test, WhenCal
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-using MultipleDevicesP2PDevice0Access1Atomic1Device1Access1Atomic0Test = MultipleDevicesP2PFixture<1, 1, 1, 0>;
+using MultipleDevicesP2PDevice0Access1Atomic1Device1Access1Atomic0Test = MultipleDevicesP2PFixture<1, 1, 0>;
 TEST_F(MultipleDevicesP2PDevice0Access1Atomic1Device1Access1Atomic0Test, WhenCallingGetP2PPropertiesWithBothDevicesHavingAccessSupportAndOnlyFirstWithAtomicThenSupportIsReturnedOnlyForAccess) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -3164,7 +3122,7 @@ TEST_F(MultipleDevicesP2PDevice0Access1Atomic1Device1Access1Atomic0Test, WhenCal
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-using MultipleDevicesP2PDevice0Access1Atomic1Device1Access1Atomic1Test = MultipleDevicesP2PFixture<1, 1, 1, 1>;
+using MultipleDevicesP2PDevice0Access1Atomic1Device1Access1Atomic1Test = MultipleDevicesP2PFixture<1, 1, 1>;
 TEST_F(MultipleDevicesP2PDevice0Access1Atomic1Device1Access1Atomic1Test, WhenCallingGetP2PPropertiesWithBothDevicesHavingAccessAndAtomicSupportThenSupportIsReturnedOnlyForAccess) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
@@ -3176,7 +3134,7 @@ TEST_F(MultipleDevicesP2PDevice0Access1Atomic1Device1Access1Atomic1Test, WhenCal
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-template <bool p2pAccessDevice0, bool p2pAtomicAccessDevice0, bool p2pAccessDevice1, bool p2pAtomicAccessDevice1>
+template <bool p2pAccess, bool p2pAtomicAccessDevice0, bool p2pAtomicAccessDevice1>
 struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
@@ -3186,13 +3144,13 @@ struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
         EXPECT_EQ(numRootDevices, executionEnvironment->rootDeviceEnvironments.size());
 
         auto hwInfo0 = *NEO::defaultHwInfo;
-        hwInfo0.capabilityTable.p2pAccessSupported = p2pAccessDevice0;
+        hwInfo0.capabilityTable.p2pAccessSupported = p2pAccess;
         hwInfo0.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccessDevice0;
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo0);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         auto hwInfo1 = *NEO::defaultHwInfo;
-        hwInfo1.capabilityTable.p2pAccessSupported = p2pAccessDevice1;
+        hwInfo1.capabilityTable.p2pAccessSupported = p2pAccess;
         hwInfo1.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccessDevice1;
         executionEnvironment->rootDeviceEnvironments[1]->setHwInfoAndInitHelpers(&hwInfo1);
         executionEnvironment->rootDeviceEnvironments[1]->initGmm();
@@ -3205,6 +3163,7 @@ struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
 
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
+
         driverHandle->initializeVertexes();
 
         uint32_t subDeviceCount = 2u;
@@ -3214,6 +3173,11 @@ struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
         EXPECT_NE(nullptr, device0SubDevices[1]);
         EXPECT_NE(nullptr, device1SubDevices[0]);
         EXPECT_NE(nullptr, device1SubDevices[1]);
+
+        static_cast<L0::DeviceImp *>(device0SubDevices[0])->crossAccessEnabledDevices[1] = p2pAccess;
+        static_cast<L0::DeviceImp *>(device0SubDevices[1])->crossAccessEnabledDevices[1] = p2pAccess;
+        static_cast<L0::DeviceImp *>(device1SubDevices[0])->crossAccessEnabledDevices[0] = p2pAccess;
+        static_cast<L0::DeviceImp *>(device1SubDevices[1])->crossAccessEnabledDevices[0] = p2pAccess;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[0])->getFabricVertex(&vertex0SubVertices[0]));
         EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[1])->getFabricVertex(&vertex0SubVertices[1]));
@@ -3309,7 +3273,7 @@ struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
     ze_fabric_vertex_handle_t vertex1SubVertices[numSubDevices];
 };
 
-using MultipleDevicesP2PWithXeLinkDevice0Access0Atomic0Device1Access0Atomic0Test = MultipleDevicesP2PWithXeLinkFixture<false, false, false, false>;
+using MultipleDevicesP2PWithXeLinkDevice0Access0Atomic0Device1Access0Atomic0Test = MultipleDevicesP2PWithXeLinkFixture<false, false, false>;
 TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access0Atomic0Device1Access0Atomic0Test, WhenCallingGetP2PPropertiesWithNoDeviceHavingAccessSupportThenNoDeviceHasP2PAccessSupport) {
     auto subDevice00 = DeviceImp::fromHandle(device0SubDevices[0]);
     auto subDevice01 = DeviceImp::fromHandle(device0SubDevices[1]);
@@ -3319,11 +3283,6 @@ TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access0Atomic0Device1Access0Atomic0Tes
     ze_device_p2p_properties_t p2pProperties;
 
     p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice01, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice10, &p2pProperties));
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
@@ -3342,94 +3301,9 @@ TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access0Atomic0Device1Access0Atomic0Tes
     EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice11, &p2pProperties));
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice10->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-using MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access0Atomic0Test = MultipleDevicesP2PWithXeLinkFixture<true, false, false, false>;
-TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access0Atomic0Test, WhenCallingGetP2PPropertiesWithOnlyFirstDeviceHavingAccessSupportThenOnlyFirstDeviceHasP2PAccessSupport) {
-    auto subDevice00 = DeviceImp::fromHandle(device0SubDevices[0]);
-    auto subDevice01 = DeviceImp::fromHandle(device0SubDevices[1]);
-    auto subDevice10 = DeviceImp::fromHandle(device1SubDevices[0]);
-    auto subDevice11 = DeviceImp::fromHandle(device1SubDevices[1]);
-
-    ze_device_p2p_properties_t p2pProperties;
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice01, &p2pProperties));
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice10, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice10, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice10->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-}
-
-using MultipleDevicesP2PWithXeLinkDevice0Access0Atomic0Device1Access1Atomic0Test = MultipleDevicesP2PWithXeLinkFixture<false, false, true, false>;
-TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access0Atomic0Device1Access1Atomic0Test, WhenCallingGetP2PPropertiesWithOnlySecondDeviceHavingAccessSupportThenOnlySecondDeviceHasP2PAccessSupport) {
-    auto subDevice00 = DeviceImp::fromHandle(device0SubDevices[0]);
-    auto subDevice01 = DeviceImp::fromHandle(device0SubDevices[1]);
-    auto subDevice10 = DeviceImp::fromHandle(device1SubDevices[0]);
-    auto subDevice11 = DeviceImp::fromHandle(device1SubDevices[1]);
-
-    ze_device_p2p_properties_t p2pProperties;
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice01, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice10, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice10, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice10->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-}
-
-using MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access1Atomic0Test = MultipleDevicesP2PWithXeLinkFixture<true, false, true, false>;
+using MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access1Atomic0Test = MultipleDevicesP2PWithXeLinkFixture<true, false, false>;
 TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access1Atomic0Test, WhenCallingGetP2PPropertiesWithBothDeviceHavingAccessSupportThenBothDevicesHaveP2PAccessSupport) {
     auto subDevice00 = DeviceImp::fromHandle(device0SubDevices[0]);
     auto subDevice01 = DeviceImp::fromHandle(device0SubDevices[1]);
@@ -3439,11 +3313,6 @@ TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access1Atomic0Tes
     ze_device_p2p_properties_t p2pProperties;
 
     p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice01, &p2pProperties));
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice10, &p2pProperties));
     EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
@@ -3462,94 +3331,9 @@ TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access1Atomic0Tes
     EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice11, &p2pProperties));
     EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice10->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-using MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access0Atomic0Test = MultipleDevicesP2PWithXeLinkFixture<true, true, false, false>;
-TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access0Atomic0Test, WhenCallingGetP2PPropertiesWithOnlyFirstDeviceHavingAccessAndAtomicSupportThenOnlyFirstDevicesHasP2PAccessAndAtomicSupport) {
-    auto subDevice00 = DeviceImp::fromHandle(device0SubDevices[0]);
-    auto subDevice01 = DeviceImp::fromHandle(device0SubDevices[1]);
-    auto subDevice10 = DeviceImp::fromHandle(device1SubDevices[0]);
-    auto subDevice11 = DeviceImp::fromHandle(device1SubDevices[1]);
-
-    ze_device_p2p_properties_t p2pProperties;
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice01, &p2pProperties));
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice10, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice10, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice10->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-}
-
-using MultipleDevicesP2PWithXeLinkDevice0Access0Atomic0Device1Access1Atomic1Test = MultipleDevicesP2PWithXeLinkFixture<false, false, true, true>;
-TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access0Atomic0Device1Access1Atomic1Test, WhenCallingGetP2PPropertiesWithOnlySecondDeviceHavingAccessAndAtomicSupportThenOnlySecondDevicesHasP2PAccessAndAtomicSupport) {
-    auto subDevice00 = DeviceImp::fromHandle(device0SubDevices[0]);
-    auto subDevice01 = DeviceImp::fromHandle(device0SubDevices[1]);
-    auto subDevice10 = DeviceImp::fromHandle(device1SubDevices[0]);
-    auto subDevice11 = DeviceImp::fromHandle(device1SubDevices[1]);
-
-    ze_device_p2p_properties_t p2pProperties;
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice01, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice10, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice10, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice10->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-}
-
-using MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access1Atomic0Test = MultipleDevicesP2PWithXeLinkFixture<true, true, true, false>;
+using MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access1Atomic0Test = MultipleDevicesP2PWithXeLinkFixture<true, true, false>;
 TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access1Atomic0Test, WhenCallingGetP2PPropertiesWithSecondDeviceDoesNotHaveAtomicSupportThenCorrectSupportIsReturned) {
     auto subDevice00 = DeviceImp::fromHandle(device0SubDevices[0]);
     auto subDevice01 = DeviceImp::fromHandle(device0SubDevices[1]);
@@ -3559,11 +3343,6 @@ TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access1Atomic0Tes
     ze_device_p2p_properties_t p2pProperties;
 
     p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice01, &p2pProperties));
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice10, &p2pProperties));
     EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
@@ -3582,14 +3361,9 @@ TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access1Atomic0Tes
     EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice11, &p2pProperties));
     EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice10->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-using MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access1Atomic1Test = MultipleDevicesP2PWithXeLinkFixture<true, false, true, true>;
+using MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access1Atomic1Test = MultipleDevicesP2PWithXeLinkFixture<true, false, true>;
 TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access1Atomic1Test, WhenCallingGetP2PPropertiesWithFirstDeviceDoesNotHaveAtomicSupportThenCorrectSupportIsReturned) {
     auto subDevice00 = DeviceImp::fromHandle(device0SubDevices[0]);
     auto subDevice01 = DeviceImp::fromHandle(device0SubDevices[1]);
@@ -3599,11 +3373,6 @@ TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access1Atomic1Tes
     ze_device_p2p_properties_t p2pProperties;
 
     p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice01, &p2pProperties));
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice00->getP2PProperties(subDevice10, &p2pProperties));
     EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
@@ -3622,14 +3391,9 @@ TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic0Device1Access1Atomic1Tes
     EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice01->getP2PProperties(subDevice11, &p2pProperties));
     EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
     EXPECT_FALSE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
-
-    p2pProperties = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, subDevice10->getP2PProperties(subDevice11, &p2pProperties));
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS);
-    EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-using MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access1Atomic1Test = MultipleDevicesP2PWithXeLinkFixture<true, true, true, true>;
+using MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access1Atomic1Test = MultipleDevicesP2PWithXeLinkFixture<true, true, true>;
 TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access1Atomic1Test, WhenCallingGetP2PPropertiesWithBothDevicesHavingAccessAndAtomicSupportThenCorrectSupportIsReturned) {
     auto subDevice00 = DeviceImp::fromHandle(device0SubDevices[0]);
     auto subDevice01 = DeviceImp::fromHandle(device0SubDevices[1]);

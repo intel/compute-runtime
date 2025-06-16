@@ -660,14 +660,15 @@ ze_result_t DeviceImp::getP2PProperties(ze_device_handle_t hPeerDevice,
                                         ze_device_p2p_properties_t *pP2PProperties) {
 
     DeviceImp *peerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
-    if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAccessSupported &&
-        peerDevice->getNEODevice()->getHardwareInfo().capabilityTable.p2pAccessSupported) {
-        pP2PProperties->flags = ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS;
-        if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported &&
-            peerDevice->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported) {
-            if (this->getNEODevice()->getRootDeviceIndex() == peerDevice->getNEODevice()->getRootDeviceIndex()) {
-                pP2PProperties->flags |= ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS;
-            } else {
+    if (this->getNEODevice()->getRootDeviceIndex() == peerDevice->getNEODevice()->getRootDeviceIndex()) {
+        pP2PProperties->flags = ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS | ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS;
+    } else {
+        ze_bool_t peerAccessAvaiable = false;
+        canAccessPeer(hPeerDevice, &peerAccessAvaiable);
+        if (peerAccessAvaiable) {
+            pP2PProperties->flags = ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS;
+            if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported &&
+                peerDevice->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported) {
                 ze_device_p2p_bandwidth_exp_properties_t p2pBandwidthProperties{};
                 getP2PPropertiesDirectFabricConnection(peerDevice, &p2pBandwidthProperties);
                 if (std::max(p2pBandwidthProperties.physicalBandwidth, p2pBandwidthProperties.logicalBandwidth) > 0u) {
