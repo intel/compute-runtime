@@ -1825,11 +1825,15 @@ void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
 }
 
 void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
+
     if (allocation) {
         auto drmAllocation = static_cast<DrmAllocation *>(allocation);
-        drmAllocation->registerBOBindExtHandle(&getDrm(drmAllocation->getRootDeviceIndex()));
-        if (isAllocationTypeToCapture(drmAllocation->getAllocationType())) {
-            drmAllocation->markForCapture();
+        auto drm = &getDrm(drmAllocation->getRootDeviceIndex());
+        if (drm->getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
+            drmAllocation->registerBOBindExtHandle(drm);
+            if (isAllocationTypeToCapture(drmAllocation->getAllocationType())) {
+                drmAllocation->markForCapture();
+            }
         }
     }
 }
