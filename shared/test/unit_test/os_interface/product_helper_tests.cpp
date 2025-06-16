@@ -1145,6 +1145,32 @@ HWTEST2_F(ProductHelperTest, givenProductHelperThenCompressionIsNotForbidden, Is
     EXPECT_FALSE(productHelper->isCompressionForbidden(hwInfo));
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperBeforeXe2WhenOverrideDirectSubmissionTimeoutsThenTimeoutsNotAdjusted, IsBeforeXe2HpgCore) {
+    DebugManagerStateRestore restorer;
+
+    std::chrono::microseconds timeout{5000};
+    std::chrono::microseconds maxTimeout{5000};
+    productHelper->overrideDirectSubmissionTimeouts(timeout, maxTimeout);
+    EXPECT_EQ(std::chrono::microseconds{5000}, timeout);
+    EXPECT_EQ(std::chrono::microseconds{5000}, maxTimeout);
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenOverrideDirectSubmissionTimeoutsThenTimeoutsAdjusted, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restorer;
+
+    std::chrono::microseconds timeout{5000};
+    std::chrono::microseconds maxTimeout{5000};
+    productHelper->overrideDirectSubmissionTimeouts(timeout, maxTimeout);
+    EXPECT_EQ(std::chrono::microseconds{1000}, timeout);
+    EXPECT_EQ(std::chrono::microseconds{1000}, maxTimeout);
+
+    debugManager.flags.DirectSubmissionControllerTimeout.set(10000);
+    debugManager.flags.DirectSubmissionControllerMaxTimeout.set(10000);
+    productHelper->overrideDirectSubmissionTimeouts(timeout, maxTimeout);
+    EXPECT_EQ(std::chrono::microseconds{10000}, timeout);
+    EXPECT_EQ(std::chrono::microseconds{10000}, maxTimeout);
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenQueryIsPostImageWriteFlushRequiredThenFalseReturned) {
     EXPECT_FALSE(productHelper->isPostImageWriteFlushRequired());
 }

@@ -488,6 +488,10 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isPidFdOrSocketForIpcSupported() const {
     return false;
 }
 
+template <>
+void ProductHelperHw<IGFX_UNKNOWN>::overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const {
+}
+
 } // namespace NEO
 
 #include "shared/source/os_interface/product_helper.inl"

@@ -7,6 +7,7 @@
 
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/helpers/sleep.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/sys_calls_winmm.h"
 
 #include <chrono>
@@ -17,4 +18,9 @@ bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
     SysCalls::timeEndPeriod(1u);
     return returnValue;
 }
+
+void DirectSubmissionController::overrideDirectSubmissionTimeouts(const ProductHelper &productHelper) {
+    productHelper.overrideDirectSubmissionTimeouts(this->timeout, this->maxTimeout);
+}
+
 } // namespace NEO

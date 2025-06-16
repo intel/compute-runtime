@@ -14,7 +14,6 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/os_interface/product_helper.h"
 
 #include <chrono>
 #include <thread>
@@ -45,7 +44,7 @@ DirectSubmissionController::~DirectSubmissionController() {
 void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver *csr) {
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
     directSubmissions.insert(std::make_pair(csr, DirectSubmissionState()));
-    csr->getProductHelper().overrideDirectSubmissionTimeouts(this->timeout, this->maxTimeout);
+    this->overrideDirectSubmissionTimeouts(csr->getProductHelper());
 }
 
 void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceiver *csr) {

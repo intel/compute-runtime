@@ -66,4 +66,8 @@ bool ProductHelperHw<gfxProduct>::isPidFdOrSocketForIpcSupported() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const {
+}
+
 } // namespace NEO

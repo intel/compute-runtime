@@ -1333,4 +1333,18 @@ HWTEST2_F(WddmDirectSubmissionTest, givenRelaxedOrderingSchedulerRequiredWhenAsk
     EXPECT_EQ(expectedBaseEndSize + directSubmission.getSizeDispatchRelaxedOrderingQueueStall(), directSubmission.getSizeEnd(true));
     EXPECT_EQ(expectedBaseEndSize, directSubmission.getSizeEnd(false));
 }
+
+HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionControllerWhenRegisterCsrsThenTimeoutIsAdjusted) {
+    auto csr = device->getDefaultEngine().commandStreamReceiver;
+
+    DirectSubmissionControllerMock controller;
+    auto timeout = std::chrono::microseconds{5'000};
+    EXPECT_EQ(controller.timeout, timeout);
+    controller.registerDirectSubmission(csr);
+    csr->getProductHelper().overrideDirectSubmissionTimeouts(timeout, timeout);
+    EXPECT_EQ(controller.timeout, timeout);
+
+    controller.unregisterDirectSubmission(csr);
+}
+
 } // namespace NEO
