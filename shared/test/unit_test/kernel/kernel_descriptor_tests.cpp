@@ -273,3 +273,20 @@ TEST(KernelDescriptor, GivenDescriptorWithoutStatefulArgsWhenInitBindlessOffsets
     desc.initBindlessOffsetToSurfaceState();
     EXPECT_EQ(0u, desc.bindlessArgsMap.size());
 }
+
+TEST(KernelDescriptor, GivenDescriptorWhenGettingPerThreadDataOffsetThenItReturnsCorrectValue) {
+    NEO::KernelDescriptor desc{};
+
+    desc.kernelAttributes.crossThreadDataSize = 64u;
+    desc.kernelAttributes.inlineDataPayloadSize = 64u;
+    EXPECT_EQ(0u, desc.getPerThreadDataOffset());
+
+    // crossThreadData is fully consumed by inlineDataPayload
+    desc.kernelAttributes.crossThreadDataSize = 40u;
+    desc.kernelAttributes.inlineDataPayloadSize = 64u;
+    EXPECT_EQ(0u, desc.getPerThreadDataOffset());
+
+    desc.kernelAttributes.crossThreadDataSize = 128u;
+    desc.kernelAttributes.inlineDataPayloadSize = 64u;
+    EXPECT_EQ(64u, desc.getPerThreadDataOffset());
+}

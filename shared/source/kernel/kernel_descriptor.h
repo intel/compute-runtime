@@ -60,6 +60,9 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
     const BindlessToSurfaceStateMap &getBindlessOffsetToSurfaceState() const {
         return bindlessArgsMap;
     }
+    uint16_t getPerThreadDataOffset() const {
+        return kernelAttributes.crossThreadDataSize - std::min(kernelAttributes.crossThreadDataSize, kernelAttributes.inlineDataPayloadSize);
+    }
 
     struct KernelAttributes {
         uint32_t slmInlineSize = 0U;

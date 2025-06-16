@@ -450,8 +450,7 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
 
             auto relocAddress = ptrOffset(segment.hostPointer, static_cast<uintptr_t>(relocation.offset));
             if (relocation.type == LinkerInput::RelocationInfo::Type::perThreadPayloadOffset) {
-                uint32_t crossThreadDataSize = kernelDescriptors.at(segId)->kernelAttributes.crossThreadDataSize - kernelDescriptors.at(segId)->kernelAttributes.inlineDataPayloadSize;
-                *reinterpret_cast<uint32_t *>(relocAddress) = crossThreadDataSize;
+                *reinterpret_cast<uint32_t *>(relocAddress) = kernelDescriptors.at(segId)->getPerThreadDataOffset();
             } else if (relocation.symbolName == implicitArgsRelocationSymbolName) {
                 pImplicitArgsRelocationAddresses[static_cast<uint32_t>(segId)].push_back(std::pair<void *, RelocationInfo::Type>(relocAddress, relocation.type));
             } else if (relocation.symbolName.empty()) {
@@ -701,8 +700,7 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
 
             auto kernelDescriptor = std::find_if(kernelDescriptors.begin(), kernelDescriptors.end(), [&kernelName](const KernelDescriptor *obj) { return obj->kernelMetadata.kernelName == kernelName; });
             if (kernelDescriptor != std::end(kernelDescriptors)) {
-                uint64_t crossThreadDataSize = (*kernelDescriptor)->kernelAttributes.crossThreadDataSize - (*kernelDescriptor)->kernelAttributes.inlineDataPayloadSize;
-                symbol.gpuAddress = crossThreadDataSize;
+                symbol.gpuAddress = (*kernelDescriptor)->getPerThreadDataOffset();
                 auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
                                               static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
 

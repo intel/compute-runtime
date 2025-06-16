@@ -783,10 +783,8 @@ HWTEST_F(LinkerTests, givenInvalidLinkerInputThenLinkerFails) {
 HWTEST_F(LinkerTests, givenUnresolvedExternalSymbolsWhenResolveBuiltinsIsCalledThenSubDeviceIDSymbolsAreRemoved) {
     struct LinkerMock : public NEO::Linker {
       public:
+        using NEO::Linker::Linker;
         using NEO::Linker::resolveBuiltins;
-
-        LinkerMock(const LinkerInput &data) : NEO::Linker(data) {
-        }
     };
 
     NEO::LinkerInput linkerInput;
@@ -867,10 +865,8 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalsWhenLinkThenSubDeviceIDSymbolsAreC
 HWTEST_F(LinkerTests, givenUnresolvedExternalSymbolsWhenResolveBuiltinsIsCalledThenPerThreadOffSymbolsAreResolvedAndRemoved) {
     struct LinkerMock : public NEO::Linker {
       public:
+        using NEO::Linker::Linker;
         using NEO::Linker::resolveBuiltins;
-
-        LinkerMock(const LinkerInput &data) : NEO::Linker(data) {
-        }
     };
 
     const uint64_t kernel1RelocOffset = 40;
@@ -922,10 +918,8 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalSymbolsWhenResolveBuiltinsIsCalledT
 HWTEST_F(LinkerTests, givenPerThreadOffSymbolInUnresolvedExternalSymbolsAndMissingKernelDescriptorForPerThreadOffSymbolWhenResolveBuiltinsThenPerThreadOffSymbolIsNotResolved) {
     struct LinkerMock : public NEO::Linker {
       public:
+        using NEO::Linker::Linker;
         using NEO::Linker::resolveBuiltins;
-
-        LinkerMock(const LinkerInput &data) : NEO::Linker(data) {
-        }
     };
 
     const uint64_t kernelRelocOffset = 40;
@@ -959,6 +953,40 @@ HWTEST_F(LinkerTests, givenPerThreadOffSymbolInUnresolvedExternalSymbolsAndMissi
         }
     }
     EXPECT_TRUE(isPerThreadOffUnresolved);
+}
+
+HWTEST_F(LinkerTests, givenUnresolvedExternalSymbolsAndCrossThreadDataSmallerThanInlineDataWhenResolveBuiltinsIsCalledThenPerThreadOffSymbolIsResolvedAndRemoved) {
+    struct LinkerMock : public NEO::Linker {
+      public:
+        using NEO::Linker::Linker;
+        using NEO::Linker::resolveBuiltins;
+    };
+
+    const uint64_t kernelRelocOffset = 40u;
+
+    NEO::LinkerInput linkerInput{};
+    LinkerMock linker(linkerInput);
+    NEO::Linker::UnresolvedExternals unresolvedExternals{};
+    unresolvedExternals.push_back({{NEO::Linker::perThreadOff, kernelRelocOffset, NEO::Linker::RelocationInfo::Type::address16, NEO::SegmentType::instructions, ".text.kernel_func1"}, 0u, false});
+
+    std::vector<char> instructionSegment{};
+    instructionSegment.resize(kernelRelocOffset + 16);
+    NEO::Linker::PatchableSegments instructionsSegments{};
+    instructionsSegments.push_back({instructionSegment.data(), 0u});
+
+    KernelDescriptor kernelDescriptor1{};
+    kernelDescriptor1.kernelMetadata.kernelName = "kernel_func1";
+    kernelDescriptor1.kernelAttributes.crossThreadDataSize = 40u;
+    kernelDescriptor1.kernelAttributes.inlineDataPayloadSize = 64u;
+
+    NEO::Linker::KernelDescriptorsT kernelDescriptors{};
+    kernelDescriptors.push_back(&kernelDescriptor1);
+    linker.resolveBuiltins(pDevice, unresolvedExternals, instructionsSegments, kernelDescriptors);
+
+    EXPECT_EQ(0U, unresolvedExternals.size());
+
+    uint16_t gpuAddress = 0u;
+    EXPECT_EQ(*reinterpret_cast<uint16_t *>(&instructionSegment[kernelRelocOffset]), gpuAddress);
 }
 
 HWTEST_F(LinkerTests, givenUnresolvedExternalWhenPatchingInstructionsThenLinkPartially) {
@@ -2735,5 +2763,34 @@ TEST_F(LinkerTests, givenPerThreadPayloadOffsetRelocationWhenPatchingInstruction
     linker.patchInstructionsSegments({segmentToPatch}, unresolvedExternals, kernelDescriptors);
     auto perThreadPayloadOffsetPatchedValue = reinterpret_cast<uint32_t *>(ptrOffset(segmentToPatch.hostPointer, static_cast<size_t>(rel.offset)));
     uint32_t expectedPatchedValue = kd.kernelAttributes.crossThreadDataSize - kd.kernelAttributes.inlineDataPayloadSize;
+    EXPECT_EQ(expectedPatchedValue, static_cast<uint32_t>(*perThreadPayloadOffsetPatchedValue));
+}
+
+TEST_F(LinkerTests, givenPerThreadPayloadOffsetRelocationAndCrossThreadDataSmallerThanInlineDataWhenPatchingInstructionSegmentsThenPatchItWithOffsetZero) {
+    WhiteBox<NEO::LinkerInput> linkerInput{};
+    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
+    NEO::LinkerInput::RelocationInfo rel{};
+    rel.offset = 0x4;
+    rel.type = NEO::LinkerInput::RelocationInfo::Type::perThreadPayloadOffset;
+    rel.relocationSegment = NEO::SegmentType::instructions;
+    linkerInput.textRelocations.push_back({rel});
+
+    NEO::Linker::KernelDescriptorsT kernelDescriptors{};
+    KernelDescriptor kd{};
+    kd.kernelAttributes.crossThreadDataSize = 40u;
+    kd.kernelAttributes.inlineDataPayloadSize = 64u;
+    kernelDescriptors.push_back(&kd);
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+
+    uint64_t segmentData{0};
+    NEO::Linker::PatchableSegment segmentToPatch{};
+    segmentToPatch.hostPointer = reinterpret_cast<void *>(&segmentData);
+    segmentToPatch.segmentSize = sizeof(segmentData);
+
+    NEO::Linker::UnresolvedExternals unresolvedExternals{};
+    linker.patchInstructionsSegments({segmentToPatch}, unresolvedExternals, kernelDescriptors);
+    auto perThreadPayloadOffsetPatchedValue = reinterpret_cast<uint32_t *>(ptrOffset(segmentToPatch.hostPointer, static_cast<size_t>(rel.offset)));
+    uint32_t expectedPatchedValue = 0u;
     EXPECT_EQ(expectedPatchedValue, static_cast<uint32_t>(*perThreadPayloadOffsetPatchedValue));
 }
