@@ -1071,7 +1071,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
                                                          std::move(printfHandler),
                                                          preemptionMode,
                                                          multiDispatchInfo.peekMainKernel(),
-                                                         (uint32_t)multiDispatchInfo.size(),
+                                                         static_cast<uint32_t>(multiDispatchInfo.size()),
                                                          multiRootDeviceSyncNode);
     }
     if (storeTimestampPackets) {

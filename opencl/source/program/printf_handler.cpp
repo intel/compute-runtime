@@ -60,7 +60,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
 
     const auto &printfSurfaceArg = kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.printfSurfaceAddress;
     auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getCrossThreadData()), printfSurfaceArg.stateless);
-    patchWithRequiredSize(printfPatchAddress, printfSurfaceArg.pointerSize, (uintptr_t)printfSurface->getGpuAddressToPatch());
+    patchWithRequiredSize(printfPatchAddress, printfSurfaceArg.pointerSize, printfSurface->getGpuAddressToPatch());
     if (isValidOffset(printfSurfaceArg.bindful)) {
         auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap()), printfSurfaceArg.bindful);
         void *addressToPatch = printfSurface->getUnderlyingBuffer();

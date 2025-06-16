@@ -168,12 +168,12 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
             DEBUG_BREAK_IF(true);
             return false;
         }
-        return (callbacks[(uint32_t)target].peekHead() != nullptr);
+        return (callbacks[static_cast<uint32_t>(target)].peekHead() != nullptr);
     }
 
     bool peekHasCallbacks() {
-        for (uint32_t i = 0; i < (uint32_t)ECallbackTarget::max; ++i) {
-            if (peekHasCallbacks((ECallbackTarget)i)) {
+        for (uint32_t i = 0; i < static_cast<uint32_t>(ECallbackTarget::max); ++i) {
+            if (peekHasCallbacks(static_cast<ECallbackTarget>(i))) {
                 return true;
             }
         }
@@ -373,7 +373,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     cl_command_type cmdType{};
 
     // callbacks to be executed when this event changes its execution state
-    IFList<Callback, true, true> callbacks[(uint32_t)ECallbackTarget::max];
+    IFList<Callback, true, true> callbacks[static_cast<uint32_t>(ECallbackTarget::max)];
 
     // can be accessed only with transitionExecutionState
     // this is to ensure state consitency event when doning lock-free multithreading

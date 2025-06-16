@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -257,7 +257,7 @@ typedef struct _cl_params_clCreateBuffer {
 typedef struct _cl_params_clCreateCommandQueue {
     cl_context *context;
     cl_device_id *device;
-    cl_command_queue_properties *properties;
+    const cl_command_queue_properties *properties;
     cl_int **errcodeRet;
 } cl_params_clCreateCommandQueue;
 
@@ -852,7 +852,7 @@ typedef struct _cl_params_clEnqueueCopyImageToBuffer {
     cl_mem *dstBuffer;
     const size_t **srcOrigin;
     const size_t **region;
-    size_t *dstOffset;
+    const size_t *dstOffset;
     cl_uint *numEventsInWaitList;
     const cl_event **eventWaitList;
     cl_event **event;

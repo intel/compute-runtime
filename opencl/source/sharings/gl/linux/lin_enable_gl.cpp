@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,7 +100,7 @@ std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
 void *GlSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) {
     if (debugManager.flags.EnableFormatQuery.get() &&
         functionName == "clGetSupportedGLTextureFormatsINTEL") {
-        return ((void *)(clGetSupportedGLTextureFormatsINTEL));
+        return reinterpret_cast<void *>(clGetSupportedGLTextureFormatsINTEL);
     }
 
     return nullptr;

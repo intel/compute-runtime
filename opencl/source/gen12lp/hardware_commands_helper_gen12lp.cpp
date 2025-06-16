@@ -24,7 +24,7 @@ InterfaceDescriptorType *HardwareCommandsHelper<GfxFamily>::getInterfaceDescript
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
     InterfaceDescriptorType *inlineInterfaceDescriptor) {
-    return static_cast<InterfaceDescriptorType *>(ptrOffset(indirectHeap.getCpuBase(), (size_t)offsetInterfaceDescriptor));
+    return static_cast<InterfaceDescriptorType *>(ptrOffset(indirectHeap.getCpuBase(), static_cast<size_t>(offsetInterfaceDescriptor)));
 }
 
 template <typename GfxFamily>

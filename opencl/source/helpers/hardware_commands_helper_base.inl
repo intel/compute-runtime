@@ -201,7 +201,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
                                                                kernelDescriptor.kernelAttributes.numGrfRequired, threadsPerThreadGroup, *walkerCmd);
 
     *pInterfaceDescriptor = interfaceDescriptor;
-    return (size_t)offsetInterfaceDescriptor;
+    return static_cast<size_t>(offsetInterfaceDescriptor);
 }
 
 template <typename GfxFamily>

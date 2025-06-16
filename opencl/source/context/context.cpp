@@ -55,7 +55,7 @@ Context::Context(
 }
 
 Context::~Context() {
-    gtpinNotifyContextDestroy((cl_context)this);
+    gtpinNotifyContextDestroy(static_cast<cl_context>(this));
 
     if (multiRootDeviceTimestampPacketAllocator.get() != nullptr) {
         multiRootDeviceTimestampPacketAllocator.reset();
@@ -330,7 +330,7 @@ cl_int Context::getInfo(cl_context_info paramName, size_t paramValueSize,
         break;
 
     case CL_CONTEXT_NUM_DEVICES:
-        numDevices = (cl_uint)(devices.size());
+        numDevices = static_cast<cl_uint>(devices.size());
         valueSize = sizeof(numDevices);
         pValue = &numDevices;
         break;
@@ -375,7 +375,7 @@ bool Context::containsMultipleSubDevices(uint32_t rootDeviceIndex) const {
 }
 
 ClDevice *Context::getDevice(size_t deviceOrdinal) const {
-    return (ClDevice *)devices[deviceOrdinal];
+    return static_cast<ClDevice *>(devices[deviceOrdinal]);
 }
 
 cl_int Context::getSupportedImageFormats(

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,8 +37,8 @@ inline void convertFillColor(const void *fillColor,
     float fFillColor[4] = {0.0f};
 
     for (auto i = 0; i < 4; i++) {
-        iFillColor[i] = *((int32_t *)fillColor + i);
-        fFillColor[i] = *((float *)fillColor + i);
+        iFillColor[i] = reinterpret_cast<const int32_t *>(fillColor)[i];
+        fFillColor[i] = reinterpret_cast<const float *>(fillColor)[i];
     }
 
     if (oldImageFormat.image_channel_order == CL_A) {

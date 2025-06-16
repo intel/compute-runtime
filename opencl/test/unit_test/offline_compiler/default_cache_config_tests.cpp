@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ char *mockGetenv(const char *name) noexcept {
 using getenvMockFuncPtr = char *(*)(const char *);
 
 TEST(CompilerCache, GivenDefaultCacheConfigThenValuesAreProperlyPopulated) {
-    VariableBackup<getenvMockFuncPtr> getenvBkp((getenvMockFuncPtr *)(&NEO::IoFunctions::getenvPtr), &mockGetenv);
+    VariableBackup<getenvMockFuncPtr> getenvBkp(reinterpret_cast<getenvMockFuncPtr *>(&NEO::IoFunctions::getenvPtr), &mockGetenv);
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
     EXPECT_STREQ("ocloc_cache", cacheConfig.cacheDir.c_str());
@@ -38,7 +38,7 @@ TEST(CompilerCache, GivenEnvVariableWhenDefaultConfigIsCreatedThenValuesArePrope
     mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
 
     VariableBackup<decltype(mockableEnvValues)> mockableEnvValuesBackup(&mockableEnvValues, mockableEnvs);
-    VariableBackup<getenvMockFuncPtr> getenvBkp((getenvMockFuncPtr *)(&NEO::IoFunctions::getenvPtr), &mockGetenv);
+    VariableBackup<getenvMockFuncPtr> getenvBkp(reinterpret_cast<getenvMockFuncPtr *>(&NEO::IoFunctions::getenvPtr), &mockGetenv);
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
     EXPECT_STREQ("ult/directory/", cacheConfig.cacheDir.c_str());

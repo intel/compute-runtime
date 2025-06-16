@@ -584,7 +584,7 @@ TaskCountType CommandQueue::getTaskLevelFromWaitList(TaskCountType taskLevel,
                                                      cl_uint numEventsInWaitList,
                                                      const cl_event *eventWaitList) {
     for (auto iEvent = 0u; iEvent < numEventsInWaitList; ++iEvent) {
-        auto pEvent = (Event *)(eventWaitList[iEvent]);
+        auto pEvent = static_cast<const Event *>(eventWaitList[iEvent]);
         TaskCountType eventTaskLevel = pEvent->peekTaskLevel();
         taskLevel = std::max(taskLevel, eventTaskLevel);
     }

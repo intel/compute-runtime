@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 namespace NEO {
 class Context;
 class Image;
-class GlTexture : GlSharing {
+class GlTexture : public GlSharing {
   public:
     static Image *createSharedGlTexture(Context *context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel, cl_GLuint texture,
                                         cl_int *errcodeRet);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,7 +121,7 @@ cl_int validateObject(const NonZeroBufferSize &nzbs) {
 }
 
 cl_int validateObject(const PatternSize &ps) {
-    switch ((cl_int)ps) {
+    switch (static_cast<cl_int>(ps)) {
     case 128:
     case 64:
     case 32:

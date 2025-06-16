@@ -436,7 +436,7 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
             break;
         case SVM_ALLOC_OBJ:
             setArgSvmAlloc(i, const_cast<void *>(pSourceKernel->getKernelArgInfo(i).value),
-                           (GraphicsAllocation *)pSourceKernel->getKernelArgInfo(i).object,
+                           reinterpret_cast<GraphicsAllocation *>(pSourceKernel->getKernelArgInfo(i).object),
                            pSourceKernel->getKernelArgInfo(i).allocId);
             break;
         case BUFFER_OBJ:
@@ -732,13 +732,13 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
     }
     case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE_KHR: {
         for (size_t i = 0; i < numDimensions; i++) {
-            wgs *= ((size_t *)inputValue)[i];
+            wgs *= reinterpret_cast<const size_t *>(inputValue)[i];
         }
         return changeGetInfoStatusToCLResultType(
             info.set<size_t>((wgs / maxSimdSize) + std::min(static_cast<size_t>(1), wgs % maxSimdSize))); // add 1 if WGS % maxSimdSize != 0
     }
     case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT: {
-        auto subGroupsNum = *(size_t *)inputValue;
+        auto subGroupsNum = *reinterpret_cast<const size_t *>(inputValue);
         auto workGroupSize = subGroupsNum * largestCompiledSIMDSize;
         // return workgroup size in first dimension, the rest shall be 1 in positive case
         if (workGroupSize > maxRequiredWorkGroupSize) {
@@ -1208,7 +1208,7 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
     for (decltype(numArgs) argIndex = 0; argIndex < numArgs; argIndex++) {
         if (kernelArguments[argIndex].object) {
             if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
-                auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
+                auto pSVMAlloc = reinterpret_cast<GraphicsAllocation *>(kernelArguments[argIndex].object);
                 auto pageFaultManager = executionEnvironment.memoryManager->getPageFaultManager();
                 if (pageFaultManager &&
                     this->isUnifiedMemorySyncRequired) {
@@ -1375,7 +1375,7 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
                     this->isUnifiedMemorySyncRequired) {
                     needsMigration = true;
                 }
-                auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
+                auto pSVMAlloc = reinterpret_cast<GraphicsAllocation *>(kernelArguments[argIndex].object);
                 dst.push_back(new GeneralSurface(pSVMAlloc, needsMigration));
             } else if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
                 auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
@@ -1799,10 +1799,10 @@ bool Kernel::hasPrintfOutput() const {
 
 void Kernel::resetSharedObjectsPatchAddresses() {
     for (size_t i = 0; i < getKernelArgsNumber(); i++) {
-        auto clMem = (cl_mem)kernelArguments[i].object;
+        auto clMem = kernelArguments[i].object;
         auto memObj = castToObject<MemObj>(clMem);
         if (memObj && memObj->peekSharingHandler()) {
-            setArg((uint32_t)i, sizeof(cl_mem), &clMem);
+            setArg(static_cast<uint32_t>(i), sizeof(cl_mem), &clMem);
         }
     }
 }

@@ -150,7 +150,7 @@ TEST(ZebinManipulatorTests, GivenValidZebinWhenItIsDisassembledAndAssembledBackT
         char **asmNameOutputs;
 
         retVal = oclocInvoke(static_cast<uint32_t>(asmArgs.size()), asmArgs.data(),
-                             disasmNumOutputs, const_cast<const uint8_t **>(disasmDataOutputs), disasmLenOutputs, (const char **)disasmNameOutputs,
+                             disasmNumOutputs, const_cast<const uint8_t **>(disasmDataOutputs), disasmLenOutputs, const_cast<const char **>(disasmNameOutputs),
                              0, nullptr, nullptr, nullptr,
                              &asmNumOutputs, &asmDataOutputs, &asmLenOutputs, &asmNameOutputs);
         EXPECT_EQ(OCLOC_SUCCESS, retVal);

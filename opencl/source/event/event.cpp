@@ -911,8 +911,8 @@ void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
     //     All enqueued callbacks shall be called before the event object is destroyed."
     // That's why each registered calback increments the internal refcount
     incRefInternal();
-    DBG_LOG(EventsDebugEnable, "event", this, "addCallback", "ECallbackTarget", (uint32_t)type);
-    callbacks[(uint32_t)target].pushFrontOne(*new Callback(this, fn, type, data));
+    DBG_LOG(EventsDebugEnable, "event", this, "addCallback", "ECallbackTarget", static_cast<uint32_t>(type));
+    callbacks[static_cast<uint32_t>(target)].pushFrontOne(*new Callback(this, fn, type, data));
 
     // Callback added after event reached its "completed" state
     if (updateStatusAndCheckCompletion()) {
@@ -943,7 +943,7 @@ void Event::executeCallbacks(int32_t executionStatusIn) {
     }
 
     // run through all needed callback targets and execute callbacks
-    for (uint32_t i = 0; i <= (uint32_t)target; ++i) {
+    for (uint32_t i = 0; i <= static_cast<uint32_t>(target); ++i) {
         auto cb = callbacks[i].detachNodes();
         auto curr = cb;
         while (curr != nullptr) {
@@ -951,7 +951,7 @@ void Event::executeCallbacks(int32_t executionStatusIn) {
             if (terminated) {
                 curr->overrideCallbackExecutionStatusTarget(execStatus);
             }
-            DBG_LOG(EventsDebugEnable, "event", this, "executing callback", "ECallbackTarget", (uint32_t)target);
+            DBG_LOG(EventsDebugEnable, "event", this, "executing callback", "ECallbackTarget", static_cast<uint32_t>(target));
             curr->execute();
             decRefInternal();
             delete curr;

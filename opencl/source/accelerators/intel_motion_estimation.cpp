@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ cl_int VmeAccelerator::validateVmeArgs(Context *context,
                                        size_t descriptorSize,
                                        const void *descriptor) {
     const cl_motion_estimation_desc_intel *descObj =
-        (const cl_motion_estimation_desc_intel *)descriptor;
+        reinterpret_cast<const cl_motion_estimation_desc_intel *>(descriptor);
 
     DEBUG_BREAK_IF(!context);
     DEBUG_BREAK_IF(typeId != CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL);

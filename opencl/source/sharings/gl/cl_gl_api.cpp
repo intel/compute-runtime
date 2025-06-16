@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -189,7 +189,7 @@ cl_int CL_API_CALL clGetGLObjectInfo(cl_mem memobj, cl_gl_object_type *glObjectT
     retValue = validateObjects(memobj);
     if (retValue == CL_SUCCESS) {
         auto pMemObj = castToObject<MemObj>(memobj);
-        auto handler = (GlSharing *)pMemObj->peekSharingHandler();
+        auto handler = static_cast<GlSharing *>(pMemObj->peekSharingHandler());
         if (handler != nullptr) {
             handler->getGlObjectInfo(glObjectType, glObjectName);
         } else {
@@ -213,7 +213,7 @@ cl_int CL_API_CALL clGetGLTextureInfo(cl_mem memobj, cl_gl_texture_info paramNam
     retValue = validateObjects(memobj);
     if (retValue == CL_SUCCESS) {
         auto pMemObj = castToObject<MemObj>(memobj);
-        auto glTexture = (GlTexture *)pMemObj->peekSharingHandler();
+        auto glTexture = static_cast<GlTexture *>(pMemObj->peekSharingHandler());
         retValue = glTexture->getGlTextureInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
     }
     TRACING_EXIT(ClGetGlTextureInfo, &retValue);

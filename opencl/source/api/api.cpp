@@ -574,7 +574,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context context,
                                                   cl_device_id device,
                                                   const cl_command_queue_properties properties,
                                                   cl_int *errcodeRet) {
-    TRACING_ENTER(ClCreateCommandQueue, &context, &device, (cl_command_queue_properties *)&properties, &errcodeRet);
+    TRACING_ENTER(ClCreateCommandQueue, &context, &device, &properties, &errcodeRet);
     cl_command_queue commandQueue = nullptr;
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     cl_int retVal = CL_SUCCESS;
@@ -1292,7 +1292,7 @@ cl_int CL_API_CALL clSetMemObjectDestructorCallback(cl_mem memobj,
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("memobj", memobj, "funcNotify", reinterpret_cast<void *>(funcNotify), "userData", userData);
-    retVal = validateObjects(memobj, (void *)funcNotify);
+    retVal = validateObjects(memobj, reinterpret_cast<void *>(funcNotify));
 
     if (CL_SUCCESS != retVal) {
         TRACING_EXIT(ClSetMemObjectDestructorCallback, &retVal);
@@ -1717,11 +1717,10 @@ cl_int CL_API_CALL clGetProgramInfo(cl_program program,
                    "paramValueSize", paramValueSize,
                    "paramValue", NEO::fileLoggerInstance().infoPointerToString(paramValue, paramValueSize),
                    "paramValueSizeRet", paramValueSizeRet);
-    retVal = validateObjects(program);
+    Program *pProgram = nullptr;
+    retVal = validateObjects(withCastToInternal(program, &pProgram));
 
     if (CL_SUCCESS == retVal) {
-        Program *pProgram = (Program *)(program);
-
         retVal = pProgram->getInfo(
             paramName,
             paramValueSize,
@@ -2695,7 +2694,7 @@ cl_int CL_API_CALL clEnqueueFillBuffer(cl_command_queue commandQueue,
         withCastToInternal(commandQueue, &pCommandQueue),
         withCastToInternal(buffer, &pBuffer),
         pattern,
-        (PatternSize)patternSize,
+        static_cast<PatternSize>(patternSize),
         EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (CL_SUCCESS == retVal) {
@@ -3166,7 +3165,7 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
                                               cl_uint numEventsInWaitList,
                                               const cl_event *eventWaitList,
                                               cl_event *event) {
-    TRACING_ENTER(ClEnqueueCopyImageToBuffer, &commandQueue, &srcImage, &dstBuffer, &srcOrigin, &region, (size_t *)&dstOffset, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueCopyImageToBuffer, &commandQueue, &srcImage, &dstBuffer, &srcOrigin, &region, &dstOffset, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -4651,13 +4650,13 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command
     return retVal;
 }
 
-#define RETURN_FUNC_PTR_IF_EXIST(name)                                  \
-    {                                                                   \
-        if (!strcmp(funcName, #name)) {                                 \
-            void *ret = ((void *)(name));                               \
-            TRACING_EXIT(ClGetExtensionFunctionAddress, (void **)&ret); \
-            return ret;                                                 \
-        }                                                               \
+#define RETURN_FUNC_PTR_IF_EXIST(name)                                                    \
+    {                                                                                     \
+        if (!strcmp(funcName, #name)) {                                                   \
+            void *ret = reinterpret_cast<void *>(name);                                   \
+            TRACING_EXIT(ClGetExtensionFunctionAddress, reinterpret_cast<void **>(&ret)); \
+            return ret;                                                                   \
+        }                                                                                 \
     }
 void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     TRACING_ENTER(ClGetExtensionFunctionAddress, &funcName);
@@ -5247,7 +5246,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
             return retVal;
         }
         size_t numPointers = paramValueSize / sizeof(void *);
-        size_t *pSvmPtrList = (size_t *)paramValue;
+        auto pSvmPtrList = reinterpret_cast<void **>(const_cast<void *>(paramValue));
 
         if (paramName == CL_KERNEL_EXEC_INFO_SVM_PTRS) {
             pMultiDeviceKernel->clearSvmKernelExecInfo();
@@ -5256,7 +5255,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         }
 
         for (uint32_t i = 0; i < numPointers; i++) {
-            auto svmData = pMultiDeviceKernel->getContext().getSVMAllocsManager()->getSVMAlloc((const void *)pSvmPtrList[i]);
+            auto svmData = pMultiDeviceKernel->getContext().getSVMAllocsManager()->getSVMAlloc(pSvmPtrList[i]);
             if (svmData == nullptr) {
                 retVal = CL_INVALID_VALUE;
                 TRACING_EXIT(ClSetKernelExecInfo, &retVal);
@@ -5802,7 +5801,7 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
             return retVal;
         }
         if (sizes != nullptr && sizes[i] != 0) {
-            svmData = pSvmAllocMgr->getSVMAlloc(reinterpret_cast<void *>((size_t)svmPointers[i] + sizes[i] - 1));
+            svmData = pSvmAllocMgr->getSVMAlloc(ptrOffset(svmPointers[i], sizes[i] - 1));
             if (svmData == nullptr) {
                 retVal = CL_INVALID_VALUE;
                 TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
