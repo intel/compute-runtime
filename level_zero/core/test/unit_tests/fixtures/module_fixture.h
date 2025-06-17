@@ -91,6 +91,8 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         using KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
         using KernelImp::kernelRequiresUncachedMocsCount;
         using KernelImp::patchBindlessOffsetsInCrossThreadData;
+        using KernelImp::perThreadDataForWholeThreadGroup;
+        using KernelImp::perThreadDataSizeForWholeThreadGroup;
         using KernelImp::pImplicitArgs;
         using KernelImp::printfBuffer;
         using KernelImp::privateMemoryGraphicsAllocation;
