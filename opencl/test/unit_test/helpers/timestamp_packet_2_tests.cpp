@@ -125,22 +125,20 @@ HWTEST_TEMPLATED_F(TimestampPacketTestsWithMockCsrHw, givenEmptyWaitlistAndEvent
     clReleaseEvent(event);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, TimestampPacketTests, givenEmptyWaitlistAndEventWhenMarkerProfilingEnabledOnMultiTileCommandQueueThenCrossTileBarrierAddedBeforeWritingTimestamp) {
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, TimestampPacketTestsWithMockCsrHw, givenEmptyWaitlistAndEventWhenMarkerProfilingEnabledOnMultiTileCommandQueueThenCrossTileBarrierAddedBeforeWritingTimestamp) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto commandStreamReceiver = std::make_unique<MockCommandStreamReceiverHW<FamilyType>>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
-    auto commandStreamReceiverPtr = commandStreamReceiver.get();
+    auto commandStreamReceiver = static_cast<MockCommandStreamReceiverHW<FamilyType> *>(&device->getGpgpuCommandStreamReceiver());
     commandStreamReceiver->timestampPacketWriteEnabled = true;
     commandStreamReceiver->activePartitions = 2;
     commandStreamReceiver->activePartitionsConfig = 2;
     commandStreamReceiver->staticWorkPartitioningEnabled = true;
 
-    device->resetCommandStreamReceiver(commandStreamReceiver.release());
-    *ptrOffset(commandStreamReceiverPtr->tagAddress, commandStreamReceiverPtr->immWritePostSyncWriteOffset) = *commandStreamReceiverPtr->tagAddress;
+    *ptrOffset(commandStreamReceiver->tagAddress, commandStreamReceiver->immWritePostSyncWriteOffset) = *commandStreamReceiver->tagAddress;
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
     cmdQ->setProfilingEnabled();
@@ -149,7 +147,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, TimestampPacketTests, givenEmptyWaitlistAndEventWhe
     cmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
 
     HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(*(commandStreamReceiverPtr->stream), 0);
+    hwParser.parseCommands<FamilyType>(*(commandStreamReceiver->stream), 0);
     GenCmdList storeRegMemList = hwParser.getCommandsList<MI_STORE_REGISTER_MEM>();
     EXPECT_EQ(0u, storeRegMemList.size() % 4u);
     auto storeRegMemIt = find<MI_STORE_REGISTER_MEM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());

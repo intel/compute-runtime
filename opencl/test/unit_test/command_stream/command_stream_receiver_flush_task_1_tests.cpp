@@ -30,6 +30,7 @@
 using namespace NEO;
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskTests;
+using CommandStreamReceiverFlushTaskTestsWithMockCsrHw = UltCommandStreamReceiverTestWithCsrT<MockCsrHw>;
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenCommandStreamReceiverGetsUpdated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -310,13 +311,12 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, GivenSameTas
     EXPECT_EQ(sizeUsed, 0u);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenDeviceWithThreadGroupPreemptionSupportThenDontSendMediaVfeStateIfNotDirty) {
+HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWithMockCsrHw, givenDeviceWithThreadGroupPreemptionSupportThenDontSendMediaVfeStateIfNotDirty) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
 
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
     // Configure the CSR to not need to submit any state or commands.
     configureCSRtoNonDirtyState<FamilyType>(false);
@@ -1145,11 +1145,10 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, WhenGettingCsThenReturnCsWithEno
     }
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, GivenBlockingWhenFlushingTaskThenAddPipeControlOnlyToTaskCs) {
+HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWithMockCsrHw, GivenBlockingWhenFlushingTaskThenAddPipeControlOnlyToTaskCs) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     // Configure the CSR to not need to submit any state or commands
     configureCSRtoNonDirtyState<FamilyType>(false);

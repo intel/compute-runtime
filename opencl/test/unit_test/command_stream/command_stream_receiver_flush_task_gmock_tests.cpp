@@ -49,28 +49,10 @@
 using namespace NEO;
 
 using CommandStreamReceiverFlushTaskGmockTests = UltCommandStreamReceiverTest;
+using CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2 = UltCommandStreamReceiverTestWithCsrT<MockCsrHw2>;
 
-class CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2
-    : public CommandStreamReceiverFlushTaskGmockTests {
-  public:
-    void SetUp() override {}
-    void TearDown() override {}
-
-    template <typename FamilyType>
-    void setUpT() {
-        EnvironmentWithCsrWrapper environment;
-        environment.setCsrType<MockCsrHw2<FamilyType>>();
-        CommandStreamReceiverFlushTaskGmockTests::SetUp();
-    }
-
-    template <typename FamilyType>
-    void tearDownT() {
-        CommandStreamReceiverFlushTaskGmockTests::TearDown();
-    }
-};
-
-HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
-          givenCsrInBatchingModeThreeRecordedCommandBufferEnabledBatchBufferFlatteningAndPatchInfoCollectionWhenFlushBatchedSubmissionsIsCalledThenBatchBuffersAndPatchInfoAreCollected, MatchAny) {
+HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2,
+                    givenCsrInBatchingModeThreeRecordedCommandBufferEnabledBatchBufferFlatteningAndPatchInfoCollectionWhenFlushBatchedSubmissionsIsCalledThenBatchBuffersAndPatchInfoAreCollected, MatchAny) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::batchedDispatch));
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
@@ -81,10 +63,9 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*pDevice->executionEnvironment);
     mockCsr->overwriteFlatBatchBufferHelper(mockHelper);
-    pDevice->resetCommandStreamReceiver(mockCsr);
     bool heaplessStateInitEnabled = mockCsr->getHeaplessStateInitEnabled();
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;

@@ -29,6 +29,8 @@
 using namespace NEO;
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskXeHPAndLaterTests;
+using CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw = UltCommandStreamReceiverTestWithCsrT<MockCsrHw>;
+using CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw2 = UltCommandStreamReceiverTestWithCsrT<MockCsrHw2>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenReprogrammingSshThenBindingTablePoolIsProgrammed) {
     if constexpr (FamilyType::isHeaplessRequired()) {
@@ -294,17 +296,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Gi
     EXPECT_EQ(usedBefore, usedAfter);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenDeviceWithThreadGroupPreemptionSupportThenDontSendMediaVfeStateIfNotDirty) {
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw, givenDeviceWithThreadGroupPreemptionSupportThenDontSendMediaVfeStateIfNotDirty) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
 
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
+    auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     if (commandStreamReceiver->getHeaplessStateInitEnabled()) {
         GTEST_SKIP();
     }
-
-    pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
     // Configure the CSR to not need to submit any state or commands.
     configureCSRtoNonDirtyState<FamilyType>(true);
@@ -492,12 +492,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
     EXPECT_EQ(stateHeapMocs, cmd.getInstructionMemoryObjectControlState());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, GivenBlockingWhenFlushingTaskThenPipeControlProgrammedCorrectly) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw, GivenBlockingWhenFlushingTaskThenPipeControlProgrammedCorrectly) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     commandStreamReceiver->heaplessStateInitialized = true;
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
     // Configure the CSR to not need to submit any state or commands
     configureCSRtoNonDirtyState<FamilyType>(true);
@@ -542,13 +541,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Gi
     EXPECT_EQ(0u, numberOfPC);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenCsrInNonDirtyStateWhenflushTaskIsCalledThenNoFlushIsCalled) {
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw2, givenCsrInNonDirtyStateWhenflushTaskIsCalledThenNoFlushIsCalled) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->heaplessStateInitialized = true;
-    pDevice->resetCommandStreamReceiver(mockCsr);
 
     configureCSRtoNonDirtyState<FamilyType>(true);
 
@@ -567,12 +565,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_EQ(0u, mockCsr->flushCalledCount);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenCsrInNonDirtyStateAndBatchingModeWhenflushTaskIsCalledWithDisabledPreemptionThenSubmissionIsNotRecorded) {
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw2, givenCsrInNonDirtyStateAndBatchingModeWhenflushTaskIsCalledWithDisabledPreemptionThenSubmissionIsNotRecorded) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
@@ -602,15 +599,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_EQ(0u, surfacesForResidency.size());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenCsrInBatchingModeWhenRecordedBatchBufferIsBeingSubmittedThenFlushIsCalledWithRecordedCommandBuffer) {
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw2, givenCsrInBatchingModeWhenRecordedBatchBufferIsBeingSubmittedThenFlushIsCalledWithRecordedCommandBuffer) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    mockCsr->getResidencyAllocations().clear();
     mockCsr->heaplessStateInitialized = true;
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
@@ -674,10 +671,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenNothingToFlushWhenFlushTaskCalledThenDontFlushStamp) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw2, givenNothingToFlushWhenFlushTaskCalledThenDontFlushStamp) {
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->heaplessStateInitialized = true;
-    pDevice->resetCommandStreamReceiver(mockCsr);
 
     configureCSRtoNonDirtyState<FamilyType>(true);
 

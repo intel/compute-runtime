@@ -86,6 +86,25 @@ struct InternalsEventTest
     MockContext *mockContext = nullptr;
 };
 
+struct InternalsEventTestWithMockCsr
+    : public InternalsEventTest {
+
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<MockCsr<FamilyType>>();
+        InternalsEventTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        InternalsEventTest::TearDown();
+    }
+};
+
 struct MyUserEvent : public VirtualEvent {
     WaitStatus wait(bool blocking, bool quickKmdSleep) override {
         return VirtualEvent::wait(blocking, quickKmdSleep);

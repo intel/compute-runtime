@@ -1314,7 +1314,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenSubmitCommandEventNotReadyAndEventWitho
     EXPECT_EQ(pDevice->getUltCommandStreamReceiver<FamilyType>().recursiveLockCounter, currLockCounter + 1);
 }
 
-HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyWhenMappingOrUnmappingThenFlushPreviousTasksBeforeMappingOrUnmapping) {
+HWTEST_TEMPLATED_F(InternalsEventTestWithMockCsr, GivenBufferWithoutZeroCopyWhenMappingOrUnmappingThenFlushPreviousTasksBeforeMappingOrUnmapping) {
     struct MockNonZeroCopyBuff : UnalignedBuffer {
         MockNonZeroCopyBuff(int32_t &executionStamp)
             : executionStamp(executionStamp) {
@@ -1335,42 +1335,40 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyWhenMappingOrUnmappingThe
         int32_t dataTransferedStamp = -1;
     };
 
-    int32_t executionStamp = 0;
-    auto csr = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(csr);
+    auto csr = static_cast<MockCsr<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     auto pCmdQ = makeReleaseable<MockCommandQueue>(mockContext, pClDevice, props, false);
 
-    MockNonZeroCopyBuff buffer(executionStamp);
+    MockNonZeroCopyBuff buffer(csr->defaultExecStamp);
 
     MemObjSizeArray size = {{4, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
     auto commandMap = std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::map, buffer, size, offset, false, *pCmdQ));
-    EXPECT_EQ(0, executionStamp);
+    EXPECT_EQ(0, csr->defaultExecStamp);
     EXPECT_EQ(-1, csr->flushTaskStamp);
     EXPECT_EQ(-1, buffer.dataTransferedStamp);
 
     auto latestSentFlushTaskCount = csr->peekLatestSentTaskCount();
 
     commandMap->submit(0, false);
-    EXPECT_EQ(1, executionStamp);
+    EXPECT_EQ(1, csr->defaultExecStamp);
     EXPECT_EQ(0, csr->flushTaskStamp);
     EXPECT_EQ(1, buffer.dataTransferedStamp);
     auto latestSentFlushTaskCountAfterSubmit = csr->peekLatestSentTaskCount();
     EXPECT_GT(latestSentFlushTaskCountAfterSubmit, latestSentFlushTaskCount);
 
-    executionStamp = 0;
+    csr->defaultExecStamp = 0;
     csr->flushTaskStamp = -1;
     buffer.dataTransferedStamp = -1;
     buffer.swapCopyDirection();
 
     auto commandUnMap = std::unique_ptr<Command>(new CommandMapUnmap(MapOperationType::unmap, buffer, size, offset, false, *pCmdQ));
-    EXPECT_EQ(0, executionStamp);
+    EXPECT_EQ(0, csr->defaultExecStamp);
     EXPECT_EQ(-1, csr->flushTaskStamp);
     EXPECT_EQ(-1, buffer.dataTransferedStamp);
     commandUnMap->submit(0, false);
-    EXPECT_EQ(1, executionStamp);
+    EXPECT_EQ(1, csr->defaultExecStamp);
     EXPECT_EQ(0, csr->flushTaskStamp);
     EXPECT_EQ(1, buffer.dataTransferedStamp);
     EXPECT_EQ(nullptr, commandUnMap->getCommandStream());

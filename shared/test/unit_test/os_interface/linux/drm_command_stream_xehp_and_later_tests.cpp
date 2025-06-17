@@ -85,9 +85,26 @@ struct DrmCommandStreamMultiTileMemExecFixture {
 
 using DrmCommandStreamMultiTileMemExecTest = Test<DrmCommandStreamMultiTileMemExecFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSupportsCompletionFenceAndVmBindWhenCallingCsrExecThenMultipleTagAllocationIsPassed) {
-    auto *testCsr = new TestedDrmCommandStreamReceiver<FamilyType>(*executionEnvironment, 0, device->getDeviceBitfield());
-    device->resetCommandStreamReceiver(testCsr);
+struct DrmCommandStreamMultiTileMemExecTestWithCsr : public DrmCommandStreamMultiTileMemExecTest {
+    void SetUp() override {}
+    void TearDown() override {}
+
+    template <typename FamilyType>
+    void setUpT() {
+        EnvironmentWithCsrWrapper environment;
+        environment.setCsrType<TestedDrmCommandStreamReceiver<FamilyType>>();
+
+        DrmCommandStreamMultiTileMemExecTest::SetUp();
+    }
+
+    template <typename FamilyType>
+    void tearDownT() {
+        DrmCommandStreamMultiTileMemExecTest::TearDown();
+    }
+};
+
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTestWithCsr, GivenDrmSupportsCompletionFenceAndVmBindWhenCallingCsrExecThenMultipleTagAllocationIsPassed) {
+    auto testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(&device->getGpgpuCommandStreamReceiver());
     EXPECT_EQ(2u, testCsr->activePartitions);
 
     TestedBufferObject bo(0, mock, 128);

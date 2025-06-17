@@ -1048,12 +1048,11 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverIn
     EXPECT_EQ(mockCsr->heaplessStateInitialized ? 2u : 1u, mockCsr->flushCalledCount);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTwoEnqueueProgrammedWithinSameCommandBufferWhenBatchedThenNoBBSBetweenThem) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, EnqueueKernelTestWithMockCsrHw2, givenTwoEnqueueProgrammedWithinSameCommandBufferWhenBatchedThenNoBBSBetweenThem) {
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
-    pDevice->resetCommandStreamReceiver(mockCsr);
 
     auto mockedSubmissionsAggregator = new MockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);

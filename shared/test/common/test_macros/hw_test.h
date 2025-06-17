@@ -348,9 +348,77 @@
     template <typename FamilyType>                                                                                                          \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::testBodyHw()
 
+// Compared to HWCMDTEST_TEST_ allows setup and teardown to be called with the FamilyType template
+#define HWCMDTEST_TEMPLATED_(cmdset_gen_base, test_suite_name, test_name, parent_class, parent_id, SetUpT_name, TearDownT_name)             \
+    CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                      \
+                                                                                                                                            \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
+    class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public parent_class {                                                        \
+      public:                                                                                                                               \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        () {}                                                                                                                               \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        (const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete;                                                              \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
+        (GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &&) = delete;                                                                   \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &operator=(const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &) = delete; \
+        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &operator=(GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) &&) = delete;      \
+                                                                                                                                            \
+      private:                                                                                                                              \
+        template <typename FamilyType>                                                                                                      \
+        void testBodyHw();                                                                                                                  \
+                                                                                                                                            \
+        template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                   \
+        auto runCmdTestHwIfSupported() -> typename std::enable_if<ShouldBeTested>::type {                                                   \
+            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                            \
+                testBodyHw<FamilyType>();                                                                                                   \
+            }                                                                                                                               \
+        }                                                                                                                                   \
+                                                                                                                                            \
+        template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>                                   \
+        auto runCmdTestHwIfSupported() -> typename std::enable_if<false == ShouldBeTested>::type {                                          \
+            /* do nothing */                                                                                                                \
+        }                                                                                                                                   \
+                                                                                                                                            \
+        void TestBody() override {                                                                                                          \
+            FAMILY_SELECTOR(::renderCoreFamily, runCmdTestHwIfSupported)                                                                    \
+        }                                                                                                                                   \
+        void SetUp() override {                                                                                                             \
+            if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                             \
+                GTEST_SKIP();                                                                                                               \
+            }                                                                                                                               \
+            CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::SetUp());                                                                      \
+            FAMILY_SELECTOR(::renderCoreFamily, SetUpT_name);                                                                               \
+        }                                                                                                                                   \
+        void TearDown() override {                                                                                                          \
+            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                            \
+                FAMILY_SELECTOR(::renderCoreFamily, TearDownT_name);                                                                        \
+                CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::TearDown());                                                               \
+            }                                                                                                                               \
+        }                                                                                                                                   \
+        static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                                                               \
+    };                                                                                                                                      \
+                                                                                                                                            \
+    ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::test_info_ =                                             \
+        ::testing::internal::MakeAndRegisterTestInfo(                                                                                       \
+            #test_suite_name, #test_name, nullptr, nullptr,                                                                                 \
+            ::testing::internal::CodeLocation(__FILE__, __LINE__), (parent_id),                                                             \
+            ::testing::internal::SuiteApiResolver<                                                                                          \
+                parent_class>::GetSetUpCaseOrSuite(__FILE__, __LINE__),                                                                     \
+            ::testing::internal::SuiteApiResolver<                                                                                          \
+                parent_class>::GetTearDownCaseOrSuite(__FILE__, __LINE__),                                                                  \
+            new ::testing::internal::TestFactoryImpl<GTEST_TEST_CLASS_NAME_(                                                                \
+                test_suite_name, test_name)>);                                                                                              \
+    template <typename FamilyType>                                                                                                          \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::testBodyHw()
+
 #define HWCMDTEST_F(cmdset_gen_base, test_fixture, test_name)               \
     HWCMDTEST_TEST_(cmdset_gen_base, test_fixture, test_name, test_fixture, \
                     ::testing::internal::GetTypeId<test_fixture>())
+
+#define HWCMDTEST_TEMPLATED_F(cmdset_gen_base, test_fixture, test_name)          \
+    HWCMDTEST_TEMPLATED_(cmdset_gen_base, test_fixture, test_name, test_fixture, \
+                         ::testing::internal::GetTypeId<test_fixture>(), setUpT, tearDownT)
 
 // Equivalent Hw specific macro for permuted tests
 // Test can use FamilyType in the test -- equivalent to Gen9Family

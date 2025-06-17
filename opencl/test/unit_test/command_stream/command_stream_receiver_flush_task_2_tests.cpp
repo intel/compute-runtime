@@ -725,7 +725,7 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw, whenPrivat
     EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratch1Allocation));
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecutiveNdRangeKernelsThenStateBaseAddressIsProgrammedOnceAndScratchAddressInMediaVfeStateIsProgrammedTwiceBothWithCorrectAddress) {
+HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWithMockCsrHw, givenTwoConsecutiveNdRangeKernelsThenStateBaseAddressIsProgrammedOnceAndScratchAddressInMediaVfeStateIsProgrammedTwiceBothWithCorrectAddress) {
     typedef typename FamilyType::Parse Parse;
     typedef typename Parse::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
@@ -733,8 +733,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenTwoCons
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     size_t gws = 1;
     uint32_t scratchSize = 1024;
@@ -838,7 +837,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenTwoCons
     }
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenNdRangeKernelAndReadBufferStateBaseAddressAndScratchAddressInMediaVfeStateThenProgrammingIsCorrect) {
+HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWithMockCsrHw, givenNdRangeKernelAndReadBufferStateBaseAddressAndScratchAddressInMediaVfeStateThenProgrammingIsCorrect) {
 
     typedef typename FamilyType::Parse Parse;
     typedef typename Parse::MEDIA_VFE_STATE MEDIA_VFE_STATE;
@@ -847,8 +846,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenNdRange
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     size_t gws = 1;
     uint32_t scratchSize = 1024;
@@ -1159,12 +1157,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenSamplerCacheFlushSentT
     EXPECT_EQ(sizeof(typename FamilyType::PIPE_CONTROL), difference);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateWhenflushTaskIsCalledThenNoFlushIsCalled) {
+HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrInNonDirtyStateWhenflushTaskIsCalledThenNoFlushIsCalled) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     configureCSRtoNonDirtyState<FamilyType>(false);
 
@@ -1183,12 +1180,11 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNo
     EXPECT_EQ(0u, mockCsr->flushCalledCount);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateAndBatchingModeWhenflushTaskIsCalledWithDisabledPreemptionThenSubmissionIsNotRecorded) {
+HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrInNonDirtyStateAndBatchingModeWhenflushTaskIsCalledWithDisabledPreemptionThenSubmissionIsNotRecorded) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
 
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
 
@@ -1447,17 +1443,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenGpuIsIdleWhenCsrIsEnabledToFl
     *commandStreamReceiver.getTagAddress() = 2u;
 }
 
-using SingleRootDeviceCommandStreamReceiverTests = CommandStreamReceiverFlushTaskTests;
+using SingleRootDeviceCommandStreamReceiverTests = UltCommandStreamReceiverTestWithCsr<MockCommandStreamReceiver>;
 
 HWTEST_F(SingleRootDeviceCommandStreamReceiverTests, givenMultipleEventInSingleRootDeviceEnvironmentWhenTheyArePassedToEnqueueWithoutSubmissionThenSemaphoreWaitCommandIsNotProgrammed) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto deviceFactory = std::make_unique<UltClDeviceFactory>(1, 0);
     auto device0 = deviceFactory->rootDevices[0];
-
-    auto mockCsr0 = new MockCommandStreamReceiver(*device0->executionEnvironment, device0->getRootDeviceIndex(), device0->getDeviceBitfield());
-
-    device0->resetCommandStreamReceiver(mockCsr0);
 
     cl_device_id devices[] = {device0};
 
