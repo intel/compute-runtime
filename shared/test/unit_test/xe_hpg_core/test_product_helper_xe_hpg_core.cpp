@@ -19,7 +19,3 @@ using XeHpgProductHelper = ProductHelperTest;
 XE_HPG_CORETEST_F(XeHpgProductHelper, givenProductHelperWhenIsSystolicModeConfigurabledThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isSystolicModeConfigurable(pInHwInfo));
 }
-
-XE_HPG_CORETEST_F(XeHpgProductHelper, givenProductHelperWhenQueryIsPostImageWriteFlushRequiredThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isPostImageWriteFlushRequired());
-}

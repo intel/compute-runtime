@@ -193,7 +193,6 @@ class ProductHelper {
     virtual uint32_t getInternalHeapsPreallocated() const = 0;
     virtual bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const = 0;
     virtual bool is2MBLocalMemAlignmentEnabled() const = 0;
-    virtual bool isPostImageWriteFlushRequired() const = 0;
 
     virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
     virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;

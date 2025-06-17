@@ -85,6 +85,15 @@ TEST_F(ReleaseHelper1255Tests, whenGettingNumThreadsPerEuThenCorrectValueIsRetur
     whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnOverrideNumThreadsPerEuDebugKey();
 }
 
+TEST_F(ReleaseHelper1255Tests, whenIsPostImageWriteFlushRequiredCalledThenTrueReturned) {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isPostImageWriteFlushRequired());
+    }
+}
+
 TEST_F(ReleaseHelper1255Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

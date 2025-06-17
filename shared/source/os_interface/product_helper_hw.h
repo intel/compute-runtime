@@ -132,7 +132,6 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getInternalHeapsPreallocated() const override;
     bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const override;
     bool is2MBLocalMemAlignmentEnabled() const override;
-    bool isPostImageWriteFlushRequired() const override;
     bool isPackedCopyFormatSupported() const override;
 
     bool getFrontEndPropertyScratchSizeSupport() const override;

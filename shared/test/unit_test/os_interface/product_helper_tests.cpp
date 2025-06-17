@@ -1171,10 +1171,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenOverrideDirectSubmissionTimeo
     EXPECT_EQ(std::chrono::microseconds{10000}, maxTimeout);
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenQueryIsPostImageWriteFlushRequiredThenFalseReturned) {
-    EXPECT_FALSE(productHelper->isPostImageWriteFlushRequired());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsExposingSubdevicesAllowedThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isExposingSubdevicesAllowed());
 }

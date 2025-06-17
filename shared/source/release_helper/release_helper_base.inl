@@ -184,5 +184,8 @@ template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isBlitImageAllowedForDepthFormat() const {
     return true;
 }
-
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isPostImageWriteFlushRequired() const {
+    return false;
+}
 } // namespace NEO

@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
@@ -454,7 +455,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     bool textureFlushRequired = false;
-    if (this->device->getProductHelper().isPostImageWriteFlushRequired() &&
+    if (this->isPostImageWriteFlushRequired &&
         kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg) {
         if (this->isImmediateType()) {
             textureFlushRequired = true;

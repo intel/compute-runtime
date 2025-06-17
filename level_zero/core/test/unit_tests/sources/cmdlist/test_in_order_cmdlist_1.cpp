@@ -13,6 +13,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -2671,7 +2672,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, address);
             EXPECT_EQ(2u, pcCmd->getImmediateData());
 
-            const bool textureFlushRequired = device->getProductHelper().isPostImageWriteFlushRequired() &&
+            auto releaseHelper = device->getNEODevice()->getReleaseHelper();
+            const bool textureFlushRequired = releaseHelper && releaseHelper->isPostImageWriteFlushRequired() &&
                                               kernel->kernelImmData->getKernelInfo()->kernelDescriptor.kernelAttributes.hasImageWriteArg;
             EXPECT_EQ(textureFlushRequired, pcCmd->getTextureCacheInvalidationEnable());
         } else {

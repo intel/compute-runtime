@@ -226,11 +226,6 @@ bool ProductHelperHw<gfxProduct>::is2MBLocalMemAlignmentEnabled() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isPostImageWriteFlushRequired() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }

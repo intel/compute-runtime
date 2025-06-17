@@ -21,6 +21,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
@@ -1321,12 +1322,11 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaunc
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-HWTEST_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteArgAndPlatformRequiresFlushWhenLaunchingKernelThenPipeControlWithTextureCacheInvalidationIsAdded) {
-    if (!device->getProductHelper().isPostImageWriteFlushRequired()) {
-        GTEST_SKIP();
-    }
-
+HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteArgAndPlatformRequiresFlushWhenLaunchingKernelThenPipeControlWithTextureCacheInvalidationIsAdded, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isPostImageWriteFlushRequiredResult = true;
+    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
 
     auto kernel = std::make_unique<Mock<KernelImp>>();
     kernel->module = module.get();
@@ -1365,12 +1365,16 @@ HWTEST_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteAr
     EXPECT_TRUE(cmd->getTextureCacheInvalidationEnable());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExecutionWhenKernelWithImageWriteIsAppendedThenBarrierContainsTextureCacheFlush, IsXeHpgCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExecutionWhenKernelWithImageWriteIsAppendedThenBarrierContainsTextureCacheFlush, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto kernel = std::make_unique<Mock<KernelImp>>();
     kernel->module = module.get();
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isPostImageWriteFlushRequiredResult = true;
+    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -1406,13 +1410,16 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     EXPECT_TRUE(cmd->getTextureCacheInvalidationEnable());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendingTwiceThenPipeControlWithTextureCacheInvalidationIsProgrammedBetweenWalkers, IsXeHpgCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendingTwiceThenPipeControlWithTextureCacheInvalidationIsProgrammedBetweenWalkers, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
 
     StackVec<ze_command_list_flags_t, 2> testedCmdListFlags = {ZE_COMMAND_LIST_FLAG_IN_ORDER,
                                                                ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING};
 
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isPostImageWriteFlushRequiredResult = true;
+    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
     for (auto cmdListFlags : testedCmdListFlags) {
         auto kernel = std::make_unique<Mock<KernelImp>>();
         kernel->module = module.get();
@@ -1471,6 +1478,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenText
     kernel->module = module.get();
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
 
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isPostImageWriteFlushRequiredResult = true;
+    device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
     ze_command_list_flags_t flags = ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING;

@@ -190,3 +190,12 @@ void ReleaseHelperTestsBase::whenProgrammAdditionalStallPriorToBarrierWithTimest
         EXPECT_FALSE(releaseHelper->programmAdditionalStallPriorToBarrierWithTimestamp());
     }
 }
+
+void ReleaseHelperTestsBase::whenIsPostImageWriteFlushRequiredCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isPostImageWriteFlushRequired());
+    }
+}
