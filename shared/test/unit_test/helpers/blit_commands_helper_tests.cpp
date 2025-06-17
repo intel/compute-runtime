@@ -18,6 +18,7 @@
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -561,6 +562,143 @@ HWTEST2_F(BlitTests, givenXe2HpgCoreWhenAppendBlitCommandsMemCopyIsCalledThenNot
     EXPECT_EQ(bltCmd.getCompressionFormat(), 0);
 }
 
+HWTEST2_F(BlitTests, givenXe2HpgCoreWhenAppendBlitCommandsMemCopyIsCalledWithDebugFlagSetThenNothingChanged, IsXe2HpgCore) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+    BlitProperties properties = {};
+    properties.dstAllocation = nullptr;
+    properties.srcAllocation = nullptr;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), 0);
+}
+
+HWTEST2_F(BlitTests, givenXe2HpgCoreWhenDstGraphicAlloctionWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe2HpgCore) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = &mockAllocation;
+    properties.srcAllocation = nullptr;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
+}
+
+HWTEST2_F(BlitTests, givenXe2HpgCoreWhenDstGraphicAlloctionAndStatelessFlagSetWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe2HpgCore) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    uint32_t statelessCompressionFormat = debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get();
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = &mockAllocation;
+    properties.srcAllocation = nullptr;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), statelessCompressionFormat);
+}
+
+HWTEST2_F(BlitTests, givenXe2HpgCoreWhenDstGraphicAlloctionAndStatelessFlagSetAndSystemMemoryPoolWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe2HpgCore) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = &mockAllocation;
+    properties.srcAllocation = nullptr;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
+}
+
+HWTEST2_F(BlitTests, givenXe2HpgCoreWhenSrcGraphicAlloctionWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe2HpgCore) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = nullptr;
+    properties.srcAllocation = &mockAllocation;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
+}
+
+HWTEST2_F(BlitTests, givenXe2HpgCoreWhenSrcGraphicAlloctionAndStatelessFlagSetWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe2HpgCore) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    uint32_t statelessCompressionFormat = debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get();
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = nullptr;
+    properties.srcAllocation = &mockAllocation;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), statelessCompressionFormat);
+}
+
+HWTEST2_F(BlitTests, givenXe2HpgCoreWhenSrcGraphicAlloctionAndStatelessFlagSetAndSystemMemoryPoolWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe2HpgCore) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = nullptr;
+    properties.srcAllocation = &mockAllocation;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
+}
+
 HWTEST2_F(BlitTests, givenXe3CoreWhenAppendBlitCommandsMemCopyIsCalledThenNothingChanged, IsXe3Core) {
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
@@ -568,6 +706,143 @@ HWTEST2_F(BlitTests, givenXe3CoreWhenAppendBlitCommandsMemCopyIsCalledThenNothin
     properties.srcAllocation = nullptr;
     NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
     EXPECT_EQ(bltCmd.getCompressionFormat(), 0);
+}
+
+HWTEST2_F(BlitTests, givenXe3CoreWhenAppendBlitCommandsMemCopyIsCalledWithDebugFlagSetThenNothingChanged, IsXe3Core) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+    BlitProperties properties = {};
+    properties.dstAllocation = nullptr;
+    properties.srcAllocation = nullptr;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), 0);
+}
+
+HWTEST2_F(BlitTests, givenXe3CoreWhenDstGraphicAlloctionWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe3Core) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = &mockAllocation;
+    properties.srcAllocation = nullptr;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
+}
+
+HWTEST2_F(BlitTests, givenXe3CoreWhenDstGraphicAlloctionAndStatelessFlagSetWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe3Core) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    uint32_t statelessCompressionFormat = debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get();
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = &mockAllocation;
+    properties.srcAllocation = nullptr;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), statelessCompressionFormat);
+}
+
+HWTEST2_F(BlitTests, givenXe3CoreWhenDstGraphicAlloctionAndStatelessFlagSetAndSystemMemoryPoolWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe3Core) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = &mockAllocation;
+    properties.srcAllocation = nullptr;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
+}
+
+HWTEST2_F(BlitTests, givenXe3CoreWhenSrcGraphicAlloctionWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe3Core) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = nullptr;
+    properties.srcAllocation = &mockAllocation;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
+}
+
+HWTEST2_F(BlitTests, givenXe3CoreWhenSrcGraphicAlloctionAndStatelessFlagSetWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe3Core) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    uint32_t statelessCompressionFormat = debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get();
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = nullptr;
+    properties.srcAllocation = &mockAllocation;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), statelessCompressionFormat);
+}
+
+HWTEST2_F(BlitTests, givenXe3CoreWhenSrcGraphicAlloctionAndStatelessFlagSetAndSystemMemoryPoolWhenAppendBlitCommandsMemCopyIsCalledThenCompressionChanged, IsXe3Core) {
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t newCompressionFormat = 1;
+    debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
+    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    mockAllocation.setGmm(gmm.get(), 0);
+
+    properties.dstAllocation = nullptr;
+    properties.srcAllocation = &mockAllocation;
+    NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+    EXPECT_EQ(bltCmd.getCompressionFormat(), newCompressionFormat);
 }
 
 HWTEST_F(BlitTests, givenXyBlockCopyBltCommandAndSliceIndex0WhenAppendBaseAddressOffsetIsCalledThenNothingChanged) {
