@@ -432,7 +432,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInit
     aubCsr->aubManager = nullptr;
 }
 
-HWTEST2_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledForMultipleDevicesThenFileNameIsExtendedWithSuffixToIndicateMultipleDevices, IsAtMostXeHpcCore) {
+HWTEST2_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledForMultipleDevicesThenFileNameIsExtendedWithSuffixToIndicateMultipleDevices, IsAtMostXeCore) {
     DebugManagerStateRestore stateRestore;
 
     debugManager.flags.CreateMultipleSubDevices.set(1);

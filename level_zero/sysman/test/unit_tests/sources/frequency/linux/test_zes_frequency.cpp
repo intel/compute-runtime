@@ -264,7 +264,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures1ThenAPIExitsGracefully, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures1ThenAPIExitsGracefully, IsXeCore) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
@@ -281,7 +281,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFreq
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pFrequencyImp->frequencySetRange(&limits));
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures2ThenAPIExitsGracefully, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures2ThenAPIExitsGracefully, IsXeCore) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
@@ -298,7 +298,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFreq
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pFrequencyImp->frequencySetRange(&limits));
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMin = 900.0;
@@ -318,7 +318,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesF
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenNegativeUnityRangeSetWhenGetRangeIsCalledThenReturnsValueFromDefaultPath, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenNegativeUnityRangeSetWhenGetRangeIsCalledThenReturnsValueFromDefaultPath, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double negativeMin = -1;
@@ -335,7 +335,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenNegativeUnityRangeSetWhenGetRangeIs
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMax = 600.0;
@@ -355,7 +355,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesF
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenInvalidFrequencyLimitsWhenCallingFrequencySetRangeThenVerifyFrequencySetRangeTestReturnsError, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenInvalidFrequencyLimitsWhenCallingFrequencySetRangeThenVerifyFrequencySetRangeTestReturnsError, IsXeCore) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
@@ -452,7 +452,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandlesWhenValidatingFre
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeWithLegacyPathThenVerifyzesFrequencySetRangeTestCallSucceeds, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeWithLegacyPathThenVerifyzesFrequencySetRangeTestCallSucceeds, IsXeCore) {
     pSysfsAccess->isLegacy = true;
     pSysfsAccess->directoryExistsResult = false;
     for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {

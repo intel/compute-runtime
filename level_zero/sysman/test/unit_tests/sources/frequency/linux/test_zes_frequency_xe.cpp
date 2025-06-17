@@ -230,7 +230,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFr
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures1ThenAPIExitsGracefully, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures1ThenAPIExitsGracefully, IsXeCore) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
@@ -247,7 +247,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFr
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pFrequencyImp->frequencySetRange(&limits));
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures2ThenAPIExitsGracefully, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures2ThenAPIExitsGracefully, IsXeCore) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
@@ -264,7 +264,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyLimitsWhenCallingFr
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pFrequencyImp->frequencySetRange(&limits));
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMin = 900.0;
@@ -297,7 +297,7 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalledAnd
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalledAndGettingDefaultMaxValueFailsThenNoFreqRangeIsInEffect, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalledAndGettingDefaultMaxValueFailsThenNoFreqRangeIsInEffect, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto &handle : handles) {
         const double negativeMin = -1;
@@ -313,7 +313,7 @@ HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenNegativeRangeWhenSetRangeIsCalled
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds, IsXeCore) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMax = 600.0;

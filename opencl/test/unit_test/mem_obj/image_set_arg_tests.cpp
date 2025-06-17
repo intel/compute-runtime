@@ -227,11 +227,11 @@ struct ImageSetArgSurfaceArrayTest : ImageSetArgTest {
     }
 };
 
-HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage1DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray, IsAtMostXeHpcCore) {
+HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage1DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray, IsAtMostXeCore) {
     testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE1D_ARRAY, 1u, false);
 }
 
-HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage2DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray, IsAtMostXeHpcCore) {
+HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage2DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray, IsAtMostXeCore) {
     testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE2D_ARRAY, 1u, false);
 }
 
@@ -377,7 +377,7 @@ HWTEST2_F(ImageSetArgTest, WhenSettingKernelArgThenPropertiesAreSetCorrectly, Ma
     EXPECT_EQ(expectedChannelBlue, surfaceState->getShaderChannelSelectBlue());
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState->getShaderChannelSelectAlpha());
     EXPECT_EQ(imageMocs, surfaceState->getMemoryObjectControlState());
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(0u, surfaceState->getCoherencyType());
     }
 
@@ -510,7 +510,7 @@ HWTEST_F(ImageSetArgTest, Given1dArrayWhenSettingKernelArgThenPropertiesAreSetCo
     delete image1Darray;
 }
 
-HWTEST2_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAuxCapabilityThenProgramAuxFieldsForMultisamples, IsAtMostArl) {
+HWTEST2_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAuxCapabilityThenProgramAuxFieldsForMultisamples, IsAtMostXeCore) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -551,7 +551,7 @@ HWTEST2_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAux
     delete image;
 }
 
-HWTEST2_F(ImageSetArgTest, givenDepthFormatWhenSetArgIsCalledThenProgramAuxFields, IsAtMostArl) {
+HWTEST2_F(ImageSetArgTest, givenDepthFormatWhenSetArgIsCalledThenProgramAuxFields, IsAtMostXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
@@ -612,7 +612,7 @@ HWTEST_F(ImageSetArgTest, givenMultisampledR32Floatx8x24DepthStencilFormatWhenSe
                 RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
 }
 
-HWTEST2_F(ImageSetArgTest, givenMcsAllocationAndCompressionWhenSetArgOnMultisampledImgIsCalledThenProgramAuxFieldsWithMcsParams, IsAtMostArl) {
+HWTEST2_F(ImageSetArgTest, givenMcsAllocationAndCompressionWhenSetArgOnMultisampledImgIsCalledThenProgramAuxFieldsWithMcsParams, IsAtMostXeCore) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -645,7 +645,7 @@ HWTEST2_F(ImageSetArgTest, givenMcsAllocationAndCompressionWhenSetArgOnMultisamp
     EXPECT_EQ(mcsAlloc->getGpuAddress(), surfaceState->getAuxiliarySurfaceBaseAddress());
 }
 
-HWTEST2_F(ImageSetArgTest, givenDepthFormatAndCompressionWhenSetArgOnMultisampledImgIsCalledThenDontProgramAuxFields, IsAtMostArl) {
+HWTEST2_F(ImageSetArgTest, givenDepthFormatAndCompressionWhenSetArgOnMultisampledImgIsCalledThenDontProgramAuxFields, IsAtMostXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 

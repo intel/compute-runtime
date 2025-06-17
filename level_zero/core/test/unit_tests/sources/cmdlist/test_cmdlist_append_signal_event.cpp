@@ -495,7 +495,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeCo
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
-          givenMultiTileCommandListWhenAppendingScopeEventSignalThenExpectPartitionedPipeControl, IsAtLeastXeHpCore) {
+          givenMultiTileCommandListWhenAppendingScopeEventSignalThenExpectPartitionedPipeControl, IsAtLeastXeCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -548,7 +548,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     EXPECT_EQ(1u, postSyncFound);
 }
 
-HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSyncLayoutWhenAppendingSignalingTimestampEventThenExpectOffsetRegisters, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSyncLayoutWhenAppendingSignalingTimestampEventThenExpectOffsetRegisters, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -633,7 +633,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
-          givenMultiTileCommandListWhenAppendingNonScopeEventSignalThenExpectPartitionedStoreDataImm, IsAtLeastXeHpCore) {
+          givenMultiTileCommandListWhenAppendingNonScopeEventSignalThenExpectPartitionedStoreDataImm, IsAtLeastXeCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -685,7 +685,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
-          givenMultiTileCommandListWhenAppendingScopeEventSignalAfterWalkerThenExpectPartitionedPipeControl, IsAtLeastXeHpCore) {
+          givenMultiTileCommandListWhenAppendingScopeEventSignalAfterWalkerThenExpectPartitionedPipeControl, IsAtLeastXeCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -743,7 +743,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
-          givenMultiTileImmediateCommandListWhenAppendingScopeEventSignalAfterWalkerThenExpectPartitionedPipeControl, IsAtLeastXeHpCore) {
+          givenMultiTileImmediateCommandListWhenAppendingScopeEventSignalAfterWalkerThenExpectPartitionedPipeControl, IsAtLeastXeCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -808,7 +808,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
-          givenMultiTileCommandListWhenAppendWriteGlobalTimestampCalledWithSignalEventThenWorkPartitionedRegistersAreUsed, IsAtLeastXeHpCore) {
+          givenMultiTileCommandListWhenAppendWriteGlobalTimestampCalledWithSignalEventThenWorkPartitionedRegistersAreUsed, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->getCmdContainer();
@@ -895,7 +895,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
-          givenCopyCommandListWhenAppendingTimestampEventPacketThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeHpCore) {
+          givenCopyCommandListWhenAppendingTimestampEventPacketThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
@@ -937,7 +937,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
-          givenCopyCommandListWhenAppendingImmediateEventPacketPostWalkerThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeHpCore) {
+          givenCopyCommandListWhenAppendingImmediateEventPacketPostWalkerThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();
@@ -981,7 +981,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
-          givenCopyCommandListWhenAppendingSignalImmediateEventPacketThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeHpCore) {
+          givenCopyCommandListWhenAppendingSignalImmediateEventPacketThenExpectCorrectNumberOfMiFlushCommands, IsAtLeastXeCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();

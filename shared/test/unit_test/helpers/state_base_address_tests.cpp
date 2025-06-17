@@ -239,7 +239,7 @@ HWTEST2_F(SbaTest, givenNotUsedGlobalHeapBaseAndSshPassedWhenBindlessSurfStateBa
     EXPECT_NE(ssh.getHeapGpuBase(), globalBindlessHeapsBaseAddress);
 }
 
-HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenNothingChanged, IsAtMostXeHpCore) {
+HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenNothingChanged, IsGen12LP) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
     auto expectedStateBaseAddress = FamilyType::cmdInitStateBaseAddress;
@@ -259,7 +259,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
     EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
 }
 
-HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenProgramCorrectL1CachePolicy, IsAtLeastXeHpgCore) {
+HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenProgramCorrectL1CachePolicy, IsAtLeastXeCore) {
     auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
 
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&stateBaseAddress, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);
@@ -329,7 +329,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
     }
 }
 
-HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePolicy, IsAtLeastXeHpgCore) {
+HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePolicy, IsAtLeastXeCore) {
     auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
 
     struct {
@@ -363,7 +363,7 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
     }
 }
 
-HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingRssThenProgramCorrectL1CachePolicy, IsAtLeastXeHpgCore) {
+HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingRssThenProgramCorrectL1CachePolicy, IsAtLeastXeCore) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
     AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::buffer, pDevice->getDeviceBitfield());
@@ -594,7 +594,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
     EXPECT_EQ(surfaceStateCount, sbaCmd.getBindlessSurfaceStateSize());
 }
 
-HWTEST2_F(SbaTest, GivenPlatformNotSupportingIndirectHeapBaseWhenProgramIndirectHeapThenNothingHappens, IsAtLeastXeHpCore) {
+HWTEST2_F(SbaTest, GivenPlatformNotSupportingIndirectHeapBaseWhenProgramIndirectHeapThenNothingHappens, IsAtLeastXeCore) {
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(nullptr, nullptr);
     StateBaseAddressHelper<FamilyType>::appendIohParameters(args);
 }
@@ -682,7 +682,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingIndirectStateProper
     EXPECT_EQ(indirectHeapSize, sbaCmd.getIndirectObjectBufferSize());
 }
 
-using GlobalBaseAddressPlatforms = IsAtLeastXeHpCore;
+using GlobalBaseAddressPlatforms = IsAtLeastXeCore;
 
 using BindlessSurfaceAddressPlatforms = MatchAny;
 

@@ -134,7 +134,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCalling
     EXPECT_EQ(expectedPowerUnit, pSysmanProductHelper->getPowerLimitUnit());
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCallingIsPowerSetLimitSupportedThenVerifySetRequestIsSupported, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCallingIsPowerSetLimitSupportedThenVerifySetRequestIsSupported, IsXeCore) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(pSysmanProductHelper->isPowerSetLimitSupported());
 }
@@ -313,7 +313,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenComponentCountZeroWhenEnumeratingPo
     }
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenSetPowerLimitsWhenGettingPowerLimitsWhenHwmonInterfaceExistThenLimitsSetEarlierAreRetrieved, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenSetPowerLimitsWhenGettingPowerLimitsWhenHwmonInterfaceExistThenLimitsSetEarlierAreRetrieved, IsXeCore) {
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -470,7 +470,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleAndWritingToPeakLim
     }
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleAndPermissionsThenFirstDisableSustainedPowerLimitAndThenEnableItAndCheckSuccesIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleAndPermissionsThenFirstDisableSustainedPowerLimitAndThenEnableItAndCheckSuccesIsReturned, IsXeCore) {
     auto handles = getPowerHandles(powerHandleComponentCount);
     ASSERT_NE(nullptr, handles[0]);
     zes_power_sustained_limit_t sustainedSet = {};
@@ -483,7 +483,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleAndPermissionsThenF
     EXPECT_EQ(sustainedGet.power, sustainedSet.power);
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenWritingToSustainedPowerEnableNodeWithoutPermissionsThenErrorIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenWritingToSustainedPowerEnableNodeWithoutPermissionsThenErrorIsReturned, IsXeCore) {
     auto handles = getPowerHandles(powerHandleComponentCount);
     ASSERT_NE(nullptr, handles[0]);
 
@@ -540,7 +540,7 @@ HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenValidPowerHandlesWithTel
     }
 }
 
-HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenSetPowerLimitsWhenGettingPowerLimitsThenLimitsSetEarlierAreRetrieved, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerMultiDeviceTest, GivenSetPowerLimitsWhenGettingPowerLimitsThenLimitsSetEarlierAreRetrieved, IsXeCore) {
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);

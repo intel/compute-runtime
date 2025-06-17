@@ -30,14 +30,14 @@ using namespace NEO;
 #include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 using ThreadArbitrationXeHPAndLater = PreambleFixture;
-HWTEST2_F(ThreadArbitrationXeHPAndLater, whenGetDefaultThreadArbitrationPolicyIsCalledThenCorrectPolicyIsReturned, IsXeHpOrXeHpgCore) {
+HWTEST2_F(ThreadArbitrationXeHPAndLater, whenGetDefaultThreadArbitrationPolicyIsCalledThenCorrectPolicyIsReturned, IsXeHpgCore) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, gfxCoreHelper.getDefaultThreadArbitrationPolicy());
 }
 
 using ProgramPipelineXeHPAndLater = PreambleFixture;
-HWTEST2_F(ProgramPipelineXeHPAndLater, givenDebugVariableWhenProgramPipelineSelectIsCalledThenItHasProperFieldsSet, IsWithinXeGfxFamily) {
+HWTEST2_F(ProgramPipelineXeHPAndLater, givenDebugVariableWhenProgramPipelineSelectIsCalledThenItHasProperFieldsSet, IsXeCore) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     DebugManagerStateRestore stateRestore;
     debugManager.flags.OverrideSystolicPipelineSelect.set(1);
@@ -56,7 +56,7 @@ HWTEST2_F(ProgramPipelineXeHPAndLater, givenDebugVariableWhenProgramPipelineSele
 }
 
 using PreemptionWatermarkXeHPAndLater = PreambleFixture;
-HWTEST2_F(PreemptionWatermarkXeHPAndLater, givenPreambleThenPreambleWorkAroundsIsNotProgrammed, IsAtLeastXeHpCore) {
+HWTEST2_F(PreemptionWatermarkXeHPAndLater, givenPreambleThenPreambleWorkAroundsIsNotProgrammed, IsAtLeastXeCore) {
     PreambleHelper<FamilyType>::programGenSpecificPreambleWorkArounds(&linearStream, *defaultHwInfo);
 
     parseCommands<FamilyType>(linearStream);
@@ -148,7 +148,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenScratchEnabledWh
     }
 }
 
-HWTEST2_F(PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveNotSetValue, IsHeapfulSupportedAndAtLeastXeHpCore) {
+HWTEST2_F(PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveNotSetValue, IsHeapfulSupportedAndAtLeastXeCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     auto cfeState = reinterpret_cast<CFE_STATE *>(linearStream.getSpace(sizeof(CFE_STATE)));
@@ -181,7 +181,7 @@ HWTEST2_F(PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeState
     EXPECT_EQ(overDispatchControl, static_cast<uint32_t>(cfeState->getOverDispatchControl()));
 }
 
-HWTEST2_F(PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue, IsWithinXeHpCoreAndXe2HpgCore) {
+HWTEST2_F(PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue, IsWithinXeCoreAndXe2HpgCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     uint32_t expectedValue1 = 1u;
@@ -396,7 +396,7 @@ void flushTaskAndcheckForSBA(StateBaseAddressXeHPAndLaterTests *sbaTest, Command
 
 using RenderSurfaceStateXeHPAndLaterTests = XeHpCommandStreamReceiverFlushTaskTests;
 
-HWTEST2_F(RenderSurfaceStateXeHPAndLaterTests, givenSpecificProductFamilyWhenAppendingRssThenProgramGpuCoherency, IsWithinXeGfxFamily) {
+HWTEST2_F(RenderSurfaceStateXeHPAndLaterTests, givenSpecificProductFamilyWhenAppendingRssThenProgramGpuCoherency, IsXeCore) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
     AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::buffer, pDevice->getDeviceBitfield());
@@ -427,7 +427,7 @@ HWTEST2_F(RenderSurfaceStateXeHPAndLaterTests, givenSpecificProductFamilyWhenApp
 
 using PipelineSelectTest = ::testing::Test;
 
-HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWithinXeGfxFamily) {
+HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsXeCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 

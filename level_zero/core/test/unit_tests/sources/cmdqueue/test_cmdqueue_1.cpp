@@ -1152,7 +1152,7 @@ HWTEST_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchWh
     alignedFree(alloc);
 }
 
-HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateScratchWhenExecuteThenSshWasUsed, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateScratchWhenExecuteThenSshWasUsed, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
@@ -1754,7 +1754,7 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->destroy();
 }
 
-HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPrivateScratchUniquePerCmdListThenCFEIsProgrammedOncePerSubmission, IsHeapfulSupportedAndAtLeastXeHpCore) {
+HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandListsAndWithPrivateScratchUniquePerCmdListThenCFEIsProgrammedOncePerSubmission, IsHeapfulSupportedAndAtLeastXeCore) {
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);

@@ -22,7 +22,7 @@ using namespace NEO;
 
 using GfxCoreHelperDg2AndLaterTest = ::testing::Test;
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsTrueWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeHpgCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsTrueWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     MockExecutionEnvironment mockExecutionEnvironment{};
@@ -35,7 +35,7 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsTrueWhenCallSetL1CacheP
     EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, surfaceState.getL1CacheControlCachePolicy());
 }
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStateForScratchSpaceWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeHpgCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStateForScratchSpaceWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.set(1);
 
@@ -50,7 +50,7 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStat
     EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_UC, surfaceState.getL1CacheControlCachePolicy());
 }
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsNotSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsNotSet, IsAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
@@ -62,7 +62,7 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1Cache
 }
 
 using GfxCoreHelperWithLargeGrf = ::testing::Test;
-HWTEST2_F(GfxCoreHelperWithLargeGrf, givenLargeGrfAndSimdSmallerThan32WhenCalculatingMaxWorkGroupSizeThenReturnHalfOfDeviceDefault, IsWithinXeGfxFamily) {
+HWTEST2_F(GfxCoreHelperWithLargeGrf, givenLargeGrfAndSimdSmallerThan32WhenCalculatingMaxWorkGroupSizeThenReturnHalfOfDeviceDefault, IsXeCore) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
@@ -83,7 +83,7 @@ HWTEST2_F(GfxCoreHelperWithLargeGrf, givenLargeGrfAndSimdSmallerThan32WhenCalcul
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize, rootDeviceEnvironment));
 }
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCallCalculateMaxWorkGroupSizeThenMethodAdjustMaxWorkGroupSizeIsCalled, IsWithinXeGfxFamily) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCallCalculateMaxWorkGroupSizeThenMethodAdjustMaxWorkGroupSizeIsCalled, IsXeCore) {
     static bool isCalledAdjustMaxWorkGroupSize = false;
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
         uint32_t adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const override {
@@ -102,7 +102,7 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCallCalculateMaxWo
 
 using PipeControlHelperTestsDg2AndLater = ::testing::Test;
 
-HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectCommandsAreProgrammed, IsAtLeastXeHpgCore) {
+HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectCommandsAreProgrammed, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     uint8_t buffer[128];
@@ -156,7 +156,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
     }
 }
 
-HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenSettingExtraPipeControlPropertiesThenCorrectValuesAreSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenSettingExtraPipeControlPropertiesThenCorrectValuesAreSet, IsAtLeastXeCore) {
     PipeControlArgs args{};
     MemorySynchronizationCommands<FamilyType>::setPostSyncExtraProperties(args);
 
@@ -164,7 +164,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenSettingExtraPipeControlProperti
     EXPECT_TRUE(args.unTypedDataPortCacheFlush);
 }
 
-HWTEST2_F(PipeControlHelperTestsDg2AndLater, whenSettingCacheFlushExtraFieldsThenExpectHdcAndUnTypedDataPortFlushSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(PipeControlHelperTestsDg2AndLater, whenSettingCacheFlushExtraFieldsThenExpectHdcAndUnTypedDataPortFlushSet, IsAtLeastXeCore) {
     PipeControlArgs args{};
 
     MemorySynchronizationCommands<FamilyType>::setCacheFlushExtraProperties(args);
@@ -172,7 +172,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, whenSettingCacheFlushExtraFieldsThe
     EXPECT_TRUE(args.unTypedDataPortCacheFlush);
 }
 
-HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenRequestedCacheFlushesWhenProgrammingPipeControlThenFlushHdcAndUnTypedDataPortCache, IsAtLeastXeHpgCore) {
+HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenRequestedCacheFlushesWhenProgrammingPipeControlThenFlushHdcAndUnTypedDataPortCache, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     uint32_t buffer[sizeof(PIPE_CONTROL) * 2] = {};
@@ -190,7 +190,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenRequestedCacheFlushesWhenProgr
     EXPECT_TRUE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 
-HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugVariableSetWhenProgrammingPipeControlThenFlushHdcAndUnTypedDataPortCache, IsAtLeastXeHpgCore) {
+HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugVariableSetWhenProgrammingPipeControlThenFlushHdcAndUnTypedDataPortCache, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore restore;
     debugManager.flags.FlushAllCaches.set(true);
@@ -207,7 +207,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugVariableSetWhenProgrammin
     EXPECT_TRUE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 
-HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugDisableCacheFlushWhenProgrammingPipeControlWithCacheFlushThenExpectDebugOverrideFlushHdcAndUnTypedDataPortCache, IsAtLeastXeHpgCore) {
+HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugDisableCacheFlushWhenProgrammingPipeControlWithCacheFlushThenExpectDebugOverrideFlushHdcAndUnTypedDataPortCache, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore restore;
     debugManager.flags.DoNotFlushCaches.set(true);
@@ -227,27 +227,27 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugDisableCacheFlushWhenProg
     EXPECT_FALSE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenXeHPGAndLaterPlatformWhenCheckingIfUnTypedDataPortCacheFlushRequiredThenReturnTrue, IsAtLeastXeHpgCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenXeHPGAndLaterPlatformWhenCheckingIfUnTypedDataPortCacheFlushRequiredThenReturnTrue, IsAtLeastXeCore) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     EXPECT_TRUE(gfxCoreHelper.unTypedDataPortCacheFlushRequired());
 }
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCheckIsUpdateTaskCountFromWaitSupportedThenReturnsTrue, IsAtLeastXeHpgCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCheckIsUpdateTaskCountFromWaitSupportedThenReturnsTrue, IsAtLeastXeCore) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
     EXPECT_TRUE(gfxCoreHelper.isUpdateTaskCountFromWaitSupported());
 }
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCheckMakeResidentBeforeLockNeededThenReturnsTrue, IsAtLeastXeHpgCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCheckMakeResidentBeforeLockNeededThenReturnsTrue, IsAtLeastXeCore) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
     EXPECT_TRUE(gfxCoreHelper.makeResidentBeforeLockNeeded(false));
 }
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue, IsXeHpcOrXeHpgCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue, IsXeCore) {
     DebugManagerStateRestore restorer;
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
@@ -262,13 +262,13 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenFlagSetAndCallGetA
 
 using ProductHelperTestDg2AndLater = ::testing::Test;
 
-HWTEST2_F(ProductHelperTestDg2AndLater, givenDg2AndLaterPlatformWhenAskedIfHeapInLocalMemThenTrueIsReturned, IsAtLeastXeHpgCore) {
+HWTEST2_F(ProductHelperTestDg2AndLater, givenDg2AndLaterPlatformWhenAskedIfHeapInLocalMemThenTrueIsReturned, IsAtLeastXeCore) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.heapInLocalMem(*defaultHwInfo));
 }
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenPlatformSupportsHdcUntypedCacheFlushWhenPropertyBlocksCacheFlushThenExpectNoCacheFlushSet, IsAtLeastXeHpCore) {
+HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenPlatformSupportsHdcUntypedCacheFlushWhenPropertyBlocksCacheFlushThenExpectNoCacheFlushSet, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 

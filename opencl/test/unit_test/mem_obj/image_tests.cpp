@@ -1985,7 +1985,7 @@ HWTEST2_F(ImageAdjustDepthTests, givenSurfaceStateWhenImageIsNot3DRTVOrUAVThenDe
     EXPECT_EQ(ss.getDepth(), originalDepth);
 }
 
-HWTEST2_F(ImageAdjustDepthTests, givenSurfaceStateWhenAdjustDepthReturnFalseThenOriginalDepthIsUsed, IsAtMostXeHpcCore) {
+HWTEST2_F(ImageAdjustDepthTests, givenSurfaceStateWhenAdjustDepthReturnFalseThenOriginalDepthIsUsed, IsAtMostXeCore) {
     typename FamilyType::RENDER_SURFACE_STATE ss;
     uint32_t minArrayElement = 1;
     uint32_t renderTargetViewExtent = 1;

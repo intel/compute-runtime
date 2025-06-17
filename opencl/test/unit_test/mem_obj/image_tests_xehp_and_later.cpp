@@ -205,7 +205,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedMode);
 }
 
-HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetAuxParamsForMultisampleCalledThenAuxModeIsExpected, IsAtLeastBmg) {
+HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetAuxParamsForMultisampleCalledThenAuxModeIsExpected, IsAtLeastXe2HpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     MockContext context;
@@ -240,7 +240,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetAuxParamsForMultisamp
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedSS.getAuxiliarySurfaceMode());
 }
 
-HWTEST2_F(XeHPAndLaterImageTests, givenImageWithUnifiedMcsWhenSetAuxParamsForMultisampleThenAuxModeIsExpected, IsAtLeastBmg) {
+HWTEST2_F(XeHPAndLaterImageTests, givenImageWithUnifiedMcsWhenSetAuxParamsForMultisampleThenAuxModeIsExpected, IsAtLeastXe2HpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     MockContext context;
@@ -269,7 +269,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithUnifiedMcsWhenSetAuxParamsForMul
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedSS.getAuxiliarySurfaceMode());
 }
 
-HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWhenSetAuxParamsForMultisampleThenAuxSurfBaseAddredssIsZero, IsAtLeastBmg) {
+HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWhenSetAuxParamsForMultisampleThenAuxSurfBaseAddredssIsZero, IsAtLeastXe2HpgCore) {
     MockContext context;
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
@@ -284,7 +284,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWhenSetAuxParamsForMultisa
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
 }
 
-HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithDepthFormatWhenSetAuxParamsForMultisampleThenStorageFormatIsSetToDepthStencil, IsAtLeastBmg) {
+HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithDepthFormatWhenSetAuxParamsForMultisampleThenStorageFormatIsSetToDepthStencil, IsAtLeastXe2HpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     MockContext context;
@@ -304,7 +304,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithDepthFormatWhenSetAuxP
               RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
 }
 
-HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithNotDepthFormatWhenSetAuxParamsForMultisampleThenStorageFormatIsSetToMSS, IsAtLeastBmg) {
+HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithNotDepthFormatWhenSetAuxParamsForMultisampleThenStorageFormatIsSetToMSS, IsAtLeastXe2HpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     MockContext context;
@@ -324,7 +324,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithNotDepthFormatWhenSetA
               RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
 }
 
-HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithTypelessSurfaceStateFormatWhenSetAuxParamsForMultisampleThenStorageFormatIsSetToMSS, IsAtLeastBmg) {
+HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithTypelessSurfaceStateFormatWhenSetAuxParamsForMultisampleThenStorageFormatIsSetToMSS, IsAtLeastXe2HpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     MockContext context;
@@ -602,7 +602,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenAuxModeMcsLceWhenAppendingSurfaceSt
     EXPECT_EQ(expectedGetMediaSurfaceStateCompressionFormatCalled, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled);
 }
 
-HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenAuxCapableIsNotSetThenProgramAuxBaseAddressAnyway, IsAtLeastBmg) {
+HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenAuxCapableIsNotSetThenProgramAuxBaseAddressAnyway, IsAtLeastXe2HpgCore) {
     MockContext context;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});

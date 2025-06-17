@@ -339,7 +339,7 @@ HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, 
     auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
     auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
     EXPECT_EQ(devicePtr, reinterpret_cast<void *>(surfaceStateAddress->getSurfaceBaseAddress()));
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceStateAddress->getCoherencyType());
     }
 
@@ -3349,7 +3349,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenDontAppendAllowZebi
     EXPECT_STREQ(expectedOptions, moduleTu.options.c_str());
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenLargeGrfAndSimd16WhenProcessingBinaryThenKernelGroupSizeReducedToFitWithinSubslice, IsWithinXeGfxFamily) {
+HWTEST2_F(ModuleTranslationUnitTest, givenLargeGrfAndSimd16WhenProcessingBinaryThenKernelGroupSizeReducedToFitWithinSubslice, IsXeCore) {
     std::string validZeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
 kernels:
     - name : kernel_with_default_maxWGS
@@ -3396,7 +3396,7 @@ kernels:
     EXPECT_EQ(ZE_RESULT_SUCCESS, reducedKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]));
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenLargeGrfAndSimd16WhenProcessingBinaryThenSuggestedKernelGroupSizeFitsWithinSubslice, IsWithinXeGfxFamily) {
+HWTEST2_F(ModuleTranslationUnitTest, givenLargeGrfAndSimd16WhenProcessingBinaryThenSuggestedKernelGroupSizeFitsWithinSubslice, IsXeCore) {
     std::string validZeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
 kernels:
     - name : kernel_with_default_maxWGS
@@ -3611,7 +3611,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenInternalOptionsThenLSCCachePolicyIsSet)
     }
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
     auto pMockCompilerInterface = new MockCompilerInterface;
@@ -3673,7 +3673,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebin
     removeVirtualFile(fileName);
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetForceAllResourcesUncachedWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetForceAllResourcesUncachedWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
     debugManager.flags.ForceAllResourcesUncached.set(true);
@@ -3689,7 +3689,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetForceAllResourcesUncachedW
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=2 -cl-load-cache-default=2"), std::string::npos);
 }
 
-HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeCore) {
     auto pMockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(pMockCompilerInterface);

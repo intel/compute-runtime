@@ -330,7 +330,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIsDisableScratchPagesSup
     EXPECT_TRUE(productHelper->isDisableScratchPagesSupported());
 }
 
-HWTEST2_F(ProductHelperTestLinux, givenE2ECompressionWhenConfiguringHwInfoDrmThenCompressionFlagsAreCorrectlySet, IsBeforeXe2HpgCore) {
+HWTEST2_F(ProductHelperTestLinux, givenE2ECompressionWhenConfiguringHwInfoDrmThenCompressionFlagsAreCorrectlySet, IsAtMostXeCore) {
     pInHwInfo.featureTable.flags.ftrE2ECompression = true;
     int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);

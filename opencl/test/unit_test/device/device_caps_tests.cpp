@@ -1428,28 +1428,7 @@ HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNa
     clGfxCoreHelper.release();
 }
 
-using isPreGen12 = IsBeforeGfxCore<IGFX_GEN12_CORE>;
-HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsCalculatedCorrectly, isPreGen12) {
-    HardwareInfo myHwInfo = *defaultHwInfo;
-    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
-    PLATFORM &myPlatform = myHwInfo.platform;
-
-    mySysInfo.EUCount = 16;
-    mySysInfo.SubSliceCount = 4;
-    mySysInfo.DualSubSliceCount = 2;
-    mySysInfo.ThreadCount = 16 * 8;
-    myPlatform.usRevId = 0x4;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto minSimd = gfxCoreHelper.getMinimalSIMDSize();
-
-    size_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.SubSliceCount) * minSimd;
-
-    EXPECT_EQ(expectedWGSize, device->sharedDeviceInfo.maxWorkGroupSize);
-}
-
-using isGen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
-HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsCalculatedCorrectly, isGen12Plus) {
+HWTEST_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsCalculatedCorrectly) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     PLATFORM &myPlatform = myHwInfo.platform;

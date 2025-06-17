@@ -356,7 +356,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2
     EXPECT_NE(0u, idd.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST2_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenNumberOfPipelineSelectsIsOne, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenNumberOfPipelineSelectsIsOne, IsAtMostXeCore) {
     enqueueCopyBufferRect2D<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
@@ -480,7 +480,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3
     EXPECT_NE(0u, idd.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST2_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenNumberOfPipelineSelectsIsOne, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenNumberOfPipelineSelectsIsOne, IsAtMostXeCore) {
     enqueueCopyBufferRect3D<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

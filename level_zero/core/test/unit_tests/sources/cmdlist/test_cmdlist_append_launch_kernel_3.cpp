@@ -619,7 +619,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     EXPECT_EQ(std::numeric_limits<size_t>::max(), cooperativeParams.syncBufferPatchIndex);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelWithMakeViewIsCalledThenNoAllocationCreated, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelWithMakeViewIsCalledThenNoAllocationCreated, IsAtLeastXeCore) {
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -670,7 +670,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenAppendLaunchKernelIsCalledThenPatchBuffer, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenAppendLaunchKernelIsCalledThenPatchBuffer, IsAtLeastXeCore) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
 
@@ -752,7 +752,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     EXPECT_NE(0u, noopParam.patchSize);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenAppendLaunchKernelWithMakeViewIsCalledThenNoPatchBuffer, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenAppendLaunchKernelWithMakeViewIsCalledThenNoPatchBuffer, IsAtLeastXeCore) {
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -1177,7 +1177,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
 
 using MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest = Test<MultiTileImmediateCommandListAppendLaunchKernelFixture>;
 
-HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListThenDoNotAddSelfCleanup, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImplicitScalingWhenUsingImmediateCommandListThenDoNotAddSelfCleanup, IsAtLeastXeCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;

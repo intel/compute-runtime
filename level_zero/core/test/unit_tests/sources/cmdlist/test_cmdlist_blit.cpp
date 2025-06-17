@@ -423,13 +423,13 @@ HWTEST_F(AppendMemoryCopyFromContext, givenCommandListThenUpOnPerformingAppendMe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-struct IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport {
+struct IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
         return IsAtLeastGfxCore<IGFX_XE_HP_CORE>::isMatched<productFamily>() && !IsXe2HpgCore::isMatched<productFamily>() && NEO::HwMapper<productFamily>::GfxProduct::supportsSampler;
     }
 };
-HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTiled1DArrayImagePassedToImageCopyBlitThenTransformedTo2DArrayCopy, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTiled1DArrayImagePassedToImageCopyBlitThenTransformedTo2DArrayCopy, IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -464,7 +464,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTiled1DArrayImagePassed
     EXPECT_EQ(cmd->getSourceSurfaceHeight(), depth);
 }
 
-HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenNotTiled1DArrayImagePassedToImageCopyBlitThenNotTransformedTo2DArrayCopy, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenNotTiled1DArrayImagePassedToImageCopyBlitThenNotTransformedTo2DArrayCopy, IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);

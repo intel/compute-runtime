@@ -672,14 +672,14 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaDisabledThenAddit
     EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
 }
 
-struct IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport {
+struct IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
         return IsAtLeastGfxCore<IGFX_XE_HP_CORE>::isMatched<productFamily>() && !IsXe2HpgCore::isMatched<productFamily>() && NEO::HwMapper<productFamily>::GfxProduct::supportsSampler;
     }
 };
 
-HWTEST2_F(BlitTests, givenXeHPOrAboveTiledResourcesWhenAppendSliceOffsetsIsCalledThenIndexesAreSet, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+HWTEST2_F(BlitTests, givenXeHPOrAboveTiledResourcesWhenAppendSliceOffsetsIsCalledThenIndexesAreSet, IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
     auto blitCmd = FamilyType::cmdInitXyBlockCopyBlt;
@@ -702,7 +702,7 @@ HWTEST2_F(BlitTests, givenXeHPOrAboveTiledResourcesWhenAppendSliceOffsetsIsCalle
     EXPECT_EQ(blitCmd.getSourceArrayIndex(), sliceIndex + 1);
 }
 
-HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled4ThenSrcAndDstTypeIs2D, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled4ThenSrcAndDstTypeIs2D, IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
@@ -727,7 +727,7 @@ HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled4ThenSrcAndDstTypeIs2D,
     EXPECT_EQ(bltCmd.getDestinationSurfaceType(), XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
 }
 
-HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled64ThenSrcAndDstTypeIs2D, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled64ThenSrcAndDstTypeIs2D, IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
@@ -752,7 +752,7 @@ HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled64ThenSrcAndDstTypeIs2D
     EXPECT_EQ(bltCmd.getDestinationSurfaceType(), XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
 }
 
-HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DNotTiledThenSrcAndDstTypeIs1D, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DNotTiledThenSrcAndDstTypeIs1D, IsAtLeastXeCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());

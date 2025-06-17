@@ -330,13 +330,13 @@ HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationN
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, state->getSurfaceType());
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), state->getCoherencyType());
     }
     alignedFree(stateBuffer);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherencyProvidedThenCoherencyGpuIsSet, IsWithinXeGfxFamily) {
+HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherencyProvidedThenCoherencyGpuIsSet, IsXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
@@ -461,7 +461,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, whenAdjustPipelineSelect
     EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotInitializedSshThenExpectCorrectSbaCommand, IsHeapfulSupportedAndAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotInitializedSshThenExpectCorrectSbaCommand, IsHeapfulSupportedAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
@@ -492,7 +492,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotIniti
     EXPECT_EQ(commands.end(), itorCmd);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, IsHeapfulSupportedAndAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, IsHeapfulSupportedAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
@@ -537,7 +537,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetTh
     EXPECT_EQ(bindingTablePoolSize, bindTablePoolCmd->getBindingTablePoolBufferSize());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenGeneralBaseAddressSetThenExpectAddressFromPropertiesUsedNotFromContainer, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenGeneralBaseAddressSetThenExpectAddressFromPropertiesUsedNotFromContainer, IsAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto indirectHeapBaseAddress = cmdContainer->getIndirectObjectHeapBaseAddress();

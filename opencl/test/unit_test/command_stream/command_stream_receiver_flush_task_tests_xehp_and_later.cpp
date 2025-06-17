@@ -158,7 +158,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenSBACommandToProgramOnSingleCCSSetupThenThereIsPipeControlPriorToIt, IsWithinXeGfxFamily) {
+HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenSBACommandToProgramOnSingleCCSSetupThenThereIsPipeControlPriorToIt, IsXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     hardwareInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;

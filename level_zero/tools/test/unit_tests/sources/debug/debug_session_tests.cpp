@@ -1317,7 +1317,7 @@ TEST(DebugSessionTest, givenErrorFromReadRegistersWhenReadSbaRegistersCalledThen
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
-HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledThenErrorReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledThenErrorReturned, IsAtLeastXeCore) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
@@ -2801,7 +2801,7 @@ TEST_F(DebugSessionRegistersAccessTest,
 
 HWTEST2_F(DebugSessionRegistersAccessTest,
           givenGetThreadRegisterSetPropertiesCalledWhenLargeGrfIsSetThen256GrfRegisterCountIsReported,
-          IsXeHpOrXeHpcOrXeHpgCore) {
+          IsXeCore) {
     auto mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 256);
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
@@ -2830,7 +2830,7 @@ HWTEST2_F(DebugSessionRegistersAccessTest,
 
 HWTEST2_F(DebugSessionRegistersAccessTest,
           givenGetThreadRegisterSetPropertiesCalledWhenLargeGrfIsNotSetThen128GrfRegisterCountIsReported,
-          IsXeHpOrXeHpcOrXeHpgCore) {
+          IsXeCore) {
     auto mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 256);
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);

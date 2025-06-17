@@ -3046,7 +3046,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 struct HeapfulSupportedAndAtLeastXeHpCoreMatch {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-        return IsAtLeastXeHpCore::isMatched<productFamily>() && HeapfulSupportedMatch::isMatched<productFamily>();
+        return IsAtLeastXeCore::isMatched<productFamily>() && HeapfulSupportedMatch::isMatched<productFamily>();
     }
 };
 

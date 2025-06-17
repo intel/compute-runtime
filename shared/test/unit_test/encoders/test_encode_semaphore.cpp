@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
     EXPECT_EQ(WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore->getWaitMode());
 }
 
-HWTEST2_F(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreThenSetIndirectBit, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreThenSetIndirectBit, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 

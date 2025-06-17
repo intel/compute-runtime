@@ -381,7 +381,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferTest, WhenCopyingBufferThenInter
     EXPECT_NE(0u, cmdIDD->getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferThenNumberOfPipelineSelectsIsOne, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferThenNumberOfPipelineSelectsIsOne, IsAtMostXeCore) {
     enqueueCopyBufferAndParse<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

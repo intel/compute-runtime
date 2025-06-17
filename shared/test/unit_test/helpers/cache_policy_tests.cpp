@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,27 +14,27 @@
 
 using namespace NEO;
 
-HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenUnsupportedL1PoliciesAndGetDefaultL1CachePolicyThenReturnZero, IsAtMostXeHpCore) {
+HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenUnsupportedL1PoliciesAndGetDefaultL1CachePolicyThenReturnZero, IsGen12LP) {
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), 0u);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), 0u);
 }
 
-HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenUnsupportedL1PoliciesAndGetUncached1CachePolicyThenReturnOne, IsAtMostXeHpCore) {
+HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenUnsupportedL1PoliciesAndGetUncached1CachePolicyThenReturnOne, IsGen12LP) {
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getUncachedL1CachePolicy(), 1u);
 }
 
-HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeHpgCore) {
+HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
     using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
 }
 
-HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetUncached1CachePolicyThenReturnCorrectValue, IsAtLeastXeHpgCore) {
+HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetUncached1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
     using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getUncachedL1CachePolicy(), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC);
 }
 
-HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndWriteBackPolicyWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeHpgCore) {
+HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndWriteBackPolicyWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
 
@@ -43,7 +43,7 @@ HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndWriteBackPolicyWhenGetL1Cac
     EXPECT_EQ(0, memcmp(L1CachePolicyHelper<productFamily>::getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
 }
 
-HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndForceAllResourcesUncachedWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeHpgCore) {
+HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndForceAllResourcesUncachedWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceAllResourcesUncached.set(true);
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);

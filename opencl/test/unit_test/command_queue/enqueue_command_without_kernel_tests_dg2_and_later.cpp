@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 
 namespace NEO {
-using IsDG2AndLater = IsAtLeastXeHpgCore;
+using IsDG2AndLater = IsAtLeastXeCore;
 
 HWTEST2_F(DispatchFlagsTests, whenSubmittingKernelWithAdditionalKernelExecInfoThenCorrectDispatchFlagIsSet, IsDG2AndLater) {
 

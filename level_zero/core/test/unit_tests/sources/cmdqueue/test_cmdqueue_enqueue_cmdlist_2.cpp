@@ -130,7 +130,7 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeCo
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothThenPipelineSelectProgrammedOnce, IsAtMostXeHpcCore) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothThenPipelineSelectProgrammedOnce, IsAtMostXeCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
 
     auto &productHelper = device->getProductHelper();
@@ -194,7 +194,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
     commandQueue2->destroy();
 }
 
-HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothQueuesThenPreemptionModeIsProgrammedOnce, IsAtMostXeHpcCore) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothQueuesThenPreemptionModeIsProgrammedOnce, IsAtMostXeCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     ze_result_t returnValue;

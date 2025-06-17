@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ using namespace NEO;
 
 using XeHPAndLaterCommandEncoderMathTest = Test<DeviceFixture>;
 
-HWTEST2_F(XeHPAndLaterCommandEncoderMathTest, WhenAppendsAGreaterThanThenPredicateCorrectlySetAndRemapEnabled, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterCommandEncoderMathTest, WhenAppendsAGreaterThanThenPredicateCorrectlySetAndRemapEnabled, IsAtLeastXeCore) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;

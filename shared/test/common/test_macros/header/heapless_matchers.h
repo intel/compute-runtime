@@ -29,10 +29,7 @@ struct IsHeapfulSupportedAnd {
     }
 };
 
-using IsHeapfulSupportedAndAtLeastXeHpCore = IsHeapfulSupportedAnd<IsAtLeastXeHpCore>;
+using IsHeapfulSupportedAndAtLeastXeCore = IsHeapfulSupportedAnd<IsAtLeastXeCore>;
 using IsHeapfulSupportedAndAtLeastXeHpcCore = IsHeapfulSupportedAnd<IsAtLeastXeHpcCore>;
-using IsHeapfulSupportedAndAtLeastXe3Core = IsHeapfulSupportedAnd<IsAtLeastXe3Core>;
-using IsHeapfulSupportedAndAtLeastXeHpgCore = IsHeapfulSupportedAnd<IsAtLeastXeHpgCore>;
-using IsHeapfulSupportedAndDG2AndLater = IsHeapfulSupportedAndAtLeastXeHpgCore;
 using IsHeapfulSupportedAndAtLeastXe2HpgCore = IsHeapfulSupportedAnd<IsAtLeastXe2HpgCore>;
-using IsHeapfulSupportedAndAtLeastGen12LP = IsHeapfulSupportedAnd<IsAtLeastGen12LP>;
+using IsHeapfulSupportedAndAtLeastXe3Core = IsHeapfulSupportedAnd<IsAtLeastXe3Core>;

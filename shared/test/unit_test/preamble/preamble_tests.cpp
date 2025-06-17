@@ -250,7 +250,7 @@ HWTEST_F(PreambleTest, givenNotSetForceSemaphoreDelayBetweenWaitsWhenProgramSema
     ASSERT_EQ(0u, cmdList.size());
 }
 
-HWTEST2_F(PreambleTest, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsCalledThenExtraPipelineSelectAndTwoExtraPipeControlsAdded, IsWithinXeGfxFamily) {
+HWTEST2_F(PreambleTest, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsCalledThenExtraPipelineSelectAndTwoExtraPipeControlsAdded, IsXeCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -283,14 +283,14 @@ HWTEST2_F(PreambleTest, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsC
     EXPECT_EQ(2u, numPipelineSelect);
 }
 
-HWTEST2_F(PreambleTest, GivenAtLeastXeHpCoreWhenPreambleRetrievesUrbEntryAllocationSizeThenValueIsCorrect, IsAtLeastXeHpCore) {
+HWTEST2_F(PreambleTest, GivenAtLeastXeHpCoreWhenPreambleRetrievesUrbEntryAllocationSizeThenValueIsCorrect, IsAtLeastXeCore) {
     uint32_t actualVal = PreambleHelper<FamilyType>::getUrbEntryAllocationSize();
     EXPECT_EQ(0u, actualVal);
 }
 
 using PreambleHwTest = PreambleFixture;
 
-HWTEST2_F(PreambleHwTest, GivenAtLeastXeHpCoreWhenPreambleAddsPipeControlBeforeCommandThenExpectNothingToAdd, IsAtLeastXeHpCore) {
+HWTEST2_F(PreambleHwTest, GivenAtLeastXeHpCoreWhenPreambleAddsPipeControlBeforeCommandThenExpectNothingToAdd, IsAtLeastXeCore) {
     constexpr size_t bufferSize = 64;
     uint8_t buffer[bufferSize];
     LinearStream stream(buffer, bufferSize);
@@ -301,7 +301,7 @@ HWTEST2_F(PreambleHwTest, GivenAtLeastXeHpCoreWhenPreambleAddsPipeControlBeforeC
     EXPECT_EQ(0u, stream.getUsed());
 }
 
-HWTEST2_F(PreambleHwTest, givenHwWithForcedHeaplessModeWhenCallingSetSingleSliceDispatchModeThenDoNothing, IsAtLeastXeHpCore) {
+HWTEST2_F(PreambleHwTest, givenHwWithForcedHeaplessModeWhenCallingSetSingleSliceDispatchModeThenDoNothing, IsAtLeastXeCore) {
     if (FamilyType::isHeaplessRequired() == false) {
         GTEST_SKIP();
     }

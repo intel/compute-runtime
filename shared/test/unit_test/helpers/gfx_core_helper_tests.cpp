@@ -99,7 +99,7 @@ HWTEST_F(GfxCoreHelperTest, givenForceExtendedKernelIsaSizeSetWhenGettingISAPadd
     }
 }
 
-HWTEST2_F(GfxCoreHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIsSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(GfxCoreHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIsSet, IsAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
@@ -612,7 +612,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvide
     EXPECT_EQ(pitch, state->getSurfacePitch() - 1u);
     EXPECT_EQ(gpuAddr, state->getSurfaceBaseAddress());
 
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), state->getCoherencyType());
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
@@ -648,7 +648,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationC
     allocation.getDefaultGmm()->setCompressionEnabled(true);
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false, false);
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, state->getCoherencyType());
     }
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(state, allocation.getDefaultGmm()));
@@ -684,7 +684,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDis
     allocation.setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false, false);
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), state->getCoherencyType());
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
@@ -758,7 +758,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationC
     allocation.getDefaultGmm()->setCompressionEnabled(true);
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true, false);
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), state->getCoherencyType());
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
@@ -1278,7 +1278,7 @@ HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpPlatformiWhenCheckingIfScratchSpa
     EXPECT_FALSE(gfxCoreHelper.isScratchSpaceSurfaceStateAccessible());
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenAtLeastXeHpPlatformWhenCheckingIfScratchSpaceSurfaceStateAccessibleTheniTrueIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(GfxCoreHelperTest, givenAtLeastXeHpPlatformWhenCheckingIfScratchSpaceSurfaceStateAccessibleTheniTrueIsReturned, IsAtLeastXeCore) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_TRUE(gfxCoreHelper.isScratchSpaceSurfaceStateAccessible());
 }
@@ -1356,7 +1356,7 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSuppor
     EXPECT_FALSE(gfxCoreHelper.isRelaxedOrderingSupported());
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse, IsNotXeHpgOrXeHpcCore) {
+HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse, IsNotXeCore) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
@@ -1373,7 +1373,7 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallCopyThroughLocke
     EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue, IsBeforeXeHpCore) {
+HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue, IsGen12LP) {
     DebugManagerStateRestore restorer;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 0u);
@@ -1390,7 +1390,7 @@ HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpPlatformWhenGettingMinimalScratch
     EXPECT_EQ(1024U, gfxCoreHelper.getMinimalScratchSpaceSize());
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenAtLeastXeHpPlatformWhenGettingMinimalScratchSpaceSizeThen64IsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(GfxCoreHelperTest, givenAtLeastXeHpPlatformWhenGettingMinimalScratchSpaceSizeThen64IsReturned, IsAtLeastXeCore) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(64U, gfxCoreHelper.getMinimalScratchSpaceSize());
 }
@@ -1573,7 +1573,7 @@ HWTEST_F(ProductHelperCommonTest, givenProductHelperWhenCallingIsCalculationForD
     auto &gfxCoreHelper = getHelper<ProductHelper>();
     EXPECT_FALSE(gfxCoreHelper.isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo));
 }
-HWTEST2_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustMaxWorkGroupCountIsCalledThenSmallerValueIsReturned, IsAtLeastBmg) {
+HWTEST2_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustMaxWorkGroupCountIsCalledThenSmallerValueIsReturned, IsAtLeastXe2HpgCore) {
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
@@ -1658,7 +1658,7 @@ HWTEST_F(GfxCoreHelperTest, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeT
     EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, defaultMaxGroupSize, rootDeviceEnvironment));
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenParamsWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue, IsAtMostXeHpcCore) {
+HWTEST2_F(GfxCoreHelperTest, givenParamsWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue, IsAtMostXeCore) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     std::array<std::array<uint32_t, 3>, 8> values = {{
@@ -1783,7 +1783,7 @@ HWTEST_F(GfxCoreHelperTest, givenCooperativeKernelWhenAskingForSingleTileDispatc
     EXPECT_FALSE(helper.singleTileExecImplicitScalingRequired(false));
 }
 
-HWTEST2_F(GfxCoreHelperTest, whenPrivateScratchSizeIsDefinedThenItIsReturnedAsKernelPrivateMemorySize, IsAtLeastXeHpCore) {
+HWTEST2_F(GfxCoreHelperTest, whenPrivateScratchSizeIsDefinedThenItIsReturnedAsKernelPrivateMemorySize, IsAtLeastXeCore) {
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = 0x100u;
     kernelDescriptor.kernelAttributes.privateScratchMemorySize = 0x200u;
@@ -1922,7 +1922,7 @@ HWTEST_F(GfxCoreHelperTest, givenDebugFlagForceUseOnlyGlobalTimestampsSetWhenCal
     EXPECT_TRUE(gfxCoreHelper.useOnlyGlobalTimestamps());
 }
 
-HWTEST2_F(GfxCoreHelperTest, whenIsCacheFlushPriorImageReadRequiredCalledThenFalseIsReturned, IsBeforeXe2HpgCore) {
+HWTEST2_F(GfxCoreHelperTest, whenIsCacheFlushPriorImageReadRequiredCalledThenFalseIsReturned, IsAtMostXeCore) {
     auto &helper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(helper.isCacheFlushPriorImageReadRequired());
 }

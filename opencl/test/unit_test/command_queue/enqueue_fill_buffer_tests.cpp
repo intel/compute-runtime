@@ -280,7 +280,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueFillBufferCmdTests, WhenFillingBufferThenI
     EXPECT_NE(0u, idd.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenNumberOfPipelineSelectsIsOne, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenNumberOfPipelineSelectsIsOne, IsAtMostXeCore) {
     enqueueFillBuffer<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

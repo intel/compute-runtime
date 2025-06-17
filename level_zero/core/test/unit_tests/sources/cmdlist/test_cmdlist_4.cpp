@@ -187,7 +187,7 @@ HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenAppendWriteGlobalT
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeCore) {
     const ze_command_queue_desc_t queueDesc = {};
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -276,7 +276,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 
 using CommandListAppendLaunchKernelResetKernelCount = Test<DeviceFixture>;
 
-HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOperationFalseWhenAppendLaunchKernelThenResetKernelCount, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOperationFalseWhenAppendLaunchKernelThenResetKernelCount, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
 
     NEO::debugManager.flags.CompactL3FlushEventPacket.set(0);
@@ -1122,7 +1122,7 @@ HWTEST_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest, givenMultipleCommand
 
 HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
           givenImmediateCommandListWhenFirstAppendIsNonKernelAppendAndSecondAppendIsKernelAppendThenExpectAllBaseAddressSbaCommandBeforeSecondAppend,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();

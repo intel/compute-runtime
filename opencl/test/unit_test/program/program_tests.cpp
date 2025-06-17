@@ -1700,7 +1700,7 @@ TEST_F(ProgramTests, whenGetInternalOptionsThenLSCPolicyIsSet) {
     }
 }
 
-HWTEST2_F(ProgramTests, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(ProgramTests, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
@@ -1708,7 +1708,7 @@ HWTEST2_F(ProgramTests, givenDebugFlagSetToWbWhenGetInternalOptionsThenCorrectBu
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=7 -cl-load-cache-default=4"));
 }
 
-HWTEST2_F(ProgramTests, givenDebugFlagSetForceAllResourcesUncachedWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(ProgramTests, givenDebugFlagSetForceAllResourcesUncachedWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
     debugManager.flags.ForceAllResourcesUncached.set(true);
@@ -1717,7 +1717,7 @@ HWTEST2_F(ProgramTests, givenDebugFlagSetForceAllResourcesUncachedWhenGetInterna
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=2 -cl-load-cache-default=2"));
 }
 
-HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeCore) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=2 -cl-load-cache-default=4"));

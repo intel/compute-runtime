@@ -41,12 +41,12 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenFrequencyModuleWhenGettingSt
     EXPECT_EQ(50.0, stepSize);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenFrequencyModuleWhenQueryingFrequencySetRangeSupportedThenVerifySetRangeIsSupported, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenFrequencyModuleWhenQueryingFrequencySetRangeSupportedThenVerifySetRangeIsSupported, IsXeCore) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(true, pSysmanProductHelper->isFrequencySetRangeSupported());
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL1WhenCallingGetThrottleReasonsThenVerifyCorrectReasonIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL1WhenCallingGetThrottleReasonsThenVerifyCorrectReasonIsReturned, IsXeCore) {
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
@@ -58,7 +58,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL1WhenCalling
     EXPECT_EQ(throttleReason, ZES_FREQ_THROTTLE_REASON_FLAG_AVE_PWR_CAP);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL2WhenCallingGetThrottleReasonsThenVerifyCorrectReasonIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL2WhenCallingGetThrottleReasonsThenVerifyCorrectReasonIsReturned, IsXeCore) {
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
@@ -70,7 +70,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL2WhenCalling
     EXPECT_EQ(throttleReason, ZES_FREQ_THROTTLE_REASON_FLAG_BURST_PWR_CAP);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL4WhenCallingGetThrottleReasonsThenVerifyCorrectReasonIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL4WhenCallingGetThrottleReasonsThenVerifyCorrectReasonIsReturned, IsXeCore) {
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
@@ -83,7 +83,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonPL4WhenCalling
     EXPECT_EQ(throttleReason, ZES_FREQ_THROTTLE_REASON_FLAG_CURRENT_LIMIT);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleThermalReasonWhenCallingGetThrottleReasonsThenVerifyCorrectReasonIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleThermalReasonWhenCallingGetThrottleReasonsThenVerifyCorrectReasonIsReturned, IsXeCore) {
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
@@ -95,7 +95,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleThermalReasonWhenCal
     EXPECT_EQ(throttleReason, ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidPL4AndInvalidThermalThrottleReasonWhenCallingGetThrottleReasonsThenVerifyCorrectReasonIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidPL4AndInvalidThermalThrottleReasonWhenCallingGetThrottleReasonsThenVerifyCorrectReasonIsReturned, IsXeCore) {
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
@@ -109,7 +109,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidPL4AndInvalidThermalThr
     EXPECT_EQ(throttleReason, ZES_FREQ_THROTTLE_REASON_FLAG_CURRENT_LIMIT);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidPL1PL2PL4AndThermalThrottleReasonsWhenCallingGetThrottleReasonsThenCorrectReasonsAreReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidPL1PL2PL4AndThermalThrottleReasonsWhenCallingGetThrottleReasonsThenCorrectReasonsAreReturned, IsXeCore) {
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
@@ -129,7 +129,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidPL1PL2PL4AndThermalThro
     EXPECT_EQ(throttleReason, setAllThrottleReasons);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenNoThrottleReasonsStatusWhenCallingGetThrottleReasonsThenNoThrottleReasonsAreReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenNoThrottleReasonsStatusWhenCallingGetThrottleReasonsThenNoThrottleReasonsAreReturned, IsXeCore) {
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
@@ -146,7 +146,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenNoThrottleReasonsStatusWhenC
     EXPECT_EQ(throttleReason, unsetAllThrottleReasons);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsStatusSysfsReadFileFailsWhenCallingGetThrottleReasonsThenNoThrottleReasonsAreReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsStatusSysfsReadFileFailsWhenCallingGetThrottleReasonsThenNoThrottleReasonsAreReturned, IsXeCore) {
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
@@ -157,7 +157,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsStatusSysfsRe
     EXPECT_EQ(throttleReason, unsetAllThrottleReasons);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsExceptThermalWhenCallingGetThrottleReasonsThenCorrectThrottleReasonsForMissingThermalStatusIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsExceptThermalWhenCallingGetThrottleReasonsThenCorrectThrottleReasonsForMissingThermalStatusIsReturned, IsXeCore) {
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
@@ -180,7 +180,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsExceptThermal
     EXPECT_EQ(throttleReason, setAllThrottleReasonsExceptThermal);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL4WhenCallingGetThrottleReasonsThenCorrectThrottleReasonsForMissingPL4StatusIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL4WhenCallingGetThrottleReasonsThenCorrectThrottleReasonsForMissingPL4StatusIsReturned, IsXeCore) {
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
@@ -203,7 +203,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL4WhenCallin
     EXPECT_EQ(throttleReason, setAllThrottleReasonsExceptPL4);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL2WhenCallingGetThrottleReasonsThenCorrectThrottleReasonsForMissingPL2StatusIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL2WhenCallingGetThrottleReasonsThenCorrectThrottleReasonsForMissingPL2StatusIsReturned, IsXeCore) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
 
@@ -225,7 +225,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL2WhenCallin
     EXPECT_EQ(throttleReason, setAllThrottleReasonsExceptPL2);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL1WhenCallingGetThrottleReasonsThenCorrectThrottleReasonsForMissingPL1StatusIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL1WhenCallingGetThrottleReasonsThenCorrectThrottleReasonsForMissingPL1StatusIsReturned, IsXeCore) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subdeviceId = 0;
 
@@ -247,7 +247,7 @@ HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenThrottleReasonsPL1WhenCallin
     EXPECT_EQ(throttleReason, setAllThrottleReasonsExceptPL1);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetStateWithLegacyPathThenVerifyzesFrequencyGetStateTestCallSucceeds, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetStateWithLegacyPathThenVerifyzesFrequencyGetStateTestCallSucceeds, IsXeCore) {
 
     pSysfsAccess->isLegacy = true;
     pSysfsAccess->directoryExistsResult = false;

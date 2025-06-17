@@ -1049,7 +1049,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithoutImplicitArgsWhenAppen
     EXPECT_EQ(indirectHeap->getUsed(), sizeCrossThreadData + sizePerThreadDataForWholeGroup);
 }
 
-HWTEST2_F(CmdlistAppendLaunchKernelTests, givenKernelWithScratchAndPrivateWhenAppendLaunchKernelThenCmdListHasCorrectPrivateAndScratchSizesSet, IsAtLeastXeHpCore) {
+HWTEST2_F(CmdlistAppendLaunchKernelTests, givenKernelWithScratchAndPrivateWhenAppendLaunchKernelThenCmdListHasCorrectPrivateAndScratchSizesSet, IsAtLeastXeCore) {
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
@@ -1087,7 +1087,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests, givenKernelWithScratchAndPrivateWhenAp
 struct CmdlistAppendLaunchKernelTestsWithoutHeaplessMatcher {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-        return IsAtLeastXeHpCore::isMatched<productFamily>() && !(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessRequired);
+        return IsAtLeastXeCore::isMatched<productFamily>() && !(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessRequired);
     }
 };
 
@@ -1462,7 +1462,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
     EXPECT_EQ(POSTSYN_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
 }
 
-HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenSetProperPartitionSize, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenSetProperPartitionSize, IsAtLeastXeCore) {
 
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
@@ -1515,7 +1515,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
 }
 
 HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
-          givenRegularCommandListWhenSynchronizationRequiredThenExpectJumpingBbStartCommandToSecondary, IsAtLeastXeHpCore) {
+          givenRegularCommandListWhenSynchronizationRequiredThenExpectJumpingBbStartCommandToSecondary, IsAtLeastXeCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;

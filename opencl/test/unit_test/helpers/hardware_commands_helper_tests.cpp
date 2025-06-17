@@ -1078,7 +1078,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhen
     delete[] mockDsh;
 }
 
-HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirectStateThenSurfaceStateIsCopiedToHeapAndCrossThreadDataIsCorrectlyPatched, IsHeapfulSupportedAndAtLeastXeHpCore) {
+HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirectStateThenSurfaceStateIsCopiedToHeapAndCrossThreadDataIsCorrectlyPatched, IsHeapfulSupportedAndAtLeastXeCore) {
 
     using WalkerType = typename FamilyType::COMPUTE_WALKER;
     using InterfaceDescriptorType = typename WalkerType::InterfaceDescriptorType;

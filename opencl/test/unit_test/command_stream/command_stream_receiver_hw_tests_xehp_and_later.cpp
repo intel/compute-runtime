@@ -793,7 +793,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, whenCreati
     EXPECT_TRUE(workPartitionAllocationStorageInfo.tileInstanced);
 }
 
-HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenStaticPartitionEnabledWhenSinglePartitionUsedForPostSyncBarrierThenExpectOnlyPostSyncCommands, IsAtLeastXeHpCore) {
+HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenStaticPartitionEnabledWhenSinglePartitionUsedForPostSyncBarrierThenExpectOnlyPostSyncCommands, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
@@ -840,7 +840,7 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenS
     EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
 }
 
-HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenStaticPartitionDisabledWhenMultiplePartitionsUsedForPostSyncBarrierThenExpectOnlyPostSyncCommands, IsAtLeastXeHpCore) {
+HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenStaticPartitionDisabledWhenMultiplePartitionsUsedForPostSyncBarrierThenExpectOnlyPostSyncCommands, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
@@ -887,7 +887,7 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenS
     EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
 }
 
-HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenStaticPartitionEnabledWhenMultiplePartitionsUsedThenExpectImplicitScalingPostSyncBarrierWithoutSelfCleanup, IsAtLeastXeHpCore) {
+HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenStaticPartitionEnabledWhenMultiplePartitionsUsedThenExpectImplicitScalingPostSyncBarrierWithoutSelfCleanup, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;

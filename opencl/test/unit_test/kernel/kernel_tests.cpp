@@ -3721,7 +3721,7 @@ struct KernelLargeGrfTests : Test<ClDeviceFixture> {
     SPatchExecutionEnvironment executionEnvironment = {};
 };
 
-HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSizeThenCorrectValueReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSizeThenCorrectValueReturned, IsAtLeastXeCore) {
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = pClDevice->getGfxCoreHelper().getMinimalSIMDSize();
     pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4;
     pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize = 0;
@@ -3756,7 +3756,7 @@ HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSi
     }
 }
 
-HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsCreatedThenConstantMemorySurfaceStateIsPatchedWithMocs, IsAtLeastXeHpCore) {
+HWTEST2_F(KernelConstantSurfaceTest, givenKernelWithConstantSurfaceWhenKernelIsCreatedThenConstantMemorySurfaceStateIsPatchedWithMocs, IsAtLeastXeCore) {
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 

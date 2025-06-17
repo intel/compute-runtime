@@ -200,7 +200,7 @@ HWTEST_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenSurfaceStateI
     EXPECT_EQ(dstImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
 }
 
-HWTEST2_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenNumberOfPipelineSelectsIsOne, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenNumberOfPipelineSelectsIsOne, IsAtMostXeCore) {
     enqueueCopyBufferToImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

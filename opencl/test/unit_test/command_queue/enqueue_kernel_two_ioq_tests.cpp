@@ -101,7 +101,7 @@ HWTEST_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThe
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWTEST2_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipelineSelectExists, IsAtMostXeHpcCore) {
+HWTEST2_F(TwoIOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipelineSelectExists, IsAtMostXeCore) {
     parseWalkers<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

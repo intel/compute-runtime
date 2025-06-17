@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,7 +126,7 @@ HWTEST_F(TwoOOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThe
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWTEST2_F(TwoOOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipelineSelectExists, IsAtMostXeHpcCore) {
+HWTEST2_F(TwoOOQsTwoDependentWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipelineSelectExists, IsAtMostXeCore) {
     parseWalkers<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

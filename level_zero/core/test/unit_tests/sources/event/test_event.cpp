@@ -1603,7 +1603,7 @@ TEST_F(EventCreate, givenEventWhenCallingGetWaitScopelThenCorrectScopeIsReturned
     }
 }
 
-HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseContextEndThenDoNotUseContextEndOffset, IsXeHpOrXeHpcCore) {
+HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseContextEndThenDoNotUseContextEndOffset, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseContextEndOffsetForEventCompletion.set(0);
 
@@ -1637,7 +1637,7 @@ HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseCont
     event->destroy();
 }
 
-HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseContextEndThenUseContextEndOffset, IsNotXeHpOrXeHpcCore) {
+HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseContextEndThenUseContextEndOffset, IsNotXeHpcCore) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseContextEndOffsetForEventCompletion.set(1);
 
@@ -2267,7 +2267,7 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsDependentIfAllo
     }
 }
 
-HWTEST2_F(TimestampEventCreateMultiKernel, givenEventTimestampWhenPacketCountIsSetThenCorrectOffsetIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(TimestampEventCreateMultiKernel, givenEventTimestampWhenPacketCountIsSetThenCorrectOffsetIsReturned, IsAtLeastXeCore) {
     EXPECT_EQ(1u, event->getPacketsInUse());
     auto gpuAddr = event->getGpuAddress(device);
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
@@ -2857,7 +2857,7 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWithBlitAdditionalPropert
     EXPECT_EQ(packetData[2].globalEnd, event->globalEndTS);
 }
 
-HWTEST2_F(TimestampEventCreateMultiKernel, givenFlagPrintTimestampPacketContentsWhenMultiKernelsAndMultiPacketsAndCallQueryKernelTimestampThenProperLogIsPrinted, IsAtLeastXeHpCore) {
+HWTEST2_F(TimestampEventCreateMultiKernel, givenFlagPrintTimestampPacketContentsWhenMultiKernelsAndMultiPacketsAndCallQueryKernelTimestampThenProperLogIsPrinted, IsAtLeastXeCore) {
     debugManager.flags.PrintTimestampPacketContents.set(1);
     typename MockTimestampPackets32::Packet packetData[4];
 
@@ -2952,7 +2952,7 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWhenQueryingTimestampExpT
     }
 }
 
-HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnFirstKernelThenDoNotUseSecondPacketOfFirstKernel, IsAtLeastXeHpCore) {
+HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnFirstKernelThenDoNotUseSecondPacketOfFirstKernel, IsAtLeastXeCore) {
     typename MockTimestampPackets32::Packet packetData[4];
 
     event->hostAddressFromPool = packetData;
@@ -2996,7 +2996,7 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWh
     EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.global.kernelEnd);
 }
 
-HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnSecondKernelThenDoNotUseSecondPacketOfSecondKernel, IsAtLeastXeHpCore) {
+HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnSecondKernelThenDoNotUseSecondPacketOfSecondKernel, IsAtLeastXeCore) {
     typename MockTimestampPackets32::Packet packetData[4];
 
     event->hostAddressFromPool = packetData;
@@ -3040,7 +3040,7 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWh
     EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.global.kernelEnd);
 }
 
-HWTEST2_F(TimestampEventCreateMultiKernel, givenOverflowingTimeStampDataOnTwoKernelsWhenQueryKernelTimestampIsCalledOverflowIsObserved, IsAtLeastXeHpCore) {
+HWTEST2_F(TimestampEventCreateMultiKernel, givenOverflowingTimeStampDataOnTwoKernelsWhenQueryKernelTimestampIsCalledOverflowIsObserved, IsAtLeastXeCore) {
     typename MockTimestampPackets32::Packet packetData[4] = {};
     event->hostAddressFromPool = packetData;
 
@@ -3519,7 +3519,7 @@ TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThe
 }
 
 using EventUsedPacketSignalNoCompactionTests = Test<EventUsedPacketSignalFixture<1, 0, 0, 0>>;
-HWTEST2_F(EventUsedPacketSignalNoCompactionTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel, IsAtLeastXeHpCore) {
+HWTEST2_F(EventUsedPacketSignalNoCompactionTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel, IsAtLeastXeCore) {
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
     ASSERT_NE(event, nullptr);
     EXPECT_FALSE(event->getL3FlushForCurrenKernel());
@@ -4815,11 +4815,11 @@ HWTEST_F(EventDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPa
 }
 
 using EventMultiTileDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<1, 0>>;
-HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromAllDevicesThenMaxPossibleSelected, IsAtLeastXeHpCore) {
+HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromAllDevicesThenMaxPossibleSelected, IsAtLeastXeCore) {
     testAllDevices();
 }
 
-HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceButUsedOnDifferentSubdeviceWhenQueryingThenDownload, IsAtLeastXeHpCore) {
+HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceButUsedOnDifferentSubdeviceWhenQueryingThenDownload, IsAtLeastXeCore) {
     neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
@@ -4909,7 +4909,7 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     event->destroy();
 }
 
-HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedOnSubDeviceButUsedOnDifferentSubdeviceWhenQueryingThenDownload, IsAtLeastXeHpCore) {
+HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedOnSubDeviceButUsedOnDifferentSubdeviceWhenQueryingThenDownload, IsAtLeastXeCore) {
     neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
@@ -4988,25 +4988,25 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     event2->destroy();
 }
 
-HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromSingleOneTileDeviceThenMaxFromThisDeviceSelected, IsAtLeastXeHpCore) {
+HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromSingleOneTileDeviceThenMaxFromThisDeviceSelected, IsAtLeastXeCore) {
     testSingleDevice();
 }
 
 using EventSignalAllPacketsTest = Test<EventDynamicPacketUseFixture<0, 1>>;
-HWTEST2_F(EventSignalAllPacketsTest, givenDynamicPacketEstimationWhenImmediateEventSignalMaxPacketThenAllPacketCompletionSignaled, IsAtLeastXeHpCore) {
+HWTEST2_F(EventSignalAllPacketsTest, givenDynamicPacketEstimationWhenImmediateEventSignalMaxPacketThenAllPacketCompletionSignaled, IsAtLeastXeCore) {
     testSignalAllPackets(Event::STATE_SIGNALED, ZE_RESULT_NOT_READY, 0, true);
 }
 
-HWTEST2_F(EventSignalAllPacketsTest, givenDynamicPacketEstimationWhenTimestampEventSignalMaxPacketThenAllPacketCompletionSignaled, IsAtLeastXeHpCore) {
+HWTEST2_F(EventSignalAllPacketsTest, givenDynamicPacketEstimationWhenTimestampEventSignalMaxPacketThenAllPacketCompletionSignaled, IsAtLeastXeCore) {
     testSignalAllPackets(Event::STATE_SIGNALED, ZE_RESULT_NOT_READY, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, true);
 }
 
 using EventSignalUsedPacketsTest = Test<EventDynamicPacketUseFixture<0, 0>>;
-HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenImmediateSignalUsedPacketThenUsedPacketCompletionSignaled, IsAtLeastXeHpCore) {
+HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenImmediateSignalUsedPacketThenUsedPacketCompletionSignaled, IsAtLeastXeCore) {
     testSignalAllPackets(Event::STATE_CLEARED, ZE_RESULT_SUCCESS, 0, false);
 }
 
-HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenTimestampSignalUsedPacketThenUsedPacketCompletionSignaled, IsAtLeastXeHpCore) {
+HWTEST2_F(EventSignalUsedPacketsTest, givenDynamicPacketEstimationWhenTimestampSignalUsedPacketThenUsedPacketCompletionSignaled, IsAtLeastXeCore) {
     testSignalAllPackets(Event::STATE_CLEARED, ZE_RESULT_SUCCESS, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false);
 }
 
@@ -5077,14 +5077,14 @@ void testQueryAllPackets(L0::Event *event, bool singlePacket) {
 using TimestampEventAllPacketSignalMultiPacketUseTest = Test<EventUsedPacketSignalFixture<1, 1, 1, 0>>;
 HWTEST2_F(TimestampEventAllPacketSignalMultiPacketUseTest,
           givenSignalAllEventPacketWhenQueryingAndSignalingTimestampEventThenUseEventMaxPackets,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     testQueryAllPackets(event.get(), false);
 }
 
 using ImmediateEventAllPacketSignalMultiPacketUseTest = Test<EventUsedPacketSignalFixture<1, 0, 1, 0>>;
 HWTEST2_F(ImmediateEventAllPacketSignalMultiPacketUseTest,
           givenSignalAllEventPacketWhenQueryingAndSignalingImmediateEventThenUseEventMaxPackets,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     testQueryAllPackets(event.get(), false);
 }
 

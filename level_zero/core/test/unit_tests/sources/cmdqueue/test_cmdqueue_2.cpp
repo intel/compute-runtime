@@ -354,7 +354,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchro
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
-HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSynchronizeThenExpectTheSameNumberCsrSynchronizeCalls, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenCallingSynchronizeThenExpectTheSameNumberCsrSynchronizeCalls, IsAtLeastXeCore) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
 
@@ -394,7 +394,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
-HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartitionWhenExecutingCmdListOnNewCmdQueueThenExpectCmdPartitionCountMatchCsrActivePartitions, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartitionWhenExecutingCmdListOnNewCmdQueueThenExpectCmdPartitionCountMatchCsrActivePartitions, IsAtLeastXeCore) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
 
@@ -760,7 +760,7 @@ struct DeviceWithDualStorage : Test<DeviceFixture> {
     std::unique_ptr<L0::ult::Module> mockModule;
 };
 
-HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAndBlitterDisabledWhenExecuteCmdListThenCfeStateOnceProgrammed, IsHeapfulSupportedAndAtLeastXeHpCore) {
+HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAndBlitterDisabledWhenExecuteCmdListThenCfeStateOnceProgrammed, IsHeapfulSupportedAndAtLeastXeCore) {
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
@@ -963,7 +963,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
     scratch->scratchSlot0Allocation = nullptr;
 }
 
-HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorrectlyPatched, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorrectlyPatched, IsAtLeastXeCore) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);

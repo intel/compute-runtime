@@ -1003,7 +1003,7 @@ struct CommandListCreateWithBcs : public CommandListCreateTests {
         CommandListCreateTests::SetUp();
     }
 };
-HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingRenderThenSuccessIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingRenderThenSuccessIsReturned, IsAtLeastXeCore) {
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
@@ -1049,7 +1049,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromI
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingCopyWintInvalidRegionArguementsThenErrorIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromImageToImageUsingCopyWintInvalidRegionArguementsThenErrorIsReturned, IsAtLeastXeCore) {
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
@@ -1097,7 +1097,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromI
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
 }
 
-HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyFromImageToImageUsingRenderThenSuccessIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyFromImageToImageUsingRenderThenSuccessIsReturned, IsAtLeastXeCore) {
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
@@ -1361,7 +1361,7 @@ TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateComma
 }
 
 HWTEST2_F(CommandListCreateWithBcs,
-          givenInternalImmediateCommandListCreatedAsLinkedCopyWhenUsingInternalCopyEngineThenSelectCopyTypeCommandList, IsAtLeastXeHpCore) {
+          givenInternalImmediateCommandListCreatedAsLinkedCopyWhenUsingInternalCopyEngineThenSelectCopyTypeCommandList, IsAtLeastXeCore) {
     const ze_command_queue_desc_t queueDesc = {};
     bool internalEngine = true;
 
@@ -1562,7 +1562,7 @@ HWTEST_F(CommandListCreateTests, givenGetAlignedAllocationWhenExternalMemWithinD
 struct FrontEndStateTestingAllowed {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-        return IsAtLeastXeHpCore::isMatched<productFamily>() && !(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessRequired);
+        return IsAtLeastXeCore::isMatched<productFamily>() && !(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessRequired);
     }
 };
 

@@ -427,7 +427,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
 
 using MultiTileCommandListAppendBarrier = Test<MultiTileCommandListAppendBarrierFixture<false>>;
 
-HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -479,7 +479,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
 }
 
 HWTEST2_F(MultiTileCommandListAppendBarrier,
-          GivenCurrentCommandBufferExhaustedWhenAppendingMultiTileBarrierThenPipeControlAndCrossTileSyncIsGeneratedInNewBuffer, IsAtLeastXeHpCore) {
+          GivenCurrentCommandBufferExhaustedWhenAppendingMultiTileBarrierThenPipeControlAndCrossTileSyncIsGeneratedInNewBuffer, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -540,31 +540,31 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
 }
 
 HWTEST2_F(MultiTileCommandListAppendBarrier,
-          GivenNonTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndPostSyncOperation, IsAtLeastXeHpCore) {
+          GivenNonTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndPostSyncOperation, IsAtLeastXeCore) {
     testBodyNonTimestampEventSignal<FamilyType>();
 }
 
 HWTEST2_F(MultiTileCommandListAppendBarrier,
-          GivenTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndTimestampOperations, IsAtLeastXeHpCore) {
+          GivenTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndTimestampOperations, IsAtLeastXeCore) {
     testBodyTimestampEventSignal<FamilyType>();
 }
 
 using MultiTilePrimaryBatchBufferCommandListAppendBarrier = Test<MultiTileCommandListAppendBarrierFixture<true>>;
 
 HWTEST2_F(MultiTilePrimaryBatchBufferCommandListAppendBarrier,
-          GivenNonTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndPostSyncOperation, IsAtLeastXeHpCore) {
+          GivenNonTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndPostSyncOperation, IsAtLeastXeCore) {
     testBodyNonTimestampEventSignal<FamilyType>();
 }
 
 HWTEST2_F(MultiTilePrimaryBatchBufferCommandListAppendBarrier,
-          GivenTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndTimestampOperations, IsAtLeastXeHpCore) {
+          GivenTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndTimestampOperations, IsAtLeastXeCore) {
     testBodyTimestampEventSignal<FamilyType>();
 }
 
 using MultiTileImmediateCommandListAppendBarrier = Test<MultiTileCommandListFixture<true, false, false, 0>>;
 
 HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
-          givenMultiTileImmediateCommandListWhenAppendingBarrierThenExpectCrossTileSyncAndNoCleanupSection, IsAtLeastXeHpCore) {
+          givenMultiTileImmediateCommandListWhenAppendingBarrierThenExpectCrossTileSyncAndNoCleanupSection, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -666,7 +666,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 }
 
 HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
-          givenMultiTileImmediateCommandListUsingFlushTaskWhenAppendingBarrierThenExpectNonSecondaryBufferStart, IsAtLeastXeHpCore) {
+          givenMultiTileImmediateCommandListUsingFlushTaskWhenAppendingBarrierThenExpectNonSecondaryBufferStart, IsAtLeastXeCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     ze_command_queue_desc_t queueDesc = {};

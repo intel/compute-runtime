@@ -788,7 +788,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
     }
 }
 
-HWTEST2_F(CommandEncoderTests, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrderThenWalkerIsNotChanged, IsAtMostXeHpcCore) {
+HWTEST2_F(CommandEncoderTests, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrderThenWalkerIsNotChanged, IsAtMostXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];

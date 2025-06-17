@@ -726,7 +726,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenFlushTaskWhenInitProgrammingF
     EXPECT_FALSE(commandStreamReceiver.bindingTableBaseAddressRequired);
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleNotSentAndMediaSamplerRequirementChangedWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeHpcCore) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleNotSentAndMediaSamplerRequirementChangedWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeCore) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = false;
     commandStreamReceiver.lastMediaSamplerConfig = -1;
@@ -735,7 +735,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleNotSentAndMediaSampl
     EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleNotSentAndMediaSamplerRequirementNotChangedWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeHpcCore) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleNotSentAndMediaSamplerRequirementNotChangedWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeCore) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = false;
     commandStreamReceiver.lastMediaSamplerConfig = 0;
@@ -757,7 +757,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerRe
         EXPECT_EQ(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
     }
 }
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerRequirementChangedWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeHpcCore) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerRequirementChangedWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeCore) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
     commandStreamReceiver.isPreambleSent = true;

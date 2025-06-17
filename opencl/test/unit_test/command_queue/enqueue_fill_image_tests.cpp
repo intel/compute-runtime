@@ -252,7 +252,7 @@ HWTEST_F(EnqueueFillImageTest, givenHeaplessWhenFillingImage1dBufferThenCorrectB
     EXPECT_TRUE(kernelInfo.kernelDescriptor.kernelMetadata.kernelName == "FillImage1dBuffer");
 }
 
-HWTEST2_F(EnqueueFillImageTest, WhenFillingImageThenNumberOfPipelineSelectsIsOne, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueFillImageTest, WhenFillingImageThenNumberOfPipelineSelectsIsOne, IsAtMostXeCore) {
     enqueueFillImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

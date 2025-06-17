@@ -20,9 +20,9 @@ using namespace NEO;
 #include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 using PreambleCfeStateDg2AndLater = PreambleFixture;
-using IsDG2AndLater = IsAtLeastXeHpgCore;
+using IsDG2AndLater = IsAtLeastXeCore;
 
-HWTEST2_F(PreambleCfeStateDg2AndLater, whenprogramVFEStateIsCalledWithProperAdditionalKernelExecInfoThenProperStateIsSet, IsHeapfulSupportedAndDG2AndLater) {
+HWTEST2_F(PreambleCfeStateDg2AndLater, whenprogramVFEStateIsCalledWithProperAdditionalKernelExecInfoThenProperStateIsSet, IsHeapfulSupportedAndAtLeastXeCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -56,7 +56,7 @@ HWTEST2_F(PreambleCfeStateDg2AndLater, whenprogramVFEStateIsCalledWithProperAddi
     EXPECT_FALSE(cfeState->getComputeOverdispatchDisable());
 }
 
-HWTEST2_F(PreambleCfeStateDg2AndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue, IsHeapfulSupportedAndDG2AndLater) {
+HWTEST2_F(PreambleCfeStateDg2AndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue, IsHeapfulSupportedAndAtLeastXeCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     uint32_t expectedValue1 = 1u;

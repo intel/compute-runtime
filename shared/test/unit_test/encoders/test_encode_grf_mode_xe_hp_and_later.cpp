@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenN
     EXPECT_FALSE(cmd->getLargeGrfMode());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWhenAdjustPipelineSelectCalledThenCommandHasGpgpuType, IsWithinXeGfxFamily) {
+HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWhenAdjustPipelineSelectCalledThenCommandHasGpgpuType, IsXeCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
     GenCmdList commands;
@@ -52,7 +52,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWhenAdjustPipelineSelect
     EXPECT_EQ(cmd->getPipelineSelection(), PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithKernelDpasThenSystolicModeEnabled, IsWithinXeGfxFamily) {
+HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithKernelDpasThenSystolicModeEnabled, IsXeCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
     EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
@@ -67,7 +67,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithKernelDpasThenSystol
     EXPECT_EQ(pDevice->getUltCommandStreamReceiver<FamilyType>().pipelineSupportFlags.systolicMode, cmd->getSystolicModeEnable());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithNoKernelDpasThenSystolicModeIsNotEnabled, IsWithinXeGfxFamily) {
+HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithNoKernelDpasThenSystolicModeIsNotEnabled, IsXeCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = false;
     EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
@@ -81,7 +81,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithNoKernelDpasThenSyst
     EXPECT_FALSE(cmd->getSystolicModeEnable());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToTrueWhenItIsSetThenPipelineSelectContainsProperBits, IsWithinXeGfxFamily) {
+HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToTrueWhenItIsSetThenPipelineSelectContainsProperBits, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideSystolicPipelineSelect.set(1);
 
@@ -98,7 +98,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToTrueWhe
     EXPECT_TRUE(cmd->getSystolicModeEnable());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToFalseWhenItIsSetThenPipelineSelectContainsProperBits, IsWithinXeGfxFamily) {
+HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToFalseWhenItIsSetThenPipelineSelectContainsProperBits, IsXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideSystolicPipelineSelect.set(0);
 

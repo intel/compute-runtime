@@ -872,7 +872,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
     EXPECT_TRUE(cmd->getDcFlushEnable());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyThenAdditionalPCIsAdded, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyThenAdditionalPCIsAdded, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
@@ -923,7 +923,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyTh
     EXPECT_EQ(numberOfPCsWithDebugKey, numberOfPCsBase + 1);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAndNoSpaceThenNewBatchBufferAllocationIsUsed, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAndNoSpaceThenNewBatchBufferAllocationIsUsed, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForcePipeControlPriorToWalker.set(1);
 
@@ -1322,7 +1322,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaunc
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteArgAndPlatformRequiresFlushWhenLaunchingKernelThenPipeControlWithTextureCacheInvalidationIsAdded, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteArgAndPlatformRequiresFlushWhenLaunchingKernelThenPipeControlWithTextureCacheInvalidationIsAdded, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
     releaseHelper->isPostImageWriteFlushRequiredResult = true;
@@ -1365,7 +1365,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteA
     EXPECT_TRUE(cmd->getTextureCacheInvalidationEnable());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExecutionWhenKernelWithImageWriteIsAppendedThenBarrierContainsTextureCacheFlush, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExecutionWhenKernelWithImageWriteIsAppendedThenBarrierContainsTextureCacheFlush, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto kernel = std::make_unique<Mock<KernelImp>>();
@@ -1410,7 +1410,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     EXPECT_TRUE(cmd->getTextureCacheInvalidationEnable());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendingTwiceThenPipeControlWithTextureCacheInvalidationIsProgrammedBetweenWalkers, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendingTwiceThenPipeControlWithTextureCacheInvalidationIsProgrammedBetweenWalkers, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
 
@@ -1540,7 +1540,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenC
 
 HWTEST2_F(CommandListAppendLaunchKernelMockModule,
           givenFlagOmitKernelArgumentResourcePassToCmdlistResidencyWhenAppendingKernelThenExpectNoKernelArgumentsInCmdlistResidency,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     NEO::MockGraphicsAllocation mockAllocation;
     NEO::GraphicsAllocation *allocation = &mockAllocation;
     kernel->argumentsResidencyContainer.push_back(allocation);
@@ -1567,7 +1567,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
 
 HWTEST2_F(CommandListAppendLaunchKernelMockModule,
           givenFlagOmitKernelInternalResourcePassToCmdlistResidencyWhenAppendingKernelThenExpectNoKernelInternalsInCmdlistResidency,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     NEO::MockGraphicsAllocation mockAllocation;
     NEO::GraphicsAllocation *allocation = &mockAllocation;
     kernel->internalResidencyContainer.push_back(allocation);
@@ -1600,7 +1600,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
 
 HWTEST2_F(CommandListAppendLaunchKernelMockModule,
           givenOutWalkerPtrDispatchParamWhenAppendingKernelThenSetPtrToWalkerCmd,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -1625,7 +1625,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
 
 HWTEST2_F(CommandListAppendLaunchKernelMockModule,
           givenFlagOmitEventResourcePassToCmdlistResidencyWhenAppendingKernelThenExpectNoEventInCmdlistResidency,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     ze_result_t returnValue;
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};

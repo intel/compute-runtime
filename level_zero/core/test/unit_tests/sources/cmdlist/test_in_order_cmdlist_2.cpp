@@ -82,7 +82,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenOverri
     EXPECT_NE(0x1234u, immCmdList->copyOffloadMode);
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenUseDefaultQueue, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenUseDefaultQueue, IsAtLeastXeCore) {
     debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
     immCmdList->useAdditionalBlitProperties = true;
@@ -103,7 +103,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenUseDef
     EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenDontProgramBcsMmioBase, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenDontProgramBcsMmioBase, IsAtLeastXeCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     debugManager.flags.OverrideCopyOffloadMode.set(nonDualStreamMode);
     auto immCmdList0 = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
@@ -132,7 +132,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenDontPr
     }
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeAndProfilingEventWithRelaxedOrderingWhenAppendingThenDontBcsCommands, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeAndProfilingEventWithRelaxedOrderingWhenAppendingThenDontBcsCommands, IsAtLeastXeCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
@@ -194,7 +194,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeAndProfilingEventWithRe
     }
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingRegularCmdListThenEnableCopyOffload, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingRegularCmdListThenEnableCopyOffload, IsAtLeastXeCore) {
     NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
@@ -210,7 +210,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingRegularCmdListTh
     EXPECT_EQ(CopyOffloadModes::disabled, regularCmdList->copyOffloadMode);
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeCore) {
     NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
 
     ze_command_list_handle_t cmdListHandle;
@@ -313,7 +313,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
     }
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeCore) {
     NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(-1);
 
     ze_command_list_handle_t cmdListHandle;
@@ -405,7 +405,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListTh
     }
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsThenUseCopyCommands, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsThenUseCopyCommands, IsAtLeastXeCore) {
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
@@ -591,7 +591,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenImageCopyCalledT
     context->freeMem(data);
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenFillCalledThenSkipSycCommands, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenFillCalledThenSkipSycCommands, IsAtLeastXeCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
@@ -638,7 +638,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenFillCalledThenSk
     context->freeMem(data);
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgrammingHwCmdsThenDontUseCopyCommands, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgrammingHwCmdsThenDontUseCopyCommands, IsAtLeastXeCore) {
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
@@ -695,7 +695,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgram
     context->freeMem(deviceMem);
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWhenAppendingThenUseBcsCommands, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWhenAppendingThenUseBcsCommands, IsAtLeastXeCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
@@ -744,7 +744,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWhenAppendingThenUseBcsCom
     }
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWithRelaxedOrderingWhenAppendingThenUseBcsCommands, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWithRelaxedOrderingWhenAppendingThenUseBcsCommands, IsAtLeastXeCore) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
@@ -1087,7 +1087,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenRelaxedOrderingEnabledWhenDispatchingThe
     EXPECT_TRUE(immCmdList->latestRelaxedOrderingMode);
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleCompletionOnCorrectCsr, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleCompletionOnCorrectCsr, IsAtLeastXeCore) {
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
     if (!immCmdList->isHeaplessModeEnabled()) {
@@ -1167,7 +1167,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
     *hostAddress = std::numeric_limits<uint64_t>::max();
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAllocationsFromBothCsrs, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAllocationsFromBothCsrs, IsAtLeastXeCore) {
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
     immCmdList->isTbxMode = true;
 
@@ -1208,7 +1208,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAlloc
     EXPECT_EQ(2u, offloadCsr->downloadAllocationsCalledCount);
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionOnCorrectCsr, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionOnCorrectCsr, IsAtLeastXeCore) {
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
     auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
@@ -1249,7 +1249,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     *hostAddress = std::numeric_limits<uint64_t>::max();
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionAndTempAllocations, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionAndTempAllocations, IsAtLeastXeCore) {
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager());
@@ -1394,7 +1394,7 @@ HWTEST_F(InOrderRegularCmdListTests, givenInOrderFlagWhenCreatingCmdListThenEnab
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -1698,7 +1698,7 @@ HWTEST_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenExe
     verifyPatching(7, baseEventWaitValue + (3 * regularCmdList1->inOrderExecInfo->getCounterValue()));
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListThenDontAddCmdsToPatch, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListThenDontAddCmdsToPatch, IsAtLeastXeCore) {
     debugManager.flags.EnableInOrderRegularCmdListPatching.set(0);
 
     ze_command_queue_desc_t desc = {};
@@ -1714,7 +1714,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListTh
     EXPECT_EQ(0u, regularCmdList->inOrderPatchCmds.size());
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_command_queue_desc_t desc = {};
@@ -1780,7 +1780,7 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatc
     EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->getCounterValue());
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenProgramPipeControlsToHandleDependencies, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenProgramPipeControlsToHandleDependencies, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using WalkerType = typename FamilyType::DefaultWalkerType;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -1864,7 +1864,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     EXPECT_FALSE(regularCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining);
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenUpdateCounterAllocation, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenUpdateCounterAllocation, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto eventPool = createEvents<FamilyType>(1, true);
@@ -1925,7 +1925,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
 using InOrderRegularCopyOnlyCmdListTests = InOrderCmdListFixture;
 
-HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenDontProgramBarriers, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenDontProgramBarriers, IsAtLeastXeCore) {
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -2001,7 +2001,7 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
     alignedFree(alignedPtr);
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, givenNonInOrderRegularCmdListWhenPassingCounterBasedEventToWaitThenPatchOnExecute, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCmdListTests, givenNonInOrderRegularCmdListWhenPassingCounterBasedEventToWaitThenPatchOnExecute, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
@@ -2106,7 +2106,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenNonInOrderRegularCmdListWhenPassingCo
     verifyPatching(2);
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderInfoThenNewInfoIsSet, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderInfoThenNewInfoIsSet, IsAtLeastXeCore) {
     auto semaphoreCmd = FamilyType::cmdInitMiSemaphoreWait;
 
     auto inOrderRegularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
@@ -2145,7 +2145,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderI
     EXPECT_EQ(5u, semaphoreCmd.getSemaphoreDataDword());
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, givenPipeControlCmdAddedForPatchWhenUpdateNewInOrderInfoThenNewInfoIsSet, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderRegularCmdListTests, givenPipeControlCmdAddedForPatchWhenUpdateNewInOrderInfoThenNewInfoIsSet, IsAtLeastXeCore) {
     auto pcCmd = FamilyType::cmdInitPipeControl;
 
     auto inOrderRegularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
@@ -2315,7 +2315,7 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetToZeroWhenA
     EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), *tag0Data);
     context->freeMem(deviceAlloc);
 }
-HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignalingWhenPassedNonProfilingEventThenNotAssignAllocation, IsAtLeastXeHpCore) {
+HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignalingWhenPassedNonProfilingEventThenNotAssignAllocation, IsAtLeastXeCore) {
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(0);
@@ -3189,7 +3189,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageWhenCallingAppen
     context->freeMem(devAddress);
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventWhenCallingAppendThenSuccess, IsAtLeastXeCore) {
     uint64_t counterValue = 2;
     auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
 
@@ -3221,7 +3221,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventWhenCallingAppendThe
     context->freeMem(hostAddress);
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCallingAppendThenSuccess, IsAtLeastXeCore) {
     uint64_t counterValue = 2;
     auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
 
@@ -3251,7 +3251,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCa
     context->freeMem(hostAddress);
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenImplicitScalingEnabledWhenAskingForExtensionsThenReturnSyncDispatchExtension, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenImplicitScalingEnabledWhenAskingForExtensionsThenReturnSyncDispatchExtension, IsAtLeastXeCore) {
     uint32_t count = 0;
     ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3272,7 +3272,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenImplicitScalingEnabledWhenAskingFor
     }
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWhenCallingAppendThenSuccess, IsAtLeastXeCore) {
     uint64_t counterValue = 2;
     auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
 
@@ -3300,7 +3300,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWh
     context->freeMem(hostAddress);
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagSetWhenAskingForAtomicSignallingThenReturnTrue, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagSetWhenAskingForAtomicSignallingThenReturnTrue, IsAtLeastXeCore) {
     auto immCmdList = createMultiTileImmCmdList<FamilyType::gfxCoreFamily>();
     auto heaplessEnabled = immCmdList->isHeaplessModeEnabled();
     if (heaplessEnabled) {
@@ -3320,7 +3320,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagSetWhenAskingForAtomicSign
     EXPECT_EQ(partitionCount, immCmdList2->getInOrderIncrementValue());
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignallingCounterThenUseMiAtomicCmd, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignallingCounterThenUseMiAtomicCmd, IsAtLeastXeCore) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
@@ -3365,7 +3365,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignalli
     EXPECT_EQ(0u, atomicCmd->getCsStall());
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSignallingEnabledWhenSignallingCounterThenUseMiAtomicAndSdiCmd, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSignallingEnabledWhenSignallingCounterThenUseMiAtomicAndSdiCmd, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
@@ -3420,7 +3420,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSi
     EXPECT_TRUE(sdiCmd->getWorkloadPartitionIdOffsetEnable());
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndWithoutAtomicSignallingEnabledWhenSignallingCounterThenUseTwoSdiCmds, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndWithoutAtomicSignallingEnabledWhenSignallingCounterThenUseTwoSdiCmds, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
@@ -3487,7 +3487,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndWithoutA
     EXPECT_TRUE(sdiCmd->getWorkloadPartitionIdOffsetEnable());
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingForDependencyThenUseOnlyOneSemaphore, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingForDependencyThenUseOnlyOneSemaphore, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
@@ -3529,7 +3529,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingF
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, partitionCount, events[0]->inOrderExecInfo->getBaseDeviceAddress(), immCmdList2->isQwordInOrderCounter(), false));
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingWaitOnEventsThenHandleAllEventPackets, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingWaitOnEventsThenHandleAllEventPackets, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -3603,7 +3603,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
     }
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSyncAllocationThenEnablePartitionOffset, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSyncAllocationThenEnablePartitionOffset, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto immCmdList = createMultiTileImmCmdList<FamilyType::gfxCoreFamily>();
@@ -3624,7 +3624,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSy
     EXPECT_TRUE(sdiCmd->getWorkloadPartitionIdOffsetEnable());
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSyncThenHandleCompletion, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSyncThenHandleCompletion, IsAtLeastXeCore) {
     auto immCmdList = createMultiTileImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, false);
@@ -3667,7 +3667,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_command_queue_desc_t desc = {};

@@ -22,7 +22,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EngineNodeHelperTestsXeHPAndLater, WhenGetBcsEngine
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, {}, selectorCopyEngine, false));
 }
 
-HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenDebugVariableSetWhenAskingForEngineTypeThenReturnTheSameAsVariableIndex, IsAtLeastXeHpCore) {
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenDebugVariableSetWhenAskingForEngineTypeThenReturnTheSameAsVariableIndex, IsAtLeastXeCore) {
     DebugManagerStateRestore restore;
     DeviceBitfield deviceBitfield = 0b11;
 
@@ -42,7 +42,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenDebugVariableSetWhenAskingForE
     }
 }
 
-HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenForceBCSForInternalCopyEngineWhenGetBcsEngineTypeForInternalEngineThenForcedTypeIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenForceBCSForInternalCopyEngineWhenGetBcsEngineTypeForInternalEngineThenForcedTypeIsReturned, IsAtLeastXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ForceBCSForInternalCopyEngine.set(0u);
 
@@ -126,7 +126,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenLessThanFourCopyEnginesWhenGet
     }
 }
 
-HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineWhenSelectLinkCopyEngineThenHpEngineIsNotSelected, IsAtLeastXeHpCore) {
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineWhenSelectLinkCopyEngineThenHpEngineIsNotSelected, IsAtLeastXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(8);
     DeviceBitfield deviceBitfield = 0b1;
@@ -149,7 +149,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineWhenSelectLinkCopy
     EXPECT_NE(hpEngine, engineType2);
 }
 
-HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineAndBcs0And1And2RegularEnginesWhenDefaultCopyIsNotBcs1ThenHpEngineIsNotSelectedAndDifferentEnginesAreReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineAndBcs0And1And2RegularEnginesWhenDefaultCopyIsNotBcs1ThenHpEngineIsNotSelectedAndDifferentEnginesAreReturned, IsAtLeastXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(8);
     DeviceBitfield deviceBitfield = 0b1;
@@ -182,7 +182,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineAndBcs0And1And2Reg
     }
 }
 
-HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenBcs2HpCopyEngineAndBcs0And1RegularEnginesWhenSelectingLinkCopyEngineThenBcs1IsSelected, IsAtLeastXeHpCore) {
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenBcs2HpCopyEngineAndBcs0And1RegularEnginesWhenSelectingLinkCopyEngineThenBcs1IsSelected, IsAtLeastXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(8);
     DeviceBitfield deviceBitfield = 0b1;

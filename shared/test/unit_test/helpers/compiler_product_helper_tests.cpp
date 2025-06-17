@@ -41,16 +41,12 @@ TEST(CompilerProductHelperTest, WhenCompilerProductHelperCreateIsCalledWithUnkno
     EXPECT_EQ(nullptr, CompilerProductHelper::create(IGFX_UNKNOWN));
 }
 
-using IsBeforeXeHpc = IsBeforeGfxCore<IGFX_XE_HPC_CORE>;
-
-HWTEST2_F(CompilerProductHelperFixture, GivenProductBeforeXeHpcWhenIsForceToStatelessRequiredThenFalseIsReturned, IsBeforeXeHpc) {
+HWTEST2_F(CompilerProductHelperFixture, GivenProductBeforeXeHpcWhenIsForceToStatelessRequiredThenFalseIsReturned, IsAtMostXeHpgCore) {
     auto &compilerProductHelper = getHelper<CompilerProductHelper>();
     EXPECT_FALSE(compilerProductHelper.isForceToStatelessRequired());
 }
 
-using IsAtLeastXeHpc = IsAtLeastGfxCore<IGFX_XE_HPC_CORE>;
-
-HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterWhenIsForceToStatelessRequiredThenCorrectResultIsReturned, IsAtLeastXeHpc) {
+HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterWhenIsForceToStatelessRequiredThenCorrectResultIsReturned, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_TRUE(compilerProductHelper.isForceToStatelessRequired());
@@ -72,7 +68,7 @@ HWTEST2_F(CompilerProductHelperFixture, GivenGen11AndLaterThenSubgroupLocalBlock
     EXPECT_TRUE(compilerProductHelper.isSubgroupLocalBlockIoSupported());
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenDotAccumulateIsSupported, IsAtLeastXeHpCore) {
+HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenDotAccumulateIsSupported, IsAtLeastXeCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
     EXPECT_TRUE(compilerProductHelper.isDotAccumulateSupported());
@@ -84,7 +80,7 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenDotAccumulateIsNotSuppor
     EXPECT_FALSE(compilerProductHelper.isDotAccumulateSupported());
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenCreateBufferWithPropertiesIsSupported, IsAtLeastXeHpCore) {
+HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenCreateBufferWithPropertiesIsSupported, IsAtLeastXeCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
     EXPECT_TRUE(compilerProductHelper.isCreateBufferWithPropertiesSupported());
@@ -263,20 +259,20 @@ HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThe
     EXPECT_EQ(hwInfo.ipVersion.value, aotConfig.value);
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenAtMostXeHPWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtMostXeHpCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtMostXeHPWhenGetCachingPolicyOptionsThenReturnNullptr, IsGen12LP) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_EQ(compilerProductHelper.getCachingPolicyOptions(false), nullptr);
     EXPECT_EQ(compilerProductHelper.getCachingPolicyOptions(true), nullptr);
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsAtLeastXeHpgCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsAtLeastXeCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     const char *expectedStr = "-cl-store-cache-default=2 -cl-load-cache-default=4";
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteBackPolicyOption, IsAtLeastXeHpgCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteBackPolicyOption, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
 
@@ -286,7 +282,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolic
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreAndDebugFlagSetForceAllResourcesUncachedWhenGetCachingPolicyOptionsThenReturnUncachedPolicyOption, IsAtLeastXeHpgCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreAndDebugFlagSetForceAllResourcesUncachedWhenGetCachingPolicyOptionsThenReturnUncachedPolicyOption, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
     debugManager.flags.ForceAllResourcesUncached.set(true);
@@ -297,7 +293,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreAndDebugFlagSetForc
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenCachePolicyWithoutCorrespondingBuildOptionWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtLeastXeHpgCore) {
+HWTEST2_F(CompilerProductHelperFixture, givenCachePolicyWithoutCorrespondingBuildOptionWhenGetCachingPolicyOptionsThenReturnNullptr, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(5);
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();

@@ -59,7 +59,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgr
     }
 }
 
-HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInDeviceMemoryWhenStatelessCompressionIsEnabledThenSetSurfaceStateWithCompressionSettings, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInDeviceMemoryWhenStatelessCompressionIsEnabledThenSetSurfaceStateWithCompressionSettings, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(1);
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
@@ -90,14 +90,14 @@ HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInDeviceMemoryWhenStatel
 
     buffer->setArgStateful(&surfaceState, false, false, false, false, device, false);
 
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
     }
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, allocation->getDefaultGmm()));
     EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), surfaceState.getCompressionFormat());
 }
 
-HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInHostMemoryWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInHostMemoryWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
@@ -121,14 +121,14 @@ HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInHostMemoryWhenStateles
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());
     EXPECT_EQ(0u, surfaceState.getCompressionFormat());
 }
 
-HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationWithoutGraphicsAllocationWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationWithoutGraphicsAllocationWhenStatelessCompressionIsEnabledThenDontSetSurfaceStateWithCompressionSettings, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
@@ -154,7 +154,7 @@ HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationWithoutGraphicsAllocatio
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());

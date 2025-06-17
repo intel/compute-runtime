@@ -217,7 +217,7 @@ HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenSurfaceStateIsCorrect) {
     EXPECT_EQ(dstAllocation->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
 }
 
-HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenOnePipelineSelectIsProgrammed, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenOnePipelineSelectIsProgrammed, IsAtMostXeCore) {
     enqueueWriteImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

@@ -123,7 +123,7 @@ struct CopyOffloadMultiTileFixture : public SimpleMultiTileFixture {
 
 using CopyOffloadMultiTileL0AubTests = Test<CopyOffloadMultiTileFixture>;
 
-HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatchingThenDataIsCorrect, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatchingThenDataIsCorrect, IsAtLeastXeCore) {
     if (!rootDevice->isImplicitScalingCapable()) {
         GTEST_SKIP();
     }

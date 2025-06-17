@@ -443,7 +443,7 @@ HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingWhenMappingBufferThenWi
     clReleaseEvent(gatingEvent);
 }
 
-HWTEST2_F(CommandQueueHwTest, GivenFillBufferBlockedOnUserEventWhenEventIsAbortedThenClearTimestamps, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueHwTest, GivenFillBufferBlockedOnUserEventWhenEventIsAbortedThenClearTimestamps, IsAtLeastXeCore) {
     CommandQueueHw<FamilyType> cmdQ(context, pCmdQ->getDevice().getSpecializedDevice<ClDevice>(), 0, false);
 
     auto buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, 20, nullptr, nullptr);

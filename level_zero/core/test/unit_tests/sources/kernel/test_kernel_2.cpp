@@ -446,7 +446,7 @@ TEST(zeKernelGetProperties, WhenGettingKernelPropertiesThenSuccessIsReturned) {
 
 using KernelImpSuggestMaxCooperativeGroupCountTests = Test<KernelImpSuggestMaxCooperativeGroupCountFixture>;
 
-HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenNoBarriersOrSlmUsedWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithSimd, IsAtLeastBmg) {
+HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenNoBarriersOrSlmUsedWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithSimd, IsAtLeastXe2HpgCore) {
     auto workGroupSize = lws[0] * lws[1] * lws[2];
     auto expected = availableThreadCount / Math::divideAndRoundUp(workGroupSize, simd);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
@@ -472,13 +472,13 @@ HWTEST_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenMultiTileWhenCalcul
     }
 }
 
-HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenBarriersWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToBarriersCount, IsAtLeastBmg) {
+HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenBarriersWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToBarriersCount, IsAtLeastXe2HpgCore) {
     usesBarriers = 1;
     auto expected = dssCount * (maxBarrierCount / usesBarriers);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
-HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenUsedSlmSizeWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToUsedSlmSize, IsAtLeastBmg) {
+HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenUsedSlmSizeWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToUsedSlmSize, IsAtLeastXe2HpgCore) {
     usedSlm = 64 * MemoryConstants::kiloByte;
     auto expected = availableSlm / usedSlm;
     EXPECT_EQ(expected, getMaxWorkGroupCount());
@@ -571,7 +571,7 @@ HWTEST2_F(KernelTest, givenTwoInlineSamplersWithBindlessAddressingWhenSettingInl
 
 using KernelImmutableDataBindlessTest = Test<DeviceFixture>;
 
-HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndNoBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeHpgCore) {
+HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndNoBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeCore) {
     HardwareInfo hwInfo = *defaultHwInfo;
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
@@ -640,7 +640,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
     }
 }
 
-HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplicitAndImplicitArgsAndNoBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeHpgCore) {
+HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplicitAndImplicitArgsAndNoBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeCore) {
     HardwareInfo hwInfo = *defaultHwInfo;
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
@@ -710,7 +710,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
     }
 }
 
-HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeHpgCore) {
+HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     HardwareInfo hwInfo = *defaultHwInfo;
 
@@ -795,7 +795,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
     }
 }
 
-HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeHpgCore) {
+HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     HardwareInfo hwInfo = *defaultHwInfo;
 

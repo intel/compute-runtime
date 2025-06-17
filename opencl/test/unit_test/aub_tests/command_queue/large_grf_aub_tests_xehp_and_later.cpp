@@ -264,7 +264,7 @@ class LargeGrfTest : public AUBFixture,
 
 static bool largeGrfModes[] = {true, false};
 
-HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, IsAtLeastXeHpCore) {
+HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, IsAtLeastXeCore) {
     createProgramFromBinary(getContext(), getContext()->getDevices(),
                             "simple_kernel_large_grf");
 
@@ -355,7 +355,7 @@ HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, Is
     expectMemory<FamilyType>(AUBFixture::getGpuPointer(destinationBuffer->getGraphicsAllocation(rootDeviceIndex), destinationBuffer->getOffset()), expectedMemory, bufferSize);
 }
 
-HWTEST2_P(LargeGrfTest, givenKernelWithSpillWhenExecutedInLargeGrfThenDontSpillAndResultsAreCorrect, IsAtLeastXeHpCore) {
+HWTEST2_P(LargeGrfTest, givenKernelWithSpillWhenExecutedInLargeGrfThenDontSpillAndResultsAreCorrect, IsAtLeastXeCore) {
     createKernels(true);
 
     allocateLargeGrfMemory();
@@ -396,7 +396,7 @@ HWTEST2_P(LargeGrfTest, givenKernelWithSpillWhenExecutedInLargeGrfThenDontSpillA
         expectedMemory, bufferSize);
 }
 
-HWTEST2_P(LargeGrfTest, givenMixedLargeGrfAndSmallGrfKernelsWhenExecutedThenResultsAreCorrect, IsAtLeastXeHpCore) {
+HWTEST2_P(LargeGrfTest, givenMixedLargeGrfAndSmallGrfKernelsWhenExecutedThenResultsAreCorrect, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CopyHostPtrOnCpu.set(0);
     createKernels(false);
@@ -501,7 +501,7 @@ class MultiContextLargeGrfKernelAubTest : public MulticontextOclAubFixture, publ
 
 static uint32_t enginesIndices[] = {0, 1};
 
-HWTEST2_P(MultiContextLargeGrfKernelAubTest, givenLargeAndSmallGrfWhenParallelRunOnCcsAndRcsThenResultsAreOk, IsWithinXeGfxFamily) {
+HWTEST2_P(MultiContextLargeGrfKernelAubTest, givenLargeAndSmallGrfWhenParallelRunOnCcsAndRcsThenResultsAreOk, IsXeCore) {
     createKernels(false);
     allocateLargeGrfMemory();
 

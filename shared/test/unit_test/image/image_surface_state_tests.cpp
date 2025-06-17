@@ -54,7 +54,7 @@ HWTEST2_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenProp
     EXPECT_EQ(castSurfaceState->getSurfaceVerticalAlignment(), static_cast<typename RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT>(mockGmm->gmmResourceInfo->getVAlignSurfaceState()));
     EXPECT_EQ(castSurfaceState->getTileMode(), mockGmm->gmmResourceInfo->getTileModeSurfaceState());
     EXPECT_EQ(castSurfaceState->getMemoryObjectControlState(), gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
-    if constexpr (IsAtMostXeHpcCore::isMatched<productFamily>()) {
+    if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_EQ(castSurfaceState->getCoherencyType(), RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
     }
     EXPECT_EQ(castSurfaceState->getMultisampledSurfaceStorageFormat(), RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);

@@ -2025,7 +2025,7 @@ using PrimaryBatchBufferPreamblelessCmdListTest = Test<PrimaryBatchBufferPreambl
 
 HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
           givenPrimaryBatchBufferWhenExecutingSingleCommandListTwiceInSingleCallAndFirstTimeNotExpectsPreambleThenProperlyDispatchPreambleForSecondInstance,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     if (device->getProductHelper().isNewCoherencyModelSupported()) {
@@ -2088,7 +2088,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
 
 HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
           givenPrimaryBatchBufferWhenExecutingCommandWithoutPreambleThenUseCommandListBufferAsStartingBuffer,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
@@ -2130,7 +2130,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
 
 HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
           givenPrimaryBatchBufferWhenExecutingMultipleCommandListsAndEachWithoutPreambleThenUseCommandListBufferAsStartingBufferAndChainAllCommandLists,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
 
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
@@ -2211,7 +2211,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
 
 HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
           givenPrimaryBatchBufferWhenExecutingMultipleCommandListsAndSecondWithPreambleThenUseCommandListBufferAsStartingBufferAndChainFirstListToQueuePreambleAndAfterToSecondList,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 

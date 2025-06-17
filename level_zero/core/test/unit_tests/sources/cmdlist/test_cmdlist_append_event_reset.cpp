@@ -357,7 +357,7 @@ HWTEST_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPipe
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
-          givenMultiTileCommandListWhenAppendingMultiPacketEventThenExpectCorrectNumberOfStoreDataImmAndResetPostSyncAndMultiBarrierCommands, IsAtLeastXeHpCore) {
+          givenMultiTileCommandListWhenAppendingMultiPacketEventThenExpectCorrectNumberOfStoreDataImmAndResetPostSyncAndMultiBarrierCommands, IsAtLeastXeCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -438,7 +438,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
-          givenCopyCommandListWhenAppendingMultiPacketEventThenExpectCorrectNumberOfMiFlushResetPostSyncCommands, IsAtLeastXeHpCore) {
+          givenCopyCommandListWhenAppendingMultiPacketEventThenExpectCorrectNumberOfMiFlushResetPostSyncCommands, IsAtLeastXeCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<FamilyType::gfxCoreFamily>>();

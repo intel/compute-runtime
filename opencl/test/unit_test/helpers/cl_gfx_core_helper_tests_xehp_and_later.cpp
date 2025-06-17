@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ClGfxCoreHelperTestXeHpAndLater, givenCLImageFormat
     }
 }
 
-HWTEST2_F(ClGfxCoreHelperTestXeHpAndLater, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue, IsAtLeastXeHpCore) {
+HWTEST2_F(ClGfxCoreHelperTestXeHpAndLater, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue, IsAtLeastXeCore) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     auto releaseHelper = pDevice->getReleaseHelper();
 

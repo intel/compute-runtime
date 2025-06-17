@@ -613,7 +613,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
     EXPECT_EQ(0x2'0000'0002u, postSyncData.getImmediateData());
 }
 
-HWTEST2_F(XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenSystolicIsProgrammed, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenSystolicIsProgrammed, IsXeCore) {
     debugManager.flags.OverrideSystolicInComputeWalker.set(true);
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
@@ -1726,7 +1726,7 @@ using NonDefaultPlatformGpuWalkerTest = XeHPAndLaterDispatchWalkerBasicTest;
 struct NonDefaultPlatformGpuWalkerTestNonHeaplessMatcher {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-        return IsAtLeastXeHpCore::isMatched<productFamily>() && !(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessRequired);
+        return IsAtLeastXeCore::isMatched<productFamily>() && !(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessRequired);
     }
 };
 

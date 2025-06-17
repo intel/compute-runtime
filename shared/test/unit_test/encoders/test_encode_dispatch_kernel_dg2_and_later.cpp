@@ -25,7 +25,7 @@ using namespace NEO;
 
 using CommandEncodeStatesTestDg2AndLater = Test<CommandEncodeStatesFixture>;
 
-HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCAndDG2ThenSetDataportSubsliceCacheFlushIstSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCAndDG2ThenSetDataportSubsliceCacheFlushIstSet, IsAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -48,7 +48,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCA
     EXPECT_EQ(true, cmd->getPostSync().getDataportSubsliceCacheFlush());
 }
 
-HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenDebugVariableToForceL1FlushWhenWalkerIsProgramedThenCacheFlushIsDisabled, IsAtLeastXeHpgCore) {
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenDebugVariableToForceL1FlushWhenWalkerIsProgramedThenCacheFlushIsDisabled, IsAtLeastXeCore) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
@@ -118,7 +118,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenVariousSlmTotalSizesWhenSetPr
     verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
 }
 
-HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditionalInfoIsCalledThenDebugValuesAreSet, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditionalInfoIsCalledThenDebugValuesAreSet, IsXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
 
@@ -161,7 +161,7 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
     }
 }
 
-HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocationSizePerDssWhenDispatchingKernelThenCorrectValueIsSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocationSizePerDssWhenDispatchingKernelThenCorrectValueIsSet, IsAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
     debugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(5);

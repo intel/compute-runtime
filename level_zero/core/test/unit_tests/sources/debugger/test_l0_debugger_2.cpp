@@ -250,7 +250,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     commandList->destroy();
 }
 
-HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelThenSipIsInstalledAndDebuggerAllocationsAreResident, IsAtLeastXeHpCore) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelThenSipIsInstalledAndDebuggerAllocationsAreResident, IsAtLeastXeCore) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();

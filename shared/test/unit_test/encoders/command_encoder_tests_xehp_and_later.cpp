@@ -27,7 +27,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenXeHPAndLater
     EXPECT_FALSE(EncodeSurfaceState<FamilyType>::doBindingTablePrefetch());
 }
 
-HWTEST2_F(XeHPAndLaterHardwareCommandsTest, GivenXeHPAndLaterPlatformWhenSetCoherencyTypeIsCalledThenOnlyEncodingSupportedIsSingleGpuCoherent, IsWithinXeGfxFamily) {
+HWTEST2_F(XeHPAndLaterHardwareCommandsTest, GivenXeHPAndLaterPlatformWhenSetCoherencyTypeIsCalledThenOnlyEncodingSupportedIsSingleGpuCoherent, IsXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using COHERENCY_TYPE = typename RENDER_SURFACE_STATE::COHERENCY_TYPE;
 
@@ -45,7 +45,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenXeHPAndLater
 
 using XeHPAndLaterCommandEncoderTest = Test<DeviceFixture>;
 
-HWTEST2_F(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsAtLeastXeCore) {
     auto container = CommandContainer();
     if constexpr (FamilyType::isHeaplessRequired()) {
         EXPECT_ANY_THROW(EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false));
@@ -55,7 +55,7 @@ HWTEST2_F(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAdd
     EXPECT_EQ(size, 104ul);
 }
 
-HWTEST2_F(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsHeapfulSupportedAndAtLeastXeHpCore) {
+HWTEST2_F(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsHeapfulSupportedAndAtLeastXeCore) {
     auto container = CommandContainer();
     container.setHeapDirty(HeapType::surfaceState);
     size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);

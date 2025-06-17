@@ -2965,7 +2965,7 @@ HWTEST_F(CommandListCreateTests, givenCommandListWhenSetBarrierThenPipeControlIs
     EXPECT_NE(cmdList.end(), itor);
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedAndHdcFlushIsSet, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedAndHdcFlushIsSet, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
@@ -2985,7 +2985,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeCo
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedWithHdcAndUntypedFlushSet, IsAtLeastXeHpgCore) {
+HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedWithHdcAndUntypedFlushSet, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
@@ -3177,7 +3177,7 @@ TEST(BuiltinTypeHelperTest, givenHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrec
     EXPECT_EQ(Builtin::fillBufferMiddleStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless));
     EXPECT_EQ(Builtin::fillBufferRightLeftoverStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless));
 }
-HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithPostSyncThenDummyBlitIsProgrammedPriorToMiFlushAndDummyAllocationIsAddedToResidencyContainer, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithPostSyncThenDummyBlitIsProgrammedPriorToMiFlushAndDummyAllocationIsAddedToResidencyContainer, IsAtLeastXeCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceDummyBlitWa.set(1);
@@ -3205,7 +3205,7 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithPos
     EXPECT_EQ(commandContainer.getResidencyContainer()[0], rootDeviceEnvironment.getDummyAllocation());
 }
 
-HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithoutPostSyncThenDummyBlitIsNotProgrammedAndDummyAllocationIsNotAddedToResidencyContainer, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithoutPostSyncThenDummyBlitIsNotProgrammedAndDummyAllocationIsNotAddedToResidencyContainer, IsAtLeastXeCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceDummyBlitWa.set(1);
@@ -3230,7 +3230,7 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitRequiredWhenEncodeMiFlushWithout
     EXPECT_EQ(commandContainer.getResidencyContainer().size(), 0u);
 }
 
-HWTEST2_F(CommandListCreateTests, givenDummyBlitNotRequiredWhenEncodeMiFlushThenDummyBlitIsNotProgrammedAndDummyAllocationIsNotAddedToResidencyContainer, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateTests, givenDummyBlitNotRequiredWhenEncodeMiFlushThenDummyBlitIsNotProgrammedAndDummyAllocationIsNotAddedToResidencyContainer, IsAtLeastXeCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceDummyBlitWa.set(0);

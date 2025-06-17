@@ -325,7 +325,7 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutingCommandListsThenWorkPartitionAllocationIsMadeResident, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecutingCommandListsThenWorkPartitionAllocationIsMadeResident, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWalkerPartition.set(1);
 
@@ -374,7 +374,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenExecuti
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenWalkerPartitionIsDisabledThenWorkPartitionAllocationIsNotCreated, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenWalkerPartitionIsDisabledThenWorkPartitionAllocationIsNotCreated, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableWalkerPartition.set(0);
 
@@ -913,7 +913,7 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueTest, givenBindlessEnabledWhenEstimateStateBaseAddressCmdSizeCalledThenZeroSizeIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueTest, givenBindlessEnabledWhenEstimateStateBaseAddressCmdSizeCalledThenZeroSizeIsReturned, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseBindlessMode.set(1);
     ze_command_queue_desc_t desc = {};
@@ -924,7 +924,7 @@ HWTEST2_F(CommandQueueTest, givenBindlessEnabledWhenEstimateStateBaseAddressCmdS
     EXPECT_EQ(size, expectedSize);
 }
 
-HWTEST2_F(CommandQueueTest, givenBindlessDisabledWhenEstimateStateBaseAddressCmdSizeCalledThenZeroReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueTest, givenBindlessDisabledWhenEstimateStateBaseAddressCmdSizeCalledThenZeroReturned, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseBindlessMode.set(0);
     ze_command_queue_desc_t desc = {};
@@ -951,7 +951,7 @@ size_t estimateAllCommmandLists(MockCommandQueueHw<gfxCoreFamily> *commandQueue,
     return estimatedSize;
 }
 
-HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFrontEndCmdsIsCalculatedAndCorrectStateIsSet, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFrontEndCmdsIsCalculatedAndCorrectStateIsSet, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
 
     debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
@@ -1110,7 +1110,7 @@ HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFron
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteCommandListsIsCalledThenComputeDispatchAllWalkerEnableIsSet, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteCommandListsIsCalledThenComputeDispatchAllWalkerEnableIsSet, IsAtLeastXeCore) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
@@ -1145,7 +1145,7 @@ HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteC
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandListsIsCalledThenCorrectSizeOfFrontEndCmdsIsCalculated, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandListsIsCalledThenCorrectSizeOfFrontEndCmdsIsCalculated, IsAtLeastXeCore) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
@@ -1270,7 +1270,7 @@ struct DeferredFirstSubmissionCmdQueueTests : public Test<ModuleFixture> {
     DebugManagerStateRestore dbgRestorer;
 };
 
-HWTEST2_F(DeferredFirstSubmissionCmdQueueTests, givenDebugFlagSetWhenSubmittingToSecondaryThenDeferFirstSubmission, IsAtLeastXeHpCore) {
+HWTEST2_F(DeferredFirstSubmissionCmdQueueTests, givenDebugFlagSetWhenSubmittingToSecondaryThenDeferFirstSubmission, IsAtLeastXeCore) {
     HardwareInfo hwInfo = *defaultHwInfo;
     if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
         GTEST_SKIP();

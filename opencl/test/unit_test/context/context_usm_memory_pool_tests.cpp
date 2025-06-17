@@ -44,7 +44,7 @@ struct ContextUsmPoolFlagValuesTest : public ::testing::Test {
 
 using ContextUsmPoolDefaultFlagsTest = ContextUsmPoolFlagValuesTest<-1, -1>;
 
-HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContextThenPoolsAreNotInitialized, IsBeforeXeHpgCore) {
+HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContextThenPoolsAreNotInitialized, IsGen12LP) {
     EXPECT_FALSE(mockDeviceUsmMemAllocPool->isInitialized());
     EXPECT_EQ(0u, mockDeviceUsmMemAllocPool->poolSize);
     EXPECT_EQ(nullptr, mockDeviceUsmMemAllocPool->pool);

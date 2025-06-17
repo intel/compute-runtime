@@ -532,7 +532,7 @@ struct CommandQueueExecuteCommandListsImplicitScalingDisabled : CommandQueueExec
     DebugManagerStateRestore restorer{};
 };
 
-HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandListWithCooperativeKernelsWhenExecuteCommandListsIsCalledThenCorrectBatchBufferIsSubmitted, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandQueueExecuteCommandListsImplicitScalingDisabled, givenCommandListWithCooperativeKernelsWhenExecuteCommandListsIsCalledThenCorrectBatchBufferIsSubmitted, IsAtLeastXeCore) {
     struct MockCsr : NEO::CommandStreamReceiverHw<FamilyType> {
         using NEO::CommandStreamReceiverHw<FamilyType>::CommandStreamReceiverHw;
         NEO::SubmissionStatus submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
@@ -1082,7 +1082,7 @@ void findPartitionRegister(GenCmdList &cmdList, bool expectToFind) {
     }
 }
 
-HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCountWhenExecutingCmdListThenExpectMmioProgrammingAndCorrectEstimation, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCountWhenExecutingCmdListThenExpectMmioProgrammingAndCorrectEstimation, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
     using Parse = typename FamilyType::Parse;

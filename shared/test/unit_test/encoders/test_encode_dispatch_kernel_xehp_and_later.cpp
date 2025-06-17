@@ -1456,7 +1456,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenNonTimestampEventWhen
 }
 
 HWTEST2_F(CommandEncodeStatesTest,
-          givenDispatchInterfaceWhenDpasRequiredIsNotDefaultThenPipelineSelectCommandAdded, IsWithinXeGfxFamily) {
+          givenDispatchInterfaceWhenDpasRequiredIsNotDefaultThenPipelineSelectCommandAdded, IsXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     uint32_t dims[] = {2, 1, 1};
@@ -1490,7 +1490,7 @@ HWTEST2_F(CommandEncodeStatesTest,
 }
 
 HWTEST2_F(CommandEncodeStatesTest,
-          givenDebugVariableWhenEncodeStateIsCalledThenSystolicValueIsOverwritten, IsWithinXeGfxFamily) {
+          givenDebugVariableWhenEncodeStateIsCalledThenSystolicValueIsOverwritten, IsXeCore) {
     DebugManagerStateRestore restorer;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
@@ -1615,7 +1615,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScalingSecondaryBufferTe
 
 using EncodeKernelScratchProgrammingTest = Test<ScratchProgrammingFixture>;
 
-HWTEST2_F(EncodeKernelScratchProgrammingTest, givenHeaplessModeDisabledWhenSetScratchAddressIsCalledThenDoNothing, IsAtLeastXeHpCore) {
+HWTEST2_F(EncodeKernelScratchProgrammingTest, givenHeaplessModeDisabledWhenSetScratchAddressIsCalledThenDoNothing, IsAtLeastXeCore) {
 
     static constexpr bool heaplessModeEnabled = false;
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -1629,7 +1629,7 @@ HWTEST2_F(EncodeKernelScratchProgrammingTest, givenHeaplessModeDisabledWhenSetSc
     EXPECT_EQ(expectedScratchAddress, scratchAddress);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetThenReturnWalkerInlineOffset, IsHeapfulSupportedAndAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetThenReturnWalkerInlineOffset, IsHeapfulSupportedAndAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     EncodeDispatchKernelArgs dispatchArgs = {};
@@ -1639,7 +1639,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingInlineDat
     EXPECT_EQ(expectedOffset, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenCpuWalkerPointerIsSetThenProvideWalkerContentInCpuBuffer, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenCpuWalkerPointerIsSetThenProvideWalkerContentInCpuBuffer, IsAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     uint32_t dims[] = {1, 1, 1};
@@ -1666,7 +1666,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenCpuWalkerPointer
     EXPECT_EQ(0, memcmp(cmdWalkerGfxMemory, cpuWalkerPointer, sizeof(DefaultWalkerType)));
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingExtraPayloadSpaceThenConsumeExtraIndirectHeapSpace, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingExtraPayloadSpaceThenConsumeExtraIndirectHeapSpace, IsAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1687,7 +1687,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingExtraP
     EXPECT_EQ(expectedConsumedSize, heap->getUsed());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenForceComputeWalkerPostSyncFlushWithWriteWhenEncodeIsCalledThenPostSyncIsProgrammedCorrectly, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenForceComputeWalkerPostSyncFlushWithWriteWhenEncodeIsCalledThenPostSyncIsProgrammedCorrectly, IsAtLeastXeCore) {
 
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
@@ -1719,7 +1719,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenForceComputeWalkerPostSyncFlushWithWrite
     EXPECT_EQ(expectedData, postSync.getImmediateData());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingCommandViewThenDoNotConsumeCmdBufferAndHeapSpace, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingCommandViewThenDoNotConsumeCmdBufferAndHeapSpace, IsAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1748,7 +1748,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingComman
     EXPECT_EQ(cmdBufferUsed, cmdBuffer->getUsed());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingCommandViewWithoutCpuPointersThenExpectUnrecoverable, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingCommandViewWithoutCpuPointersThenExpectUnrecoverable, IsAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1783,7 +1783,7 @@ struct MultiTileCommandEncodeStatesFixture : public CommandEncodeStatesFixture {
 };
 
 using MultiTileCommandEncodeStatesTest = Test<MultiTileCommandEncodeStatesFixture>;
-HWTEST2_F(MultiTileCommandEncodeStatesTest, givenEncodeDispatchKernelInImplicitScalingWhenRequestingCommandViewThenDoNotConsumeCmdBufferAndHeapSpace, IsAtLeastXeHpCore) {
+HWTEST2_F(MultiTileCommandEncodeStatesTest, givenEncodeDispatchKernelInImplicitScalingWhenRequestingCommandViewThenDoNotConsumeCmdBufferAndHeapSpace, IsAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

@@ -275,7 +275,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadBufferTypeTest, WhenReadingBufferThenI
     EXPECT_NE(0u, idd.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST2_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenPipelineSelectIsProgrammedOnce, IsAtMostXeHpcCore) {
+HWTEST2_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenPipelineSelectIsProgrammedOnce, IsAtMostXeCore) {
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();

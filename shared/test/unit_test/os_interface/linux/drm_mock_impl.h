@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,6 +127,6 @@ struct NonDefaultIoctlsSupported {
         if (productFamily == IGFX_DG1) {
             return true;
         }
-        return IsWithinXeGfxFamily::isMatched<productFamily>();
+        return IsXeCore::isMatched<productFamily>();
     }
 };

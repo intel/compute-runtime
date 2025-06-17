@@ -75,12 +75,12 @@ struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
 
 using WalkerDispatchTestDg2AndLater = ::testing::Test;
 using Dg2AndLaterDispatchWalkerBasicTest = Test<Dg2AndLaterDispatchWalkerBasicFixture>;
-using matcherDG2AndLater = IsAtLeastXeHpgCore;
+using matcherDG2AndLater = IsAtLeastXeCore;
 
 struct L3PrefetchMatch {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-        return IsAtLeastXeHpCore::isMatched<productFamily>() && HeapfulSupportedMatch::isMatched<productFamily>();
+        return IsAtLeastXeCore::isMatched<productFamily>() && HeapfulSupportedMatch::isMatched<productFamily>();
     }
 };
 

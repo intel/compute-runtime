@@ -821,7 +821,7 @@ HWTEST_F(CommandListAppendWaitOnSecondaryBatchBufferEvent, givenCommandBufferIsE
 
 using MultTileCommandListAppendWaitOnEvent = Test<MultiTileCommandListFixture<false, false, false, -1>>;
 HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
-          GivenMultiTileCmdListWhenPartitionedEventUsedToWaitThenExpectProperGpuAddressAndSemaphoreCount, IsAtLeastXeHpCore) {
+          GivenMultiTileCmdListWhenPartitionedEventUsedToWaitThenExpectProperGpuAddressAndSemaphoreCount, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     size_t expectedSize = commandList->partitionCount * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();

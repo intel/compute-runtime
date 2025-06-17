@@ -1289,7 +1289,7 @@ TEST_F(DeviceTests, WhenIsStateSipRequiredIsCalledThenCorrectValueIsReturned) {
     device->executionEnvironment->rootDeviceEnvironments[0].reset(backupenv);
 }
 
-HWTEST2_F(DeviceTests, GivenXeHpAndLaterThenDefaultPreemptionModeIsThreadGroup, IsWithinXeGfxFamily) {
+HWTEST2_F(DeviceTests, GivenXeHpAndLaterThenDefaultPreemptionModeIsThreadGroup, IsXeCore) {
     EXPECT_EQ(PreemptionMode::ThreadGroup, defaultHwInfo->capabilityTable.defaultPreemptionMode);
 }
 

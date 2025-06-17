@@ -19,7 +19,7 @@
 using namespace NEO;
 using CommandEncoderXeHpgCorePlusTests = Test<DeviceFixture>;
 
-HWTEST2_F(CommandEncoderXeHpgCorePlusTests, givenSpecifiedL1CacheControlWhenAppendingRssThenProgramProvidedL1CachePolicy, IsAtLeastXeHpgCore) {
+HWTEST2_F(CommandEncoderXeHpgCorePlusTests, givenSpecifiedL1CacheControlWhenAppendingRssThenProgramProvidedL1CachePolicy, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;

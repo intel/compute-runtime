@@ -3785,7 +3785,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, InOrderCmdListTests, givenImmediateEventWhenWaiti
     EXPECT_NE(cmdList.end(), walkerItor);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListThenDontPatch, IsAtLeastXeHpgCore) {
+HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListThenDontPatch, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using WalkerType = typename FamilyType::DefaultWalkerType;
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);

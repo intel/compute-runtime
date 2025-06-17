@@ -653,7 +653,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 }
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests,
-          givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillAndPrivateScratchSpaceThenExpectCsrHasCorrectValuesSet, IsAtLeastXeHpCore) {
+          givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillAndPrivateScratchSpaceThenExpectCsrHasCorrectValuesSet, IsAtLeastXeCore) {
     constexpr uint32_t scratch0PerThreadSize = 0x200;
     constexpr uint32_t scratch1PerThreadSize = 0x100;
 
@@ -1911,7 +1911,7 @@ struct DeferredFirstSubmissionCmdListTests : public Test<ModuleFixture> {
     DebugManagerStateRestore dbgRestorer;
 };
 
-HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingToSecondaryThenDeferFirstSubmission, IsAtLeastXeHpCore) {
+HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingToSecondaryThenDeferFirstSubmission, IsAtLeastXeCore) {
     HardwareInfo hwInfo = *defaultHwInfo;
     if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
         GTEST_SKIP();
@@ -1967,7 +1967,7 @@ HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingTo
     commandList2->destroy();
 }
 
-HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingToPrimaryThenDeferFirstSubmission, IsAtLeastXeHpCore) {
+HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingToPrimaryThenDeferFirstSubmission, IsAtLeastXeCore) {
     HardwareInfo hwInfo = *defaultHwInfo;
     if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
         GTEST_SKIP();

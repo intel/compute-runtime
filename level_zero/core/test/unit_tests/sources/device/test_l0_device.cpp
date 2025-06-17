@@ -183,7 +183,7 @@ TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddD
 
 using DeviceCopyEngineTests = ::testing::Test;
 
-HWTEST2_F(DeviceCopyEngineTests, givenRootOrSubDeviceWhenAskingForCopyOrdinalThenReturnCorrectId, IsAtLeastXeHpCore) {
+HWTEST2_F(DeviceCopyEngineTests, givenRootOrSubDeviceWhenAskingForCopyOrdinalThenReturnCorrectId, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleSubDevices.set(2);
     debugManager.flags.EnableImplicitScaling.set(1);
@@ -4964,7 +4964,7 @@ TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenEnabledImplicitScalingWhen
     EXPECT_EQ(defaultEngine.commandStreamReceiver, csr);
 }
 
-HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceWhenGettingLowPriorityCsrForComputeEngineThenDefaultCsrReturned, IsAtLeastXeHpgCore) {
+HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceWhenGettingLowPriorityCsrForComputeEngineThenDefaultCsrReturned, IsAtLeastXeCore) {
     auto &defaultEngine = deviceImp->getActiveDevice()->getDefaultEngine();
 
     NEO::CommandStreamReceiver *csr = nullptr;
@@ -4989,7 +4989,7 @@ HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceW
     EXPECT_EQ(1u, csr->getOsContext().getDeviceBitfield().count());
 }
 
-HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceWhenGettingHighPriorityCsrForCopyEngineThenSubDeviceHpBcsIsReturned, IsAtLeastXeHpgCore) {
+HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceWhenGettingHighPriorityCsrForCopyEngineThenSubDeviceHpBcsIsReturned, IsAtLeastXeCore) {
 
     NEO::CommandStreamReceiver *csr = nullptr;
     auto ordinal = deviceImp->getCopyEngineOrdinal();

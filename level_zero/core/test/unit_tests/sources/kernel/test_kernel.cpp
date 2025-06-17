@@ -1294,7 +1294,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndPatchTokenPointerSizeIsZ
     EXPECT_NE(nullptr, rtDispatchGlobals);
 }
 
-HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAllocatedThenRayTracingIsNotInitialized, IsAtLeastXeHpgCore) {
+HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAllocatedThenRayTracingIsNotInitialized, IsAtLeastXeCore) {
     KernelDescriptor mockDescriptor = {};
     mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
@@ -1335,7 +1335,7 @@ HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIs
     neoDevice->executionEnvironment->memoryManager.swap(otherMemoryManager);
 }
 
-HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRTStackAllocationFailsThenRayTracingIsNotInitialized, IsAtLeastXeHpgCore) {
+HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRTStackAllocationFailsThenRayTracingIsNotInitialized, IsAtLeastXeCore) {
     KernelDescriptor mockDescriptor = {};
     mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
@@ -1848,7 +1848,7 @@ TEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
                         sizeof(kernelProperties.uuid.mid)));
 }
 
-HWTEST2_F(KernelPropertiesTests, givenKernelWithPrivateScratchMemoryThenProperPrivateMemorySizeIsReported, IsAtLeastXeHpCore) {
+HWTEST2_F(KernelPropertiesTests, givenKernelWithPrivateScratchMemoryThenProperPrivateMemorySizeIsReported, IsAtLeastXeCore) {
     ze_kernel_properties_t kernelProperties = {};
 
     kernelProperties.privateMemSize = std::numeric_limits<uint32_t>::max();
@@ -1890,7 +1890,7 @@ TEST_F(KernelPropertiesTests, givenKernelWithInlineAndDynamicSharedLocalMemoryTh
 
 using KernelMaxNumSubgroupsTests = Test<ModuleImmutableDataFixture>;
 
-HWTEST2_F(KernelMaxNumSubgroupsTests, givenLargeGrfAndSimdSmallerThan32WhenCalculatingMaxWorkGroupSizeThenMaxNumSubgroupsReturnHalfOfDeviceDefault, IsWithinXeGfxFamily) {
+HWTEST2_F(KernelMaxNumSubgroupsTests, givenLargeGrfAndSimdSmallerThan32WhenCalculatingMaxWorkGroupSizeThenMaxNumSubgroupsReturnHalfOfDeviceDefault, IsXeCore) {
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
 
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
@@ -1924,7 +1924,7 @@ HWTEST2_F(KernelMaxNumSubgroupsTests, givenLargeGrfAndSimdSmallerThan32WhenCalcu
     EXPECT_EQ(static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize) / maxSubgroupSize, maxNumSubgroups * 2);
 }
 
-HWTEST2_F(KernelMaxNumSubgroupsTests, givenLargeGrfAndSimdSmallerThan32WhenPassingKernelMaxGroupSizePropertiesStructToGetPropertiesThenHalfDeviceMaxGroupSizeIsReturned, IsWithinXeGfxFamily) {
+HWTEST2_F(KernelMaxNumSubgroupsTests, givenLargeGrfAndSimdSmallerThan32WhenPassingKernelMaxGroupSizePropertiesStructToGetPropertiesThenHalfDeviceMaxGroupSizeIsReturned, IsXeCore) {
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
 
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;

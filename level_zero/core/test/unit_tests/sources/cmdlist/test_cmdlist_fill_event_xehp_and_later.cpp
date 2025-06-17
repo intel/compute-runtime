@@ -753,7 +753,7 @@ using AppendFillMultiPacketEventTest = Test<AppendFillMultiPacketEventFixture<0,
 
 HWTEST2_F(AppendFillMultiPacketEventTest,
           givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesPostSyncProfiling,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 2;
     arg.expectedWalkerPostSyncOp = 3;
@@ -778,7 +778,7 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
 
 HWTEST2_F(AppendFillMultiPacketEventTest,
           givenCallToAppendMemoryFillWhenTimestampEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesWalkerPostSyncProfiling,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 2;
     arg.expectedWalkerPostSyncOp = 3;
@@ -803,7 +803,7 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
 
 HWTEST2_F(AppendFillMultiPacketEventTest,
           givenAppendMemoryFillUsingSinglePacketEventWhenPatternDispatchOneKernelThenUseComputeWalkerPostSync,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 3;
@@ -823,7 +823,7 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
 
 HWTEST2_F(AppendFillMultiPacketEventTest,
           givenAppendMemoryFillUsingSinglePacketEventWhenPatternDispatchOneKernelThenUseComputeWalkerPostSyncAndL3PostSync,
-          IsXeHpOrXeHpgCore) {
+          IsXeHpgCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 3;
@@ -845,7 +845,7 @@ using AppendFillSinglePacketEventTest = Test<AppendFillMultiPacketEventFixture<1
 
 HWTEST2_F(AppendFillSinglePacketEventTest,
           givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfiling,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -866,7 +866,7 @@ HWTEST2_F(AppendFillSinglePacketEventTest,
 
 HWTEST2_F(AppendFillSinglePacketEventTest,
           givenCallToAppendMemoryFillWhenTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfiling,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -887,7 +887,7 @@ HWTEST2_F(AppendFillSinglePacketEventTest,
 
 HWTEST2_F(AppendFillSinglePacketEventTest,
           givenAppendMemoryFillUsingSinglePacketEventWhenPatternDispatchOneKernelThenUseComputeWalkerPostSync,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 3;
@@ -903,7 +903,7 @@ HWTEST2_F(AppendFillSinglePacketEventTest,
 
 HWTEST2_F(AppendFillSinglePacketEventTest,
           givenAppendMemoryFillUsingSinglePacketEventWhenPatternDispatchOneKernelThenUseComputeWalkerPostSyncAndL3PostSync,
-          IsXeHpOrXeHpgCore) {
+          IsXeHpgCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 3;
@@ -918,7 +918,7 @@ HWTEST2_F(AppendFillSinglePacketEventTest,
 using MultiTileAppendFillEventMultiPacketTest = Test<AppendFillMultiPacketEventFixture<0, 0, 1>>;
 
 HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesWalkerPostSyncProfilingAndSingleDcFlushWithImmediatePostSync, IsAtLeastXeHpCore) {
+          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesWalkerPostSyncProfilingAndSingleDcFlushWithImmediatePostSync, IsAtLeastXeCore) {
     // two kernels and each kernel uses two packets (for two tiles), in total 4
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 2;
@@ -949,7 +949,7 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
 }
 
 HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeImmediateEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesWalkerPostSyncAndSingleDcFlushWithPostSync, IsAtLeastXeHpCore) {
+          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeImmediateEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesWalkerPostSyncAndSingleDcFlushWithPostSync, IsAtLeastXeCore) {
     // two kernels and each kernel uses two packets (for two tiles), in total 4
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 2;
@@ -981,7 +981,7 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
 }
 
 HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesComputeWalkerPostSyncThenSingleKernelsUsesWalkerPostSyncProfilingAndSingleDcFlushWithImmediatePostSync, IsXeHpOrXeHpgCore) {
+          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesComputeWalkerPostSyncThenSingleKernelsUsesWalkerPostSyncProfilingAndSingleDcFlushWithImmediatePostSync, IsXeHpgCore) {
     // kernel uses 4 packets, in addition to kernel two packets, use 2 packets to two tile cache flush
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 1;
@@ -1002,7 +1002,7 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
 }
 
 HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeImmediateEventUsesComputeWalkerPostSyncThenSingleKernelUsesWalkerPostSyncAndSingleDcFlushWithPostSync, IsXeHpOrXeHpgCore) {
+          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeImmediateEventUsesComputeWalkerPostSyncThenSingleKernelUsesWalkerPostSyncAndSingleDcFlushWithPostSync, IsXeHpgCore) {
     // kernel uses 4 packets, in addition to kernel two packets, use 2 packets to two tile cache flush
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 1;
@@ -1025,7 +1025,7 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
 using MultiTileAppendFillEventSinglePacketTest = Test<AppendFillMultiPacketEventFixture<1, 0, 1>>;
 
 HWTEST2_F(MultiTileAppendFillEventSinglePacketTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithNoPostSync, IsAtLeastXeHpCore) {
+          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithNoPostSync, IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -1051,7 +1051,7 @@ HWTEST2_F(MultiTileAppendFillEventSinglePacketTest,
 }
 
 HWTEST2_F(MultiTileAppendFillEventSinglePacketTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeImmediateEventUsesPipeControlPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithImmediatePostSync, IsAtLeastXeHpCore) {
+          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeImmediateEventUsesPipeControlPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithImmediatePostSync, IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 2;
@@ -1080,7 +1080,7 @@ using AppendFillCompactL3EventTest = Test<AppendFillMultiPacketEventFixture<0, 1
 
 HWTEST2_F(AppendFillCompactL3EventTest,
           givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesWalkerPostSyncThenSeparateKernelsUsesWalkerPostSyncProfiling,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 2;
     arg.expectedWalkerPostSyncOp = 3;
@@ -1102,7 +1102,7 @@ HWTEST2_F(AppendFillCompactL3EventTest,
 
 HWTEST2_F(AppendFillCompactL3EventTest,
           givenCallToAppendMemoryFillWhenTimestampEventUsesWalkerPostSyncThenSeparateKernelsUsesWalkerPostSyncProfiling,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 2;
     arg.expectedWalkerPostSyncOp = 3;
@@ -1124,7 +1124,7 @@ HWTEST2_F(AppendFillCompactL3EventTest,
 
 HWTEST2_F(AppendFillCompactL3EventTest,
           givenAppendMemoryFillUsingSinglePacketEventWhenPatternDispatchOneKernelThenUseComputeWalkerPostSync,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 3;
@@ -1141,7 +1141,7 @@ HWTEST2_F(AppendFillCompactL3EventTest,
 
 HWTEST2_F(AppendFillCompactL3EventTest,
           givenAppendMemoryFillUsingL3CompactEventWhenPatternDispatchOneKernelThenUseRegisterPostSync,
-          IsXeHpOrXeHpgCore) {
+          IsXeHpgCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -1161,7 +1161,7 @@ HWTEST2_F(AppendFillCompactL3EventTest,
 
 HWTEST2_F(AppendFillCompactL3EventTest,
           givenCallToAppendMemoryFillWhenL3CompactImmediateEventUsesPipeControlPostSyncThenSinglePipeControlPostSyncUsed,
-          IsXeHpOrXeHpgCore) {
+          IsXeHpgCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -1183,7 +1183,7 @@ using MultiTileAppendFillCompactL3EventTest = Test<AppendFillMultiPacketEventFix
 
 HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
           givenMultiTileCmdListCallToAppendMemoryFillWhenPlatformNeedsDcFlushAndL3CompactTimestampEventThenRegisterPostSyncUsedOtherwiseUsesWalkerPostSyncProfiling,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
         arg.expectedPacketsInUse = 2;
         arg.expectedKernelCount = 1;
@@ -1216,7 +1216,7 @@ HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
 
 HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
           givenMultiTileCmdListCallToAppendMemoryFillWhenPlatformNeedsDcFlushAndL3CompactImmediateEventThenPipeControlPostSyncUsedOtherwiseUsesWalkerPostSyncProfiling,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
         arg.expectedPacketsInUse = 2;
         arg.expectedKernelCount = 1;
@@ -1252,7 +1252,7 @@ using AppendFillKernelSplitAndCompactL3EventTest = Test<AppendFillMultiPacketEve
 
 HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
           givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfiling,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -1268,7 +1268,7 @@ HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
 
 HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
           givenCallToAppendMemoryFillWhenTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfiling,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -1284,7 +1284,7 @@ HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
 
 HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
           givenAppendMemoryFillUsingSinglePacketEventWhenPatternDispatchOneKernelThenUseComputeWalkerPostSync,
-          IsAtLeastXeHpCore) {
+          IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 3;
@@ -1295,7 +1295,7 @@ HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
 
 HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
           givenAppendMemoryFillUsingL3CompactTimestampEventWhenPatternDispatchOneKernelThenUseRegisterPostSync,
-          IsXeHpOrXeHpgCore) {
+          IsXeHpgCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -1309,7 +1309,7 @@ HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
 
 HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
           givenAppendMemoryFillUsingL3CompactImmediateEventWhenPatternDispatchOneKernelThenUsePipeControlPostSync,
-          IsXeHpOrXeHpgCore) {
+          IsXeHpgCore) {
     arg.expectedPacketsInUse = 1;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -1325,7 +1325,7 @@ HWTEST2_F(AppendFillKernelSplitAndCompactL3EventTest,
 using MultiTileAppendFillKernelSplitAndCompactL3EventTest = Test<AppendFillMultiPacketEventFixture<1, 1, 1>>;
 
 HWTEST2_F(MultiTileAppendFillKernelSplitAndCompactL3EventTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenL3CompactTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithNoPostSync, IsAtLeastXeHpCore) {
+          givenMultiTileCmdListCallToAppendMemoryFillWhenL3CompactTimestampEventUsesRegisterPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithNoPostSync, IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
     arg.expectedWalkerPostSyncOp = 0;
@@ -1343,7 +1343,7 @@ HWTEST2_F(MultiTileAppendFillKernelSplitAndCompactL3EventTest,
 }
 
 HWTEST2_F(MultiTileAppendFillKernelSplitAndCompactL3EventTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenL3CompactImmediateEventUsesPipeControlPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithImmediatePostSync, IsAtLeastXeHpCore) {
+          givenMultiTileCmdListCallToAppendMemoryFillWhenL3CompactImmediateEventUsesPipeControlPostSyncThenSeparateKernelsNotUsesWalkerPostSyncProfilingAndDcFlushWithImmediatePostSync, IsAtLeastXeCore) {
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 2;

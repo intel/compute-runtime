@@ -89,7 +89,7 @@ HWTEST2_F(ProductHelperTestWindows, givenProductHelperWhenAskedIfPlatformSupport
     EXPECT_FALSE(productHelper->isSvmHeapReservationSupported());
 }
 
-HWTEST2_F(ProductHelperTestWindows, givenE2ECompressionWhenConfiguringHwInfoWddmThenCompressionFlagsAreCorrectlySet, IsBeforeXe2HpgCore) {
+HWTEST2_F(ProductHelperTestWindows, givenE2ECompressionWhenConfiguringHwInfoWddmThenCompressionFlagsAreCorrectlySet, IsAtMostXeCore) {
     HardwareInfo initialHwInfo = *defaultHwInfo;
 
     outHwInfo.featureTable.flags.ftrE2ECompression = true;

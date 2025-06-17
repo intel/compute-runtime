@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 
 using namespace NEO;
-using MatcherIsRTCapable = IsAtLeastXeHpgCore;
+using MatcherIsRTCapable = IsAtLeastXeCore;
 
 struct CommandStreamReceiverHwTestDg2AndLater : public DeviceFixture,
                                                 public HardwareParse,
@@ -174,7 +174,7 @@ HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenNotXE_HPG_COREWhenCheckin
     EXPECT_FALSE(commandStreamReceiver.checkPlatformSupportsNewResourceImplicitFlush());
 }
 
-HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenNotXE_HP_COREWhenCheckingNewResourceGpuIdleThenReturnFalse, IsAtLeastXeHpgCore) {
+HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenNotXE_HP_COREWhenCheckingNewResourceGpuIdleThenReturnFalse, IsAtLeastXeCore) {
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto osContext = pDevice->getDefaultEngine().osContext;
     commandStreamReceiver.setupContext(*osContext);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,7 +142,7 @@ TEST_F(ZesPerformanceFixtureI915, GivenKmdInterfaceWhenGettingSysFsFilenamesForP
     EXPECT_STREQ(std::string(i915MediaFreqFactorScaleFileName0).c_str(), pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale, 0, true).c_str());
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915, GivenValidSysmanHandleWhenRetrievingPerfThenValidHandlesAreReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915, GivenValidSysmanHandleWhenRetrievingPerfThenValidHandlesAreReturned, IsXeCore) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
 
@@ -164,7 +164,7 @@ HWTEST2_F(ZesPerformanceFixtureI915, GivenValidSysmanHandleWhenRetrievingPerfThe
     EXPECT_EQ(count, mockI915HandleCount);
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915, GivenValidPerfHandleWhenGettingPerformancePropertiesThenValidPropertiesReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915, GivenValidPerfHandleWhenGettingPerformancePropertiesThenValidPropertiesReturned, IsXeCore) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
 
@@ -192,7 +192,7 @@ TEST_F(ZesPerformanceFixtureI915, GivenBaseAndOtherDomainTypeWhenGettingPerfHand
     delete pLinuxPerformanceImp;
 }
 
-HWTEST2_F(ZesPerformanceFixtureI915, GivenMediaDomainTypeWhenGettingPerfHandlesThenValidHandleIsRetrieved, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureI915, GivenMediaDomainTypeWhenGettingPerfHandlesThenValidHandleIsRetrieved, IsXeCore) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
@@ -318,7 +318,7 @@ TEST_F(ZesPerformanceFixtureXe, GivenKmdInterfaceWhenGettingSysFsFilenamesForPer
     EXPECT_STREQ(std::string(sysPwrBalanceFileName).c_str(), pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceSystemPowerBalance, 0, false).c_str());
 }
 
-HWTEST2_F(ZesPerformanceFixtureXe, GivenPerfFactorDomainsWhenGettingPerfHandlesThenVerifyPerfFactorIsNotSupported, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(ZesPerformanceFixtureXe, GivenPerfFactorDomainsWhenGettingPerfHandlesThenVerifyPerfFactorIsNotSupported, IsXeCore) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
