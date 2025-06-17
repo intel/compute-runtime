@@ -1281,6 +1281,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagNo
     struct MockGpuTimestampEvent : public EventImp<uint32_t> {
         using EventImp<uint32_t>::gpuStartTimestamp;
         using EventImp<uint32_t>::gpuEndTimestamp;
+        MockGpuTimestampEvent(L0::Device *device) : EventImp<uint32_t>::EventImp(0, device, false) {
+        }
+        void synchronizeTimestampCompletionWithTimeout() override {
+            synchronizeTimestampCompletionWithTimeoutCalled = true;
+        }
+        bool synchronizeTimestampCompletionWithTimeoutCalled = false;
     };
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -1290,23 +1296,15 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagNo
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     neoDevice->setOSTime(new NEO::MockOSTimeWithConstTimestamp());
 
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::make_unique<MockGpuTimestampEvent>(device);
     auto phEvent = event->toHandle();
     cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, phEvent, 0, nullptr, copyParams);
     ze_kernel_timestamp_result_t resultTimestamp = {};
     auto result = event->queryKernelTimestamp(&resultTimestamp);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(0u, reinterpret_cast<MockGpuTimestampEvent *>(event.get())->gpuStartTimestamp);
-    EXPECT_EQ(0u, reinterpret_cast<MockGpuTimestampEvent *>(event.get())->gpuEndTimestamp);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT);
+    EXPECT_FALSE(event->synchronizeTimestampCompletionWithTimeoutCalled);
+    EXPECT_EQ(0u, event->gpuStartTimestamp);
+    EXPECT_EQ(0u, event->gpuEndTimestamp);
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenAllocationDataWhenFailingToObtainLockedPtrFromDeviceThenNullptrIsReturned) {

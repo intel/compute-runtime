@@ -874,6 +874,9 @@ void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) {
+    if (!isEventTimestampFlagSet()) {
+        return ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT;
+    }
     ze_kernel_timestamp_result_t &result = *dstptr;
 
     if (!this->isCounterBased() || this->inOrderTimestampNode.empty()) {
