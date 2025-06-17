@@ -534,7 +534,8 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
 
     std::string bindOutput = capture.getCapturedStdout();
     std::stringstream expected;
-    expected << "bind BO-0 to VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: 0\n";
+    expected << "bind BO-0 to VM " << drm->latestCreatedVmId << ", vmHandleId = 0"
+             << ", range: 0 - 0, size: 0, result: 0\n";
     EXPECT_STREQ(bindOutput.c_str(), expected.str().c_str()) << bindOutput;
     expected.str("");
 
@@ -544,7 +545,8 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     EXPECT_FALSE(bo.bindInfo[contextId][0]);
 
     std::string unbindOutput = capture.getCapturedStdout();
-    expected << "unbind BO-0 from VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: 0\n";
+    expected << "unbind BO-0 from VM " << drm->latestCreatedVmId << ", vmHandleId = 0"
+             << ", range: 0 - 0, size: 0, result: 0\n";
     EXPECT_STREQ(unbindOutput.c_str(), expected.str().c_str()) << unbindOutput;
 }
 
@@ -593,7 +595,8 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
 
     std::string bindOutput = testing::internal::GetCapturedStderr();
     std::stringstream expected;
-    expected << "bind BO-0 to VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: -1, errno: 22\n";
+    expected << "bind BO-0 to VM " << drm->latestCreatedVmId << ", vmHandleId = 0"
+             << ", range: 0 - 0, size: 0, result: -1, errno: 22\n";
     EXPECT_TRUE(hasSubstr(expected.str(), expected.str())) << bindOutput;
     expected.str("");
     testing::internal::CaptureStderr();
@@ -603,7 +606,8 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     EXPECT_TRUE(bo.bindInfo[contextId][0]);
 
     std::string unbindOutput = testing::internal::GetCapturedStderr();
-    expected << "unbind BO-0 from VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: -1, errno: 22";
+    expected << "unbind BO-0 from VM " << drm->latestCreatedVmId << ", vmHandleId = 0"
+             << ", range: 0 - 0, size: 0, result: -1, errno: 22";
     EXPECT_TRUE(hasSubstr(unbindOutput, expected.str())) << unbindOutput;
 }
 

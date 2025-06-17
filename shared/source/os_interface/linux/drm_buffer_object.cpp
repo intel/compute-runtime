@@ -243,22 +243,23 @@ MemoryOperationsStatus BufferObject::evictUnusedAllocations(bool waitForCompleti
 }
 
 void BufferObject::printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal) {
+    auto vmId = static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() > 0 ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : drm->getVirtualMemoryAddressSpace(vmHandleId);
     if (retVal == 0) {
         if (bind) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stdout, "bind BO-%d to VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d\n",
-                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
+            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stdout, "bind BO-%d to VM %u, vmHandleId = %u, range: %llx - %llx, size: %lld, result: %d\n",
+                               this->handle.getBoHandle(), vmId, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
         } else {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stdout, "unbind BO-%d from VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d\n",
-                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
+            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stdout, "unbind BO-%d from VM %u, vmHandleId = %u, range: %llx - %llx, size: %lld, result: %d\n",
+                               this->handle.getBoHandle(), vmId, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
         }
     } else {
         auto err = this->drm->getErrno();
         if (bind) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
-                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, vmHandleId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
+                               this->handle.getBoHandle(), vmId, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
         } else {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
-                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+            PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, vmHandleId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
+                               this->handle.getBoHandle(), vmId, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
         }
     }
 }
