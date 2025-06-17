@@ -140,24 +140,15 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorS
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsHostUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
         EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
-    }
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
-    }
-}
-
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
         EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
         EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
 }

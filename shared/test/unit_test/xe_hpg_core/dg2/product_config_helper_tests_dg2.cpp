@@ -831,13 +831,15 @@ DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingUseLocalPreferredFo
     EXPECT_TRUE(productHelper->useLocalPreferredForCacheableBuffers());
 }
 
-DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
+DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
         EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
         EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
 }

@@ -462,6 +462,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
 
     device->getDriverHandle()->getSvmAllocsManager()->freeSVMAlloc(deviceAlloc);
     commandQueue->destroy();
+    L0UltHelper::cleanupUsmAllocPools(driverHandle.get());
 }
 
 HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndirectAllocationsAsPackWhenIndirectAccessIsUsedThenWholePackIsMadeResident) {

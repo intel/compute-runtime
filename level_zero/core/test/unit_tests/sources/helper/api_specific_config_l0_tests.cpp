@@ -49,7 +49,7 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfHostDeviceAllocationCacheIsEnabledT
 }
 
 TEST(ApiSpecificConfigL0Tests, WhenCheckingIfUsmAllocPoolingIsEnabledThenReturnCorrectValue) {
-    EXPECT_FALSE(ApiSpecificConfig::isHostUsmPoolingEnabled());
+    EXPECT_TRUE(ApiSpecificConfig::isHostUsmPoolingEnabled());
     EXPECT_TRUE(ApiSpecificConfig::isDeviceUsmPoolingEnabled());
 }
 

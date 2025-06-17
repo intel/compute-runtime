@@ -64,7 +64,7 @@ bool ApiSpecificConfig::isDeviceUsmPoolingEnabled() {
 }
 
 bool ApiSpecificConfig::isHostUsmPoolingEnabled() {
-    return false;
+    return true;
 }
 
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {

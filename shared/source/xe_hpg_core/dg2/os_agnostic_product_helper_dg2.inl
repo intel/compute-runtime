@@ -255,4 +255,9 @@ bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
     return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
+}
+
 } // namespace NEO

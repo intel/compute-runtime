@@ -87,24 +87,15 @@ MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCach
     EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
 }
 
-MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckingIsHostUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
+MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
         EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
-    }
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
-    }
-}
-
-MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
         EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
         EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
 }

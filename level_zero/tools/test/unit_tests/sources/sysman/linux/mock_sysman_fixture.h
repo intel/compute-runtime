@@ -57,6 +57,8 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
+        debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
         DeviceFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = *device->getOsInterface();
@@ -95,7 +97,7 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         DeviceFixture::tearDown();
         unsetenv("ZES_ENABLE_SYSMAN");
     }
-
+    DebugManagerStateRestore restorer;
     SysmanDevice *pSysmanDevice = nullptr;
     SysmanDeviceImp *pSysmanDeviceImp = nullptr;
     OsSysman *pOsSysman = nullptr;

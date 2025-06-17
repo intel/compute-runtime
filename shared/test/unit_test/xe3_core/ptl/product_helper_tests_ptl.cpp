@@ -124,24 +124,15 @@ PTLTEST_F(PtlProductHelper, givenResolveDependenciesByPipeControllsNotSupportedW
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csrRelaxed));
 }
 
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsHostUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
         EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
-    }
-}
-
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
-        EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
-    }
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
         EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
 }

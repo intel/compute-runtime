@@ -44,7 +44,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
                 mockProductHelpers[i]->isDeviceUsmPoolAllocatorSupportedResult = true;
             }
         }
-
+        std::vector<std::unique_ptr<NEO::Device>> devices;
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(),
                                                                                                                             executionEnvironment, i));
@@ -80,7 +80,6 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     const uint32_t numRootDevices = 2u;
     L0::ContextImp *context = nullptr;
-    std::vector<std::unique_ptr<NEO::Device>> devices;
     std::vector<MockProductHelper *> mockProductHelpers;
     NEO::ExecutionEnvironment *executionEnvironment;
     L0::Device *l0Devices[2];
@@ -88,17 +87,30 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
 };
 
 using AllocUsmHostDefaultMemoryTest = AllocUsmPoolMemoryTest<-1, -1>;
+TEST_F(AllocUsmHostDefaultMemoryTest, givenDriverHandleWhenCallinginitHostUsmAllocPoolThenInitIfEnabledForAllDevicesAndNoDebugger) {
+    driverHandle->usmHostMemAllocPool.cleanup();
+    mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = false;
+    mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = false;
+    driverHandle->initHostUsmAllocPool();
+    EXPECT_FALSE(driverHandle->usmHostMemAllocPool.isInitialized());
 
-TEST_F(AllocUsmHostDefaultMemoryTest, givenDriverHandleWhenCallingAllocHostMemThenDoNotUsePool) {
+    driverHandle->usmHostMemAllocPool.cleanup();
+    mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
+    mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = false;
+    driverHandle->initHostUsmAllocPool();
     EXPECT_FALSE(driverHandle->usmHostMemAllocPool.isInitialized());
-    void *ptr = nullptr;
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = context->allocHostMem(&hostDesc, 1u, 0u, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
+
+    driverHandle->usmHostMemAllocPool.cleanup();
+    mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
+    mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = true;
+    driverHandle->initHostUsmAllocPool();
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInitialized());
+
+    driverHandle->usmHostMemAllocPool.cleanup();
+    auto debuggerL0 = DebuggerL0::create(l0Devices[1]->getNEODevice());
+    executionEnvironment->rootDeviceEnvironments[1]->debugger.reset(debuggerL0.release());
+    driverHandle->initHostUsmAllocPool();
     EXPECT_FALSE(driverHandle->usmHostMemAllocPool.isInitialized());
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 using AllocUsmHostDisabledMemoryTest = AllocUsmPoolMemoryTest<0, -1>;
