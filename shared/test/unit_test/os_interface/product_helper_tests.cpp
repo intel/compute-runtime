@@ -1100,6 +1100,10 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnTr
     EXPECT_TRUE(productHelper->supports2DBlockStore());
 }
 
+HWTEST2_F(ProductHelperTest, WhenGetSvmCpuAlignmentThenProperValueIsReturned, IsAtLeastXeHpcCore) {
+    EXPECT_EQ(MemoryConstants::pageSize64k, productHelper->getSvmCpuAlignment());
+}
+
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetRequiredDetectIndirectVersionCalledThenReturnCorrectVersion, IsNotPVC) {
     EXPECT_EQ(9u, productHelper->getRequiredDetectIndirectVersion());
     EXPECT_EQ(6u, productHelper->getRequiredDetectIndirectVersionVC());
