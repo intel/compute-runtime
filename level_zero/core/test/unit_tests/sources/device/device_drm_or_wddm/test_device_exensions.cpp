@@ -147,6 +147,20 @@ TEST_F(DeviceExtensionTest, whenGetExternalMemoryPropertiesWithoutOsInterfaceIsC
     EXPECT_FALSE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
 }
 
+TEST_F(DeviceExtensionTest, givenDeviceCacheLineSizeExtensionThenGetCachePropertiesReturnsDeviceCachLineSizeGreaterThanZero) {
+    ze_device_cache_line_size_ext_t cacheLineSizeExtDesc = {};
+    cacheLineSizeExtDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_CACHELINE_SIZE_EXT;
+
+    ze_device_cache_properties_t deviceCacheProperties = {};
+    deviceCacheProperties.pNext = &cacheLineSizeExtDesc;
+
+    uint32_t count = 1;
+    ze_result_t res = device->getCacheProperties(&count, &deviceCacheProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_NE(0u, cacheLineSizeExtDesc.cacheLineSize);
+}
+
 class MockCacheReservation : public CacheReservation {
   public:
     ~MockCacheReservation() override = default;

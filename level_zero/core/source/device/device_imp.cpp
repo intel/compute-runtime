@@ -1303,6 +1303,10 @@ ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_prop
             constexpr size_t cacheLevel{3U};
             auto cacheReservationProperties = reinterpret_cast<ze_cache_reservation_ext_desc_t *>(extendedProperties);
             cacheReservationProperties->maxCacheReservationSize = cacheReservation->getMaxCacheReservationSize(cacheLevel);
+        } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_CACHELINE_SIZE_EXT) {
+            auto cacheLineSizeProperties = reinterpret_cast<ze_device_cache_line_size_ext_t *>(extendedProperties);
+            auto &productHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+            cacheLineSizeProperties->cacheLineSize = productHelper.getCacheLineSize();
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }
