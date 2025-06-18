@@ -448,6 +448,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool isClosed() const {
         return closedCmdList;
     }
+    ze_result_t obtainLaunchParamsFromExtensions(const ze_base_desc_t *desc, CmdListKernelLaunchParams &launchParams, ze_kernel_handle_t kernelHandle) const;
 
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);

@@ -22,4 +22,8 @@ ze_result_t CommandList::validateLaunchParams(const CmdListKernelLaunchParams &l
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t CommandList::obtainLaunchParamsFromExtensions(const ze_base_desc_t *desc, CmdListKernelLaunchParams &launchParams, ze_kernel_handle_t kernelHandle) const {
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0
