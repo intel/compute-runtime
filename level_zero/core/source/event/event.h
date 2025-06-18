@@ -416,6 +416,7 @@ struct Event : _ze_event_handle_t {
     bool isSharableCounterBased = false;
     bool mitigateHostVisibleSignal = false;
     uint64_t timestampRefreshIntervalInNanoSec = 0;
+    static const uint64_t completionTimeoutMs;
 };
 
 struct EventPool : _ze_event_pool_handle_t {

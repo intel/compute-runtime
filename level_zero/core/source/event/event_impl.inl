@@ -860,7 +860,6 @@ void EventImp<TagSizeT>::resetDeviceCompletionData(bool resetAllPackets) {
 template <typename TagSizeT>
 void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
-    constexpr uint64_t timeoutMs = 1000 * 5; // 5s
     uint64_t timeDiff = 0;
 
     do {
@@ -868,7 +867,7 @@ void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
         calculateProfilingData();
 
         timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
-    } while (!isTimestampPopulated() && (timeDiff < timeoutMs));
+    } while (!isTimestampPopulated() && (timeDiff < completionTimeoutMs));
     DEBUG_BREAK_IF(!isTimestampPopulated());
 }
 
