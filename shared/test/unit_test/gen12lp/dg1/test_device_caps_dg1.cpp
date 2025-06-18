@@ -20,10 +20,6 @@ DG1TEST_F(Dg1DeviceCaps, givenDg1WhenCheckSupportCacheFlushAfterWalkerThenFalse)
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
 }
 
-DG1TEST_F(Dg1DeviceCaps, givenDG1WhenCheckftr64KBpagesThenTrue) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
-}
-
 DG1TEST_F(Dg1DeviceCaps, givenDg1WhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }

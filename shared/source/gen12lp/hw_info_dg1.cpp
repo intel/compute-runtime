@@ -58,7 +58,6 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     false,                                                     // ftrSupportsCoherency
     false,                                                     // ftrRenderCompressedBuffers
     false,                                                     // ftrRenderCompressedImages
-    true,                                                      // ftr64KBpages
     true,                                                      // instrumentationEnabled
     true,                                                      // supportCacheFlushAfterWalker
     true,                                                      // supportsImages,

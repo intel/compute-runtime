@@ -61,7 +61,7 @@ void OsAgnosticMemoryManager::initialize(bool aubUsage) {
 OsAgnosticMemoryManager::~OsAgnosticMemoryManager() = default;
 
 bool OsAgnosticMemoryManager::is64kbPagesEnabled(const HardwareInfo *hwInfo) {
-    return hwInfo->capabilityTable.ftr64KBpages && !!debugManager.flags.Enable64kbpages.get();
+    return !!debugManager.flags.Enable64kbpages.get();
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {

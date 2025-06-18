@@ -1914,42 +1914,9 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenOsEnabled64kbPages
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     auto hwInfo = *defaultHwInfo;
     OSInterface::osEnabled64kbPages = false;
-    hwInfo.capabilityTable.ftr64KBpages = true;
     EXPECT_TRUE(memoryManager.is64kbPagesEnabled(&hwInfo));
     OSInterface::osEnabled64kbPages = true;
     EXPECT_TRUE(memoryManager.is64kbPagesEnabled(&hwInfo));
-}
-
-TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenCheckIs64kbPagesEnabledThenOsEnabled64PkbPagesIsNotAffectedReturnedValue) {
-    MockExecutionEnvironment executionEnvironment;
-    VariableBackup<bool> osEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    auto hwInfo = *defaultHwInfo;
-    OSInterface::osEnabled64kbPages = true;
-    hwInfo.capabilityTable.ftr64KBpages = true;
-    EXPECT_TRUE(memoryManager.is64kbPagesEnabled(&hwInfo));
-    hwInfo.capabilityTable.ftr64KBpages = false;
-    EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
-}
-
-TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWithFlagEnable64kbpagesWhenCheckIs64kbPagesEnabledThenProperValueIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-
-    MockExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    auto hwInfo = *defaultHwInfo;
-    debugManager.flags.Enable64kbpages.set(true);
-    hwInfo.capabilityTable.ftr64KBpages = true;
-    EXPECT_TRUE(memoryManager.is64kbPagesEnabled(&hwInfo));
-    debugManager.flags.Enable64kbpages.set(true);
-    hwInfo.capabilityTable.ftr64KBpages = false;
-    EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
-    debugManager.flags.Enable64kbpages.set(false);
-    hwInfo.capabilityTable.ftr64KBpages = false;
-    EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
-    debugManager.flags.Enable64kbpages.set(false);
-    hwInfo.capabilityTable.ftr64KBpages = true;
-    EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
 }
 
 TEST(OsAgnosticMemoryManager, givenStartAddressAndSizeWhenReservingCpuAddressThenPageAlignedAddressRangeIsReturned) {

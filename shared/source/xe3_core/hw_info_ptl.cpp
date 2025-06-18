@@ -59,7 +59,6 @@ const RuntimeCapabilityTable PTL::capabilityTable{
     false,                                                     // ftrSupportsCoherency
     false,                                                     // ftrRenderCompressedBuffers
     false,                                                     // ftrRenderCompressedImages
-    true,                                                      // ftr64KBpages
     true,                                                      // instrumentationEnabled
     false,                                                     // supportCacheFlushAfterWalker
     true,                                                      // supportsImages

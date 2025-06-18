@@ -70,7 +70,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         internalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(hwInfo)));
         externalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(hwInfo)));
         this->localMemorySupported.push_back(gfxCoreHelper.getEnableLocalMemory(*hwInfo));
-        this->enable64kbpages.push_back(OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages && !!debugManager.flags.Enable64kbpages.get());
+        this->enable64kbpages.push_back(OSInterface::osEnabled64kbPages && !!debugManager.flags.Enable64kbpages.get());
 
         gfxPartitions.push_back(std::make_unique<GfxPartition>(reservedCpuAddressRange));
 

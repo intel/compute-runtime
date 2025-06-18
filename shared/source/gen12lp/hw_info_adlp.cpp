@@ -59,7 +59,6 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     false,                                                      // ftrRenderCompressedBuffers
     false,                                                      // ftrRenderCompressedImages
     true,                                                       // instrumentationEnabled
-    true,                                                       // ftr64KBpages
     false,                                                      // supportCacheFlushAfterWalker
     true,                                                       // supportsImages
     true,                                                       // supportsOcl21Features

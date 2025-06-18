@@ -45,7 +45,6 @@ struct RuntimeCapabilityTable {
     bool ftrSupportsCoherency;
     bool ftrRenderCompressedBuffers;
     bool ftrRenderCompressedImages;
-    bool ftr64KBpages;
     bool instrumentationEnabled;
     bool supportCacheFlushAfterWalker;
     bool supportsImages;
