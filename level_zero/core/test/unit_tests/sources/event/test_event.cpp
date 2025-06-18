@@ -3085,7 +3085,6 @@ HWTEST_EXCLUDE_PRODUCT(TimestampEventCreate, givenEventTimestampsWhenQueryKernel
 
 TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyReturned) {
     struct MockEventQuery : public L0::EventImp<uint32_t> {
-        using L0::EventImp<uint32_t>::setEventTimestampFlag;
         MockEventQuery(int index, L0::Device *device) : EventImp(index, device, false) {}
 
         ze_result_t queryStatus() override {
@@ -3094,7 +3093,7 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyRetur
     };
 
     auto mockEvent = std::make_unique<MockEventQuery>(1u, device);
-    mockEvent->setEventTimestampFlag(true);
+
     ze_kernel_timestamp_result_t resultTimestamp = {};
 
     auto result = mockEvent->queryKernelTimestamp(&resultTimestamp);
