@@ -66,8 +66,6 @@ const RuntimeCapabilityTable ADLS::capabilityTable{
     false,                                                      // supportsIndependentForwardProgress
     true,                                                       // isIntegratedDevice
     true,                                                       // supportsMediaBlock
-    false,                                                      // p2pAccessSupported
-    false,                                                      // p2pAtomicAccessSupported
     true,                                                       // fusedEuEnabled
     false,                                                      // l0DebuggerSupported;
     true,                                                       // supportsFloatAtomics

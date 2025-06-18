@@ -2746,7 +2746,6 @@ TEST_F(MultipleDevicesTest, whenCallingsetAtomicAccessAttributeForSystemAccessSh
     void *ptr = reinterpret_cast<void *>(0x1234);
 
     L0::Device *device0 = driverHandle->devices[0];
-    auto &hwInfo = device0->getNEODevice()->getHardwareInfo();
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(true);
     debugManager.flags.EnableRecoverablePageFaults.set(true);
@@ -2763,9 +2762,7 @@ TEST_F(MultipleDevicesTest, whenCallingsetAtomicAccessAttributeForSystemAccessSh
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
     result = context->setAtomicAccessAttribute(device0->toHandle(), ptr, size, attr);
-    if ((hwInfo.capabilityTable.p2pAccessSupported == true) && (hwInfo.capabilityTable.p2pAtomicAccessSupported == true)) {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -2929,13 +2926,9 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
 
         NEO::HardwareInfo hardwareInfo = *NEO::defaultHwInfo;
 
-        hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccess;
-        hardwareInfo.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccess;
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
-        hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccess;
-        hardwareInfo.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccess;
         executionEnvironment->rootDeviceEnvironments[1]->setHwInfoAndInitHelpers(&hardwareInfo);
         executionEnvironment->rootDeviceEnvironments[1]->initGmm();
 
@@ -3118,14 +3111,10 @@ struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
         EXPECT_EQ(numRootDevices, executionEnvironment->rootDeviceEnvironments.size());
 
         auto hwInfo0 = *NEO::defaultHwInfo;
-        hwInfo0.capabilityTable.p2pAccessSupported = p2pAccess;
-        hwInfo0.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccess;
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo0);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         auto hwInfo1 = *NEO::defaultHwInfo;
-        hwInfo1.capabilityTable.p2pAccessSupported = p2pAccess;
-        hwInfo1.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccess;
         executionEnvironment->rootDeviceEnvironments[1]->setHwInfoAndInitHelpers(&hwInfo1);
         executionEnvironment->rootDeviceEnvironments[1]->initGmm();
 

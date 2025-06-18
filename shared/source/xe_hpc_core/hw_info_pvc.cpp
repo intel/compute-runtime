@@ -79,8 +79,6 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     true,                                                      // supportsIndependentForwardProgress
     false,                                                     // isIntegratedDevice
     false,                                                     // supportsMediaBlock
-    true,                                                      // p2pAccessSupported
-    true,                                                      // p2pAtomicAccessSupported
     false,                                                     // fusedEuEnabled
     true,                                                      // l0DebuggerSupported;
     true,                                                      // supportsFloatAtomics

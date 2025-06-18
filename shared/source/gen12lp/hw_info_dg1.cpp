@@ -66,8 +66,6 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     false,                                                     // supportsIndependentForwardProgress
     false,                                                     // isIntegratedDevice
     true,                                                      // supportsMediaBlock
-    true,                                                      // p2pAccessSupported
-    false,                                                     // p2pAtomicAccessSupported
     true,                                                      // fusedEuEnabled
     true,                                                      // l0DebuggerSupported;
     true,                                                      // supportsFloatAtomics

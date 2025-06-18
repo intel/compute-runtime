@@ -64,8 +64,6 @@ const RuntimeCapabilityTable ARL::capabilityTable{
     false,                                                     // supportsIndependentForwardProgress
     true,                                                      // isIntegratedDevice
     true,                                                      // supportsMediaBlock
-    false,                                                     // p2pAccessSupported
-    false,                                                     // p2pAtomicAccessSupported
     true,                                                      // fusedEuEnabled
     true,                                                      // l0DebuggerSupported
     true,                                                      // supportsFloatAtomics

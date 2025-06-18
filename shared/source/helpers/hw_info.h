@@ -53,8 +53,6 @@ struct RuntimeCapabilityTable {
     bool supportsIndependentForwardProgress;
     bool isIntegratedDevice;
     bool supportsMediaBlock;
-    bool p2pAccessSupported;
-    bool p2pAtomicAccessSupported;
     bool fusedEuEnabled;
     bool l0DebuggerSupported;
     bool supportsFloatAtomics;

@@ -69,8 +69,6 @@ const RuntimeCapabilityTable BMG::capabilityTable{
     true,                                                      // supportsIndependentForwardProgress
     false,                                                     // isIntegratedDevice
     false,                                                     // supportsMediaBlock
-    false,                                                     // p2pAccessSupported
-    false,                                                     // p2pAtomicAccessSupported
     false,                                                     // fusedEuEnabled
     true,                                                      // l0DebuggerSupported;
     true,                                                      // supportsFloatAtomics
