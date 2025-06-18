@@ -106,7 +106,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
         if constexpr (heaplessModeEnabled) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-            bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation || kernel.isAnyKernelArgumentUsingZeroCopyMemory();
+            bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation;
             bool flushL3AfterPostSyncForExternalAllocation = kernel.isUsingSharedObjArgs();
 
             if (debugManager.flags.RedirectFlushL3HostUsmToExternal.get() && flushL3AfterPostSyncForHostUsm) {
@@ -114,7 +114,9 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                 flushL3AfterPostSyncForExternalAllocation = true;
             }
 
-            GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacketFlushL3<WalkerType>(&walkerCmd, productHelper, flushL3AfterPostSyncForHostUsm, flushL3AfterPostSyncForExternalAllocation);
+            if (walkerArgs.event != nullptr || walkerArgs.blocking) {
+                GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacketFlushL3<WalkerType>(&walkerCmd, productHelper, flushL3AfterPostSyncForHostUsm, flushL3AfterPostSyncForExternalAllocation);
+            }
         }
     }
 

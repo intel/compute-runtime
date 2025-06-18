@@ -282,9 +282,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             clearLastBcsPackets();
             setStallingCommandsOnNextFlush(false);
         }
+
         processDispatchForKernels<commandType>(multiDispatchInfo, printfHandler, eventBuilder.getEvent(),
                                                hwTimeStamps, blockQueue, csrDeps, blockedCommandsData.get(),
-                                               timestampPacketDependencies, relaxedOrderingEnabled);
+                                               timestampPacketDependencies, relaxedOrderingEnabled, blocking);
     } else if (isCacheFlushCommand(commandType)) {
         processDispatchForCacheFlush(surfacesForResidency, numSurfaceForResidency, &commandStream, csrDeps);
     } else if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
@@ -520,7 +521,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
                                                           CsrDependencies &csrDeps,
                                                           KernelOperation *blockedCommandsData,
                                                           TimestampPacketDependencies &timestampPacketDependencies,
-                                                          bool relaxedOrderingEnabled) {
+                                                          bool relaxedOrderingEnabled, bool blocking) {
     TagNodeBase *hwPerfCounter = nullptr;
     getClFileLogger().dumpKernelArgs(&multiDispatchInfo);
 
@@ -556,6 +557,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
     dispatchWalkerArgs.commandType = commandType;
     dispatchWalkerArgs.event = event;
     dispatchWalkerArgs.relaxedOrderingEnabled = relaxedOrderingEnabled;
+    dispatchWalkerArgs.blocking = blocking;
 
     getGpgpuCommandStreamReceiver().setRequiredScratchSizes(multiDispatchInfo.getRequiredScratchSize(0u), multiDispatchInfo.getRequiredScratchSize(1u));
 

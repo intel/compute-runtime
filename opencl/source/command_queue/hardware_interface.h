@@ -53,6 +53,7 @@ struct HardwareInterfaceWalkerArgs {
     uint32_t interfaceDescriptorIndex = 0;
     bool isMainKernel = false;
     bool relaxedOrderingEnabled = false;
+    bool blocking = false;
 };
 
 struct HardwareInterfaceHelper {

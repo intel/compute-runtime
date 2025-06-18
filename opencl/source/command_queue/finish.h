@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,17 @@ namespace NEO {
 
 template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::finish() {
-    auto result = getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
+
+    auto &csr = getGpgpuCommandStreamReceiver();
+
+    auto result = csr.flushBatchedSubmissions();
     if (!result) {
         return CL_OUT_OF_RESOURCES;
+    }
+
+    if (!l3FlushedAfterCpuRead && l3FlushAfterPostSyncEnabled) {
+        csr.flushTagUpdate();
+        this->l3FlushedAfterCpuRead = true;
     }
 
     // Stall until HW reaches taskCount on all its engines
