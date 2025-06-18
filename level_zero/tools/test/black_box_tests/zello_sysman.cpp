@@ -523,10 +523,14 @@ void testSysmanEcc(ze_device_handle_t &device) {
     }
 
     zes_device_ecc_properties_t getProps = {};
+    zes_device_ecc_default_properties_ext_t extProps = {};
+    extProps.stype = ZES_STRUCTURE_TYPE_DEVICE_ECC_DEFAULT_PROPERTIES_EXT;
+    getProps.pNext = &extProps;
     VALIDATECALL(zesDeviceGetEccState(device, &getProps));
     if (verbose) {
         std::cout << "getStateProps.pendingState " << getProps.pendingState << std::endl;
         std::cout << "getStateProps.currentState " << getProps.currentState << std::endl;
+        std::cout << "getStateProps.defaultState " << extProps.defaultState << std::endl;
         std::cout << "getStateProps.pendingAction " << getProps.pendingAction << std::endl;
     }
 

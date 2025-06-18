@@ -92,7 +92,7 @@ TEST_F(SysmanDeviceFixture, GivenComponentCountZeroAndOpenCallFailsWhenCallingZe
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
 }
 
-TEST_F(ZesEngineFixturePrelim, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
+TEST_F(ZesEngineFixturePrelim, GivenComponentCountZeroWhenCallingZesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, handleComponentCount);

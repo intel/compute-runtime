@@ -65,13 +65,24 @@ ze_result_t EccImp::getEccState(zes_device_ecc_properties_t *pState) {
 
     uint8_t currentState = 0xff;
     uint8_t pendingState = 0xff;
-    ze_result_t result = pFwInterface->fwGetEccConfig(&currentState, &pendingState);
+    uint8_t defaultState = 0xff;
+    ze_result_t result = pFwInterface->fwGetEccConfig(&currentState, &pendingState, &defaultState);
 
     pState->currentState = getEccState(currentState);
     pState->pendingState = getEccState(pendingState);
 
     if (result != ZE_RESULT_SUCCESS) {
         return result;
+    }
+
+    void *pNext = pState->pNext;
+    while (pNext) {
+        zes_device_ecc_default_properties_ext_t *pExtProps = reinterpret_cast<zes_device_ecc_default_properties_ext_t *>(pNext);
+        if (pExtProps->stype == ZES_STRUCTURE_TYPE_DEVICE_ECC_DEFAULT_PROPERTIES_EXT) {
+            pExtProps->defaultState = getEccState(defaultState);
+            break;
+        }
+        pNext = pExtProps->pNext;
     }
 
     pState->pendingAction = ZES_DEVICE_ACTION_WARM_CARD_RESET;

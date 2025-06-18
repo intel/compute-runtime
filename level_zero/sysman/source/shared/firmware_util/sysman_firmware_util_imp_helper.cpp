@@ -145,7 +145,7 @@ void FirmwareUtilImp::fwGetMemoryHealthIndicator(zes_mem_health_t *health) {
     NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(); Could not get memory health indicator from igsc\n", __FUNCTION__);
 }
 
-ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState) {
+ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState, uint8_t *defaultState) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     gfspHeciCmd = reinterpret_cast<pIgscGfspHeciCmd>(libraryHandle->getProcAddress(fwGfspHeciCmd));
     if (gfspHeciCmd != nullptr) {
@@ -157,6 +157,7 @@ ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pend
         if (ret == IGSC_SUCCESS) {
             *currentState = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccCurrentState] & 0x1;
             *pendingState = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccPendingState] & 0x1;
+            *defaultState = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccDefaultState] & 0x1;
             return ZE_RESULT_SUCCESS;
         }
         receivedSize = 0;
@@ -166,6 +167,7 @@ ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pend
         if (ret == IGSC_SUCCESS) {
             *currentState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::currentState];
             *pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
+            *defaultState = 0xff;
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -250,7 +252,8 @@ ze_result_t FirmwareUtilImp::fwSetEccConfig(uint8_t newState, uint8_t *currentSt
 
         if (ret == IGSC_SUCCESS) {
             lock.unlock();
-            ze_result_t status = fwGetEccConfig(currentState, pendingState);
+            uint8_t defaultState = 0;
+            ze_result_t status = fwGetEccConfig(currentState, pendingState, &defaultState);
             lock.lock();
             if (status != ZE_RESULT_SUCCESS) {
                 return status;

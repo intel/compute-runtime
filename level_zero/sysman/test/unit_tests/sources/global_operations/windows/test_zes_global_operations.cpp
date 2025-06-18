@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,13 +63,13 @@ TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueAndDeviceInUseWhenCallingRes
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceGetStateThenFailureIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesDeviceGetStateThenFailureIsReturned) {
     init(true);
     zes_device_state_t pState = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetState(pSysmanDevice->toHandle(), &pState));
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceProcessesGetStateThenFailureIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesDeviceProcessesGetStateThenFailureIsReturned) {
     init(true);
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceProcessesGetState(pSysmanDevice->toHandle(), &count, nullptr));
@@ -81,13 +81,13 @@ TEST_F(SysmanGlobalOperationsFixture, GivenProcessStartsMidResetWhenCallingReset
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingzesDeviceResetExtThenUnsupportedFeatureErrorIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingZesDeviceResetExtThenUnsupportedFeatureErrorIsReturned) {
     init(true);
     ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceGetSubDevicePropertiesExpThenUnsupportedIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingZesDeviceGetSubDevicePropertiesExpThenUnsupportedIsReturned) {
     init(true);
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetSubDevicePropertiesExp(pSysmanDevice->toHandle(), &count, nullptr));

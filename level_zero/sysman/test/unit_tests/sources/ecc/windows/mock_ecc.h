@@ -28,18 +28,20 @@ struct EccFwInterface : public L0::Sysman::FirmwareUtil {
     ze_bool_t mockEccConfigurable = true;
     uint8_t mockCurrentState = 0;
     uint8_t mockPendingState = 0;
+    uint8_t mockDefaultState = 0xff;
 
     ze_result_t fwDeviceInit() override {
         return mockFwDeviceInit;
     }
 
-    ze_result_t fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState) override {
+    ze_result_t fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState, uint8_t *defaultState) override {
         if (mockFwGetEccConfigResult != ZE_RESULT_SUCCESS) {
             return mockFwGetEccConfigResult;
         }
 
         *currentState = mockCurrentState;
         *pendingState = mockPendingState;
+        *defaultState = mockDefaultState;
 
         return ZE_RESULT_SUCCESS;
     }

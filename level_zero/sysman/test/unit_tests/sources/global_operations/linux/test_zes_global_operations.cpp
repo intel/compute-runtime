@@ -658,7 +658,7 @@ TEST_F(SysmanGlobalOperationsFixture,
 }
 
 TEST_F(SysmanGlobalOperationsFixture,
-       GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDriverVersionWhenDriverVersionFileReadFailsThenVerifyzesDeviceGetPropertiesCallSucceeds) {
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionWhenDriverVersionFileReadFailsThenVerifyzesDeviceGetPropertiesCallSucceeds) {
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
@@ -677,7 +677,7 @@ TEST_F(SysmanGlobalOperationsFixture,
 }
 
 TEST_F(SysmanGlobalOperationsFixture,
-       GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDevicePropertiesWhenVendorIsUnKnownThenVerifyzesDeviceGetPropertiesCallSucceeds) {
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForCheckingDevicePropertiesWhenVendorIsUnKnownThenVerifyzesDeviceGetPropertiesCallSucceeds) {
     pSysfsAccess->mockReadVal[static_cast<int>(MockGlobalOperationsSysfsAccess::Index::mockSubsystemVendor)] = "0xa086";
     pSysfsAccess->mockReadVal[static_cast<int>(MockGlobalOperationsSysfsAccess::Index::mockVendor)] = "0x1806"; // Unknown Vendor id
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -839,7 +839,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenGemCreateIoctlFailsWithEINVALWhenCall
     EXPECT_EQ(0u, deviceState.reset);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingzesDeviceResetExtThenResetExtCallReturnSuccess) {
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingZesDeviceResetExtThenResetExtCallReturnSuccess) {
     init(true);
 
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();

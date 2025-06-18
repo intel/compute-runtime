@@ -105,7 +105,7 @@ class SysmanDeviceSchedulerFixtureI915 : public SysmanDeviceSchedulerFixture {
     }
 };
 
-TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroWhenCallingzesDeviceEnumSchedulersAndSysfsCanReadReturnsErrorThenZeroCountIsReturned) {
+TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroWhenCallingZesDeviceEnumSchedulersAndSysfsCanReadReturnsErrorThenZeroCountIsReturned) {
     pSysfsAccess->mockGetScanDirEntryError = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     auto pSchedulerHandleContextTest = std::make_unique<L0::Sysman::SchedulerHandleContext>(pOsSysman);
@@ -113,14 +113,14 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroWhenCallingzesDe
     EXPECT_EQ(0u, static_cast<uint32_t>(pSchedulerHandleContextTest->handleList.size()));
 }
 
-TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroWhenCallingzesDeviceEnumSchedulersAndSysfsCanReadReturnsIncorrectPermissionThenZeroCountIsReturned) {
+TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroWhenCallingZesDeviceEnumSchedulersAndSysfsCanReadReturnsIncorrectPermissionThenZeroCountIsReturned) {
     pSysfsAccess->setEngineDirectoryPermission(0);
     auto pSchedulerHandleContextTest = std::make_unique<L0::Sysman::SchedulerHandleContext>(pOsSysman);
     pSchedulerHandleContextTest->init(pOsSysman->getSubDeviceCount());
     EXPECT_EQ(0u, static_cast<uint32_t>(pSchedulerHandleContextTest->handleList.size()));
 }
 
-TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroWhenCallingzesDeviceEnumSchedulersThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
+TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroWhenCallingZesDeviceEnumSchedulersThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumSchedulers(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, handleComponentCount);
@@ -135,7 +135,7 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroWhenCallingzesDe
     EXPECT_EQ(count, handleComponentCount);
 }
 
-TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroAndKMDVersionIsPrelimWhenCallingzesDeviceEnumSchedulersThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
+TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroAndKMDVersionIsPrelimWhenCallingZesDeviceEnumSchedulersThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
 
     pLinuxSysmanImp->pSysmanKmdInterface.reset();
     pLinuxSysmanImp->pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Prelim>(pLinuxSysmanImp->getSysmanProductHelper());

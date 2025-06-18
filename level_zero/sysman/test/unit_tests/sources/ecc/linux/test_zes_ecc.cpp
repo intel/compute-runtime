@@ -39,7 +39,7 @@ class ZesEccFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndEccUnsupportedWhenCallingzesDeviceEccAvailableThenVerifyApiCallFails) {
+TEST_F(ZesEccFixture, GivenValidSysmanHandleAndEccUnsupportedWhenCallingZesDeviceEccAvailableThenVerifyApiCallFails) {
     struct MockSysmanProductHelperEcc : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
         MockSysmanProductHelperEcc() = default;
     };

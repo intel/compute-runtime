@@ -146,7 +146,8 @@ enum GetEccCmd16BytePostition {
     eccAvailable = 0,
     eccCurrentState = 4,
     eccConfigurable = 8,
-    eccPendingState = 12
+    eccPendingState = 12,
+    eccDefaultState = 16
 };
 
 enum GetEccCmd9BytePostition {
@@ -169,7 +170,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableAndNonMovableClass 
     ze_result_t fwGetMemoryErrorCount(zes_ras_error_type_t type, uint32_t subDeviceCount, uint32_t subDeviceId, uint64_t &count) override;
     ze_result_t fwGetEccAvailable(ze_bool_t *pAvailable) override;
     ze_result_t fwGetEccConfigurable(ze_bool_t *pConfigurable) override;
-    ze_result_t fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState) override;
+    ze_result_t fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState, uint8_t *defaultState) override;
     ze_result_t fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) override;
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
     void fwGetMemoryHealthIndicator(zes_mem_health_t *health) override;

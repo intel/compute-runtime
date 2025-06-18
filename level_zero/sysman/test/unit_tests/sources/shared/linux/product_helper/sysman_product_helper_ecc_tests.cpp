@@ -107,6 +107,31 @@ HWTEST2_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallin
     EXPECT_EQ(ZES_DEVICE_ACTION_NONE, props.pendingAction);
 }
 
+HWTEST2_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingZesDeviceGetEccStateWithDefaultExtensionStructureThenApiCallSucceeds, isDg2OrBmg) {
+    zes_device_ecc_properties_t props = {};
+    zes_device_ecc_default_properties_ext_t extProps = {};
+    extProps.stype = ZES_STRUCTURE_TYPE_DEVICE_ECC_DEFAULT_PROPERTIES_EXT;
+    props.pNext = &extProps;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(pSysmanDevice->toHandle(), &props));
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, props.currentState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, props.pendingState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_UNAVAILABLE, extProps.defaultState);
+    EXPECT_EQ(ZES_DEVICE_ACTION_NONE, props.pendingAction);
+}
+
+HWTEST2_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingZesDeviceGetEccStateWithWrongDefaultExtensionStructureThenApiCallSucceeds, isDg2OrBmg) {
+    zes_device_ecc_properties_t props = {};
+    zes_device_ecc_default_properties_ext_t extProps = {};
+    extProps.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
+    props.pNext = &extProps;
+    extProps.defaultState = ZES_DEVICE_ECC_STATE_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(pSysmanDevice->toHandle(), &props));
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, props.currentState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, props.pendingState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_FORCE_UINT32, extProps.defaultState);
+    EXPECT_EQ(ZES_DEVICE_ACTION_NONE, props.pendingAction);
+}
+
 HWTEST2_F(ZesEccFixture, GivenValidSysmanHandleAndFwGetEccConfigFailsWhenCallingZesDeviceGetEccStateThenApiCallReturnFailure, isDg2OrBmg) {
     zes_device_ecc_properties_t props = {};
     pMockFwInterface->mockFwGetEccConfigResult = ZE_RESULT_ERROR_UNINITIALIZED;

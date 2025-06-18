@@ -34,6 +34,7 @@ std::vector<uint32_t>
     mockSupportedHeciCmds = {GfspHeciConstants::Cmd::getEccConfigurationCmd16, GfspHeciConstants::Cmd::setEccConfigurationCmd15};
 uint8_t mockEccCurrentState = 1;
 uint8_t mockEccPendingState = 1;
+uint8_t mockEccDefaultState = 1;
 uint8_t mockEccHeciCmd16Val = 1;
 
 void restoreEccMockVars() {
@@ -41,6 +42,7 @@ void restoreEccMockVars() {
     mockSupportedHeciCmds.insert(mockSupportedHeciCmds.end(), {GfspHeciConstants::Cmd::getEccConfigurationCmd16, GfspHeciConstants::Cmd::setEccConfigurationCmd15});
     mockEccCurrentState = 1;
     mockEccPendingState = 1;
+    mockEccDefaultState = 1;
     mockEccHeciCmd16Val = 1;
 }
 
@@ -126,10 +128,12 @@ static int mockGetEccConfig(struct igsc_device_handle *handle, uint32_t gfspCmd,
     case GfspHeciConstants::Cmd::getEccConfigurationCmd16:
         outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccCurrentState] = mockEccCurrentState;
         outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccPendingState] = mockEccPendingState;
+        outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccDefaultState] = mockEccDefaultState;
         return IGSC_SUCCESS;
     case GfspHeciConstants::Cmd::getEccConfigurationCmd9:
         outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::currentState] = mockEccCurrentState;
         outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::pendingState] = mockEccPendingState;
+        outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccDefaultState] = 0xff;
         return IGSC_SUCCESS;
     case GfspHeciConstants::Cmd::setEccConfigurationCmd15:
         outBuffer[GfspHeciConstants::SetEccCmd15BytePostition::response] = inBuffer[GfspHeciConstants::SetEccCmd15BytePostition::request];
@@ -293,8 +297,9 @@ TEST(FwEccTest, GivenFwEccConfigCallFailsWhenCallingFirmwareUtilSetAndGetEccThen
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new IgscEccMockOsLibrary());
     uint8_t currentState = 0;
     uint8_t pendingState = 0;
+    uint8_t defaultState = 0;
     uint8_t newState = 0;
-    auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState);
+    auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState, &defaultState);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
     ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
@@ -334,8 +339,9 @@ TEST(LinuxFwEccTest, GivenValidFwUtilMethodWhenCallingFirmwareUtilSetAndGetEccTh
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new IgscEccMockOsLibrary());
     uint8_t currentState = 0;
     uint8_t pendingState = 0;
+    uint8_t defaultState = 0;
     uint8_t newState = 0;
-    auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState);
+    auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState, &defaultState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -354,8 +360,9 @@ TEST(LinuxFwEccTest, GivenGetProcAddrCallFailsWhenFirmwareUtilChecksEccGetAndSet
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
     uint8_t currentState = 0;
     uint8_t pendingState = 0;
+    uint8_t defaultState = 0;
     uint8_t newState = 0;
-    auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState);
+    auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState, &defaultState);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
     ret = pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
@@ -763,12 +770,15 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigSuces
     mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd16);
     mockEccCurrentState = 1;
     mockEccPendingState = 1;
+    mockEccDefaultState = 1;
 
     uint8_t currentState;
     uint8_t pendingState;
-    auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState);
+    uint8_t defaultState;
+    auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState, &defaultState);
     EXPECT_EQ(currentState, mockEccCurrentState);
     EXPECT_EQ(pendingState, mockEccPendingState);
+    EXPECT_EQ(defaultState, mockEccDefaultState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     delete pFwUtilImp->libraryHandle;
@@ -786,6 +796,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingF
     mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
     uint8_t currentState;
     uint8_t pendingState;
+    uint8_t defaultState;
 
     std::vector<uint8_t> possibleEccStates = {0, 1, 0xff};
 
@@ -794,9 +805,10 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingF
             mockEccCurrentState = iterCurrentState;
             mockEccPendingState = iterPendingState;
 
-            auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState);
+            auto ret = pFwUtilImp->fwGetEccConfig(&currentState, &pendingState, &defaultState);
             EXPECT_EQ(currentState, mockEccCurrentState);
             EXPECT_EQ(pendingState, mockEccPendingState);
+            EXPECT_EQ(defaultState, 0xff);
             EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
         }
     }
@@ -820,7 +832,8 @@ TEST(LinuxFwEccTest, GivenUnavailableHeciFunctionPointersWhenCallingEccMethodsTh
 
     uint8_t currentState;
     uint8_t pendingState;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFwUtilImp->fwGetEccConfig(&currentState, &pendingState));
+    uint8_t defaultState;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFwUtilImp->fwGetEccConfig(&currentState, &pendingState, &defaultState));
 
     uint8_t newState = 1;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFwUtilImp->fwSetEccConfig(newState, &currentState, &pendingState));
