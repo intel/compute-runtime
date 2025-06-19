@@ -30,6 +30,7 @@ using IsWithinXeCoreAndXe2HpgCore = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE2_H
 using IsWithinXeCoreAndXe3Core = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE3_CORE>;
 using IsWithinXeHpcCoreAndXe2HpgCore = IsWithinGfxCore<IGFX_XE_HPC_CORE, IGFX_XE2_HPG_CORE>;
 using IsWithinXe2HpgCoreAndXe3Core = IsWithinGfxCore<IGFX_XE2_HPG_CORE, IGFX_XE3_CORE>;
+using IsWithinXeHpcCoreAndXe3Core = IsWithinGfxCore<IGFX_XE_HPC_CORE, IGFX_XE3_CORE>;
 
 using IsTGLLP = IsProduct<IGFX_TIGERLAKE_LP>;
 using IsRKL = IsProduct<IGFX_ROCKETLAKE>;

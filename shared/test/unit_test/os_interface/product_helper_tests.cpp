@@ -1090,12 +1090,12 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnFa
     EXPECT_FALSE(productHelper->supports2DBlockStore());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockLoadThenReturnTrue, IsAtLeastXeHpcCore) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockLoadThenReturnTrue, IsWithinXeHpcCoreAndXe3Core) {
 
     EXPECT_TRUE(productHelper->supports2DBlockLoad());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnTrue, IsAtLeastXeHpcCore) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnTrue, IsWithinXeHpcCoreAndXe3Core) {
 
     EXPECT_TRUE(productHelper->supports2DBlockStore());
 }
