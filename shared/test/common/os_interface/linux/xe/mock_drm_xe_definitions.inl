@@ -72,6 +72,21 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
             ret = 0;
         }
     } break;
+    case DrmIoctl::syncObjFdToHandle: {
+        ret = 0;
+    } break;
+    case DrmIoctl::syncObjTimelineWait: {
+        ret = 0;
+    } break;
+    case DrmIoctl::syncObjWait: {
+        ret = 0;
+    } break;
+    case DrmIoctl::syncObjSignal: {
+        ret = 0;
+    } break;
+    case DrmIoctl::syncObjTimelineSignal: {
+        ret = 0;
+    } break;
     case DrmIoctl::gemCreate: {
         ioctlCnt.gemCreate++;
         auto createParams = static_cast<drm_xe_gem_create *>(arg);

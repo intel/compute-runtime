@@ -1345,6 +1345,26 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         xeLog(" ->PrimeHandleToFd h=0x%x f=0x%x d=0x%x r=%d\n",
               prime->handle, prime->flags, prime->fileDescriptor, ret);
     } break;
+    case DrmIoctl::syncObjFdToHandle: {
+        ret = IoctlHelper::ioctl(request, arg);
+        xeLog(" -> IoctlHelperXe::ioctl SyncObjFdToHandle r=%d\n", ret);
+    } break;
+    case DrmIoctl::syncObjTimelineWait: {
+        ret = IoctlHelper::ioctl(request, arg);
+        xeLog(" -> IoctlHelperXe::ioctl SyncObjTimelineWait r=%d\n", ret);
+    } break;
+    case DrmIoctl::syncObjWait: {
+        ret = IoctlHelper::ioctl(request, arg);
+        xeLog(" -> IoctlHelperXe::ioctl SyncObjWait r=%d\n", ret);
+    } break;
+    case DrmIoctl::syncObjSignal: {
+        ret = IoctlHelper::ioctl(request, arg);
+        xeLog(" -> IoctlHelperXe::ioctl SyncObjSignal r=%d\n", ret);
+    } break;
+    case DrmIoctl::syncObjTimelineSignal: {
+        ret = IoctlHelper::ioctl(request, arg);
+        xeLog(" -> IoctlHelperXe::ioctl SyncObjTimelineSignal r=%d\n", ret);
+    } break;
     case DrmIoctl::gemCreate: {
         drm_xe_gem_create *gemCreate = static_cast<drm_xe_gem_create *>(arg);
         ret = IoctlHelper::ioctl(request, arg);

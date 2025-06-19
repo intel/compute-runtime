@@ -765,6 +765,52 @@ TEST_F(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         EXPECT_EQ(static_cast<int>(test.fileDescriptor), testValuePrime);
     }
     {
+        SyncObjHandle test = {};
+        test.fd = 0;
+        test.flags = 0;
+        test.handle = 0;
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::syncObjFdToHandle, &test);
+        EXPECT_EQ(0, ret);
+    }
+    {
+        SyncObjWait test = {};
+        test.handles = static_cast<uintptr_t>(0x1234);
+        test.timeoutNs = 0;
+        test.countHandles = 1u;
+        test.flags = 0;
+
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::syncObjWait, &test);
+        EXPECT_EQ(0, ret);
+    }
+    {
+        SyncObjTimelineWait test = {};
+        test.handles = static_cast<uintptr_t>(0x1234);
+        test.points = static_cast<uintptr_t>(0x1234);
+        test.timeoutNs = 0;
+        test.countHandles = 1u;
+        test.flags = 0;
+
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::syncObjTimelineWait, &test);
+        EXPECT_EQ(0, ret);
+    }
+    {
+        SyncObjArray test = {};
+        test.handles = static_cast<uintptr_t>(0x1234);
+        test.countHandles = 1u;
+
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::syncObjSignal, &test);
+        EXPECT_EQ(0, ret);
+    }
+    {
+        SyncObjTimelineArray test = {};
+        test.handles = static_cast<uintptr_t>(0x1234);
+        test.points = static_cast<uintptr_t>(0x1234);
+        test.countHandles = 1u;
+
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::syncObjTimelineSignal, &test);
+        EXPECT_EQ(0, ret);
+    }
+    {
         drm_xe_gem_create test = {};
         test.handle = 0;
         test.placement = 1;
