@@ -652,7 +652,7 @@ HWTEST_F(ProductHelperTest, givenDefaultSettingWhenIsThreadArbitrationPolicyRepo
     EXPECT_EQ(productHelper->getScmPropertyThreadArbitrationPolicySupport(), productHelper->isThreadArbitrationPolicyReportedWithScm());
 }
 
-HWTEST_F(ProductHelperTest, givenForceThreadArbitrationPolicyProgrammingWithScmFlagSetWhenIsThreadArbitrationPolicyReportedWithScmIsQueriedThenCorrectValueIsReturned) {
+HWTEST2_F(ProductHelperTest, givenForceThreadArbitrationPolicyProgrammingWithScmFlagSetWhenIsThreadArbitrationPolicyReportedWithScmIsQueriedThenCorrectValueIsReturned, IsAtMostXe3Core) {
     DebugManagerStateRestore restorer;
 
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(0);

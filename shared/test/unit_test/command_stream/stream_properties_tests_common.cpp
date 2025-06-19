@@ -111,7 +111,7 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
     }
 }
 
-HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet, MatchAny) {
+HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet, IsAtMostXe3Core) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);

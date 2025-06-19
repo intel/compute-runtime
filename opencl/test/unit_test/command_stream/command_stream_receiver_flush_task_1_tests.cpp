@@ -1303,7 +1303,7 @@ struct CommandStreamReceiverFlushTaskTestsWithMockCsrHw2DebugFlag : public UltCo
     DebugManagerStateRestore restorer;
 };
 
-HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2DebugFlag, givenDispatchFlagsWhenCallFlushTaskThenThreadArbitrationPolicyIsSetProperly) {
+HWTEST2_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2DebugFlag, givenDispatchFlagsWhenCallFlushTaskThenThreadArbitrationPolicyIsSetProperly, IsAtMostXe3Core) {
     auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     if (mockCsr->getHeaplessStateInitEnabled()) {
         GTEST_SKIP();
