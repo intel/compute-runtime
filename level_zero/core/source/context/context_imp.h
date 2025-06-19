@@ -197,7 +197,33 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
-    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcMemoryData &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool);
+    template <typename IpcDataT>
+    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool) {
+        std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
+
+        ipcData = {};
+        ipcData.handle = handle;
+        ipcData.type = type;
+
+        if (usmPool) {
+            ipcData.poolOffset = usmPool->getOffsetInPool(addrToPtr(ptrAddress));
+            ptrAddress = usmPool->getPoolAddress();
+        }
+
+        auto lock = this->driverHandle->lockIPCHandleMap();
+        ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(handle);
+        if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
+            ipcHandleIterator->second->refcnt += 1;
+        } else {
+            IpcHandleTracking *handleTracking = new IpcHandleTracking;
+            handleTracking->alloc = graphicsAllocation;
+            handleTracking->refcnt = 1;
+            handleTracking->ptr = ptrAddress;
+            handleTracking->handle = handle;
+            handleTracking->ipcData = ipcData;
+            this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
+        }
+    }
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
     size_t getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
     NEO::UsmMemAllocPool *getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);

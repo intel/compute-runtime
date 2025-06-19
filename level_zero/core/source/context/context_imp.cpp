@@ -698,7 +698,8 @@ ze_result_t ContextImp::closeIpcMemHandle(const void *ptr) {
 }
 
 ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
-    IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
+    using IpcDataT = IpcMemoryData;
+    IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(ipcHandle.data);
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lock = this->driverHandle->lockIPCHandleMap();
     ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(ipcData.handle);
@@ -714,39 +715,13 @@ ze_result_t ContextImp::putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) {
     return ZE_RESULT_SUCCESS;
 }
 
-void ContextImp::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcMemoryData &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool) {
-    std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
-
-    ipcData = {};
-    ipcData.handle = handle;
-    ipcData.type = type;
-
-    if (usmPool) {
-        ipcData.poolOffset = usmPool->getOffsetInPool(addrToPtr(ptrAddress));
-        ptrAddress = usmPool->getPoolAddress();
-    }
-
-    auto lock = this->driverHandle->lockIPCHandleMap();
-    ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(handle);
-    if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
-        ipcHandleIterator->second->refcnt += 1;
-    } else {
-        IpcHandleTracking *handleTracking = new IpcHandleTracking;
-        handleTracking->alloc = graphicsAllocation;
-        handleTracking->refcnt = 1;
-        handleTracking->ptr = ptrAddress;
-        handleTracking->handle = handle;
-        handleTracking->ipcData = ipcData;
-        this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
-    }
-}
-
 ze_result_t ContextImp::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) {
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lock = this->driverHandle->lockIPCHandleMap();
     ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(handle);
     if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
-        IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
+        using IpcDataT = IpcMemoryData;
+        IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandle->data);
         ipcData = ipcHandleIterator->second->ipcData;
     } else {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -755,7 +730,8 @@ ze_result_t ContextImp::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t 
 }
 
 ze_result_t ContextImp::getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle) {
-    IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
+    using IpcDataT = IpcMemoryData;
+    IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(ipcHandle.data);
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
     auto lock = this->driverHandle->lockIPCHandleMap();
     ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(ipcData.handle);
@@ -812,8 +788,9 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
 
         memoryManager->registerIpcExportedAllocation(alloc);
 
-        IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandles[i].data);
-        setIPCHandleData(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool);
+        using IpcDataT = IpcMemoryData;
+        IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
+        setIPCHandleData<IpcDataT>(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -835,7 +812,8 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
                                          const ze_ipc_mem_handle_t &pIpcHandle,
                                          ze_ipc_memory_flags_t flags,
                                          void **ptr) {
-    const IpcMemoryData &ipcData = *reinterpret_cast<const IpcMemoryData *>(pIpcHandle.data);
+    using IpcDataT = IpcMemoryData;
+    const IpcDataT &ipcData = *reinterpret_cast<const IpcDataT *>(pIpcHandle.data);
 
     uint64_t handle = ipcData.handle;
     uint8_t type = ipcData.type;
@@ -870,8 +848,9 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
     std::vector<NEO::osHandle> handles;
     handles.reserve(numIpcHandles);
 
+    using IpcDataT = IpcMemoryData;
     for (uint32_t i = 0; i < numIpcHandles; i++) {
-        const IpcMemoryData &ipcData = *reinterpret_cast<const IpcMemoryData *>(pIpcHandles[i].data);
+        const IpcDataT &ipcData = *reinterpret_cast<const IpcDataT *>(pIpcHandles[i].data);
         uint64_t handle = ipcData.handle;
 
         if (ipcData.type != static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
@@ -924,7 +903,8 @@ ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *allo
                     return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
                 }
             } else {
-                IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
+                using IpcDataT = IpcMemoryData;
+                IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(ipcHandle.data);
                 handle = ipcData.handle;
             }
             extendedMemoryExportProperties->fd = static_cast<int>(handle);
