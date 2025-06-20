@@ -23,15 +23,6 @@
 #include <string>
 
 namespace NEO {
-
-struct MockAubFileStreamMockMmioWrite : public AubMemDump::AubFileStream {
-    void writeMMIOImpl(uint32_t offset, uint32_t value) override {
-        mmioList.push_back(std::make_pair(offset, value));
-    }
-
-    std::vector<std::pair<uint32_t, uint32_t>> mmioList;
-};
-
 template <typename GfxFamily>
 struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::defaultSshSize;

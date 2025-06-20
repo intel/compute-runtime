@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hardware_context_controller.h"

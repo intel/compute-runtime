@@ -38,30 +38,6 @@ inline void setAddress(CmdServicesMemTraceMemoryCompare &cmd, uint64_t address) 
     cmd.addressHigh = static_cast<uint32_t>(address >> 32);
 }
 
-union IAPageTableEntry {
-    struct
-    {
-        uint64_t present : 1;          //[0]
-        uint64_t writable : 1;         //[1]
-        uint64_t userSupervisor : 1;   //[2]
-        uint64_t pwt : 1;              //[3]
-        uint64_t pcd : 1;              //[4]
-        uint64_t accessed : 1;         //[5]
-        uint64_t dirty : 1;            //[6]
-        uint64_t pat : 1;              //[7]
-        uint64_t global : 1;           //[8]
-        uint64_t reserved9 : 1;        //[9]
-        uint64_t reserved10 : 1;       //[10]
-        uint64_t reserved11 : 1;       //[11]
-        uint64_t physicalAddress : 27; //[38:12]
-        uint64_t reserved51To39 : 13;  //[51:39]
-        uint64_t ignored : 11;         //[62:52]
-        uint64_t executeDisable : 1;   //[63]
-    } pageConfig;
-    uint32_t dwordData[2];
-    uint64_t uiData;
-};
-
 union MiGttEntry {
     struct
     {
@@ -94,50 +70,6 @@ struct Traits {
     enum {
         addressingBits = addressingBitsIn,
     };
-};
-
-struct AubStream {
-    virtual void open(const char *filePath) = 0;
-    virtual void close() = 0;
-    virtual bool init(uint32_t stepping, uint32_t device) = 0;
-    virtual void createContext(const AubPpgttContextCreate &cmd) {}
-    virtual void writeMemory(uint64_t physAddress, const void *memory, size_t sizeToDumpThisIteration, uint32_t addressSpace, uint32_t hint) = 0;
-    virtual void writeMemoryWriteHeader(uint64_t physAddress, size_t size, uint32_t addressSpace, uint32_t hint) = 0;
-    virtual void writeMemoryWriteHeader(uint64_t physAddress, size_t size, uint32_t addressSpace) {
-        writeMemoryWriteHeader(physAddress, size, addressSpace, CmdServicesMemTraceMemoryWrite::DataTypeHintValues::TraceNotype);
-    }
-    virtual void writePTE(uint64_t physAddress, uint64_t entry, uint32_t addressSpace) = 0;
-    virtual void writeGTT(uint32_t offset, uint64_t entry) = 0;
-    void writeMMIO(uint32_t offset, uint32_t value);
-    virtual void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) = 0;
-    virtual ~AubStream() = default;
-
-  protected:
-    virtual void writeMMIOImpl(uint32_t offset, uint32_t value) = 0;
-};
-
-struct AubFileStream : public AubStream {
-    void open(const char *filePath) override;
-    void close() override;
-    bool init(uint32_t stepping, uint32_t device) override;
-    void createContext(const AubPpgttContextCreate &cmd) override;
-    void writeMemory(uint64_t physAddress, const void *memory, size_t size, uint32_t addressSpace, uint32_t hint) override;
-    void writeMemoryWriteHeader(uint64_t physAddress, size_t size, uint32_t addressSpace, uint32_t hint) override;
-    void writePTE(uint64_t physAddress, uint64_t entry, uint32_t addressSpace) override;
-    void writeGTT(uint32_t offset, uint64_t entry) override;
-    void writeMMIOImpl(uint32_t offset, uint32_t value) override;
-    void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) override;
-    MOCKABLE_VIRTUAL bool isOpen() const { return fileHandle.is_open(); }
-    MOCKABLE_VIRTUAL const std::string &getFileName() const { return fileName; }
-    MOCKABLE_VIRTUAL void write(const char *data, size_t size);
-    MOCKABLE_VIRTUAL void flush();
-    MOCKABLE_VIRTUAL void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue);
-    MOCKABLE_VIRTUAL void expectMemory(uint64_t physAddress, const void *memory, size_t size,
-                                       uint32_t addressSpace, uint32_t compareOperation);
-    MOCKABLE_VIRTUAL bool addComment(const char *message);
-
-    std::ofstream fileHandle;
-    std::string fileName;
 };
 
 template <int addressingBits>
@@ -282,18 +214,6 @@ struct AubDump : public std::conditional<TraitsIn::addressingBits == 32, AubPage
         uint32_t ulData[2];
         uint64_t qwordData[2 / 2];
     };
-
-    // Write a block of memory to a given address space using an optional hint
-    static void addMemoryWrite(Stream &stream, uint64_t addr, const void *memory, size_t blockSize, int addressSpace, int hint = DataTypeHintValues::TraceNotype);
-    static uint64_t reserveAddressGGTT(Stream &stream, uint32_t addr, size_t size, uint64_t physStart, AubGTTData data);
-    static uint64_t reserveAddressGGTT(Stream &stream, const void *memory, size_t size, uint64_t physStart, AubGTTData data);
-    static void reserveAddressGGTTAndWriteMmeory(Stream &stream, uintptr_t gfxAddress, const void *memory, uint64_t physAddress,
-                                                 size_t size, size_t offset, uint64_t additionalBits, const NEO::AubHelper &aubHelper);
-
-    static void setGttEntry(MiGttEntry &entry, uint64_t address, AubGTTData data);
-
-  private:
-    static uint64_t reserveAddress(Stream &stream, uint32_t addr, size_t size, unsigned int addressSpace /* = AddressSpaceValues::TraceGttEntry*/, uint64_t physStart, AubGTTData data);
 };
 
 struct LrcaHelper {
@@ -406,5 +326,4 @@ struct LrcaHelperCccs : public LrcaHelper {
 };
 
 extern const uint64_t pageMask;
-extern const size_t dwordCountMax;
 } // namespace AubMemDump

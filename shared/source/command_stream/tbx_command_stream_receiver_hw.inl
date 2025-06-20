@@ -73,10 +73,6 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
 template <typename GfxFamily>
 TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
     this->downloadAllocationImpl = nullptr;
-
-    if (streamInitialized) {
-        tbxStream.close();
-    }
 }
 
 template <typename GfxFamily>
@@ -251,35 +247,12 @@ template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(bool skipTaskCountCheck) {
     if (hardwareContextController) {
         hardwareContextController->pollForCompletion();
-        return;
     }
-
-    typedef typename AubMemDump::CmdServicesMemTraceRegisterPoll CmdServicesMemTraceRegisterPoll;
-
-    auto mmioBase = this->getCsTraits(osContext->getEngineType()).mmioBase;
-    bool pollNotEqual = getpollNotEqualValueForPollForCompletion();
-    uint32_t mask = getMaskAndValueForPollForCompletion();
-    uint32_t value = mask;
-    tbxStream.registerPoll(
-        AubMemDump::computeRegisterOffset(mmioBase, 0x2234), // EXECLIST_STATUS
-        mask,
-        value,
-        pollNotEqual,
-        CmdServicesMemTraceRegisterPoll::TimeoutActionValues::Abort);
 }
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) {
     UNRECOVERABLE_IF(!isEngineInitialized);
-
-    AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
-
-    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
-        AUB::reserveAddressGGTTAndWriteMmeory(tbxStream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, entryBits,
-                                              aubHelperHw);
-    };
-
-    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, entryBits, walker, memoryBank);
 }
 
 template <typename GfxFamily>
@@ -428,17 +401,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAlloca
         hardwareContextController->readMemory(gpuAddress, cpuAddress, size,
                                               this->getMemoryBank(&gfxAllocation), gfxAllocation.getUsedPageSize());
         this->protectCPUMemoryFromWritesIfTbxFaultable(&gfxAllocation, cpuAddress, size);
-        return;
     }
-
-    if (size) {
-        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
-            DEBUG_BREAK_IF(offset > size);
-            tbxStream.readMemory(physAddress, ptrOffset(cpuAddress, offset), size);
-        };
-        ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, 0, walker, this->getMemoryBank(&gfxAllocation));
-    }
-    this->protectCPUMemoryFromWritesIfTbxFaultable(&gfxAllocation, cpuAddress, size);
 }
 
 template <typename GfxFamily>

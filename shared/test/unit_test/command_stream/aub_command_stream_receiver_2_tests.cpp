@@ -22,7 +22,6 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_csr.h"
-#include "shared/test/common/mocks/mock_aub_file_stream.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_aub_subcapture_manager.h"
 #include "shared/test/common/mocks/mock_csr.h"
@@ -629,19 +628,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGTTD
     } else {
         EXPECT_FALSE(data.localMemory);
     }
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenPhysicalAddressWhenSetGttEntryIsCalledThenGttEntrysBitFieldsShouldBePopulated) {
-    typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
-
-    AubMemDump::MiGttEntry entry = {};
-    uint64_t address = 0x0123456789;
-    AubGTTData data = {true, false};
-    AUB::setGttEntry(entry, address, data);
-
-    EXPECT_EQ(entry.pageConfig.physicalAddress, address / 4096);
-    EXPECT_TRUE(entry.pageConfig.present);
-    EXPECT_FALSE(entry.pageConfig.localMemory);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, whenGetMemoryBankForGttIsCalledThenCorrectBankIsReturned) {

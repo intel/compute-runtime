@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,10 +17,6 @@
 namespace NEO {
 extern bool overrideCommandStreamReceiverCreation;
 using XeHpgCoreAubMemDumpTests = Test<ClDeviceFixture>;
-
-XE_HPG_CORETEST_F(XeHpgCoreAubMemDumpTests, GivenCcsThenExpectationsAreMet) {
-    setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_CCS);
-}
 
 XE_HPG_CORETEST_F(XeHpgCoreAubMemDumpTests, whenAubCsrIsCreatedThenCreateHardwareContext) {
     DebugManagerStateRestore restore;

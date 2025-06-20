@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,20 +18,6 @@
 using namespace NEO;
 
 using AubAllocDumpTests = Test<DeviceFixture>;
-
-struct AubFileStreamMock : public AubMemDump::AubFileStream {
-    void write(const char *data, size_t size) override {
-        buffer.resize(size);
-        memcpy(buffer.data(), data, size);
-    }
-    char *getData() {
-        return buffer.data();
-    }
-    size_t getSize() {
-        return buffer.size();
-    }
-    std::vector<char> buffer;
-};
 
 HWTEST_F(AubAllocDumpTests, givenBufferOrImageWhenGraphicsAllocationIsKnownThenItsTypeCanBeCheckedIfItIsWritable) {
     auto memoryManager = pDevice->getMemoryManager();
@@ -87,62 +73,4 @@ HWTEST_F(AubAllocDumpTests, givenImageResourceWhenGmmResourceInfoIsAvailableThen
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D, AubAllocDump::getImageSurfaceTypeFromGmmResourceType<FamilyType>(GMM_RESOURCE_TYPE::RESOURCE_2D));
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D, AubAllocDump::getImageSurfaceTypeFromGmmResourceType<FamilyType>(GMM_RESOURCE_TYPE::RESOURCE_3D));
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, AubAllocDump::getImageSurfaceTypeFromGmmResourceType<FamilyType>(GMM_RESOURCE_TYPE::RESOURCE_INVALID));
-}
-
-HWTEST_F(AubAllocDumpTests, givenGraphicsAllocationWhenDumpAllocationIsCalledInDefaultModeThenGraphicsAllocationShouldNotBeDumped) {
-    auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
-    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
-    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), 0);
-
-    EXPECT_EQ(0u, mockAubFileStream->getSize());
-
-    memoryManager->freeGraphicsMemory(gfxAllocation);
-}
-
-HWTEST_F(AubAllocDumpTests, givenGraphicsAllocationWhenDumpAllocationIsCalledButDumpFormatIsUnspecifiedThenGraphicsAllocationShouldNotBeDumped) {
-    auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
-    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
-    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), 0);
-
-    EXPECT_EQ(0u, mockAubFileStream->getSize());
-
-    memoryManager->freeGraphicsMemory(gfxAllocation);
-}
-
-HWTEST_F(AubAllocDumpTests, givenNonWritableBufferWhenDumpAllocationIsCalledAndDumpFormatIsSpecifiedThenBufferShouldNotBeDumped) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.AUBDumpBufferFormat.set("BIN");
-
-    auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, pDevice->getDeviceBitfield()});
-
-    std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
-    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
-    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), 0);
-
-    EXPECT_EQ(0u, mockAubFileStream->getSize());
-
-    memoryManager->freeGraphicsMemory(gfxAllocation);
-}
-
-HWTEST_F(AubAllocDumpTests, givenNonWritableImageWhenDumpAllocationIsCalledAndDumpFormatIsSpecifiedThenImageShouldNotBeDumped) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.AUBDumpBufferFormat.set("BMP");
-
-    auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = MockGmm::allocateImage2d(*memoryManager);
-
-    std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
-    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
-    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), 0);
-
-    EXPECT_EQ(0u, mockAubFileStream->getSize());
-
-    memoryManager->freeGraphicsMemory(gfxAllocation);
 }

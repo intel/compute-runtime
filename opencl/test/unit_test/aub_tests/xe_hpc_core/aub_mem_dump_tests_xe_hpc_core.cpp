@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,10 +15,6 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 using XeHpcCoreAubMemDumpTests = Test<NEO::ClDeviceFixture>;
-
-XE_HPC_CORETEST_F(XeHpcCoreAubMemDumpTests, GivenCcsThenExpectationsAreMet) {
-    setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_CCS);
-}
 
 XE_HPC_CORETEST_F(XeHpcCoreAubMemDumpTests, whenAubCsrIsCreatedThenCreateHardwareContext) {
     DebugManagerStateRestore restore;

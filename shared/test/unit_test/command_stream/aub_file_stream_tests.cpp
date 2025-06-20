@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
@@ -19,7 +20,6 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_csr.h"
-#include "shared/test/common/mocks/mock_aub_file_stream.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_aub_subcapture_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"

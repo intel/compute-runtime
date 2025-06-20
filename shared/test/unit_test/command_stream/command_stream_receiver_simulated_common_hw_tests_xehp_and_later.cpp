@@ -13,7 +13,6 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/mocks/mock_aub_stream.h"
 #include "shared/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 
 using XeHPAndLaterMockSimulatedCsrHwTests = Test<DeviceFixture>;

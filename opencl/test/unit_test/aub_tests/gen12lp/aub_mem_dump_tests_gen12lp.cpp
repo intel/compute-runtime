@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,6 @@
 namespace NEO {
 
 using Gen12LPAubMemDumpTests = Test<ClDeviceFixture>;
-
-GEN12LPTEST_F(Gen12LPAubMemDumpTests, GivenCcsThenExpectationsAreMet) {
-    setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_CCS);
-}
 
 GEN12LPTEST_F(Gen12LPAubMemDumpTests, whenAubCsrIsCreatedThenCreateHardwareContext) {
     DebugManagerStateRestore restore;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,6 @@
 namespace AubMemDump {
 
 const uint64_t pageMask = ~(4096ull - 1);
-
-const size_t dwordCountMax = 65536;
 
 // Some page table constants used in virtualizing the page tables.
 // clang-format off
@@ -175,16 +173,5 @@ void LrcaHelper::initialize(void *pLRCIn) const {
     setPDP1(pLRCIn, 0);
     setPDP2(pLRCIn, 0);
     setPDP3(pLRCIn, 0);
-}
-
-void AubStream::writeMMIO(uint32_t offset, uint32_t value) {
-    auto dbgOffset = NEO::debugManager.flags.AubDumpOverrideMmioRegister.get();
-    if (dbgOffset > 0) {
-        if (offset == static_cast<uint32_t>(dbgOffset)) {
-            offset = static_cast<uint32_t>(dbgOffset);
-            value = static_cast<uint32_t>(NEO::debugManager.flags.AubDumpOverrideMmioRegisterValue.get());
-        }
-    }
-    writeMMIOImpl(offset, value);
 }
 } // namespace AubMemDump
