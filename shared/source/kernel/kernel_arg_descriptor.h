@@ -105,6 +105,7 @@ struct ArgDescImage final {
         CrossThreadDataOffset flatPitch = undefined<CrossThreadDataOffset>;
     } metadataPayload;
     NEOImageType imageType;
+    uint8_t size = undefined<uint8_t>;
 };
 
 struct ArgDescSampler final {

@@ -1320,6 +1320,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
                 dst.kernelAttributes.numArgsStateful++;
             } else if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::argTImage>()) {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(false).bindless = src.offset;
+                dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(false).size = src.size;
                 dst.kernelAttributes.numArgsStateful++;
             } else {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(false).bindless = src.offset;

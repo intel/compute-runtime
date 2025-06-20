@@ -827,7 +827,7 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
             auto ssInHeap = image->getBindlessSlot();
             auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
             auto bindlessSlotOffset = ssInHeap->surfaceStateOffset;
-            uint32_t patchSize = this->heaplessEnabled ? 8u : 4u;
+            uint32_t patchSize = NEO::isUndefined(arg.size) ? 0 : arg.size;
             uint64_t patchValue = this->heaplessEnabled
                                       ? bindlessSlotOffset
                                       : gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));

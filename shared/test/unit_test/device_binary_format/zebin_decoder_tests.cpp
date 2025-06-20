@@ -4843,6 +4843,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenMemoryAddressingModeIsKno
                 break;
             case AddressingMode::memoryAddressingModeBindless:
                 EXPECT_EQ(24U, argAsImage.bindless);
+                EXPECT_EQ(8U, argAsImage.size);
                 EXPECT_EQ(32U, argAsSampler.bindless);
                 break;
             }
