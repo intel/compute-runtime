@@ -200,8 +200,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
                                 alignUp(used, 8), flags, drmContextId);
 
     if (debugManager.flags.PrintExecutionBuffer.get()) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintExecutionBuffer.get(), stdout, "Exec called with drmVmId = %u\n",
-                           static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0);
+        PRINT_DEBUG_STRING(debugManager.flags.PrintExecutionBuffer.get(), stdout, "Exec called with drmVmId = %u\n", drm->getVmIdForContext(*osContext, vmHandleId));
 
         printExecutionBuffer(execbuf, residencyCount, execObjectsStorage, residency);
     }
@@ -243,7 +242,7 @@ MemoryOperationsStatus BufferObject::evictUnusedAllocations(bool waitForCompleti
 }
 
 void BufferObject::printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal) {
-    auto vmId = static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() > 0 ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : drm->getVirtualMemoryAddressSpace(vmHandleId);
+    auto vmId = this->drm->getVmIdForContext(*osContext, vmHandleId);
     if (retVal == 0) {
         if (bind) {
             PRINT_DEBUG_STRING(debugManager.flags.PrintBOBindingResult.get(), stdout, "bind BO-%d to VM %u, vmHandleId = %u, range: %llx - %llx, size: %lld, result: %d\n",

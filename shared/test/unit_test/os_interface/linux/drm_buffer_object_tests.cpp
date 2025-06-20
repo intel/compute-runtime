@@ -254,8 +254,13 @@ TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundI
     EXPECT_EQ(0, ret);
 
     std::string output = capture.getCapturedStdout();
-    auto idx = output.find("drm_i915_gem_execbuffer2 {");
-    size_t expectedValue = 29;
+
+    auto idx = output.find("Exec called with drmVmId = " + std::to_string(mock->getVmIdForContext(*osContext.get(), 0)));
+    uint32_t expectedValue = 0;
+    EXPECT_EQ(expectedValue, idx);
+
+    idx = output.find("drm_i915_gem_execbuffer2 {");
+    expectedValue = 29;
     EXPECT_EQ(expectedValue, idx);
 }
 

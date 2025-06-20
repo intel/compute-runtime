@@ -1878,6 +1878,11 @@ uint32_t Drm::getAggregatedProcessCount() const {
     return ioctlHelper->getNumProcesses();
 }
 
+uint32_t Drm::getVmIdForContext(OsContext &osContext, uint32_t vmHandleId) const {
+    auto osContextLinux = static_cast<const OsContextLinux *>(&osContext);
+    return osContextLinux->getDrmVmIds().size() > 0 ? osContextLinux->getDrmVmIds()[vmHandleId] : getVirtualMemoryAddressSpace(vmHandleId);
+}
+
 template std::vector<uint16_t> Drm::query<uint16_t>(uint32_t queryId, uint32_t queryItemFlags);
 template std::vector<uint32_t> Drm::query<uint32_t>(uint32_t queryId, uint32_t queryItemFlags);
 template std::vector<uint64_t> Drm::query<uint64_t>(uint32_t queryId, uint32_t queryItemFlags);

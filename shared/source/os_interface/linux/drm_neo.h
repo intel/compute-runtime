@@ -272,6 +272,7 @@ class Drm : public DriverModel {
     std::vector<DataType> query(uint32_t queryId, uint32_t queryItemFlags);
     static std::string getDrmVersion(int fileDescriptor);
     MOCKABLE_VIRTUAL uint32_t getAggregatedProcessCount() const;
+    uint32_t getVmIdForContext(OsContext &osContext, uint32_t vmHandleId) const;
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
