@@ -31,7 +31,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
     ze_result_t setEnergyThreshold(double threshold) override;
     ze_result_t getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
     ze_result_t setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
-    ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) override;
+    ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtProperties) override;
 
     bool isPowerModuleSupported() override;
     bool isIntelGraphicsHwmonDir(const std::string &name);
@@ -50,11 +50,14 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
   private:
     std::string intelGraphicsHwmonDir = {};
     std::string energyCounterNodeFile = {};
+    std::string burstPowerLimitFile = {};
+    std::string burstPowerLimitIntervalFile = {};
     std::string criticalPowerLimitFile = {};
     std::string sustainedPowerLimitFile = {};
     std::string sustainedPowerLimitIntervalFile = {};
-    bool sustainedPowerLimitFileExists = false;
+    bool burstPowerLimitFileExists = false;
     bool criticalPowerLimitFileExists = false;
+    bool sustainedPowerLimitFileExists = false;
     bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
