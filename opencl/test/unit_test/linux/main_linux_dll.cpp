@@ -524,12 +524,12 @@ TEST_F(DrmTests, GivenUnknownDeviceWhenCreatingDrmThenNullIsReturned) {
     deviceId = -1;
     revisionId = -1;
 
-    ::testing::internal::CaptureStderr();
     StreamCapture capture;
+    capture.captureStderr();
     capture.captureStdout();
     auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
-    std::string errStr = ::testing::internal::GetCapturedStderr();
+    std::string errStr = capture.getCapturedStderr();
     EXPECT_TRUE(hasSubstr(errStr, std::string("FATAL: Unknown device: deviceId: ffff, revisionId: ffff")));
     capture.getCapturedStdout();
 }
@@ -742,8 +742,8 @@ TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetV
 TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenPerContextVMIsFalseVMsAreCreatedAndDebugMessageIsPrinted) {
     DebugManagerStateRestore restore;
 
-    ::testing::internal::CaptureStderr();
     StreamCapture capture;
+    capture.captureStderr();
     capture.captureStdout();
 
     debugManager.flags.CreateMultipleSubDevices.set(2);
@@ -757,7 +757,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
 
     if (drm->isPerContextVMRequired()) {
         capture.getCapturedStdout();
-        ::testing::internal::GetCapturedStderr();
+        capture.getCapturedStderr();
         GTEST_SKIP();
     }
 
@@ -769,7 +769,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
 
     debugManager.flags.PrintDebugMessages.set(false);
     capture.getCapturedStdout();
-    std::string errStr = ::testing::internal::GetCapturedStderr();
+    std::string errStr = capture.getCapturedStderr();
 
     auto &compilerProductHelper = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     bool heapless = compilerProductHelper.isHeaplessModeEnabled(*drm->getRootDeviceEnvironment().getHardwareInfo());
@@ -803,8 +803,8 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
 
     failOnVirtualMemoryCreate = -1;
 
-    ::testing::internal::CaptureStderr();
     StreamCapture capture;
+    capture.captureStderr();
     capture.captureStdout();
     auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
@@ -812,7 +812,7 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
     EXPECT_EQ(0u, drm->getVirtualMemoryAddressSpace(0));
     EXPECT_EQ(0u, static_cast<DrmWrap *>(drm.get())->virtualMemoryIds.size());
 
-    std::string errStr = ::testing::internal::GetCapturedStderr();
+    std::string errStr = capture.getCapturedStderr();
     if (!drm->isPerContextVMRequired()) {
         EXPECT_TRUE(hasSubstr(errStr, std::string("INFO: Device doesn't support GEM Virtual Memory")));
     }
@@ -996,15 +996,15 @@ TEST_F(DrmTests, whenDrmIsCreatedAndQueryEngineInfoFailsThenWarningIsReported) {
     VariableBackup<decltype(DrmQueryConfig::failOnQueryEngineInfo)> backupFailOnFdSetParamEngineMap(&DrmQueryConfig::failOnQueryEngineInfo);
     DrmQueryConfig::failOnQueryEngineInfo = true;
 
-    ::testing::internal::CaptureStderr();
     StreamCapture capture;
+    capture.captureStderr();
     capture.captureStdout();
 
     MockExecutionEnvironment mockExecutionEnvironment;
     auto drm = DrmWrap::createDrm(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_NE(drm, nullptr);
 
-    std::string errStr = ::testing::internal::GetCapturedStderr();
+    std::string errStr = capture.getCapturedStderr();
     EXPECT_TRUE(hasSubstr(errStr, std::string("WARNING: Failed to query engine info\n")));
     capture.getCapturedStdout();
 }
@@ -1017,15 +1017,15 @@ TEST_F(DrmTests, whenDrmIsCreatedAndQueryMemoryInfoFailsThenWarningIsReported) {
     VariableBackup<decltype(DrmQueryConfig::failOnQueryMemoryInfo)> backupFailOnFdSetParamMemRegionMap(&DrmQueryConfig::failOnQueryMemoryInfo);
     DrmQueryConfig::failOnQueryMemoryInfo = true;
 
-    ::testing::internal::CaptureStderr();
     StreamCapture capture;
+    capture.captureStderr();
     capture.captureStdout();
 
     MockExecutionEnvironment mockExecutionEnvironment;
     auto drm = DrmWrap::createDrm(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_NE(drm, nullptr);
 
-    std::string errStr = ::testing::internal::GetCapturedStderr();
+    std::string errStr = capture.getCapturedStderr();
     EXPECT_TRUE(hasSubstr(errStr, std::string("WARNING: Failed to query memory info\n")));
     capture.getCapturedStdout();
 }

@@ -174,13 +174,14 @@ TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryF
     EXPECT_EQ(1u + tileCount, memoryInfo->getDrmRegionInfos().size());
 
     drm->ioctlCount.reset();
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     bool ret = drm->createVirtualMemoryAddressSpace(tileCount);
     EXPECT_FALSE(ret);
     EXPECT_EQ(1, drm->ioctlCount.gemVmCreate.load());
     EXPECT_NE(0ull, drm->receivedGemVmControl.extensions);
 
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     auto pos = output.find("INFO: Cannot create Virtual Memory at memory bank");
     EXPECT_NE(std::string::npos, pos);
 }

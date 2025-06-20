@@ -12,6 +12,7 @@
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
@@ -1943,13 +1944,14 @@ TEST_F(IoctlHelperXeTest, whenXeShowBindTableIsCalledThenBindLogsArePrinted) {
     mockBindInfo.addr = 3u;
     xeIoctlHelper->bindInfo.push_back(mockBindInfo);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     debugManager.flags.PrintXeLogs.set(true);
     xeIoctlHelper->xeShowBindTable();
     debugManager.flags.PrintXeLogs.set(false);
 
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     std::string expectedOutput1 = "show bind: (<index> <userptr> <addr>)\n";
     std::string expectedOutput2 = "0 x0000000000000002 x0000000000000003";
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_assert_handler.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -51,10 +52,11 @@ TEST(AssertHandlerTests, GivenNoFlagSetWhenPrintAssertAndAbortCalledThenAbortIsN
 
     reinterpret_cast<AssertBufferHeader *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer())->flags = 0;
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     assertHandler.printAssertAndAbort();
 
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_STREQ("", output.c_str());
 }
 
@@ -80,9 +82,10 @@ TEST(AssertHandlerTests, GivenFlagSetWhenPrintAssertAndAbortCalledThenMessageIsP
 
     reinterpret_cast<AssertBufferHeader *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer())->begin += sizeof(uint64_t);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_THROW(assertHandler.printAssertAndAbort(), std::exception);
 
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_STREQ("AssertHandler::printMessage\nassert!", output.c_str());
 }

@@ -170,9 +170,10 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndNotSupportedWhenSetupHardwareI
 
     drm.ioctlHelper.reset(mockIoctlHelper.release());
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_EQ(-1, drm.setupHardwareInfo(&device, false));
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_STREQ("WARNING: Small BAR detected for device 0000:ab:cd.e\n", output.c_str());
 }
 
@@ -189,9 +190,10 @@ TEST(DrmTest, givenSmallBarDetectedInMemoryInfoAndSupportedWhenSetupHardwareInfo
 
     drm.ioctlHelper.reset(mockIoctlHelper.release());
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_EQ(0, drm.setupHardwareInfo(&device, false));
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_STREQ("WARNING: Small BAR detected for device 0000:ab:cd.e\n", output.c_str());
 }
 
@@ -1563,11 +1565,11 @@ TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcess
 
     std::string expectedString = std::string(buf.get());
 
-    ::testing::internal::CaptureStderr();
     StreamCapture capture;
+    capture.captureStderr();
     capture.captureStdout();
     EXPECT_THROW(drm.isGpuHangDetected(mockOsContextLinux), std::runtime_error);
-    auto stderrString = ::testing::internal::GetCapturedStderr();
+    auto stderrString = capture.getCapturedStderr();
     auto stdoutString = capture.getCapturedStdout();
     EXPECT_EQ(expectedString, stderrString);
     EXPECT_EQ(expectedString, stdoutString);

@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -597,20 +598,21 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueAndForceExecutionStateWhenSubmit
     VariableBackup<volatile uint64_t *> pagingFenceBackup(&wddm->pagingFenceAddress, &pagingFenceValue);
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     WddmSubmitArguments submitArguments{};
     EXPECT_FALSE(wddm->submit(0, 0, nullptr, submitArguments));
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_EQ(std::string("Device execution error, out of memory " + std::to_string(executionState) + "\n"), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
 
     COMMAND_BUFFER_HEADER commandBufferHeader{};
     MonitoredFence monitoredFence{};
     submitArguments.monitorFence = &monitoredFence;
     EXPECT_TRUE(wddm->submit(0, 0, &commandBufferHeader, submitArguments));
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -622,16 +624,17 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateAndForceEx
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_EQ(std::string("Device execution error, out of memory " + std::to_string(executionState) + "\n"), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -644,17 +647,18 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsFai
     setMockDeviceExecutionStateFcn(executionState);
     setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS + 1, true);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
     setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS, true);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -666,16 +670,17 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToFalseWhenCallGetDeviceStateAndForceE
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -770,17 +775,18 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsPag
     wddm->checkDeviceState = true;
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ERROR_DMAPAGEFAULT);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     std::string expected = "Device execution error, page fault\nfaulted gpuva 0xabc000, pipeline stage 0, bind table entry 2, flags 0x1, error code(is device) 1, error code 10\n";
     EXPECT_EQ(expected, output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -792,18 +798,19 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsFai
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ERROR_DMAPAGEFAULT);
     setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS + 1, false);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     std::string expected = "Device execution error, page fault\n";
     EXPECT_EQ(expected, output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
     setMockGetDeviceStateReturnValueFcn(STATUS_SUCCESS, false);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 
@@ -815,17 +822,18 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueWhenCallGetDeviceStateReturnsOth
     auto executionState = D3DKMT_DEVICEEXECUTION_RESET;
     setMockDeviceExecutionStateFcn(executionState);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     EXPECT_FALSE(wddm->getDeviceState());
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     std::string expected = std::string("Device execution error " + std::to_string(executionState) + "\n");
     EXPECT_EQ(expected, output);
 
     setMockDeviceExecutionStateFcn(D3DKMT_DEVICEEXECUTION_ACTIVE);
 
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     EXPECT_TRUE(wddm->getDeviceState());
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     EXPECT_EQ(std::string(""), output);
 }
 

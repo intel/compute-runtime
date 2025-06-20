@@ -791,13 +791,14 @@ TEST_F(EventPoolIPCHandleTests,
     ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     ze_event_pool_handle_t ipcEventPoolHandle = {};
     res = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
     EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     std::string expectedOutput("IPC handle max event packets 2 does not match context devices max event packet 1\n");
     EXPECT_EQ(expectedOutput, output);
 

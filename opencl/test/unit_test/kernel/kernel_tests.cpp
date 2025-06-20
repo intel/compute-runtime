@@ -23,6 +23,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
@@ -3630,7 +3631,8 @@ TEST(KernelInitializationTest, givenSlmSizeExceedingLocalMemorySizeWhenInitializ
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.PrintDebugMessages.set(true);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     MockContext context;
     MockProgram mockProgram(&context, false, context.getDevices());
@@ -3644,15 +3646,15 @@ TEST(KernelInitializationTest, givenSlmSizeExceedingLocalMemorySizeWhenInitializ
     mockKernelInfoExceedsSLM.kernelDescriptor.kernelAttributes.slmInlineSize = slmTotalSize;
     auto localMemSize = static_cast<uint32_t>(clDevice->getDevice().getDeviceInfo().localMemSize);
 
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
 
     cl_int retVal{};
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     std::unique_ptr<MockKernel> kernelPtr(Kernel::create<MockKernel>(&mockProgram, mockKernelInfoExceedsSLM, *clDevice, retVal));
     EXPECT_EQ(nullptr, kernelPtr.get());
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 
-    output = testing::internal::GetCapturedStderr();
+    output = capture.getCapturedStderr();
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmTotalSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_EQ(expectedOutput, output);
 }

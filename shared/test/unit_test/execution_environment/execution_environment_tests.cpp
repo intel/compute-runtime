@@ -27,6 +27,7 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -132,7 +133,8 @@ class TestAubCenter : public AubCenter {
     }
 };
 TEST(RootDeviceEnvironment, givenNullptrAubManagerWhenInitializeAubCenterIsCalledThenMessErrorIsPrintedAndAbortCalled) {
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
@@ -145,7 +147,7 @@ TEST(RootDeviceEnvironment, givenNullptrAubManagerWhenInitializeAubCenterIsCalle
     rootDeviceEnvironment->useMockAubCenter = false;
     EXPECT_THROW(rootDeviceEnvironment->initAubCenter(true, "test.aub", CommandStreamReceiverType::aub), std::runtime_error);
 
-    std::string output = ::testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_NE(output.find("ERROR: Simulation mode detected but Aubstream is not available.\n"), std::string::npos);
 }
 

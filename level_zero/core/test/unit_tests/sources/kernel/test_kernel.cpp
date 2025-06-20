@@ -192,7 +192,8 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasTooBigScratchSizeThenInvalidBin
 TEST_F(KernelInitTest, givenKernelToInitWhenPrivateSurfaceAllocationFailsThenOutOfDeviceMemoryIsRetutned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(true);
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
 
@@ -213,7 +214,7 @@ TEST_F(KernelInitTest, givenKernelToInitWhenPrivateSurfaceAllocationFailsThenOut
 
     device->getNEODevice()->getExecutionEnvironment()->memoryManager.swap(otherMemoryManager);
 
-    auto output = ::testing::internal::GetCapturedStderr();
+    auto output = capture.getCapturedStderr();
     std::string errorMsg = "Failed to allocate private surface";
     EXPECT_NE(std::string::npos, output.find(errorMsg));
 }
@@ -3981,10 +3982,10 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
 
         StreamCapture capture;
         capture.captureStdout();
-        testing::internal::CaptureStderr();
+        capture.captureStderr();
         PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &deviceImp, true);
         std::string output = capture.getCapturedStdout();
-        std::string error = testing::internal::GetCapturedStderr();
+        std::string error = capture.getCapturedStderr();
 
         EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
         EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);

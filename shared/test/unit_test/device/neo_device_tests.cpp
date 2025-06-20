@@ -24,6 +24,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -2479,9 +2480,10 @@ TEST_F(DeviceTests, givenDebuggerRequestedByUserAndNotAvailableWhenDeviceIsIniti
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
 
     NEO::debugManager.flags.PrintDebugMessages.set(1);
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
-    auto output = testing::internal::GetCapturedStderr();
+    auto output = capture.getCapturedStderr();
 
     EXPECT_EQ(std::string("Debug mode is not enabled in the system.\n"), output);
     EXPECT_EQ(nullptr, device);

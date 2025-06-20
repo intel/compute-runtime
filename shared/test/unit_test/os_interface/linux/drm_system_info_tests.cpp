@@ -79,7 +79,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
 
     StreamCapture capture;
     capture.captureStdout();
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
 
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(true);
@@ -89,7 +89,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 
     EXPECT_TRUE(isEmpty(capture.getCapturedStdout()));
-    EXPECT_FALSE(isEmpty(::testing::internal::GetCapturedStderr()));
+    EXPECT_FALSE(isEmpty(capture.getCapturedStderr()));
 }
 
 TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpVersion) {
@@ -237,7 +237,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
 
     StreamCapture capture;
     capture.captureStdout();
-    ::testing::internal::CaptureStderr();
+    capture.captureStderr();
     DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(true);
 
@@ -251,9 +251,9 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     EXPECT_TRUE(hasSubstr(capture.getCapturedStdout(), "INFO: System Info query failed!\n"));
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     if (productHelper.isPlatformQuerySupported()) {
-        EXPECT_TRUE(hasSubstr(::testing::internal::GetCapturedStderr(), "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size\n"));
+        EXPECT_TRUE(hasSubstr(capture.getCapturedStderr(), "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size\n"));
     } else {
-        EXPECT_FALSE(::testing::internal::GetCapturedStderr().empty());
+        EXPECT_FALSE(capture.getCapturedStderr().empty());
     }
 }
 

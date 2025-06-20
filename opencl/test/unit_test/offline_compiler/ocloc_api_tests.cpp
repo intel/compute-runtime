@@ -1242,14 +1242,14 @@ struct OclocFallbackTests : ::testing::Test {
 
             StreamCapture capture;
             capture.captureStdout();
-            testing::internal::CaptureStderr();
+            capture.captureStderr();
 
             auto retVal = oclocInvoke(argc, argv,
                                       0, nullptr, nullptr, nullptr,
                                       0, nullptr, nullptr, nullptr,
                                       nullptr, nullptr, nullptr, nullptr);
             capturedStdout = capture.getCapturedStdout();
-            capturedStderr = testing::internal::GetCapturedStderr();
+            capturedStderr = capture.getCapturedStderr();
             return retVal;
         }
     }

@@ -540,13 +540,13 @@ TEST_F(CcsModeXeTest, GivenXeDrmAndValidCcsModeAndOpenSysCallFailsWithNoPermissi
 
     StreamCapture capture;
     capture.captureStdout();
-    testing::internal::CaptureStderr();
+    capture.captureStderr();
 
     debugManager.flags.ZEX_NUMBER_OF_CCS.set("2");
     executionEnvironment->configureCcsMode();
 
     std::string stdOutString = capture.getCapturedStdout();
-    std::string stdErrString = testing::internal::GetCapturedStderr();
+    std::string stdErrString = capture.getCapturedStderr();
     std::string expectedOutput = "No read and write permissions for /sys/class/drm/card0/device/tile0/gt0/ccs_mode, System administrator needs to grant permissions to allow modification of this file from user space\n";
 
     EXPECT_EQ(1u, ccsMode);
@@ -626,13 +626,13 @@ TEST_F(CcsModeXeTest, GivenXeDrmAndValidCcsModeAndOpenSysCallFailsWithNoAccessWh
 
     StreamCapture capture;
     capture.captureStdout();
-    testing::internal::CaptureStderr();
+    capture.captureStderr();
 
     debugManager.flags.ZEX_NUMBER_OF_CCS.set("2");
     executionEnvironment->configureCcsMode();
 
     std::string stdOutString = capture.getCapturedStdout();
-    std::string stdErrString = testing::internal::GetCapturedStderr();
+    std::string stdErrString = capture.getCapturedStderr();
     std::string expectedOutput = "No read and write permissions for /sys/class/drm/card0/device/tile0/gt0/ccs_mode, System administrator needs to grant permissions to allow modification of this file from user space\n";
 
     EXPECT_EQ(1u, ccsMode);

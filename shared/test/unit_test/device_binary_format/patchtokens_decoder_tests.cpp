@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <vector>
@@ -1219,10 +1220,11 @@ TEST(ProgramDecoder, givenPatchTokenInterfaceDescriptorDataWhenFlagPrintDebugMes
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
     kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
     NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
 
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_TRUE(decodeSuccess);
     EXPECT_EQ(NEO::DecodeError::success, decodedKernel.decodeStatus);
     EXPECT_EQ("Ignored kernel-scope Patch Token: 21\n", output);

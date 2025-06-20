@@ -979,12 +979,13 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnIni
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(true);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     drm->returnInvalidHwIpVersionLength = true;
     drm->ioctlHelper->setupIpVersion();
 
     debugManager.flags.PrintDebugMessages.set(false);
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     std::string expectedOutput = "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size\n";
 
     EXPECT_STREQ(output.c_str(), expectedOutput.c_str());
@@ -994,12 +995,13 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationAndPlat
     DebugManagerStateRestore restore;
     debugManager.flags.PrintDebugMessages.set(true);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     drm->failRetHwIpVersion = true;
     drm->ioctlHelper->setupIpVersion();
 
     debugManager.flags.PrintDebugMessages.set(false);
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     if (productHelper.isPlatformQuerySupported()) {

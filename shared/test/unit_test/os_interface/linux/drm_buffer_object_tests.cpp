@@ -593,24 +593,25 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     auto osContext = engines[contextId].osContext;
     osContext->ensureContextInitialized(false);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     bo.bind(osContext, 0, false);
     EXPECT_FALSE(bo.bindInfo[contextId][0]);
 
-    std::string bindOutput = testing::internal::GetCapturedStderr();
+    std::string bindOutput = capture.getCapturedStderr();
     std::stringstream expected;
     expected << "bind BO-0 to VM " << drm->latestCreatedVmId << ", vmHandleId = 0"
              << ", range: 0 - 0, size: 0, result: -1, errno: 22\n";
     EXPECT_TRUE(hasSubstr(expected.str(), expected.str())) << bindOutput;
     expected.str("");
-    testing::internal::CaptureStderr();
+    capture.captureStderr();
     bo.bindInfo[contextId][0] = true;
 
     bo.unbind(osContext, 0);
     EXPECT_TRUE(bo.bindInfo[contextId][0]);
 
-    std::string unbindOutput = testing::internal::GetCapturedStderr();
+    std::string unbindOutput = capture.getCapturedStderr();
     expected << "unbind BO-0 from VM " << drm->latestCreatedVmId << ", vmHandleId = 0"
              << ", range: 0 - 0, size: 0, result: -1, errno: 22";
     EXPECT_TRUE(hasSubstr(unbindOutput, expected.str())) << unbindOutput;

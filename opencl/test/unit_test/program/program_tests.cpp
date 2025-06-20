@@ -2126,13 +2126,14 @@ TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimit
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     auto retVal = program->processGenBinary(*pClDevice);
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     const auto &slmInlineSize = patchtokensProgram.slmMutable->TotalInlineLocalMemorySize;
     const auto &localMemSize = pDevice->getDeviceInfo().localMemSize;
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
@@ -2793,11 +2794,12 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebuildIsF
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     pProgram->irBinarySize = 0x10;
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     debugManager.flags.PrintDebugMessages.set(true);
     retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size(), *clDevice);
     debugManager.flags.PrintDebugMessages.set(false);
-    std::string output = testing::internal::GetCapturedStderr();
+    std::string output = capture.getCapturedStderr();
     EXPECT_FALSE(pProgram->requiresRebuild);
     EXPECT_EQ(CL_SUCCESS, retVal);
     std::string expectedOutput = "Skip rebuild binary. Lack of IR, rebuild impossible.\n";
