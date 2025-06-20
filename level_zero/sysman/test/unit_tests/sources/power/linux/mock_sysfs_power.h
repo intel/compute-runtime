@@ -133,15 +133,8 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
 
     ze_result_t setVal(const std::string file, const int val) {
         ze_result_t result = ZE_RESULT_SUCCESS;
-        if (file.compare(i915HwmonDir + "/" + sustainedPowerLimit) == 0) {
-            sustainedPowerLimitVal = static_cast<uint64_t>(val);
-        } else if ((file.compare(i915HwmonDir + "/" + sustainedPowerLimitInterval) == 0)) {
+        if ((file.compare(i915HwmonDir + "/" + sustainedPowerLimitInterval) == 0)) {
             sustainedPowerLimitIntervalVal = val;
-        } else if ((file.compare(i915HwmonDir + "/" + criticalPowerLimit1) == 0) || (file.compare(i915HwmonDir + "/" + criticalPowerLimit2) == 0)) {
-            if (mockWritePeakLimitResult != ZE_RESULT_SUCCESS) {
-                return mockWritePeakLimitResult;
-            }
-            criticalPowerLimitVal = static_cast<uint64_t>(val);
         } else {
             result = ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -198,7 +191,7 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
         return getValUnsignedInt(file, val);
     }
 
-    ze_result_t write(const std::string file, const int val) override {
+    ze_result_t write(const std::string file, const int32_t val) override {
         if (mockWriteResult != ZE_RESULT_SUCCESS) {
             return mockWriteResult;
         }
