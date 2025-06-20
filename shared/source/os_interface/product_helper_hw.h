@@ -198,7 +198,7 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getGmmResourceUsageOverride(uint32_t usageType) const override;
     bool isSharingWith3dOrMediaAllowed() const override;
     bool isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const override;
-    void overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const override;
+    void overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const override;
     bool isMisalignedUserPtr2WayCoherent() const override;
     bool isSvmHeapReservationSupported() const override;
     void setRenderCompressedFlags(HardwareInfo &hwInfo) const override;

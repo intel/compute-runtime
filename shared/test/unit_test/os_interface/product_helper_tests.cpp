@@ -1152,27 +1152,27 @@ HWTEST2_F(ProductHelperTest, givenProductHelperThenCompressionIsNotForbidden, Is
 HWTEST2_F(ProductHelperTest, givenProductHelperBeforeXe2WhenOverrideDirectSubmissionTimeoutsThenTimeoutsNotAdjusted, IsAtMostXeCore) {
     DebugManagerStateRestore restorer;
 
-    std::chrono::microseconds timeout{5000};
-    std::chrono::microseconds maxTimeout{5000};
-    productHelper->overrideDirectSubmissionTimeouts(timeout, maxTimeout);
-    EXPECT_EQ(std::chrono::microseconds{5000}, timeout);
-    EXPECT_EQ(std::chrono::microseconds{5000}, maxTimeout);
+    uint64_t timeoutUs{5000};
+    uint64_t maxTimeoutUs{5000};
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    EXPECT_EQ(5000ull, timeoutUs);
+    EXPECT_EQ(5000ull, maxTimeoutUs);
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenOverrideDirectSubmissionTimeoutsThenTimeoutsAdjusted, IsAtLeastXe2HpgCore) {
     DebugManagerStateRestore restorer;
 
-    std::chrono::microseconds timeout{5000};
-    std::chrono::microseconds maxTimeout{5000};
-    productHelper->overrideDirectSubmissionTimeouts(timeout, maxTimeout);
-    EXPECT_EQ(std::chrono::microseconds{1000}, timeout);
-    EXPECT_EQ(std::chrono::microseconds{1000}, maxTimeout);
+    uint64_t timeoutUs{5000};
+    uint64_t maxTimeoutUs{5000};
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    EXPECT_EQ(1000ull, timeoutUs);
+    EXPECT_EQ(1000ull, maxTimeoutUs);
 
     debugManager.flags.DirectSubmissionControllerTimeout.set(10000);
     debugManager.flags.DirectSubmissionControllerMaxTimeout.set(10000);
-    productHelper->overrideDirectSubmissionTimeouts(timeout, maxTimeout);
-    EXPECT_EQ(std::chrono::microseconds{10000}, timeout);
-    EXPECT_EQ(std::chrono::microseconds{10000}, maxTimeout);
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    EXPECT_EQ(10000ull, timeoutUs);
+    EXPECT_EQ(10000ull, maxTimeoutUs);
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsExposingSubdevicesAllowedThenTrueIsReturned) {

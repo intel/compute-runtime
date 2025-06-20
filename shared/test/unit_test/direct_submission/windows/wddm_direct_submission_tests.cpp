@@ -12,13 +12,12 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/allocation_properties.h"
-#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -1338,11 +1337,11 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionControllerWhenRegisterCs
     auto csr = device->getDefaultEngine().commandStreamReceiver;
 
     DirectSubmissionControllerMock controller;
-    auto timeout = std::chrono::microseconds{5'000};
-    EXPECT_EQ(controller.timeout, timeout);
+    uint64_t timeoutUs{5'000};
+    EXPECT_EQ(static_cast<uint64_t>(controller.timeout.count()), timeoutUs);
     controller.registerDirectSubmission(csr);
-    csr->getProductHelper().overrideDirectSubmissionTimeouts(timeout, timeout);
-    EXPECT_EQ(controller.timeout, timeout);
+    csr->getProductHelper().overrideDirectSubmissionTimeouts(timeoutUs, timeoutUs);
+    EXPECT_EQ(static_cast<uint64_t>(controller.timeout.count()), timeoutUs);
 
     controller.unregisterDirectSubmission(csr);
 }

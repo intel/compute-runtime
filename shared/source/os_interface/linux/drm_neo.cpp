@@ -66,6 +66,7 @@ Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &r
       hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     pagingFence.fill(0u);
     fenceVal.fill(0u);
+    minimalChunkingSize = MemoryConstants::pageSize2M;
 }
 
 SubmissionStatus Drm::getSubmissionStatusFromReturnCode(int32_t retCode) {

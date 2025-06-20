@@ -7,16 +7,12 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/stackvec.h"
-
-#include "neo_igfxfmid.h"
 
 #include <array>
 #include <atomic>
@@ -275,6 +271,7 @@ class Drm : public DriverModel {
     uint32_t getVmIdForContext(OsContext &osContext, uint32_t vmHandleId) const;
 
   protected:
+    Drm() = delete;
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 
     int waitOnUserFencesImpl(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
@@ -358,7 +355,7 @@ class Drm : public DriverModel {
     bool setPairAvailable = false;
     bool chunkingAvailable = false;
     uint32_t chunkingMode = 0;
-    uint32_t minimalChunkingSize = MemoryConstants::pageSize2M;
+    uint32_t minimalChunkingSize;
     bool contextDebugSupported = false;
     bool pageFaultSupported = false;
     bool completionFenceSupported = false;

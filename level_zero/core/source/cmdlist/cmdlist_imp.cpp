@@ -9,29 +9,24 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/os_interface/sys_calls_common.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "log_manager.h"
 #include "neo_igfxfmid.h"
-
-#include <algorithm>
 
 namespace L0 {
 

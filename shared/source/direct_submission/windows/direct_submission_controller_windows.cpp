@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/windows/sys_calls_winmm.h"
 
 #include <chrono>
+
 namespace NEO {
 bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
     SysCalls::timeBeginPeriod(1u);
@@ -20,7 +21,11 @@ bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
 }
 
 void DirectSubmissionController::overrideDirectSubmissionTimeouts(const ProductHelper &productHelper) {
-    productHelper.overrideDirectSubmissionTimeouts(this->timeout, this->maxTimeout);
+    uint64_t timeoutUs = this->timeout.count();
+    uint64_t maxTimeoutUs = this->maxTimeout.count();
+    productHelper.overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    this->timeout = std::chrono::microseconds(timeoutUs);
+    this->maxTimeout = std::chrono::microseconds(maxTimeoutUs);
 }
 
 } // namespace NEO

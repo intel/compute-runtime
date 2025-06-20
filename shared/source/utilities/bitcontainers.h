@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <bit>
 #include <bitset>
+#include <functional>
 #include <vector>
 
 // Variable-length bitarray with support for ffz (find first zero)
