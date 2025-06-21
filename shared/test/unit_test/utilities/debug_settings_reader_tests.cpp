@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_settings_reader.h"
 #include "shared/test/common/test_macros/test.h"
@@ -100,5 +102,30 @@ TEST(SettingsReader, GivenFalseWhenPrintingDebugStringThenNoOutput) {
     PRINT_DEBUG_STRING(false, stderr, "Error String %d", i);
     std::string output = capture.getCapturedStdout();
     EXPECT_STREQ(output.c_str(), "");
+}
+
+TEST(SettingsReader, GivenDebugMessagesBitmaskWithPidWhenPrintingDebugStringThenPrintsPidToOutput) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DebugMessagesBitmask.set(DebugMessagesBitmask::withPid);
+
+    int i = 4;
+    StreamCapture capture;
+    capture.captureStdout();
+    PRINT_DEBUG_STRING(true, stdout, "debug string %d", i);
+    std::string output = capture.getCapturedStdout();
+    EXPECT_TRUE(hasSubstr(output, "[PID: "));
+}
+
+TEST(SettingsReader, GivenDebugMessagesBitmaskWithTimestampWhenPrintingDebugStringThenPrintsTimestampToOutput) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DebugMessagesBitmask.set(DebugMessagesBitmask::withTimestamp);
+
+    int i = 4;
+    StreamCapture capture;
+    capture.captureStdout();
+    PRINT_DEBUG_STRING(true, stdout, "debug string %d", i);
+    std::string output = capture.getCapturedStdout();
+    std::string dateRegex = R"(\[20\d{2}-\d{2}-\d{2})";
+    EXPECT_TRUE(containsRegex(output, dateRegex));
 }
 } // namespace SettingsReaderTests

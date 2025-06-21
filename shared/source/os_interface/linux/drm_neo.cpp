@@ -102,7 +102,7 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         auto printIoctl = debugManager.flags.PrintIoctlEntries.get();
 
         if (printIoctl) {
-            printf("IOCTL %s called\n", ioctlHelper->getIoctlString(request).c_str());
+            PRINT_DEBUG_STRING(true, stdout, "IOCTL %s called\n", ioctlHelper->getIoctlString(request).c_str());
         }
 
         if (measureTime) {
@@ -137,11 +137,11 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
 
         if (printIoctl) {
             if (ret == 0) {
-                printf("IOCTL %s returns %d\n",
-                       ioctlHelper->getIoctlString(request).c_str(), ret);
+                PRINT_DEBUG_STRING(true, stdout, "IOCTL %s returns %d\n",
+                                   ioctlHelper->getIoctlString(request).c_str(), ret);
             } else {
-                printf("IOCTL %s returns %d, errno %d(%s)\n",
-                       ioctlHelper->getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+                PRINT_DEBUG_STRING(true, stdout, "IOCTL %s returns %d, errno %d(%s)\n",
+                                   ioctlHelper->getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
             }
         }
 

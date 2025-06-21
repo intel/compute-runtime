@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,9 @@ static inline std::string getTimestamp() {
 
     std::stringstream ss;
 
-    ss << "[" << std::put_time(&timeInfo, "%Y-%m-%d %H:%M:%S") << "] ";
+    char buffer[32];
+    std::strftime(buffer, sizeof(buffer), "[%Y-%m-%d %H:%M:%S] ", &timeInfo);
+    ss << buffer;
 
     return ss.str();
 }

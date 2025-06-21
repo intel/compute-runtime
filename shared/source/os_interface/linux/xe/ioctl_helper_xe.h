@@ -229,7 +229,6 @@ class IoctlHelperXe : public IoctlHelper {
 template <typename... XeLogArgs>
 void IoctlHelperXe::xeLog(XeLogArgs &&...args) const {
     if (debugManager.flags.PrintXeLogs.get()) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintXeLogs.get(), stderr, TimestampHelper::getTimestamp().c_str());
         PRINT_DEBUG_STRING(debugManager.flags.PrintXeLogs.get(), stderr, args...);
     }
 }
