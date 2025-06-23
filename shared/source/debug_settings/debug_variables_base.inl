@@ -416,6 +416,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsSize, -1, "-1: default, >=0: Size to app
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMask, 0, "0: default, >0: bitmask: indicates bcs engines for split")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMaskH2D, 0, "0: default, >0: bitmask: indicates bcs engines for H2D split")
 DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsMaskD2H, 0, "0: default, >0: bitmask: indicates bcs engines for D2H split")
+DECLARE_DEBUG_VARIABLE(int32_t, SplitBcsAggregatedEventsMode, -1, "-1: default, 0: disabled, 1: enabled. If enabled, use Aggregated CB Events for all Split operations")
 DECLARE_DEBUG_VARIABLE(int32_t, ReuseKernelBinaries, -1, "-1: default, 0:disabled, 1: enabled. If enabled, driver reuses kernel binaries.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetAmountOfReusableAllocations, -1, "-1: default, 0:disabled, > 1: enabled. If enabled, driver will fill reusable allocation lists with given amount of command buffers and heaps at initialization of immediate command list.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetAmountOfReusableAllocationsPerCmdQueue, -1, "-1: default, 0:disabled, > 1: enabled. If enabled, driver will fill reusable allocation lists with given amount of command buffers for each initialized opencl command queue.")

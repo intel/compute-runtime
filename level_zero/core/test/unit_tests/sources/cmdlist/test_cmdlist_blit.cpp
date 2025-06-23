@@ -926,5 +926,133 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPr
     context->freeMem(dstBuffer);
 }
 
+struct AggregatedBcsSplitTests : public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.SplitBcsAggregatedEventsMode.set(1);
+        debugManager.flags.SplitBcsCopy.set(1);
+
+        device = createDevice();
+        cmdList = createCmdList();
+    }
+
+    std::unique_ptr<L0::Device> createDevice() {
+        ze_result_t returnValue;
+        auto hwInfo = *NEO::defaultHwInfo;
+        hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+        hwInfo.capabilityTable.blitterOperationsSupported = true;
+        auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+
+        auto device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), neoDevice, false, &returnValue));
+
+        bcsSplit = &static_cast<DeviceImp *>(device.get())->bcsSplit;
+
+        return device;
+    }
+
+    std::unique_ptr<L0::CommandList> createCmdList() {
+        ze_result_t returnValue;
+
+        ze_command_queue_desc_t desc = {};
+        desc.ordinal = static_cast<uint32_t>(device->getNEODevice()->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
+
+        std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                                   device.get(),
+                                                                                   &desc,
+                                                                                   false,
+                                                                                   NEO::EngineGroupType::copy,
+                                                                                   returnValue));
+
+        return commandList0;
+    }
+
+    DebugManagerStateRestore restore;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<L0::Device> device;
+    std::unique_ptr<L0::CommandList> cmdList;
+    BcsSplit *bcsSplit = nullptr;
+};
+
+HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, IsAtLeastXeHpcCore) {
+    EXPECT_EQ(0u, bcsSplit->events.subcopy.size());
+    EXPECT_TRUE(bcsSplit->events.aggregatedEventsMode);
+
+    auto context = Context::fromHandle(driverHandle->getDefaultContext());
+
+    for (size_t i = 0; i < 8; i++) {
+        auto index = bcsSplit->events.obtainForSplit(context, 123);
+        bcsSplit->events.resetAggregatedEventState(0, 0);
+        ASSERT_TRUE(index.has_value());
+        EXPECT_EQ(i, *index);
+
+        EXPECT_EQ(8u, bcsSplit->events.subcopy.size());
+        EXPECT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
+        EXPECT_EQ(0u, bcsSplit->events.marker.size());
+        EXPECT_EQ(0u, bcsSplit->events.barrier.size());
+    }
+
+    auto index = bcsSplit->events.obtainForSplit(context, 123);
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(8u, *index);
+    EXPECT_EQ(16u, bcsSplit->events.subcopy.size());
+    EXPECT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
+
+    bcsSplit->events.resetAggregatedEventState(1, static_cast<uint64_t>(bcsSplit->cmdQs.size()));
+
+    index = bcsSplit->events.obtainForSplit(context, 123);
+    ASSERT_TRUE(index.has_value());
+    EXPECT_EQ(1u, *index);
+    EXPECT_EQ(16u, bcsSplit->events.subcopy.size());
+    EXPECT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
+
+    for (auto &event : bcsSplit->events.subcopy) {
+        EXPECT_TRUE(event->isCounterBased());
+        EXPECT_EQ(1u, event->getInOrderIncrementValue());
+        EXPECT_EQ(static_cast<uint64_t>(bcsSplit->cmdQs.size()), event->getInOrderExecSignalValueWithSubmissionCounter());
+    }
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenMultipleEventsWhenObtainIsCalledTheAssignNewDeviceAlloc, IsAtLeastXeHpcCore) {
+    auto context = Context::fromHandle(driverHandle->getDefaultContext());
+
+    auto index = bcsSplit->events.obtainForSplit(context, 123);
+    EXPECT_EQ(8u, bcsSplit->events.subcopy.size());
+    ASSERT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
+    auto alloc = bcsSplit->events.allocsForAggregatedEvents[0];
+
+    for (size_t i = 0; i < bcsSplit->events.subcopy.size(); i++) {
+        EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseDeviceAddress());
+        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
+    }
+
+    bcsSplit->events.currentAggregatedAllocOffset = MemoryConstants::pageSize64k - (MemoryConstants::cacheLineSize - 1);
+
+    while (bcsSplit->events.subcopy.size() == 8) {
+        index = bcsSplit->events.obtainForSplit(context, 123);
+    }
+
+    EXPECT_EQ(16u, bcsSplit->events.subcopy.size());
+    EXPECT_EQ(8u, *index);
+
+    ASSERT_EQ(2u, bcsSplit->events.allocsForAggregatedEvents.size());
+    auto alloc2 = bcsSplit->events.allocsForAggregatedEvents[1];
+
+    for (size_t i = 0; i < 8; i++) {
+        EXPECT_EQ(castToUint64(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i))), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseDeviceAddress());
+        EXPECT_EQ(ptrOffset(alloc, (MemoryConstants::cacheLineSize * i)), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
+    }
+
+    for (size_t i = 8; i < 16; i++) {
+        auto offset = MemoryConstants::cacheLineSize * (i - 8);
+
+        EXPECT_EQ(castToUint64(ptrOffset(alloc2, offset)), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseDeviceAddress());
+        EXPECT_EQ(ptrOffset(alloc2, offset), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
+    }
+}
+
 } // namespace ult
 } // namespace L0

@@ -240,7 +240,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
 
         cmdList->engineGroupType = EngineGroupType::copy;
 
-        mockCopyOsContext = std::make_unique<NEO::MockOsContext>(0, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, DeviceBitfield(1)));
+        mockCopyOsContext = std::make_unique<NEO::MockOsContext>(0, NEO::EngineDescriptorHelper::getDefaultDescriptor({device->getProductHelper().getDefaultCopyEngine(), EngineUsage::regular}, DeviceBitfield(1)));
         cmdList->getCsr(false)->setupContext(*mockCopyOsContext);
         return cmdList;
     }

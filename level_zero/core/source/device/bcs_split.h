@@ -42,15 +42,22 @@ struct BcsSplit {
         std::vector<Event *> barrier;
         std::vector<Event *> subcopy;
         std::vector<Event *> marker;
+        std::vector<void *> allocsForAggregatedEvents;
+        size_t currentAggregatedAllocOffset = 0;
         size_t createdFromLatestPool = 0u;
+        bool aggregatedEventsMode = false;
 
         std::optional<size_t> obtainForSplit(Context *context, size_t maxEventCountInPool);
-        std::optional<size_t> allocateNew(Context *context, size_t maxEventCountInPool);
+        size_t obtainAggregatedEventsForSplit(Context *context);
         void resetEventPackage(size_t index);
-
+        void resetAggregatedEventState(size_t index, uint64_t value);
         void releaseResources();
+        bool allocatePool(Context *context, size_t maxEventCountInPool, size_t neededEvents);
+        std::optional<size_t> createFromPool(Context *context, size_t maxEventCountInPool);
+        size_t createAggregatedEvent(Context *context);
+        uint64_t *getNextAllocationForAggregatedEvent();
 
-        Events(BcsSplit &bcsSplit) : bcsSplit(bcsSplit){};
+        Events(BcsSplit &bcsSplit);
     } events;
 
     std::vector<CommandQueue *> cmdQs;
