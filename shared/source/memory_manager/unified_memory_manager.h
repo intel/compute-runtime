@@ -68,6 +68,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     }
     bool mappedAllocData = false;
     bool isInternalAllocation = false;
+    bool isSavedForReuse = false;
 
     uint32_t getAllocId() const {
         return allocId;
@@ -198,6 +199,7 @@ class SVMAllocsManager {
         static bool sizeAllowed(size_t size) { return size <= SvmAllocationCache::maxServicedSize; }
         bool insert(size_t size, void *ptr, SvmAllocationData *svmData);
         static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
+        static bool alignmentAllows(void *ptr, size_t alignment);
         bool isInUse(SvmAllocationData *svmData);
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
         void trim();

@@ -53,6 +53,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory;
     using MemoryManager::unMapPhysicalHostMemoryFromVirtualMemory;
     using MemoryManager::useNonSvmHostPtrAlloc;
+    using MemoryManager::usmReuseInfo;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using MemoryManagerCreate<OsAgnosticMemoryManager>::MemoryManagerCreate;
     using MemoryManager::customHeapAllocators;

@@ -413,7 +413,7 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenNTHandleWhenCreatingHostMemor
 }
 
 HWTEST_F(ImportNTHandleWithMockMemoryManager, whenCallingCreateGraphicsAllocationFromMultipleSharedHandlesFromOsAgnosticMemoryManagerThenNullptrIsReturned) {
-    L0UltHelper::cleanupUsmAllocPools(driverHandle.get());
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     delete driverHandle->svmAllocsManager;
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get());

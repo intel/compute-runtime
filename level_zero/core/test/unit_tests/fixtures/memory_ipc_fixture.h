@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -157,6 +157,7 @@ struct MemoryExportImportWinHandleTest : public ::testing::Test {
     void SetUp() override;
 
     void TearDown() override {
+        driverHandle.reset(nullptr);
     }
     std::unique_ptr<DriverHandleGetWinHandleMock> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;

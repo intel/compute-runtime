@@ -86,6 +86,7 @@ void ModuleImmutableDataFixture::setUp() {
     }
     auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
     memoryManager = new MockImmutableMemoryManager(*executionEnvironment);
+    memoryManager->initUsmReuseLimits();
     executionEnvironment->memoryManager.reset(memoryManager);
     DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);
 }

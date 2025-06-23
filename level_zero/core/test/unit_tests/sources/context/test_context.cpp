@@ -394,7 +394,7 @@ struct ContextHostAllocTests : public ::testing::Test {
         ze_result_t res = driverHandle->initialize(std::move(devices));
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-        L0UltHelper::cleanupUsmAllocPools(driverHandle.get());
+        L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
         currSvmAllocsManager = new SVMAllocsManagerContextMock(driverHandle->memoryManager);
         driverHandle->svmAllocsManager = currSvmAllocsManager;
@@ -410,7 +410,7 @@ struct ContextHostAllocTests : public ::testing::Test {
     }
 
     void TearDown() override {
-        L0UltHelper::cleanupUsmAllocPools(driverHandle.get());
+        L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
         driverHandle->svmAllocsManager = prevSvmAllocsManager;
         delete currSvmAllocsManager;
     }
@@ -718,6 +718,7 @@ TEST_F(ContextMakeMemoryResidentTests, givenDeviceUnifiedMemoryAndLocalOnlyAlloc
     auto *driverHandleImp{static_cast<DriverHandleImp *>(hostDriverHandle.get())};
     driverHandleImp->memoryManager->usmDeviceAllocationMode = NEO::LocalMemAllocationMode::localOnly;
     static_cast<MockMemoryManager *>(driverHandleImp->memoryManager)->returnFakeAllocation = true;
+    hostDriverHandle->svmAllocsManager->cleanupUSMAllocCaches();
 
     EXPECT_EQ(0U, mockMemoryInterface->makeResidentCalled);
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;

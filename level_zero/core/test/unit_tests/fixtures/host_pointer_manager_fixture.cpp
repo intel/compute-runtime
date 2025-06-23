@@ -59,8 +59,8 @@ void HostPointerManagerFixure::setUp() {
 
 void HostPointerManagerFixure::tearDown() {
     context->destroy();
-
     hostDriverHandle->getMemoryManager()->freeSystemMemory(heapPointer);
+    hostDriverHandle->svmAllocsManager->cleanupUSMAllocCaches();
 }
 
 } // namespace ult

@@ -301,7 +301,9 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
     if (this->svmAllocsManager == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
-    this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
+    if (this->devices.size() == 1) {
+        this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
+    }
     this->initHostUsmAllocPool();
     for (auto &device : this->devices) {
         this->initDeviceUsmAllocPool(*device->getNEODevice());

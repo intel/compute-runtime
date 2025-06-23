@@ -328,6 +328,8 @@ struct CompressionMemoryTest : public MemoryTest {
     void SetUp() override {
         debugManager.flags.EnableHostUsmAllocationPool.set(0);
         debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        debugManager.flags.ExperimentalEnableHostAllocationCache.set(0);
+        debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(0);
         MemoryTest::SetUp();
     }
     GraphicsAllocation *allocDeviceMem(size_t size) {
@@ -1408,12 +1410,6 @@ TEST_F(MemoryTest, givenProductWith48bForRTWhenAllocatingDeviceMemoryAsRayTracin
     size_t alignment = 1u;
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    // do warmup alloc to make sure usm device pool is allocated before validation in mem mgr
-    {
-        void *ptr;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
-    }
     void *ptr = reinterpret_cast<void *>(0x1234);
     ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
     rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
@@ -1594,13 +1590,6 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryThenAlignmentIsPassedCorrectlyAndMe
     deviceDesc.pNext = nullptr;
 
     auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
-
-    // do warmup alloc to make sure usm device pool is allocated before validation in mem mgr
-    {
-        void *ptr;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
-    }
 
     size_t alignment = 8 * MemoryConstants::megaByte;
     do {
@@ -5155,7 +5144,7 @@ TEST_F(AllocHostMemoryTest,
 
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationThenNullIsReturned) {
-    L0UltHelper::cleanupUsmAllocPools(driverHandle.get());
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
 
