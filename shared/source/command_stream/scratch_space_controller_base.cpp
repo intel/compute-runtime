@@ -66,7 +66,7 @@ uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
     if (scratchSlot0Allocation) {
         scratchAddress = scratchSlot0Allocation->getGpuAddressToPatch();
         if (is64bit && !getMemoryManager()->peekForce32BitAllocations()) {
-            // this is to avoid scractch allocation offset "0"
+            // this is to avoid scratch allocation offset "0"
             scratchAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
         }
     }

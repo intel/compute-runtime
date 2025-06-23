@@ -1805,7 +1805,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressDebugTracking() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, CommandListExecutionContext &ctx) {
-    bool patchNewScratchAddress = false;
+    bool patchNewScratchController = false;
     uint64_t scratchAddress = ctx.scratchSpaceController->getScratchPatchAddress();
 
     if (this->heaplessModeEnabled) {
@@ -1813,16 +1813,14 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, Comm
             scratchAddress += ctx.globalStatelessAllocation->getGpuAddress();
         }
 
-        if (commandList.getCurrentScratchPatchAddress() != scratchAddress ||
-            commandList.getCommandListUsedScratchController() != ctx.scratchSpaceController) {
-            patchNewScratchAddress = true;
+        if (commandList.getCommandListUsedScratchController() != ctx.scratchSpaceController) {
+            patchNewScratchController = true;
         }
     }
 
-    patchCommands(commandList, scratchAddress, patchNewScratchAddress);
+    patchCommands(commandList, scratchAddress, patchNewScratchController);
 
-    if (patchNewScratchAddress) {
-        commandList.setCurrentScratchPatchAddress(scratchAddress);
+    if (patchNewScratchController) {
         commandList.setCommandListUsedScratchController(ctx.scratchSpaceController);
     }
 }

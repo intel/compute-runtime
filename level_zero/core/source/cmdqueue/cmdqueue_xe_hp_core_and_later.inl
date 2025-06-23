@@ -164,7 +164,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint64_t scratchAddress,
-                                                  bool patchNewScratchAddress) {
+                                                  bool patchNewScratchController) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
@@ -235,21 +235,27 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             break;
         }
         case CommandToPatch::ComputeWalkerInlineDataScratch: {
-            if (!patchNewScratchAddress) {
+            if (NEO::isUndefined(commandToPatch.patchSize) || NEO::isUndefinedOffset(commandToPatch.offset)) {
                 continue;
             }
+            if (!patchNewScratchController && commandToPatch.scratchAddressAfterPatch == scratchAddress) {
+                continue;
+            }
+
             uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
             void *scratchAddressPatch = ptrOffset(commandToPatch.pDestination, commandToPatch.offset);
             std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
+            commandToPatch.scratchAddressAfterPatch = scratchAddress;
             break;
         }
         case CommandToPatch::ComputeWalkerImplicitArgsScratch: {
-            if (!patchNewScratchAddress) {
+            if (!patchNewScratchController && commandToPatch.scratchAddressAfterPatch == scratchAddress) {
                 continue;
             }
             uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
             void *scratchAddressPatch = ptrOffset(commandToPatch.pDestination, commandToPatch.offset);
             std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
+            commandToPatch.scratchAddressAfterPatch = scratchAddress;
             break;
         }
         case CommandToPatch::NoopSpace: {

@@ -35,7 +35,10 @@ struct CommandToPatch {
         Invalid
     };
     void *pDestination = nullptr;
-    void *pCommand = nullptr;
+    union {
+        void *pCommand;
+        mutable uint64_t scratchAddressAfterPatch;
+    };
     size_t offset = 0;
     CommandType type = Invalid;
     size_t inOrderPatchListIndex = 0;

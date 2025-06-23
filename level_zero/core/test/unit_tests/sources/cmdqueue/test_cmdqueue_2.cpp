@@ -1048,6 +1048,50 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWh
     commandList->commandsToPatch.clear();
 }
 
+HWTEST2_F(CommandQueueScratchTests, givenInlineDataScratchWhenPatchCommandsIsCalledThenCommandsAreCorrectlyPatched, IsAtLeastXeCore) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, csr, &desc);
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+
+    constexpr uint64_t dummyScratchAddress = 0xdeadu;
+    constexpr uint64_t baseAddress = 0x1234u;
+    constexpr uint64_t scratchAddress = 0x5000u;
+
+    struct TestCase {
+        const char *name;
+        bool undefinedPatchSize;
+        bool undefinedOffset;
+        bool scratchAlreadyPatched;
+        uint64_t expectedValue;
+    };
+
+    const TestCase testCases[] = {
+        {"Valid patchSize and offset - should patch", false, false, false, scratchAddress + baseAddress},
+        {"Undefined patchSize - should not patch", true, false, false, dummyScratchAddress},
+        {"Undefined offset - should not patch", false, true, false, dummyScratchAddress},
+        {"scratchAddressAfterPatch==scratchAddress - should not patch", false, false, true, dummyScratchAddress}};
+
+    for (const auto &testCase : testCases) {
+        uint64_t scratchBuffer = dummyScratchAddress;
+        commandList->commandsToPatch.clear();
+
+        CommandToPatch cmd;
+        cmd.type = CommandToPatch::ComputeWalkerInlineDataScratch;
+        cmd.pDestination = &scratchBuffer;
+        cmd.offset = testCase.undefinedOffset ? NEO::undefined<size_t> : 0;
+        cmd.patchSize = testCase.undefinedPatchSize ? NEO::undefined<size_t> : sizeof(uint64_t);
+        cmd.baseAddress = baseAddress;
+        cmd.scratchAddressAfterPatch = testCase.scratchAlreadyPatched ? scratchAddress : 0;
+
+        commandList->commandsToPatch.push_back(cmd);
+        commandQueue->patchCommands(*commandList, scratchAddress, false);
+
+        EXPECT_EQ(testCase.expectedValue, scratchBuffer);
+    }
+}
+
 using CommandQueueCreate = Test<DeviceFixture>;
 
 HWTEST_F(CommandQueueCreate, givenCommandsToPatchWithNoopSpacePatchWhenPatchCommandsIsCalledThenSpaceIsNooped) {

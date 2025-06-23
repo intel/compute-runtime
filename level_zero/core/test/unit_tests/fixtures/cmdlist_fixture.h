@@ -408,7 +408,7 @@ struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixtu
     void testExternalScratchPatching();
 
     template <typename FamilyType>
-    void testScratchUndefinedNoPatching();
+    void testScratchUndefinedPatching();
 
     int32_t fixtureGlobalStatelessMode = 0;
     uint32_t scratchInlineOffset = 8;

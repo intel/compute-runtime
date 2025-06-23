@@ -54,7 +54,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                              uint32_t perThreadScratchSpaceSlot1Size);
 
     bool getPreemptionCmdProgramming() override;
-    void patchCommands(CommandList &commandList, uint64_t scratchAddress, bool patchNewScratchAddress);
+    void patchCommands(CommandList &commandList, uint64_t scratchAddress, bool patchNewScratchController);
 
   protected:
     struct CommandListExecutionContext {

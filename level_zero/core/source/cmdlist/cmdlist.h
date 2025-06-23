@@ -243,14 +243,6 @@ struct CommandList : _ze_command_list_handle_t {
         commandListPerThreadScratchSize[slotId] = size;
     }
 
-    uint64_t getCurrentScratchPatchAddress() const {
-        return currentScratchPatchAddress;
-    }
-
-    void setCurrentScratchPatchAddress(uint64_t scratchPatchAddress) {
-        currentScratchPatchAddress = scratchPatchAddress;
-    }
-
     NEO::ScratchSpaceController *getCommandListUsedScratchController() const {
         return usedScratchController;
     }

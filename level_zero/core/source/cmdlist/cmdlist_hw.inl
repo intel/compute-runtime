@@ -3667,7 +3667,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendVfeStateCmdToPatch() {
         auto frontEndStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), device->getHwInfo(), engineGroupType);
         auto frontEndStateCmd = new FrontEndStateCommand;
         NEO::PreambleHelper<GfxFamily>::programVfeState(frontEndStateCmd, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState);
-        commandsToPatch.push_back({frontEndStateAddress, frontEndStateCmd, 0, CommandToPatch::FrontEndState});
+        commandsToPatch.push_back({.pDestination = frontEndStateAddress,
+                                   .pCommand = frontEndStateCmd,
+                                   .type = CommandToPatch::FrontEndState});
     }
 }
 

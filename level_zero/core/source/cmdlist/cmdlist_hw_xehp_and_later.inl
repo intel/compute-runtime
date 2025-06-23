@@ -433,21 +433,27 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
     launchParams.outWalker = dispatchKernelArgs.outWalkerPtr;
 
-    auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
-    if (this->heaplessModeEnabled && this->scratchAddressPatchingEnabled && kernelNeedsScratchSpace && NEO::isDefined(scratchPointerAddress.pointerSize) && NEO::isValidOffset(scratchPointerAddress.offset)) {
+    if (this->heaplessModeEnabled && this->scratchAddressPatchingEnabled && kernelNeedsScratchSpace) {
+        auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
+        launchParams.scratchAddressPatchIndex = commandsToPatch.size();
+
         CommandToPatch scratchInlineData;
         scratchInlineData.pDestination = dispatchKernelArgs.outWalkerPtr;
-        scratchInlineData.pCommand = nullptr;
+        scratchInlineData.scratchAddressAfterPatch = 0;
         scratchInlineData.type = CommandToPatch::CommandType::ComputeWalkerInlineDataScratch;
-        scratchInlineData.offset = NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) + scratchPointerAddress.offset;
-        scratchInlineData.patchSize = scratchPointerAddress.pointerSize;
+        scratchInlineData.offset = NEO::isDefined(scratchPointerAddress.offset) ? NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) + scratchPointerAddress.offset : NEO::undefined<size_t>;
+        scratchInlineData.patchSize = NEO::isDefined(scratchPointerAddress.pointerSize) ? scratchPointerAddress.pointerSize : NEO::undefined<size_t>;
+
         auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         if (ssh != nullptr) {
             scratchInlineData.baseAddress = ssh->getGpuBase();
         }
+
         commandsToPatch.push_back(scratchInlineData);
 
-        addPatchScratchAddressInImplicitArgs(commandsToPatch, dispatchKernelArgs, kernelDescriptor, kernelNeedsImplicitArgs);
+        if (NEO::isDefined(scratchPointerAddress.pointerSize) && NEO::isValidOffset(scratchPointerAddress.offset)) {
+            addPatchScratchAddressInImplicitArgs(commandsToPatch, dispatchKernelArgs, kernelDescriptor, kernelNeedsImplicitArgs);
+        }
     }
 
     if (!isImmediateType()) {
@@ -575,16 +581,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueuePipeControlStart});
+        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueuePipeControlStart});
         additionalCommands.pop_front();
-        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueueSemaphoreStart});
+        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueueSemaphoreStart});
         additionalCommands.pop_front();
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueuePipeControlEnd});
+        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueuePipeControlEnd});
         additionalCommands.pop_front();
-        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueueSemaphoreEnd});
+        commandsToPatch.push_back({.pCommand = additionalCommands.front(), .type = CommandToPatch::PauseOnEnqueueSemaphoreEnd});
         additionalCommands.pop_front();
     }
 
