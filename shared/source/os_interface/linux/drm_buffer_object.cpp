@@ -305,7 +305,7 @@ void BufferObject::printExecutionBuffer(ExecBuffer &execbuf, const size_t &resid
     logger << "Command ";
     ioctlHelper->logExecObject(execObjectsStorage[i], logger, this->peekSize());
 
-    printf("%s\n", logger.str().c_str());
+    PRINT_DEBUG_STRING(debugManager.flags.PrintExecutionBuffer.get(), stdout, "%s\n", logger.str().c_str());
 }
 
 int bindBOsWithinContext(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, const bool forcePagingFence) {

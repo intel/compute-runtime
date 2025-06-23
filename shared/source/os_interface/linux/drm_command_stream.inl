@@ -200,9 +200,9 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(Residenc
         }
         PRINT_DEBUG_STRING(true, stdout, "Buffer object for submit\n");
         for (const auto &bo : bosForSubmit) {
-            printf("BO-%d, range: %" SCNx64 " - %" SCNx64 ", size: %" SCNdPTR "\n", bo->peekHandle(), bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize());
+            PRINT_DEBUG_STRING(true, stdout, "BO-%d, range: %" SCNx64 " - %" SCNx64 ", size: %" SCNdPTR "\n", bo->peekHandle(), bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize());
         }
-        printf("\n");
+        PRINT_DEBUG_STRING(true, stdout, "\n");
     }
     return SubmissionStatus::success;
 }
