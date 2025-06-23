@@ -2853,7 +2853,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendi
     EXPECT_TRUE(verifyTokenCheck(1));
 
     offset = cmdStream->getUsed();
-    immCmdList->appendMemoryFill(alloc, alloc, 8, 8, nullptr, 0, nullptr, copyParams);
+    immCmdList->appendMemoryFill(alloc, alloc, 2, 2, nullptr, 0, nullptr, copyParams);
     EXPECT_TRUE(verifyTokenCheck(1));
 
     offset = cmdStream->getUsed();

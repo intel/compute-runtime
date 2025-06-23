@@ -1370,7 +1370,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenSettingFillPro
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     auto unalignedOffset = 2u;
-    auto patternSize = 8u;
+    auto patternSize = 4u;
     auto sizeToFill = 599u * patternSize;
     CmdListFillKernelArguments outArguments;
     cmdList.setupFillKernelArguments(unalignedOffset, patternSize, sizeToFill, outArguments, kernel.get());
@@ -1384,7 +1384,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenSettingFillPrope
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     auto unalignedOffset = 4u;
-    auto patternSize = 8u;
+    auto patternSize = 4u;
     auto sizeToFill = 599u * patternSize;
     CmdListFillKernelArguments outArguments;
     cmdList.setupFillKernelArguments(unalignedOffset, patternSize, sizeToFill, outArguments, kernel.get());
