@@ -200,6 +200,9 @@ int OclocIgcAsFcl::initialize(const HardwareInfo &hwInfo) {
         return ret;
     }
     auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    if (!compilerProductHelper) {
+        return OCLOC_INVALID_DEVICE;
+    }
     this->preferredIntermediateRepresentation = compilerProductHelper->getPreferredIntermediateRepresentation();
     return OCLOC_SUCCESS;
 }
