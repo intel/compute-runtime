@@ -227,7 +227,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
 
     size_t sizeForPipeControl = 0;
     if (isResolveDependenciesByPipeControlsEnabled) {
-        sizeForPipeControl = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
+        sizeForPipeControl = MemorySynchronizationCommands<FamilyType>::getSizeForStallingBarrier();
     }
 
     size_t extendedSize = sizeWithDisabled + EnqueueOperation<FamilyType>::getSizeRequiredForTimestampPacketWrite() + sizeForNodeDependency + sizeForPipeControl;
@@ -1653,6 +1653,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    using StallingBarrierType = typename FamilyType::StallingBarrierType;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
@@ -1684,9 +1685,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
     size_t pipeControlCountSecondEnqueue = 0u;
     size_t semaphoreWaitCount = 0u;
     size_t currentEnqueue = 1u;
+    bool stallingBarrierProgrammed = false;
     while (it != hwParser.cmdList.end()) {
         MI_SEMAPHORE_WAIT *semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
         PIPE_CONTROL *pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*it);
+        StallingBarrierType *stallingBarrierCmd = genCmdCast<StallingBarrierType *>(*it);
         MI_BATCH_BUFFER_END *miBatchBufferEnd = genCmdCast<MI_BATCH_BUFFER_END *>(*it);
         if (pipeControlCmd != nullptr) {
             if (currentEnqueue == 1) {
@@ -1694,6 +1697,9 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
             } else if (currentEnqueue == 2) {
                 ++pipeControlCountSecondEnqueue;
             }
+        } else if (stallingBarrierCmd != nullptr) {
+            EXPECT_EQ(2u, currentEnqueue);
+            stallingBarrierProgrammed = true;
         } else if (semaphoreWaitCmd != nullptr) {
             ++semaphoreWaitCount;
         } else if (miBatchBufferEnd != nullptr) {
@@ -1704,7 +1710,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
         ++it;
     }
     EXPECT_EQ(semaphoreWaitCount, 0u);
-    EXPECT_EQ(pipeControlCountSecondEnqueue, pipeControlCountFirstEnqueue + 1);
+    auto stallingBarrierAsPC = stallingBarrierProgrammed ? 0 : 1;
+    EXPECT_EQ(pipeControlCountSecondEnqueue, pipeControlCountFirstEnqueue + stallingBarrierAsPC);
 }
 
 HWTEST2_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesResolvedViaPipeControlsAndSingleIOQWhenEnqueueKernelThenDoNotProgramSemaphoresButProgramPipeControlWithProperFlagsBeforeGpgpuWalker, IsXeHpgCore) {

@@ -99,7 +99,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps, relaxedOrderingEnabled);
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
         if (resolveDependenciesByPipecontrol) {
-            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForStallingBarrier();
         }
         if (isMarkerWithProfiling) {
             if (!eventsInWaitlist) {
