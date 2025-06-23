@@ -15,14 +15,24 @@
 namespace LevelZeroBlackBoxTests {
 
 std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &options, std::string &outCompilerLog) {
+    return compileToSpirV(src, options, {}, outCompilerLog);
+}
+
+std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &options, const std::string &device, std::string &outCompilerLog) {
     std::vector<uint8_t> ret;
 
     const char *mainFileName = "main.cl";
-    const char *argv[] = {"ocloc", "-q", "-spv_only", "-file", mainFileName, "", ""};
-    uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 2;
+    const char *argv[] = {"ocloc", "-q", "-spv_only", "-file", mainFileName, "", "", "", ""};
+    uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 4;
+    uint32_t nextArgIndex = 5;
+    if (device.size() > 0) {
+        argv[nextArgIndex++] = "-device";
+        argv[nextArgIndex++] = device.c_str();
+        numArgs += 2;
+    }
     if (options.size() > 0) {
-        argv[5] = "-options";
-        argv[6] = options.c_str();
+        argv[nextArgIndex++] = "-options";
+        argv[nextArgIndex++] = options.c_str();
         numArgs += 2;
     }
     const unsigned char *sources[] = {reinterpret_cast<const unsigned char *>(src.c_str())};
