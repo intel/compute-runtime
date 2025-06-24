@@ -553,5 +553,31 @@ void MemoryExportImportImplicitScalingTest::TearDown() {
     delete currMemoryManager;
 }
 
+void MemoryGetIpcHandlePidfdTest::SetUp() {
+    neoDevice =
+        NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+    auto mockBuiltIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandle = std::make_unique<DriverHandleImp>();
+    driverHandle->initialize(std::move(devices));
+    prevMemoryManager = driverHandle->getMemoryManager();
+    currMemoryManager = new MemoryManagerOpenIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(currMemoryManager);
+    device = driverHandle->devices[0];
+
+    context = std::make_unique<ContextImp>(driverHandle.get());
+    EXPECT_NE(context, nullptr);
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto neoDevice = device->getNEODevice();
+    context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
+    context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+}
+void MemoryGetIpcHandlePidfdTest::TearDown() {
+    driverHandle->setMemoryManager(prevMemoryManager);
+    delete currMemoryManager;
+}
+
 } // namespace ult
 } // namespace L0

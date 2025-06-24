@@ -402,5 +402,17 @@ struct MemoryExportImportImplicitScalingTest : public ::testing::Test {
     std::unique_ptr<ContextIpcMock> context;
 };
 
+struct MemoryGetIpcHandlePidfdTest : public ::testing::Test {
+    void SetUp() override;
+    void TearDown() override;
+
+    NEO::MemoryManager *prevMemoryManager = nullptr;
+    NEO::MemoryManager *currMemoryManager = nullptr;
+    std::unique_ptr<DriverHandleImp> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    std::unique_ptr<ContextImp> context;
+};
+
 } // namespace ult
 } // namespace L0

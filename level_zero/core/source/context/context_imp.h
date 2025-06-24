@@ -202,8 +202,16 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
         std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
 
         ipcData = {};
-        ipcData.handle = handle;
-        ipcData.type = type;
+        if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
+            ipcData.handle = handle;
+            ipcData.type = type;
+        } else if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
+            printf("opaque type used\n");
+            ipcData.memoryType = type;
+            ipcData.processId = NEO::SysCalls::getCurrentProcessId();
+            ipcData.type = IpcHandleType::fdHandle;
+            ipcData.handle.fd = static_cast<int>(handle);
+        }
 
         if (usmPool) {
             ipcData.poolOffset = usmPool->getOffsetInPool(addrToPtr(ptrAddress));
@@ -220,7 +228,9 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
             handleTracking->refcnt = 1;
             handleTracking->ptr = ptrAddress;
             handleTracking->handle = handle;
-            handleTracking->ipcData = ipcData;
+            if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
+                handleTracking->ipcData = ipcData;
+            }
             this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
         }
     }

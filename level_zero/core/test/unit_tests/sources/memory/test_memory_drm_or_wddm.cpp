@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,10 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/os_interface/linux/drm_mock_extended.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 
@@ -1026,6 +1029,48 @@ TEST_F(MemoryExportImportTest,
                                      size, alignment, &importedPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     EXPECT_EQ(nullptr, importedPtr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+class DrmIpcPidfdFixture : public DeviceFixture {
+  public:
+    void setUp() {
+        DeviceFixture::setUp();
+
+        auto &rootDeviceEnvironment{*neoDevice->executionEnvironment->rootDeviceEnvironments[0]};
+        drmMock = new DrmMock(rootDeviceEnvironment);
+
+        rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface);
+        rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<NEO::Drm>(drmMock));
+    }
+    void tearDown() {
+        DeviceFixture::tearDown();
+    }
+
+    DrmMock *drmMock = nullptr;
+};
+
+using MemoryDrmIpcPidfdTests = Test<DrmIpcPidfdFixture>;
+TEST_F(MemoryDrmIpcPidfdTests,
+       givenCallToGetIpcHandleWithDeviceAllocationWithPidFdSocketMethodAndMockDrmThenIpcHandleIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnablePidFdOrSocketsForIpc.set(1);
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    ze_ipc_mem_handle_t ipcHandle;
+    result = context->getIpcMemHandle(ptr, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

@@ -779,6 +779,14 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
         ipcType = InternalIpcMemoryType::hostUnifiedMemory;
     }
 
+    bool pidfdOrSocket = true;
+    for (auto &device : this->driverHandle->devices) {
+        auto &productHelper = device->getNEODevice()->getProductHelper();
+        if (!productHelper.isPidFdOrSocketForIpcSupported()) {
+            pidfdOrSocket = false;
+            break;
+        }
+    }
     uint32_t loopCount = numIpcHandles ? *numIpcHandles : 1u;
     for (uint32_t i = 0u; i < loopCount; i++) {
         uint64_t handle = 0;
@@ -789,11 +797,14 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
 
         memoryManager->registerIpcExportedAllocation(alloc);
 
-        using IpcDataT = IpcMemoryData;
-        IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
-        setIPCHandleData<IpcDataT>(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool);
+        if (pidfdOrSocket) {
+            IpcOpaqueMemoryData &ipcData = *reinterpret_cast<IpcOpaqueMemoryData *>(pIpcHandles[i].data);
+            setIPCHandleData<IpcOpaqueMemoryData>(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool);
+        } else {
+            IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandles[i].data);
+            setIPCHandleData<IpcMemoryData>(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool);
+        }
     }
-
     return ZE_RESULT_SUCCESS;
 }
 
