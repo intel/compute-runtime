@@ -311,7 +311,7 @@ void init() {
     enabledLogging = debugManager.flags.LogGdiCalls.get();
     if (enabledLogging) {
         if (debugManager.flags.LogGdiCallsToFile.get()) {
-            output = IoFunctions::fopenPtr("gdi.log", "rw");
+            output = IoFunctions::fopenPtr("gdi.log", "w+");
         } else {
             output = stdout;
         }
