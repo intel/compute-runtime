@@ -9,6 +9,7 @@
 
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
@@ -32,6 +33,10 @@
 #include "gtest/gtest.h"
 #include "ocl_igc_shared/indirect_access_detection/version.h"
 #include "test_traits_common.h"
+
+namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+}
 
 using namespace NEO;
 
@@ -781,56 +786,58 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocator
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsGen12LP) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsGen12LP) {
+    EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
     EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsGen12LP) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
     EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
     EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
-    EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
+    EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
-    EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsGen12LP) {
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+    }
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+    }
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtMostDg2) {
-    EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+    }
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+    }
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
-    EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtLeastMtl) {
-    EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsGen12LP) {
-    EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
-    EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
-    EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtLeastMtl) {
-    EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXe2HpgCore) {
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
+    }
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+    }
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsUnlockingLockedPtrNecessaryThenReturnFalse) {

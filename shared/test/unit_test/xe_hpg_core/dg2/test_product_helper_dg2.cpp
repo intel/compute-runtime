@@ -5,14 +5,18 @@
  *
  */
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "gtest/gtest.h"
-
+namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+}
 using namespace NEO;
 
 using Dg2ProductHelper = ProductHelperTest;
@@ -117,4 +121,17 @@ DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenCallIsNewCoherencyModelSupport
 DG2TEST_F(Dg2ProductHelper, givenProductHelperThenCompressionIsNotForbidden) {
     auto hwInfo = *defaultHwInfo;
     EXPECT_FALSE(productHelper->isCompressionForbidden(hwInfo));
+}
+
+DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenCheckingIsUsmAllocationReuseSupportedThenCorrectValueIsReturned) {
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+    }
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+    }
 }

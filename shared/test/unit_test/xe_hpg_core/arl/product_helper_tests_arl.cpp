@@ -5,15 +5,20 @@
  *
  */
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_arl.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "neo_aot_platforms.h"
-
+namespace NEO {
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+}
 using namespace NEO;
 
 using ArlProductHelper = ProductHelperTest;
@@ -78,5 +83,18 @@ ARLTEST_F(ArlProductHelper, givenPubliclyAvailableAcronymsForMtlDevicesWhenGetPr
         ProductConfigHelper::adjustDeviceName(acronym);
         auto ret = productConfigHelper->getProductConfigFromDeviceName(acronym);
         EXPECT_EQ(ret, AOT::ARL_H_B0);
+    }
+}
+
+ARLTEST_F(ArlProductHelper, givenProductHelperWhenCheckingIsUsmAllocationReuseSupportedThenCorrectValueIsReturned) {
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+        EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
+    }
+    {
+        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
     }
 }

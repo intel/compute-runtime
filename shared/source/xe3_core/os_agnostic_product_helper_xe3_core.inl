@@ -72,4 +72,14 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(c
     return enabled;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
+    return true;
+}
+
 } // namespace NEO

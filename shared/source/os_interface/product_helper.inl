@@ -11,6 +11,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
@@ -1041,12 +1042,12 @@ bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
-    return true;
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
-    return true;
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
