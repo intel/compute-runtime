@@ -8214,8 +8214,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmap
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
     mock->mmapOffsetExpected = 21;
 
+    auto drm = bo.peekDrm();
+    auto ioctlHelper = drm->getIoctlHelper();
+
     uint64_t offset = 0;
-    auto ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, 0, offset);
+    auto ret = ioctlHelper->retrieveMmapOffsetForBufferObject(bo, 0, offset);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(21u, offset);
@@ -8226,8 +8229,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmap
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
     mock->failOnMmapOffset = true;
 
+    auto drm = bo.peekDrm();
+    auto ioctlHelper = drm->getIoctlHelper();
+
     uint64_t offset = 0;
-    auto ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, 0, offset);
+    auto ret = ioctlHelper->retrieveMmapOffsetForBufferObject(bo, 0, offset);
 
     EXPECT_FALSE(ret);
 }
@@ -8240,8 +8246,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmap
     // To set the error value used to create the debug string in retrieveMmapOffsetForBufferObject()
     mock->errnoValue = -2;
 
+    auto drm = bo.peekDrm();
+    auto ioctlHelper = drm->getIoctlHelper();
+
     uint64_t offset = 0;
-    auto ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, 0, offset);
+    auto ret = ioctlHelper->retrieveMmapOffsetForBufferObject(bo, 0, offset);
 
     const char *systemErrorDescription = nullptr;
     executionEnvironment->getErrorDescription(&systemErrorDescription);
@@ -8258,8 +8267,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmap
     mock->ioctlExpected.gemMmapOffset = 5;
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
 
+    auto drm = bo.peekDrm();
+    auto ioctlHelper = drm->getIoctlHelper();
+
     uint64_t offset = 0;
-    auto ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, 0, offset);
+    auto ret = ioctlHelper->retrieveMmapOffsetForBufferObject(bo, 0, offset);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(4u, mock->mmapOffsetFlags);
@@ -8267,7 +8279,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmap
     mock->failOnMmapOffset = true;
 
     for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
-        ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
+        ret = ioctlHelper->retrieveMmapOffsetForBufferObject(bo, flags, offset);
 
         EXPECT_FALSE(ret);
         EXPECT_EQ(flags, mock->mmapOffsetFlags);
@@ -8282,8 +8294,12 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBuffer
     bool ret = false;
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     bo.setBOType(BufferObject::BOType::legacy);
+
+    auto drm = bo.peekDrm();
+    auto ioctlHelper = drm->getIoctlHelper();
+
     for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
-        ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
+        ret = ioctlHelper->retrieveMmapOffsetForBufferObject(bo, flags, offset);
 
         EXPECT_TRUE(ret);
         if (productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
@@ -8295,7 +8311,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBuffer
 
     bo.setBOType(BufferObject::BOType::coherent);
     for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
-        ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
+        ret = ioctlHelper->retrieveMmapOffsetForBufferObject(bo, flags, offset);
 
         EXPECT_TRUE(ret);
         if (productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
@@ -8307,7 +8323,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBuffer
 
     bo.setBOType(BufferObject::BOType::nonCoherent);
     for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
-        ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
+        ret = ioctlHelper->retrieveMmapOffsetForBufferObject(bo, flags, offset);
 
         EXPECT_TRUE(ret);
         if (productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
@@ -8320,7 +8336,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBuffer
     mock->failOnMmapOffset = true;
 
     for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
-        ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
+        ret = ioctlHelper->retrieveMmapOffsetForBufferObject(bo, flags, offset);
 
         EXPECT_FALSE(ret);
         if (productHelper.useGemCreateExtInAllocateMemoryByKMD()) {

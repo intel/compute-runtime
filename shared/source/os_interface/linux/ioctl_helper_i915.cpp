@@ -23,6 +23,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/directory.h"
 
 #include <fcntl.h>
@@ -718,6 +719,57 @@ bool IoctlHelperI915::hasContextFreqHint() {
     }
     return retVal == 0 && (param == 1);
 }
+
+bool IoctlHelperI915::retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) {
+    constexpr uint64_t mmapOffsetFixed = 4;
+    constexpr uint64_t mmapOffsetCoherent = I915_MMAP_OFFSET_WB;
+    constexpr uint64_t mmapOffsetNonCoherent = I915_MMAP_OFFSET_WC;
+
+    GemMmapOffset mmapOffset = {};
+    mmapOffset.handle = bo.peekHandle();
+
+    auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    auto memoryManager = rootDeviceEnvironment.executionEnvironment.memoryManager.get();
+
+    if (memoryManager->isLocalMemorySupported(bo.getRootDeviceIndex())) {
+        mmapOffset.flags = mmapOffsetFixed;
+    } else {
+        if (productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+            switch (bo.peekBOType()) {
+            case NEO::BufferObject::BOType::nonCoherent:
+                mmapOffset.flags = mmapOffsetNonCoherent;
+                break;
+            case NEO::BufferObject::BOType::legacy:
+            case NEO::BufferObject::BOType::coherent:
+            default:
+                mmapOffset.flags = mmapOffsetCoherent;
+            }
+        } else {
+            mmapOffset.flags = flags;
+        }
+    }
+
+    auto ret = ioctl(DrmIoctl::gemMmapOffset, &mmapOffset);
+    if (ret != 0 && memoryManager->isLocalMemorySupported(bo.getRootDeviceIndex())) {
+        mmapOffset.flags = flags;
+        ret = ioctl(DrmIoctl::gemMmapOffset, &mmapOffset);
+    }
+    if (ret != 0) {
+        int err = drm.getErrno();
+
+        CREATE_DEBUG_STRING(str, "ioctl(%s) failed with %d. errno=%d(%s)\n",
+                            getIoctlString(DrmIoctl::gemMmapOffset).c_str(), ret, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        DEBUG_BREAK_IF(true);
+
+        return false;
+    }
+
+    offset = mmapOffset.offset;
+    return true;
+};
 
 void IoctlHelperI915::fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) {
     extSetparam.base.name = getDrmParamValue(DrmParam::contextCreateExtSetparam);

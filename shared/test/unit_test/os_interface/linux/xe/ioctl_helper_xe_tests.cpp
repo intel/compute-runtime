@@ -48,13 +48,27 @@ TEST_F(IoctlHelperXeTest, whenGettingIfSmallBarConfigIsAllowedThenFalseIsReturne
     EXPECT_FALSE(ioctlHelper.isSmallBarConfigAllowed());
 }
 
-TEST_F(IoctlHelperXeTest, givenXeDrmWhenGetPciBarrierMmapThenReturnsNullptr) {
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-    IoctlHelperXe ioctlHelper{*drm};
+TEST_F(IoctlHelperXeTest, givenXeDrmWhenGetPciBarrierMmapThenReturnsSuccess) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
 
-    auto ptr = ioctlHelper.pciBarrierMmap();
-    EXPECT_EQ(ptr, nullptr);
+    auto ptr = xeIoctlHelper->pciBarrierMmap();
+    EXPECT_NE(ptr, MAP_FAILED);
+    EXPECT_NE(ptr, nullptr);
+    SysCalls::munmap(ptr, MemoryConstants::pageSize);
+}
+
+TEST_F(IoctlHelperXeTest, givenXeDrmAndMmapOffsetFailingWhenGetPciBarrierMmapThenReturnsFail) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    drm->forceMmapOffsetFail = true;
+    auto ptr = xeIoctlHelper->pciBarrierMmap();
+    EXPECT_EQ(ptr, MAP_FAILED);
 }
 
 TEST_F(IoctlHelperXeTest, whenChangingBufferBindingThenWaitIsNeededAlways) {
@@ -750,6 +764,14 @@ TEST_F(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemMmapOffset, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.offset), testValueMapOff);
+    }
+    {
+        GemMmapOffset test = {};
+        test.flags = DRM_XE_MMAP_OFFSET_FLAG_PCI_BARRIER;
+        test.handle = 0; // must be zero for PCI-BARRIER flag
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemMmapOffset, &test);
+        EXPECT_EQ(0, ret);
+        EXPECT_EQ(static_cast<int>(test.offset), testValuePciBarrierOff);
     }
     {
         PrimeHandle test = {};

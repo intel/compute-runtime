@@ -141,6 +141,8 @@ class IoctlHelperXe : public IoctlHelper {
     uint32_t getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const override;
     bool makeResidentBeforeLockNeeded() const override;
     bool isSmallBarConfigAllowed() const override { return false; }
+    void *pciBarrierMmap() override;
+    bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;

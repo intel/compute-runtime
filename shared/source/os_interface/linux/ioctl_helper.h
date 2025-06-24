@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/utilities/stackvec.h"
@@ -112,6 +113,7 @@ class IoctlHelper {
     virtual int ioctl(DrmIoctl request, void *arg);
     virtual int ioctl(int fd, DrmIoctl request, void *arg);
     virtual void setExternalContext(ExternalCtx *ctx);
+    virtual bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) = 0;
 
     virtual bool initialize() = 0;
     virtual bool isSetPairAvailable() = 0;
@@ -292,6 +294,7 @@ class IoctlHelperI915 : public IoctlHelper {
     bool hasContextFreqHint() override;
     void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) override;
     bool isSmallBarConfigAllowed() const override { return true; }
+    bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
 
   protected:
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);

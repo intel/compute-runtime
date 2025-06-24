@@ -77,7 +77,6 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::registerAllocationInOs;
     using DrmMemoryManager::registerSharedBoHandleAllocation;
     using DrmMemoryManager::releaseGpuRange;
-    using DrmMemoryManager::retrieveMmapOffsetForBufferObject;
     using DrmMemoryManager::secondaryEngines;
     using DrmMemoryManager::selectAlignmentAndHeap;
     using DrmMemoryManager::setDomainCpu;

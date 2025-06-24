@@ -54,7 +54,16 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
             break;
         }
         struct drm_xe_gem_mmap_offset *v = static_cast<struct drm_xe_gem_mmap_offset *>(arg);
-        v->offset = v->handle;
+        if (v->flags == 1) { // DRM_XE_MMAP_OFFSET_FLAG_PCI_BARRIER flag
+            if (v->handle != 0) {
+                ret = -1;
+                break;
+            }
+            v->offset = testValuePciBarrierOff;
+        } else {
+            v->offset = v->handle;
+        }
+
         ret = 0;
 
     } break;

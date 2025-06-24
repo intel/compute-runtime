@@ -1315,6 +1315,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         GemMmapOffset *d = static_cast<GemMmapOffset *>(arg);
         struct drm_xe_gem_mmap_offset mmo = {};
         mmo.handle = d->handle;
+        mmo.flags = static_cast<uint32_t>(d->flags);
         ret = IoctlHelper::ioctl(request, &mmo);
         d->offset = mmo.offset;
         xeLog(" -> IoctlHelperXe::ioctl GemMmapOffset h=0x%x o=0x%x f=0x%x r=%d\n",
@@ -1900,6 +1901,45 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
     default:
         return "???";
     }
+}
+
+void *IoctlHelperXe::pciBarrierMmap() {
+    GemMmapOffset mmapOffset = {};
+    mmapOffset.flags = DRM_XE_MMAP_OFFSET_FLAG_PCI_BARRIER;
+    auto ret = ioctl(DrmIoctl::gemMmapOffset, &mmapOffset);
+    if (ret != 0) {
+        return MAP_FAILED;
+    }
+
+    return SysCalls::mmap(NULL, MemoryConstants::pageSize, PROT_WRITE, MAP_SHARED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset.offset));
+}
+
+bool IoctlHelperXe::retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) {
+    GemMmapOffset mmapOffset = {};
+    mmapOffset.handle = bo.peekHandle();
+
+    auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+    auto memoryManager = rootDeviceEnvironment.executionEnvironment.memoryManager.get();
+
+    auto ret = ioctl(DrmIoctl::gemMmapOffset, &mmapOffset);
+    if (ret != 0 && memoryManager->isLocalMemorySupported(bo.getRootDeviceIndex())) {
+        mmapOffset.flags = flags;
+        ret = ioctl(DrmIoctl::gemMmapOffset, &mmapOffset);
+    }
+    if (ret != 0) {
+        int err = drm.getErrno();
+
+        CREATE_DEBUG_STRING(str, "ioctl(%s) failed with %d. errno=%d(%s)\n",
+                            getIoctlString(DrmIoctl::gemMmapOffset).c_str(), ret, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        DEBUG_BREAK_IF(true);
+
+        return false;
+    }
+
+    offset = mmapOffset.offset;
+    return true;
 }
 
 } // namespace NEO
