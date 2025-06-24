@@ -408,6 +408,7 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     poolData.maxEventPackets = this->getEventMaxPackets();
     poolData.numDevices = static_cast<uint32_t>(this->devices.size());
     poolData.isEventPoolKernelMappedTsFlagSet = this->isEventPoolKernelMappedTsFlagSet();
+    poolData.isEventPoolTsFlagSet = this->isEventPoolTimestampFlagSet();
 
     auto memoryManager = this->context->getDriverHandle()->getMemoryManager();
     auto allocation = this->eventPoolAllocations->getDefaultGraphicsAllocation();
@@ -427,6 +428,9 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     if (poolData.isEventPoolKernelMappedTsFlagSet) {
         desc.flags |= ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP;
+    }
+    if (poolData.isEventPoolTsFlagSet) {
+        desc.flags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
     }
     desc.count = static_cast<uint32_t>(poolData.numEvents);
     auto eventPool = std::make_unique<EventPool>(&desc);

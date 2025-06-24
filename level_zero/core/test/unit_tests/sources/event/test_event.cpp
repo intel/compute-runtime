@@ -689,7 +689,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolThenEventPoolIsC
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
         nullptr,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
         numEvents};
 
     auto deviceHandle = device->toHandle();
@@ -713,6 +713,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolThenEventPoolIsC
 
     EXPECT_EQ(ipcEventPool->getEventSize(), eventPool->getEventSize());
     EXPECT_EQ(numEvents, static_cast<uint32_t>(ipcEventPool->getNumEvents()));
+    EXPECT_TRUE(ipcEventPool->isEventPoolTimestampFlagSet());
 
     res = ipcEventPool->closeIpcHandle();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
@@ -728,7 +729,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithHostVisibleT
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
         nullptr,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP,
         numEvents};
 
     auto deviceHandle = device->toHandle();
@@ -752,6 +753,7 @@ TEST_F(EventPoolIPCHandleTests, whenOpeningIpcHandleForEventPoolWithHostVisibleT
 
     EXPECT_EQ(ipcEventPool->isHostVisibleEventPoolAllocation, eventPool->isHostVisibleEventPoolAllocation);
     EXPECT_TRUE(ipcEventPool->isHostVisibleEventPoolAllocation);
+    EXPECT_TRUE(ipcEventPool->isEventPoolKernelMappedTsFlagSet());
 
     res = ipcEventPool->closeIpcHandle();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);

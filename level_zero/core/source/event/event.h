@@ -62,6 +62,7 @@ struct IpcEventPoolData {
     bool isHostVisibleEventPoolAllocation = false;
     bool isImplicitScalingCapable = false;
     bool isEventPoolKernelMappedTsFlagSet = false;
+    bool isEventPoolTsFlagSet = false;
 };
 
 struct IpcCounterBasedEventData {
