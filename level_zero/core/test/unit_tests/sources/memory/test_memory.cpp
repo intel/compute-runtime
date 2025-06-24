@@ -1146,7 +1146,7 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
     size_t size = 10;
     void *ptr = nullptr;
     ptr = malloc(size);
-    ASSERT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, ptr);
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
     auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
@@ -1176,7 +1176,7 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionNotDeviceAtomicCabapleWhenCallingSe
     size_t size = 10;
     void *ptr = nullptr;
     ptr = malloc(size);
-    ASSERT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, ptr);
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
     auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
@@ -1210,7 +1210,7 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
     size_t size = 10;
     void *ptr = nullptr;
     ptr = malloc(size);
-    ASSERT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, ptr);
 
     ze_memory_atomic_attr_exp_flags_t attr = 0;
     auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
@@ -1279,7 +1279,7 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
     size_t size = 10;
     void *ptr = nullptr;
     ptr = malloc(size);
-    ASSERT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, ptr);
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS;
     auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
@@ -1309,7 +1309,7 @@ TEST_F(MemoryTest, givenSharedSystemNotHostAtomicCapableAlloctionWhenCallingSetA
     size_t size = 10;
     void *ptr = nullptr;
     ptr = malloc(size);
-    ASSERT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, ptr);
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS;
     auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
@@ -1378,7 +1378,7 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
     size_t size = 10;
     void *ptr = nullptr;
     ptr = malloc(size);
-    ASSERT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, ptr);
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
     auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
@@ -1412,7 +1412,7 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
     size_t size = 10;
     void *ptr = nullptr;
     ptr = malloc(size);
-    ASSERT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, ptr);
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
     auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
@@ -1442,7 +1442,7 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionNotSystemAtomicCapableWhenCallingSe
     size_t size = 10;
     void *ptr = nullptr;
     ptr = malloc(size);
-    ASSERT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, ptr);
 
     ze_memory_atomic_attr_exp_flags_t attr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
     auto result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, attr);
