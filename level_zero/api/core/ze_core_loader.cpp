@@ -238,6 +238,7 @@ zeGetDeviceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetRootDevice, L0::globalDriverDispatch.coreDevice.pfnGetRootDevice, version, ZE_API_VERSION_1_7);
     fillDdiEntry(pDdiTable->pfnImportExternalSemaphoreExt, L0::globalDriverDispatch.coreDevice.pfnImportExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
     fillDdiEntry(pDdiTable->pfnReleaseExternalSemaphoreExt, L0::globalDriverDispatch.coreDevice.pfnReleaseExternalSemaphoreExt, version, ZE_API_VERSION_1_12);
+    fillDdiEntry(pDdiTable->pfnGetVectorWidthPropertiesExt, L0::globalDriverDispatch.coreDevice.pfnGetVectorWidthPropertiesExt, version, ZE_API_VERSION_1_13);
     driverDdiTable.coreDdiTable.Device = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         fillDdiEntry(pDdiTable->pfnGet, zeDeviceGetTracing, version, ZE_API_VERSION_1_0);

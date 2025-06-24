@@ -152,6 +152,13 @@ ze_result_t zeDeviceReleaseExternalSemaphoreExt(
     return L0::ExternalSemaphoreImp::fromHandle(hSemaphore)->releaseExternalSemaphore();
 }
 
+ze_result_t zeDeviceGetVectorWidthPropertiesExt(
+    ze_device_handle_t hDevice,
+    uint32_t *pCount,
+    ze_device_vector_width_properties_ext_t *pVectorWidthProperties) {
+    return L0::Device::fromHandle(hDevice)->getVectorWidthPropertiesExt(pCount, pVectorWidthProperties);
+}
+
 uint32_t zerDeviceTranslateToIdentifier(ze_device_handle_t device) {
     if (!device) {
         auto driverHandle = static_cast<L0::DriverHandleImp *>(L0::globalDriverHandles->front());
@@ -348,6 +355,13 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceImportExternalSemaphoreExt(
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceReleaseExternalSemaphoreExt(
     ze_external_semaphore_ext_handle_t hSemaphore) {
     return L0::ExternalSemaphoreImp::fromHandle(hSemaphore)->releaseExternalSemaphore();
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetVectorWidthPropertiesExt(
+    ze_device_handle_t hDevice,
+    uint32_t *pCount,
+    ze_device_vector_width_properties_ext_t *pVectorWidthProperties) {
+    return L0::zeDeviceGetVectorWidthPropertiesExt(hDevice, pCount, pVectorWidthProperties);
 }
 
 uint32_t ZE_APICALL zerDeviceTranslateToIdentifier(ze_device_handle_t device) {

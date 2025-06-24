@@ -1000,6 +1000,36 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t DeviceImp::getVectorWidthPropertiesExt(uint32_t *pCount, ze_device_vector_width_properties_ext_t *pVectorWidthProperties) {
+    if (*pCount == 0) {
+        *pCount = 1;
+        return ZE_RESULT_SUCCESS;
+    }
+    if (pVectorWidthProperties == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (*pCount > 1) {
+        *pCount = 1;
+    }
+    auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
+    auto vectorWidthSize = gfxCoreHelper.getMinimalSIMDSize();
+    pVectorWidthProperties[0].vector_width_size = vectorWidthSize;
+    pVectorWidthProperties[0].preferred_vector_width_char = gfxCoreHelper.getPreferredVectorWidthChar(vectorWidthSize);
+    pVectorWidthProperties[0].preferred_vector_width_short = gfxCoreHelper.getPreferredVectorWidthShort(vectorWidthSize);
+    pVectorWidthProperties[0].preferred_vector_width_int = gfxCoreHelper.getPreferredVectorWidthInt(vectorWidthSize);
+    pVectorWidthProperties[0].preferred_vector_width_long = gfxCoreHelper.getPreferredVectorWidthLong(vectorWidthSize);
+    pVectorWidthProperties[0].preferred_vector_width_float = gfxCoreHelper.getPreferredVectorWidthFloat(vectorWidthSize);
+    pVectorWidthProperties[0].preferred_vector_width_half = gfxCoreHelper.getPreferredVectorWidthHalf(vectorWidthSize);
+    pVectorWidthProperties[0].native_vector_width_char = gfxCoreHelper.getNativeVectorWidthChar(vectorWidthSize);
+    pVectorWidthProperties[0].native_vector_width_short = gfxCoreHelper.getNativeVectorWidthShort(vectorWidthSize);
+    pVectorWidthProperties[0].native_vector_width_int = gfxCoreHelper.getNativeVectorWidthInt(vectorWidthSize);
+    pVectorWidthProperties[0].native_vector_width_long = gfxCoreHelper.getNativeVectorWidthLong(vectorWidthSize);
+    pVectorWidthProperties[0].native_vector_width_float = gfxCoreHelper.getNativeVectorWidthFloat(vectorWidthSize);
+    pVectorWidthProperties[0].native_vector_width_half = gfxCoreHelper.getNativeVectorWidthHalf(vectorWidthSize);
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) {
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();

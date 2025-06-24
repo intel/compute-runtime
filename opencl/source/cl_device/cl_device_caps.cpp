@@ -149,11 +149,11 @@ void ClDevice::initializeCaps() {
     deviceInfo.independentForwardProgress = hwInfo.capabilityTable.supportsIndependentForwardProgress;
     deviceInfo.maxNumOfSubGroups = 0;
 
-    if (ocl21FeaturesEnabled) {
+    auto simdSizeUsed = debugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
+                            ? CommonConstants::maximalSimdSize
+                            : gfxCoreHelper.getMinimalSIMDSize();
 
-        auto simdSizeUsed = debugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
-                                ? CommonConstants::maximalSimdSize
-                                : gfxCoreHelper.getMinimalSIMDSize();
+    if (ocl21FeaturesEnabled) {
 
         // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
         deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
@@ -233,18 +233,18 @@ void ClDevice::initializeCaps() {
         deviceInfo.partitionAffinityDomain = 0;
     }
     deviceInfo.partitionType[0] = 0;
-    deviceInfo.preferredVectorWidthChar = 16;
-    deviceInfo.preferredVectorWidthShort = 8;
-    deviceInfo.preferredVectorWidthInt = 4;
-    deviceInfo.preferredVectorWidthLong = 1;
-    deviceInfo.preferredVectorWidthFloat = 1;
-    deviceInfo.preferredVectorWidthHalf = 8;
-    deviceInfo.nativeVectorWidthChar = 16;
-    deviceInfo.nativeVectorWidthShort = 8;
-    deviceInfo.nativeVectorWidthInt = 4;
-    deviceInfo.nativeVectorWidthLong = 1;
-    deviceInfo.nativeVectorWidthFloat = 1;
-    deviceInfo.nativeVectorWidthHalf = 8;
+    deviceInfo.preferredVectorWidthChar = gfxCoreHelper.getPreferredVectorWidthChar(simdSizeUsed);
+    deviceInfo.preferredVectorWidthShort = gfxCoreHelper.getPreferredVectorWidthShort(simdSizeUsed);
+    deviceInfo.preferredVectorWidthInt = gfxCoreHelper.getPreferredVectorWidthInt(simdSizeUsed);
+    deviceInfo.preferredVectorWidthLong = gfxCoreHelper.getPreferredVectorWidthLong(simdSizeUsed);
+    deviceInfo.preferredVectorWidthFloat = gfxCoreHelper.getPreferredVectorWidthFloat(simdSizeUsed);
+    deviceInfo.preferredVectorWidthHalf = gfxCoreHelper.getPreferredVectorWidthHalf(simdSizeUsed);
+    deviceInfo.nativeVectorWidthChar = gfxCoreHelper.getNativeVectorWidthChar(simdSizeUsed);
+    deviceInfo.nativeVectorWidthShort = gfxCoreHelper.getNativeVectorWidthShort(simdSizeUsed);
+    deviceInfo.nativeVectorWidthInt = gfxCoreHelper.getNativeVectorWidthInt(simdSizeUsed);
+    deviceInfo.nativeVectorWidthLong = gfxCoreHelper.getNativeVectorWidthLong(simdSizeUsed);
+    deviceInfo.nativeVectorWidthFloat = gfxCoreHelper.getNativeVectorWidthFloat(simdSizeUsed);
+    deviceInfo.nativeVectorWidthHalf = gfxCoreHelper.getNativeVectorWidthHalf(simdSizeUsed);
     deviceInfo.maxReadWriteImageArgs = hwInfo.capabilityTable.supportsImages ? 128 : 0;
     deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
 

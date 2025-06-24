@@ -464,6 +464,66 @@ inline uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalSIMDSize() const {
 }
 
 template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthChar(uint32_t vectorWidthSize) const {
+    return 16;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthShort(uint32_t vectorWidthSize) const {
+    return 8;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthInt(uint32_t vectorWidthSize) const {
+    return 4;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthLong(uint32_t vectorWidthSize) const {
+    return 1;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthFloat(uint32_t vectorWidthSize) const {
+    return 1;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getPreferredVectorWidthHalf(uint32_t vectorWidthSize) const {
+    return 8;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthChar(uint32_t vectorWidthSize) const {
+    return 16;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthShort(uint32_t vectorWidthSize) const {
+    return 8;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthInt(uint32_t vectorWidthSize) const {
+    return 4;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthLong(uint32_t vectorWidthSize) const {
+    return 1;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthFloat(uint32_t vectorWidthSize) const {
+    return 1;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getNativeVectorWidthHalf(uint32_t vectorWidthSize) const {
+    return 8;
+}
+
+template <typename GfxFamily>
 std::unique_ptr<TagAllocatorBase> GfxCoreHelperHw<GfxFamily>::createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
                                                                                              size_t initialTagCount, CommandStreamReceiverType csrType, DeviceBitfield deviceBitfield) const {
     bool doNotReleaseNodes = (csrType > CommandStreamReceiverType::hardware) ||

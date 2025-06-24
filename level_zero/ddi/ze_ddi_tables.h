@@ -40,7 +40,9 @@ struct DriverDispatch {
     zes_dditable_driver_t sysman{};
 
     ze_rtas_builder_exp_dditable_t coreRTASBuilderExp{};
+    ze_rtas_builder_dditable_t coreRTASBuilder{};
     ze_rtas_parallel_operation_exp_dditable_t coreRTASParallelOperationExp{};
+    ze_rtas_parallel_operation_dditable_t coreRTASParallelOperation{};
     ze_global_dditable_t coreGlobal{};
     ze_driver_dditable_t coreDriver{};
     ze_driver_exp_dditable_t coreDriverExp{};

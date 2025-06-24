@@ -1295,6 +1295,62 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     EXPECT_EQ(3u, deviceProperties.numSlices);
 }
 
+TEST_F(DeviceTest, givenNullPointerWhenCallingGetVectorWidthPropertiesExtThenInvalidArgumentIsReturned) {
+    ze_device_vector_width_properties_ext_t *vectorWidthProperties = nullptr;
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    uint32_t pCount = 1;
+    ze_result_t result = deviceImp->getVectorWidthPropertiesExt(&pCount, vectorWidthProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(DeviceTest, givenValidPointerWhenCallingGetVectorWidthPropertiesExtThenPropertiesAreSetCorrectly) {
+    ze_device_vector_width_properties_ext_t vectorWidthProperties = {};
+    vectorWidthProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_VECTOR_WIDTH_PROPERTIES_EXT;
+    vectorWidthProperties.pNext = nullptr;
+    uint32_t pCount = 0;
+
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    ze_result_t result = deviceImp->getVectorWidthPropertiesExt(&pCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, pCount);
+
+    pCount = 2; // Check that the pCount is updated to the correct limit.
+    result = deviceImp->getVectorWidthPropertiesExt(&pCount, &vectorWidthProperties);
+    EXPECT_EQ(1u, pCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(16u, vectorWidthProperties.preferred_vector_width_char);
+    EXPECT_EQ(8u, vectorWidthProperties.preferred_vector_width_short);
+    EXPECT_EQ(4u, vectorWidthProperties.preferred_vector_width_int);
+    EXPECT_EQ(1u, vectorWidthProperties.preferred_vector_width_long);
+    EXPECT_EQ(1u, vectorWidthProperties.preferred_vector_width_float);
+    EXPECT_EQ(8u, vectorWidthProperties.preferred_vector_width_half);
+    EXPECT_EQ(16u, vectorWidthProperties.native_vector_width_char);
+    EXPECT_EQ(8u, vectorWidthProperties.native_vector_width_short);
+    EXPECT_EQ(4u, vectorWidthProperties.native_vector_width_int);
+    EXPECT_EQ(1u, vectorWidthProperties.native_vector_width_long);
+    EXPECT_EQ(1u, vectorWidthProperties.native_vector_width_float);
+    EXPECT_EQ(8u, vectorWidthProperties.native_vector_width_half);
+
+    // Check that using the pCount updated to the correct limit, that this still works.
+    result = deviceImp->getVectorWidthPropertiesExt(&pCount, &vectorWidthProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(16u, vectorWidthProperties.preferred_vector_width_char);
+    EXPECT_EQ(8u, vectorWidthProperties.preferred_vector_width_short);
+    EXPECT_EQ(4u, vectorWidthProperties.preferred_vector_width_int);
+    EXPECT_EQ(1u, vectorWidthProperties.preferred_vector_width_long);
+    EXPECT_EQ(1u, vectorWidthProperties.preferred_vector_width_float);
+    EXPECT_EQ(8u, vectorWidthProperties.preferred_vector_width_half);
+    EXPECT_EQ(16u, vectorWidthProperties.native_vector_width_char);
+    EXPECT_EQ(8u, vectorWidthProperties.native_vector_width_short);
+    EXPECT_EQ(4u, vectorWidthProperties.native_vector_width_int);
+    EXPECT_EQ(1u, vectorWidthProperties.native_vector_width_long);
+    EXPECT_EQ(1u, vectorWidthProperties.native_vector_width_float);
+    EXPECT_EQ(8u, vectorWidthProperties.native_vector_width_half);
+}
+
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDriverInfoIsEmptyThenDeviceNameTheSameAsInDeviceInfo) {
     auto deviceImp = static_cast<DeviceImp *>(device);
     ze_device_properties_t deviceProperties{};

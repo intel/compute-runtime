@@ -105,6 +105,18 @@ class GfxCoreHelper {
 
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
     virtual uint32_t getMinimalSIMDSize() const = 0;
+    virtual uint32_t getPreferredVectorWidthChar(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getPreferredVectorWidthShort(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getPreferredVectorWidthInt(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getPreferredVectorWidthLong(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getPreferredVectorWidthFloat(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getPreferredVectorWidthHalf(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getNativeVectorWidthChar(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getNativeVectorWidthShort(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getNativeVectorWidthInt(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getNativeVectorWidthLong(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getNativeVectorWidthFloat(uint32_t vectorWidthSize) const = 0;
+    virtual uint32_t getNativeVectorWidthHalf(uint32_t vectorWidthSize) const = 0;
     virtual uint32_t getMinimalGrfSize() const = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const = 0;
@@ -336,6 +348,19 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isWaDisableRccRhwoOptimizationRequired() const override;
 
     uint32_t getMinimalSIMDSize() const override;
+
+    uint32_t getPreferredVectorWidthChar(uint32_t vectorWidthSize) const override;
+    uint32_t getPreferredVectorWidthShort(uint32_t vectorWidthSize) const override;
+    uint32_t getPreferredVectorWidthInt(uint32_t vectorWidthSize) const override;
+    uint32_t getPreferredVectorWidthLong(uint32_t vectorWidthSize) const override;
+    uint32_t getPreferredVectorWidthFloat(uint32_t vectorWidthSize) const override;
+    uint32_t getPreferredVectorWidthHalf(uint32_t vectorWidthSize) const override;
+    uint32_t getNativeVectorWidthChar(uint32_t vectorWidthSize) const override;
+    uint32_t getNativeVectorWidthShort(uint32_t vectorWidthSize) const override;
+    uint32_t getNativeVectorWidthInt(uint32_t vectorWidthSize) const override;
+    uint32_t getNativeVectorWidthLong(uint32_t vectorWidthSize) const override;
+    uint32_t getNativeVectorWidthFloat(uint32_t vectorWidthSize) const override;
+    uint32_t getNativeVectorWidthHalf(uint32_t vectorWidthSize) const override;
 
     uint32_t getMinimalGrfSize() const override;
 

@@ -18,9 +18,11 @@ namespace L0 {
 DriverDispatch globalDriverDispatch;
 
 DriverDispatch::DriverDispatch() {
-    this->core.version = ZE_API_VERSION_1_12;
+    this->core.version = ZE_API_VERSION_1_13;
     this->core.RTASBuilderExp = &this->coreRTASBuilderExp;
+    this->core.RTASBuilder = &this->coreRTASBuilder;
     this->core.RTASParallelOperationExp = &this->coreRTASParallelOperationExp;
+    this->core.RTASParallelOperation = &this->coreRTASParallelOperation;
     this->core.Global = &this->coreGlobal;
     this->core.Driver = &this->coreDriver;
     this->core.DriverExp = &this->coreDriverExp;
@@ -133,6 +135,7 @@ DriverDispatch::DriverDispatch() {
     this->coreDevice.pfnGetRootDevice = L0::zeDeviceGetRootDevice;
     this->coreDevice.pfnImportExternalSemaphoreExt = L0::zeDeviceImportExternalSemaphoreExt;
     this->coreDevice.pfnReleaseExternalSemaphoreExt = L0::zeDeviceReleaseExternalSemaphoreExt;
+    this->coreDevice.pfnGetVectorWidthPropertiesExt = L0::zeDeviceGetVectorWidthPropertiesExt;
     this->coreDeviceExp.pfnGetFabricVertexExp = L0::zeDeviceGetFabricVertexExp;
     this->coreContext.pfnCreate = L0::zeContextCreate;
     this->coreContext.pfnDestroy = L0::zeContextDestroy;

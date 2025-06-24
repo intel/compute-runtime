@@ -76,6 +76,7 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) = 0;
     virtual ze_result_t getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties) = 0;
     virtual ze_result_t getProperties(ze_device_properties_t *pDeviceProperties) = 0;
+    virtual ze_result_t getVectorWidthPropertiesExt(uint32_t *pCount, ze_device_vector_width_properties_ext_t *pVectorWidthProperties) = 0;
     virtual ze_result_t getSubDevices(uint32_t *pCount, ze_device_handle_t *phSubdevices) = 0;
     virtual ze_result_t getCacheProperties(uint32_t *pCount, ze_device_cache_properties_t *pCacheProperties) = 0;
     virtual ze_result_t getStatus() = 0;

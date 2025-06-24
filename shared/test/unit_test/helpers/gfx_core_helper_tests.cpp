@@ -1061,6 +1061,26 @@ HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenMinimalSIMDSizeIsQuer
     EXPECT_EQ(8u, gfxCoreHelper.getMinimalSIMDSize());
 }
 
+HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenGettingPreferredVectorWidthsThenCorrectValuesAreReturned) {
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(16u, gfxCoreHelper.getPreferredVectorWidthChar(gfxCoreHelper.getMinimalSIMDSize()));
+    EXPECT_EQ(8u, gfxCoreHelper.getPreferredVectorWidthShort(gfxCoreHelper.getMinimalSIMDSize()));
+    EXPECT_EQ(4u, gfxCoreHelper.getPreferredVectorWidthInt(gfxCoreHelper.getMinimalSIMDSize()));
+    EXPECT_EQ(1u, gfxCoreHelper.getPreferredVectorWidthLong(gfxCoreHelper.getMinimalSIMDSize()));
+    EXPECT_EQ(1u, gfxCoreHelper.getPreferredVectorWidthFloat(gfxCoreHelper.getMinimalSIMDSize()));
+    EXPECT_EQ(8u, gfxCoreHelper.getPreferredVectorWidthHalf(gfxCoreHelper.getMinimalSIMDSize()));
+}
+
+HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenGettingNativeVectorWidthsThenCorrectValuesAreReturned) {
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(16u, gfxCoreHelper.getNativeVectorWidthChar(gfxCoreHelper.getMinimalSIMDSize()));
+    EXPECT_EQ(8u, gfxCoreHelper.getNativeVectorWidthShort(gfxCoreHelper.getMinimalSIMDSize()));
+    EXPECT_EQ(4u, gfxCoreHelper.getNativeVectorWidthInt(gfxCoreHelper.getMinimalSIMDSize()));
+    EXPECT_EQ(1u, gfxCoreHelper.getNativeVectorWidthLong(gfxCoreHelper.getMinimalSIMDSize()));
+    EXPECT_EQ(1u, gfxCoreHelper.getNativeVectorWidthFloat(gfxCoreHelper.getMinimalSIMDSize()));
+    EXPECT_EQ(8u, gfxCoreHelper.getNativeVectorWidthHalf(gfxCoreHelper.getMinimalSIMDSize()));
+}
+
 HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenMinimalGrfSizeIsQueriedThen128IsReturned) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(128u, gfxCoreHelper.getMinimalGrfSize());
