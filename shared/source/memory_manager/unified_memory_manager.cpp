@@ -162,6 +162,7 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
             allocationIter->svmData->size = size;
             allocationIter->svmData->isSavedForReuse = false;
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
+            allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
             allocations.erase(allocationIter);
             return allocationPtr;
         }

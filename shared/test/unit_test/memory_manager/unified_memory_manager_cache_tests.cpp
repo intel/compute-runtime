@@ -1542,7 +1542,7 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationCacheEnabledAndMultipleSVMMana
     }
 }
 
-TEST_F(SvmHostAllocationCacheTest, givenAllocationsWithDifferentSizesWhenAllocatingAfterFreeThenReturnCorrectCachedAllocation) {
+TEST_F(SvmHostAllocationCacheTest, givenAllocationsWithDifferentSizesWhenAllocatingAfterFreeThenReturnCorrectCachedAllocationAndSetAubTbxWritable) {
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
@@ -1582,10 +1582,20 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationsWithDifferentSizesWhenAllocat
 
     std::vector<void *> allocationsToFree;
 
+    constexpr auto allBanks = std::numeric_limits<uint32_t>::max();
+    for (auto allocInfo : svmManager->usmHostAllocationsCache->allocations) {
+        allocInfo.svmData->gpuAllocations.getDefaultGraphicsAllocation()->setAubWritable(false, allBanks);
+        allocInfo.svmData->gpuAllocations.getDefaultGraphicsAllocation()->setTbxWritable(false, allBanks);
+    }
+
     for (auto &testData : testDataset) {
         auto secondAllocation = svmManager->createHostUnifiedMemoryAllocation(testData.allocationSize, unifiedMemoryProperties);
         EXPECT_EQ(svmManager->usmHostAllocationsCache->allocations.size(), testDataset.size() - 1);
         EXPECT_EQ(secondAllocation, testData.allocation);
+        auto allocData = svmManager->getSVMAlloc(secondAllocation);
+        EXPECT_NE(nullptr, allocData);
+        EXPECT_TRUE(allocData->gpuAllocations.getDefaultGraphicsAllocation()->isAubWritable(allBanks));
+        EXPECT_TRUE(allocData->gpuAllocations.getDefaultGraphicsAllocation()->isTbxWritable(allBanks));
         svmManager->freeSVMAlloc(secondAllocation);
         EXPECT_EQ(svmManager->usmHostAllocationsCache->allocations.size(), testDataset.size());
     }
