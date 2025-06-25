@@ -1977,12 +1977,14 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateInDevice
     allocData.flags.shareable = true;
     allocData.storageInfo.memoryBanks = 2;
     allocData.storageInfo.systemMemoryPlacement = false;
+    allocData.alignment = MemoryConstants::pageSize64k;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
     EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(allocation->getUnderlyingBufferSize()));
     uint64_t handle = 0;
     allocation->peekInternalHandle(memoryManager.get(), handle);
     EXPECT_NE(handle, 0u);
