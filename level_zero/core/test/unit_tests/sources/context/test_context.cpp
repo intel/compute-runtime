@@ -461,6 +461,8 @@ TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsRe
     res = context->getStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
+    driverHandle->getSvmAllocsManager()->cleanupUSMAllocCaches();
+
     for (auto device : driverHandle->devices) {
         L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
         deviceImp->releaseResources();

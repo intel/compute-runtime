@@ -155,6 +155,39 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenCheckingIsInUseThenReturn
     }
 }
 
+TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenInsertingAllocationThenDoNotInsertImportedNorInternal) {
+    SVMAllocsManager::SvmAllocationCache allocationCache;
+    MockMemoryManager memoryManager;
+    MockSVMAllocsManager svmAllocsManager(&memoryManager);
+
+    allocationCache.memoryManager = &memoryManager;
+    allocationCache.svmAllocsManager = &svmAllocsManager;
+    memoryManager.usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+
+    void *ptr = addrToPtr(0xFULL);
+    MockGraphicsAllocation gpuGfxAllocation;
+    SvmAllocationData svmAllocData(mockRootDeviceIndex);
+    svmAllocData.gpuAllocations.addAllocation(&gpuGfxAllocation);
+    {
+        svmAllocData.isImportedAllocation = false;
+        svmAllocData.isInternalAllocation = false;
+        EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData));
+        allocationCache.allocations.clear();
+    }
+    {
+        svmAllocData.isImportedAllocation = true;
+        svmAllocData.isInternalAllocation = false;
+        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData));
+        allocationCache.allocations.clear();
+    }
+    {
+        svmAllocData.isImportedAllocation = false;
+        svmAllocData.isInternalAllocation = true;
+        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData));
+        allocationCache.allocations.clear();
+    }
+}
+
 struct SvmAllocationCacheTestFixture {
     SvmAllocationCacheTestFixture() : executionEnvironment(defaultHwInfo.get()) {}
     void setUp() {

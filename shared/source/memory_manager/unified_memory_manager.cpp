@@ -61,7 +61,9 @@ SVMAllocsManager::SvmAllocationCache::SvmAllocationCache() {
 }
 
 bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAllocationData *svmData) {
-    if (false == sizeAllowed(size)) {
+    if (false == sizeAllowed(size) ||
+        svmData->isInternalAllocation ||
+        svmData->isImportedAllocation) {
         return false;
     }
     if (svmData->device ? svmData->device->shouldLimitAllocationsReuse() : memoryManager->shouldLimitAllocationsReuse()) {
@@ -159,6 +161,7 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
             }
             allocationIter->svmData->size = size;
             allocationIter->svmData->isSavedForReuse = false;
+            allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
             allocations.erase(allocationIter);
             return allocationPtr;
         }
@@ -645,7 +648,6 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
-            false == svmData->isInternalAllocation &&
             this->usmDeviceAllocationsCache) {
             if (this->usmDeviceAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
                 return true;

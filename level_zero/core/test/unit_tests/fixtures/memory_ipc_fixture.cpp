@@ -17,6 +17,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/test/common/ult_helpers_l0.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
@@ -197,12 +198,7 @@ void MemoryExportImportWSLTest::SetUp() {
 }
 
 void MemoryExportImportWSLTest::TearDown() {
-    // cleanup pools before restoring memory manager
-    for (auto device : driverHandle->devices) {
-        device->getNEODevice()->cleanupUsmAllocationPool();
-        device->getNEODevice()->resetUsmAllocationPool(nullptr);
-    }
-    driverHandle->usmHostMemAllocPool.cleanup();
+    L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     driverHandle->setMemoryManager(prevMemoryManager);
     delete currMemoryManager;
 }

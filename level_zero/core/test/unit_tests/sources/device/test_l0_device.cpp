@@ -2824,6 +2824,7 @@ TEST_F(DeviceGetStatusTest, givenCallToDeviceGetStatusThenCorrectErrorCodeIsRetu
     ze_result_t res = device->getStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
+    driverHandle->getSvmAllocsManager()->cleanupUSMAllocCaches();
     deviceImp->releaseResources();
     res = device->getStatus();
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
@@ -4381,6 +4382,7 @@ TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenResourcesRelea
     auto deviceImp = static_cast<DeviceImp *>(device);
     EXPECT_FALSE(deviceImp->resourcesReleased);
     EXPECT_FALSE(nullptr == deviceImp->getNEODevice());
+    driverHandle->getSvmAllocsManager()->cleanupUSMAllocCaches();
     deviceImp->releaseResources();
     EXPECT_TRUE(deviceImp->resourcesReleased);
     EXPECT_TRUE(nullptr == deviceImp->getNEODevice());
