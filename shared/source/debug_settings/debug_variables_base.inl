@@ -372,6 +372,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintCpuFlags, false, "Print CPU Flags and properti
 DECLARE_DEBUG_VARIABLE(int32_t, PrintL0MetricLogs, 0, "L0 Metrics logs mask. 0 - Disabled, 1 - ERROR, 3 - INFO, 7 - DEBUG")
 DECLARE_DEBUG_VARIABLE(bool, PrintL0SetKernelArg, false, "Print L0 Set Kernel Arg data")
 DECLARE_DEBUG_VARIABLE(bool, LogIndirectDetectionKernelDetails, false, "Log information for indirect detection for each kernel")
+DECLARE_DEBUG_VARIABLE(bool, PrintMclData, false, "Print all parameters used for MCL");
 
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")

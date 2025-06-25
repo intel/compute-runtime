@@ -1,0 +1,61 @@
+#
+# Copyright (C) 2025 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+target_sources(${L0_STATIC_LIB_NAME}
+               PRIVATE
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/helper.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/helper.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mcl_kernel_ext.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mcl_types.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_imp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_imp.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_hw.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_hw.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker_hw.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker_hw.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_indirect_data.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_indirect_data.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel_group.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel_group.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel_dispatch.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_load_register_imm.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_load_register_imm_hw.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_load_register_imm_hw.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_pipe_control.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_pipe_control_hw.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_pipe_control_hw.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_semaphore_wait.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_semaphore_wait_hw.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_semaphore_wait_hw.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_store_data_imm.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_store_data_imm_hw.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_store_data_imm_hw.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_store_register_mem.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_store_register_mem_hw.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_store_register_mem_hw.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_variable_descriptor.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/usage.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/variable.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/variable.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/variable_dispatch.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/variable_dispatch.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/variable_handle.h
+)
+
+if(SUPPORT_XE3_AND_BEFORE)
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_hw_from_xe_hpg_to_xe3.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker_hw_from_xe_hpg_to_xe3.inl
+  )
+endif()
+
+add_subdirectories()

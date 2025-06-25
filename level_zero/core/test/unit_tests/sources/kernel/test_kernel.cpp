@@ -40,6 +40,7 @@
 #include "level_zero/core/source/kernel/kernel_hw.h"
 #include "level_zero/core/source/kernel/sampler_patch_values.h"
 #include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -2283,8 +2284,36 @@ TEST_F(KernelPropertiesTests, givenValidKernelAndLargeDataIsSetThenForceLargeDat
     EXPECT_EQ(NEO::SlmPolicy::slmPolicyLargeData, kernel->getSlmPolicy());
 }
 
-TEST_F(KernelPropertiesTests, WhenGetExtensionIsCalledWithUnknownExtensionTypeThenReturnNullptr) {
-    EXPECT_EQ(nullptr, kernel->getExtension(0U));
+struct KernelExtFixture {
+    struct MockKernel : public WhiteBox<::L0::KernelImp> {
+        using WhiteBox<::L0::KernelImp>::BaseClass::pExtension;
+    };
+    void setUp() {
+        kernel = std::make_unique<MockKernel>();
+    }
+    void tearDown() {}
+
+    std::unique_ptr<MockKernel> kernel;
+    static constexpr uint32_t mclExtType = L0::MCL::MclKernelExt::extensionType;
+};
+
+using KernelExtTest = Test<KernelExtFixture>;
+
+TEST_F(KernelExtTest, GivenUnknownExtTypeWhenGettingExtensionThenReturnNullptr) {
+    auto ext = kernel->getExtension(0U);
+    EXPECT_EQ(nullptr, ext);
+}
+
+TEST_F(KernelExtTest, GivenMclExtTypeReturnWhenGettingExtensionThenCreateAndReturnExtension) {
+    auto ext = kernel->getExtension(mclExtType);
+    EXPECT_NE(nullptr, ext);
+    EXPECT_EQ(kernel->pExtension.get(), ext);
+}
+
+TEST_F(KernelExtTest, GivenMclExtTypeAndCreatedExtensionWhenGettingExtensionThenReturnExtension) {
+    kernel->pExtension = std::make_unique<MCL::MclKernelExt>(0U);
+    auto ext = kernel->getExtension(mclExtType);
+    EXPECT_EQ(kernel->pExtension.get(), ext);
 }
 
 using KernelLocalIdsTest = Test<ModuleFixture>;

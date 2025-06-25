@@ -8,6 +8,7 @@
 #include "level_zero/core/source/driver/extension_function_address.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
+#include "level_zero/driver_experimental/mcl_ext/zex_mutable_cmdlist_ext.h"
 #include "level_zero/driver_experimental/zex_api.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/driver_experimental/zex_context.h"
@@ -73,6 +74,32 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zetIntelCommandListAppendMarkerExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelDeviceEnableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelDeviceDisableMetricsExp);
+
+    // mutable command list extension
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListGetNextCommandIdExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListUpdateMutableCommandsExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListUpdateMutableCommandSignalEventExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListUpdateMutableCommandWaitEventsExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListGetNextCommandIdWithKernelsExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListUpdateMutableCommandKernelsExp);
+
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListGetVariable);
+    RETURN_FUNC_PTR_IF_EXIST(zexKernelSetArgumentVariable);
+    RETURN_FUNC_PTR_IF_EXIST(zexVariableSetValue);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListGetLabel);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListSetLabel);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendJump);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendLoadRegVariable);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendStoreRegVariable);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListTempMemSetEleCount);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListTempMemGetSize);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListTempMemSet);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListGetNativeBinary);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListLoadNativeBinary);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendVariableLaunchKernel);
+    RETURN_FUNC_PTR_IF_EXIST(zexKernelSetVariableGroupSize);
+    RETURN_FUNC_PTR_IF_EXIST(zexVariableGetInfo);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListGetVariablesList);
 
     // Metrics
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerCreateExp);

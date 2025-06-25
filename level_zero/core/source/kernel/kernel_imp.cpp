@@ -47,6 +47,7 @@
 #include "level_zero/core/source/kernel/sampler_patch_values.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler.h"
 #include "level_zero/driver_experimental/zex_module.h"
@@ -1608,6 +1609,16 @@ ze_result_t KernelImp::getArgumentType(uint32_t argIndex, uint32_t *pSize, char 
         strncpy_s(pString, *pSize, argMetadata.type.c_str(), argMetadata.type.length());
     }
     return ZE_RESULT_SUCCESS;
+}
+
+KernelExt *KernelImp::getExtension(uint32_t extensionType) {
+    if (extensionType == MCL::MclKernelExt::extensionType) {
+        if (nullptr == this->pExtension) {
+            this->pExtension = std::make_unique<MCL::MclKernelExt>(this->kernelArgHandlers.size());
+        }
+        return this->pExtension.get();
+    }
+    return nullptr;
 }
 
 } // namespace L0

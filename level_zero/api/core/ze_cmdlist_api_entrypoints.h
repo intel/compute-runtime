@@ -7,11 +7,10 @@
 
 #pragma once
 
+#include "level_zero/api/core/ze_mutable_cmdlist_api_entrypoints.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
 #include <level_zero/ze_api.h>
-
-#include "mcl_cmdlist.h"
 
 namespace L0 {
 ze_result_t zeCommandListCreate(

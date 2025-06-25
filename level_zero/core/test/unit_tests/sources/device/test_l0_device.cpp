@@ -50,6 +50,7 @@
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 #include "level_zero/core/source/rtas/rtas.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -6576,6 +6577,57 @@ HWTEST2_F(DeviceSimpleTests, givenDeviceWhenQueryingPriorityLevelsThen2LevelsAre
 
     EXPECT_EQ(0, highestPriorityLevel);
     EXPECT_EQ(1, lowestPriorityLevel);
+}
+
+struct L0DeviceGetCmdlistCreateFunFixture {
+    using CmdListCreateFunPtrT = L0::DeviceImp::CmdListCreateFunPtrT;
+    void setUp() {
+        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+        auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
+        mockDeviceImp = std::make_unique<MockDeviceImp>(neoMockDevice);
+        ASSERT_NE(nullptr, mockDeviceImp);
+        deviceImp = static_cast<L0::DeviceImp *>(mockDeviceImp.get());
+        desc.pNext = nullptr;
+    }
+    void tearDown() {}
+
+    ze_command_list_desc_t desc{};
+    L0::DeviceImp *deviceImp = nullptr;
+    ze_mutable_command_list_exp_desc_t mutableExpDesc{};
+
+    const CmdListCreateFunPtrT mutableCreateAddress = &L0::MCL::MutableCommandList::create;
+
+  protected:
+    std::unique_ptr<MockDeviceImp> mockDeviceImp;
+};
+
+using L0DeviceGetCmdlistCreateFunTest = Test<L0DeviceGetCmdlistCreateFunFixture>;
+
+TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenNoExtReturnBaseCommandListCreateFun) {
+    EXPECT_EQ(nullptr, deviceImp->getCmdListCreateFunc(nullptr));
+}
+
+TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenOtherExtReturnBaseCommandListCreateFun) {
+    ze_command_list_desc_t otherDesc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+
+    EXPECT_EQ(nullptr, deviceImp->getCmdListCreateFunc(reinterpret_cast<const ze_base_desc_t *>(&otherDesc)));
+}
+
+TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenMclExpDescriptorReturnMclCreateFun) {
+    ze_mutable_command_list_exp_desc_t mutableExpDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC};
+    EXPECT_EQ(mutableCreateAddress, deviceImp->getCmdListCreateFunc(reinterpret_cast<const ze_base_desc_t *>(&mutableExpDesc)));
+}
+
+TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceMclPropertiesWhenReturnMclPropertiesThenProvidePerDeviceCapability) {
+    ze_mutable_command_list_exp_properties_t mclDeviceProperties{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_PROPERTIES};
+
+    ze_device_properties_t deviceProperties{ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    deviceProperties.pNext = &mclDeviceProperties;
+
+    deviceImp->getProperties(&deviceProperties);
+
+    uint32_t deviceMclCapability = deviceImp->getL0GfxCoreHelper().getCmdListUpdateCapabilities(deviceImp->getNEODevice()->getRootDeviceEnvironment());
+    EXPECT_EQ(deviceMclCapability, mclDeviceProperties.mutableCommandFlags);
 }
 
 } // namespace ult

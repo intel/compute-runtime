@@ -55,6 +55,7 @@
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_build_log.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler.h"
 #include "level_zero/driver_experimental/zex_module.h"
@@ -1176,6 +1177,10 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
                 supportMatrix |= getProductHelper().supports2DBlockLoad() ? ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_LOAD : 0;
                 auto blockTransposeProps = reinterpret_cast<ze_intel_device_block_array_exp_properties_t *>(extendedProperties);
                 blockTransposeProps->flags = supportMatrix;
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_PROPERTIES) {
+                ze_mutable_command_list_exp_properties_t *mclProperties = reinterpret_cast<ze_mutable_command_list_exp_properties_t *>(extendedProperties);
+                mclProperties->mutableCommandListFlags = 0;
+                mclProperties->mutableCommandFlags = getL0GfxCoreHelper().getCmdListUpdateCapabilities(this->getNEODevice()->getRootDeviceEnvironment());
             }
             getAdditionalExtProperties(extendedProperties);
             extendedProperties = static_cast<ze_base_properties_t *>(extendedProperties->pNext);
@@ -2252,6 +2257,16 @@ ze_result_t DeviceImp::synchronize() {
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+DeviceImp::CmdListCreateFunPtrT DeviceImp::getCmdListCreateFunc(const ze_base_desc_t *desc) {
+    if (desc) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC) {
+            return &MCL::MutableCommandList::create;
+        }
+    }
+
+    return nullptr;
 }
 
 } // namespace L0

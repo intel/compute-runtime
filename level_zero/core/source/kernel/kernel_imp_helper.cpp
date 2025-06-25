@@ -10,8 +10,6 @@
 
 namespace L0 {
 
-KernelExt *KernelImp::getExtension(uint32_t extensionType) { return nullptr; }
-
 void KernelImp::patchRegionParams(const CmdListKernelLaunchParams &launchParams, const ze_group_count_t &threadGroupDimensions) {}
 
 ze_result_t KernelImp::validateWorkgroupSize() const {
