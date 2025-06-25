@@ -1124,29 +1124,28 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(*this, tileCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
 
     std::unique_ptr<RTDispatchGlobalsInfo> dispatchGlobalsInfo = std::make_unique<RTDispatchGlobalsInfo>();
-
+    auto releaseHelper = getReleaseHelper();
     auto &productHelper = getProductHelper();
-
-    GraphicsAllocation *dispatchGlobalsArrayAllocation = nullptr;
+    bool isResource48Bit = productHelper.is48bResourceNeededForRayTracing();
 
     AllocationProperties arrayAllocProps(getRootDeviceIndex(), true, dispatchGlobalsSize,
                                          AllocationType::globalSurface, true, getDeviceBitfield());
-    arrayAllocProps.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
+    arrayAllocProps.flags.resource48Bit = isResource48Bit;
     arrayAllocProps.flags.isUSMDeviceAllocation = true;
-    dispatchGlobalsArrayAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(arrayAllocProps);
+    GraphicsAllocation *dispatchGlobalsArrayAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(arrayAllocProps);
 
     if (dispatchGlobalsArrayAllocation == nullptr) {
         return;
     }
 
-    for (unsigned int tile = 0; tile < tileCount; tile++) {
+    for (auto tile = 0u; tile < tileCount; tile++) {
         DeviceBitfield deviceBitfield =
             (tileCount == 1)
                 ? this->getDeviceBitfield()
                 : subdevices[tile]->getDeviceBitfield();
 
         AllocationProperties allocProps(getRootDeviceIndex(), true, rtStackSize, AllocationType::buffer, true, deviceBitfield);
-        allocProps.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
+        allocProps.flags.resource48Bit = isResource48Bit;
         allocProps.flags.isUSMDeviceAllocation = true;
 
         auto rtStackAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(allocProps);
@@ -1157,22 +1156,14 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         }
 
         RTDispatchGlobals dispatchGlobals = {0};
-
         dispatchGlobals.rtMemBasePtr = rtStackAllocation->getGpuAddress() + rtStackSize;
-        dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
-        auto releaseHelper = getReleaseHelper();
-        dispatchGlobals.stackSizePerRay = releaseHelper ? releaseHelper->getStackSizePerRay() : 0;
-
-        auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(*this);
-        dispatchGlobals.numDSSRTStacks = rtStacksPerDss;
+        dispatchGlobals.callStackHandlerKSP = 0;
+        dispatchGlobals.stackSizePerRay = releaseHelper ? releaseHelper->getAsyncStackSizePerRay() : 0;
+        dispatchGlobals.numDSSRTStacks = RayTracingHelper::getAsyncNumRTStacksPerDss();
         dispatchGlobals.maxBVHLevels = maxBvhLevels;
-        uint32_t *dispatchGlobalsAsArray = reinterpret_cast<uint32_t *>(&dispatchGlobals);
-        dispatchGlobalsAsArray[7] = 1;
+        dispatchGlobals.flags = 1;
 
-        if (releaseHelper) {
-            bool heaplessEnabled = this->getCompilerProductHelper().isHeaplessModeEnabled(this->getHardwareInfo());
-            releaseHelper->adjustRTDispatchGlobals(static_cast<void *>(&dispatchGlobals), rtStacksPerDss, heaplessEnabled, maxBvhLevels);
-        }
+        productHelper.adjustRTDispatchGlobals(dispatchGlobals, this->getHardwareInfo());
 
         MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(this->getRootDeviceEnvironment(), *dispatchGlobalsArrayAllocation),
                                                          *this,

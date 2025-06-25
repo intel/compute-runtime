@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,8 +39,8 @@ TEST(RayTracingHelperTests, whenRTStackSizeIsRequestedThenCorrectValueIsReturned
     uint32_t extraBytesLocal = 20;
     uint32_t extraBytesGlobal = 100;
     uint32_t tiles = 2;
-
-    size_t expectedSize = alignUp(RayTracingHelper::getStackSizePerRay(maxBvhLevel, extraBytesLocal) * RayTracingHelper::getNumRtStacks(device) + extraBytesGlobal, MemoryConstants::cacheLineSize);
+    auto numRtStacksPerDss = device.getProductHelper().getNumRtStacksPerDSSForAllocation(device.getHardwareInfo());
+    size_t expectedSize = alignUp(RayTracingHelper::getStackSizePerRay(maxBvhLevel, extraBytesLocal) * RayTracingHelper::getNumRtStacks(device, numRtStacksPerDss) + extraBytesGlobal, MemoryConstants::cacheLineSize);
     size_t size = RayTracingHelper::getRTStackSizePerTile(device, tiles, maxBvhLevel, extraBytesLocal, extraBytesGlobal);
     EXPECT_EQ(expectedSize, size);
 }
@@ -48,8 +48,8 @@ TEST(RayTracingHelperTests, whenRTStackSizeIsRequestedThenCorrectValueIsReturned
 TEST(RayTracingHelperTests, whenNumRtStacksIsQueriedThenItIsEqualToNumRtStacksPerDssMultipliedByDualSubsliceCount) {
     MockDevice device;
 
-    uint32_t numDssRtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(device);
-    uint32_t numDssRtStacks = RayTracingHelper::getNumRtStacks(device);
+    uint32_t numDssRtStacksPerDss = device.getProductHelper().getNumRtStacksPerDSSForAllocation(device.getHardwareInfo());
+    uint32_t numDssRtStacks = RayTracingHelper::getNumRtStacks(device, numDssRtStacksPerDss);
     uint32_t subsliceCount = GfxCoreHelper::getHighestEnabledDualSubSlice(device.getHardwareInfo());
 
     EXPECT_LT(0u, numDssRtStacks);
@@ -71,53 +71,40 @@ TEST(RayTracingHelperTests, whenGetMemoryBackedFifoSizeToPatchIsCalledThenCorrec
     EXPECT_EQ(2u, RayTracingHelper::getMemoryBackedFifoSizeToPatch());
 }
 
-TEST(RayTracingHelperTests, whenNumRtStacksPerDssIsRequestedAndFixedValueIsTrueThenCorrectValueIsReturned) {
-    MockReleaseHelper mockReleaseHelper;
-    MockDevice mockDevice;
-
-    mockReleaseHelper.isNumRtStacksPerDssFixedValueResult = true;
-    mockDevice.mockReleaseHelper = &mockReleaseHelper;
-
-    uint32_t fixedSizeOfRtStacksPerDss = 2048;
-    uint32_t result = RayTracingHelper::getNumRtStacksPerDss(mockDevice);
-    EXPECT_EQ(fixedSizeOfRtStacksPerDss, result);
-}
-
 TEST(RayTracingHelperTests, whenNumRtStacksPerDssIsRequestedAndFixedValueIsFalseThenCorrectValueIsReturned) {
-    MockReleaseHelper mockReleaseHelper;
-    mockReleaseHelper.isNumRtStacksPerDssFixedValueResult = false;
 
+    MockDevice device;
     uint32_t maxEuPerSubSlice = 16;
     uint32_t threadCount = 672;
     uint32_t euCount = 96;
 
-    auto hwInfo = *NEO::defaultHwInfo;
+    auto &hwInfo = *device.getRootDeviceEnvironmentRef().getMutableHardwareInfo();
     hwInfo.gtSystemInfo.MaxEuPerSubSlice = maxEuPerSubSlice;
     hwInfo.gtSystemInfo.ThreadCount = threadCount;
     hwInfo.gtSystemInfo.EUCount = euCount;
 
-    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    mockDevice->mockReleaseHelper = &mockReleaseHelper;
-
-    // maxEuPerSubSlice * (threadCount / euCount) * CommonConstants::maximalSimdSize = 3584u
-    constexpr uint32_t expectedValue = 3584;
-
-    EXPECT_EQ(expectedValue, RayTracingHelper::getNumRtStacksPerDss(*mockDevice));
+    auto numRtStackPerDss = device.getProductHelper().getSyncNumRTStacksPerDss(device.getHardwareInfo());
+    if (numRtStackPerDss > 0) {
+        // maxEuPerSubSlice * (threadCount / euCount) * CommonConstants::maximalSimdSize = 3584u
+        constexpr uint32_t expectedValue = 3584;
+        EXPECT_EQ(expectedValue, numRtStackPerDss);
+    }
 }
 
 TEST(RayTracingHelperTests, whenNumRtStacksPerDssExceedsMaxThenReturnsMaxRtStacksPerDssSupported) {
-    MockReleaseHelper mockReleaseHelper;
-    mockReleaseHelper.isNumRtStacksPerDssFixedValueResult = false;
 
-    auto hwInfo = *NEO::defaultHwInfo;
+    MockDevice device;
+    uint32_t maxSizeOfRtStacksPerDss = 4096;
+
+    auto &hwInfo = *device.getRootDeviceEnvironmentRef().getMutableHardwareInfo();
     hwInfo.gtSystemInfo.MaxEuPerSubSlice = 512;
     hwInfo.gtSystemInfo.ThreadCount = 2048;
     hwInfo.gtSystemInfo.EUCount = 256;
 
-    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    mockDevice->mockReleaseHelper = &mockReleaseHelper;
-
-    uint32_t maxSizeOfRtStacksPerDss = 4096;
-    uint32_t result = RayTracingHelper::getNumRtStacksPerDss(*mockDevice);
-    EXPECT_EQ(maxSizeOfRtStacksPerDss, result);
+    auto numRtStackPerDss = device.getProductHelper().getSyncNumRTStacksPerDss(device.getHardwareInfo());
+    if (numRtStackPerDss > 0) {
+        uint32_t uncappedRtStacksPerDss = hwInfo.gtSystemInfo.MaxEuPerSubSlice * (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) * CommonConstants::maximalSimdSize;
+        EXPECT_GT(uncappedRtStacksPerDss, maxSizeOfRtStacksPerDss);
+        EXPECT_EQ(maxSizeOfRtStacksPerDss, numRtStackPerDss);
+    }
 }

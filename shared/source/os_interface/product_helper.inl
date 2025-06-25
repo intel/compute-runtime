@@ -20,6 +20,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -1080,6 +1081,21 @@ bool ProductHelperHw<gfxProduct>::isPackedCopyFormatSupported() const {
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const {
     return defaultValue;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, const HardwareInfo &hwInfo) const {
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getSyncNumRTStacksPerDss(const HardwareInfo &hwInfo) const {
+    return 0;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getNumRtStacksPerDSSForAllocation(const HardwareInfo &hwInfo) const {
+
+    return RayTracingHelper::getAsyncNumRTStacksPerDss();
 }
 
 } // namespace NEO

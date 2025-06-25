@@ -19,6 +19,7 @@
 
 namespace NEO {
 
+struct HardwareInfo;
 class ReleaseHelper;
 enum class ReleaseType;
 
@@ -56,13 +57,11 @@ class ReleaseHelper {
     virtual bool isRayTracingSupported() const = 0;
     virtual uint32_t getAdditionalFp16Caps() const = 0;
     virtual uint32_t getAdditionalExtraCaps() const = 0;
-    virtual uint32_t getStackSizePerRay() const = 0;
-    virtual void adjustRTDispatchGlobals(void *rtDispatchGlobals, uint32_t rtStacksPerDss, bool heaplessEnabled, uint32_t maxBvhLevels) const = 0;
+    virtual uint32_t getAsyncStackSizePerRay() const = 0;
     virtual bool isLocalOnlyAllowed() const = 0;
     virtual bool isDummyBlitWaRequired() const = 0;
     virtual bool isDirectSubmissionLightSupported() const = 0;
     virtual const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const = 0;
-    virtual bool isNumRtStacksPerDssFixedValue() const = 0;
     virtual bool getFtrXe2Compression() const = 0;
     virtual bool programmAdditionalStallPriorToBarrierWithTimestamp() const = 0;
     virtual uint32_t computeSlmValues(uint32_t slmSize, bool isHeapless) const = 0;
@@ -103,13 +102,11 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isRayTracingSupported() const override;
     uint32_t getAdditionalFp16Caps() const override;
     uint32_t getAdditionalExtraCaps() const override;
-    uint32_t getStackSizePerRay() const override;
-    void adjustRTDispatchGlobals(void *rtDispatchGlobals, uint32_t rtStacksPerDss, bool heaplessEnabled, uint32_t maxBvhLevels) const override;
+    uint32_t getAsyncStackSizePerRay() const override;
     bool isLocalOnlyAllowed() const override;
     bool isDummyBlitWaRequired() const override;
     bool isDirectSubmissionLightSupported() const override;
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override;
-    bool isNumRtStacksPerDssFixedValue() const override;
     bool getFtrXe2Compression() const override;
     bool programmAdditionalStallPriorToBarrierWithTimestamp() const override;
     uint32_t computeSlmValues(uint32_t slmSize, bool isHeapless) const override;

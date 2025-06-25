@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/task_count_helper.h"
 
 #include "aubstream/engine_node.h"
+#include "ocl_igc_shared/raytracing/ocl_raytracing_structures.h"
 
 #include <igfxfmid.h>
 #include <memory>
@@ -44,6 +45,7 @@ class MemoryManager;
 struct RootDeviceEnvironment;
 class OSInterface;
 class DriverModel;
+
 enum class DriverModelType;
 enum class EngineGroupType : uint32_t;
 enum class GfxMemoryAllocationMethod : uint32_t;
@@ -268,6 +270,9 @@ class ProductHelper {
     virtual bool isNonCoherentTimestampsModeEnabled() const = 0;
     virtual bool isPackedCopyFormatSupported() const = 0;
     virtual bool isPidFdOrSocketForIpcSupported() const = 0;
+    virtual void adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getSyncNumRTStacksPerDss(const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getNumRtStacksPerDSSForAllocation(const HardwareInfo &hwInfo) const = 0;
 
     virtual bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const = 0;
     virtual ~ProductHelper() = default;
