@@ -177,6 +177,7 @@ class SysmanKmdInterface {
     virtual std::string getGpuUnBindEntry() const = 0;
     virtual std::vector<zes_power_domain_t> getPowerDomains() const = 0;
     virtual void setSysmanDeviceDirName(const bool isIntegratedDevice) = 0;
+    const std::string getSysmanDeviceDirName() const;
     ze_result_t checkErrorNumberAndReturnStatus();
 
   protected:
@@ -185,8 +186,8 @@ class SysmanKmdInterface {
     std::unique_ptr<SysFsAccessInterface> pSysfsAccess;
     std::string sysmanDeviceDirName = "";
     virtual const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() = 0;
-    ze_result_t getDeviceDirName(std::string &dirName, const bool isIntegratedDevice);
     void getWedgedStatusImpl(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState);
+    void updateSysmanDeviceDirName(std::string &dirName);
 };
 
 class SysmanKmdInterfaceI915 {

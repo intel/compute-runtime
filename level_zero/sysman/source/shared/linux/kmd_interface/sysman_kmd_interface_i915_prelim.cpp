@@ -240,9 +240,10 @@ std::string SysmanKmdInterfaceI915Prelim::getGpuUnBindEntry() const {
 }
 
 void SysmanKmdInterfaceI915Prelim::setSysmanDeviceDirName(const bool isIntegratedDevice) {
-
     sysmanDeviceDirName = "i915";
-    getDeviceDirName(sysmanDeviceDirName, isIntegratedDevice);
+    if (!isIntegratedDevice) {
+        updateSysmanDeviceDirName(sysmanDeviceDirName);
+    }
 }
 
 } // namespace Sysman

@@ -205,22 +205,23 @@ ze_result_t SysmanKmdInterface::checkErrorNumberAndReturnStatus() {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t SysmanKmdInterface::getDeviceDirName(std::string &dirName, const bool isIntegratedDevice) {
+void SysmanKmdInterface::updateSysmanDeviceDirName(std::string &dirName) {
 
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    if (!isIntegratedDevice) {
-        auto pSysFsAccess = getSysFsAccess();
-        std::string bdfDir;
-        result = pSysFsAccess->readSymLink(std::string(deviceDir), bdfDir);
-        if (ZE_RESULT_SUCCESS != result) {
-            return result;
-        }
-        const auto loc = bdfDir.find_last_of('/');
-        auto bdf = bdfDir.substr(loc + 1);
-        std::replace(bdf.begin(), bdf.end(), ':', '_');
-        dirName = dirName + "_" + bdf;
+    std::string bdfDir = "";
+    auto pSysfsAccess = getSysFsAccess();
+    auto result = pSysfsAccess->readSymLink(std::string(deviceDir), bdfDir);
+    if (ZE_RESULT_SUCCESS != result) {
+        dirName = "";
+        return;
     }
-    return result;
+    const auto loc = bdfDir.find_last_of('/');      // Gives the location of the last occurence of '/' in the bdfDir path. Eg: bdfDir = ../../../0000:03:00.0
+    auto bdf = bdfDir.substr(loc + 1);              // The bdf will start after the last location of '/'. Eg: bdf = 0000:03:00.0
+    std::replace(bdf.begin(), bdf.end(), ':', '_'); // The ':' is replaced by '_'. Eg: bdf = 0000_03_00.0
+    dirName = dirName + "_" + bdf;                  // The final dirName has bdf name appended to the dirName. Eg: i915_0000_03_00.0 or xe_0000_03_00.0
+}
+
+const std::string SysmanKmdInterface::getSysmanDeviceDirName() const {
+    return sysmanDeviceDirName;
 }
 
 std::string SysmanKmdInterfaceI915::getBasePathI915(uint32_t subDeviceId) {

@@ -157,7 +157,7 @@ ze_result_t SysmanKmdInterfaceXe::getEngineActivityFdListAndConfigPair(zes_engin
         return result;
     }
 
-    const std::string sysmanDeviceDir = std::string(sysDevicesDir) + sysmanDeviceDirName;
+    const std::string sysmanDeviceDir = std::string(sysDevicesDir) + getSysmanDeviceDirName();
     uint64_t activeTicksConfig = UINT64_MAX;
     uint64_t totalTicksConfig = UINT64_MAX;
 
@@ -255,7 +255,7 @@ ze_result_t SysmanKmdInterfaceXe::getBusyAndTotalTicksConfigsForVf(PmuInterface 
                                                                    std::pair<uint64_t, uint64_t> &configPair) {
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    const std::string sysmanDeviceDir = std::string(sysDevicesDir) + sysmanDeviceDirName;
+    const std::string sysmanDeviceDir = std::string(sysDevicesDir) + getSysmanDeviceDirName();
 
     auto ret = pPmuInterface->getPmuConfigs(sysmanDeviceDir, engineClass, engineInstance, gtId, configPair.first, configPair.second);
     if (ret < 0) {
@@ -283,9 +283,8 @@ std::string SysmanKmdInterfaceXe::getGpuUnBindEntry() const {
 }
 
 void SysmanKmdInterfaceXe::setSysmanDeviceDirName(const bool isIntegratedDevice) {
-
     sysmanDeviceDirName = "xe";
-    getDeviceDirName(sysmanDeviceDirName, isIntegratedDevice);
+    updateSysmanDeviceDirName(sysmanDeviceDirName);
 }
 
 } // namespace Sysman

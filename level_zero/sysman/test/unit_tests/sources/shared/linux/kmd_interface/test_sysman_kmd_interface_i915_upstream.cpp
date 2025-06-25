@@ -56,7 +56,7 @@ class SysmanFixtureDeviceI915Upstream : public SysmanDeviceFixture {
     std::unique_ptr<MockPmuInterfaceImp> pPmuInterface;
 
     void SetUp() override {
-
+        VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
         SysmanDeviceFixture::SetUp();
         device = pSysmanDevice;
         pPmuInterface = std::make_unique<MockPmuInterfaceImp>(pLinuxSysmanImp);
@@ -65,6 +65,10 @@ class SysmanFixtureDeviceI915Upstream : public SysmanDeviceFixture {
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
         bool isIntegratedDevice = false;
         pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
+    }
+
+    void mockInitFsAccess() {
+        pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pLinuxSysmanImp->getDrm());
     }
 
     void TearDown() override {
@@ -128,6 +132,29 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenGettingHwMonN
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenGettingEngineBasePathThenCorrectPathIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     EXPECT_STREQ("engine", pSysmanKmdInterface->getEngineBasePath(0).c_str());
+}
+
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenCallingGetSysmanDeviceDirNameForDiscreteDeviceThenCorrectNameIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_STREQ("i915_0000_03_00.0", pSysmanKmdInterface->getSysmanDeviceDirName().c_str());
+}
+
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceAndReadSymLinkFailsWhenCallingGetSysmanDeviceDirNameForDiscreteDeviceThenEmptyStringIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkFailure);
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    bool isIntegratedDevice = false;
+    pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
+    EXPECT_STREQ("", pSysmanKmdInterface->getSysmanDeviceDirName().c_str());
+}
+
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenCallingGetSysmanDeviceDirNameForIntegratedDeviceThenCorrectNameIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Upstream>(pLinuxSysmanImp->getSysmanProductHelper());
+    mockInitFsAccess();
+    bool isIntegratedDevice = true;
+    pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
+    EXPECT_STREQ("i915", pSysmanKmdInterface->getSysmanDeviceDirName().c_str());
 }
 
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenCallingGetEngineClassStringThenCorrectPathIsReturned) {

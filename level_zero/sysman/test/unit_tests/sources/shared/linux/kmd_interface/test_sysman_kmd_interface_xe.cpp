@@ -40,11 +40,17 @@ static ssize_t mockReadSuccess(int fd, void *buf, size_t count, off_t offset) {
     return count;
 }
 
+static int mockReadLinkFailure(const char *path, char *buf, size_t bufsize) {
+    errno = ENOENT;
+    return -1;
+}
+
 class SysmanFixtureDeviceXe : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockPmuInterfaceImp> pPmuInterface;
 
     void SetUp() override {
+        VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
         SysmanDeviceFixture::SetUp();
         pPmuInterface = std::make_unique<MockPmuInterfaceImp>(pLinuxSysmanImp);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper()));
@@ -55,7 +61,6 @@ class SysmanFixtureDeviceXe : public SysmanDeviceFixture {
     }
 
     void mockInitFsAccess() {
-        VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
         pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pLinuxSysmanImp->getDrm());
     }
 
@@ -63,6 +68,19 @@ class SysmanFixtureDeviceXe : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
     }
 };
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenCallingGetSysmanDeviceDirNameThenCorrectNameIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_STREQ("xe_0000_03_00.0", pSysmanKmdInterface->getSysmanDeviceDirName().c_str());
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndReadSymLinkFailsWhenCallingGetSysmanDeviceDirNameThenEmptyStringIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkFailure);
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    bool isIntegratedDevice = false;
+    pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
+    EXPECT_STREQ("", pSysmanKmdInterface->getSysmanDeviceDirName().c_str());
+}
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingSysfsFileNamesThenProperPathsAreReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
