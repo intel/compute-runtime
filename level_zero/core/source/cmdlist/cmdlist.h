@@ -477,8 +477,6 @@ struct CommandList : _ze_command_list_handle_t {
     int64_t currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
 
-    uint64_t currentScratchPatchAddress = 0;
-
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;
     CommandQueue *cmdQImmediateCopyOffload = nullptr;

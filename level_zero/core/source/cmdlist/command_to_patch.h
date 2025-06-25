@@ -35,15 +35,13 @@ struct CommandToPatch {
         Invalid
     };
     void *pDestination = nullptr;
-    union {
-        void *pCommand;
-        mutable uint64_t scratchAddressAfterPatch;
-    };
+    void *pCommand = nullptr;
+    uint64_t baseAddress = 0;
+    mutable uint64_t scratchAddressAfterPatch = 0;
     size_t offset = 0;
-    CommandType type = Invalid;
     size_t inOrderPatchListIndex = 0;
     size_t patchSize = 0;
-    uint64_t baseAddress = 0;
+    CommandType type = Invalid;
 };
 
 using CommandToPatchContainer = std::vector<CommandToPatch>;

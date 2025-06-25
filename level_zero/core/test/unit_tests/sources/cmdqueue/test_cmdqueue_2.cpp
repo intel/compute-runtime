@@ -1058,20 +1058,23 @@ HWTEST2_F(CommandQueueScratchTests, givenInlineDataScratchWhenPatchCommandsIsCal
     constexpr uint64_t dummyScratchAddress = 0xdeadu;
     constexpr uint64_t baseAddress = 0x1234u;
     constexpr uint64_t scratchAddress = 0x5000u;
+    constexpr uint64_t expectedPatchedScratchAddress = baseAddress + scratchAddress;
 
     struct TestCase {
-        const char *name;
         bool undefinedPatchSize;
         bool undefinedOffset;
         bool scratchAlreadyPatched;
+        bool scratchControllerChanged;
         uint64_t expectedValue;
     };
 
     const TestCase testCases[] = {
-        {"Valid patchSize and offset - should patch", false, false, false, scratchAddress + baseAddress},
-        {"Undefined patchSize - should not patch", true, false, false, dummyScratchAddress},
-        {"Undefined offset - should not patch", false, true, false, dummyScratchAddress},
-        {"scratchAddressAfterPatch==scratchAddress - should not patch", false, false, true, dummyScratchAddress}};
+        {false, false, false, false, expectedPatchedScratchAddress}, // Valid patchSize and offset - should patch
+        {false, false, false, true, expectedPatchedScratchAddress},  // scratchControllerChanged - should patch
+        {true, false, false, false, dummyScratchAddress},            // Undefined patchSize - should not patch
+        {false, true, false, false, dummyScratchAddress},            // Undefined offset - should not patch
+        {false, false, true, false, dummyScratchAddress},            // scratchAddressAfterPatch==scratchAddress - should not patch
+    };
 
     for (const auto &testCase : testCases) {
         uint64_t scratchBuffer = dummyScratchAddress;
@@ -1086,9 +1089,43 @@ HWTEST2_F(CommandQueueScratchTests, givenInlineDataScratchWhenPatchCommandsIsCal
         cmd.scratchAddressAfterPatch = testCase.scratchAlreadyPatched ? scratchAddress : 0;
 
         commandList->commandsToPatch.push_back(cmd);
-        commandQueue->patchCommands(*commandList, scratchAddress, false);
+        commandQueue->patchCommands(*commandList, scratchAddress, testCase.scratchControllerChanged);
 
         EXPECT_EQ(testCase.expectedValue, scratchBuffer);
+    }
+}
+
+HWTEST2_F(CommandQueueScratchTests, givenImplicitArgsScratchWhenPatchCommandsIsCalledThenCommandsAreCorrectlyPatched, IsAtLeastXeCore) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, csr, &desc);
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+
+    constexpr uint64_t dummyScratchAddress = 0xdeadu;
+    constexpr uint64_t baseAddress = 0x1234u;
+    constexpr uint64_t scratchAddress = 0x5000u;
+    constexpr uint64_t expectedPatchedScratchAddress = baseAddress + scratchAddress;
+
+    for (const bool scratchControllerChanged : {false, true}) {
+        for (const bool scratchAlreadyPatched : {false, true}) {
+            const uint64_t expectedValue = (scratchControllerChanged || !scratchAlreadyPatched) ? expectedPatchedScratchAddress : dummyScratchAddress;
+            uint64_t scratchBuffer = dummyScratchAddress;
+            commandList->commandsToPatch.clear();
+
+            CommandToPatch cmd;
+            cmd.type = CommandToPatch::ComputeWalkerImplicitArgsScratch;
+            cmd.pDestination = &scratchBuffer;
+            cmd.baseAddress = baseAddress;
+            cmd.offset = 0;
+            cmd.patchSize = sizeof(uint64_t);
+            cmd.scratchAddressAfterPatch = scratchAlreadyPatched ? scratchAddress : 0;
+
+            commandList->commandsToPatch.push_back(cmd);
+            commandQueue->patchCommands(*commandList, scratchAddress, scratchControllerChanged);
+
+            EXPECT_EQ(expectedValue, scratchBuffer);
+        }
     }
 }
 
