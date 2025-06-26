@@ -293,7 +293,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
     if (!this->inOrderExecInfo.get()) {
-        return ZE_RESULT_SUCCESS;
+        return reportEmptyCbEventAsReady ? ZE_RESULT_SUCCESS : ZE_RESULT_NOT_READY;
     }
 
     auto waitValue = getInOrderExecSignalValueWithSubmissionCounter();

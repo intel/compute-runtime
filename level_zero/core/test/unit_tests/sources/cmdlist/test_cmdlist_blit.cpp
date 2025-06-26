@@ -932,6 +932,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         debugManager.flags.SplitBcsCopy.set(1);
 
         device = createDevice();
+        context = Context::fromHandle(driverHandle->getDefaultContext());
         cmdList = createCmdList();
     }
 
@@ -958,40 +959,63 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         ze_result_t returnValue;
 
         ze_command_queue_desc_t desc = {};
+        desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
         desc.ordinal = static_cast<uint32_t>(device->getNEODevice()->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-        std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
-                                                                                   device.get(),
-                                                                                   &desc,
-                                                                                   false,
-                                                                                   NEO::EngineGroupType::copy,
-                                                                                   returnValue));
+        std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
+                                                                                  device.get(),
+                                                                                  &desc,
+                                                                                  false,
+                                                                                  NEO::EngineGroupType::copy,
+                                                                                  returnValue));
 
-        return commandList0;
+        return commandList;
+    }
+
+    void *allocHostMem() {
+        void *alloc = nullptr;
+        ze_host_mem_alloc_desc_t deviceDesc = {};
+        context->allocHostMem(&deviceDesc, copySize, 4096, &alloc);
+
+        return alloc;
     }
 
     DebugManagerStateRestore restore;
+    CmdListMemoryCopyParams copyParams = {};
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     std::unique_ptr<L0::Device> device;
     std::unique_ptr<L0::CommandList> cmdList;
     BcsSplit *bcsSplit = nullptr;
+    Context *context = nullptr;
+    const size_t copySize = 4 * MemoryConstants::megaByte;
 };
 
 HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, IsAtLeastXeHpcCore) {
     EXPECT_EQ(0u, bcsSplit->events.subcopy.size());
     EXPECT_TRUE(bcsSplit->events.aggregatedEventsMode);
 
-    auto context = Context::fromHandle(driverHandle->getDefaultContext());
-
     for (size_t i = 0; i < 8; i++) {
         auto index = bcsSplit->events.obtainForSplit(context, 123);
-        bcsSplit->events.resetAggregatedEventState(0, 0);
         ASSERT_TRUE(index.has_value());
         EXPECT_EQ(i, *index);
 
+        EXPECT_EQ(0u, *bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
+        EXPECT_FALSE(bcsSplit->events.subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+        EXPECT_TRUE(bcsSplit->events.subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
+        EXPECT_EQ(1u, bcsSplit->events.subcopy[i]->getInOrderIncrementValue());
+        EXPECT_EQ(static_cast<uint64_t>(bcsSplit->cmdQs.size()), bcsSplit->events.subcopy[i]->getInOrderExecBaseSignalValue());
+
+        EXPECT_EQ(nullptr, bcsSplit->events.marker[i]->getInOrderExecInfo());
+        EXPECT_TRUE(bcsSplit->events.marker[i]->isCounterBased());
+        EXPECT_TRUE(bcsSplit->events.marker[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+        EXPECT_FALSE(bcsSplit->events.marker[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
+
+        // already reserved for this obtainForSplit() call
+        EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.marker[i]->queryStatus());
+
         EXPECT_EQ(8u, bcsSplit->events.subcopy.size());
         EXPECT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
-        EXPECT_EQ(0u, bcsSplit->events.marker.size());
+        EXPECT_EQ(8u, bcsSplit->events.marker.size());
         EXPECT_EQ(0u, bcsSplit->events.barrier.size());
     }
 
@@ -999,14 +1023,26 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
     ASSERT_TRUE(index.has_value());
     EXPECT_EQ(8u, *index);
     EXPECT_EQ(16u, bcsSplit->events.subcopy.size());
+    EXPECT_EQ(16u, bcsSplit->events.marker.size());
     EXPECT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
 
-    bcsSplit->events.resetAggregatedEventState(1, static_cast<uint64_t>(bcsSplit->cmdQs.size()));
+    for (size_t i = 0; i < 16; i++) {
+        EXPECT_EQ(0u, *bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
+
+        if (i <= 8) {
+            EXPECT_EQ(ZE_RESULT_NOT_READY, bcsSplit->events.marker[i]->queryStatus());
+        } else {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, bcsSplit->events.marker[i]->queryStatus());
+        }
+    }
+
+    bcsSplit->events.resetAggregatedEventState(1, true);
 
     index = bcsSplit->events.obtainForSplit(context, 123);
     ASSERT_TRUE(index.has_value());
     EXPECT_EQ(1u, *index);
     EXPECT_EQ(16u, bcsSplit->events.subcopy.size());
+    EXPECT_EQ(16u, bcsSplit->events.marker.size());
     EXPECT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
 
     for (auto &event : bcsSplit->events.subcopy) {
@@ -1017,8 +1053,6 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, givenMultipleEventsWhenObtainIsCalledTheAssignNewDeviceAlloc, IsAtLeastXeHpcCore) {
-    auto context = Context::fromHandle(driverHandle->getDefaultContext());
-
     auto index = bcsSplit->events.obtainForSplit(context, 123);
     EXPECT_EQ(8u, bcsSplit->events.subcopy.size());
     ASSERT_EQ(1u, bcsSplit->events.allocsForAggregatedEvents.size());
@@ -1052,6 +1086,29 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMultipleEventsWhenObtainIsCalledTheAssig
         EXPECT_EQ(castToUint64(ptrOffset(alloc2, offset)), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseDeviceAddress());
         EXPECT_EQ(ptrOffset(alloc2, offset), bcsSplit->events.subcopy[i]->getInOrderExecInfo()->getBaseHostAddress());
     }
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenResetItsState, IsAtLeastXeHpcCore) {
+    auto ptr = allocHostMem();
+
+    auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
+
+    cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.marker[0]->getInOrderExecInfo().get());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[0]->getInOrderExecBaseSignalValue());
+
+    cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.marker[1]->getInOrderExecInfo().get());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[1]->getInOrderExecBaseSignalValue());
+
+    *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 2;
+
+    cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(nullptr, bcsSplit->events.marker[2]->getInOrderExecInfo().get());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.marker[0]->getInOrderExecInfo().get());
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[0]->getInOrderExecBaseSignalValue());
+
+    context->freeMem(ptr);
 }
 
 } // namespace ult

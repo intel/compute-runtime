@@ -124,9 +124,9 @@ BcsSplit::Events::Events(BcsSplit &bcsSplit) : bcsSplit(bcsSplit) {
 };
 
 size_t BcsSplit::Events::obtainAggregatedEventsForSplit(Context *context) {
-    for (size_t i = 0; i < this->subcopy.size(); i++) {
-        if (this->subcopy[i]->queryStatus() == ZE_RESULT_SUCCESS) {
-            resetAggregatedEventState(i, 0);
+    for (size_t i = 0; i < this->marker.size(); i++) {
+        if (this->marker[i]->queryStatus() == ZE_RESULT_SUCCESS) {
+            resetAggregatedEventState(i, false);
             return i;
         }
     }
@@ -186,14 +186,18 @@ size_t BcsSplit::Events::createAggregatedEvent(Context *context) {
     constexpr int preallocationCount = 8;
     size_t returnIndex = this->subcopy.size();
 
-    zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES};
-    externalStorageAllocProperties.completionValue = static_cast<uint64_t>(bcsSplit.cmdQs.size());
-    externalStorageAllocProperties.incrementValue = 1;
+    zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES,
+                                                                                            .incrementValue = 1,
+                                                                                            .completionValue = static_cast<uint64_t>(bcsSplit.cmdQs.size())};
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
-    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_DEVICE;
-    counterBasedDesc.pNext = &externalStorageAllocProperties;
+    const zex_counter_based_event_desc_t counterBasedDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
+                                                             .pNext = &externalStorageAllocProperties,
+                                                             .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE,
+                                                             .signalScope = ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+    const zex_counter_based_event_desc_t markerCounterBasedDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
+                                                                   .flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE,
+                                                                   .signalScope = ZE_EVENT_SCOPE_FLAG_HOST};
 
     for (int i = 0; i < preallocationCount; i++) {
         externalStorageAllocProperties.deviceAddress = getNextAllocationForAggregatedEvent();
@@ -204,7 +208,13 @@ size_t BcsSplit::Events::createAggregatedEvent(Context *context) {
 
         this->subcopy.push_back(Event::fromHandle(handle));
 
-        resetAggregatedEventState(this->subcopy.size() - 1, (i == 0) ? 0 : externalStorageAllocProperties.completionValue);
+        ze_event_handle_t markerHandle = nullptr;
+        zexCounterBasedEventCreate2(context, bcsSplit.device.toHandle(), &markerCounterBasedDesc, &markerHandle);
+        UNRECOVERABLE_IF(markerHandle == nullptr);
+
+        this->marker.push_back(Event::fromHandle(markerHandle));
+
+        resetAggregatedEventState(this->subcopy.size() - 1, (i != 0));
     }
 
     return returnIndex;
@@ -282,15 +292,13 @@ void BcsSplit::Events::resetEventPackage(size_t index) {
     }
 }
 
-void BcsSplit::Events::resetAggregatedEventState(size_t index, uint64_t value) {
-    auto event = this->subcopy[index];
-    *event->getInOrderExecInfo()->getBaseHostAddress() = value;
+void BcsSplit::Events::resetAggregatedEventState(size_t index, bool markerCompleted) {
+    *this->subcopy[index]->getInOrderExecInfo()->getBaseHostAddress() = 0;
 
-    if (value == 0) {
-        event->resetCompletionStatus();
-    } else {
-        event->setIsCompleted();
-    }
+    auto markerEvent = this->marker[index];
+    markerEvent->resetCompletionStatus();
+    markerEvent->unsetInOrderExecInfo();
+    markerEvent->setReportEmptyCbEventAsReady(markerCompleted);
 }
 
 void BcsSplit::Events::releaseResources() {

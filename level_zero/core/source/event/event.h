@@ -341,6 +341,7 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t hostEventSetValue(State eventState) = 0;
 
     size_t getOffsetInSharedAlloc() const { return offsetInSharedAlloc; }
+    void setReportEmptyCbEventAsReady(bool reportEmptyCbEventAsReady) { this->reportEmptyCbEventAsReady = reportEmptyCbEventAsReady; }
 
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
@@ -353,6 +354,8 @@ struct Event : _ze_event_handle_t {
     virtual void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) = 0;
 
     EventPool *eventPool = nullptr;
+
+    uint64_t timestampRefreshIntervalInNanoSec = 0;
 
     uint64_t globalStartTS = 1;
     uint64_t globalEndTS = 1;
@@ -416,7 +419,8 @@ struct Event : _ze_event_handle_t {
     bool interruptMode = false;
     bool isSharableCounterBased = false;
     bool mitigateHostVisibleSignal = false;
-    uint64_t timestampRefreshIntervalInNanoSec = 0;
+    bool reportEmptyCbEventAsReady = true;
+
     static const uint64_t completionTimeoutMs;
 };
 
