@@ -201,7 +201,7 @@ void SVMAllocsManager::SvmAllocationCache::trim() {
 }
 
 void SVMAllocsManager::SvmAllocationCache::cleanup() {
-    DEBUG_BREAK_IF(this->memoryManager);
+    DEBUG_BREAK_IF(nullptr == this->memoryManager);
     if (auto usmReuseCleaner = this->memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner.get()) {
         usmReuseCleaner->unregisterSvmAllocationCache(this);
     }
