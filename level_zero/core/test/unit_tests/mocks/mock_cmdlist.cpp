@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ WhiteBox<::L0::CommandListImp>::WhiteBox() : BaseClass(BaseClass::defaultNumIdds
 
 WhiteBox<::L0::CommandListImp>::~WhiteBox() {}
 
-MockCommandList::MockCommandList(Device *device) : WhiteBox<::L0::CommandListImp>() {
+Mock<CommandList>::Mock(Device *device) : WhiteBox<::L0::CommandListImp>() {
     this->device = device;
     size_t batchBufferSize = 65536u;
     batchBuffer = new uint8_t[batchBufferSize];
@@ -29,7 +29,7 @@ MockCommandList::MockCommandList(Device *device) : WhiteBox<::L0::CommandListImp
                                                  NEO::MemoryManager::maxOsContextCount);
 }
 
-MockCommandList::~MockCommandList() {
+Mock<CommandList>::~Mock() {
     delete mockAllocation;
     delete[] batchBuffer;
 }

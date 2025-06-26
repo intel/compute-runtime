@@ -12,6 +12,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/kernel/kernel.h"
+#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
@@ -343,11 +344,12 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
 
 using CommandList = WhiteBox<::L0::CommandListImp>;
 
-struct MockCommandList : public CommandList {
+template <>
+struct Mock<CommandList> : public CommandList {
     using BaseClass = CommandList;
 
-    MockCommandList(Device *device = nullptr);
-    ~MockCommandList() override;
+    Mock(Device *device = nullptr);
+    ~Mock() override;
 
     ADDMETHOD_NOBASE(close, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
@@ -627,6 +629,8 @@ struct MockCommandList : public CommandList {
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;
 };
+
+using MockCommandList = Mock<CommandList>;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {

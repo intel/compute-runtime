@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
 namespace L0 {
@@ -65,6 +66,23 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(openEventPoolIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle));
     ADDMETHOD_NOBASE(createEventPool, ze_result_t, ZE_RESULT_SUCCESS, (const ze_event_pool_desc_t *desc, uint32_t numDevices, ze_device_handle_t *phDevices, ze_event_pool_handle_t *phEventPool));
     ADDMETHOD_NOBASE(createImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage));
+    ADDMETHOD_NOBASE_OVERLOAD(freeMem, _BL, ze_result_t, ZE_RESULT_SUCCESS, (const void *ptr, bool blocking));
+    ADDMETHOD_NOBASE(freeMemExt, ze_result_t, ZE_RESULT_SUCCESS, (const ze_memory_free_ext_desc_t *pMemFreeDesc, void *ptr));
+    ADDMETHOD_NOBASE(getIpcMemHandles, ze_result_t, ZE_RESULT_SUCCESS, (const void *, uint32_t *, ze_ipc_mem_handle_t *));
+    ADDMETHOD_NOBASE(putIpcMemHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle));
+    ADDMETHOD_NOBASE(getIpcHandleFromFd, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle));
+    ADDMETHOD_NOBASE(getFdFromIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle));
+    ADDMETHOD_NOBASE(openIpcMemHandles, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, uint32_t, ze_ipc_mem_handle_t *, ze_ipc_memory_flags_t, void **));
+    ADDMETHOD_NOBASE(getImageAllocProperties, ze_result_t, ZE_RESULT_SUCCESS, (L0::Image *, ze_image_allocation_ext_properties_t *));
+    ADDMETHOD_NOBASE(setAtomicAccessAttribute, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t attr));
+    ADDMETHOD_NOBASE(getAtomicAccessAttribute, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t *pAttr));
+    ADDMETHOD_NOBASE(getVirtualAddressSpaceIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, ze_ipc_mem_handle_t *));
+    ADDMETHOD_NOBASE(putVirtualAddressSpaceIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle));
+    ADDMETHOD_NOBASE(lockMemory, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, void *ptr, size_t size));
+    ADDMETHOD_NOBASE(isShareableMemory, bool, true, (const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice));
+    ADDMETHOD_NOBASE(getMemHandlePtr, void *, nullptr, (ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, ze_ipc_memory_flags_t flags));
+    ADDMETHOD_NOBASE(getPitchFor2dImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, size_t, size_t, unsigned int, size_t *));
+    ADDMETHOD_NOBASE(getContextExt, ContextExt *, nullptr, ());
 };
 
 struct ContextShareableMock : public L0::ContextImp {

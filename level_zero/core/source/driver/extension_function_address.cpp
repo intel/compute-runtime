@@ -118,6 +118,19 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculateMultipleValuesExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculateValuesExp);
 
+    // Graphs
+    RETURN_FUNC_PTR_IF_EXIST(zeGraphCreateExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListBeginGraphCaptureExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListBeginCaptureIntoGraphExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListEndGraphCaptureExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListInstantiateGraphExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListAppendGraphExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeGraphDestroyExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeExecutableGraphDestroyExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeCommandListIsGraphCaptureEnabledExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeGraphIsEmptyExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeGraphDumpContentsExp);
+
 #undef RETURN_FUNC_PTR_IF_EXIST
 
     return ExtensionFunctionAddressHelper::getAdditionalExtensionFunctionAddress(functionName);

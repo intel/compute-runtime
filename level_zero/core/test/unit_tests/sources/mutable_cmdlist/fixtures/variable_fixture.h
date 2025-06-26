@@ -223,8 +223,6 @@ struct VariableFixture : public MutableCommandListFixtureInit {
     bool inOrder = false;
 };
 
-struct MockCommandList;
-
 struct VariableInOrderFixture : public VariableFixture {
     void setUp();
     void attachCbEvent(Event *event, L0::ult::MockCommandList *cmdList);

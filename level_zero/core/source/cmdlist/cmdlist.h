@@ -49,6 +49,7 @@ struct Kernel;
 struct CommandQueue;
 struct CmdListKernelLaunchParams;
 struct CmdListMemoryCopyParams;
+struct Graph;
 
 struct CmdListReturnPoint {
     NEO::StreamProperties configSnapshot;
@@ -444,6 +445,14 @@ struct CommandList : _ze_command_list_handle_t {
     }
     ze_result_t obtainLaunchParamsFromExtensions(const ze_base_desc_t *desc, CmdListKernelLaunchParams &launchParams, ze_kernel_handle_t kernelHandle) const;
 
+    void setCaptureTarget(Graph *graph) {
+        this->captureTarget = graph;
+    }
+
+    Graph *getCaptureTarget() const {
+        return this->captureTarget;
+    }
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
@@ -541,6 +550,8 @@ struct CommandList : _ze_command_list_handle_t {
     bool l3FlushAfterPostSyncRequired = false;
     bool textureCacheFlushPending = false;
     bool closedCmdList = false;
+
+    Graph *captureTarget = nullptr;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

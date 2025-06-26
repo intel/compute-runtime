@@ -1,0 +1,179 @@
+/*
+ * Copyright (C) 2025 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "level_zero/driver_experimental/zex_graph.h"
+
+#include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/context/context.h"
+#include "level_zero/experimental/source/graph/graph.h"
+
+namespace L0 {
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphCreateExp(ze_context_handle_t hContext, ze_graph_handle_t *phGraph, void *pNext) {
+    if (nullptr != pNext) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto ctx = L0::Context::fromHandle(hContext);
+    if (nullptr == ctx) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (nullptr == phGraph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    *phGraph = new Graph(ctx, true);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListBeginGraphCaptureExp(ze_command_list_handle_t hCommandList, void *pNext) {
+    if (nullptr != pNext) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if (nullptr == cmdList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (cmdList->getCaptureTarget() != nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    ze_context_handle_t hCtx = nullptr;
+    cmdList->getContextHandle(&hCtx);
+    auto ctx = L0::Context::fromHandle(hCtx);
+
+    cmdList->setCaptureTarget(new Graph(ctx, false));
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListBeginCaptureIntoGraphExp(ze_command_list_handle_t hCommandList, ze_graph_handle_t hGraph, void *pNext) {
+    if (nullptr != pNext) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if (nullptr == cmdList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (cmdList->getCaptureTarget() != nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto graph = L0::Graph::fromHandle(hGraph);
+    if (nullptr == graph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    cmdList->setCaptureTarget(graph);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListEndGraphCaptureExp(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph, void *pNext) {
+    if (nullptr != pNext) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if (nullptr == cmdList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (nullptr == cmdList->getCaptureTarget()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (nullptr == phGraph) {
+        if (cmdList->getCaptureTarget()->wasPreallocated()) {
+            cmdList->setCaptureTarget(nullptr);
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    } else {
+        *phGraph = cmdList->getCaptureTarget();
+        cmdList->setCaptureTarget(nullptr);
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListInstantiateGraphExp(ze_graph_handle_t hGraph, ze_executable_graph_handle_t *phExecutableGraph, void *pNext) {
+    if (nullptr != pNext) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto virtualGraph = L0::Graph::fromHandle(hGraph);
+    if (nullptr == virtualGraph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (nullptr == phExecutableGraph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    *phExecutableGraph = new ExecutableGraph(virtualGraph);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendGraphExp(ze_command_list_handle_t hCommandList, ze_executable_graph_handle_t hGraph, void *pNext,
+                                                                ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    if (nullptr != pNext) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if (nullptr == cmdList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto graph = L0::ExecutableGraph::fromHandle(hGraph);
+    if (nullptr == graph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphDestroyExp(ze_graph_handle_t hGraph) {
+    auto graph = L0::Graph::fromHandle(hGraph);
+    if (nullptr == graph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    delete graph;
+    return ZE_RESULT_SUCCESS;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeExecutableGraphDestroyExp(ze_executable_graph_handle_t hGraph) {
+    auto graph = L0::ExecutableGraph::fromHandle(hGraph);
+    if (nullptr == graph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    delete graph;
+    return ZE_RESULT_SUCCESS;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsGraphCaptureEnabledExp(ze_command_list_handle_t hCommandList) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphIsEmptyExp(ze_graph_handle_t hGraph) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const char *filePath, void *pNext) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+} // namespace L0

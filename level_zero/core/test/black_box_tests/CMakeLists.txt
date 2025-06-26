@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -56,6 +56,7 @@ set(TEST_TARGETS
     zello_fill
     zello_function_pointers_cl
     zello_global_bindless_kernel
+    zello_graph
     zello_host_pointer
     zello_image
     zello_image_view

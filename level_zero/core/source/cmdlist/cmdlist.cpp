@@ -23,6 +23,7 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/experimental/source/graph/graph.h"
 
 namespace L0 {
 
@@ -39,6 +40,9 @@ CommandList::~CommandList() {
     }
     removeMemoryPrefetchAllocations();
     printfKernelContainer.clear();
+    if (captureTarget && (false == captureTarget->wasPreallocated())) {
+        delete captureTarget;
+    }
 }
 
 void CommandList::storePrintfKernel(Kernel *kernel) {

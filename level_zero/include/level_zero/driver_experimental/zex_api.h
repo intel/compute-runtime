@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@
 #include "zex_cmdlist.h"
 #include "zex_driver.h"
 #include "zex_event.h"
+#include "zex_graph.h"
 #include "zex_memory.h"
 #include "zex_module.h"
 
