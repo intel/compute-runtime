@@ -416,6 +416,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     }
 
     auto kernel = Kernel::fromHandle(kernelHandle);
+
+    auto result = validateLaunchParams(*kernel, launchParams);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
     auto ioh = commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::IndirectHeapType::indirectObject, getIohSizeForPrefetch(*kernel, launchParams.reserveExtraPayloadSpace), GfxFamily::indirectDataAlignment);
 
     ensureCmdBufferSpaceForPrefetch();

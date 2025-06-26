@@ -235,7 +235,7 @@ struct CommandList : _ze_command_list_handle_t {
     void setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const;
     void setAdditionalDispatchKernelArgsFromKernel(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const Kernel *kernel) const;
 
-    ze_result_t validateLaunchParams(const CmdListKernelLaunchParams &launchParams) const;
+    ze_result_t validateLaunchParams(const Kernel &kernel, const CmdListKernelLaunchParams &launchParams) const;
 
     void setOrdinal(uint32_t ord) { ordinal = ord; }
     void setCommandListPerThreadScratchSize(uint32_t slotId, uint32_t size) {
