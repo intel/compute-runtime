@@ -1864,6 +1864,46 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     EXPECT_FALSE(regularCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining);
 }
 
+HWTEST2_F(InOrderRegularCmdListTests, givenAppendMemoryFillWhenHostSynchronizeThenStoreFillAllocationsInReusableContainer, IsAtLeastXeCore) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    EXPECT_EQ(immCmdList->patternAllocations.size(), 0u);
+    EXPECT_TRUE(static_cast<DeviceImp *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocDeviceMem(size);
+    uint64_t pattern = 0u;
+
+    immCmdList->appendMemoryFill(data, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(immCmdList->patternAllocations.size(), 1u);
+    EXPECT_TRUE(static_cast<DeviceImp *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
+
+    immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(immCmdList->patternAllocations.size(), 0u);
+    EXPECT_FALSE(static_cast<DeviceImp *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
+
+    context->freeMem(data);
+}
+
+HWTEST2_F(InOrderRegularCmdListTests, givenAppendMemoryFillWhenResetThenStoreFillAllocationsInReusableContainer, IsAtLeastXeCore) {
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    EXPECT_EQ(regularCmdList->patternAllocations.size(), 0u);
+    EXPECT_TRUE(static_cast<DeviceImp *>(regularCmdList->device)->allocationsForReuse->peekIsEmpty());
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocDeviceMem(size);
+    uint64_t pattern = 0u;
+
+    regularCmdList->appendMemoryFill(data, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(regularCmdList->patternAllocations.size(), 1u);
+    EXPECT_TRUE(static_cast<DeviceImp *>(regularCmdList->device)->allocationsForReuse->peekIsEmpty());
+
+    regularCmdList->reset();
+    EXPECT_EQ(regularCmdList->patternAllocations.size(), 0u);
+    EXPECT_FALSE(static_cast<DeviceImp *>(regularCmdList->device)->allocationsForReuse->peekIsEmpty());
+
+    context->freeMem(data);
+}
+
 HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenUpdateCounterAllocation, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 

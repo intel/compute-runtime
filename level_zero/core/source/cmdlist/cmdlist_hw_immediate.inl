@@ -1197,6 +1197,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                 if (inOrderExecInfo) {
                     inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
                 }
+
+                for (auto &patternAlloc : this->patternAllocations) {
+                    this->device->storeReusableAllocation(*patternAlloc);
+                }
+                this->patternAllocations.clear();
             }
 
             bool hangDetected = status == ZE_RESULT_ERROR_DEVICE_LOST;
