@@ -26,6 +26,13 @@ cl_int CommandQueueHw<GfxFamily>::finish() {
     if (!l3FlushedAfterCpuRead && l3FlushAfterPostSyncEnabled) {
         csr.flushTagUpdate();
         this->l3FlushedAfterCpuRead = true;
+
+        CompletionStamp completionStamp = {
+            csr.peekTaskCount(),
+            csr.peekTaskLevel(),
+            csr.obtainCurrentFlushStamp()};
+
+        this->updateFromCompletionStamp(completionStamp, nullptr);
     }
 
     // Stall until HW reaches taskCount on all its engines

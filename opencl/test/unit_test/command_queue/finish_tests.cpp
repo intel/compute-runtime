@@ -117,7 +117,13 @@ HWTEST_F(FinishTest, givenL3FlushAfterPostSyncEnabledWhenFlushTagUpdateIsCalledT
 
     auto &csr = cmdQ.getUltCommandStreamReceiver();
     auto used = csr.commandStream.getUsed();
+
+    auto taskCount = csr.taskCount.load();
     auto retVal = cmdQ.finish();
+
+    EXPECT_EQ(taskCount + 1, csr.taskCount.load());
+    EXPECT_EQ(taskCount + 1, cmdQ.taskCount);
+
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     HardwareParse hwParse;
