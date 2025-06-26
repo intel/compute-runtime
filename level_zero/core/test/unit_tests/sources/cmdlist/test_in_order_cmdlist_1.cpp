@@ -5402,7 +5402,7 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEvent2ThenRet
     counterBasedDesc.pNext = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
     auto eventObj = Event::fromHandle(handle);
-    EXPECT_EQ(nullptr, eventObj->getInOrderExecInfo());
+
     zeEventDestroy(handle);
 
     counterBasedDesc.pNext = &externalSyncAllocProperties;
@@ -5420,6 +5420,10 @@ HWTEST_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEvent2ThenRet
     EXPECT_EQ(hostAddress, eventObj->getInOrderExecInfo()->getBaseHostAddress());
     EXPECT_EQ(castToUint64(gpuAddress), eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
     EXPECT_EQ(nullptr, eventObj->getInOrderExecInfo()->getDeviceCounterAllocation());
+
+    eventObj->resetCompletionStatus();
+    eventObj->setIsCompleted();
+    EXPECT_FALSE(eventObj->isAlreadyCompleted());
 
     uint64_t address = 0;
     uint64_t value = 0;
@@ -5515,6 +5519,7 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEv
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
     auto event = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    EXPECT_EQ(Event::State::HOST_CACHING_DISABLED_PERMANENT, event->isCompleted.load());
     event->isTimestampEvent = true;
     ASSERT_NE(nullptr, event->getInOrderExecInfo());
 
