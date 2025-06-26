@@ -2389,7 +2389,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
-    bool useImmediateFill = patternSize == 1 || (patternSize <= 4 && (dstAllocation.offset % sizeof(uint32_t) == 0) && (size % (sizeof(uint32_t) * 4) == 0));
+    bool useImmediateFill = patternSize == 1 || (patternSize <= 4 && isAligned<sizeof(uint32_t)>(dstAllocation.offset) && isAligned<sizeof(uint32_t) * 4>(size));
     auto builtin = useImmediateFill
                        ? BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless)
                        : BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless);
@@ -4070,7 +4070,7 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFillKernelArguments(size_t baseO
                                                                     CmdListFillKernelArguments &outArguments,
                                                                     Kernel *kernel) {
     constexpr auto dataTypeSize = sizeof(uint32_t) * 4;
-    if (patternSize == 1 || (patternSize <= 4 && (baseOffset % sizeof(uint32_t) == 0) && (dstSize % dataTypeSize == 0))) {
+    if (patternSize == 1 || (patternSize <= 4 && isAligned<sizeof(uint32_t)>(baseOffset) && isAligned<dataTypeSize>(dstSize))) {
         size_t middleSize = dstSize;
         outArguments.mainOffset = baseOffset;
         outArguments.leftRemainingBytes = sizeof(uint32_t) - (baseOffset % sizeof(uint32_t));
