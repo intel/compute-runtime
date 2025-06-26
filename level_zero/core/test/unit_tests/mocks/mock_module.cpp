@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
-
-#include "level_zero/core/source/device/device.h"
 
 namespace L0 {
 namespace ult {

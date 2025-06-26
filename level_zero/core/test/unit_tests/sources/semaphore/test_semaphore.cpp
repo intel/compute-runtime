@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -15,12 +13,15 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
-#include "level_zero/ze_intel_gpu.h"
 
 using namespace NEO;
 #include "gtest/gtest.h"
+
+namespace L0 {
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct CommandListCoreFamilyImmediate;
+} // namespace L0
 
 namespace L0 {
 namespace ult {

@@ -11,7 +11,14 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
+
+namespace NEO {
+class Device;
+} // namespace NEO
+
 namespace L0 {
+struct DriverHandleImp;
+
 namespace ult {
 
 template <bool useImagesBuiltins, bool isStateless>

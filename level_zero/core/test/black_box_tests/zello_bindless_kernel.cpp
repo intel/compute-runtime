@@ -6,16 +6,13 @@
  */
 
 #include "level_zero/core/source/image/image_format_desc_helper.h"
-#include "level_zero/driver_experimental/ze_bindless_image_exp.h"
 #include <level_zero/ze_api.h>
 
 #include "zello_common.h"
 #include "zello_compile.h"
 
-#include <array>
 #include <cstring>
 #include <iostream>
-#include <numeric>
 #include <sstream>
 
 namespace {

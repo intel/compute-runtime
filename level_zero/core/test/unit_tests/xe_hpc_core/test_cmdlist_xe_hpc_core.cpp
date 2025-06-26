@@ -22,7 +22,12 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct CommandListCoreFamily;
+
 namespace ult {
+template <typename Type>
+struct WhiteBox;
 
 struct LocalMemoryModuleFixture : public ModuleFixture {
     void setUp() {

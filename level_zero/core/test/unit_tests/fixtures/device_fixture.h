@@ -21,17 +21,20 @@
 #include "level_zero/core/test/unit_tests/mock.h"
 
 class MockPageFaultManager;
+
 namespace NEO {
 struct UltDeviceFactory;
 class MockMemoryManager;
 class OsAgnosticMemoryManager;
 class MemoryManagerMemHandleMock;
+class Device;
 } // namespace NEO
 
 namespace L0 {
 struct Context;
 struct Device;
 struct ContextImp;
+struct DeviceImp;
 
 namespace ult {
 class MockBuiltins;

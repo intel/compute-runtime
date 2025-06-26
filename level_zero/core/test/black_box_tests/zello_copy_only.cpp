@@ -10,7 +10,6 @@
 #include "zello_common.h"
 
 #include <cstring>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>

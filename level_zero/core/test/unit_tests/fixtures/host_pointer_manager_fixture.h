@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
-#include "level_zero/core/test/unit_tests/white_box.h"
 #include <level_zero/ze_api.h>
 
 namespace NEO {
@@ -22,7 +21,10 @@ struct Context;
 struct Device;
 struct DriverHandleImp;
 class HostPointerManager;
+
 namespace ult {
+template <typename Type>
+struct WhiteBox;
 
 struct HostPointerManagerFixure {
     void setUp();

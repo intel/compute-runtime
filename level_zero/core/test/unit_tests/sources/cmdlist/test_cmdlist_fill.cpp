@@ -5,24 +5,16 @@
  *
  */
 
-#include "shared/source/built_ins/sip.h"
 #include "shared/source/helpers/register_offsets.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
-#include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-
-#include <limits>
 
 namespace L0 {
 namespace ult {
+template <typename Type>
+struct WhiteBox;
 
 using AppendFillTest = Test<AppendFillFixture>;
 

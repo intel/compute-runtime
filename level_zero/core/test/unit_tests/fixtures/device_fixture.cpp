@@ -7,7 +7,6 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
-#include "shared/source/built_ins/sip.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
@@ -15,10 +14,8 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
 #include "gtest/gtest.h"
 

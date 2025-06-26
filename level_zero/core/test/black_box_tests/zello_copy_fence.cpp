@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,8 @@
 #include "zello_common.h"
 
 #include <cstring>
-#include <fstream>
 #include <iostream>
 #include <limits>
-#include <memory>
 
 void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096;

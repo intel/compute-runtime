@@ -13,7 +13,6 @@
 #include <array>
 #include <cstring>
 #include <iostream>
-#include <numeric>
 #include <sstream>
 
 #ifdef _WIN32

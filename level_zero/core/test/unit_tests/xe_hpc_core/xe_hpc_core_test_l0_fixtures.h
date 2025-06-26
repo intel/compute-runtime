@@ -12,6 +12,10 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 
+namespace NEO {
+struct HardwareInfo;
+} // namespace NEO
+
 namespace L0 {
 namespace ult {
 struct DeviceFixtureXeHpcTests : public DeviceFixture {

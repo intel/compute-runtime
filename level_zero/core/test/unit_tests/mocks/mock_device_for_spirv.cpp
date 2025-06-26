@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,13 +8,11 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device_for_spirv.h"
 
 #include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/test_files.h"
-#include "shared/test/common/libult/global_environment.h"
-
-#include "level_zero/tools/source/debug/debug_session.h"
 
 namespace L0 {
+struct ModuleBuildLog;
+
 namespace ult {
 template <bool useImagesBuiltins, bool isStateless>
 ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,

@@ -16,7 +16,16 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
+namespace NEO {
+class ExecutionEnvironment;
+struct KernelDescriptor;
+struct KernelInfo;
+} // namespace NEO
+
 namespace L0 {
+struct Device;
+struct ModuleBuildLog;
+
 namespace ult {
 
 struct ModuleImmutableDataFixture : public DeviceFixture {

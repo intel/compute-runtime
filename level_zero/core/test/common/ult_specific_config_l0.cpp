@@ -8,8 +8,9 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/tests_configuration.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/common/ult_config_listener_l0.h"
+
+struct _ze_driver_handle_t;
 
 namespace L0 {
 extern std::vector<_ze_driver_handle_t *> *globalDriverHandles;

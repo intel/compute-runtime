@@ -6,18 +6,13 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/ptr_math.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker_hw.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_kernel.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_kernel_group.h"
-#include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_variable.h"
 
 namespace L0 {
 namespace ult {

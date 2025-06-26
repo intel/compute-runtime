@@ -14,7 +14,6 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -30,6 +29,18 @@
 
 using namespace NEO;
 #include "shared/test/common/test_macros/header/heapless_matchers.h"
+
+namespace L0 {
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct CommandListCoreFamily;
+} // namespace L0
+namespace NEO {
+class InternalAllocationStorage;
+class ScratchSpaceController;
+enum QueueThrottle : uint32_t;
+template <typename GfxFamily>
+class UltAubCommandStreamReceiver;
+} // namespace NEO
 
 namespace L0 {
 namespace ult {

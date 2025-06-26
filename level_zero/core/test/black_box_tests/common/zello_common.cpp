@@ -8,7 +8,6 @@
 #include "zello_common.h"
 
 #include <bitset>
-#include <cstdlib>
 #include <cstring>
 #include <iomanip>
 #include <map>

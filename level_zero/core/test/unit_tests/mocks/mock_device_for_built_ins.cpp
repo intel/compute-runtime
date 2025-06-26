@@ -10,6 +10,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 namespace L0 {
+struct Device;
+
 namespace ult {
 
 MockDeviceForBuiltinTests::MockModuleForBuiltinTests::MockModuleForBuiltinTests(Device *device, ModuleType type) : ModuleImp(device, nullptr, type){};

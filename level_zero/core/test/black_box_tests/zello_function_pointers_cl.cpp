@@ -11,9 +11,7 @@
 #include "zello_compile.h"
 
 #include <cstring>
-#include <fstream>
 #include <iostream>
-#include <memory>
 
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Function Pointers CL";

@@ -8,7 +8,6 @@
 #include "level_zero/core/test/common/ult_config_listener_l0.h"
 
 #include "level_zero/core/source/driver/driver.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/ddi/ze_ddi_tables.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 

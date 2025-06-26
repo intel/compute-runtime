@@ -18,8 +18,22 @@
 #include <cstddef>
 #include <optional>
 
+namespace NEO {
+class GraphicsAllocation;
+class LinearStream;
+class ScratchSpaceController;
+enum class SubmissionStatus : uint32_t;
+enum class WaitStatus;
+} // namespace NEO
+
 namespace L0 {
+struct Device;
+
 namespace ult {
+template <typename Type>
+struct Mock;
+template <typename Type>
+struct WhiteBox;
 
 template <>
 struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {

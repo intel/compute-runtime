@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -19,9 +20,14 @@
 namespace NEO {
 class MockDevice;
 class MemoryManagerMemHandleMock;
+class ExecutionEnvironment;
+class SVMAllocsManager;
 } // namespace NEO
 
 namespace L0 {
+struct Device;
+struct DriverHandle;
+
 namespace ult {
 
 struct DriverHandleGetFdMock : public L0::DriverHandleImp {

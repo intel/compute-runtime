@@ -6,15 +6,11 @@
  */
 
 #include "shared/source/compiler_interface/compiler_options.h"
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

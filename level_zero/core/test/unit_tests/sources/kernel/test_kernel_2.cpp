@@ -14,7 +14,6 @@
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -30,6 +29,7 @@
 
 namespace L0 {
 #include "level_zero/core/source/kernel/patch_with_implicit_surface.inl"
+
 namespace ult {
 
 using KernelImpTest = Test<DeviceFixture>;

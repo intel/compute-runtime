@@ -1,16 +1,23 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
+
+namespace NEO {
+class Device;
+class GraphicsAllocation;
+class SVMAllocsManager;
+} // namespace NEO
 
 namespace L0 {
 namespace ult {

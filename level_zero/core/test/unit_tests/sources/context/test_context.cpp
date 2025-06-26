@@ -5,9 +5,7 @@
  *
  */
 
-#include "shared/source/built_ins/sip.h"
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/helpers/blit_properties.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/utilities/cpu_info.h"
@@ -34,6 +32,9 @@
 #include "gtest/gtest.h"
 
 namespace L0 {
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct CommandListCoreFamily;
+
 namespace ult {
 
 using MultiDeviceContextTests = Test<MultiDeviceFixture>;

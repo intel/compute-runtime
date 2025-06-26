@@ -42,7 +42,10 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/driver_experimental/zex_memory.h"
+
 namespace L0 {
+struct ModuleBuildLog;
+
 namespace ult {
 
 TEST_F(MemoryExportImportImplicitScalingTest,

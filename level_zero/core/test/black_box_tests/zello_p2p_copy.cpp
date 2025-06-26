@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,7 @@
 
 #include "zello_common.h"
 
-#include <fstream>
 #include <iostream>
-#include <memory>
 
 struct DevObjects {
     ze_command_queue_handle_t cmdQueue;

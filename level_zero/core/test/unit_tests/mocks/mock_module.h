@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_cif.h"
@@ -17,8 +18,21 @@
 #include "level_zero/core/test/unit_tests/white_box.h"
 
 #include "gtest/gtest.h"
+
+namespace NEO {
+class GraphicsAllocation;
+} // namespace NEO
+
 namespace L0 {
+struct Device;
+struct KernelImmutableData;
+struct ModuleBuildLog;
+
 namespace ult {
+template <typename Type>
+struct Mock;
+template <typename Type>
+struct WhiteBox;
 
 struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
     using BaseClass = L0::ModuleTranslationUnit;

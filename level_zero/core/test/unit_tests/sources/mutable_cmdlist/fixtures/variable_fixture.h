@@ -22,8 +22,21 @@
 
 #include <map>
 
+namespace NEO {
+class IndirectHeap;
+} // namespace NEO
+
+namespace L0 {
+struct CommandList;
+struct Event;
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct CommandListCoreFamily;
+} // namespace L0
+
 namespace L0 {
 namespace ult {
+template <typename Type>
+struct WhiteBox;
 
 struct VariableFixture : public MutableCommandListFixtureInit {
     constexpr static size_t kernelArgVariableSize = sizeof(void *);

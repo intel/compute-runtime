@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,9 @@
 
 #include <cstring>
 #include <ctime>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <memory>
 
 struct UserTracerData {
     uint32_t tracerData;

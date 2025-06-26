@@ -5,16 +5,10 @@
  *
  */
 
-#include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/program/kernel_info_from_patchtokens.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/mock_file_io.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -26,6 +20,8 @@
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
 namespace L0 {
+struct ModuleBuildLog;
+
 namespace ult {
 
 using ModuleWithDebuggerL0Test = Test<L0DebuggerHwFixture>;

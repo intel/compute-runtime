@@ -23,8 +23,11 @@ class GraphicsAllocation;
 
 namespace L0 {
 struct Device;
+enum class Builtin : uint32_t;
+struct Event;
 
 namespace ult {
+struct Device;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>

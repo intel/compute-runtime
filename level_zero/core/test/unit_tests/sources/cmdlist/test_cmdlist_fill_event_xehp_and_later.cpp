@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -17,9 +16,10 @@
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
-#include <limits>
-
 namespace L0 {
+struct Context;
+struct DriverHandle;
+
 namespace ult {
 
 struct FillTestInput {

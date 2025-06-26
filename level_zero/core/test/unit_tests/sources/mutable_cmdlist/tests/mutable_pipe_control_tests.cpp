@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/test/common/helpers/ult_gfx_core_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_pipe_control_hw.h"

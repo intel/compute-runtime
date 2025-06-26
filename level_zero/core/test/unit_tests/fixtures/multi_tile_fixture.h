@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,11 @@
 namespace L0 {
 struct ContextImp;
 struct Device;
+struct CommandListImp;
 
 namespace ult {
+template <typename Type>
+struct WhiteBox;
 
 struct MultiTileCommandListAppendLaunchKernelFixture : public MultiDeviceModuleFixture {
     MultiTileCommandListAppendLaunchKernelFixture();

@@ -14,7 +14,14 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_cmdlist.h"
 
+namespace NEO {
+class GraphicsAllocation;
+} // namespace NEO
+
 namespace L0 {
+struct Event;
+struct Kernel;
+
 namespace ult {
 
 struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {

@@ -7,9 +7,6 @@
 
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
-
-#include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
 namespace L0 {

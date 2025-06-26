@@ -9,9 +9,6 @@
 
 #include "zello_common.h"
 
-#include <cstring>
-#include <iomanip>
-
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello DP Support";
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);

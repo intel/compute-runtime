@@ -5,10 +5,8 @@
  *
  */
 
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
-#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/fabric/fabric.h"
@@ -16,7 +14,6 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 namespace L0 {
-class FabricDeviceMdfi;
 namespace ult {
 
 class MockFabricDeviceInterface {

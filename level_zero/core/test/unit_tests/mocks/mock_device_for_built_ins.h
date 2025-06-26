@@ -11,6 +11,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
 namespace L0 {
+struct Device;
+
 namespace ult {
 
 struct MockDeviceForBuiltinTests : public MockDeviceImp {

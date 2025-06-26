@@ -17,6 +17,8 @@
 #include "gtest/gtest.h"
 
 namespace L0 {
+struct ModuleBuildLog;
+
 namespace ult {
 
 ModuleImmutableDataFixture::MockImmutableMemoryManager::MockImmutableMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}

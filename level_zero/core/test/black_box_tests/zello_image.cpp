@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,7 @@
 #include "zello_common.h"
 
 #include <algorithm>
-#include <fstream>
 #include <iostream>
-#include <memory>
-#include <vector>
 
 #define imageIndex(buf, x, y, z, chan) \
     (buf)[(chan) +                     \
