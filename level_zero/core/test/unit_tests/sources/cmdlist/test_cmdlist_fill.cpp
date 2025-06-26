@@ -56,12 +56,43 @@ HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithAppendLaunchKernelFailur
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithPatternSizeLessOrEqualThanFourButUnalignedSizeThenUseFill) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    for (const auto patternSize : {1, 2, 4}) {
+        size_t patternAllocationsVectorSizeBefore = commandList->patternAllocations.size();
+        CmdListMemoryCopyParams copyParams = {};
+        ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        size_t patternAllocationsVectorSize = commandList->patternAllocations.size();
+        if (patternSize == 1) {
+            EXPECT_EQ(patternAllocationsVectorSize, patternAllocationsVectorSizeBefore);
+        } else {
+            EXPECT_NE(patternAllocationsVectorSize, patternAllocationsVectorSizeBefore);
+        }
+    }
+}
+
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithPatternSizeLessOrEqualThanFourThenUseImmmediateFill) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    for (const auto patternSize : {1, 2, 4}) {
+        CmdListMemoryCopyParams copyParams = {};
+        ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, 256, nullptr, 0, nullptr, copyParams);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        size_t patternAllocationsVectorSize = commandList->patternAllocations.size();
+        EXPECT_EQ(patternAllocationsVectorSize, 0u);
+    }
+}
+
 HWTEST_F(AppendFillTest, givenTwoCallsToAppendMemoryFillWithSamePatternThenAllocationIsCreatedForEachCall) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     CmdListMemoryCopyParams copyParams = {};
-    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 4, allocSize, nullptr, 0, nullptr, copyParams);
+    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 8, allocSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t patternAllocationsVectorSize = commandList->patternAllocations.size();
     EXPECT_EQ(patternAllocationsVectorSize, 1u);
@@ -81,7 +112,7 @@ HWTEST_F(AppendFillTest, givenTwoCallsToAppendMemoryFillWithDifferentPatternsThe
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     CmdListMemoryCopyParams copyParams = {};
-    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 4, allocSize, nullptr, 0, nullptr, copyParams);
+    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 8, allocSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t patternAllocationsVectorSize = commandList->patternAllocations.size();
     EXPECT_EQ(patternAllocationsVectorSize, 1u);
