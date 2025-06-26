@@ -124,6 +124,11 @@ PTLTEST_F(PtlProductHelper, givenResolveDependenciesByPipeControllsNotSupportedW
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csrRelaxed));
 }
 
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckBlitEnqueuePreferredThenReturnCorrectValue) {
+    EXPECT_TRUE(productHelper->blitEnqueuePreferred(true));
+    EXPECT_FALSE(productHelper->blitEnqueuePreferred(false));
+}
+
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
