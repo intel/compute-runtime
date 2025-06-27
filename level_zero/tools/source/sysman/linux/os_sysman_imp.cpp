@@ -547,6 +547,8 @@ ze_result_t LinuxSysmanImp::osColdReset() {
 
     cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);    // e.g cardBusPath=/sys/devices/pci0000:89/0000:89:02.0/
     std::string rootAddress = getAddressFromPath(cardBusPath); // e.g rootAddress = 0000:8a:00.0
+    size_t dotPos = rootAddress.rfind(".");
+    rootAddress = rootAddress.substr(0, dotPos); // update rootAddress e.g rootAddress = 0000:8a:00
 
     std::vector<std::string> dir;
     ze_result_t result = pFsAccess->listDirectory(slotPath, dir); // get list of slot directories from  /sys/bus/pci/slots/

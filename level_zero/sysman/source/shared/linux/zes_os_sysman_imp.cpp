@@ -420,6 +420,8 @@ ze_result_t LinuxSysmanImp::osColdReset() {
                                                               // will hold the absolute real path (not symlink) to the selected Device
     cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);   // e.g cardBusPath=/sys/devices/pci0000:89/0000:89:02.0/
     std::string uspAddress = getAddressFromPath(cardBusPath); // e.g upstreamPortAddress = 0000:8a:00.0
+    size_t dotPos = uspAddress.rfind(".");
+    uspAddress = uspAddress.substr(0, dotPos); // update upstreamPortAddress e.g upstreamPortAddress = 0000:8a:00
 
     std::vector<std::string> dir;
     ze_result_t result = pFsAccess->listDirectory(slotPath, dir); // get list of slot directories from  /sys/bus/pci/slots/

@@ -26,7 +26,7 @@ const std::string mockRemove("remove");
 const std::string mockRescan("rescan");
 const std::string mockSlotPath("/sys/bus/pci/slots/");
 const std::string mockSlotPath1("/sys/bus/pci/slots/1/");
-const std::string mockCorrectRootAddress("0000:8a:00.0");
+const std::string mockCorrectRootAddress("0000:8a:00");
 const std::string mockWrongRootAddress("0000:7a:00.0");
 
 struct MockDiagnosticsFwInterface : public L0::Sysman::FirmwareUtil {
