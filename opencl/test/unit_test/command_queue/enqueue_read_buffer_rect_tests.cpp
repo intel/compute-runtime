@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

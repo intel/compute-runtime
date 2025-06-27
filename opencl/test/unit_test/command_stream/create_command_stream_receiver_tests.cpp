@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -15,6 +14,10 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/create_command_stream.h"
 #include "shared/test/common/test_macros/hw_test.h"
+
+namespace NEO {
+struct HardwareInfo;
+} // namespace NEO
 
 using namespace NEO;
 

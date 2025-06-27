@@ -5,12 +5,8 @@
  *
  */
 
-#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/surface.h"
-#include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/mocks/mock_csr.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -30,6 +26,8 @@
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 
 namespace NEO {
+class GraphicsAllocation;
+class TagNodeBase;
 
 template <typename GfxFamily>
 class MockCommandQueueWithCacheFlush : public MockCommandQueueHw<GfxFamily> {

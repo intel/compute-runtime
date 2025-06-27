@@ -5,12 +5,9 @@
  *
  */
 
-#include "shared/source/memory_manager/memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"

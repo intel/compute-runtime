@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"

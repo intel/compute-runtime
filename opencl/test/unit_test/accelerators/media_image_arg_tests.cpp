@@ -5,13 +5,9 @@
  *
  */
 
-#include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/surface.h"
-#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -19,6 +15,10 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
+
+namespace NEO {
+struct KernelInfo;
+} // namespace NEO
 
 using namespace NEO;
 

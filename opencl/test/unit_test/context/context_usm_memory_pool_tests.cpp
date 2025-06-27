@@ -15,6 +15,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
+
 using namespace NEO;
 
 struct ContextUsmPoolTest : public ::testing::Test {

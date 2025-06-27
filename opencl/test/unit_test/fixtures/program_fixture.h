@@ -16,6 +16,7 @@ class MockContext;
 class MockProgram;
 class ClDevice;
 class MockNeoProgram;
+
 using cl_int = int;
 
 class NEOProgramFixture {

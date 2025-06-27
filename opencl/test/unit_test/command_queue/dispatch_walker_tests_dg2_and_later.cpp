@@ -5,19 +5,15 @@
  *
  */
 
-#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/linear_stream_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"

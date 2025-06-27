@@ -6,13 +6,8 @@
  */
 
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
-#include "opencl/source/command_queue/enqueue_fill_buffer.h"
-#include "opencl/source/command_queue/enqueue_kernel.h"
-#include "opencl/source/command_queue/enqueue_read_buffer.h"
-#include "opencl/source/command_queue/enqueue_write_buffer.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -21,7 +16,6 @@
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
-#include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 

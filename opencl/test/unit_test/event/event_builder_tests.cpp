@@ -6,9 +6,7 @@
  */
 
 #include "shared/source/memory_manager/allocation_properties.h"
-#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/arrayref.h"
-#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/event/event_builder.h"
@@ -23,6 +21,8 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
+class CommandQueue;
+class Kernel;
 
 struct SmallEventBuilderEventMock : MockEvent<Event> {
     SmallEventBuilderEventMock(CommandQueue *commandQueue, int param1, float param2)

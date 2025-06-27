@@ -9,8 +9,6 @@
 #include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
-#include "test_traits_common.h"
-
 using namespace NEO;
 #include "shared/test/common/test_macros/header/heapless_matchers.h"
 

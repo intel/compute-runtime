@@ -5,15 +5,11 @@
  *
  */
 
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
-#include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -21,11 +17,20 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_sharing_handler.h"
+
+namespace NEO {
+class ClDevice;
+class Context;
+template <typename GfxFamily>
+class RenderDispatcher;
+template <typename GfxFamily>
+class UltCommandStreamReceiver;
+} // namespace NEO
+
 using namespace NEO;
 
 HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoWaitAndTagIsNotUpdated) {

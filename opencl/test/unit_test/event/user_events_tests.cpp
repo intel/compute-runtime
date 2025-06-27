@@ -10,7 +10,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 

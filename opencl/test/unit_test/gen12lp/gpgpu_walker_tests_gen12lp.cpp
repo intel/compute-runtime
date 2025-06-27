@@ -1,14 +1,12 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/gen12lp/hw_info.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/linear_stream_fixture.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
@@ -18,6 +16,10 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 namespace NEO {
+class ClDevice;
+class Program;
+struct KernelInfo;
+
 struct GpgpuWalkerTests : public ::testing::Test {
     void SetUp() override {
     }

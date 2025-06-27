@@ -41,6 +41,10 @@
 
 #include "gtest/gtest.h"
 
+namespace NEO {
+class InternalAllocationStorage;
+} // namespace NEO
+
 using namespace NEO;
 
 namespace NEO {

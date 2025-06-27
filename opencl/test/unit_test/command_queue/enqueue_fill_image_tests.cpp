@@ -8,7 +8,6 @@
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/test.h"
 

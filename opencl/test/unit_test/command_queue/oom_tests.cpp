@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"

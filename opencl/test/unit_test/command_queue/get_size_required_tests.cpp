@@ -5,16 +5,10 @@
  *
  */
 
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/command_queue/enqueue_barrier.h"
-#include "opencl/source/command_queue/enqueue_marker.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
 

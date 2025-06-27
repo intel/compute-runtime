@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
@@ -17,6 +16,10 @@
 #include "CL/cl.h"
 
 #include <memory>
+
+namespace NEO {
+class GraphicsAllocation;
+} // namespace NEO
 
 struct EnqueueTraits {
     static cl_uint numEventsInWaitList;

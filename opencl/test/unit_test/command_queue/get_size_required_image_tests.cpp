@@ -5,27 +5,15 @@
  *
  */
 
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/file_io.h"
-#include "shared/source/utilities/perf_counter.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
-#include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/command_queue/enqueue_copy_image.h"
-#include "opencl/source/command_queue/enqueue_fill_image.h"
-#include "opencl/source/command_queue/enqueue_read_image.h"
-#include "opencl/source/command_queue/enqueue_write_image.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
-#include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
-#include "opencl/test/unit_test/command_queue/enqueue_write_image_fixture.h"
-#include "opencl/test/unit_test/fixtures/built_in_fixture.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;

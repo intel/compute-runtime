@@ -1,14 +1,12 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/mock_method_macros.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -18,6 +16,11 @@
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+
+namespace NEO {
+class CommandQueue;
+class Context;
+} // namespace NEO
 
 using namespace NEO;
 using namespace ::testing;

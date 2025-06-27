@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 

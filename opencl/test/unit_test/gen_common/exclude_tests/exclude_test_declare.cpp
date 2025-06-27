@@ -5,10 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
-
-#include <type_traits>
 
 template <uint32_t prohibitedValue>
 struct ExcludeTest : ::testing::Test {

@@ -15,10 +15,13 @@
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_mdi.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "aubstream/engine_node.h"
+
+namespace NEO {
+template <typename GfxFamily>
+class UltCommandStreamReceiver;
+} // namespace NEO
 
 using namespace NEO;
 

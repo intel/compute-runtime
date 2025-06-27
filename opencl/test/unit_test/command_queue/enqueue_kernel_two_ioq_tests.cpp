@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
-
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"

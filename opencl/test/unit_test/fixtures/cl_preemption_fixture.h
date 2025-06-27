@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,8 @@ class MockKernel;
 class MockProgram;
 struct KernelInfo;
 struct WorkaroundTable;
+class MockClDevice;
+struct HardwareInfo;
 
 using PreemptionEnqueueKernelFixture = HelloWorldFixture<HelloWorldFixtureFactory>;
 using PreemptionEnqueueKernelTest = Test<PreemptionEnqueueKernelFixture>;

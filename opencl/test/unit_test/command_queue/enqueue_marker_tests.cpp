@@ -9,7 +9,6 @@
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/event/user_event.h"

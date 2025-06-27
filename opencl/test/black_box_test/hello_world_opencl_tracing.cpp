@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/source/tracing/tracing_api.h"
-#include "opencl/source/tracing/tracing_handle.h"
 
 #include "CL/cl.h"
 

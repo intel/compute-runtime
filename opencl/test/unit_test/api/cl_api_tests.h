@@ -25,6 +25,7 @@
 #include <memory>
 
 namespace NEO {
+class CommandQueue;
 
 template <uint32_t rootDeviceIndex = 1u>
 struct ApiFixture {

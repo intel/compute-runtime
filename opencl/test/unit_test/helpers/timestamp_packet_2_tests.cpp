@@ -15,6 +15,10 @@
 #include "opencl/test/unit_test/helpers/timestamp_packet_tests.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 
+namespace NEO {
+class IndirectHeap;
+} // namespace NEO
+
 using namespace NEO;
 
 HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndNoOutputEventWhenEnqueueingMarkerThenDoNothing) {

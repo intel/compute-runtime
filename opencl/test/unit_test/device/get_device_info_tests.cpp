@@ -11,12 +11,9 @@
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"

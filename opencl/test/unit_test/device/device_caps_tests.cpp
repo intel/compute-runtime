@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
@@ -14,11 +13,9 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"

@@ -1,37 +1,27 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/local_memory_access_modes.h"
-#include "shared/source/helpers/pause_on_gpu_properties.h"
-#include "shared/source/helpers/vec.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/hw_timestamps.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/command_queue/blit_enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 namespace NEO {
+template <typename GfxFamily>
+class MockCommandQueueHw;
 
 using BlitEnqueueWithDisabledGpgpuSubmissionTests = BlitEnqueueTests<1>;
 

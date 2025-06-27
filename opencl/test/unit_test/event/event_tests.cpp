@@ -10,14 +10,12 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -25,7 +23,6 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
-#include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/memory_manager/mem_obj_surface.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
@@ -36,7 +33,6 @@
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_printf_handler.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
 #include "event_fixture.h"
@@ -44,6 +40,12 @@
 #include <cmath>
 #include <memory>
 #include <type_traits>
+
+namespace NEO {
+class Kernel;
+} // namespace NEO
+template <typename GfxFamily>
+class MockCsr;
 
 using namespace NEO;
 

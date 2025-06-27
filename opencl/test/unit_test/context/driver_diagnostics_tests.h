@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"

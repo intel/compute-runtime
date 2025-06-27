@@ -8,12 +8,10 @@
 #include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/task_information.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -21,6 +19,12 @@
 
 #include <array>
 #include <memory>
+
+namespace NEO {
+class Device;
+class ExecutionEnvironment;
+class Kernel;
+} // namespace NEO
 
 using namespace NEO;
 

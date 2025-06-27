@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
@@ -19,6 +20,11 @@
 
 namespace NEO {
 class Device;
+class Buffer;
+class ClDevice;
+class CommandQueue;
+class Context;
+class MockContext;
 
 struct CommandQueueHwFixture {
     CommandQueue *createCommandQueue(ClDevice *device) {

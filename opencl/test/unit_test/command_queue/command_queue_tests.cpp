@@ -7,15 +7,12 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/array_count.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
@@ -26,12 +23,9 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
-#include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
@@ -41,7 +35,6 @@
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
@@ -56,11 +49,14 @@
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-#include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_sharing_handler.h"
 
 #include "gtest/gtest.h"
+
+namespace NEO {
+enum QueueThrottle : uint32_t;
+} // namespace NEO
 
 using namespace NEO;
 
