@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
 #include "opencl/test/unit_test/program/program_tests.h"
 
 namespace NEO {
@@ -17,6 +18,7 @@ class MockProgram;
 using namespace NEO;
 
 class MockBuffer;
+
 class ProgramWithZebinFixture : public ProgramTests {
   public:
     std::unique_ptr<MockProgram> program;

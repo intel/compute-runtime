@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/sharings/unified/unified_sharing_types.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"

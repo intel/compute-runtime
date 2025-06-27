@@ -18,6 +18,10 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
 
+namespace NEO {
+class MemoryManager;
+} // namespace NEO
+
 using namespace NEO;
 
 TEST(UnifiedSharingTests, givenContextCreatedWithExternalDeviceHandlePropertyWhenGettingUnifiedSharingThenReturnIt) {

@@ -18,6 +18,12 @@ class SubDevice;
 template <typename GfxFamily>
 class UltCommandStreamReceiver;
 struct HardwareInfo;
+class BuiltIns;
+class ExecutionEnvironment;
+class MemoryManager;
+enum PreemptionMode : uint32_t;
+struct DeviceInfo;
+struct EngineControl;
 
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
                                                   uint32_t rootDeviceIndex,

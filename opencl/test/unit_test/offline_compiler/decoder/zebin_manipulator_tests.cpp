@@ -13,7 +13,6 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_elf.h"
-#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -22,9 +21,6 @@
 #include "opencl/test/unit_test/offline_compiler/decoder/mock/mock_zebin_encoder.h"
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 
-#include "neo_igfxfmid.h"
-
-#include <fstream>
 #include <platforms.h>
 
 template <NEO::Elf::ElfIdentifierClass numBits>

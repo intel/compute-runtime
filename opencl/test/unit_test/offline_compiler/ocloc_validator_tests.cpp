@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "shared/offline_compiler/source/ocloc_validator.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"

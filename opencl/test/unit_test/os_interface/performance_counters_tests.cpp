@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 

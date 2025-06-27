@@ -1,24 +1,19 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/compiler_interface/compiler_options.h"
-#include "shared/source/compiler_interface/intermediate_representations.h"
-#include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/device_binary_format/elf/elf_tests_data.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_elf.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

@@ -9,7 +9,6 @@
 
 #include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_compilers.h"

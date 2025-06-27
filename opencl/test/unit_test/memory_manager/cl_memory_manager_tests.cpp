@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,9 +18,6 @@
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
-
-#include <future>
-#include <type_traits>
 
 using namespace NEO;
 

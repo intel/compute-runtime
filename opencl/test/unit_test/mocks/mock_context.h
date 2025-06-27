@@ -19,6 +19,11 @@ namespace NEO {
 
 class AsyncEventsHandler;
 class OsContext;
+class ClDevice;
+class ClDeviceVector;
+class CommandStreamReceiver;
+class MockClDevice;
+class SharingFunctions;
 
 class MockContext : public Context {
   public:

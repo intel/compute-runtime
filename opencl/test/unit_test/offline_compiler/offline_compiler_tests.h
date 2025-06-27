@@ -23,6 +23,11 @@
 #include <cstdint>
 #include <memory>
 
+namespace NEO {
+class MultiCommand;
+class OfflineCompiler;
+} // namespace NEO
+
 extern Environment *gEnvironment;
 
 namespace NEO {

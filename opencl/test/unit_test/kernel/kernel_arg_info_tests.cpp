@@ -1,14 +1,12 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/test_macros/test.h"
-#include <shared/test/common/mocks/mock_modules_zebin.h>
 
-#include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

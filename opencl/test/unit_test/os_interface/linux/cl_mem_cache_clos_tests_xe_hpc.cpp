@@ -5,16 +5,13 @@
  *
  */
 
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
-#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_prelim_fixtures.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"

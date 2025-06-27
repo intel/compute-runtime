@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,8 @@
 
 #include <optional>
 #include <string>
+
+class OclocArgHelper;
 
 namespace NEO {
 

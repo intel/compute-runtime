@@ -7,12 +7,8 @@
 
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "shared/source/built_ins/built_ins.h"
-#include "shared/source/compiler_interface/compiler_interface.h"
-#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -20,12 +16,8 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/sharings/sharing.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_kernel.h"
-
-#include "d3d_sharing_functions.h"
 
 namespace NEO {
 

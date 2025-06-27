@@ -8,8 +8,6 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
@@ -17,7 +15,6 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"

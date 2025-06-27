@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,9 @@
 namespace NEO {
 
 class GraphicsAllocation;
+class BuiltinDispatchInfoBuilder;
+class Context;
+
 ClDeviceVector toClDeviceVector(ClDevice &clDevice);
 ////////////////////////////////////////////////////////////////////////////////
 // Program - Core implementation

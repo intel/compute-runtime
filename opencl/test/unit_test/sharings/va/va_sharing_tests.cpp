@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,10 @@
 #include "gtest/gtest.h"
 
 #include <va/va_backend.h>
+
+namespace NEO {
+class Context;
+} // namespace NEO
 
 using namespace NEO;
 

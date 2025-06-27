@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 
 namespace NEO {
 class ClDevice;
+struct HardwareInfo;
 
 struct ClGfxCoreHelperXeHpcCoreFixture : public ClDeviceFixture {
     void checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(HardwareInfo *hwInfo);

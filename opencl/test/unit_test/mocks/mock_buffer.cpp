@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,11 @@
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
+
+namespace NEO {
+class Context;
+class GmmHelper;
+} // namespace NEO
 
 MockBufferStorage::MockBufferStorage(bool unaligned) : mockGfxAllocation(unaligned ? alignUp(&data, 4) : alignUp(&data, 64), sizeof(data) / 2),
                                                        multiGfxAllocation(GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation)) {

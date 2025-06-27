@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,6 @@
 
 #include "mock_performance_counters.h"
 
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 

@@ -18,8 +18,6 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include <functional>
-
 using namespace NEO;
 
 using XeHPAndLaterBufferTests = ::testing::Test;

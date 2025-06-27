@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include <memory>
+
 using namespace NEO;
 
 // Tests for cl_khr_image2d_from_buffer

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,12 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/program/program_with_zebin.h"
 
 #include <memory>
+
 using namespace NEO;
 
 TEST_F(ProgramWithZebinFixture, givenNoZebinThenSegmentsAreEmpty) {

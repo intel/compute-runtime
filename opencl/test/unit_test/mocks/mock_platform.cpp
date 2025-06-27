@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,7 @@
 
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,10 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"

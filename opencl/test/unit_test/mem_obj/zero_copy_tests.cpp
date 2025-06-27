@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/cl_device/cl_device.h"

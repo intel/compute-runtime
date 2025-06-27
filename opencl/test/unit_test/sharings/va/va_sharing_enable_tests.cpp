@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/variable_backup.h"

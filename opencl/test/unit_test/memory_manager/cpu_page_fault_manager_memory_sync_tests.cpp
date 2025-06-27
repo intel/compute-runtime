@@ -7,15 +7,17 @@
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
-#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "gtest/gtest.h"
+
+namespace NEO {
+class MemoryManager;
+} // namespace NEO
 
 using namespace NEO;
 

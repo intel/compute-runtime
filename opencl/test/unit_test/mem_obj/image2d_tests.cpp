@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"

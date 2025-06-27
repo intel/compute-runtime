@@ -1,14 +1,12 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/compiler_interface/compiler_interface.h"
-#include "shared/source/compiler_interface/compiler_interface.inl"
 #include "shared/test/common/mocks/mock_cif.h"
-#include "shared/test/common/mocks/mock_compilers.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

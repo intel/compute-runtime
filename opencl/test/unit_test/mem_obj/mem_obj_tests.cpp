@@ -1,18 +1,16 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -22,13 +20,16 @@
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/sharing.h"
-#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
+
+namespace NEO {
+class Context;
+class GmmHelper;
+} // namespace NEO
 
 using namespace NEO;
 

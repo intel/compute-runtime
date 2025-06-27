@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_igc_facade.h"
 
 #include "shared/source/os_interface/os_library.h"
+
+class OclocArgHelper;
 
 namespace NEO {
 

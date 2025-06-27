@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,10 @@
 #include <atomic>
 #include <iterator>
 #include <vector>
+
+namespace NEO {
+class Event;
+} // namespace NEO
 
 using namespace NEO;
 namespace MockAsyncEventHandlerGlobals {

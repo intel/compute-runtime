@@ -11,7 +11,6 @@
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"

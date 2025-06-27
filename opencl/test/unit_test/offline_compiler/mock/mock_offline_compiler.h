@@ -14,6 +14,7 @@
 #include <string>
 
 class MockOclocArgHelper;
+
 namespace NEO {
 class MockOclocFclFacade;
 class MockOclocIgcFacade;

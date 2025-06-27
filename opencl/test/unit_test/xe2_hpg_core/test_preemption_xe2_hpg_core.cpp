@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
-
-#include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/cl_preemption_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_preemption_fixture.h"

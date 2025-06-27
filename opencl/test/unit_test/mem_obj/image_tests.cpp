@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
@@ -42,6 +41,11 @@
 
 #include "CL/cl.h"
 #include "memory_properties_flags.h"
+
+namespace NEO {
+template <typename GfxFamily>
+class RenderDispatcher;
+} // namespace NEO
 
 using namespace NEO;
 
