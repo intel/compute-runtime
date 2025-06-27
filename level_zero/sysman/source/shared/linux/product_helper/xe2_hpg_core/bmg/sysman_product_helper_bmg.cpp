@@ -782,27 +782,6 @@ static ze_result_t getMemoryMaxBandwidth(const std::map<std::string, uint64_t> &
     return ZE_RESULT_SUCCESS;
 }
 
-static ze_result_t getMemoryBandwidthTimestamp(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
-                                               zes_mem_bandwidth_t *pBandwidth) {
-    uint32_t timeStampH = 0;
-    uint32_t timeStampL = 0;
-    pBandwidth->timestamp = 0;
-
-    std::string key = "GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timeStampH)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    key = "GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timeStampL)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    pBandwidth->timestamp = packInto64Bit(timeStampH, timeStampL) * milliSecsToMicroSecs;
-
-    return ZE_RESULT_SUCCESS;
-}
-
 static ze_result_t getCounterValues(const std::vector<std::pair<const std::string, const std::string>> &registerList, const std::string &keyPrefix,
                                     const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap, uint64_t &totalCounter) {
     for (const auto &regPair : registerList) {
@@ -927,15 +906,13 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    // Get Timestamp Values
-    if (ZE_RESULT_SUCCESS != getMemoryBandwidthTimestamp(keyOffsetMap, keyTelemInfoMap, pBandwidth)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
     // Get Max Bandwidth
     if (ZE_RESULT_SUCCESS != getMemoryMaxBandwidth(keyOffsetMap, keyTelemInfoMap, pBandwidth)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
+
+    // Get Timestamp
+    pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
 
     return ZE_RESULT_SUCCESS;
 }

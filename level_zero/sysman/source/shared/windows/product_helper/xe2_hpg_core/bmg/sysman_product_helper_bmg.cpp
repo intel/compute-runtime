@@ -875,21 +875,8 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
     // PMT reports maxBandwidth in units of 100 MBps (decimal). Need to convert it into Bytes/sec, unit to be returned by sysman.
     pBandwidth->maxBandwidth = static_cast<uint64_t>(maxBandwidth) * megaBytesToBytes * 100;
 
-    // timestamp calculation
-    uint32_t timeStampL = 0;
-    uint32_t timeStampH = 0;
-
-    status = pPmt->readValue("GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", timeStampH);
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-    status = pPmt->readValue("GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", timeStampL);
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
-
-    // timestamp from PMT is in milli seconds
-    pBandwidth->timestamp = packInto64Bit(timeStampH, timeStampL) * milliSecsToMicroSecs;
+    // Get timestamp
+    pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
 
     return status;
 }
