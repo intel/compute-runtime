@@ -60,7 +60,7 @@ SVMAllocsManager::SvmAllocationCache::SvmAllocationCache() {
     this->enablePerformanceLogging = NEO::debugManager.flags.LogUsmReuse.get();
 }
 
-bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAllocationData *svmData) {
+bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAllocationData *svmData, bool waitForCompletion) {
     if (false == sizeAllowed(size) ||
         svmData->isInternalAllocation ||
         svmData->isImportedAllocation) {
@@ -90,8 +90,11 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         }
     }
     if (isSuccess) {
+        if (waitForCompletion) {
+            svmAllocsManager->waitForEnginesCompletion(svmData);
+        }
         svmData->isSavedForReuse = true;
-        allocations.emplace(std::lower_bound(allocations.begin(), allocations.end(), size), size, ptr, svmData);
+        allocations.emplace(std::lower_bound(allocations.begin(), allocations.end(), size), size, ptr, svmData, waitForCompletion);
     }
     if (enablePerformanceLogging) {
         logCacheOperation({.allocationSize = size,
@@ -115,11 +118,14 @@ bool SVMAllocsManager::SvmAllocationCache::alignmentAllows(void *ptr, size_t ali
     return 0u == alignment || isAligned(castToUint64(ptr), alignment);
 }
 
-bool SVMAllocsManager::SvmAllocationCache::isInUse(SvmAllocationData *svmData) {
-    if (svmData->cpuAllocation && memoryManager->allocInUse(*svmData->cpuAllocation)) {
+bool SVMAllocsManager::SvmAllocationCache::isInUse(SvmCacheAllocationInfo &cacheAllocInfo) {
+    if (cacheAllocInfo.completed) {
+        return false;
+    }
+    if (cacheAllocInfo.svmData->cpuAllocation && memoryManager->allocInUse(*cacheAllocInfo.svmData->cpuAllocation)) {
         return true;
     }
-    for (auto &gpuAllocation : svmData->gpuAllocations.getGraphicsAllocations()) {
+    for (auto &gpuAllocation : cacheAllocInfo.svmData->gpuAllocations.getGraphicsAllocations()) {
         if (gpuAllocation && memoryManager->allocInUse(*gpuAllocation)) {
             return true;
         }
@@ -144,7 +150,7 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
             allocationIter->svmData->allocationFlagsProperty.allFlags == unifiedMemoryProperties.allocationFlags.allFlags &&
             allocationIter->svmData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags &&
             alignmentAllows(allocationIter->allocation, unifiedMemoryProperties.alignment) &&
-            false == isInUse(allocationIter->svmData)) {
+            false == isInUse(*allocationIter)) {
             if (allocationIter->svmData->device) {
                 auto lock = allocationIter->svmData->device->usmReuseInfo.obtainAllocationsReuseLock();
                 allocationIter->svmData->device->usmReuseInfo.recordAllocationGetFromReuse(allocationIter->allocationSize);
@@ -650,13 +656,13 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     if (svmData) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             this->usmDeviceAllocationsCache) {
-            if (this->usmDeviceAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
+            if (this->usmDeviceAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, blocking)) {
                 return true;
             }
         }
         if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
             this->usmHostAllocationsCache) {
-            if (this->usmHostAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
+            if (this->usmHostAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, blocking)) {
                 return true;
             }
         }
@@ -678,15 +684,16 @@ bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
 
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
+        constexpr bool waitForCompletion = false;
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             this->usmDeviceAllocationsCache) {
-            if (this->usmDeviceAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
+            if (this->usmDeviceAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, waitForCompletion)) {
                 return true;
             }
         }
         if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
             this->usmHostAllocationsCache) {
-            if (this->usmHostAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
+            if (this->usmHostAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, waitForCompletion)) {
                 return true;
             }
         }
@@ -696,20 +703,24 @@ bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
     return false;
 }
 
+void SVMAllocsManager::waitForEnginesCompletion(SvmAllocationData *allocationData) {
+    if (allocationData->cpuAllocation) {
+        this->memoryManager->waitForEnginesCompletion(*allocationData->cpuAllocation);
+    }
+
+    for (auto &gpuAllocation : allocationData->gpuAllocations.getGraphicsAllocations()) {
+        if (gpuAllocation) {
+            this->memoryManager->waitForEnginesCompletion(*gpuAllocation);
+        }
+    }
+}
+
 void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData) {
     auto allowNonBlockingFree = policy == FreePolicyType::none;
     this->prepareIndirectAllocationForDestruction(svmData, allowNonBlockingFree);
 
     if (policy == FreePolicyType::blocking) {
-        if (svmData->cpuAllocation) {
-            this->memoryManager->waitForEnginesCompletion(*svmData->cpuAllocation);
-        }
-
-        for (auto &gpuAllocation : svmData->gpuAllocations.getGraphicsAllocations()) {
-            if (gpuAllocation) {
-                this->memoryManager->waitForEnginesCompletion(*gpuAllocation);
-            }
-        }
+        this->waitForEnginesCompletion(svmData);
     } else if (policy == FreePolicyType::defer) {
         if (svmData->cpuAllocation) {
             if (this->memoryManager->allocInUse(*svmData->cpuAllocation)) {

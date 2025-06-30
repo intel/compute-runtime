@@ -119,7 +119,7 @@ TEST(SvmAllocationCacheSimpleTest, givenDifferentSizesWhenCheckingIfSizeAllowsTh
 }
 
 TEST(SvmAllocationCacheSimpleTest, givenSvmAllocationCacheInfoWhenMarkedForDeleteThenSetSizeToZero) {
-    SVMAllocsManager::SvmCacheAllocationInfo info(MemoryConstants::pageSize64k, nullptr, nullptr);
+    SVMAllocsManager::SvmCacheAllocationInfo info(MemoryConstants::pageSize64k, nullptr, nullptr, false);
     EXPECT_FALSE(SVMAllocsManager::SvmCacheAllocationInfo::isMarkedForDelete(info));
     info.markForDelete();
     EXPECT_EQ(0u, info.allocationSize);
@@ -127,6 +127,7 @@ TEST(SvmAllocationCacheSimpleTest, givenSvmAllocationCacheInfoWhenMarkedForDelet
 }
 
 TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenCheckingIsInUseThenReturnCorrectValue) {
+    using SvmCacheAllocationInfo = SVMAllocsManager::SvmCacheAllocationInfo;
     SVMAllocsManager::SvmAllocationCache allocationCache;
     MockMemoryManager memoryManager;
     MockSVMAllocsManager svmAllocsManager(&memoryManager);
@@ -135,23 +136,38 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenCheckingIsInUseThenReturn
     allocationCache.svmAllocsManager = &svmAllocsManager;
 
     {
+        constexpr bool completed = false;
         memoryManager.deferAllocInUse = false;
         MockGraphicsAllocation gpuGfxAllocation;
         SvmAllocationData svmAllocData(mockRootDeviceIndex);
-        EXPECT_FALSE(allocationCache.isInUse(&svmAllocData));
+        SvmCacheAllocationInfo svmCacheAllocInfo(1u, addrToPtr(0xFULL), &svmAllocData, completed);
+        EXPECT_FALSE(allocationCache.isInUse(svmCacheAllocInfo));
         svmAllocData.gpuAllocations.addAllocation(&gpuGfxAllocation);
-        EXPECT_FALSE(allocationCache.isInUse(&svmAllocData));
+        EXPECT_FALSE(allocationCache.isInUse(svmCacheAllocInfo));
         memoryManager.deferAllocInUse = true;
-        EXPECT_TRUE(allocationCache.isInUse(&svmAllocData));
+        EXPECT_TRUE(allocationCache.isInUse(svmCacheAllocInfo));
     }
     {
+        constexpr bool completed = false;
         memoryManager.deferAllocInUse = false;
         MockGraphicsAllocation cpuGfxAllocation;
         SvmAllocationData svmAllocData(mockRootDeviceIndex);
         svmAllocData.cpuAllocation = &cpuGfxAllocation;
-        EXPECT_FALSE(allocationCache.isInUse(&svmAllocData));
+        SvmCacheAllocationInfo svmCacheAllocInfo(1u, addrToPtr(0xFULL), &svmAllocData, completed);
+        EXPECT_FALSE(allocationCache.isInUse(svmCacheAllocInfo));
         memoryManager.deferAllocInUse = true;
-        EXPECT_TRUE(allocationCache.isInUse(&svmAllocData));
+        EXPECT_TRUE(allocationCache.isInUse(svmCacheAllocInfo));
+    }
+    {
+        constexpr bool completed = true;
+        memoryManager.deferAllocInUse = false;
+        MockGraphicsAllocation cpuGfxAllocation;
+        SvmAllocationData svmAllocData(mockRootDeviceIndex);
+        svmAllocData.cpuAllocation = &cpuGfxAllocation;
+        SvmCacheAllocationInfo svmCacheAllocInfo(1u, addrToPtr(0xFULL), &svmAllocData, completed);
+        EXPECT_FALSE(allocationCache.isInUse(svmCacheAllocInfo));
+        memoryManager.deferAllocInUse = true;
+        EXPECT_FALSE(allocationCache.isInUse(svmCacheAllocInfo));
     }
 }
 
@@ -171,19 +187,19 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenInsertingAllocationThenDo
     {
         svmAllocData.isImportedAllocation = false;
         svmAllocData.isInternalAllocation = false;
-        EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData));
+        EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, false));
         allocationCache.allocations.clear();
     }
     {
         svmAllocData.isImportedAllocation = true;
         svmAllocData.isInternalAllocation = false;
-        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData));
+        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, false));
         allocationCache.allocations.clear();
     }
     {
         svmAllocData.isImportedAllocation = false;
         svmAllocData.isInternalAllocation = true;
-        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData));
+        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, false));
         allocationCache.allocations.clear();
     }
 }
@@ -1868,19 +1884,56 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationInUsageWhenAllocatingAfterFree
     EXPECT_NE(nullptr, svmManager->usmHostAllocationsCache);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
-    auto allocation = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
+    auto allocation = svmManager->createHostUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
     EXPECT_NE(allocation, nullptr);
     svmManager->freeSVMAlloc(allocation);
     EXPECT_EQ(svmManager->usmHostAllocationsCache->allocations.size(), 1u);
 
     memoryManager->deferAllocInUse = true;
-    auto testedAllocation = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
+    auto testedAllocation = svmManager->createHostUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
     EXPECT_EQ(svmManager->usmHostAllocationsCache->allocations.size(), 1u);
     auto svmData = svmManager->getSVMAlloc(testedAllocation);
     EXPECT_NE(nullptr, svmData);
 
     svmManager->freeSVMAlloc(testedAllocation);
     EXPECT_EQ(svmManager->usmHostAllocationsCache->allocations.size(), 2u);
+
+    svmManager->cleanupUSMAllocCaches();
+}
+
+TEST_F(SvmHostAllocationCacheTest, givenAllocationMarkedCompletedWhenAllocatingAfterFreeThenDoNotCallAllocInUse) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    memoryManager->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device);
+    EXPECT_NE(nullptr, svmManager->usmHostAllocationsCache);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto allocation = svmManager->createHostUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
+    EXPECT_NE(allocation, nullptr);
+    EXPECT_EQ(0u, memoryManager->waitForEnginesCompletionCalled);
+    svmManager->freeSVMAlloc(allocation, true);
+    EXPECT_EQ(1u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_EQ(svmManager->usmHostAllocationsCache->allocations.size(), 1u);
+
+    auto &svmAllocCacheInfo = svmManager->usmHostAllocationsCache->allocations[0];
+    EXPECT_TRUE(svmAllocCacheInfo.completed);
+
+    memoryManager->deferAllocInUse = true;
+    auto testedAllocation = svmManager->createHostUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
+    EXPECT_EQ(svmManager->usmHostAllocationsCache->allocations.size(), 0u);
+    auto svmData = svmManager->getSVMAlloc(testedAllocation);
+    EXPECT_EQ(0u, memoryManager->allocInUseCalled);
+    EXPECT_NE(nullptr, svmData);
+
+    svmManager->freeSVMAlloc(testedAllocation);
+    EXPECT_EQ(svmManager->usmHostAllocationsCache->allocations.size(), 1u);
 
     svmManager->cleanupUSMAllocCaches();
 }

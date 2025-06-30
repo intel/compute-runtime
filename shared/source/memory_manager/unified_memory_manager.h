@@ -159,7 +159,8 @@ class SVMAllocsManager {
         void *allocation;
         SvmAllocationData *svmData;
         std::chrono::high_resolution_clock::time_point saveTime;
-        SvmCacheAllocationInfo(size_t allocationSize, void *allocation, SvmAllocationData *svmData) : allocationSize(allocationSize), allocation(allocation), svmData(svmData) {
+        bool completed;
+        SvmCacheAllocationInfo(size_t allocationSize, void *allocation, SvmAllocationData *svmData, bool completed) : allocationSize(allocationSize), allocation(allocation), svmData(svmData), completed(completed) {
             saveTime = std::chrono::high_resolution_clock::now();
         }
         bool operator<(SvmCacheAllocationInfo const &other) const {
@@ -199,10 +200,10 @@ class SVMAllocsManager {
         SvmAllocationCache();
 
         static bool sizeAllowed(size_t size) { return size <= SvmAllocationCache::maxServicedSize; }
-        bool insert(size_t size, void *ptr, SvmAllocationData *svmData);
+        bool insert(size_t size, void *ptr, SvmAllocationData *svmData, bool waitForCompletion);
         static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
         static bool alignmentAllows(void *ptr, size_t alignment);
-        bool isInUse(SvmAllocationData *svmData);
+        bool isInUse(SvmCacheAllocationInfo &cacheAllocInfo);
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
         void trim();
         void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll);
@@ -290,6 +291,8 @@ class SVMAllocsManager {
     void initUsmAllocationsCaches(Device &device);
 
     bool submitIndirectAllocationsAsPack(CommandStreamReceiver &csr);
+
+    void waitForEnginesCompletion(SvmAllocationData *allocationData);
 
   protected:
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
