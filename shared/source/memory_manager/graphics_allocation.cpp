@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -158,9 +158,9 @@ bool GraphicsAllocation::hasAllocationReadOnlyType() {
     return false;
 }
 
-void GraphicsAllocation::checkAllocationTypeReadOnlyRestrictions(const AllocationProperties &properties) {
+void GraphicsAllocation::checkAllocationTypeReadOnlyRestrictions(const AllocationData &allocData) {
     if (getAllocationType() == AllocationType::commandBuffer &&
-        (properties.flags.cantBeReadOnly | properties.flags.multiOsContextCapable)) {
+        (allocData.flags.cantBeReadOnly | allocData.flags.multiOsContextCapable)) {
         setAsCantBeReadOnly(true);
         return;
     }

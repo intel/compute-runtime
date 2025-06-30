@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -1142,6 +1143,37 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationIsCommandBufferAndMultiC
     AllocationProperties properties(mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield);
     properties.flags.cantBeReadOnly = false;
     properties.flags.multiOsContextCapable = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(properties,
+                                                                          nullptr);
+    EXPECT_EQ(allocation, &mockGa);
+    EXPECT_EQ(mockGa.setAsReadOnlyCalled, 0u);
+}
+
+TEST(MemoryManagerTest, givenSingleAddressSpaceSbaTrackingWhenAllocationIsCommandBufferAndMultiContextCapableIsFalseThenAllocationIsNotSetAsReadOnly) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.setDebuggingMode(NEO::DebuggingMode::offline);
+    auto debugger = new MockDebugger;
+    debugger->singleAddressSpaceSbaTracking = true;
+    executionEnvironment.rootDeviceEnvironments[0]->debugger.reset(debugger);
+
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
+    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+    MockGraphicsAllocation mockGa;
+    mockGa.setAllocationType(AllocationType::commandBuffer);
+
+    mockGa.hasAllocationReadOnlyTypeResult = true;
+
+    memoryManager.mockGa = &mockGa;
+    memoryManager.returnMockGAFromDevicePool = true;
+
+    AllocationProperties properties(mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::commandBuffer, mockDeviceBitfield);
+    properties.flags.cantBeReadOnly = false;
+    properties.flags.multiOsContextCapable = false;
 
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(properties,
                                                                           nullptr);

@@ -868,7 +868,7 @@ bool CommandStreamReceiver::createWorkPartitionAllocation(const Device &device) 
         *copySrc = {logicalId++, deviceIndex};
         DeviceBitfield copyBitfield{};
         copyBitfield.set(deviceIndex);
-        auto copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(device, workPartitionAllocation, 0, copySrc.get(), 2 * sizeof(uint32_t), copyBitfield);
+        auto copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(true, device, workPartitionAllocation, 0, copySrc.get(), 2 * sizeof(uint32_t), copyBitfield);
 
         if (!copySuccess) {
             return false;

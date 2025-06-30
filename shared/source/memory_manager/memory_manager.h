@@ -95,7 +95,7 @@ constexpr size_t paddingBufferSize = 2 * MemoryConstants::megaByte;
 
 namespace MemoryTransferHelper {
 bool transferMemoryToAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory, size_t srcSize);
-bool transferMemoryToAllocationBanks(const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory,
+bool transferMemoryToAllocationBanks(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory,
                                      size_t srcSize, DeviceBitfield dstMemoryBanks);
 } // namespace MemoryTransferHelper
 

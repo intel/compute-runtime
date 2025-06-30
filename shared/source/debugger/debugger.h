@@ -32,6 +32,7 @@ class Debugger {
     virtual ~Debugger() = default;
     virtual void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) = 0;
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) = 0;
+    virtual bool getSingleAddressSpaceSbaTracking() const = 0;
 
     void *getDebugSurfaceReservedSurfaceState(IndirectHeap &ssh);
 
