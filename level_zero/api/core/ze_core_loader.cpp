@@ -793,3 +793,42 @@ zeGetRTASBuilderExpProcAddrTable(
     driverDdiTable.coreDdiTable.RTASBuilderExp = *pDdiTable;
     return result;
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeGetRTASBuilderProcAddrTable(
+    ze_api_version_t version,
+    ze_rtas_builder_dditable_t *pDdiTable) {
+
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    fillDdiEntry(pDdiTable->pfnCreateExt, L0::globalDriverDispatch.coreRTASBuilder.pfnCreateExt, version, ZE_API_VERSION_1_13);
+    fillDdiEntry(pDdiTable->pfnGetBuildPropertiesExt, L0::globalDriverDispatch.coreRTASBuilder.pfnGetBuildPropertiesExt, version, ZE_API_VERSION_1_13);
+    fillDdiEntry(pDdiTable->pfnBuildExt, L0::globalDriverDispatch.coreRTASBuilder.pfnBuildExt, version, ZE_API_VERSION_1_13);
+    fillDdiEntry(pDdiTable->pfnCommandListAppendCopyExt, L0::globalDriverDispatch.coreRTASBuilder.pfnCommandListAppendCopyExt, version, ZE_API_VERSION_1_13);
+    fillDdiEntry(pDdiTable->pfnDestroyExt, L0::globalDriverDispatch.coreRTASBuilder.pfnDestroyExt, version, ZE_API_VERSION_1_13);
+    driverDdiTable.coreDdiTable.RTASBuilder = *pDdiTable;
+    return result;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeGetRTASParallelOperationProcAddrTable(
+    ze_api_version_t version,
+    ze_rtas_parallel_operation_dditable_t *pDdiTable) {
+
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.core.version) != ZE_MAJOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    fillDdiEntry(pDdiTable->pfnCreateExt, L0::globalDriverDispatch.coreRTASParallelOperation.pfnCreateExt, version, ZE_API_VERSION_1_13);
+    fillDdiEntry(pDdiTable->pfnGetPropertiesExt, L0::globalDriverDispatch.coreRTASParallelOperation.pfnGetPropertiesExt, version, ZE_API_VERSION_1_13);
+    fillDdiEntry(pDdiTable->pfnJoinExt, L0::globalDriverDispatch.coreRTASParallelOperation.pfnJoinExt, version, ZE_API_VERSION_1_13);
+    fillDdiEntry(pDdiTable->pfnDestroyExt, L0::globalDriverDispatch.coreRTASParallelOperation.pfnDestroyExt, version, ZE_API_VERSION_1_13);
+    driverDdiTable.coreDdiTable.RTASParallelOperation = *pDdiTable;
+    return result;
+}

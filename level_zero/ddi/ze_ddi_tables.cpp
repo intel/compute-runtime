@@ -96,6 +96,11 @@ DriverDispatch::DriverDispatch() {
     this->sysman.Diagnostics = &this->sysmanDiagnostics;
     this->sysman.VFManagementExp = &this->sysmanVFManagementExp;
 
+    this->coreRTASBuilder.pfnCreateExt = L0::zeRTASBuilderCreateExt;
+    this->coreRTASBuilder.pfnGetBuildPropertiesExt = L0::zeRTASBuilderGetBuildPropertiesExt;
+    this->coreRTASBuilder.pfnBuildExt = L0::zeRTASBuilderBuildExt;
+    this->coreRTASBuilder.pfnDestroyExt = L0::zeRTASBuilderDestroyExt;
+    this->coreRTASBuilder.pfnCommandListAppendCopyExt = L0::zeRTASBuilderCommandListAppendCopyExt;
     this->coreRTASBuilderExp.pfnCreateExp = L0::zeRTASBuilderCreateExp;
     this->coreRTASBuilderExp.pfnGetBuildPropertiesExp = L0::zeRTASBuilderGetBuildPropertiesExp;
     this->coreRTASBuilderExp.pfnBuildExp = L0::zeRTASBuilderBuildExp;
@@ -104,6 +109,10 @@ DriverDispatch::DriverDispatch() {
     this->coreRTASParallelOperationExp.pfnGetPropertiesExp = L0::zeRTASParallelOperationGetPropertiesExp;
     this->coreRTASParallelOperationExp.pfnJoinExp = L0::zeRTASParallelOperationJoinExp;
     this->coreRTASParallelOperationExp.pfnDestroyExp = L0::zeRTASParallelOperationDestroyExp;
+    this->coreRTASParallelOperation.pfnCreateExt = L0::zeRTASParallelOperationCreateExt;
+    this->coreRTASParallelOperation.pfnGetPropertiesExt = L0::zeRTASParallelOperationGetPropertiesExt;
+    this->coreRTASParallelOperation.pfnJoinExt = L0::zeRTASParallelOperationJoinExt;
+    this->coreRTASParallelOperation.pfnDestroyExt = L0::zeRTASParallelOperationDestroyExt;
     this->coreGlobal.pfnInit = L0::zeInit;
     this->coreGlobal.pfnInitDrivers = L0::zeInitDrivers;
     this->coreDriver.pfnGet = L0::zeDriverGet;

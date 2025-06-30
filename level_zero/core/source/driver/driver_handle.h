@@ -78,8 +78,11 @@ struct DriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
 
     virtual ze_result_t loadRTASLibrary() = 0;
     virtual ze_result_t createRTASBuilder(const ze_rtas_builder_exp_desc_t *desc, ze_rtas_builder_exp_handle_t *phBuilder) = 0;
+    virtual ze_result_t createRTASBuilderExt(const ze_rtas_builder_ext_desc_t *desc, ze_rtas_builder_ext_handle_t *phBuilder) = 0;
     virtual ze_result_t createRTASParallelOperation(ze_rtas_parallel_operation_exp_handle_t *phParallelOperation) = 0;
+    virtual ze_result_t createRTASParallelOperationExt(ze_rtas_parallel_operation_ext_handle_t *phParallelOperation) = 0;
     virtual ze_result_t formatRTASCompatibilityCheck(ze_rtas_format_exp_t rtasFormatA, ze_rtas_format_exp_t rtasFormatB) = 0;
+    virtual ze_result_t formatRTASCompatibilityCheckExt(ze_rtas_format_ext_t rtasFormatA, ze_rtas_format_ext_t rtasFormatB) = 0;
 
     virtual int setErrorDescription(const std::string &str) = 0;
     virtual ze_result_t getErrorDescription(const char **ppString) = 0;

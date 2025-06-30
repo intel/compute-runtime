@@ -1705,6 +1705,7 @@ TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnC
     verifyExtensionDefinition(ZE_CACHELINE_SIZE_EXT_NAME, ZE_DEVICE_CACHE_LINE_SIZE_EXT_VERSION_1_0);
     verifyExtensionDefinition(ZE_DEVICE_VECTOR_SIZES_EXT_NAME, ZE_DEVICE_VECTOR_SIZES_EXT_VERSION_1_0);
     verifyExtensionDefinition(ZE_MUTABLE_COMMAND_LIST_EXP_NAME, ZE_MUTABLE_COMMAND_LIST_EXP_VERSION_1_1);
+    verifyExtensionDefinition(ZE_RTAS_EXT_NAME, ZE_RTAS_BUILDER_EXT_VERSION_1_0);
 
     // Driver experimental extensions
     verifyExtensionDefinition(ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME, ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_VERSION_CURRENT);

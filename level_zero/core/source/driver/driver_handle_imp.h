@@ -136,8 +136,11 @@ struct DriverHandleImp : public DriverHandle {
 
     ze_result_t loadRTASLibrary() override;
     ze_result_t createRTASBuilder(const ze_rtas_builder_exp_desc_t *desc, ze_rtas_builder_exp_handle_t *phBuilder) override;
+    ze_result_t createRTASBuilderExt(const ze_rtas_builder_ext_desc_t *desc, ze_rtas_builder_ext_handle_t *phBuilder) override;
     ze_result_t createRTASParallelOperation(ze_rtas_parallel_operation_exp_handle_t *phParallelOperation) override;
+    ze_result_t createRTASParallelOperationExt(ze_rtas_parallel_operation_ext_handle_t *phParallelOperation) override;
     ze_result_t formatRTASCompatibilityCheck(ze_rtas_format_exp_t rtasFormatA, ze_rtas_format_exp_t rtasFormatB) override;
+    ze_result_t formatRTASCompatibilityCheckExt(ze_rtas_format_ext_t rtasFormatA, ze_rtas_format_ext_t rtasFormatB) override;
 
     std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
