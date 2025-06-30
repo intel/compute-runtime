@@ -39,6 +39,7 @@ class CommandStreamReceiver;
 class GraphicsAllocation;
 class ProductHelper;
 
+struct AllocationData;
 struct AllocationProperties;
 
 struct AubInfo {
@@ -332,7 +333,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     void setShareableHostMemory(bool shareableHostMemory) { this->shareableHostMemory = shareableHostMemory; }
     bool isShareableHostMemory() const { return shareableHostMemory; }
     MOCKABLE_VIRTUAL bool hasAllocationReadOnlyType();
-    MOCKABLE_VIRTUAL void checkAllocationTypeReadOnlyRestrictions(const AllocationProperties &properties);
+    MOCKABLE_VIRTUAL void checkAllocationTypeReadOnlyRestrictions(const AllocationData &allocData);
 
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};

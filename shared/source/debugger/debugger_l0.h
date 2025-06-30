@@ -111,7 +111,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableAndNonMovableClass {
     void setSingleAddressSpaceSbaTracking(bool value) {
         singleAddressSpaceSbaTracking = value;
     }
-    bool getSingleAddressSpaceSbaTracking() { return singleAddressSpaceSbaTracking; }
+    bool getSingleAddressSpaceSbaTracking() const override { return singleAddressSpaceSbaTracking; }
 
     struct CommandQueueNotification {
         uint32_t subDeviceIndex = 0;

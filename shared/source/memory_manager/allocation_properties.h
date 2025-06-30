@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,7 +110,8 @@ struct AllocationData {
             uint32_t use32BitFrontWindow : 1;
             uint32_t isUSMDeviceMemory : 1;
             uint32_t zeroMemory : 1;
-            uint32_t reserved : 16;
+            uint32_t cantBeReadOnly : 1;
+            uint32_t reserved : 15;
         } flags;
         uint32_t allFlags = 0;
     };

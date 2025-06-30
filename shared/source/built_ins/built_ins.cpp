@@ -114,9 +114,13 @@ const SipKernel &BuiltIns::getSipKernel(Device &device, OsContext *context) {
                     binary[bindlessSip.getPidOffset()] = static_cast<uint32_t>((context->getOfflineDumpContextId(deviceIndex) >> 32) & 0xFFFFFFFF);
                 }
 
+                auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
+                auto &productHelper = device.getProductHelper();
+
                 DeviceBitfield copyBitfield{};
                 copyBitfield.set(deviceIndex);
-                copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(device, sipAllocation, 0, binary.get(), bindlessSip.getBinary().size(), copyBitfield);
+                copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
+                                                                                    device, sipAllocation, 0, binary.get(), bindlessSip.getBinary().size(), copyBitfield);
                 DEBUG_BREAK_IF(!copySuccess);
             }
         }

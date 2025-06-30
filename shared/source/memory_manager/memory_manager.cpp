@@ -653,7 +653,12 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.preferCompressed = properties.flags.preferCompressed;
     allocationData.flags.preferCompressed |= CompressionSelector::preferCompressedAllocation(properties);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
+    allocationData.flags.cantBeReadOnly = properties.flags.cantBeReadOnly;
     allocationData.usmInitialPlacement = properties.usmInitialPlacement;
+
+    if (properties.allocationType == AllocationType::commandBuffer && rootDeviceEnvironment.debugger.get() && rootDeviceEnvironment.debugger->getSingleAddressSpaceSbaTracking()) {
+        allocationData.flags.cantBeReadOnly = true;
+    }
 
     if (GraphicsAllocation::isDebugSurfaceAllocationType(properties.allocationType) ||
         GraphicsAllocation::isConstantOrGlobalSurfaceAllocationType(properties.allocationType)) {
@@ -783,7 +788,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     if (!allocation) {
         return nullptr;
     }
-    allocation->checkAllocationTypeReadOnlyRestrictions(properties);
+    allocation->checkAllocationTypeReadOnlyRestrictions(allocationData);
 
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
@@ -1268,10 +1273,13 @@ bool MemoryTransferHelper::transferMemoryToAllocation(bool useBlitter, const Dev
     }
     return device.getMemoryManager()->copyMemoryToAllocation(dstAllocation, dstOffset, srcMemory, srcSize);
 }
-bool MemoryTransferHelper::transferMemoryToAllocationBanks(const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory,
+bool MemoryTransferHelper::transferMemoryToAllocationBanks(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory,
                                                            size_t srcSize, DeviceBitfield dstMemoryBanks) {
-    auto blitSuccess = BlitHelper::blitMemoryToAllocationBanks(device, dstAllocation, dstOffset, srcMemory, {srcSize, 1, 1}, dstMemoryBanks) == BlitOperationResult::success;
+    auto blitSuccess = false;
 
+    if (useBlitter) {
+        blitSuccess = BlitHelper::blitMemoryToAllocationBanks(device, dstAllocation, dstOffset, srcMemory, {srcSize, 1, 1}, dstMemoryBanks) == BlitOperationResult::success;
+    }
     if (!blitSuccess) {
         return device.getMemoryManager()->copyMemoryToAllocationBanks(dstAllocation, dstOffset, srcMemory, srcSize, dstMemoryBanks);
     }
