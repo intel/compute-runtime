@@ -84,10 +84,7 @@ CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
         device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc.second);
     }
     this->ownedPrivateAllocations.clear();
-    for (auto &patternAlloc : this->patternAllocations) {
-        device->storeReusableAllocation(*patternAlloc);
-    }
-    this->patternAllocations.clear();
+    this->storeFillPatternResourcesForReuse();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -112,11 +109,7 @@ void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
-    for (auto &patternAlloc : this->patternAllocations) {
-        device->storeReusableAllocation(*patternAlloc);
-    }
-    this->patternAllocations.clear();
-
+    this->storeFillPatternResourcesForReuse();
     removeDeallocationContainerData();
     removeHostPtrAllocations();
     removeMemoryPrefetchAllocations();
@@ -2476,18 +2469,30 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     } else {
         builtinKernel->setGroupSize(static_cast<uint32_t>(fillArguments.mainGroupSize), 1, 1);
 
+        NEO::GraphicsAllocation *patternGfxAlloc = nullptr;
+        void *patternGfxAllocPtr = nullptr;
         size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
-        auto patternGfxAlloc = device->obtainReusableAllocation(patternAllocationSize, NEO::AllocationType::fillPattern);
-        if (patternGfxAlloc == nullptr) {
-            NEO::AllocationProperties allocationProperties{device->getNEODevice()->getRootDeviceIndex(),
-                                                           patternAllocationSize,
-                                                           NEO::AllocationType::fillPattern,
-                                                           device->getNEODevice()->getDeviceBitfield()};
-            allocationProperties.alignment = MemoryConstants::pageSize;
-            patternGfxAlloc = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+
+        if (patternAllocationSize > MemoryConstants::cacheLineSize) {
+            patternGfxAlloc = device->obtainReusableAllocation(patternAllocationSize, NEO::AllocationType::fillPattern);
+            if (patternGfxAlloc == nullptr) {
+                NEO::AllocationProperties allocationProperties{device->getNEODevice()->getRootDeviceIndex(),
+                                                               patternAllocationSize,
+                                                               NEO::AllocationType::fillPattern,
+                                                               device->getNEODevice()->getDeviceBitfield()};
+                allocationProperties.alignment = MemoryConstants::pageSize;
+                patternGfxAlloc = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+            }
+            patternGfxAllocPtr = patternGfxAlloc->getUnderlyingBuffer();
+            patternAllocations.push_back(patternGfxAlloc);
+        } else {
+            auto patternTag = device->getFillPatternAllocator()->getTag();
+            patternGfxAllocPtr = patternTag->getCpuBase();
+            patternGfxAlloc = patternTag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
+            this->patternTags.push_back(patternTag);
+            commandContainer.addToResidencyContainer(patternGfxAlloc);
         }
-        void *patternGfxAllocPtr = patternGfxAlloc->getUnderlyingBuffer();
-        patternAllocations.push_back(patternGfxAlloc);
+
         uint64_t patternAllocPtr = reinterpret_cast<uintptr_t>(patternGfxAllocPtr);
         uint64_t patternAllocOffset = 0;
         uint64_t patternSizeToCopy = patternSize;

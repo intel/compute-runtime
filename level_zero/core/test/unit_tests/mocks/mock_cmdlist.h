@@ -112,6 +112,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::obtainKernelPreemptionMode;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
+    using BaseClass::patternTags;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;

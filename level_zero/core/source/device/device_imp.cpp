@@ -1755,6 +1755,7 @@ void DeviceImp::releaseResources() {
     deviceInOrderCounterAllocator.reset();
     hostInOrderCounterAllocator.reset();
     inOrderTimestampAllocator.reset();
+    fillPatternAllocator.reset();
 
     if (allocationsForReuse.get()) {
         allocationsForReuse->freeAllGraphicsAllocations(neoDevice);

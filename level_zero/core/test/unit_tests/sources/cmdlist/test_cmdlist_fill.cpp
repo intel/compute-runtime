@@ -53,16 +53,17 @@ HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithPatternSizeLessOrEqualTh
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     for (const auto patternSize : {1, 2, 4}) {
-        size_t patternAllocationsVectorSizeBefore = commandList->patternAllocations.size();
+        size_t patternTagsVectorSizeBefore = commandList->patternTags.size();
         CmdListMemoryCopyParams copyParams = {};
         ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        size_t patternAllocationsVectorSize = commandList->patternAllocations.size();
+        size_t patternTagsVectorSize = commandList->patternTags.size();
         if (patternSize == 1) {
-            EXPECT_EQ(patternAllocationsVectorSize, patternAllocationsVectorSizeBefore);
+            EXPECT_EQ(patternTagsVectorSize, patternTagsVectorSizeBefore);
         } else {
-            EXPECT_NE(patternAllocationsVectorSize, patternAllocationsVectorSizeBefore);
+            EXPECT_NE(patternTagsVectorSize, patternTagsVectorSizeBefore);
         }
+        EXPECT_EQ(0u, commandList->patternAllocations.size());
     }
 }
 
@@ -76,6 +77,7 @@ HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithPatternSizeLessOrEqualTh
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         size_t patternAllocationsVectorSize = commandList->patternAllocations.size();
         EXPECT_EQ(patternAllocationsVectorSize, 0u);
+        EXPECT_EQ(0u, commandList->patternTags.size());
     }
 }
 
@@ -84,13 +86,14 @@ HWTEST_F(AppendFillTest, givenTwoCallsToAppendMemoryFillWithSamePatternThenAlloc
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     CmdListMemoryCopyParams copyParams = {};
-    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 8, allocSize, nullptr, 0, nullptr, copyParams);
+    char pattern[65] = {};
+    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, sizeof(pattern), allocSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t patternAllocationsVectorSize = commandList->patternAllocations.size();
     EXPECT_EQ(patternAllocationsVectorSize, 1u);
 
     uint8_t *newDstPtr = new uint8_t[allocSize];
-    result = commandList->appendMemoryFill(newDstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    result = commandList->appendMemoryFill(newDstPtr, pattern, sizeof(pattern), allocSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t newPatternAllocationsVectorSize = commandList->patternAllocations.size();
 
@@ -104,17 +107,56 @@ HWTEST_F(AppendFillTest, givenTwoCallsToAppendMemoryFillWithDifferentPatternsThe
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     CmdListMemoryCopyParams copyParams = {};
-    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 8, allocSize, nullptr, 0, nullptr, copyParams);
+    char pattern[65] = {};
+    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, sizeof(pattern), allocSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t patternAllocationsVectorSize = commandList->patternAllocations.size();
     EXPECT_EQ(patternAllocationsVectorSize, 1u);
 
-    uint8_t newPattern[patternSize] = {1, 2, 3, 4};
-    result = commandList->appendMemoryFill(dstPtr, newPattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    char newPattern[66] = {};
+    result = commandList->appendMemoryFill(dstPtr, newPattern, sizeof(newPattern), allocSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t newPatternAllocationsVectorSize = commandList->patternAllocations.size();
 
     EXPECT_EQ(patternAllocationsVectorSize + 1u, newPatternAllocationsVectorSize);
+}
+
+HWTEST_F(AppendFillTest, givenTwoCallsToAppendMemoryFillWithSamePatternThenTagIsCreatedForEachCall) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 8, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t patternTagsVectorSize = commandList->patternTags.size();
+    EXPECT_EQ(patternTagsVectorSize, 1u);
+
+    uint8_t *newDstPtr = new uint8_t[allocSize];
+    result = commandList->appendMemoryFill(newDstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t newPatternTagsVectorSize = commandList->patternTags.size();
+
+    EXPECT_GT(newPatternTagsVectorSize, patternTagsVectorSize);
+
+    delete[] newDstPtr;
+}
+
+HWTEST_F(AppendFillTest, givenTwoCallsToAppendMemoryFillWithDifferentPatternsThenTagIsCreatedForEachPattern) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, 8, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t patternTagsVectorSize = commandList->patternTags.size();
+    EXPECT_EQ(patternTagsVectorSize, 1u);
+
+    uint8_t newPattern[patternSize] = {1, 2, 3, 4};
+    result = commandList->appendMemoryFill(dstPtr, newPattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t newPatternTagsVectorSize = commandList->patternTags.size();
+
+    EXPECT_EQ(patternTagsVectorSize + 1u, newPatternTagsVectorSize);
 }
 
 HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPatternSizeIsOneThenDispatchOneKernel) {

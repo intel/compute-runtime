@@ -1871,7 +1871,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAppendMemoryFillWhenHostSynchronizeTh
 
     constexpr size_t size = 128 * sizeof(uint32_t);
     auto data = allocDeviceMem(size);
-    uint64_t pattern = 0u;
+    char pattern[65] = {};
 
     immCmdList->appendMemoryFill(data, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(immCmdList->patternAllocations.size(), 1u);
@@ -1891,7 +1891,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAppendMemoryFillWhenResetThenStoreFil
 
     constexpr size_t size = 128 * sizeof(uint32_t);
     auto data = allocDeviceMem(size);
-    uint64_t pattern = 0u;
+    char pattern[65] = {};
 
     regularCmdList->appendMemoryFill(data, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(regularCmdList->patternAllocations.size(), 1u);

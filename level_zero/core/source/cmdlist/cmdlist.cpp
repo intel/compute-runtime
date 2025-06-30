@@ -88,6 +88,17 @@ void CommandList::removeMemoryPrefetchAllocations() {
     }
 }
 
+void CommandList::storeFillPatternResourcesForReuse() {
+    for (auto &patternAlloc : this->patternAllocations) {
+        device->storeReusableAllocation(*patternAlloc);
+    }
+    this->patternAllocations.clear();
+    for (auto &patternTag : this->patternTags) {
+        patternTag->returnTag();
+    }
+    this->patternTags.clear();
+}
+
 NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload) {
     auto allocation = hostPtrMap.lower_bound(buffer);
     if (allocation != hostPtrMap.end()) {

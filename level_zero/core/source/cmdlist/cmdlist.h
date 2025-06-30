@@ -37,6 +37,7 @@ static_assert(IsCompliantWithDdiHandlesExt<_ze_command_list_handle_t>);
 
 namespace NEO {
 class ScratchSpaceController;
+class TagNodeBase;
 struct EncodeDispatchKernelArgs;
 } // namespace NEO
 
@@ -279,6 +280,7 @@ struct CommandList : _ze_command_list_handle_t {
     void removeDeallocationContainerData();
     void removeHostPtrAllocations();
     void removeMemoryPrefetchAllocations();
+    void storeFillPatternResourcesForReuse();
     void eraseDeallocationContainerEntry(NEO::GraphicsAllocation *allocation);
     void eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocation);
     bool isCopyOnly(bool copyOffloadOperation) const {
@@ -458,6 +460,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     NEO::PrivateAllocsToReuseContainer ownedPrivateAllocations;
     std::vector<NEO::GraphicsAllocation *> patternAllocations;
+    std::vector<NEO::TagNodeBase *> patternTags;
     std::vector<std::weak_ptr<Kernel>> printfKernelContainer;
 
     NEO::CommandContainer commandContainer;
