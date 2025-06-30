@@ -207,6 +207,7 @@ struct SyncObjHandle {
     uint32_t flags;
     int32_t fd;
     uint32_t pad;
+    uint64_t point;
 };
 
 struct SyncObjWait {
@@ -216,6 +217,7 @@ struct SyncObjWait {
     uint32_t flags;
     uint32_t firstSignaled;
     uint32_t pad;
+    uint64_t deadlineNs;
 };
 
 struct SyncObjTimelineWait {
@@ -226,6 +228,7 @@ struct SyncObjTimelineWait {
     uint32_t flags;
     uint32_t firstSignaled;
     uint32_t pad;
+    uint64_t deadlineNs;
 };
 
 struct SyncObjArray {
@@ -238,7 +241,7 @@ struct SyncObjTimelineArray {
     uint64_t handles;
     uint64_t points;
     uint32_t countHandles;
-    uint32_t pad;
+    uint32_t flags;
 };
 
 struct PrimaryContextHandle {

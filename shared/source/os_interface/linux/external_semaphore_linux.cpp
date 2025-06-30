@@ -105,7 +105,7 @@ bool ExternalSemaphoreLinux::enqueueSignal(uint64_t *fenceValue) {
     auto ioctlHelper = drm->getIoctlHelper();
 
     if (this->type == ExternalSemaphore::TimelineSemaphoreFd) {
-        struct SyncObjTimelineArray args;
+        struct SyncObjTimelineArray args = {};
         args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
         args.points = reinterpret_cast<uintptr_t>(fenceValue);
         args.countHandles = 1u;
@@ -115,7 +115,7 @@ bool ExternalSemaphoreLinux::enqueueSignal(uint64_t *fenceValue) {
             return false;
         }
     } else {
-        struct SyncObjArray args;
+        struct SyncObjArray args = {};
         args.handles = reinterpret_cast<uintptr_t>(&this->syncHandle);
         args.countHandles = 1u;
 
