@@ -1894,16 +1894,6 @@ HWTEST2_F(GfxCoreHelperTest, GivenModifiedGtSystemInfoWhenCallingCalculateAvaila
     }
 }
 
-HWTEST_F(GfxCoreHelperTest, givenGetDeviceTimestampWidthCalledThenReturnCorrectValue) {
-    DebugManagerStateRestore restore;
-
-    auto &helper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(0u, helper.getDeviceTimestampWidth());
-
-    debugManager.flags.OverrideTimestampWidth.set(64);
-    EXPECT_EQ(64u, helper.getDeviceTimestampWidth());
-}
-
 HWTEST_F(GfxCoreHelperTest, givenHwHelperWhenAligningThreadGroupCountToDssSizeThenThreadGroupCountChanged) {
     auto &helper = getHelper<GfxCoreHelper>();
     uint32_t threadGroupCountBefore = 4096;

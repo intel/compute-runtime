@@ -284,14 +284,6 @@ uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::getDeviceTimestampWidth() const {
-    if (debugManager.flags.OverrideTimestampWidth.get() != -1) {
-        return debugManager.flags.OverrideTimestampWidth.get();
-    }
-    return 64u;
-};
-
-template <>
 void MemorySynchronizationCommands<Family>::setStallingBarrier(void *commandsBuffer, PipeControlArgs &args) {
     using RESOURCE_BARRIER = typename Family::RESOURCE_BARRIER;
 

@@ -139,7 +139,6 @@ void RootDeviceEnvironment::initOsTime() {
     if (!osTime) {
         osTime = OSTime::create(osInterface.get());
         osTime->setDeviceTimerResolution();
-        osTime->setDeviceTimestampWidth(gfxCoreHelper->getDeviceTimestampWidth());
     }
 }
 

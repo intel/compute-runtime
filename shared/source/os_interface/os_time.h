@@ -94,14 +94,6 @@ class OSTime {
         deviceTime->setDeviceTimerResolution();
     }
 
-    void setDeviceTimestampWidth(uint32_t timestampWidth) {
-        this->timestampWidth = timestampWidth;
-    }
-
-    uint32_t getDeviceTimestampWidth() const {
-        return this->timestampWidth;
-    }
-
     void setRefreshTimestampsFlag() const {
         deviceTime->setRefreshTimestampsFlag();
     }
@@ -115,6 +107,5 @@ class OSTime {
     OSInterface *osInterface = nullptr;
     std::unique_ptr<DeviceTime> deviceTime;
     uint64_t maxGpuTimeStamp = 0;
-    uint32_t timestampWidth = 0;
 };
 } // namespace NEO

@@ -892,14 +892,6 @@ void GfxCoreHelperHw<GfxFamily>::alignThreadGroupCountToDssSize(uint32_t &thread
     threadCount = std::min(threadCount, availableTreadCount);
 }
 
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getDeviceTimestampWidth() const {
-    if (debugManager.flags.OverrideTimestampWidth.get() != -1) {
-        return debugManager.flags.OverrideTimestampWidth.get();
-    }
-    return 0u;
-}
-
 template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getInternalCopyEngineIndex(const HardwareInfo &hwInfo) const {
     if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
