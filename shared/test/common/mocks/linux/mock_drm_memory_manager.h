@@ -6,9 +6,12 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -49,8 +52,9 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::checkUnexpectedGpuPageFault;
     using DrmMemoryManager::createAllocWithAlignment;
     using DrmMemoryManager::createAllocWithAlignmentFromUserptr;
+    using DrmMemoryManager::createBufferObjectInMemoryRegion;
     using DrmMemoryManager::createGraphicsAllocation;
-    using DrmMemoryManager::createMultiHostAllocation;
+    using DrmMemoryManager::createMultiHostDebugSurfaceAllocation;
     using DrmMemoryManager::createSharedUnifiedMemoryAllocation;
     using DrmMemoryManager::createStorageInfoFromProperties;
     using DrmMemoryManager::eraseSharedBoHandleWrapper;
@@ -203,6 +207,24 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     size_t unregisterAllocationCalled = 0u;
     ExecutionEnvironment *executionEnvironment = nullptr;
 
+    BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
+                                                   DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation) override {
+        if (createBufferObjectInMemoryRegionCallBase) {
+            return DrmMemoryManager::createBufferObjectInMemoryRegion(rootDeviceIndex, gmm, allocationType, gpuAddress, size, memoryBanks, maxOsContextCount, pairHandle, isSystemMemoryPool, isUsmHostAllocation);
+        }
+        // Create a mock BufferObject for testing
+        auto &drm = this->getDrm(rootDeviceIndex);
+        auto bo = new (std::nothrow) MockBufferObject(rootDeviceIndex, &drm);
+        if (bo) {
+            bo->setSize(size);
+            bo->setAddress(gpuAddress);
+        }
+        createBufferObjectInMemoryRegionCallCount++;
+        return bo;
+    }
+    bool createBufferObjectInMemoryRegionCallBase = true; // Default to calling the base class
+    uint32_t createBufferObjectInMemoryRegionCallCount = 0u;
+
   protected:
     std::mutex unreferenceMtx;
     std::mutex releaseGpuRangeMtx;
@@ -227,6 +249,24 @@ struct MockDrmMemoryManager : DrmMemoryManager {
     using DrmMemoryManager::mmapFunction;
     using DrmMemoryManager::munmapFunction;
     ADDMETHOD_CONST(emitPinningRequestForBoContainer, SubmissionStatus, true, SubmissionStatus::success, (BufferObject * *bo, uint32_t boCount, uint32_t rootDeviceIndex), (bo, boCount, rootDeviceIndex));
+
+    BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
+                                                   DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation) override {
+        if (createBufferObjectInMemoryRegionCallBase) {
+            return DrmMemoryManager::createBufferObjectInMemoryRegion(rootDeviceIndex, gmm, allocationType, gpuAddress, size, memoryBanks, maxOsContextCount, pairHandle, isSystemMemoryPool, isUsmHostAllocation);
+        }
+        // Create a mock BufferObject for testing
+        auto &drm = this->getDrm(rootDeviceIndex);
+        auto bo = new (std::nothrow) MockBufferObject(rootDeviceIndex, &drm);
+        if (bo) {
+            bo->setSize(size);
+            bo->setAddress(gpuAddress);
+        }
+        createBufferObjectInMemoryRegionCallCount++;
+        return bo;
+    }
+    bool createBufferObjectInMemoryRegionCallBase = true; // Default to calling the base class
+    uint32_t createBufferObjectInMemoryRegionCallCount = 0u;
 };
 
 } // namespace NEO

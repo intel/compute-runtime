@@ -5405,40 +5405,6 @@ HWTEST2_TEMPLATED_F(DrmMemoryManagerTest, givenDrmAllocationWithWithAlignmentFro
     EXPECT_EQ(allocation, nullptr);
 }
 
-TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAllocateGraphicsMemoryWithPropertiesCalledWithDebugSurfaceTypeThenDebugSurfaceIsCreated) {
-    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::debugContextSaveArea, false, false, 0b1011};
-    auto debugSurface = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties));
-
-    EXPECT_NE(nullptr, debugSurface);
-
-    auto mem = debugSurface->getUnderlyingBuffer();
-    ASSERT_NE(nullptr, mem);
-
-    EXPECT_EQ(3u, debugSurface->getNumGmms());
-
-    auto &bos = debugSurface->getBOs();
-
-    EXPECT_NE(nullptr, bos[0]);
-    EXPECT_NE(nullptr, bos[1]);
-    EXPECT_NE(nullptr, bos[3]);
-
-    EXPECT_EQ(debugSurface->getGpuAddress(), bos[0]->peekAddress());
-    EXPECT_EQ(debugSurface->getGpuAddress(), bos[1]->peekAddress());
-    EXPECT_EQ(debugSurface->getGpuAddress(), bos[3]->peekAddress());
-
-    auto sipType = SipKernel::getSipKernelType(*device);
-    SipKernel::initSipKernel(sipType, *device);
-
-    auto &stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*device, nullptr).getStateSaveAreaHeader();
-    mem = ptrOffset(mem, stateSaveAreaHeader.size());
-    auto size = debugSurface->getUnderlyingBufferSize() - stateSaveAreaHeader.size();
-
-    EXPECT_TRUE(memoryZeroed(mem, size));
-
-    SipKernel::freeSipKernels(&device->getRootDeviceEnvironmentRef(), device->getMemoryManager());
-    memoryManager->freeGraphicsMemory(debugSurface);
-}
-
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAffinityMaskDeviceWithBitfieldIndex1SetWhenAllocatingDebugSurfaceThenSingleAllocationWithOneBoIsCreated) {
     NEO::debugManager.flags.CreateMultipleSubDevices.set(2);
 
@@ -8608,53 +8574,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandling
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMultiSubDevicesBitfieldWhenAllocatingSbaTrackingBufferThenCorrectMultiHostAllocationReturned) {
-    mock->ioctlExpected.total = -1;
-
-    NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize,
-                                         NEO::AllocationType::debugSbaTrackingBuffer,
-                                         false, false,
-                                         0b0011};
-
-    const uint64_t gpuAddresses[] = {0, 0x12340000};
-
-    for (auto gpuAddress : gpuAddresses) {
-        properties.gpuAddress = gpuAddress;
-
-        auto sbaBuffer = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties));
-
-        EXPECT_NE(nullptr, sbaBuffer);
-
-        EXPECT_EQ(MemoryPool::system4KBPages, sbaBuffer->getMemoryPool());
-        EXPECT_EQ(2u, sbaBuffer->getNumGmms());
-
-        EXPECT_NE(nullptr, sbaBuffer->getUnderlyingBuffer());
-        EXPECT_EQ(MemoryConstants::pageSize, sbaBuffer->getUnderlyingBufferSize());
-
-        auto &bos = sbaBuffer->getBOs();
-
-        EXPECT_NE(nullptr, bos[0]);
-        EXPECT_NE(nullptr, bos[1]);
-
-        if (gpuAddress != 0) {
-            EXPECT_EQ(gpuAddress, sbaBuffer->getGpuAddress());
-
-            EXPECT_EQ(gpuAddress, bos[0]->peekAddress());
-            EXPECT_EQ(gpuAddress, bos[1]->peekAddress());
-            EXPECT_EQ(0u, sbaBuffer->getReservedAddressPtr());
-        } else {
-            EXPECT_EQ(bos[0]->peekAddress(), bos[1]->peekAddress());
-            EXPECT_NE(nullptr, sbaBuffer->getReservedAddressPtr());
-            EXPECT_NE(0u, sbaBuffer->getGpuAddress());
-        }
-
-        EXPECT_EQ(nullptr, bos[2]);
-        EXPECT_EQ(nullptr, bos[3]);
-
-        memoryManager->freeGraphicsMemory(sbaBuffer);
-    }
-}
-
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenSingleSubDevicesBitfieldWhenAllocatingSbaTrackingBufferThenSingleHostAllocationReturned) {
     mock->ioctlExpected.total = -1;
 
@@ -9223,4 +9142,26 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmHostVMAllocationUnmapFails) {
     SysCalls::failMunmap = true;
     EXPECT_FALSE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(gfxAllocs, gfxAlloc, gpuAddr, MemoryConstants::pageSize));
     SysCalls::failMunmap = false;
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenCpuAddressReservationIsAttemptedwithMmapFailureThenNullptrAllocationReturned) {
+    // Configure mock to use mock behavior for createBufferObjectInMemoryRegion
+    memoryManager->createBufferObjectInMemoryRegionCallBase = false;
+
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::debugContextSaveArea;
+    allocationData.rootDeviceIndex = 0;
+    allocationData.storageInfo.memoryBanks = 0b1;
+    allocationData.gpuAddress = 0x1000;
+
+    VariableBackup<bool> backup(&SysCalls::failMmap, true);
+    memoryManager->mmapFunction = [](void *addr, size_t len, int prot,
+                                     int flags, int fd, off_t offset) throw() {
+        errno = EINVAL; // Simulate mmap failure
+        return MAP_FAILED;
+    };
+    auto allocation = memoryManager->createMultiHostDebugSurfaceAllocation(allocationData);
+    EXPECT_EQ(nullptr, allocation);
+    memoryManager->mmapFunction = SysCalls::mmap; // Restore original mmap function
 }

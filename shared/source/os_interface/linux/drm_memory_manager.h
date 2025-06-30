@@ -160,7 +160,7 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *allocateGraphicsMemoryWithAlignmentImpl(const AllocationData &allocationData);
     DrmAllocation *createAllocWithAlignmentFromUserptr(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress);
     DrmAllocation *createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSize, uint64_t gpuAddress);
-    DrmAllocation *createMultiHostAllocation(const AllocationData &allocationData);
+    DrmAllocation *createMultiHostDebugSurfaceAllocation(const AllocationData &allocationData);
     void obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress);
     GraphicsAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;

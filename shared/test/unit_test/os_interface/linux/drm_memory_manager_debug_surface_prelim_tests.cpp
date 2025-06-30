@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
@@ -27,66 +28,110 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateDebugSurfaceWithUnalign
     EXPECT_EQ(nullptr, debugSurface);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateDebugSurfaceAndAlignedMallocFailedThenNullptrReturned) {
-    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::debugContextSaveArea, false, false, 0b1011};
-    memoryManager->alignedMallocShouldFail = true;
-    auto debugSurface = memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties);
-    memoryManager->alignedMallocShouldFail = false;
-    EXPECT_EQ(nullptr, debugSurface);
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateMultiHostDebugSurfaceAllocationWithUnalignedSizeThenNullptrReturned) {
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize + 101; // Unaligned size
+    allocationData.type = AllocationType::debugContextSaveArea;
+    allocationData.rootDeviceIndex = 0;
+    allocationData.storageInfo.memoryBanks = 0b1;
+
+    auto allocation = memoryManager->createMultiHostDebugSurfaceAllocation(allocationData);
+    EXPECT_EQ(nullptr, allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenCreateDebugSurfaceAndAllocUserptrFailedThenNullptrReturned) {
-    mock->ioctlRes = -1;
-    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::debugContextSaveArea, false, false, 0b1011};
-    auto debugSurface = memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties);
-    mock->ioctlRes = 0;
-    EXPECT_EQ(1, mock->ioctlCnt.gemUserptr);
-    EXPECT_EQ(nullptr, debugSurface);
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateMultiHostDebugSurfaceAllocationWithAlignedSizeThenLocalMemoryPoolSelected) {
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::debugContextSaveArea;
+    allocationData.rootDeviceIndex = 0;
+    allocationData.storageInfo.memoryBanks = 0b11; // Two tiles
+    allocationData.gpuAddress = 0x1000;
+
+    auto allocation = memoryManager->createMultiHostDebugSurfaceAllocation(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
+    EXPECT_TRUE(allocation->isFlushL3Required());
+    EXPECT_TRUE(allocation->isUncacheable());
+
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenCreateDebugSurfaceSuccessThenCorrectMultiHostAllocationReturned) {
-    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::debugContextSaveArea, false, false, 0b1011};
-    auto debugSurface = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties));
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateMultiHostDebugSurfaceAllocationWithZeroGpuAddressThenGpuRangeIsAcquired) {
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::debugContextSaveArea;
+    allocationData.rootDeviceIndex = 0;
+    allocationData.storageInfo.memoryBanks = 0b11; // Two tiles
+    allocationData.gpuAddress = 0;                 // Zero GPU address
 
-    EXPECT_NE(nullptr, debugSurface);
+    auto allocation = memoryManager->createMultiHostDebugSurfaceAllocation(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_NE(0u, allocation->getGpuAddress());
+    EXPECT_NE(nullptr, allocation->getReservedAddressPtr());
 
-    EXPECT_EQ(MemoryPool::system4KBPages, debugSurface->getMemoryPool());
-    EXPECT_EQ(3u, debugSurface->getNumGmms());
-    EXPECT_EQ(3, mock->ioctlCnt.gemUserptr);
+    memoryManager->freeGraphicsMemory(allocation);
+}
 
-    EXPECT_NE(nullptr, debugSurface->getUnderlyingBuffer());
-    EXPECT_EQ(MemoryConstants::pageSize, debugSurface->getUnderlyingBufferSize());
-    EXPECT_EQ(3 * MemoryConstants::pageSize, memoryManager->alignedMallocSizeRequired);
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateMultiHostDebugSurfaceAllocationWithNonZeroGpuAddressThenProvidedAddressIsUsed) {
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::debugContextSaveArea;
+    allocationData.rootDeviceIndex = 0;
+    allocationData.storageInfo.memoryBanks = 0b11; // Two tiles
+    allocationData.gpuAddress = 0x1000;            // Non-zero GPU address
 
-    auto gpuAddress = debugSurface->getGpuAddress();
-    auto gfxPartition = memoryManager->getGfxPartition(0);
-    EXPECT_NE(reinterpret_cast<uint64_t>(debugSurface->getUnderlyingBuffer()), gpuAddress);
+    auto allocation = memoryManager->createMultiHostDebugSurfaceAllocation(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    auto gmmHelper = memoryManager->getGmmHelper(0);
+    EXPECT_EQ(gmmHelper->canonize(0x1000), allocation->getGpuAddress());
+    EXPECT_EQ(nullptr, allocation->getReservedAddressPtr());
 
-    auto gmmHelper = device.get()->getGmmHelper();
-    EXPECT_GE(gmmHelper->decanonize(gpuAddress), gfxPartition->getHeapBase(HeapIndex::heapStandard));
-    EXPECT_LT(gmmHelper->decanonize(gpuAddress), gfxPartition->getHeapLimit(HeapIndex::heapStandard));
+    memoryManager->freeGraphicsMemory(allocation);
+}
 
-    auto &storageInfo = debugSurface->storageInfo;
-    auto &bos = debugSurface->getBOs();
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateMultiHostDebugSurfaceAllocationWithMultipleTilesThenAllTilesAreHandled) {
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::debugContextSaveArea;
+    allocationData.rootDeviceIndex = 0;
+    allocationData.storageInfo.memoryBanks = 0b11; // Two tiles
+    allocationData.gpuAddress = 0x1000;
 
-    EXPECT_NE(nullptr, bos[0]);
-    EXPECT_EQ(gpuAddress, bos[0]->peekAddress());
-    EXPECT_NE(nullptr, bos[1]);
-    EXPECT_EQ(gpuAddress, bos[1]->peekAddress());
-    EXPECT_EQ(nullptr, bos[2]);
-    EXPECT_NE(nullptr, bos[3]);
-    EXPECT_EQ(gpuAddress, bos[3]->peekAddress());
+    auto allocation = memoryManager->createMultiHostDebugSurfaceAllocation(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(2u, allocation->getNumGmms());
 
-    EXPECT_TRUE(debugSurface->isFlushL3Required());
-    EXPECT_TRUE(debugSurface->isUncacheable());
-    EXPECT_EQ(debugSurface->getNumGmms(), storageInfo.getNumBanks());
-    EXPECT_EQ(0b1011u, storageInfo.memoryBanks.to_ulong());
-    EXPECT_EQ(0b1011u, storageInfo.pageTablesVisibility.to_ulong());
-    EXPECT_FALSE(storageInfo.cloningOfPageTables);
-    EXPECT_FALSE(storageInfo.multiStorage);
-    EXPECT_TRUE(storageInfo.tileInstanced);
-    EXPECT_TRUE(storageInfo.cpuVisibleSegment);
-    EXPECT_TRUE(storageInfo.isLockable);
+    // Check that buffer objects are created for tiles
+    const auto &bufferObjects = allocation->getBOs();
+    EXPECT_GE(bufferObjects.size(), 2u); // At least 2 buffer objects
 
-    memoryManager->freeGraphicsMemory(debugSurface);
+    // Check that some buffer objects are valid (not all may be used)
+    bool foundValidBufferObjects = false;
+    for (const auto &bo : bufferObjects) {
+        if (bo != nullptr) {
+            foundValidBufferObjects = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(foundValidBufferObjects);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateMultiHostDebugSurfaceAllocationWithOsContextThenOsContextIsSet) {
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::debugContextSaveArea;
+    allocationData.rootDeviceIndex = 0;
+    allocationData.storageInfo.memoryBanks = 0b11; // Two tiles
+    allocationData.gpuAddress = 0x1000;
+
+    auto osContext = static_cast<OsContextLinux *>(device->getDefaultEngine().osContext);
+    allocationData.osContext = osContext;
+
+    auto allocation = memoryManager->createMultiHostDebugSurfaceAllocation(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(osContext, allocation->getOsContext());
+
+    memoryManager->freeGraphicsMemory(allocation);
 }

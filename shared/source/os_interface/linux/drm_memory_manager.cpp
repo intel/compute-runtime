@@ -501,7 +501,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
     if (GraphicsAllocation::isDebugSurfaceAllocationType(allocationData.type) &&
         allocationData.storageInfo.subDeviceBitfield.count() > 1) {
-        return createMultiHostAllocation(allocationData);
+        return createMultiHostDebugSurfaceAllocation(allocationData);
     }
 
     return allocateGraphicsMemoryWithAlignmentImpl(allocationData);
@@ -657,7 +657,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const Allo
 
     if (allocationData.type == NEO::AllocationType::debugSbaTrackingBuffer &&
         allocationData.storageInfo.subDeviceBitfield.count() > 1) {
-        return createMultiHostAllocation(allocationData);
+        return createMultiHostDebugSurfaceAllocation(allocationData);
     }
 
     auto osContextLinux = static_cast<OsContextLinux *>(allocationData.osContext);
