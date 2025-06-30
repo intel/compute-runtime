@@ -2382,7 +2382,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
-    bool useImmediateFill = patternSize == 1 || (patternSize <= 4 && isAligned<sizeof(uint32_t)>(dstAllocation.offset) && isAligned<sizeof(uint32_t) * 4>(size));
+    const auto maxWgSize = this->device->getDeviceInfo().maxWorkGroupSize;
+    bool useImmediateFill = patternSize == 1 || (patternSize <= 4 && isAligned<sizeof(uint32_t)>(dstAllocation.offset) && isAligned<sizeof(uint32_t) * 4>(size) && (size <= maxWgSize || isAligned(size, maxWgSize)));
     auto builtin = useImmediateFill
                        ? BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless)
                        : BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless);
@@ -2415,6 +2416,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     if (useImmediateFill) {
         launchParams.numKernelsInSplitLaunch++;
         if (fillArguments.leftRemainingBytes > 0) {
+            DEBUG_BREAK_IF(useImmediateFill && patternSize > 1u);
             res = appendUnalignedFillKernel(isStateless, fillArguments.leftRemainingBytes, dstAllocation, pattern, signalEvent, launchParams);
             if (res) {
                 return res;
@@ -2459,6 +2461,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         launchParams.numKernelsExecutedInSplitLaunch++;
 
         if (fillArguments.rightRemainingBytes > 0) {
+            DEBUG_BREAK_IF(useImmediateFill && patternSize > 1u);
             dstAllocation.offset = fillArguments.rightOffset;
             res = appendUnalignedFillKernel(isStateless, fillArguments.rightRemainingBytes, dstAllocation, pattern, signalEvent, launchParams);
             if (res) {
@@ -4075,7 +4078,8 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFillKernelArguments(size_t baseO
                                                                     CmdListFillKernelArguments &outArguments,
                                                                     Kernel *kernel) {
     constexpr auto dataTypeSize = sizeof(uint32_t) * 4;
-    if (patternSize == 1 || (patternSize <= 4 && isAligned<sizeof(uint32_t)>(baseOffset) && isAligned<dataTypeSize>(dstSize))) {
+    const auto maxWgSize = this->device->getDeviceInfo().maxWorkGroupSize;
+    if (patternSize == 1 || (patternSize <= 4 && isAligned<sizeof(uint32_t)>(baseOffset) && isAligned<dataTypeSize>(dstSize) && (dstSize <= maxWgSize || isAligned(dstSize, maxWgSize)))) {
         size_t middleSize = dstSize;
         outArguments.mainOffset = baseOffset;
         outArguments.leftRemainingBytes = sizeof(uint32_t) - (baseOffset % sizeof(uint32_t));
@@ -4087,7 +4091,7 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFillKernelArguments(size_t baseO
         }
 
         size_t adjustedSize = middleSize / dataTypeSize;
-        outArguments.mainGroupSize = this->device->getDeviceInfo().maxWorkGroupSize;
+        outArguments.mainGroupSize = maxWgSize;
         if (outArguments.mainGroupSize > adjustedSize && adjustedSize > 0) {
             outArguments.mainGroupSize = adjustedSize;
         }

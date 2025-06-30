@@ -1371,6 +1371,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenSettingFillPro
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
+    cmdList.device = device;
     auto unalignedOffset = 2u;
     auto patternSize = 8u;
     auto sizeToFill = 599u * patternSize;
@@ -1385,6 +1386,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenSettingFillPrope
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
+    cmdList.device = device;
     auto unalignedOffset = 4u;
     auto patternSize = 8u;
     auto sizeToFill = 599u * patternSize;
