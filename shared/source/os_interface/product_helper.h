@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/common_types.h"
 
 #include "aubstream/engine_node.h"
 #include "ocl_igc_shared/raytracing/ocl_raytracing_structures.h"
@@ -157,7 +158,7 @@ class ProductHelper {
     virtual bool isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const = 0;
+    virtual BcsSplitSettings getBcsSplitSettings() const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const = 0;
     virtual bool isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const = 0;

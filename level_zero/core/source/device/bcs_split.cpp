@@ -18,11 +18,19 @@
 namespace L0 {
 
 bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_command_queue_desc_t *desc, NEO::CommandStreamReceiver *csr) {
-    const auto defaultEngine = this->device.getProductHelper().getDefaultCopyEngine();
+    auto &productHelper = this->device.getProductHelper();
+    auto bcsSplitSettings = productHelper.getBcsSplitSettings();
+
+    if (NEO::debugManager.flags.SplitBcsRequiredTileCount.get() != -1) {
+        bcsSplitSettings.requiredTileCount = static_cast<uint32_t>(NEO::debugManager.flags.SplitBcsRequiredTileCount.get());
+    }
+
+    // If expectedTileCount==1, route root device to Tile0, otherwise use all Tiles
+    bool tileCountMatch = (bcsSplitSettings.requiredTileCount == 1) || (this->device.getNEODevice()->getNumSubDevices() == bcsSplitSettings.requiredTileCount);
 
     auto initializeBcsSplit = this->device.getNEODevice()->isBcsSplitSupported() &&
-                              csr->getOsContext().getEngineType() == defaultEngine &&
-                              !internalUsage;
+                              (csr->getOsContext().getEngineType() == productHelper.getDefaultCopyEngine()) &&
+                              !internalUsage && tileCountMatch;
 
     if (!initializeBcsSplit) {
         return false;
@@ -36,30 +44,33 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
         return true;
     }
 
-    if (NEO::debugManager.flags.SplitBcsMask.get() > 0) {
-        this->engines = NEO::debugManager.flags.SplitBcsMask.get();
-    }
+    setupEnginesMask(bcsSplitSettings);
 
-    StackVec<NEO::CommandStreamReceiver *, 4u> csrs;
+    return setupQueues(bcsSplitSettings, productFamily);
+}
 
-    for (uint32_t i = 0; i < NEO::bcsInfoMaskSize; i++) {
-        if (this->engines.test(i)) {
-            auto engineType = (i == 0u ? aub_stream::EngineType::ENGINE_BCS : aub_stream::EngineType::ENGINE_BCS1 + i - 1);
-            auto engine = this->device.getNEODevice()->getNearestGenericSubDevice(0u)->tryGetEngine(static_cast<aub_stream::EngineType>(engineType), NEO::EngineUsage::regular);
-            if (!engine) {
-                continue;
+bool BcsSplit::setupQueues(const NEO::BcsSplitSettings &settings, uint32_t productFamily) {
+    CsrContainer csrs;
+
+    for (uint32_t tileId = 0; tileId < settings.requiredTileCount; tileId++) {
+        auto subDevice = this->device.getNEODevice()->getNearestGenericSubDevice(tileId);
+
+        UNRECOVERABLE_IF(!subDevice);
+
+        for (uint32_t engineId = 0; engineId < NEO::bcsInfoMaskSize; engineId++) {
+            if (settings.allEngines.test(engineId)) {
+                if (auto engine = subDevice->tryGetEngine(NEO::EngineHelpers::getBcsEngineAtIdx(engineId), NEO::EngineUsage::regular)) {
+                    csrs.push_back(engine->commandStreamReceiver);
+                }
             }
-            auto csr = engine->commandStreamReceiver;
-            csrs.push_back(csr);
         }
     }
 
-    if (csrs.size() != this->engines.count()) {
+    if (csrs.size() < settings.minRequiredTotalCsrCount) {
         return false;
     }
 
-    ze_command_queue_desc_t splitDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    splitDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    const ze_command_queue_desc_t splitDesc = {.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS};
 
     for (const auto &csr : csrs) {
         ze_result_t result;
@@ -67,29 +78,35 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
         UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
 
         this->cmdQs.push_back(commandQueue);
-    }
 
-    if (NEO::debugManager.flags.SplitBcsMaskH2D.get() > 0) {
-        this->h2dEngines = NEO::debugManager.flags.SplitBcsMaskH2D.get();
-    }
-    if (NEO::debugManager.flags.SplitBcsMaskD2H.get() > 0) {
-        this->d2hEngines = NEO::debugManager.flags.SplitBcsMaskD2H.get();
-    }
+        auto engineType = csr->getOsContext().getEngineType();
+        auto bcsId = NEO::EngineHelpers::getBcsIndex(engineType);
 
-    uint32_t cmdQIndex = 0u;
-    for (uint32_t i = 0; i < NEO::bcsInfoMaskSize; i++) {
-        if (this->engines.test(i)) {
-            if (this->h2dEngines.test(i)) {
-                this->h2dCmdQs.push_back(this->cmdQs[cmdQIndex]);
-            }
-            if (this->d2hEngines.test(i)) {
-                this->d2hCmdQs.push_back(this->cmdQs[cmdQIndex]);
-            }
-            cmdQIndex++;
+        if (settings.h2dEngines.test(bcsId)) {
+            this->h2dCmdQs.push_back(commandQueue);
+        }
+        if (settings.d2hEngines.test(bcsId)) {
+            this->d2hCmdQs.push_back(commandQueue);
         }
     }
 
     return true;
+}
+
+void BcsSplit::setupEnginesMask(NEO::BcsSplitSettings &settings) {
+    if (NEO::debugManager.flags.SplitBcsMask.get() > 0) {
+        settings.allEngines = NEO::debugManager.flags.SplitBcsMask.get();
+    }
+    if (NEO::debugManager.flags.SplitBcsMaskH2D.get() > 0) {
+        settings.h2dEngines = NEO::debugManager.flags.SplitBcsMaskH2D.get();
+    }
+    if (NEO::debugManager.flags.SplitBcsMaskD2H.get() > 0) {
+        settings.d2hEngines = NEO::debugManager.flags.SplitBcsMaskD2H.get();
+    }
+
+    if (NEO::debugManager.flags.SplitBcsRequiredEnginesCount.get() != -1) {
+        settings.minRequiredTotalCsrCount = static_cast<uint32_t>(NEO::debugManager.flags.SplitBcsRequiredEnginesCount.get());
+    }
 }
 
 void BcsSplit::releaseResources() {

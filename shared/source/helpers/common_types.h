@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/sku_info/sku_info_base.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <cstdint>
@@ -140,5 +141,14 @@ static constexpr uint32_t notUsed = std::numeric_limits<uint32_t>::max();
 namespace TypeTraits {
 template <typename T>
 constexpr bool isPodV = std::is_standard_layout_v<T> && std::is_trivial_v<T> && std::is_trivially_copyable_v<T>;
-}
+} // namespace TypeTraits
+
+struct BcsSplitSettings {
+    BcsInfoMask allEngines = {};
+    BcsInfoMask h2dEngines = {};
+    BcsInfoMask d2hEngines = {};
+    uint32_t minRequiredTotalCsrCount = 0;
+    uint32_t requiredTileCount = 0;
+    bool enabled = false;
+};
 } // namespace NEO

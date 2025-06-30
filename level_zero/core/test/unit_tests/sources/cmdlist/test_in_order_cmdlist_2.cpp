@@ -3785,6 +3785,9 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
 struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
     void SetUp() override {
         NEO::debugManager.flags.SplitBcsCopy.set(1);
+        NEO::debugManager.flags.SplitBcsRequiredTileCount.set(1);
+        NEO::debugManager.flags.SplitBcsRequiredEnginesCount.set(numLinkCopyEngines);
+        NEO::debugManager.flags.SplitBcsMask.set(0b11110);
 
         hwInfoBackup = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;

@@ -96,7 +96,14 @@ PVCTEST_F(PvcProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryPhysic
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsBlitSplitEnqueueWARequiredThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isBlitSplitEnqueueWARequired(pInHwInfo));
+    auto bcsSplitSettings = productHelper->getBcsSplitSettings();
+
+    EXPECT_TRUE(bcsSplitSettings.enabled);
+    EXPECT_EQ(NEO::EngineHelpers::oddLinkedCopyEnginesMask, bcsSplitSettings.allEngines.to_ulong());
+    EXPECT_EQ(NEO::EngineHelpers::h2dCopyEngineMask, bcsSplitSettings.h2dEngines.to_ulong());
+    EXPECT_EQ(NEO::EngineHelpers::d2hCopyEngineMask, bcsSplitSettings.d2hEngines.to_ulong());
+    EXPECT_EQ(static_cast<uint32_t>(bcsSplitSettings.allEngines.count()), bcsSplitSettings.minRequiredTotalCsrCount);
+    EXPECT_EQ(1u, bcsSplitSettings.requiredTileCount);
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {

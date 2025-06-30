@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
@@ -930,6 +932,9 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.SplitBcsAggregatedEventsMode.set(1);
         debugManager.flags.SplitBcsCopy.set(1);
+        debugManager.flags.SplitBcsRequiredTileCount.set(expectedTileCount);
+        debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
+        debugManager.flags.SplitBcsMask.set(0b11110);
 
         device = createDevice();
         context = Context::fromHandle(driverHandle->getDefaultContext());
@@ -955,12 +960,31 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         return device;
     }
 
+    uint32_t queryCopyOrdinal() {
+        uint32_t count = 0;
+        device->getCommandQueueGroupProperties(&count, nullptr);
+
+        std::vector<ze_command_queue_group_properties_t> groups;
+        groups.resize(count);
+
+        device->getCommandQueueGroupProperties(&count, groups.data());
+
+        for (uint32_t i = 0; i < count; i++) {
+            if (groups[i].flags == ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) {
+                return i;
+            }
+        }
+
+        EXPECT_TRUE(false);
+        return 0;
+    }
+
     std::unique_ptr<L0::CommandList> createCmdList() {
         ze_result_t returnValue;
 
         ze_command_queue_desc_t desc = {};
         desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-        desc.ordinal = static_cast<uint32_t>(device->getNEODevice()->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
+        desc.ordinal = queryCopyOrdinal();
 
         std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
                                                                                   device.get(),
@@ -988,6 +1012,8 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
     BcsSplit *bcsSplit = nullptr;
     Context *context = nullptr;
     const size_t copySize = 4 * MemoryConstants::megaByte;
+    uint32_t expectedTileCount = 1;
+    uint32_t expectedEnginesCount = 4;
 };
 
 HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, IsAtLeastXeHpcCore) {
@@ -1109,6 +1135,44 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenRes
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[0]->getInOrderExecBaseSignalValue());
 
     context->freeMem(ptr);
+}
+
+struct MultiTileAggregatedBcsSplitTests : public AggregatedBcsSplitTests {
+    void SetUp() override {
+        expectedTileCount = 2;
+        expectedEnginesCount *= expectedTileCount;
+        debugManager.flags.CreateMultipleSubDevices.set(expectedTileCount);
+        AggregatedBcsSplitTests::SetUp();
+        EXPECT_EQ(expectedTileCount, device->getNEODevice()->getNumSubDevices());
+    }
+};
+
+HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenSetupingThenCreateCorrectQueues, IsAtLeastXeHpcCore) {
+    ASSERT_EQ(expectedEnginesCount, bcsSplit->cmdQs.size());
+
+    auto perTileEngineCount = expectedEnginesCount / expectedTileCount;
+
+    for (uint32_t tileId = 0; tileId < expectedTileCount; tileId++) {
+        for (uint32_t baseEngineId = 0; baseEngineId < perTileEngineCount; baseEngineId++) {
+            auto engineId = (tileId * perTileEngineCount) + baseEngineId;
+
+            auto expectedEngineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + baseEngineId);
+
+            auto &osContext = static_cast<CommandQueueImp *>(bcsSplit->cmdQs[engineId])->getCsr()->getOsContext();
+            EXPECT_EQ(expectedEngineType, osContext.getEngineType());
+            EXPECT_EQ(1u << tileId, osContext.getDeviceBitfield().to_ulong());
+        }
+    }
+}
+
+HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenIncorrectNumberOfTilesWhenCreatingBcsSplitThenDontCreate, IsAtLeastXeHpcCore) {
+    debugManager.flags.SplitBcsRequiredTileCount.set(expectedTileCount + 1);
+    cmdList.reset();
+    bcsSplit->releaseResources();
+    EXPECT_EQ(0u, bcsSplit->cmdQs.size());
+
+    cmdList = createCmdList();
+    EXPECT_EQ(0u, bcsSplit->cmdQs.size());
 }
 
 } // namespace ult

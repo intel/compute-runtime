@@ -29,6 +29,7 @@ struct CommandQueue;
 struct DeviceImp;
 
 struct BcsSplit {
+    using CsrContainer = StackVec<NEO::CommandStreamReceiver *, 12u>;
     DeviceImp &device;
     uint32_t clientCount = 0u;
 
@@ -63,10 +64,6 @@ struct BcsSplit {
     std::vector<CommandQueue *> cmdQs;
     std::vector<CommandQueue *> h2dCmdQs;
     std::vector<CommandQueue *> d2hCmdQs;
-
-    NEO::BcsInfoMask engines = NEO::EngineHelpers::oddLinkedCopyEnginesMask;
-    NEO::BcsInfoMask h2dEngines = NEO::EngineHelpers::h2dCopyEngineMask;
-    NEO::BcsInfoMask d2hEngines = NEO::EngineHelpers::d2hCopyEngineMask;
 
     template <GFXCORE_FAMILY gfxCoreFamily, typename T, typename K>
     ze_result_t appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFamily> *cmdList,
@@ -168,6 +165,8 @@ struct BcsSplit {
     bool setupDevice(uint32_t productFamily, bool internalUsage, const ze_command_queue_desc_t *desc, NEO::CommandStreamReceiver *csr);
     void releaseResources();
     std::vector<CommandQueue *> &getCmdQsForSplit(NEO::TransferDirection direction);
+    void setupEnginesMask(NEO::BcsSplitSettings &settings);
+    bool setupQueues(const NEO::BcsSplitSettings &settings, uint32_t productFamily);
 
     BcsSplit(DeviceImp &device) : device(device), events(*this){};
 };

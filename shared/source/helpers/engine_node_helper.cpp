@@ -172,6 +172,9 @@ uint32_t getBcsIndex(aub_stream::EngineType engineType) {
 }
 
 aub_stream::EngineType getBcsEngineAtIdx(uint32_t idx) {
+    if (idx == 0) {
+        return aub_stream::ENGINE_BCS;
+    }
     return static_cast<aub_stream::EngineType>((idx - 1) + aub_stream::ENGINE_BCS1);
 }
 

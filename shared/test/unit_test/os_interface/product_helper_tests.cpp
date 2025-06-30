@@ -100,7 +100,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSharedSystemMemCapabili
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfIsBlitSplitEnqueueWARequiredThenReturnFalse) {
 
-    EXPECT_FALSE(productHelper->isBlitSplitEnqueueWARequired(pInHwInfo));
+    EXPECT_FALSE(productHelper->getBcsSplitSettings().enabled);
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenCorrectValueIsReturned) {

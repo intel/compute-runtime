@@ -175,8 +175,17 @@ bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const {
-    return true;
+BcsSplitSettings ProductHelperHw<gfxProduct>::getBcsSplitSettings() const {
+    constexpr BcsInfoMask oddLinkedCopyEnginesMask = NEO::EngineHelpers::oddLinkedCopyEnginesMask;
+
+    return {
+        .allEngines = oddLinkedCopyEnginesMask,
+        .h2dEngines = NEO::EngineHelpers::h2dCopyEngineMask,
+        .d2hEngines = NEO::EngineHelpers::d2hCopyEngineMask,
+        .minRequiredTotalCsrCount = static_cast<uint32_t>(oddLinkedCopyEnginesMask.count()),
+        .requiredTileCount = 1,
+        .enabled = true,
+    };
 }
 
 template <>

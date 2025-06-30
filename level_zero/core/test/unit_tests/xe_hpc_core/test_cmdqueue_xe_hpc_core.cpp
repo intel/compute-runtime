@@ -394,6 +394,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableAndSplitBcsMask
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.SplitBcsMask.set(0b010001000);
+    debugManager.flags.SplitBcsRequiredEnginesCount.set(2);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -418,6 +419,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndSplitBcsMaskWhenCreateI
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.SplitBcsMask.set(0b11001);
+    debugManager.flags.SplitBcsRequiredEnginesCount.set(3);
 
     ze_result_t returnValue;
     auto hwInfo = *NEO::defaultHwInfo;
@@ -449,11 +451,13 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenIni
     cmdQueueDesc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
     debugManager.flags.SplitBcsMask.set(0b11001);
+    debugManager.flags.SplitBcsRequiredEnginesCount.set(3);
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 3u);
 
     debugManager.flags.SplitBcsMask.set(0b110);
+    debugManager.flags.SplitBcsRequiredEnginesCount.set(2);
     std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList2);
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 3u);
