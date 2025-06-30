@@ -193,6 +193,10 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
 }
 
 ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
+    bool isIntegratedDevice = pWddmSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice;
+    if (isIntegratedDevice) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
     return pSysmanProductHelper->getMemoryBandWidth(pBandwidth, pWddmSysmanImp);
 }

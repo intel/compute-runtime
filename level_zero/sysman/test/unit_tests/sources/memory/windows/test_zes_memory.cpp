@@ -147,11 +147,15 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidOsMemoryObjectWhenGettingMemoryBandW
         mockMemoryCurrentBandwidthWrite,
         mockMemoryMaxBandwidth, mockMemoryBandwidthTimestamp};
     zes_mem_bandwidth_t bandwidth = mockedBandwidth;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pWddmMemoryImp->getBandwidth(&bandwidth));
-    EXPECT_EQ(mockMemoryCurrentBandwidthRead, bandwidth.readCounter);
-    EXPECT_EQ(mockMemoryCurrentBandwidthWrite, bandwidth.writeCounter);
-    EXPECT_EQ(mockMemoryMaxBandwidth, bandwidth.maxBandwidth);
-    EXPECT_EQ(mockMemoryBandwidthTimestamp, bandwidth.timestamp);
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pWddmMemoryImp->getBandwidth(&bandwidth));
+    } else {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pWddmMemoryImp->getBandwidth(&bandwidth));
+        EXPECT_EQ(mockMemoryCurrentBandwidthRead, bandwidth.readCounter);
+        EXPECT_EQ(mockMemoryCurrentBandwidthWrite, bandwidth.writeCounter);
+        EXPECT_EQ(mockMemoryMaxBandwidth, bandwidth.maxBandwidth);
+        EXPECT_EQ(mockMemoryBandwidthTimestamp, bandwidth.timestamp);
+    }
 }
 
 TEST_F(SysmanDeviceMemoryFixture, GivenMockedComponentCountZeroWhenEnumeratingMemoryModulesThenExpectNonZeroCountAndValidHandlesForIntegratedPlatforms) {
@@ -193,6 +197,27 @@ TEST_F(SysmanDeviceMemoryFixture, GivenMockedComponentCountZeroWhenEnumeratingMe
             EXPECT_FALSE(properties.onSubdevice);
             EXPECT_EQ(properties.subdeviceId, 0u);
             EXPECT_GT(properties.physicalSize, 0u);
+        }
+    } else {
+        EXPECT_EQ(count, 0u);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenMockedComponentCountZeroWhenEnumeratingMemoryModulesThenExpectNonZeroCountAndGetBandwidthNotSupportedForIntegratedPlatforms) {
+    pKmdSysManager->mockMemoryDomains = 0;
+    clearMemHandleListAndReinit();
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(count, 1u);
+        std::vector<zes_mem_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        for (auto handle : handles) {
+            EXPECT_NE(handle, nullptr);
+            zes_mem_bandwidth_t bandwidth{};
+            EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         }
     } else {
         EXPECT_EQ(count, 0u);

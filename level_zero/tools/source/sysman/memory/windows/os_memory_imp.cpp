@@ -186,6 +186,12 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
 }
 
 ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
+    bool isIntegratedDevice = pDevice->getHwInfo().capabilityTable.isIntegratedDevice;
+
+    if (isIntegratedDevice) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     uint32_t retValu32 = 0;
     uint64_t retValu64 = 0;
     std::vector<KmdSysman::RequestProperty> vRequests = {};

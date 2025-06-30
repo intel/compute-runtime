@@ -215,17 +215,21 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
 
         ze_result_t result = zesMemoryGetBandwidth(handle, &bandwidth);
 
-        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(bandwidth.maxBandwidth, static_cast<uint64_t>(pKmdSysManager->mockMemoryMaxBandwidth) * mbpsToBytesPerSecond);
-        EXPECT_EQ(bandwidth.readCounter, pKmdSysManager->mockMemoryCurrentBandwidthRead);
-        EXPECT_EQ(bandwidth.writeCounter, pKmdSysManager->mockMemoryCurrentBandwidthWrite);
-        EXPECT_GT(bandwidth.timestamp, 0u);
+        if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+            EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        } else {
+            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+            EXPECT_EQ(bandwidth.maxBandwidth, static_cast<uint64_t>(pKmdSysManager->mockMemoryMaxBandwidth) * mbpsToBytesPerSecond);
+            EXPECT_EQ(bandwidth.readCounter, pKmdSysManager->mockMemoryCurrentBandwidthRead);
+            EXPECT_EQ(bandwidth.writeCounter, pKmdSysManager->mockMemoryCurrentBandwidthWrite);
+            EXPECT_GT(bandwidth.timestamp, 0u);
 
-        std::vector<uint32_t> requestId = {KmdSysman::Requests::Memory::MaxBandwidth, KmdSysman::Requests::Memory::CurrentBandwidthRead, KmdSysman::Requests::Memory::CurrentBandwidthWrite};
-        for (auto it = requestId.begin(); it != requestId.end(); it++) {
-            pKmdSysManager->mockMemoryFailure[*it] = 1;
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zesMemoryGetBandwidth(handle, &bandwidth));
-            pKmdSysManager->mockMemoryFailure[*it] = 0;
+            std::vector<uint32_t> requestId = {KmdSysman::Requests::Memory::MaxBandwidth, KmdSysman::Requests::Memory::CurrentBandwidthRead, KmdSysman::Requests::Memory::CurrentBandwidthWrite};
+            for (auto it = requestId.begin(); it != requestId.end(); it++) {
+                pKmdSysManager->mockMemoryFailure[*it] = 1;
+                EXPECT_EQ(ZE_RESULT_SUCCESS, zesMemoryGetBandwidth(handle, &bandwidth));
+                pKmdSysManager->mockMemoryFailure[*it] = 0;
+            }
         }
     }
 }
@@ -237,7 +241,11 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
         zes_mem_bandwidth_t bandwidth;
 
         pKmdSysManager->mockRequestMultiple = true;
-        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesMemoryGetBandwidth(handle, &bandwidth));
+        if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesMemoryGetBandwidth(handle, &bandwidth));
+        } else {
+            EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesMemoryGetBandwidth(handle, &bandwidth));
+        }
         pKmdSysManager->mockRequestMultiple = false;
     }
 }

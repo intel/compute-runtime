@@ -284,5 +284,46 @@ TEST_F(SysmanDeviceMemoryFixture, GivenMockedComponentCountZeroWhenEnumeratingMe
     }
 }
 
+TEST_F(SysmanDeviceMemoryFixture, GivenMockedComponentCountOneWhenEnumeratingMemoryModulesThenExpectNonZeroCountAndGetBandwidthIsSupportedForDiscretePlatforms) {
+    pKmdSysManager->mockMemoryDomains = 1;
+    clearMemHandleListAndReinit();
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumMemoryModules(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+
+    std::vector<zes_mem_handle_t> handles(count, nullptr);
+    EXPECT_EQ(zesDeviceEnumMemoryModules(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+
+    for (auto handle : handles) {
+        zes_mem_bandwidth_t bandwidth{};
+        if (!defaultHwInfo->capabilityTable.isIntegratedDevice) {
+            EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
+        } else {
+            EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        }
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixture, GivenMockedComponentCountZeroWhenEnumeratingMemoryModulesThenExpectNonZeroCountAndGetBandwidthNotSupportedForIntegratedPlatforms) {
+    pKmdSysManager->mockMemoryDomains = 0;
+    clearMemHandleListAndReinit();
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumMemoryModules(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(count, 1u);
+        std::vector<zes_mem_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumMemoryModules(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        for (auto handle : handles) {
+            EXPECT_NE(handle, nullptr);
+            zes_mem_bandwidth_t bandwidth{};
+            EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        }
+    } else {
+        EXPECT_EQ(count, 0u);
+    }
+}
+
 } // namespace ult
 } // namespace L0
