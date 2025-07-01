@@ -2615,11 +2615,10 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionThenBuildDoesNotOccur) {
     std::vector<std::string> argv = {
         "ocloc",
         "--help"};
-
-    testing::internal::CaptureStdout();
-
+    StreamCapture capture;
+    capture.captureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
-    std::string output = testing::internal::GetCapturedStdout();
+    std::string output = capture.getCapturedStdout();
     EXPECT_STRNE("", output.c_str());
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
 
@@ -3574,10 +3573,11 @@ TEST_F(OfflineCompilerTests, givenSpirvRepresentationInputWhenBuildSourceCodeIsC
         gEnvironment->devicePrefix.c_str(),
         "-spirv_input"};
 
-    testing::internal::CaptureStdout();
     struct StdoutCaptureRAII {
+        StreamCapture capture;
+        StdoutCaptureRAII() { capture.captureStdout(); }
         ~StdoutCaptureRAII() {
-            auto output = testing::internal::GetCapturedStdout();
+            auto output = capture.getCapturedStdout();
             if (HasFatalFailure()) {
                 printf("%s", output.c_str());
             }
@@ -3609,10 +3609,11 @@ TEST_F(OfflineCompilerTests, givenLlvmBcRepresentationInputWhenBuildSourceCodeIs
         "-llvm_input",
     };
 
-    testing::internal::CaptureStdout();
     struct StdoutCaptureRAII {
+        StreamCapture capture;
+        StdoutCaptureRAII() { capture.captureStdout(); }
         ~StdoutCaptureRAII() {
-            auto output = testing::internal::GetCapturedStdout();
+            auto output = capture.getCapturedStdout();
             if (HasFatalFailure()) {
                 printf("%s", output.c_str());
             }

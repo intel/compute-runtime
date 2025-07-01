@@ -790,12 +790,14 @@ TEST(OclocApiTests, GivenHelpParameterWhenCompilingThenHelpMsgIsPrintedAndSucces
         "--help"};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
     int retVal = oclocInvoke(argc, argv,
                              0, nullptr, nullptr, nullptr,
                              0, nullptr, nullptr, nullptr,
                              nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
+
+    std::string output = capture.getCapturedStdout();
     EXPECT_FALSE(output.empty());
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
 }

@@ -19,6 +19,7 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -316,11 +317,12 @@ TEST(DebugSessionLinuxi915Test, GivenLogsEnabledWhenPrintContextVmsCalledThenMap
 
     EXPECT_EQ(2u, sessionMock->clientHandleToConnection[sessionMock->clientHandle]->contextsCreated.size());
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     sessionMock->printContextVms();
 
-    auto map = ::testing::internal::GetCapturedStdout();
+    auto map = capture.getCapturedStdout();
 
     EXPECT_TRUE(hasSubstr(map, std::string("INFO: Context - VM map:")));
     EXPECT_TRUE(hasSubstr(map, std::string("Context = 0 : 1")));
@@ -346,11 +348,12 @@ TEST(DebugSessionLinuxi915Test, GivenLogsDisabledWhenPrintContextVmsCalledThenMa
 
     EXPECT_EQ(2u, sessionMock->clientHandleToConnection[sessionMock->clientHandle]->contextsCreated.size());
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     sessionMock->printContextVms();
 
-    auto map = ::testing::internal::GetCapturedStdout();
+    auto map = capture.getCapturedStdout();
 
     EXPECT_TRUE(map.empty());
 }
@@ -996,14 +999,15 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerFailsThenCorrectMessa
     mockDrm->context.debuggerOpenRetval = -1;
     mockDrm->baseErrno = false;
     mockDrm->errnoRetVal = 22;
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     auto session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 
-    auto errorMessage = ::testing::internal::GetCapturedStderr();
+    auto errorMessage = capture.getCapturedStderr();
     // Trim errorMessage and remove timestamp + first space
     size_t pos = errorMessage.find(']');
     errorMessage.erase(0, pos + 2);
@@ -1054,14 +1058,15 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerSucceedsThenCorrectMe
     mockDrm->context.debuggerOpenRetval = 10;
     mockDrm->baseErrno = false;
     mockDrm->errnoRetVal = 0;
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice()));
 
     EXPECT_NE(nullptr, session);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto errorMessage = ::testing::internal::GetCapturedStdout();
+    auto errorMessage = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(errorMessage, std::string("INFO: PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN: open.pid: 4660, open.events: 0, debugFd: 10\n")));
 }
 
@@ -1132,7 +1137,8 @@ TEST_F(DebugApiLinuxTest, GivenPrintDebugMessagesWhenDebugSessionClosesConnectio
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
 
@@ -1150,7 +1156,7 @@ TEST_F(DebugApiLinuxTest, GivenPrintDebugMessagesWhenDebugSessionClosesConnectio
     NEO::SysCalls::closeFuncArgPassed = 0;
     NEO::SysCalls::closeFuncRetVal = 0;
 
-    auto errorMessage = ::testing::internal::GetCapturedStderr();
+    auto errorMessage = capture.getCapturedStderr();
     // Trim errorMessage and remove timestamp + first space
     size_t pos = errorMessage.find(']');
     errorMessage.erase(0, pos + 2);
@@ -2321,7 +2327,8 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenReadEventFailsDuringInitializatio
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
@@ -2344,7 +2351,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenReadEventFailsDuringInitializatio
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
     EXPECT_EQ(2, session->getInternalEventCounter);
 
-    auto errorMessage = ::testing::internal::GetCapturedStderr();
+    auto errorMessage = capture.getCapturedStderr();
     auto pos = errorMessage.find("PRELIM_I915_DEBUG_IOCTL_READ_EVENT failed: retCode: -1 errno =");
     EXPECT_NE(std::string::npos, pos);
 }
@@ -3196,11 +3203,12 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsAndUnhandledEventTypeWhenHandlingEven
 
     session->ioctlHandler.reset(handler);
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     session->handleEvent(&event);
 
-    auto errorMessage = ::testing::internal::GetCapturedStdout();
+    auto errorMessage = capture.getCapturedStdout();
     std::stringstream expectedMessage;
     expectedMessage << "PRELIM_I915_DEBUG_IOCTL_READ_EVENT type: UNHANDLED ";
     expectedMessage << PRELIM_DRM_I915_DEBUG_EVENT_MAX_EVENT + 1;
@@ -5075,14 +5083,15 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsAndFailingReadUuidEventIoctlWhenHandl
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     errno = 0;
     session->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(&uuid));
 
     EXPECT_EQ(1, handler->ioctlCalled);
     EXPECT_EQ(0u, session->getClassHandleToIndex().size());
 
-    auto errorMessage = ::testing::internal::GetCapturedStderr();
+    auto errorMessage = capture.getCapturedStderr();
     // Trim errorMessage and remove timestamp + first space
     size_t pos = errorMessage.find(']');
     errorMessage.erase(0, pos + 2);
@@ -5209,7 +5218,9 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
     i915_engine_class_instance ci = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 1};
     memcpy(classInstance, &ci, sizeof(i915_engine_class_instance));
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
+
     session->handleEvent(&contextParamEvent->base);
     alignedFree(memory);
 
@@ -5221,7 +5232,7 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
               session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile.find(vmId));
     EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile[vmId]);
 
-    auto infoMessage = ::testing::internal::GetCapturedStdout();
+    auto infoMessage = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("I915_CONTEXT_PARAM_ENGINES ctx_id = 20 param = 10 value = 0")));
 }
 
@@ -5319,13 +5330,14 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerErrorLogsWhenContextParamWithInvalidConte
     contextParamEvent.ctx_handle = 77;
     contextParamEvent.param = {.ctx_id = 3, .size = 8, .param = I915_CONTEXT_PARAM_VM, .value = vmId};
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     session->handleEvent(&contextParamEvent.base);
 
     EXPECT_EQ(session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.end(),
               session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.find(77));
 
-    auto errorMessage = ::testing::internal::GetCapturedStderr();
+    auto errorMessage = capture.getCapturedStderr();
     // Trim errorMessage and remove timestamp + first space
     size_t pos = errorMessage.find(']');
     errorMessage.erase(0, pos + 2);
@@ -5357,13 +5369,15 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerInfoLogsWhenHandlingContextParamEventWith
     contextParamEvent.ctx_handle = contextHandle;
     contextParamEvent.param = {.ctx_id = 3, .size = 8, .param = I915_CONTEXT_PARAM_BAN_PERIOD, .value = vmId};
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
+
     session->handleEvent(&contextParamEvent.base);
 
     EXPECT_EQ(session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.end(),
               session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.find(77));
 
-    auto errorMessage = ::testing::internal::GetCapturedStdout();
+    auto errorMessage = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(errorMessage, std::string("client_handle = 1 ctx_handle = 20\n")));
     EXPECT_TRUE(hasSubstr(errorMessage, std::string("INFO: I915_CONTEXT_PARAM UNHANDLED = 1\n")));
 }
@@ -5930,7 +5944,9 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
     engines2->engines[2].lrc_handle = 5;
     engines2->engines[3].lrc_handle = 0;
 
-    ::testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
+
     NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO);
 
     session->handleEvent(&engines1->base);
@@ -5952,7 +5968,7 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
     EXPECT_EQ(40u, session->clientHandleToConnection[clientHandle]->lrcToContextHandle[4]);
     EXPECT_EQ(40u, session->clientHandleToConnection[clientHandle]->lrcToContextHandle[5]);
 
-    auto infoMessage = ::testing::internal::GetCapturedStdout();
+    auto infoMessage = capture.getCapturedStdout();
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("ENGINES event: client_handle = 34, ctx_handle = 20, num_engines = 2 CREATE")));
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("ENGINES event: client_handle = 34, ctx_handle = 40, num_engines = 4 CREATE")));
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("ENGINES event: client_handle = 34, ctx_handle = 20, num_engines = 2 DESTROY")));

@@ -41,7 +41,7 @@ class StreamCapture {
   private:
     void captureStream(FILE *stream, int pipefd[2], int &savedFd) {
 #ifdef _WIN32
-        _pipe(pipefd, 4096, O_TEXT);
+        _pipe(pipefd, bufferSize, O_TEXT);
         fflush(stream);
         savedFd = _dup(_fileno(stream));
         _dup2(pipefd[1], _fileno(stream));
@@ -49,6 +49,7 @@ class StreamCapture {
 #else
         fflush(stream);
         pipe(pipefd);
+        fcntl(pipefd[0], F_SETPIPE_SZ, bufferSize);
         savedFd = dup(fileno(stream));
         dup2(pipefd[1], fileno(stream));
         close(pipefd[1]);
@@ -61,7 +62,7 @@ class StreamCapture {
         _dup2(savedFd, _fileno(stream));
         _close(savedFd);
 
-        char buffer[4096];
+        char buffer[bufferSize];
         int count = _read(pipefd[0], buffer, sizeof(buffer) - 1);
         if (count > 0) {
             buffer[count] = '\0';
@@ -73,7 +74,6 @@ class StreamCapture {
         dup2(savedFd, fileno(stream));
         close(savedFd);
 
-        constexpr size_t bufferSize = 4096;
         char buffer[bufferSize];
         ssize_t count = read(pipefd[0], buffer, bufferSize - 1);
         if (count > 0) {
@@ -83,7 +83,7 @@ class StreamCapture {
         return "";
 #endif
     }
-
+    static constexpr size_t bufferSize = 16384;
     int pipefdStdout[2];
     int pipefdStderr[2];
     int saveStdout;

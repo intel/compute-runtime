@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 
@@ -293,13 +294,14 @@ TEST_F(DeferredOsContextCreationTests, givenPrintOsContextInitializationsIsSetWh
     DebugManagerStateRestore restore{};
     debugManager.flags.DeferOsContextInitialization.set(1);
     debugManager.flags.PrintOsContextInitializations.set(1);
-    testing::internal::CaptureStdout();
+    StreamCapture capture;
+    capture.captureStdout();
 
     auto osContext = createOsContext(engineTypeUsageRegular, false);
-    EXPECT_EQ(std::string{}, testing::internal::GetCapturedStdout());
+    EXPECT_EQ(std::string{}, capture.getCapturedStdout());
 
-    testing::internal::CaptureStdout();
+    capture.captureStdout();
     osContext->ensureContextInitialized(false);
     std::string expectedMessage = "OsContext initialization: contextId=0 usage=Regular type=RCS isRootDevice=0\n";
-    EXPECT_EQ(expectedMessage, testing::internal::GetCapturedStdout());
+    EXPECT_EQ(expectedMessage, capture.getCapturedStdout());
 }
