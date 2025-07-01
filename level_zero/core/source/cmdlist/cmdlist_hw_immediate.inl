@@ -628,7 +628,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     if (isInOrderExecutionEnabled()) {
         if (isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
             if (hSignalEvent) {
-                assignInOrderExecInfoToEvent(Event::fromHandle(hSignalEvent));
+                auto event = Event::fromHandle(hSignalEvent);
+                event->setEventOnBarrierOptimized(true);
+                assignInOrderExecInfoToEvent(event);
             }
 
             return ZE_RESULT_SUCCESS;

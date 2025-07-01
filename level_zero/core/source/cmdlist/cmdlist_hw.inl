@@ -4015,7 +4015,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     if (isInOrderExecutionEnabled() && isSkippingInOrderBarrierAllowed(hSignalEvent, numWaitEvents, phWaitEvents)) {
         if (hSignalEvent) {
-            assignInOrderExecInfoToEvent(Event::fromHandle(hSignalEvent));
+            auto event = Event::fromHandle(hSignalEvent);
+            event->setEventOnBarrierOptimized(true);
+            assignInOrderExecInfoToEvent(event);
         }
 
         return ZE_RESULT_SUCCESS;
@@ -4569,6 +4571,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             signalEvent->resetInOrderTimestampNode(tag, this->partitionCount);
             signalEvent->resetAdditionalTimestampNode(nullptr, this->partitionCount, false);
         }
+        signalEvent->setEventOnBarrierOptimized(false);
     }
 
     return true;

@@ -343,6 +343,10 @@ struct Event : _ze_event_handle_t {
     size_t getOffsetInSharedAlloc() const { return offsetInSharedAlloc; }
     void setReportEmptyCbEventAsReady(bool reportEmptyCbEventAsReady) { this->reportEmptyCbEventAsReady = reportEmptyCbEventAsReady; }
 
+    void setEventOnBarrierOptimized(bool value) {
+        this->isEventOnBarrierOptimized = value;
+    }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
@@ -420,6 +424,7 @@ struct Event : _ze_event_handle_t {
     bool isSharableCounterBased = false;
     bool mitigateHostVisibleSignal = false;
     bool reportEmptyCbEventAsReady = true;
+    bool isEventOnBarrierOptimized = false;
 
     static const uint64_t completionTimeoutMs;
 };

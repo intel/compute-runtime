@@ -4771,6 +4771,49 @@ HWTEST_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWit
     EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
 }
 
+HWTEST_F(InOrderCmdListTests, givenEventCounterReusedFromPreviousAppendWhenHostSynchronizeThenFlushCaches) {
+    if (!device->getProductHelper().isDcFlushAllowed()) {
+        GTEST_SKIP();
+    }
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(1u, cmdList->inOrderExecInfo->getCounterValue());
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+    cmdList->appendBarrier(eventHandle, 0, nullptr, false);
+
+    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
+    events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
+    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+}
+
+HWTEST_F(InOrderCmdListTests, givenEventCounterNotReusedFromPreviousAppendWhenHostSynchronizeThenDontFlushCaches) {
+    if (!device->getProductHelper().isDcFlushAllowed()) {
+        GTEST_SKIP();
+    }
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(1u, cmdList->inOrderExecInfo->getCounterValue());
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+    cmdList->appendBarrier(eventHandle, 0, nullptr, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
+
+    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
+    events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
+    EXPECT_EQ(2u, events[0]->inOrderExecSignalValue);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithDifferentEventsThenDontInherit) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
