@@ -1,9 +1,9 @@
 components:
   infra:
-    branch: master
+    branch: neo/releases/25.27
     dest_dir: infra
     fetch_tags: true
-    revision: v7093
+    revision: v7093.3210.0
     type: git
 converter: M-3107
 version: '1'
