@@ -17,10 +17,14 @@ BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         L0::globalDriverSetup();
     }
     if (fdwReason == DLL_PROCESS_DETACH) {
-        L0::globalDriverTeardown();
-        if (L0::globalOsSysmanDriver != nullptr) {
-            delete L0::globalOsSysmanDriver;
-            L0::globalOsSysmanDriver = nullptr;
+        /* If lpvReserved is non-NULL with DLL_PROCESS_DETACH, the process is terminating,
+         * cleanup should be skipped according to the DllMain spec. */
+        if (!lpvReserved) {
+            L0::globalDriverTeardown();
+            if (L0::globalOsSysmanDriver != nullptr) {
+                delete L0::globalOsSysmanDriver;
+                L0::globalOsSysmanDriver = nullptr;
+            }
         }
     }
     return TRUE;
