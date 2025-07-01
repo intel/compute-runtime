@@ -20,8 +20,14 @@ ze_result_t zeCommandListAppendMemoryCopy(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryCopy>(hCommandList, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     CmdListMemoryCopyParams memoryCopyParams = {};
-    return L0::CommandList::fromHandle(hCommandList)->appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    return cmdList->appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t zeCommandListAppendMemoryFill(
@@ -33,8 +39,14 @@ ze_result_t zeCommandListAppendMemoryFill(
     ze_event_handle_t hEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryFill>(hCommandList, ptr, pattern, patternSize, size, hEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     CmdListMemoryCopyParams memoryCopyParams = {};
-    return L0::CommandList::fromHandle(hCommandList)->appendMemoryFill(ptr, pattern, patternSize, size, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    return cmdList->appendMemoryFill(ptr, pattern, patternSize, size, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t zeCommandListAppendMemoryCopyRegion(
@@ -50,8 +62,14 @@ ze_result_t zeCommandListAppendMemoryCopyRegion(
     ze_event_handle_t hEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryCopyRegion>(hCommandList, dstptr, dstRegion, dstPitch, dstSlicePitch, srcptr, srcRegion, srcPitch, srcSlicePitch, hEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     CmdListMemoryCopyParams memoryCopyParams = {};
-    return L0::CommandList::fromHandle(hCommandList)->appendMemoryCopyRegion(dstptr, dstRegion, dstPitch, dstSlicePitch, srcptr, srcRegion, srcPitch, srcSlicePitch, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    return cmdList->appendMemoryCopyRegion(dstptr, dstRegion, dstPitch, dstSlicePitch, srcptr, srcRegion, srcPitch, srcSlicePitch, hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t zeCommandListAppendImageCopy(
@@ -61,9 +79,14 @@ ze_result_t zeCommandListAppendImageCopy(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    CmdListMemoryCopyParams memoryCopyParams = {};
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendImageCopy>(hCommandList, hDstImage, hSrcImage, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
 
-    return L0::CommandList::fromHandle(hCommandList)->appendImageCopy(hDstImage, hSrcImage, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    return cmdList->appendImageCopy(hDstImage, hSrcImage, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t zeCommandListAppendImageCopyRegion(
@@ -75,8 +98,14 @@ ze_result_t zeCommandListAppendImageCopyRegion(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendImageCopyRegion>(hCommandList, hDstImage, hSrcImage, pDstRegion, pSrcRegion, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     CmdListMemoryCopyParams memoryCopyParams = {};
-    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    return cmdList->appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t zeCommandListAppendImageCopyToMemory(
@@ -87,8 +116,14 @@ ze_result_t zeCommandListAppendImageCopyToMemory(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendImageCopyToMemory>(hCommandList, dstptr, hSrcImage, pSrcRegion, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     CmdListMemoryCopyParams memoryCopyParams = {};
-    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyToMemory(dstptr, hSrcImage, pSrcRegion, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    return cmdList->appendImageCopyToMemory(dstptr, hSrcImage, pSrcRegion, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t zeCommandListAppendImageCopyFromMemory(
@@ -99,8 +134,14 @@ ze_result_t zeCommandListAppendImageCopyFromMemory(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendImageCopyFromMemory>(hCommandList, hDstImage, srcptr, pDstRegion, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     CmdListMemoryCopyParams memoryCopyParams = {};
-    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyFromMemory(hDstImage, srcptr, pDstRegion, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    return cmdList->appendImageCopyFromMemory(hDstImage, srcptr, pDstRegion, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t zeCommandListAppendImageCopyToMemoryExt(
@@ -113,8 +154,14 @@ ze_result_t zeCommandListAppendImageCopyToMemoryExt(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendImageCopyToMemoryExt>(hCommandList, dstptr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     CmdListMemoryCopyParams memoryCopyParams = {};
-    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyToMemoryExt(dstptr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    return cmdList->appendImageCopyToMemoryExt(dstptr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t zeCommandListAppendImageCopyFromMemoryExt(
@@ -127,15 +174,27 @@ ze_result_t zeCommandListAppendImageCopyFromMemoryExt(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt>(hCommandList, hDstImage, srcptr, pDstRegion, srcRowPitch, srcSlicePitch, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     CmdListMemoryCopyParams memoryCopyParams = {};
-    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyFromMemoryExt(hDstImage, srcptr, pDstRegion, srcRowPitch, srcSlicePitch, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    return cmdList->appendImageCopyFromMemoryExt(hDstImage, srcptr, pDstRegion, srcRowPitch, srcSlicePitch, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 ze_result_t zeCommandListAppendMemoryPrefetch(
     ze_command_list_handle_t hCommandList,
     const void *ptr,
     size_t size) {
-    return L0::CommandList::fromHandle(hCommandList)->appendMemoryPrefetch(ptr, size);
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryPrefetch>(hCommandList, ptr, size);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendMemoryPrefetch(ptr, size);
 }
 
 ze_result_t zeCommandListAppendMemAdvise(
@@ -144,7 +203,13 @@ ze_result_t zeCommandListAppendMemAdvise(
     const void *ptr,
     size_t size,
     ze_memory_advice_t advice) {
-    return L0::CommandList::fromHandle(hCommandList)->appendMemAdvise(hDevice, ptr, size, advice);
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemAdvise>(hCommandList, hDevice, ptr, size, advice);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendMemAdvise(hDevice, ptr, size, advice);
 }
 
 ze_result_t zeCommandListAppendMemoryCopyFromContext(
@@ -156,7 +221,13 @@ ze_result_t zeCommandListAppendMemoryCopyFromContext(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendMemoryCopyFromContext(dstptr, hContextSrc, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, false);
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryCopyFromContext>(hCommandList, dstptr, hContextSrc, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendMemoryCopyFromContext(dstptr, hContextSrc, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
 } // namespace L0

@@ -21,6 +21,7 @@
 
 #include "level_zero/core/source/cmdlist/command_to_patch.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
+#include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/include/level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
@@ -49,7 +50,6 @@ struct Kernel;
 struct CommandQueue;
 struct CmdListKernelLaunchParams;
 struct CmdListMemoryCopyParams;
-struct Graph;
 
 struct CmdListReturnPoint {
     NEO::StreamProperties configSnapshot;
@@ -451,6 +451,14 @@ struct CommandList : _ze_command_list_handle_t {
 
     Graph *getCaptureTarget() const {
         return this->captureTarget;
+    }
+
+    template <CaptureApi api, typename... TArgs>
+    ze_result_t capture(TArgs... apiArgs) {
+        if (nullptr == this->captureTarget) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return this->captureTarget->capture<api>(apiArgs...);
     }
 
   protected:

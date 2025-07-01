@@ -157,6 +157,10 @@ ze_result_t zeCommandListAppendLaunchKernel(
     ze_event_handle_t *phWaitEvents) {
 
     auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendLaunchKernel>(hCommandList, kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
 
     L0::CmdListKernelLaunchParams launchParams = {};
     launchParams.skipInOrderNonWalkerSignaling = cmdList->skipInOrderNonWalkerSignalingAllowed(hSignalEvent);
@@ -172,6 +176,12 @@ ze_result_t zeCommandListAppendLaunchCooperativeKernel(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
 
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>(hCommandList, kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     L0::CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
 
@@ -185,6 +195,13 @@ ze_result_t zeCommandListAppendLaunchKernelIndirect(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendLaunchKernelIndirect>(hCommandList, kernelHandle, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelIndirect(kernelHandle, *pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
@@ -197,6 +214,13 @@ ze_result_t zeCommandListAppendLaunchMultipleKernelsIndirect(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
+
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>(hCommandList, numKernels, kernelHandles, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
     return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, kernelHandles, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 

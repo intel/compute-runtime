@@ -117,9 +117,9 @@ void testAppendMemoryCopy(ze_driver_handle_t driver, ze_context_handle_t &contex
 
     SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
 
-    graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr);
+    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
 
-    zeCommandListHostSynchronize(cmdList, -1);
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, -1));
 
     // Validate stack and ze buffers have the original data from heapBuffer
     validRet = LevelZeroBlackBoxTests::validate(heapBuffer, stackBuffer, allocSize);

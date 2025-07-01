@@ -50,7 +50,9 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListBeginGraphCaptureExp(ze_command
     cmdList->getContextHandle(&hCtx);
     auto ctx = L0::Context::fromHandle(hCtx);
 
-    cmdList->setCaptureTarget(new Graph(ctx, false));
+    auto graph = new Graph(ctx, false);
+    cmdList->setCaptureTarget(graph);
+    graph->startCapturingFrom(*cmdList, false);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -75,6 +77,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListBeginCaptureIntoGraphExp(ze_com
     }
 
     cmdList->setCaptureTarget(graph);
+    graph->startCapturingFrom(*cmdList, false);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -92,6 +95,8 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListEndGraphCaptureExp(ze_command_l
     if (nullptr == cmdList->getCaptureTarget()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+
+    cmdList->getCaptureTarget()->stopCapturing();
 
     if (nullptr == phGraph) {
         if (cmdList->getCaptureTarget()->wasPreallocated()) {
@@ -122,7 +127,9 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListInstantiateGraphExp(ze_graph_ha
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    *phExecutableGraph = new ExecutableGraph(virtualGraph);
+    auto execGraph = std::make_unique<ExecutableGraph>();
+    execGraph->instantiateFrom(*virtualGraph);
+    *phExecutableGraph = execGraph.release();
 
     return ZE_RESULT_SUCCESS;
 }
@@ -143,7 +150,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendGraphExp(ze_command_list_
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    return ZE_RESULT_SUCCESS;
+    return graph->execute(cmdList, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphDestroyExp(ze_graph_handle_t hGraph) {

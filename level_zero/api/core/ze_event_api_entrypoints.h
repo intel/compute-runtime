@@ -58,14 +58,26 @@ ze_result_t zeEventPoolCloseIpcHandle(
 ze_result_t zeCommandListAppendSignalEvent(
     ze_command_list_handle_t hCommandList,
     ze_event_handle_t hEvent) {
-    return L0::CommandList::fromHandle(hCommandList)->appendSignalEvent(hEvent, false);
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendSignalEvent>(hCommandList, hEvent);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendSignalEvent(hEvent, false);
 }
 
 ze_result_t zeCommandListAppendWaitOnEvents(
     ze_command_list_handle_t hCommandList,
     uint32_t numEvents,
     ze_event_handle_t *phEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendWaitOnEvents(numEvents, phEvents, nullptr, false, true, true, false, false, false);
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendWaitOnEvents>(hCommandList, numEvents, phEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendWaitOnEvents(numEvents, phEvents, nullptr, false, true, true, false, false, false);
 }
 
 ze_result_t zeEventHostSignal(
@@ -87,7 +99,13 @@ ze_result_t zeEventQueryStatus(
 ze_result_t zeCommandListAppendEventReset(
     ze_command_list_handle_t hCommandList,
     ze_event_handle_t hEvent) {
-    return L0::CommandList::fromHandle(hCommandList)->appendEventReset(hEvent);
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendEventReset>(hCommandList, hEvent);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendEventReset(hEvent);
 }
 
 ze_result_t zeEventHostReset(
