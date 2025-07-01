@@ -250,6 +250,7 @@ void RootDeviceEnvironment::setNumberOfCcs(uint32_t numberOfCcs) {
 
     hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = std::min(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled, numberOfCcs);
     limitedNumberOfCcs = true;
+    aubCenter->getAubManager()->setCCSMode(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 }
 
 bool RootDeviceEnvironment::isNumberOfCcsLimited() const {

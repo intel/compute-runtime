@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -555,15 +555,18 @@ HWTEST2_F(SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDiffere
     cl_int retVal = CL_SUCCESS;
     const uint32_t bufferSize = 256;
     const uint32_t halfBufferSize = bufferSize / 2;
-    uint8_t writePattern1[halfBufferSize];
-    uint8_t writePattern2[halfBufferSize];
     uint8_t initPattern[bufferSize];
     std::fill(initPattern, initPattern + sizeof(initPattern), 0);
-    std::fill(writePattern1, writePattern1 + sizeof(writePattern1), 1);
-    std::fill(writePattern2, writePattern2 + sizeof(writePattern2), 2);
-
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bufferSize, initPattern, retVal));
     buffer->forceDisallowCPUCopy = true;
+
+    auto svmManager = context->getSVMAllocsManager();
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
+    auto writePattern1 = static_cast<uint8_t *>(svmManager->createUnifiedMemoryAllocation(halfBufferSize, unifiedMemoryProperties));
+    auto writePattern2 = static_cast<uint8_t *>(svmManager->createUnifiedMemoryAllocation(halfBufferSize, unifiedMemoryProperties));
+
+    std::fill(writePattern1, writePattern1 + halfBufferSize, 1);
+    std::fill(writePattern2, writePattern2 + halfBufferSize, 2);
 
     auto simulatedCsr0 = getSimulatedCsr<FamilyType>(0, 0);
     simulatedCsr0->overrideDispatchPolicy(DispatchMode::batchedDispatch);
@@ -579,6 +582,9 @@ HWTEST2_F(SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDiffere
     auto gpuPtr = reinterpret_cast<void *>(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + buffer->getOffset());
     expectMemory<FamilyType>(gpuPtr, writePattern1, halfBufferSize, 0, 0);
     expectMemory<FamilyType>(ptrOffset(gpuPtr, halfBufferSize), writePattern2, halfBufferSize, 0, 1);
+
+    svmManager->freeSVMAlloc(writePattern1);
+    svmManager->freeSVMAlloc(writePattern2);
 }
 
 // 1 Tile

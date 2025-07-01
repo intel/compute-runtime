@@ -60,6 +60,7 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
         options.gpuAddressSpace = hwInfo->capabilityTable.gpuAddressSpace;
 
         aubManager.reset(createAubManager(options));
+        aubManager->setCCSMode(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
     }
     subCaptureCommon = std::make_unique<AubSubCaptureCommon>();
     if (debugManager.flags.AUBDumpSubCaptureMode.get()) {
