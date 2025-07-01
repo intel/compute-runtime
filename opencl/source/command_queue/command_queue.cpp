@@ -1361,7 +1361,7 @@ bool CommandQueue::isWaitForTimestampsEnabled() const {
     return enabled;
 }
 
-WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) {
+WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList, bool waitForTaskCountRequired) {
     if (blockedQueue) {
         while (isQueueBlocked()) {
         }
@@ -1387,7 +1387,12 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
     auto taskCountToWait = taskCount;
     queueOwnership.unlock();
 
-    waitStatus = waitUntilComplete(taskCountToWait, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
+    bool skipWaitOnTaskCount = waitedOnTimestamps;
+    if (waitForTaskCountRequired) {
+        skipWaitOnTaskCount = false; // PC with L3 flush is required after CPU read if L3 Flush After Post Sync is enabled, so we need to wait for task count
+    }
+
+    waitStatus = waitUntilComplete(taskCountToWait, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, skipWaitOnTaskCount);
 
     {
         queueOwnership.lock();

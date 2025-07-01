@@ -480,6 +480,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     }
 
     WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
+        this->recordedSkipWait = skipWait;
         latestTaskCountWaited = gpgpuTaskCountToWait;
         if (waitUntilCompleteReturnValue.has_value()) {
             return *waitUntilCompleteReturnValue;
@@ -488,14 +489,14 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return BaseClass::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, cleanTemporaryAllocationList, skipWait);
     }
 
-    WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) override {
+    WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList, bool waitForTaskCountRequired) override {
         waitForAllEnginesCalledCount++;
 
         if (waitForAllEnginesReturnValue.has_value()) {
             return *waitForAllEnginesReturnValue;
         }
 
-        return BaseClass::waitForAllEngines(blockedQueue, printfHandler, cleanTemporaryAllocationsList);
+        return BaseClass::waitForAllEngines(blockedQueue, printfHandler, cleanTemporaryAllocationsList, waitForTaskCountRequired);
     }
 
     bool isCacheFlushForBcsRequired() const override {
@@ -574,6 +575,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool useBcsCsrOnNotifyEnabled = false;
     bool waitForTimestampsCalled = false;
     bool latestWaitForTimestampsStatus = false;
+    bool recordedSkipWait = false;
     int setQueueBlocked = -1;
     int forceGpgpuSubmissionForBcsRequired = -1;
     mutable bool isBlitEnqueueImageAllowed = false;

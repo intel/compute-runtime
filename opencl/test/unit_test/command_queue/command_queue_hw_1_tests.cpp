@@ -96,7 +96,7 @@ HWTEST_F(CommandQueueHwTest, givenEnableTimestampWaitForQueuesWhenGpuHangDetecte
     cmdQ.timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
     cmdQ.timestampPacketContainer->add(mockTagAllocator->getTag());
 
-    status = cmdQ.waitForAllEngines(false, nullptr, false);
+    status = cmdQ.waitForAllEngines(false, nullptr, false, false);
 
     EXPECT_EQ(WaitStatus::gpuHang, status);
 }

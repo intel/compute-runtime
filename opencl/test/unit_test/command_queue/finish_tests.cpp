@@ -124,6 +124,7 @@ HWTEST_F(FinishTest, givenL3FlushAfterPostSyncEnabledWhenFlushTagUpdateIsCalledT
     EXPECT_EQ(taskCount + 1, cmdQ.taskCount);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(cmdQ.recordedSkipWait);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(csr.commandStream, used);

@@ -1206,7 +1206,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenUpdat
     mockCsr->taskCount.store(10);
     mockCsr->latestFlushedTaskCount.store(5);
 
-    const auto waitStatus = commandQueue.waitForAllEngines(false, nullptr);
+    const auto waitStatus = commandQueue.waitForAllEngines(false, nullptr, false);
     EXPECT_EQ(WaitStatus::ready, waitStatus);
 
     parseCommands<FamilyType>(mockCsr->getCS(4096u));
@@ -1224,7 +1224,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenGpuHangOnPrintEnqueueOutputWh
     const auto cleanTemporaryAllocationsList{false};
     MockPrintfHandler printfHandler(*pDevice);
 
-    const auto waitStatus = commandQueue.waitForAllEngines(blockedQueue, &printfHandler, cleanTemporaryAllocationsList);
+    const auto waitStatus = commandQueue.waitForAllEngines(blockedQueue, &printfHandler, cleanTemporaryAllocationsList, false);
     EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
 }
 
@@ -1254,7 +1254,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithCustomCsr, givenEnable
     mockCsr->latestFlushedTaskCount.store(5);
     mockCsr->directSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*mockCsr);
 
-    const auto waitStatus = commandQueue.waitForAllEngines(false, nullptr);
+    const auto waitStatus = commandQueue.waitForAllEngines(false, nullptr, false);
     EXPECT_EQ(WaitStatus::ready, waitStatus);
 
     parseCommands<FamilyType>(mockCsr->getCS(4096u));
