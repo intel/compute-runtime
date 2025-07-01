@@ -1386,6 +1386,9 @@ HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditio
 }
 
 HWTEST2_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryFillThenTheResultsAreTheSame, MatchAny) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.LimitBlitterMaxWidth.set(1024);
+    debugManager.flags.LimitBlitterMaxHeight.set(1024);
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
     size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), true));
     size_t dstSize = 2 * sizeof(uint32_t) * (maxBlitWidth * maxBlitHeight) + sizeof(uint32_t);
