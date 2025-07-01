@@ -18,6 +18,7 @@ namespace L0 {
 DriverDispatch globalDriverDispatch;
 
 DriverDispatch::DriverDispatch() {
+    this->core.isValidFlag = true;
     this->core.version = ZE_API_VERSION_1_13;
     this->core.RTASBuilderExp = &this->coreRTASBuilderExp;
     this->core.RTASBuilder = &this->coreRTASBuilder;
@@ -50,6 +51,7 @@ DriverDispatch::DriverDispatch() {
     this->core.FabricVertexExp = &this->coreFabricVertexExp;
     this->core.FabricEdgeExp = &this->coreFabricEdgeExp;
 
+    this->tools.isValidFlag = true;
     this->tools.version = ZE_API_VERSION_1_12;
     this->tools.MetricProgrammableExp = &this->toolsMetricProgrammableExp;
     this->tools.MetricTracerExp = &this->toolsMetricTracerExp;
@@ -70,6 +72,7 @@ DriverDispatch::DriverDispatch() {
     this->tools.TracerExp = &this->toolsTracerExp;
     this->tools.Debug = &this->toolsDebug;
 
+    this->sysman.isValidFlag = true;
     this->sysman.version = ZE_API_VERSION_1_12;
     this->sysman.Global = &this->sysmanGlobal;
     this->sysman.Device = &this->sysmanDevice;

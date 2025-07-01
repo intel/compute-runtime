@@ -20,9 +20,6 @@ decltype(&zelLoaderTranslateHandle) loaderTranslateHandleFunc = nullptr;
 decltype(&zelSetDriverTeardown) setDriverTeardownFunc = nullptr;
 
 void globalDriverSetup() {
-    globalDriverDispatch.core.isValidFlag = true;
-    globalDriverDispatch.tools.isValidFlag = true;
-    globalDriverDispatch.sysman.isValidFlag = true;
     if (!globalDriverHandles) {
         globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
     }
