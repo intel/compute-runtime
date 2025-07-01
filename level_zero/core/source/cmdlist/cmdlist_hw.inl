@@ -632,6 +632,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithArgument
     L0::CmdListKernelLaunchParams launchParams = {};
     launchParams.skipInOrderNonWalkerSignaling = this->skipInOrderNonWalkerSignalingAllowed(hSignalEvent);
 
+    result = this->obtainLaunchParamsFromExtensions(reinterpret_cast<ze_base_desc_t *>(pNext), launchParams, hKernel);
+
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
     return this->appendLaunchKernel(hKernel, groupCounts, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
 }
 
