@@ -179,6 +179,7 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     NEO::EngineGroupType getInternalEngineGroupType();
     uint32_t getCopyEngineOrdinal() const;
     std::optional<uint32_t> tryGetCopyEngineOrdinal() const;
+    void bcsSplitReleaseResources() override;
 
   protected:
     ze_result_t queryPeerAccess(DeviceImp *peerDevice);

@@ -3925,6 +3925,18 @@ inline NEO::MemoryPool getMemoryPoolFromAllocDataForSplit(bool allocFound, const
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitRemote(NEO::SvmAllocationData *allocData, void *ptr) const {
+    auto driver = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
+
+    if (allocData) {
+        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+        return driver->isRemoteResourceNeeded(ptr, alloc, allocData, this->device);
+    }
+
+    return false;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size, NEO::TransferDirection &directionOut) {
     if (size < minimalSizeForBcsSplit) {
         return false;
@@ -3943,12 +3955,14 @@ bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, con
         }
     }
 
-    return this->isAppendSplitNeeded(dstMemoryPool, srcMemoryPool, size, directionOut);
+    bool remoteCopy = isAppendSplitRemote(srcAllocData, const_cast<void *>(srcPtr)) || isAppendSplitRemote(dstAllocData, dstPtr);
+
+    return this->isAppendSplitNeeded(dstMemoryPool, srcMemoryPool, size, directionOut, remoteCopy);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut) {
-    directionOut = NEO::createTransferDirection(!NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool), !NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool));
+inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut, bool remoteCopy) {
+    directionOut = NEO::createTransferDirection(!NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool), !NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool), remoteCopy);
 
     return this->isBcsSplitNeeded &&
            size >= minimalSizeForBcsSplit &&

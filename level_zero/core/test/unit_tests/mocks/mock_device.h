@@ -80,6 +80,7 @@ struct MockDevice : public Device {
     ADDMETHOD_NOBASE(getDebugProperties, ze_result_t, ZE_RESULT_SUCCESS, (zet_device_debug_properties_t * properties));
     ADDMETHOD_NOBASE(getDebugSession, DebugSession *, nullptr, (const zet_debug_config_t &config));
     ADDMETHOD_NOBASE_VOIDRETURN(removeDebugSession, ());
+    ADDMETHOD_NOBASE_VOIDRETURN(bcsSplitReleaseResources, ());
     ADDMETHOD_NOBASE(obtainReusableAllocation, NEO::GraphicsAllocation *, nullptr, (size_t requiredSize, NEO::AllocationType type))
     ADDMETHOD_NOBASE_VOIDRETURN(storeReusableAllocation, (NEO::GraphicsAllocation & alloc));
     ADDMETHOD_NOBASE(getFabricVertex, ze_result_t, ZE_RESULT_SUCCESS, (ze_fabric_vertex_handle_t * phVertex));

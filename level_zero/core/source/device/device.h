@@ -150,6 +150,7 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) = 0;
     virtual uint32_t getEventMaxPacketCount() const = 0;
     virtual uint32_t getEventMaxKernelCount() const = 0;
+    virtual void bcsSplitReleaseResources() = 0;
     NEO::TagAllocatorBase *getDeviceInOrderCounterAllocator();
     NEO::TagAllocatorBase *getHostInOrderCounterAllocator();
     NEO::TagAllocatorBase *getInOrderTimestampAllocator();

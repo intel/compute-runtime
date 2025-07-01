@@ -936,28 +936,31 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
         debugManager.flags.SplitBcsMask.set(0b11110);
 
-        device = createDevice();
+        createDevice();
         context = Context::fromHandle(driverHandle->getDefaultContext());
         cmdList = createCmdList();
     }
 
-    std::unique_ptr<L0::Device> createDevice() {
-        ze_result_t returnValue;
+    void createDevice() {
         auto hwInfo = *NEO::defaultHwInfo;
         hwInfo.featureTable.ftrBcsInfo = 0b111111111;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
-        auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+        auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
 
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+        for (uint32_t i = 1; i < expectedNumRootDevices; i++) {
+            auto neoRootDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, neoDevice->getExecutionEnvironment(), i);
+            devices.push_back(std::unique_ptr<NEO::Device>(neoRootDevice));
+        }
+
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
 
-        auto device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), neoDevice, false, &returnValue));
+        this->device = driverHandle->devices[0];
 
-        bcsSplit = &static_cast<DeviceImp *>(device.get())->bcsSplit;
-
-        return device;
+        bcsSplit = &static_cast<DeviceImp *>(device)->bcsSplit;
     }
 
     uint32_t queryCopyOrdinal() {
@@ -987,7 +990,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         desc.ordinal = queryCopyOrdinal();
 
         std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                                  device.get(),
+                                                                                  device,
                                                                                   &desc,
                                                                                   false,
                                                                                   NEO::EngineGroupType::copy,
@@ -1004,16 +1007,25 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         return alloc;
     }
 
+    void *allocDeviceMem(L0::Device *device) {
+        void *alloc = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, copySize, 4096u, &alloc);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        return alloc;
+    }
+
     DebugManagerStateRestore restore;
     CmdListMemoryCopyParams copyParams = {};
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
-    std::unique_ptr<L0::Device> device;
+    L0::Device *device = nullptr;
     std::unique_ptr<L0::CommandList> cmdList;
     BcsSplit *bcsSplit = nullptr;
     Context *context = nullptr;
     const size_t copySize = 4 * MemoryConstants::megaByte;
     uint32_t expectedTileCount = 1;
     uint32_t expectedEnginesCount = 4;
+    uint32_t expectedNumRootDevices = 1;
 };
 
 HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, IsAtLeastXeHpcCore) {
@@ -1135,6 +1147,31 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenRes
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[0]->getInOrderExecBaseSignalValue());
 
     context->freeMem(ptr);
+}
+
+struct MultiRootAggregatedBcsSplitTests : public AggregatedBcsSplitTests {
+    void SetUp() override {
+        expectedNumRootDevices = 2;
+        debugManager.flags.CreateMultipleRootDevices.set(expectedNumRootDevices);
+        AggregatedBcsSplitTests::SetUp();
+    }
+};
+
+HWTEST2_F(MultiRootAggregatedBcsSplitTests, givenRemoteAllocWhenCopyRequestedThenEnableSplit, IsAtLeastXeHpcCore) {
+    auto device1 = driverHandle->devices[1];
+
+    auto ptr = allocHostMem();
+    auto remoteAlloc = allocDeviceMem(device1);
+    auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
+
+    cmdListHw->appendMemoryCopy(remoteAlloc, ptr, copySize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[0]->getInOrderExecBaseSignalValue());
+
+    cmdListHw->appendMemoryCopy(ptr, remoteAlloc, copySize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[1]->getInOrderExecBaseSignalValue());
+
+    context->freeMem(ptr);
+    context->freeMem(remoteAlloc);
 }
 
 struct MultiTileAggregatedBcsSplitTests : public AggregatedBcsSplitTests {

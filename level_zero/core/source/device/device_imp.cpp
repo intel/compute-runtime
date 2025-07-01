@@ -73,6 +73,10 @@ namespace L0 {
 
 DeviceImp::DeviceImp() : bcsSplit(*this){};
 
+void DeviceImp::bcsSplitReleaseResources() {
+    bcsSplit.releaseResources();
+}
+
 DriverHandle *DeviceImp::getDriverHandle() {
     return this->driverHandle;
 }

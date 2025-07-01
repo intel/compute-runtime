@@ -214,6 +214,11 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 }
 
 DriverHandleImp::~DriverHandleImp() {
+    for (auto &device : this->devices) {
+        // release temporary pointers before default context destruction
+        device->bcsSplitReleaseResources();
+    }
+
     if (this->defaultContext) {
         L0::Context::fromHandle(this->defaultContext)->destroy();
         this->defaultContext = nullptr;
