@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/mocks/mock_deferrable_deletion.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
 
@@ -95,6 +96,7 @@ class MyDeferredDeleter : public DeferredDeleter {
 struct DeferredDeleterMtTest : public ::testing::Test {
 
     void SetUp() override {
+        MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
         deleter.reset(new MyDeferredDeleter());
     }
 
