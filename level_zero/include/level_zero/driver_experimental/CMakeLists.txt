@@ -12,6 +12,7 @@ set(L0_API_DRIVER_EXPERIMENTAL_INCLUDE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_driver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_event.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/zex_graph.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_memory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/zex_module.h
 )
@@ -20,7 +21,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${L0_API_DRIVER_EXPERIMENTAL_INCLUDE_FILES}
-               ${CMAKE_CURRENT_SOURCE_DIR}/zex_graph.h
 )
 
 if(UNIX)

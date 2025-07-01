@@ -8,5 +8,6 @@ usr/include/level_zero/driver_experimental/zex_context.h
 usr/include/level_zero/driver_experimental/zex_common.h
 usr/include/level_zero/driver_experimental/zex_driver.h
 usr/include/level_zero/driver_experimental/zex_event.h
+usr/include/level_zero/driver_experimental/zex_graph.h
 usr/include/level_zero/driver_experimental/zex_memory.h
 usr/include/level_zero/driver_experimental/zex_module.h
