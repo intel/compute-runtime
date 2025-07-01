@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/sysman/source/device/os_sysman.h"
@@ -81,6 +82,8 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     bool getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
     bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
     bool generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
+    ze_result_t initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) override;
+    bool isDeviceInSurvivabilityMode() override;
 
   protected:
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
@@ -102,6 +105,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
         std::array<uint8_t, NEO::ProductHelper::uuidSize> id{};
     };
     std::vector<Uuid> uuidVec;
+    NEO::PhysicalDevicePciBusInfo pciBdfInfo = {};
 
   private:
     LinuxSysmanImp() = delete;

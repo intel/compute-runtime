@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/sysman/source/api/ecc/sysman_ecc_imp.h"
 #include "level_zero/sysman/source/api/events/sysman_events_imp.h"
@@ -46,6 +47,12 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pVfManagementHandleContext = new VfManagementHandleContext(pOsSysman);
 }
 
+SysmanDeviceImp::SysmanDeviceImp() : rootDeviceIndex(0) {
+    pOsSysman = OsSysman::create(this);
+    UNRECOVERABLE_IF(nullptr == pOsSysman);
+    pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
+}
+
 SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pGlobalOperations);
     freeResource(pDiagnosticsHandleContext);
@@ -66,7 +73,9 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pOsSysman);
     freeResource(pEvents);
     freeResource(pVfManagementHandleContext);
-    executionEnvironment->decRefInternal();
+    if (executionEnvironment != nullptr) {
+        executionEnvironment->decRefInternal();
+    }
 }
 
 ze_result_t SysmanDeviceImp::init() {

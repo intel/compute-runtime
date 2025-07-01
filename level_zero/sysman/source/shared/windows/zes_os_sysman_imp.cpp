@@ -191,6 +191,14 @@ bool WddmSysmanImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusIn
     return false;
 }
 
+ze_result_t WddmSysmanImp::initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) {
+    return ZE_RESULT_ERROR_UNINITIALIZED;
+}
+
+bool WddmSysmanImp::isDeviceInSurvivabilityMode() {
+    return false;
+}
+
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {
     WddmSysmanImp *pWddmSysmanImp = new WddmSysmanImp(pParentSysmanDeviceImp);
     return static_cast<OsSysman *>(pWddmSysmanImp);

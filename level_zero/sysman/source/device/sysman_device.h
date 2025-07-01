@@ -139,6 +139,7 @@ struct SysmanDevice : _ze_device_handle_t {
 
     virtual OsSysman *deviceGetOsInterface() = 0;
     virtual void getDeviceUuids(std::vector<std::string> &deviceUuids) = 0;
+    bool isDeviceInSurvivabilityMode = false;
 };
 
 } // namespace Sysman

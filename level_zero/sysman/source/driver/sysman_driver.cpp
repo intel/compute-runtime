@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "level_zero/sysman/source/device/sysman_hw_device_id.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/driver/sysman_driver_imp.h"
+#include "level_zero/sysman/source/driver/sysman_os_driver.h"
 
 #include <cstring>
 #include <vector>
@@ -62,6 +63,13 @@ void SysmanDriverImp::initialize(ze_result_t *result) {
         *result = ZE_RESULT_ERROR_UNINITIALIZED;
     }
     executionEnvironment->decRefInternal();
+
+    std::unique_ptr<OsDriver> pOsDriverInterface = OsDriver::create();
+    if (globalSysmanDriverHandle != nullptr) {
+        pOsDriverInterface->initSurvivabilityDevices(globalSysmanDriverHandle, result);
+    } else {
+        globalSysmanDriverHandle = pOsDriverInterface->initSurvivabilityDevicesWithDriver(result, &driverCount);
+    }
 }
 
 ze_result_t SysmanDriverImp::initStatus(ZE_RESULT_ERROR_UNINITIALIZED);

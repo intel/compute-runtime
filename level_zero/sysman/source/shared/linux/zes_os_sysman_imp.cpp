@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/directory.h"
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/api/pci/linux/sysman_os_pci_imp.h"
@@ -182,13 +183,17 @@ LinuxSysmanImp::LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) {
 }
 
 void LinuxSysmanImp::createFwUtilInterface() {
-    const auto pciBusInfo = pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
-    const uint16_t domain = static_cast<uint16_t>(pciBusInfo.pciDomain);
-    const uint8_t bus = static_cast<uint8_t>(pciBusInfo.pciBus);
-    const uint8_t device = static_cast<uint8_t>(pciBusInfo.pciDevice);
-    const uint8_t function = static_cast<uint8_t>(pciBusInfo.pciFunction);
+    if (isDeviceInSurvivabilityMode()) {
+        pFwUtilInterface = FirmwareUtil::create(pciBdfInfo.pciDomain, pciBdfInfo.pciBus, pciBdfInfo.pciDevice, pciBdfInfo.pciFunction);
+    } else {
+        const auto pciBusInfo = pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
+        const uint16_t domain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+        const uint8_t bus = static_cast<uint8_t>(pciBusInfo.pciBus);
+        const uint8_t device = static_cast<uint8_t>(pciBusInfo.pciDevice);
+        const uint8_t function = static_cast<uint8_t>(pciBusInfo.pciFunction);
 
-    pFwUtilInterface = FirmwareUtil::create(domain, bus, device, function);
+        pFwUtilInterface = FirmwareUtil::create(domain, bus, device, function);
+    }
 }
 
 FirmwareUtil *LinuxSysmanImp::getFwUtilInterface() {
@@ -588,6 +593,29 @@ bool LinuxSysmanImp::getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<u
     }
 
     return this->uuidVec[subDeviceID].isValid;
+}
+
+static NEO::PhysicalDevicePciBusInfo getPciBufInfo(const char *bdfString) {
+    constexpr int bdfTokensNum = 4;
+    uint16_t domain = -1;
+    uint8_t bus = -1, device = -1, function = -1;
+    if (NEO::parseBdfString(bdfString, domain, bus, device, function) != bdfTokensNum) {
+        return NEO::PhysicalDevicePciBusInfo{};
+    }
+    return NEO::PhysicalDevicePciBusInfo{domain, bus, device, function};
+}
+
+ze_result_t LinuxSysmanImp::initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) {
+    const auto hwDeviceIdDrm = static_cast<NEO::HwDeviceIdDrm *>(hwDeviceId.get());
+    pciBdfInfo = getPciBufInfo(hwDeviceIdDrm->getPciPath());
+    if (pciBdfInfo.pciDomain == pciBdfInfo.invalidValue) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+bool LinuxSysmanImp::isDeviceInSurvivabilityMode() {
+    return pParentSysmanDeviceImp->isDeviceInSurvivabilityMode;
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {

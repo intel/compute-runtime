@@ -25,10 +25,14 @@ void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes,
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     supportedFwTypes.clear();
     if (pFwInterface != nullptr) {
-        auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-        pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, supportedFwTypes);
-        if (pSysmanProductHelper->isLateBindingSupported()) {
-            pFwInterface->getLateBindingSupportedFwTypes(supportedFwTypes);
+        if (pLinuxSysmanImp->isDeviceInSurvivabilityMode()) {
+            pFwInterface->getDeviceSupportedFwTypes(supportedFwTypes);
+        } else {
+            auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+            pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, supportedFwTypes);
+            if (pSysmanProductHelper->isLateBindingSupported()) {
+                pFwInterface->getLateBindingSupportedFwTypes(supportedFwTypes);
+            }
         }
     }
 }
@@ -62,7 +66,9 @@ ze_result_t LinuxFirmwareImp::osGetFirmwareFlashProgress(uint32_t *pCompletionPe
 
 LinuxFirmwareImp::LinuxFirmwareImp(OsSysman *pOsSysman, const std::string &fwType) : osFwType(fwType) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    if (!pLinuxSysmanImp->isDeviceInSurvivabilityMode()) {
+        pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    }
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
 }
 

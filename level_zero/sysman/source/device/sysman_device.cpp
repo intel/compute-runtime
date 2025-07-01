@@ -44,12 +44,18 @@ ze_result_t SysmanDevice::fabricPortGet(zes_device_handle_t hDevice, uint32_t *p
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->fabricPortGet(pCount, phPort);
 }
 ze_result_t SysmanDevice::memoryGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_mem_handle_t *phMemory) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->memoryGet(pCount, phMemory);
 }
@@ -59,6 +65,9 @@ ze_result_t SysmanDevice::powerGet(zes_device_handle_t hDevice, uint32_t *pCount
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->powerGet(pCount, phPower);
 }
 
@@ -66,6 +75,9 @@ ze_result_t SysmanDevice::powerGetCardDomain(zes_device_handle_t hDevice, zes_pw
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->powerGetCardDomain(phPower);
 }
@@ -75,6 +87,9 @@ ze_result_t SysmanDevice::engineGet(zes_device_handle_t hDevice, uint32_t *pCoun
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->engineGet(pCount, phEngine);
 }
 
@@ -82,6 +97,9 @@ ze_result_t SysmanDevice::frequencyGet(zes_device_handle_t hDevice, uint32_t *pC
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->frequencyGet(pCount, phFrequency);
 }
@@ -91,6 +109,9 @@ ze_result_t SysmanDevice::schedulerGet(zes_device_handle_t hDevice, uint32_t *pC
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->schedulerGet(pCount, phScheduler);
 }
 
@@ -99,6 +120,9 @@ ze_result_t SysmanDevice::rasGet(zes_device_handle_t hDevice, uint32_t *pCount, 
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->rasGet(pCount, phRas);
 }
 
@@ -106,6 +130,9 @@ ze_result_t SysmanDevice::diagnosticsGet(zes_device_handle_t hDevice, uint32_t *
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->diagnosticsGet(pCount, phDiagnostics);
 }
@@ -123,6 +150,9 @@ ze_result_t SysmanDevice::deviceGetProperties(zes_device_handle_t hDevice, zes_d
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->deviceGetProperties(pProperties);
 }
 
@@ -130,6 +160,9 @@ ze_result_t SysmanDevice::deviceEnumEnabledVF(zes_device_handle_t hDevice, uint3
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->deviceEnumEnabledVF(pCount, phVFhandle);
 }
@@ -139,6 +172,9 @@ ze_result_t SysmanDevice::processesGetState(zes_device_handle_t hDevice, uint32_
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->processesGetState(pCount, pProcesses);
 }
 
@@ -147,12 +183,18 @@ ze_result_t SysmanDevice::deviceReset(zes_device_handle_t hDevice, ze_bool_t for
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->deviceReset(force);
 }
 ze_result_t SysmanDevice::deviceGetState(zes_device_handle_t hDevice, zes_device_state_t *pState) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->deviceGetState(pState);
 }
@@ -163,12 +205,18 @@ ze_result_t SysmanDevice::deviceGetSubDeviceProperties(zes_device_handle_t hDevi
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->deviceGetSubDeviceProperties(pCount, pSubdeviceProps);
 }
 ze_result_t SysmanDevice::standbyGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_standby_handle_t *phStandby) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->standbyGet(pCount, phStandby);
 }
@@ -178,6 +226,9 @@ ze_result_t SysmanDevice::deviceEccAvailable(zes_device_handle_t hDevice, ze_boo
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->deviceEccAvailable(pAvailable);
 }
 
@@ -185,6 +236,9 @@ ze_result_t SysmanDevice::deviceEccConfigurable(zes_device_handle_t hDevice, ze_
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->deviceEccConfigurable(pConfigurable);
 }
@@ -194,6 +248,9 @@ ze_result_t SysmanDevice::deviceGetEccState(zes_device_handle_t hDevice, zes_dev
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->deviceGetEccState(pState);
 }
 
@@ -201,6 +258,9 @@ ze_result_t SysmanDevice::deviceSetEccState(zes_device_handle_t hDevice, const z
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->deviceSetEccState(newState, pState);
 }
@@ -210,6 +270,9 @@ ze_result_t SysmanDevice::temperatureGet(zes_device_handle_t hDevice, uint32_t *
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->temperatureGet(pCount, phTemperature);
 }
 
@@ -217,6 +280,9 @@ ze_result_t SysmanDevice::performanceGet(zes_device_handle_t hDevice, uint32_t *
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->performanceGet(pCount, phPerformance);
 }
@@ -226,6 +292,9 @@ ze_result_t SysmanDevice::pciGetProperties(zes_device_handle_t hDevice, zes_pci_
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->pciGetProperties(pProperties);
 }
 
@@ -233,6 +302,9 @@ ze_result_t SysmanDevice::pciGetState(zes_device_handle_t hDevice, zes_pci_state
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->pciGetState(pState);
 }
@@ -242,6 +314,9 @@ ze_result_t SysmanDevice::pciGetBars(zes_device_handle_t hDevice, uint32_t *pCou
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->pciGetBars(pCount, pProperties);
 }
 
@@ -249,6 +324,9 @@ ze_result_t SysmanDevice::pciGetStats(zes_device_handle_t hDevice, zes_pci_stats
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->pciGetStats(pStats);
 }
@@ -258,6 +336,9 @@ ze_result_t SysmanDevice::fanGet(zes_device_handle_t hDevice, uint32_t *pCount, 
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->fanGet(pCount, phFan);
 }
 
@@ -265,6 +346,9 @@ ze_result_t SysmanDevice::deviceEventRegister(zes_device_handle_t hDevice, zes_e
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->deviceEventRegister(events);
 }
@@ -279,6 +363,9 @@ ze_result_t SysmanDevice::deviceResetExt(zes_device_handle_t hDevice, zes_reset_
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
     return pSysmanDevice->deviceResetExt(pProperties);
 }
 
@@ -286,6 +373,9 @@ ze_result_t SysmanDevice::fabricPortGetMultiPortThroughput(zes_device_handle_t h
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
     }
     return pSysmanDevice->fabricPortGetMultiPortThroughput(numPorts, phPort, pThroughput);
 }

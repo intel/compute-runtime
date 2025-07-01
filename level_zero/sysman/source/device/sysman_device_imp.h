@@ -22,9 +22,9 @@ struct OsSysman;
 struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
 
     SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex);
+    SysmanDeviceImp();
     ~SysmanDeviceImp() override;
 
-    SysmanDeviceImp() = delete;
     ze_result_t init();
 
     OsSysman *pOsSysman = nullptr;

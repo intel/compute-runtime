@@ -567,6 +567,54 @@ void testSysmanEcc(ze_device_handle_t &device) {
     }
 }
 
+void testSysmanSurvivability(ze_device_handle_t &device) {
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    if (result == ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED) {
+        std::cout << "Device is in survivability mode!!, Only firmware update supported" << std::endl;
+    }
+    if ((result == ZE_RESULT_SUCCESS) && verbose) {
+        std::cout << "Device is in Normal operations Mode. Device properties retrieved successfully. " << std::endl;
+        std::cout << "Device Name = " << properties.core.name << std::endl;
+        std::cout << "properties.vendorName = " << properties.vendorName << std::endl;
+        std::cout << "properties.core.vendorId = " << properties.core.vendorId << std::endl;
+        std::cout << "properties.core.deviceId = " << properties.core.deviceId << std::endl;
+        std::cout << "properties.core.uuid = " << std::endl;
+        for (uint32_t i = 0; i < ZE_MAX_UUID_SIZE; i++) {
+            std::cout << +properties.core.uuid.id[i] << " ";
+        }
+        std::cout << std::endl;
+        return;
+    }
+    uint32_t count = 0;
+    result = zesDeviceEnumFirmwares(device, &count, nullptr);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << "zesDeviceEnumFirmwares() Failed!!" << std::endl;
+        return;
+    }
+    if (count == 0) {
+        std::cout << "Could not retrieve Firmware domains" << std::endl;
+        return;
+    } else {
+        std::cout << "Found " << count << " firmware handles.." << std::endl;
+    }
+
+    std::vector<zes_firmware_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumFirmwares(device, &count, handles.data()));
+
+    for (auto handle : handles) {
+        zes_firmware_properties_t fwProperties = {};
+
+        VALIDATECALL(zesFirmwareGetProperties(handle, &fwProperties));
+        if (verbose) {
+            std::cout << "firmware name = " << fwProperties.name << std::endl;
+            std::cout << "On Subdevice = " << static_cast<uint32_t>(fwProperties.onSubdevice) << std::endl;
+            std::cout << "Subdevice Id = " << fwProperties.subdeviceId << std::endl;
+            std::cout << "firmware version = " << fwProperties.version << std::endl;
+        }
+    }
+}
+
 void testSysmanPci(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  PCI tests ---- " << std::endl;
@@ -1765,6 +1813,11 @@ int main(int argc, char *argv[]) {
     if (isParamEnabled(argc, argv, "-p", "--pci", &optind)) {
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanPci(device);
+        });
+    }
+    if (isParamEnabled(argc, argv, "-z", "--survive", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanSurvivability(device);
         });
     }
     if (isParamEnabled(argc, argv, "-P", "--performance", &optind)) {
