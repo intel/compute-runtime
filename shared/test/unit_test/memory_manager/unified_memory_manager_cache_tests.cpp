@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
+#include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -242,10 +243,10 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledAndMaxSizeZeroWh
     svmManager->cleanupUSMAllocCaches();
 }
 
-HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigWhenCheckingIfEnabledItIsEnabledIfProductHelperMethodReturnsTrue) {
+HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigAndProductHelperAndDebuggerWhenCheckingIfEnabledThenEnableCorrectly) {
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
-    auto device = deviceFactory->rootDevices[0];
+    MockDevice *device = deviceFactory->rootDevices[0];
     RAIIProductHelperFactory<MockProductHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     MockAILConfiguration mockAilConfigurationHelper;
     device->mockAilConfigurationHelper = &mockAilConfigurationHelper;
@@ -278,6 +279,20 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigWhenCheckingIfEn
         svmManager->initUsmAllocationsCaches(*device);
         EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
         EXPECT_EQ(0u, device->usmReuseInfo.getMaxAllocationsSavedForReuseSize());
+    }
+    {
+        device->getRootDeviceEnvironmentRef().debugger.reset(new MockDebugger);
+        raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
+        mockAilConfigurationHelper.limitAmountOfDeviceMemoryForRecyclingReturn = false;
+        device->initUsmReuseLimits();
+        auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+        EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
+        svmManager->initUsmAllocationsCaches(*device);
+        EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
+
+        device->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
+        svmManager->initUsmAllocationsCaches(*device);
+        EXPECT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
     }
 }
 
@@ -1249,10 +1264,10 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationCacheDisabledWhenCheckingIfEna
     EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
 }
 
-HWTEST_F(SvmHostAllocationCacheTest, givenOclApiSpecificConfigWhenCheckingIfEnabledItIsEnabledIfProductHelperMethodReturnsTrue) {
+HWTEST_F(SvmHostAllocationCacheTest, givenOclApiSpecificConfigAndProductHelperAndDebuggerWhenCheckingIfEnabledThenEnableCorrectly) {
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
-    auto device = deviceFactory->rootDevices[0];
+    MockDevice *device = deviceFactory->rootDevices[0];
     device->initUsmReuseLimits();
     RAIIProductHelperFactory<MockProductHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     const auto expectedMaxSize = static_cast<size_t>(0.02 * device->getMemoryManager()->getSystemSharedMemory(0u));
@@ -1271,6 +1286,19 @@ HWTEST_F(SvmHostAllocationCacheTest, givenOclApiSpecificConfigWhenCheckingIfEnab
         device->getMemoryManager()->initUsmReuseLimits();
         auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
         EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
+        svmManager->initUsmAllocationsCaches(*device);
+        EXPECT_NE(nullptr, svmManager->usmHostAllocationsCache);
+    }
+    {
+        device->getRootDeviceEnvironmentRef().debugger.reset(new MockDebugger);
+        raii.mockProductHelper->isHostUsmAllocationReuseSupportedResult = true;
+        device->getMemoryManager()->initUsmReuseLimits();
+        auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+        EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
+        svmManager->initUsmAllocationsCaches(*device);
+        EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
+
+        device->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
         svmManager->initUsmAllocationsCaches(*device);
         EXPECT_NE(nullptr, svmManager->usmHostAllocationsCache);
     }

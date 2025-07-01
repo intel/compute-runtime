@@ -929,7 +929,10 @@ void SVMAllocsManager::initUsmHostAllocationsCache() {
 }
 
 void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
-    bool usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() && device.getProductHelper().isDeviceUsmAllocationReuseSupported();
+    const bool debuggerEnabled = nullptr != device.getDebugger();
+    bool usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() &&
+                                            device.getProductHelper().isDeviceUsmAllocationReuseSupported() &&
+                                            !debuggerEnabled;
     if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
         usmDeviceAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableDeviceAllocationCache.get();
     }
@@ -938,7 +941,9 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
         this->initUsmDeviceAllocationsCache(device);
     }
 
-    bool usmHostAllocationsCacheEnabled = NEO::ApiSpecificConfig::isHostAllocationCacheEnabled() && device.getProductHelper().isHostUsmAllocationReuseSupported();
+    bool usmHostAllocationsCacheEnabled = NEO::ApiSpecificConfig::isHostAllocationCacheEnabled() &&
+                                          device.getProductHelper().isHostUsmAllocationReuseSupported() &&
+                                          !debuggerEnabled;
     if (debugManager.flags.ExperimentalEnableHostAllocationCache.get() != -1) {
         usmHostAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableHostAllocationCache.get();
     }
