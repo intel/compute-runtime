@@ -3750,6 +3750,8 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, InOrderCmdListTests, givenImmediateEventWhenWaiti
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -3788,6 +3790,9 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, InOrderCmdListTests, givenImmediateEventWhenWaiti
 HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListThenDontPatch, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -3823,8 +3828,10 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListT
     EXPECT_NE(cmdList.end(), walkerItor);
 }
 
-HWTEST_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFromImmediateThenUseSubmissionCounter) {
+HWTEST_F(InOrderCmdListTests, givenDebugFlagAndEventGeneratedByRegularCmdListWhenWaitingFromImmediateThenUseSubmissionCounter) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
 
     ze_command_queue_desc_t desc = {};
 
@@ -3892,6 +3899,75 @@ HWTEST_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFrom
     mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, nullptr);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
     verifySemaphore(expectedCounterValue + (expectedCounterAppendValue * 2));
+}
+
+HWTEST_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFromImmediateThenDontUseSubmissionCounter) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(true, false, false);
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto regularCmdListHandle = regularCmdList->toHandle();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
+    uint64_t expectedCounterValue = regularCmdList->inOrderExecInfo->getCounterValue();
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    regularCmdList->close();
+
+    auto verifySemaphore = [&](uint64_t expectedValue) {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), semaphoreItor);
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        ASSERT_NE(nullptr, semaphoreCmd);
+
+        if (semaphoreCmd->getSemaphoreGraphicsAddress() == immCmdList->inOrderExecInfo->getBaseDeviceAddress()) {
+            // skip implicit dependency
+            semaphoreItor++;
+        } else if (immCmdList->isQwordInOrderCounter()) {
+            std::advance(semaphoreItor, -2); // verify 2x LRI before semaphore
+        }
+
+        ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreItor, expectedValue, regularCmdList->inOrderExecInfo->getBaseDeviceAddress(), immCmdList->isQwordInOrderCounter(), false));
+    };
+
+    // 0 Execute calls
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
+    verifySemaphore(expectedCounterValue);
+
+    // 1 Execute call
+    offset = cmdStream->getUsed();
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, nullptr);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
+    verifySemaphore(expectedCounterValue);
+
+    // 2 Execute calls
+    offset = cmdStream->getUsed();
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, nullptr);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
+    verifySemaphore(expectedCounterValue);
+
+    // 3 Execute calls
+    offset = cmdStream->getUsed();
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, nullptr);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
+    verifySemaphore(expectedCounterValue);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDontSignalFromWalker) {
@@ -6073,7 +6149,9 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventAndAdditionalTimestampNodeAn
     EXPECT_EQ(0u, events[0]->additionalTimestampNode.size());
 }
 
-HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAndValueThenReturnCorrectValues) {
+HWTEST_F(InOrderCmdListTests, givenDebugFlagAndCounterBasedEventWhenAskingForEventAddressAndValueThenReturnCorrectValues) {
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+
     auto eventPool = createEvents<FamilyType>(1, false);
     uint64_t counterValue = -1;
     uint64_t address = -1;
@@ -6113,6 +6191,46 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAnd
     EXPECT_EQ(deviceAlloc->getGpuAddress() + events[0]->inOrderAllocationOffset, address);
 }
 
+HWTEST_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAndValueThenReturnCorrectValues) {
+    auto eventPool = createEvents<FamilyType>(1, false);
+    uint64_t counterValue = -1;
+    uint64_t address = -1;
+
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    auto deviceAlloc = cmdList->inOrderExecInfo->getDeviceCounterAllocation();
+
+    auto eventHandle = events[0]->toHandle();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(2u, counterValue);
+    EXPECT_EQ(deviceAlloc->getGpuAddress(), address);
+
+    cmdList->close();
+
+    ze_command_queue_desc_t desc = {};
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(false, false, false);
+
+    auto cmdListHandle = cmdList->toHandle();
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(2u, counterValue);
+    EXPECT_EQ(deviceAlloc->getGpuAddress(), address);
+
+    events[0]->inOrderAllocationOffset = 0x12300;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(2u, counterValue);
+    EXPECT_EQ(deviceAlloc->getGpuAddress() + events[0]->inOrderAllocationOffset, address);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, wWhenUsingImmediateCmdListThenDontAddCmdsToPatch) {
     auto immCmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -6124,6 +6242,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, wWhenUsingImmediateCmdListThen
 }
 
 HWTEST_F(InOrderCmdListTests, givenRegularCmdListWhenResetCalledThenClearCmdsToPatch) {
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+
     auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);

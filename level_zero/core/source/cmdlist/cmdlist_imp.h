@@ -44,6 +44,8 @@ struct CommandListImp : public CommandList {
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
     void addRegularCmdListSubmissionCounter();
     virtual void patchInOrderCmds() = 0;
+    bool inOrderCmdsPatchingEnabled() const;
+    void clearInOrderExecCounterAllocation();
     void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode);
     NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
     void enableCopyOperationOffload();

@@ -350,6 +350,16 @@ void CommandListImp::addRegularCmdListSubmissionCounter() {
     }
 }
 
+bool CommandListImp::inOrderCmdsPatchingEnabled() const {
+    return (!isImmediateType() && NEO::debugManager.flags.EnableInOrderRegularCmdListPatching.get() == 1);
+}
+
+void CommandListImp::clearInOrderExecCounterAllocation() {
+    if (isInOrderExecutionEnabled()) {
+        inOrderExecInfo->initializeAllocationsFromHost();
+    }
+}
+
 void CommandListImp::enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode) {
     if (!device->isImplicitScalingCapable() || this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
         return;

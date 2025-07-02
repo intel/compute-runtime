@@ -1319,6 +1319,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
             givenCounterBasedWaitEventBelongingToVariableMclWhenMutatingIntoEventBelongingToSameMclThenStateIsPreserved) {
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+
     auto event = this->createTestEvent(true, false, false, false);
     ASSERT_NE(nullptr, event);
 
@@ -1361,6 +1365,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
             givenCounterBasedWaitEventBelongingToVariableMclWhenMutatingIntoEventBelongingToDifferentMclThenWaitIsUpdated) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
 
     auto event = this->createTestEvent(true, false, false, false);
     ASSERT_NE(nullptr, event);
@@ -1412,7 +1418,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
             givenCounterBasedWaitEventBelongingToDifferentMclWhenMutatingIntoEventBelongingToOtherDifferentMclThenWaitIsUpdated) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
     std::unique_ptr<MutableCommandList> differentCmdList = createMutableCmdList();
     auto event = this->createTestEvent(true, false, false, false);
     ASSERT_NE(nullptr, event);
@@ -1464,6 +1470,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
             givenCounterBasedWaitEventBelongingToDifferentMclWhenNoopingAndRestoringEventThenWaitIsNoopedAndRestored) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+
     alignas(sizeof(uint32_t)) uint8_t noopSemaphoreSpace[sizeof(MI_SEMAPHORE_WAIT)] = {};
     memset(noopSemaphoreSpace, 0, sizeof(MI_SEMAPHORE_WAIT));
 

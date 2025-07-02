@@ -774,8 +774,14 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         commandList->storeReferenceTsToMappedEvents(false);
-        commandList->addRegularCmdListSubmissionCounter();
-        commandList->patchInOrderCmds();
+
+        if (commandList->inOrderCmdsPatchingEnabled()) {
+            commandList->addRegularCmdListSubmissionCounter();
+            commandList->patchInOrderCmds();
+        } else {
+            commandList->clearInOrderExecCounterAllocation();
+        }
+
         commandList->setInterruptEventsCsr(*this->csr);
 
         auto &commandContainer = commandList->getCmdContainer();

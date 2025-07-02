@@ -1047,9 +1047,12 @@ HWTEST_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenContai
     alignedFree(alloc);
 }
 
-HWTEST_F(ExecuteCommandListTests, givenRegularCmdListWhenExecutionThenIncSubmissionCounter) {
+HWTEST_F(ExecuteCommandListTests, givenDebugFlagAndRegularCmdListWhenExecutionThenIncSubmissionCounter) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
+    DebugManagerStateRestore restore;
+
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
     auto commandQueue = makeZeUniquePtr<MockCommandQueue<FamilyType::gfxCoreFamily>>(device, csr, &desc);
     commandQueue->initialize(false, false, false);
@@ -1083,6 +1086,45 @@ HWTEST_F(ExecuteCommandListTests, givenRegularCmdListWhenExecutionThenIncSubmiss
 
         commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(2u, copyCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
+    }
+}
+
+HWTEST_F(ExecuteCommandListTests, givenRegularCmdListWhenExecutionThenDontIncSubmissionCounter) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
+    auto commandQueue = makeZeUniquePtr<MockCommandQueue<FamilyType::gfxCoreFamily>>(device, csr, &desc);
+    commandQueue->initialize(false, false, false);
+
+    {
+        auto computeCmdList = makeZeUniquePtr<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+        computeCmdList->initialize(device, NEO::EngineGroupType::compute, 0u);
+        computeCmdList->enableInOrderExecution();
+
+        auto commandListHandle = computeCmdList->toHandle();
+        computeCmdList->close();
+
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+        EXPECT_EQ(0u, computeCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
+
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+        EXPECT_EQ(0u, computeCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
+    }
+
+    {
+        auto copyCmdList = makeZeUniquePtr<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+        copyCmdList->initialize(device, NEO::EngineGroupType::copy, 0u);
+        copyCmdList->enableInOrderExecution();
+
+        auto commandListHandle = copyCmdList->toHandle();
+        copyCmdList->close();
+
+        commandQueue->isCopyOnlyCommandQueue = true;
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+        EXPECT_EQ(0u, copyCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
+
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+        EXPECT_EQ(0u, copyCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
     }
 }
 

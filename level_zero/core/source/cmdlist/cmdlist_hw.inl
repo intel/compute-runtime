@@ -4510,7 +4510,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
-    if ((NEO::debugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && !isImmediateType()) {
+    if (inOrderCmdsPatchingEnabled()) {
         this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType, this->inOrderAtomicSignalingEnabled, this->duplicatedInOrderCounterStorageEnabled);
         return this->inOrderPatchCmds.size() - 1;
     }
@@ -4616,21 +4616,27 @@ void CommandListCoreFamily<gfxCoreFamily>::encodeMiFlush(uint64_t immediateDataG
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::updateInOrderExecInfo(size_t inOrderPatchIndex, std::shared_ptr<NEO::InOrderExecInfo> *inOrderExecInfo, bool disablePatchingFlag) {
-    auto &patchCmd = inOrderPatchCmds[inOrderPatchIndex];
-    patchCmd.updateInOrderExecInfo(inOrderExecInfo);
-    patchCmd.setSkipPatching(disablePatchingFlag);
+    if (inOrderCmdsPatchingEnabled()) {
+        auto &patchCmd = inOrderPatchCmds[inOrderPatchIndex];
+        patchCmd.updateInOrderExecInfo(inOrderExecInfo);
+        patchCmd.setSkipPatching(disablePatchingFlag);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline void CommandListCoreFamily<gfxCoreFamily>::disablePatching(size_t inOrderPatchIndex) {
-    auto &patchCmd = inOrderPatchCmds[inOrderPatchIndex];
-    patchCmd.setSkipPatching(true);
+    if (inOrderCmdsPatchingEnabled()) {
+        auto &patchCmd = inOrderPatchCmds[inOrderPatchIndex];
+        patchCmd.setSkipPatching(true);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline void CommandListCoreFamily<gfxCoreFamily>::enablePatching(size_t inOrderPatchIndex) {
-    auto &patchCmd = inOrderPatchCmds[inOrderPatchIndex];
-    patchCmd.setSkipPatching(false);
+    if (inOrderCmdsPatchingEnabled()) {
+        auto &patchCmd = inOrderPatchCmds[inOrderPatchIndex];
+        patchCmd.setSkipPatching(false);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

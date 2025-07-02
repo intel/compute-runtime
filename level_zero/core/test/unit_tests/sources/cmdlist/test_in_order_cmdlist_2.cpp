@@ -1394,10 +1394,12 @@ HWTEST_F(InOrderRegularCmdListTests, givenInOrderFlagWhenCreatingCmdListThenEnab
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch, IsAtLeastXeCore) {
+HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagWhenUsingRegularCmdListThenAddCmdsToPatch, IsAtLeastXeCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
 
     ze_command_queue_desc_t desc = {};
 
@@ -1554,8 +1556,46 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
     }
 }
 
+HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenDontAddCmdsToPatchAndResetCounter, IsAtLeastXeCore) {
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(true, false, false);
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(true);
+    regularCmdList->useAdditionalBlitProperties = false;
+
+    uint32_t copyData = 0;
+
+    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, copyParams);
+
+    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(0u, regularCmdList->inOrderPatchCmds.size());
+
+    regularCmdList->close();
+
+    auto handle = regularCmdList->toHandle();
+
+    auto deviceCounter = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+    auto hostCounter = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getBaseHostAddress());
+
+    *deviceCounter = 2;
+    *hostCounter = 2;
+
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, nullptr);
+    EXPECT_EQ(0u, *deviceCounter);
+    EXPECT_EQ(0u, *hostCounter);
+
+    *deviceCounter = 3;
+    *hostCounter = 3;
+
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, nullptr);
+    EXPECT_EQ(0u, *deviceCounter);
+    EXPECT_EQ(0u, *hostCounter);
+}
+
 HWTEST_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenExecutingThenDontPatchWhenExecutedOnlyOnce) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
 
     ze_command_queue_desc_t desc = {};
 
@@ -1622,6 +1662,8 @@ HWTEST_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenExe
 
 HWTEST_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenExecutingThenPatchWhenExecutedMultipleTimes) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
 
     ze_command_queue_desc_t desc = {};
 
@@ -1714,9 +1756,9 @@ HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListTh
     EXPECT_EQ(0u, regularCmdList->inOrderPatchCmds.size());
 }
 
-HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeCore) {
+HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagWhenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
     ze_command_queue_desc_t desc = {};
 
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
@@ -1778,6 +1820,24 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatc
     verifyPatching(2);
 
     EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->getCounterValue());
+}
+
+HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenDontAddWalkerToPatch, IsAtLeastXeCore) {
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(true, false, false);
+
+    if (mockCmdQHw->heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    ASSERT_EQ(0u, regularCmdList->inOrderPatchCmds.size());
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenProgramPipeControlsToHandleDependencies, IsAtLeastXeCore) {
@@ -2045,6 +2105,8 @@ HWTEST2_F(InOrderRegularCmdListTests, givenNonInOrderRegularCmdListWhenPassingCo
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
+
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
 
@@ -2148,7 +2210,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenNonInOrderRegularCmdListWhenPassingCo
 
 HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderInfoThenNewInfoIsSet, IsAtLeastXeCore) {
     auto semaphoreCmd = FamilyType::cmdInitMiSemaphoreWait;
-
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
     auto inOrderRegularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     auto &inOrderExecInfo = inOrderRegularCmdList->inOrderExecInfo;
     inOrderExecInfo->addRegularCmdListSubmissionCounter(4);
@@ -2186,6 +2248,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderI
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, givenPipeControlCmdAddedForPatchWhenUpdateNewInOrderInfoThenNewInfoIsSet, IsAtLeastXeCore) {
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
     auto pcCmd = FamilyType::cmdInitPipeControl;
 
     auto inOrderRegularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
@@ -3707,9 +3770,9 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
-HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeCore) {
+HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagWhenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-
+    debugManager.flags.EnableInOrderRegularCmdListPatching.set(1);
     ze_command_queue_desc_t desc = {};
 
     auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
@@ -3780,6 +3843,22 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
 
     mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, nullptr);
     verifyPatching(2);
+}
+
+HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeCore) {
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(true, false, false);
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    regularCmdList->partitionCount = 2;
+
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+
+    EXPECT_EQ(0u, regularCmdList->inOrderPatchCmds.size());
+
+    regularCmdList->close();
 }
 
 struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
