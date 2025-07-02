@@ -257,7 +257,9 @@ size_t DrmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSection
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
     if (this->disableMonitorFence) {
-        this->currentTagData.tagValue++;
+        if (this->ringStart) {
+            this->currentTagData.tagValue++;
+        }
 
         bool updateCompletionFences = true;
         if (debugManager.flags.EnableRingSwitchTagUpdateWa.get() != -1) {
