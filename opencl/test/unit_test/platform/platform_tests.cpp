@@ -416,7 +416,7 @@ TEST(PlatformInitTest, givenInitializedPlatformWhenInitializeIsCalledOneMoreTime
 TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDeviceVectorWhenInitializePlatformThenCreateOnlyOneClDevice) {
     std::vector<std::unique_ptr<Device>> devices;
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 3);
-    devices.push_back(std::make_unique<MockDevice>(executionEnvironment, 2));
+    devices.push_back(std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 2)));
     auto status = platform()->initialize(std::move(devices));
     EXPECT_TRUE(status);
     size_t expectedNumDevices = 1u;
@@ -427,8 +427,8 @@ TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDevice
 TEST(PlatformInitTest, GivenPreferredPlatformNameWhenPlatformIsInitializedThenOverridePlatformName) {
     std::vector<std::unique_ptr<Device>> devices;
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
+    devices.push_back(std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0)));
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.preferredPlatformName = "Overridden Platform Name";
-    devices.push_back(std::make_unique<MockDevice>(executionEnvironment, 0));
     auto status = platform()->initialize(std::move(devices));
     EXPECT_TRUE(status);
     EXPECT_STREQ("Overridden Platform Name", platform()->getPlatformInfo().name.c_str());

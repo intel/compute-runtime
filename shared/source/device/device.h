@@ -212,6 +212,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         return usmMemAllocPool.get();
     }
     MOCKABLE_VIRTUAL void stopDirectSubmissionAndWaitForCompletion();
+    void pollForCompletion();
     bool isAnyDirectSubmissionEnabled() const;
     bool isAnyDirectSubmissionLightEnabled() const;
     bool isStateSipRequired() const {

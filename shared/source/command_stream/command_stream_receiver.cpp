@@ -1117,6 +1117,10 @@ bool CommandStreamReceiver::isTbxMode() const {
     return (getType() == NEO::CommandStreamReceiverType::tbx || getType() == NEO::CommandStreamReceiverType::tbxWithAub);
 }
 
+bool CommandStreamReceiver::isAubMode() const {
+    return (getType() == NEO::CommandStreamReceiverType::aub || getType() == NEO::CommandStreamReceiverType::tbxWithAub || getType() == NEO::CommandStreamReceiverType::hardwareWithAub || getType() == NEO::CommandStreamReceiverType::nullAub);
+}
+
 TaskCountType CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus status) {
     switch (status) {
     case SubmissionStatus::outOfHostMemory:

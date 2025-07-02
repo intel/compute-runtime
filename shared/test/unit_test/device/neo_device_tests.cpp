@@ -43,6 +43,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
+
 using namespace NEO;
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 namespace NEO {
@@ -2703,4 +2704,22 @@ TEST(GroupDevicesTest, givenNullInputInDeviceVectorWhenGroupDevicesThenEmptyVect
     auto groupedDevices = Device::groupDevices(std::move(inputDevices));
 
     EXPECT_TRUE(groupedDevices.empty());
+}
+
+HWTEST_F(DeviceTests, givenDeviceWhenPollForCompletionCalledThenPollForCompletionCalledOnAllCommandStreamReceivers) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    std::vector<uint32_t> csrCallCounts;
+    csrCallCounts.reserve(device->commandStreamReceivers.size());
+
+    for (uint32_t csrIndex = 0; csrIndex < device->commandStreamReceivers.size(); csrIndex++) {
+        auto &csr = device->getUltCommandStreamReceiverFromIndex<FamilyType>(csrIndex);
+        csrCallCounts.push_back(csr.pollForCompletionCalled);
+    }
+
+    device->pollForCompletion();
+
+    for (uint32_t csrIndex = 0; csrIndex < device->commandStreamReceivers.size(); csrIndex++) {
+        auto &csr = device->getUltCommandStreamReceiverFromIndex<FamilyType>(csrIndex);
+        EXPECT_EQ(csrCallCounts[csrIndex] + 1, csr.pollForCompletionCalled);
+    }
 }

@@ -1084,6 +1084,13 @@ void Device::stopDirectSubmissionAndWaitForCompletion() {
     }
 }
 
+void Device::pollForCompletion() {
+    for (auto &engine : allEngines) {
+        auto csr = engine.commandStreamReceiver;
+        csr->pollForCompletion();
+    }
+}
+
 bool Device::isAnyDirectSubmissionEnabled() const {
     return this->isAnyDirectSubmissionEnabledImpl(false);
 }
