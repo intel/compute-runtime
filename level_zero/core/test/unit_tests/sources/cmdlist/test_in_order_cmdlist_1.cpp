@@ -2602,6 +2602,29 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenAddingRela
     EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lrrCmd->getDestinationRegisterAddress());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenOptimizedCbEventWhenAppendNeedsRelaxedOrderingThenSubmitInOrderCounter) {
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+    int client1, client2;
+    ultCsr->registerClient(&client1);
+    ultCsr->registerClient(&client2);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    immCmdList->latestOperationHasOptimizedCbEvent = true;
+
+    auto value = immCmdList->inOrderExecInfo->getCounterValue();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getCounterValue(), value + 1 + !immCmdList->isHeaplessModeEnabled());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSyncAllocation) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 

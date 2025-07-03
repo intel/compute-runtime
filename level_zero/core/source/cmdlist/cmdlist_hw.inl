@@ -2852,8 +2852,14 @@ inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMe
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(bool relaxedOrderingAllowed, bool dualStreamCopyOffloadOperation) {
+    auto ret = this->flushInOrderCounterSignal(dualStreamCopyOffloadOperation || relaxedOrderingAllowed);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
     if (hasInOrderDependencies()) {
         if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue())) {
+            this->latestOperationHasOptimizedCbEvent = false;
             return false;
         }
 
@@ -2863,9 +2869,11 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
 
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), relaxedOrderingAllowed, true, false, false, dualStreamCopyOffloadOperation);
 
+        this->latestOperationHasOptimizedCbEvent = false;
         return true;
     }
 
+    this->latestOperationHasOptimizedCbEvent = false;
     return false;
 }
 
@@ -2879,13 +2887,7 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
     }
 
     if (waitForImplicitInOrderDependency) {
-        auto ret = this->flushInOrderCounterSignal(dualStreamCopyOffloadOperation || relaxedOrderingAllowed);
-        if (ret != ZE_RESULT_SUCCESS) {
-            return ret;
-        }
-
         inOrderDependenciesSent = handleInOrderImplicitDependencies(relaxedOrderingAllowed, dualStreamCopyOffloadOperation);
-        this->latestOperationHasOptimizedCbEvent = false;
     }
 
     if (relaxedOrderingAllowed && numWaitEvents > 0 && !inOrderDependenciesSent) {
