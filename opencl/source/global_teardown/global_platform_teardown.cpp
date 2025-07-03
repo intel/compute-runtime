@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,9 +14,13 @@ void globalPlatformSetup() {
     platformsImpl = new std::vector<std::unique_ptr<Platform>>;
 }
 
-void globalPlatformTeardown() {
+void globalPlatformTeardown(bool processTermination) {
+    wasPlatformTeardownCalled = true;
+    if (processTermination) {
+        /* When terminating process, clean up should be skipped according to the DllMain spec. */
+        return;
+    }
     delete platformsImpl;
     platformsImpl = nullptr;
-    wasPlatformTeardownCalled = true;
 }
 } // namespace NEO

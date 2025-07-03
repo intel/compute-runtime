@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,6 @@ namespace L0 {
 extern decltype(&zelLoaderTranslateHandle) loaderTranslateHandleFunc;
 extern decltype(&zelSetDriverTeardown) setDriverTeardownFunc;
 
-void globalDriverTeardown();
+void globalDriverTeardown(bool processTermination);
 void globalDriverSetup();
 } // namespace L0

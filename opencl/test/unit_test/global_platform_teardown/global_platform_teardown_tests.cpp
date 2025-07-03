@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ class GlobalPlatformTeardownTest : public ::testing::Test {
     }
 
     void TearDown() override {
-        globalPlatformTeardown();
+        globalPlatformTeardown(false);
         wasPlatformTeardownCalled = false;
         platformsImpl = tmpPlatforms;
     }
@@ -35,13 +35,15 @@ TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformSetupThenWasTeardownCalled
     globalPlatformSetup();
     EXPECT_FALSE(wasPlatformTeardownCalled);
 }
-TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownThenPlatformsDestroyed) {
+TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownAndNotTerminatingProcessThenPlatformsDestroyed) {
     globalPlatformSetup();
-    globalPlatformTeardown();
+    globalPlatformTeardown(false);
     EXPECT_EQ(platformsImpl, nullptr);
+    EXPECT_TRUE(wasPlatformTeardownCalled);
 }
-TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownThenWasTeardownCalledIsSetToTrue) {
+TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownAndTerminatingProcessThenPlatformsNotDestroyed) {
     globalPlatformSetup();
-    globalPlatformTeardown();
+    globalPlatformTeardown(true);
+    EXPECT_NE(platformsImpl, nullptr);
     EXPECT_TRUE(wasPlatformTeardownCalled);
 }

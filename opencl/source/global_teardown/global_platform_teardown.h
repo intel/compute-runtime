@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,6 @@
 namespace NEO {
 extern volatile bool wasPlatformTeardownCalled;
 
-void globalPlatformTeardown();
+void globalPlatformTeardown(bool processTermination);
 void globalPlatformSetup();
 } // namespace NEO

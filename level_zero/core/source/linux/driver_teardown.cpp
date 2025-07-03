@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,6 @@ void __attribute__((constructor)) driverHandleConstructor() {
     globalDriverSetup();
 }
 void __attribute__((destructor)) driverHandleDestructor() {
-    globalDriverTeardown();
+    globalDriverTeardown(false);
 }
 } // namespace L0

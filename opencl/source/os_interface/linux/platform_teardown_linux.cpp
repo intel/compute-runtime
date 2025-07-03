@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,6 @@ void __attribute__((constructor)) platformsConstructor() {
     globalPlatformSetup();
 }
 void __attribute__((destructor)) platformsDestructor() {
-    globalPlatformTeardown();
+    globalPlatformTeardown(false);
 }
 } // namespace NEO

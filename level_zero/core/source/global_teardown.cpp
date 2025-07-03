@@ -31,9 +31,16 @@ void globalDriverSetup() {
     }
 }
 
-void globalDriverTeardown() {
-    if (levelZeroDriverInitialized) {
+void globalDriverTeardown(bool processTermination) {
+    globalDriverDispatch.core.isValidFlag = false;
+    globalDriverDispatch.tools.isValidFlag = false;
+    globalDriverDispatch.sysman.isValidFlag = false;
+    if (processTermination) {
+        /* When terminating process, clean up should be skipped according to the DllMain spec. */
+        return;
+    }
 
+    if (levelZeroDriverInitialized) {
         NEO::OsLibraryCreateProperties loaderLibraryProperties("ze_loader.dll");
         loaderLibraryProperties.performSelfLoad = true;
         std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc(loaderLibraryProperties)};
@@ -65,8 +72,5 @@ void globalDriverTeardown() {
         delete Sysman::globalSysmanDriver;
         Sysman::globalSysmanDriver = nullptr;
     }
-    globalDriverDispatch.core.isValidFlag = false;
-    globalDriverDispatch.tools.isValidFlag = false;
-    globalDriverDispatch.sysman.isValidFlag = false;
 }
 } // namespace L0
