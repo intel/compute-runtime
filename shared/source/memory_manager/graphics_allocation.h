@@ -176,6 +176,10 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     MOCKABLE_VIRTUAL bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
     bool isAlwaysResident(uint32_t contextId) const { return GraphicsAllocation::objectAlwaysResident == getResidencyTaskCount(contextId); }
     void updateResidencyTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
+        if (contextId >= usageInfos.size()) {
+            DEBUG_BREAK_IF(true);
+            return;
+        }
         if (usageInfos[contextId].residencyTaskCount != GraphicsAllocation::objectAlwaysResident || newTaskCount == GraphicsAllocation::objectNotResident) {
             usageInfos[contextId].residencyTaskCount = newTaskCount;
         }

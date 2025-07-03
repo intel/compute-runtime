@@ -138,6 +138,12 @@ TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenCheckIfResidency
     EXPECT_TRUE(graphicsAllocation.isResidencyTaskCountBelow(currentResidencyTaskCount + 1u, 0u));
 }
 
+TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenUpdatingResidencyTaskCountForUnusedContextIdThenDoEarlyReturn) {
+    MockGraphicsAllocation graphicsAllocation;
+    auto contextId = static_cast<uint32_t>(graphicsAllocation.usageInfos.size());
+    graphicsAllocation.updateResidencyTaskCount(1u, contextId);
+}
+
 TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingCpuAccessRequiredThenReturnTrue) {
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
         auto allocType = static_cast<AllocationType>(i);
