@@ -23,7 +23,6 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
 
     // Log file not created
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
@@ -91,7 +90,6 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     flags.LogAllocationMemoryPool.set(true);
     flags.LogAllocationStdout.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
 
     // Log file not created
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
@@ -153,7 +151,6 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
 
     // Log file not created
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
@@ -190,7 +187,6 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(false);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(false);
 
     // Log file not created
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());

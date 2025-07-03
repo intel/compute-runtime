@@ -35,19 +35,10 @@ class TestFileLogger : public NEO::FileLogger<debugLevel> {
         }
     }
 
-    void useRealFiles(bool value) {
-        mockFileSystem = !value;
-    }
-
     void writeToFile(std::string filename,
                      const char *str,
                      size_t length,
                      std::ios_base::openmode mode) override {
-
-        if (mockFileSystem == false) {
-            NEO::FileLogger<debugLevel>::writeToFile(filename, str, length, mode);
-            return;
-        }
         writeDataToFile(filename.c_str(), std::string_view(str, length));
     }
 
@@ -62,9 +53,6 @@ class TestFileLogger : public NEO::FileLogger<debugLevel> {
     std::string getFileString(std::string filename) {
         return NEO::virtualFileList[filename].str();
     }
-
-  protected:
-    bool mockFileSystem = false;
 };
 
 using FullyEnabledFileLogger = TestFileLogger<DebugFunctionalityLevel::full>;

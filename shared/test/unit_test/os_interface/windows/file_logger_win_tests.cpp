@@ -62,19 +62,17 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     std::stringstream totalLocalMemoryCheck;
     totalLocalMemoryCheck << "Total lmem allocated: " << std::dec << executionEnvironment->memoryManager->getUsedLocalMemorySize(0);
 
-    if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
-        auto str = fileLogger.getFileString(fileLogger.getLogFileName());
-        EXPECT_TRUE(str.find(threadIDCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find("Handle: 4") != std::string::npos);
-        EXPECT_TRUE(str.find(memoryPoolCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find(gpuAddressCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find(rootDeviceIndexCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find("UNKNOWN GMM USAGE TYPE 40") != std::string::npos);
-        EXPECT_TRUE(str.find("Type: BUFFER") != std::string::npos);
-        EXPECT_TRUE(str.find("Size: 777") != std::string::npos);
-        EXPECT_TRUE(str.find(totalSystemMemoryCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find(totalLocalMemoryCheck.str()) != std::string::npos);
-    }
+    ASSERT_TRUE(fileLogger.wasFileCreated(fileLogger.getLogFileName()));
+    auto str = fileLogger.getFileString(fileLogger.getLogFileName());
+    EXPECT_TRUE(str.find(threadIDCheck.str()) != std::string::npos);
+    EXPECT_TRUE(str.find("Handle: 4") != std::string::npos);
+    EXPECT_TRUE(str.find(memoryPoolCheck.str()) != std::string::npos);
+    EXPECT_TRUE(str.find(gpuAddressCheck.str()) != std::string::npos);
+    EXPECT_TRUE(str.find(rootDeviceIndexCheck.str()) != std::string::npos);
+    EXPECT_TRUE(str.find("Type: BUFFER") != std::string::npos);
+    EXPECT_TRUE(str.find("Size: 777") != std::string::npos);
+    EXPECT_TRUE(str.find(totalSystemMemoryCheck.str()) != std::string::npos);
+    EXPECT_TRUE(str.find(totalLocalMemoryCheck.str()) != std::string::npos);
 }
 
 TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogged) {

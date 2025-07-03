@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ template <DebugFunctionalityLevel debugLevel>
 class TestClFileLogger : public NEO::ClFileLogger<debugLevel> {
   public:
     TestClFileLogger(TestFileLogger<debugLevel> &baseLoggerInm, const NEO::DebugVariables &flags)
-        : NEO::ClFileLogger<debugLevel>(baseLoggerInm, flags), baseLogger(baseLoggerInm) { baseLogger.useRealFiles(false); }
+        : NEO::ClFileLogger<debugLevel>(baseLoggerInm, flags), baseLogger(baseLoggerInm) {}
 
   protected:
     TestFileLogger<debugLevel> &baseLogger;
