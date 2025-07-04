@@ -6,7 +6,6 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -599,12 +598,11 @@ TEST_F(DebugApiTest, givenZeAffinityMaskAndEnabledDebugMessagesWhenDebugAttachCa
     MockDeviceImp deviceImp(neoDevice);
     deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
 
-    StreamCapture capture;
-    capture.captureStdout();
+    testing::internal::CaptureStdout();
     zet_debug_session_handle_t debugSession = nullptr;
     zetDebugAttach(deviceImp.toHandle(), &config, &debugSession);
 
-    std::string output = capture.getCapturedStdout();
+    std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(std::string("ZE_AFFINITY_MASK is not recommended while using program debug API\n"), output);
 }
 

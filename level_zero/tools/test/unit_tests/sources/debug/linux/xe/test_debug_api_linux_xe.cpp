@@ -15,7 +15,6 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -2912,12 +2911,11 @@ TEST_F(DebugApiLinuxTestXe, GivenMultipleExecQueuePlacementEventForSameVmHandleW
     engineClassInstance[0].engineInstance = 1;
     engineClassInstance[0].gtId = 0;
 
-    StreamCapture capture;
-    capture.captureStderr();
+    ::testing::internal::CaptureStderr();
     session->handleEvent(&execQueuePlacements->base);
     alignedFree(memory);
 
-    auto infoMessage = capture.getCapturedStderr();
+    auto infoMessage = ::testing::internal::GetCapturedStderr();
     EXPECT_EQ(1u, session->clientHandleToConnection[client1.clientHandle]->vmToTile[vmHandle]);
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("tileIndex = 1 already present. Attempt to overwrite with tileIndex = 0")));
 }

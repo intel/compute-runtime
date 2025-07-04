@@ -8,7 +8,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
@@ -516,13 +515,12 @@ TEST(DebugSession, GivenLogsEnabledWhenPrintBitmaskCalledThenBitmaskIsPrinted) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
-    StreamCapture capture;
-    capture.captureStdout();
+    ::testing::internal::CaptureStdout();
 
     uint64_t bitmask[2] = {0x404080808080, 0x1111ffff1111ffff};
     DebugSession::printBitmask(reinterpret_cast<uint8_t *>(bitmask), sizeof(bitmask));
 
-    auto output = capture.getCapturedStdout();
+    auto output = ::testing::internal::GetCapturedStdout();
 
     EXPECT_TRUE(hasSubstr(output, std::string("\nINFO: Bitmask: ")));
     EXPECT_TRUE(hasSubstr(output, std::string("[0] = 0x0000404080808080")));
@@ -533,13 +531,12 @@ TEST(DebugSession, GivenLogsDisabledWhenPrintBitmaskCalledThenBitmaskIsNotPrinte
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebuggerLogBitmask.set(0);
 
-    StreamCapture capture;
-    capture.captureStdout();
+    ::testing::internal::CaptureStdout();
 
     uint64_t bitmask[2] = {0x404080808080, 0x1111ffff1111ffff};
     DebugSession::printBitmask(reinterpret_cast<uint8_t *>(bitmask), sizeof(bitmask));
 
-    auto output = capture.getCapturedStdout();
+    auto output = ::testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(0u, output.size());
 }
