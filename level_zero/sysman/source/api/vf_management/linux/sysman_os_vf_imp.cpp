@@ -157,7 +157,7 @@ ze_result_t LinuxVfImp::vfEngineDataInit() {
         int64_t totalTicksFd = pPmuInterface->pmuInterfaceOpen(totalTicksConfig, static_cast<int32_t>(busyTicksFd), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
         if (totalTicksFd < 0) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Ticks Handle and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-            close(static_cast<int>(busyTicksFd));
+            NEO::SysCalls::close(static_cast<int>(busyTicksFd));
             cleanup();
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
@@ -239,9 +239,9 @@ LinuxVfImp::LinuxVfImp(
 void LinuxVfImp::cleanup() {
     for (const auto &pEngineUtilsData : pEngineUtils) {
         DEBUG_BREAK_IF(pEngineUtilsData.busyTicksFd < 0);
-        close(static_cast<int>(pEngineUtilsData.busyTicksFd));
+        NEO::SysCalls::close(static_cast<int>(pEngineUtilsData.busyTicksFd));
         DEBUG_BREAK_IF(pEngineUtilsData.totalTicksFd < 0);
-        close(static_cast<int>(pEngineUtilsData.totalTicksFd));
+        NEO::SysCalls::close(static_cast<int>(pEngineUtilsData.totalTicksFd));
     }
     pEngineUtils.clear();
 }

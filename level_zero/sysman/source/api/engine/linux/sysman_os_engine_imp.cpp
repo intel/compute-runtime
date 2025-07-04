@@ -24,7 +24,7 @@ namespace Sysman {
 void LinuxEngineImp::cleanup() {
     for (auto &fdPair : fdList) {
         DEBUG_BREAK_IF(fdPair.first < 0);
-        close(static_cast<int>(fdPair.first));
+        NEO::SysCalls::close(static_cast<int>(fdPair.first));
     }
     fdList.clear();
 }
@@ -167,7 +167,7 @@ static void closeFds(std::vector<int64_t> &fdList) {
     if (!fdList.empty()) {
         for (auto &fd : fdList) {
             DEBUG_BREAK_IF(fd < 0);
-            close(static_cast<int>(fd));
+            NEO::SysCalls::close(static_cast<int>(fd));
         }
         fdList.clear();
     }

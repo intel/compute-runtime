@@ -149,7 +149,7 @@ ze_result_t SysmanKmdInterfaceI915Prelim::getEngineActivityFdListAndConfigPair(z
     fd[1] = pPmuInterface->pmuInterfaceOpen(configPair.second, static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
     if (fd[1] < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
-        close(static_cast<int>(fd[0]));
+        NEO::SysCalls::close(static_cast<int>(fd[0]));
         return checkErrorNumberAndReturnStatus();
     }
 
