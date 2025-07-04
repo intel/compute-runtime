@@ -921,20 +921,31 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
 
     auto pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
     MockMemorySysFsAccessInterface *pSysfsAccess = new MockMemorySysFsAccessInterface();
+    MockMemoryFsAccessInterface *pFsAccess = new MockMemoryFsAccessInterface();
     pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pLinuxSysmanImp->pFsAccess = pLinuxSysmanImp->pSysmanKmdInterface->getFsAccess();
     pSysfsAccess->mockReadStringValue.push_back(mockPhysicalSize);
     pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
     pSysfsAccess->isRepeated = true;
 
     ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm.get(), pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(properties.type, ZES_MEM_TYPE_HBM);
-    EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
-    EXPECT_EQ(properties.subdeviceId, 0u);
-    EXPECT_EQ(properties.physicalSize, strtoull(mockPhysicalSize.c_str(), nullptr, 16));
-    EXPECT_EQ(properties.numChannels, numMemoryChannels);
-    EXPECT_EQ(properties.busWidth, memoryBusWidth);
+    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(properties.location, ZES_MEM_LOC_SYSTEM);
+        EXPECT_EQ(properties.numChannels, -1);
+        EXPECT_EQ(properties.busWidth, -1);
+        EXPECT_EQ(properties.type, ZES_MEM_TYPE_FORCE_UINT32);
+        EXPECT_EQ(properties.physicalSize, mockIntegratedDevicePhysicalSize);
+    } else {
+        EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
+        EXPECT_EQ(properties.numChannels, numMemoryChannels);
+        EXPECT_EQ(properties.busWidth, memoryBusWidth);
+        EXPECT_EQ(properties.type, ZES_MEM_TYPE_HBM);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_EQ(properties.physicalSize, strtoull(mockPhysicalSize.c_str(), nullptr, 16));
+    }
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthAndNoTelemNodesAvailableThenFailureIsReturned, IsBMG) {
