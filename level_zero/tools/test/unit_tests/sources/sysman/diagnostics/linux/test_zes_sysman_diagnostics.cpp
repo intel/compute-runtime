@@ -500,8 +500,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupSu
 
     pMockDiagProcfsAccess->ourDevicePid = getpid();
     pMockDiagLinuxSysmanImp->ourDevicePid = getpid();
-    pMockDiagLinuxSysmanImp->ourDeviceFd = ::open("/dev/null", 0);
+    constexpr auto deviceFd = 0xF00;
+    pMockDiagLinuxSysmanImp->ourDeviceFd = deviceFd;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->gpuProcessCleanup(true));
+    EXPECT_EQ(deviceFd, NEO::SysCalls::closeFuncArgPassed);
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupFailsThenWaitForQuiescentCompletionsFails) {

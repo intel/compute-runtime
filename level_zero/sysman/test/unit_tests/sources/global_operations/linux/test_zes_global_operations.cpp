@@ -1003,8 +1003,10 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceNotInUseWhenCallingRe
 
     // Pretend we have the device open
     pProcfsAccess->ourDevicePid = getpid();
-    pProcfsAccess->ourDeviceFd = ::open("/dev/null", 0);
+    constexpr auto deviceFd = 0xF00;
+    pProcfsAccess->ourDeviceFd = deviceFd;
 
+    NEO::SysCalls::closeFuncCalled = 0u;
     // The first time we get the process list, include our own process, that has the file open
     // Reset should close the file (we verify after reset). On subsequent calls, return
     // the process list without our process
@@ -1015,9 +1017,8 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceNotInUseWhenCallingRe
     ze_result_t result = zesDeviceReset(device, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     // Check that reset closed the device
-    // If the device is already closed, then close will fail with errno of EBADF
-    EXPECT_NE(0, ::close(pProcfsAccess->ourDevicePid));
-    EXPECT_EQ(errno, EBADF);
+    EXPECT_LT(0u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(deviceFd, NEO::SysCalls::closeFuncArgPassed);
 }
 
 TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenForceTrueAndDeviceInUseWhenCallingResetThenSuccessIsReturned) {
