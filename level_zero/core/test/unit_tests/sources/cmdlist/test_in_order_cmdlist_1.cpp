@@ -5940,6 +5940,78 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInO
     context->freeMem(devAddress);
 }
 
+HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdListWhenCallingAppendMemoryCopyWithDisabledInOrderSignalingThenSignalAtomicStorage) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
+
+    constexpr uint64_t incValue = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234;
+    constexpr uint64_t counterValue = incValue * 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+
+    auto immCmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto offset = cmdStream->getUsed();
+    uint32_t copyData = 0;
+    copyParams.forceDisableCopyOnlyInOrderSignaling = true;
+
+    {
+        immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventObj->toHandle(), 0, nullptr, copyParams);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+        auto it = find<MI_ATOMIC *>(cmdList.begin(), cmdList.end());
+
+        if (immCmdList->useAdditionalBlitProperties) {
+            EXPECT_EQ(cmdList.end(), it);
+        } else {
+            ASSERT_NE(cmdList.end(), it);
+
+            auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
+            EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
+            EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
+            EXPECT_EQ(getLowPart(incValue), miAtomic->getOperand1DataDword0());
+            EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
+
+            EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        }
+    }
+
+    offset = cmdStream->getUsed();
+
+    {
+        ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+
+        immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, eventObj->toHandle(), 0, nullptr, copyParams);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+        auto it = find<MI_ATOMIC *>(cmdList.begin(), cmdList.end());
+        if (immCmdList->useAdditionalBlitProperties) {
+            EXPECT_EQ(cmdList.end(), it);
+        } else {
+            ASSERT_NE(cmdList.end(), it);
+
+            auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
+            EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
+            EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
+            EXPECT_EQ(getLowPart(incValue), miAtomic->getOperand1DataDword0());
+            EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
+
+            EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        }
+    }
+
+    context->freeMem(devAddress);
+}
+
 HWTEST_F(InOrderCmdListTests, givenTimestmapEnabledWhenCreatingStandaloneCbEventThenSetCorrectPacketSize) {
     zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;

@@ -3977,6 +3977,8 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
                 ASSERT_NE(nullptr, signalSubCopyEvent);
             }
             itor = ++flushDwItor;
+        } else {
+            ASSERT_TRUE(false);
         }
 
         auto semaphoreCmds = findAll<MI_SEMAPHORE_WAIT *>(beginItor, itor);

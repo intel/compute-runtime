@@ -347,6 +347,8 @@ struct Event : _ze_event_handle_t {
         this->isEventOnBarrierOptimized = value;
     }
 
+    static bool isAggregatedEvent(const Event *event) { return (event && event->getInOrderIncrementValue() > 0); }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
