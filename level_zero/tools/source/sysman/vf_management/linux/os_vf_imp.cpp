@@ -132,9 +132,9 @@ LinuxVfImp::LinuxVfImp(
 void LinuxVfImp::cleanup() {
     for (auto pEngineUtilsData : pEngineUtils) {
         DEBUG_BREAK_IF(pEngineUtilsData.busyTicksFd < 0);
-        close(static_cast<int>(pEngineUtilsData.busyTicksFd));
+        NEO::SysCalls::close(static_cast<int>(pEngineUtilsData.busyTicksFd));
         DEBUG_BREAK_IF(pEngineUtilsData.totalTicksFd < 0);
-        close(static_cast<int>(pEngineUtilsData.totalTicksFd));
+        NEO::SysCalls::close(static_cast<int>(pEngineUtilsData.totalTicksFd));
     }
     pEngineUtils.clear();
 }

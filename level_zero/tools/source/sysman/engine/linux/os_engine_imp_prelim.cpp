@@ -79,7 +79,7 @@ static ze_result_t openPmuHandlesForVfs(uint32_t numberOfVfs,
                                                     PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
             if (fd[1] < 0) {
                 NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks PMU Handle \n", __FUNCTION__);
-                close(static_cast<int>(fd[0]));
+                NEO::SysCalls::close(static_cast<int>(fd[0]));
                 fd[0] = -1;
             }
         }
@@ -111,10 +111,10 @@ ze_result_t LinuxEngineImpPrelim::getActivity(zes_engine_stats_t *pStats) {
 void LinuxEngineImpPrelim::cleanup() {
     for (auto &fdPair : fdList) {
         if (fdPair.first >= 0) {
-            close(static_cast<int>(fdPair.first));
+            NEO::SysCalls::close(static_cast<int>(fdPair.first));
         }
         if (fdPair.second >= 0) {
-            close(static_cast<int>(fdPair.second));
+            NEO::SysCalls::close(static_cast<int>(fdPair.second));
         }
     }
     fdList.clear();
@@ -154,8 +154,8 @@ ze_result_t LinuxEngineImpPrelim::getActivityExt(uint32_t *pCount, zes_engine_st
             for (size_t i = 1; i < fdList.size(); i++) {
                 auto &fdPair = fdList[i];
                 if (fdPair.first >= 0) {
-                    close(static_cast<int32_t>(fdPair.first));
-                    close(static_cast<int32_t>(fdPair.second));
+                    NEO::SysCalls::close(static_cast<int32_t>(fdPair.first));
+                    NEO::SysCalls::close(static_cast<int32_t>(fdPair.second));
                 }
                 fdList.resize(1);
             }
@@ -242,7 +242,7 @@ void LinuxEngineImpPrelim::init() {
     if (fd[1] < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
         checkErrorNumberAndUpdateStatus();
-        close(static_cast<int>(fd[0]));
+        NEO::SysCalls::close(static_cast<int>(fd[0]));
         return;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
@@ -82,7 +83,7 @@ ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t 
 void LinuxEngineImp::cleanup() {
     for (auto &fdPair : fdList) {
         DEBUG_BREAK_IF(fdPair.first < 0);
-        close(static_cast<int>(fdPair.first));
+        NEO::SysCalls::close(static_cast<int>(fdPair.first));
     }
     fdList.clear();
 }

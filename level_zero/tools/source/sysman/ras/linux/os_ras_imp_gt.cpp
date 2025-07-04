@@ -53,7 +53,7 @@ static const std::map<zes_ras_error_category_exp_t, std::vector<std::string>> ca
 
 static void closeFd(int64_t &fd) {
     if (fd != -1) {
-        close(static_cast<int>(fd));
+        NEO::SysCalls::close(static_cast<int>(fd));
         fd = -1;
     }
 }
