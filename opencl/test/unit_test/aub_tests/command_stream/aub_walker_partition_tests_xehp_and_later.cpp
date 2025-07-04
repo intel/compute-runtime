@@ -759,6 +759,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandB
     walkerCmd.getInterfaceDescriptor().setNumberOfThreadsInGpgpuThreadGroup(1u);
     walkerCmd.getPostSync().setDestinationAddress(postSyncAddress);
     walkerCmd.getPostSync().setOperation(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP);
+    if constexpr (FamilyType::template isHeaplessMode<DefaultWalkerType>()) {
+        walkerCmd.setMaximumNumberOfThreads(64);
+    }
 
     WalkerPartition::WalkerPartitionArgs testArgs = {};
     testArgs.initializeWparidRegister = true;
