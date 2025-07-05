@@ -12,6 +12,6 @@ void __attribute__((constructor)) platformsConstructor() {
     globalPlatformSetup();
 }
 void __attribute__((destructor)) platformsDestructor() {
-    globalPlatformTeardown(false);
+    globalPlatformTeardown();
 }
 } // namespace NEO

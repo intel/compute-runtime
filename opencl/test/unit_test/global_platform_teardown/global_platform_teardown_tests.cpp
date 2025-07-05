@@ -20,7 +20,7 @@ class GlobalPlatformTeardownTest : public ::testing::Test {
     }
 
     void TearDown() override {
-        globalPlatformTeardown(false);
+        globalPlatformTeardown();
         wasPlatformTeardownCalled = false;
         platformsImpl = tmpPlatforms;
     }
@@ -35,15 +35,13 @@ TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformSetupThenWasTeardownCalled
     globalPlatformSetup();
     EXPECT_FALSE(wasPlatformTeardownCalled);
 }
-TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownAndNotTerminatingProcessThenPlatformsDestroyed) {
+TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownThenPlatformsDestroyed) {
     globalPlatformSetup();
-    globalPlatformTeardown(false);
+    globalPlatformTeardown();
     EXPECT_EQ(platformsImpl, nullptr);
-    EXPECT_TRUE(wasPlatformTeardownCalled);
 }
-TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownAndTerminatingProcessThenPlatformsNotDestroyed) {
+TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownThenWasTeardownCalledIsSetToTrue) {
     globalPlatformSetup();
-    globalPlatformTeardown(true);
-    EXPECT_NE(platformsImpl, nullptr);
+    globalPlatformTeardown();
     EXPECT_TRUE(wasPlatformTeardownCalled);
 }

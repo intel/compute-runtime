@@ -14,13 +14,9 @@ void globalPlatformSetup() {
     platformsImpl = new std::vector<std::unique_ptr<Platform>>;
 }
 
-void globalPlatformTeardown(bool processTermination) {
-    wasPlatformTeardownCalled = true;
-    if (processTermination) {
-        /* When terminating process, clean up should be skipped according to the DllMain spec. */
-        return;
-    }
+void globalPlatformTeardown() {
     delete platformsImpl;
     platformsImpl = nullptr;
+    wasPlatformTeardownCalled = true;
 }
 } // namespace NEO
