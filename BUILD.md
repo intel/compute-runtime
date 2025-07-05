@@ -30,7 +30,7 @@ Neo requires:
 - [Intel(R) Graphics Compiler for OpenCL(TM)](https://github.com/intel/intel-graphics-compiler)
 - [Intel(R) Graphics Memory Management](https://github.com/intel/gmmlib)
 
-Please visit their repositories for building and instalation instructions.
+Please visit their repositories for building and installation instructions.
 
 Use versions compatible with selected [Neo release](https://github.com/intel/compute-runtime/releases).
 
