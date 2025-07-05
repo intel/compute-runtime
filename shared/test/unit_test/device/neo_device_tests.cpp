@@ -660,18 +660,6 @@ TEST_F(DeviceTests, givenPreemptionModeWhenOverridePreemptionModeThenProperlySet
     EXPECT_EQ(newPreemptionMode, device->getPreemptionMode());
 }
 
-TEST_F(DeviceTests, givenNullAubcenterThenAdjustCcsCountDoesNotThrow) {
-    auto hwInfo = *defaultHwInfo;
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ZEX_NUMBER_OF_CCS.set("4");
-
-    MockExecutionEnvironment executionEnvironment(&hwInfo, false, 1u);
-    executionEnvironment.incRefInternal();
-    EXPECT_NO_THROW(executionEnvironment.adjustCcsCount());
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableDefinedForNonPvcWhenDeviceIsCreatedThenCreateDevicesWithProperCcsCount) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
