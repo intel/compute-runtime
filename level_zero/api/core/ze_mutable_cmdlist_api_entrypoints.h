@@ -11,7 +11,7 @@
 #include <level_zero/ze_api.h>
 
 namespace L0 {
-ze_result_t zeCommandListGetNextCommandIdExp(
+ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExp(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_command_id_exp_desc_t *desc,
     uint64_t *pCommandId) {
@@ -19,14 +19,14 @@ ze_result_t zeCommandListGetNextCommandIdExp(
     return L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, 0, nullptr, pCommandId);
 }
 
-ze_result_t zeCommandListUpdateMutableCommandsExp(
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandsExp(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_commands_exp_desc_t *desc) {
     hCommandList = toInternalType(hCommandList);
     return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandsExp(desc);
 }
 
-ze_result_t zeCommandListUpdateMutableCommandSignalEventExp(
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandSignalEventExp(
     ze_command_list_handle_t hCommandList,
     uint64_t commandId,
     ze_event_handle_t hSignalEvent) {
@@ -35,7 +35,7 @@ ze_result_t zeCommandListUpdateMutableCommandSignalEventExp(
     return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandSignalEventExp(commandId, hSignalEvent);
 }
 
-ze_result_t zeCommandListUpdateMutableCommandWaitEventsExp(
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandWaitEventsExp(
     ze_command_list_handle_t hCommandList,
     uint64_t commandId,
     uint32_t numWaitEvents,
@@ -48,7 +48,7 @@ ze_result_t zeCommandListUpdateMutableCommandWaitEventsExp(
     return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandWaitEventsExp(commandId, numWaitEvents, translatedEvents.data());
 }
 
-ze_result_t zeCommandListGetNextCommandIdWithKernelsExp(
+ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExp(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_command_id_exp_desc_t *desc,
     uint32_t numKernels,
@@ -62,7 +62,7 @@ ze_result_t zeCommandListGetNextCommandIdWithKernelsExp(
     return L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, numKernels, translatedKernels.data(), pCommandId);
 }
 
-ze_result_t zeCommandListUpdateMutableCommandKernelsExp(
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
     ze_command_list_handle_t hCommandList,
     uint32_t numKernels,
     uint64_t *pCommandId,

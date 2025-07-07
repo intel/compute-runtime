@@ -113,7 +113,7 @@ ze_result_t zeCommandListCreateCloneExp(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t zeCommandListImmediateAppendCommandListsExp(
+ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandListsExp(
     ze_command_list_handle_t hCommandListImmediate,
     uint32_t numCommandLists,
     ze_command_list_handle_t *phCommandLists,
