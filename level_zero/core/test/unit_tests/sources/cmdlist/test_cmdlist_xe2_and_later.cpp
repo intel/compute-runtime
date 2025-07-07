@@ -105,8 +105,8 @@ struct CommandListXe2AndLaterFixture : public DeviceFixture {
             ASSERT_EQ(6u, srmCommands.size());
 
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[0]), globalAddress, RegisterOffsets::csGprR12);
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[1]), contextAddress, RegisterOffsets::csGprR12);
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), globalAddress + sizeof(uint32_t), RegisterOffsets::globalTimestampUn);
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[1]), globalAddress + sizeof(uint32_t), RegisterOffsets::globalTimestampUn);
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), contextAddress, RegisterOffsets::csGprR12);
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[3]), contextAddress + sizeof(uint32_t), RegisterOffsets::gpThreadTimeRegAddressOffsetHigh);
 
             validateLrrCommand<FamilyType>(reinterpret_cast<MI_LOAD_REGISTER_REG *>(*srmCommands[4]), RegisterOffsets::globalTimestampLdw);
@@ -116,8 +116,8 @@ struct CommandListXe2AndLaterFixture : public DeviceFixture {
             ASSERT_EQ(4u, srmCommands.size());
 
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[0]), globalAddress, RegisterOffsets::globalTimestampLdw);
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[1]), contextAddress, RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), globalAddress + sizeof(uint32_t), RegisterOffsets::globalTimestampUn);
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[1]), globalAddress + sizeof(uint32_t), RegisterOffsets::globalTimestampUn);
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), contextAddress, RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[3]), contextAddress + sizeof(uint32_t), RegisterOffsets::gpThreadTimeRegAddressOffsetHigh);
         }
     }

@@ -73,6 +73,15 @@ void validateTimestampRegisters(GenCmdList &cmdList,
                                 uint64_t secondStoreRegMemAddress,
                                 bool workloadPartition,
                                 bool useMask);
+template <typename FamilyType>
+void validateTimestampLongRegisters(GenCmdList &cmdList,
+                                    GenCmdList::iterator &startIt,
+                                    uint32_t firstLoadRegisterRegSrcAddress,
+                                    uint64_t firstStoreRegMemAddress,
+                                    uint32_t secondLoadRegisterRegSrcAddress,
+                                    uint64_t secondStoreRegMemAddress,
+                                    bool workloadPartition,
+                                    bool useMask);
 
 struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     void setUp() {

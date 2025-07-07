@@ -21,37 +21,18 @@ inline NEO::PreemptionMode CommandListCoreFamily<gfxCoreFamily>::obtainKernelPre
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds,
-                                                                      bool workloadPartition, bool copyOperation) {
-    uint64_t globalHighAddress = globalAddress + sizeof(uint32_t);
-    uint64_t contextHighAddress = contextAddress + sizeof(uint32_t);
-
-    void **globalPostSyncCmdBuffer = nullptr;
-    void **contextPostSyncCmdBuffer = nullptr;
-
-    void *globalPostSyncCmd = nullptr;
-    void *contextPostSyncCmd = nullptr;
+void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t address, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds,
+                                                                      bool workloadPartition, bool copyOperation, bool globalTimestamp) {
+    uint64_t highAddress = address + sizeof(uint32_t);
+    void **postSyncCmdBuffer = nullptr;
+    void *postSyncCmd = nullptr;
 
     if (outTimeStampSyncCmds != nullptr) {
-        globalPostSyncCmdBuffer = &globalPostSyncCmd;
-        contextPostSyncCmdBuffer = &contextPostSyncCmd;
+        postSyncCmdBuffer = &postSyncCmd;
     }
 
-    NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::globalTimestampUn, globalHighAddress, workloadPartition, globalPostSyncCmdBuffer, copyOperation);
-    NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, contextHighAddress, workloadPartition, contextPostSyncCmdBuffer, copyOperation);
-
-    if (outTimeStampSyncCmds != nullptr) {
-        CommandToPatch ctxCmd;
-        ctxCmd.type = CommandToPatch::TimestampEventPostSyncStoreRegMem;
-
-        ctxCmd.offset = globalHighAddress - baseAddress;
-        ctxCmd.pDestination = globalPostSyncCmd;
-        outTimeStampSyncCmds->push_back(ctxCmd);
-
-        ctxCmd.offset = contextHighAddress - baseAddress;
-        ctxCmd.pDestination = contextPostSyncCmd;
-        outTimeStampSyncCmds->push_back(ctxCmd);
-    }
+    uint32_t registerOffset = globalTimestamp ? RegisterOffsets::globalTimestampUn : RegisterOffsets::gpThreadTimeRegAddressOffsetHigh;
+    writeTimestamp(commandContainer, registerOffset, highAddress, false, workloadPartition, postSyncCmdBuffer, copyOperation);
+    pushTimestampPatch(outTimeStampSyncCmds, highAddress - baseAddress, postSyncCmd);
 }
-
 } // namespace L0
