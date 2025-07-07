@@ -329,7 +329,10 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t &threadGroupDimensions, size_t &patchIndex);
     void programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize, size_t &patchIndex);
     void appendWriteKernelTimestamp(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool maskLsb, bool workloadPartition, bool copyOperation);
-    void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds, bool workloadPartition, bool copyOperation);
+    void adjustWriteKernelTimestamp(uint64_t address, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds, bool workloadPartition, bool copyOperation, bool globalTimestamp);
+    void writeTimestamp(NEO::CommandContainer &container, uint32_t regOffset, uint64_t address, bool maskLsb, bool workloadPartition, void **postSyncCmdBuffer, bool copyOperation);
+    void pushTimestampPatch(CommandToPatchContainer *container, uint64_t offset, void *pDestination);
+    void writeKernelTimestamp(uint64_t baseAddr, Event *event, CommandToPatchContainer *outTimeStampSyncCmds, size_t offset, bool maskLsb, bool workloadPartition, bool copyOperation, bool isGlobalTimestamp);
     void appendEventForProfiling(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
     void appendEventForProfilingCopyCommand(Event *event, bool beforeWalker);
     void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);

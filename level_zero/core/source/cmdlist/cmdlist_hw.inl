@@ -3357,49 +3357,47 @@ void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &ker
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool maskLsb, bool workloadPartition, bool copyOperation) {
-    constexpr uint32_t mask = 0xfffffffe;
-
     auto baseAddr = event->getPacketAddress(this->device);
+    writeKernelTimestamp(baseAddr, event, outTimeStampSyncCmds, beforeWalker ? event->getGlobalStartOffset() : event->getGlobalEndOffset(), maskLsb, workloadPartition, copyOperation, true);
+    writeKernelTimestamp(baseAddr, event, outTimeStampSyncCmds, beforeWalker ? event->getContextStartOffset() : event->getContextEndOffset(), maskLsb, workloadPartition, copyOperation, false);
+}
 
-    auto globalOffset = beforeWalker ? event->getGlobalStartOffset() : event->getGlobalEndOffset();
-    auto contextOffset = beforeWalker ? event->getContextStartOffset() : event->getContextEndOffset();
-
-    void **globalPostSyncCmdBuffer = nullptr;
-    void **contextPostSyncCmdBuffer = nullptr;
-
-    void *globalPostSyncCmd = nullptr;
-    void *contextPostSyncCmd = nullptr;
-
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::writeKernelTimestamp(uint64_t baseAddr, Event *event, CommandToPatchContainer *outTimeStampSyncCmds, size_t offset, bool maskLsb, bool workloadPartition, bool copyOperation, bool isGlobalTimestamp) {
+    void **postSyncCmdBuffer = nullptr;
+    void *postSyncCmd = nullptr;
     if (outTimeStampSyncCmds != nullptr) {
-        globalPostSyncCmdBuffer = &globalPostSyncCmd;
-        contextPostSyncCmdBuffer = &contextPostSyncCmd;
+        postSyncCmdBuffer = &postSyncCmd;
     }
+    uint64_t address = ptrOffset(baseAddr, offset);
 
-    uint64_t globalAddress = ptrOffset(baseAddr, globalOffset);
-    uint64_t contextAddress = ptrOffset(baseAddr, contextOffset);
+    uint32_t registerOffset = isGlobalTimestamp ? RegisterOffsets::globalTimestampLdw : RegisterOffsets::gpThreadTimeRegAddressOffsetLow;
+    writeTimestamp(commandContainer, registerOffset, address, maskLsb, workloadPartition, postSyncCmdBuffer, copyOperation);
+    pushTimestampPatch(outTimeStampSyncCmds, offset, postSyncCmd);
+    adjustWriteKernelTimestamp(address, baseAddr, outTimeStampSyncCmds, workloadPartition, copyOperation, isGlobalTimestamp);
+}
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::writeTimestamp(NEO::CommandContainer &container, uint32_t regOffset, uint64_t address, bool maskLsb, bool workloadPartition, void **postSyncCmdBuffer, bool copyOperation) {
+    constexpr uint32_t mask = 0xfffffffe;
     if (maskLsb) {
-        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, RegisterOffsets::globalTimestampLdw, mask, globalAddress, workloadPartition, globalPostSyncCmdBuffer, copyOperation);
-        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, mask, contextAddress, workloadPartition, contextPostSyncCmdBuffer, copyOperation);
+        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(
+            container, regOffset, mask, address, workloadPartition, postSyncCmdBuffer, copyOperation);
     } else {
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::globalTimestampLdw, globalAddress, workloadPartition, globalPostSyncCmdBuffer, copyOperation);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextAddress, workloadPartition, contextPostSyncCmdBuffer, copyOperation);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(
+            *container.getCommandStream(), regOffset, address, workloadPartition, postSyncCmdBuffer, copyOperation);
     }
+}
 
-    if (outTimeStampSyncCmds != nullptr) {
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::pushTimestampPatch(CommandToPatchContainer *container, uint64_t offset, void *pDestination) {
+    if (container) {
         CommandToPatch ctxCmd;
         ctxCmd.type = CommandToPatch::TimestampEventPostSyncStoreRegMem;
-
-        ctxCmd.offset = globalOffset;
-        ctxCmd.pDestination = globalPostSyncCmd;
-        outTimeStampSyncCmds->push_back(ctxCmd);
-
-        ctxCmd.offset = contextOffset;
-        ctxCmd.pDestination = contextPostSyncCmd;
-        outTimeStampSyncCmds->push_back(ctxCmd);
+        ctxCmd.offset = offset;
+        ctxCmd.pDestination = pDestination;
+        container->push_back(ctxCmd);
     }
-
-    adjustWriteKernelTimestamp(globalAddress, contextAddress, baseAddr, outTimeStampSyncCmds, workloadPartition, copyOperation);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

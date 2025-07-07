@@ -80,7 +80,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
     } else {
         ASSERT_NE(cmdList.end(), itor);
         auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(RegisterOffsets::globalTimestampUn, cmdMem->getRegisterAddress());
+        EXPECT_EQ(firstLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
         EXPECT_EQ(firstStoreRegMemAddress, cmdMem->getMemoryAddress());
         if (workloadPartition) {
             EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
@@ -89,7 +89,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
         }
     }
 
-    itor++;
+    itor = useMask ? find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end()) : find<MI_STORE_REGISTER_MEM *>(startIt, cmdList.end());
     if (useMask) {
         {
             ASSERT_NE(cmdList.end(), itor);
@@ -128,7 +128,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
     } else {
         ASSERT_NE(cmdList.end(), itor);
         auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, cmdMem->getRegisterAddress());
+        EXPECT_EQ(secondLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
         EXPECT_EQ(secondStoreRegMemAddress, cmdMem->getMemoryAddress());
         if (workloadPartition) {
             EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
@@ -137,6 +137,145 @@ void validateTimestampRegisters(GenCmdList &cmdList,
         }
     }
 
+    itor++;
+    startIt = itor;
+}
+
+template <typename FamilyType>
+void validateTimestampLongRegisters(GenCmdList &cmdList,
+                                    GenCmdList::iterator &startIt,
+                                    uint32_t firstLoadRegisterRegSrcAddress,
+                                    uint64_t firstStoreRegMemAddress,
+                                    uint32_t secondLoadRegisterRegSrcAddress,
+                                    uint64_t secondStoreRegMemAddress,
+                                    uint32_t thirdLoadRegisterRegSrcAddress,
+                                    uint64_t thirdStoreRegMemAddress,
+                                    uint32_t fourthLoadRegisterRegSrcAddress,
+                                    uint64_t fourthStoreRegMemAddress,
+                                    bool workloadPartition,
+                                    bool useMask) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH = typename FamilyType::MI_MATH;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    constexpr uint32_t mask = 0xfffffffe;
+
+    auto itor = useMask ? find<MI_LOAD_REGISTER_REG *>(startIt, cmdList.end()) : find<MI_STORE_REGISTER_MEM *>(startIt, cmdList.end());
+    if (useMask) {
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+            EXPECT_EQ(firstLoadRegisterRegSrcAddress, cmdLoadReg->getSourceRegisterAddress());
+            EXPECT_EQ(RegisterOffsets::csGprR13, cmdLoadReg->getDestinationRegisterAddress());
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+            EXPECT_EQ(RegisterOffsets::csGprR14, cmdLoadImm->getRegisterOffset());
+            EXPECT_EQ(mask, cmdLoadImm->getDataDword());
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdMath = genCmdCast<MI_MATH *>(*itor);
+            EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+            EXPECT_EQ(RegisterOffsets::csGprR12, cmdMem->getRegisterAddress());
+            EXPECT_EQ(firstStoreRegMemAddress, cmdMem->getMemoryAddress());
+            if (workloadPartition) {
+                EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+            } else {
+                EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+            }
+        }
+    } else {
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(firstLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
+        EXPECT_EQ(firstStoreRegMemAddress, cmdMem->getMemoryAddress());
+        if (workloadPartition) {
+            EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+        } else {
+            EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+        }
+    }
+    itor++;
+    ASSERT_NE(cmdList.end(), itor);
+    auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(secondLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
+    EXPECT_EQ(secondStoreRegMemAddress, cmdMem->getMemoryAddress());
+    if (workloadPartition) {
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+    } else {
+        EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+    }
+
+    itor = useMask ? find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end()) : find<MI_STORE_REGISTER_MEM *>(startIt, cmdList.end());
+    if (useMask) {
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+            EXPECT_EQ(thirdLoadRegisterRegSrcAddress, cmdLoadReg->getSourceRegisterAddress());
+            EXPECT_EQ(RegisterOffsets::csGprR13, cmdLoadReg->getDestinationRegisterAddress());
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+            EXPECT_EQ(RegisterOffsets::csGprR14, cmdLoadImm->getRegisterOffset());
+            EXPECT_EQ(mask, cmdLoadImm->getDataDword());
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            auto cmdMath = genCmdCast<MI_MATH *>(*itor);
+            EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+        }
+
+        itor++;
+        {
+            ASSERT_NE(cmdList.end(), itor);
+            cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+            EXPECT_EQ(RegisterOffsets::csGprR12, cmdMem->getRegisterAddress());
+            EXPECT_EQ(thirdStoreRegMemAddress, cmdMem->getMemoryAddress());
+            if (workloadPartition) {
+                EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+            } else {
+                EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+            }
+        }
+    } else {
+        ASSERT_NE(cmdList.end(), itor);
+        cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(thirdLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
+        EXPECT_EQ(thirdStoreRegMemAddress, cmdMem->getMemoryAddress());
+        if (workloadPartition) {
+            EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+        } else {
+            EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+        }
+    }
+    itor++;
+    ASSERT_NE(cmdList.end(), itor);
+    cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(fourthLoadRegisterRegSrcAddress, cmdMem->getRegisterAddress());
+    EXPECT_EQ(fourthStoreRegMemAddress, cmdMem->getMemoryAddress());
+    if (workloadPartition) {
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+    } else {
+        EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+    }
     itor++;
     startIt = itor;
 }

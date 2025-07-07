@@ -857,40 +857,45 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     EXPECT_EQ(timestampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
 
     auto startCmdList = cmdList.begin();
-    validateTimestampRegisters<FamilyType>(cmdList,
-                                           startCmdList,
-                                           RegisterOffsets::globalTimestampLdw, globalStartAddress,
-                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
-                                           true,
-                                           true);
 
     if (UnitTestHelper<FamilyType>::timestampRegisterHighAddress()) {
         uint64_t globalStartAddressHigh = globalStartAddress + sizeof(uint32_t);
         uint64_t contextStartAddressHigh = contextStartAddress + sizeof(uint32_t);
+        validateTimestampLongRegisters<FamilyType>(cmdList,
+                                                   startCmdList,
+                                                   RegisterOffsets::globalTimestampLdw, globalStartAddress,
+                                                   RegisterOffsets::globalTimestampUn, globalStartAddressHigh,
+                                                   RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
+                                                   RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, contextStartAddressHigh,
+                                                   true,
+                                                   true);
+    } else {
         validateTimestampRegisters<FamilyType>(cmdList,
                                                startCmdList,
-                                               RegisterOffsets::globalTimestampUn, globalStartAddressHigh,
-                                               RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, contextStartAddressHigh,
+                                               RegisterOffsets::globalTimestampLdw, globalStartAddress,
+                                               RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
                                                true,
-                                               false);
+                                               true);
     }
-
-    validateTimestampRegisters<FamilyType>(cmdList,
-                                           startCmdList,
-                                           RegisterOffsets::globalTimestampLdw, globalEndAddress,
-                                           RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
-                                           true,
-                                           true);
 
     if (UnitTestHelper<FamilyType>::timestampRegisterHighAddress()) {
         uint64_t globalEndAddressHigh = globalEndAddress + sizeof(uint32_t);
         uint64_t contextEndAddressHigh = contextEndAddress + sizeof(uint32_t);
+        validateTimestampLongRegisters<FamilyType>(cmdList,
+                                                   startCmdList,
+                                                   RegisterOffsets::globalTimestampLdw, globalEndAddress,
+                                                   RegisterOffsets::globalTimestampUn, globalEndAddressHigh,
+                                                   RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
+                                                   RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, contextEndAddressHigh,
+                                                   true,
+                                                   true);
+    } else {
         validateTimestampRegisters<FamilyType>(cmdList,
                                                startCmdList,
-                                               RegisterOffsets::globalTimestampUn, globalEndAddressHigh,
-                                               RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, contextEndAddressHigh,
+                                               RegisterOffsets::globalTimestampLdw, globalEndAddress,
+                                               RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
                                                true,
-                                               false);
+                                               true);
     }
 }
 
