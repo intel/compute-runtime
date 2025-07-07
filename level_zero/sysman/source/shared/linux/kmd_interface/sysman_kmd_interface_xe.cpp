@@ -137,6 +137,10 @@ std::string SysmanKmdInterfaceXe::getEnergyCounterNodeFile(zes_power_domain_t po
     return filePath;
 }
 
+std::string SysmanKmdInterfaceXe::getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) {
+    return getSysfsFilePath(sysfsName, subDeviceId, false);
+}
+
 ze_result_t SysmanKmdInterfaceXe::getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
                                                                        uint32_t engineInstance,
                                                                        uint32_t gtId,

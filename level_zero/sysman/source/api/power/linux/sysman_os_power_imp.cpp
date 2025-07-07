@@ -378,14 +378,14 @@ void LinuxPowerImp::init() {
     }
 
     if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
-        burstPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageBurstPowerLimit, subdeviceId, false);
-        burstPowerLimitIntervalFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageBurstPowerLimitInterval, subdeviceId, false);
+        burstPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getBurstPowerLimitFile(SysfsName::sysfsNamePackageBurstPowerLimit, subdeviceId, false);
+        burstPowerLimitIntervalFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getBurstPowerLimitFile(SysfsName::sysfsNamePackageBurstPowerLimitInterval, subdeviceId, false);
         criticalPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageCriticalPowerLimit, subdeviceId, false);
         sustainedPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimit, subdeviceId, false);
         sustainedPowerLimitIntervalFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimitInterval, subdeviceId, false);
     } else if (powerDomain == ZES_POWER_DOMAIN_CARD) {
-        burstPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCardBurstPowerLimit, subdeviceId, false);
-        burstPowerLimitIntervalFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCardBurstPowerLimitInterval, subdeviceId, false);
+        burstPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getBurstPowerLimitFile(SysfsName::sysfsNameCardBurstPowerLimit, subdeviceId, false);
+        burstPowerLimitIntervalFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getBurstPowerLimitFile(SysfsName::sysfsNameCardBurstPowerLimitInterval, subdeviceId, false);
         criticalPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCardCriticalPowerLimit, subdeviceId, false);
         sustainedPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCardSustainedPowerLimit, subdeviceId, false);
         sustainedPowerLimitIntervalFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCardSustainedPowerLimitInterval, subdeviceId, false);

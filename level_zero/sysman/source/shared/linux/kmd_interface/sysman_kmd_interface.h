@@ -177,6 +177,7 @@ class SysmanKmdInterface {
     virtual std::string getGpuUnBindEntry() const = 0;
     virtual std::vector<zes_power_domain_t> getPowerDomains() const = 0;
     virtual void setSysmanDeviceDirName(const bool isIntegratedDevice) = 0;
+    virtual std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) = 0;
     const std::string getSysmanDeviceDirName() const;
     ze_result_t checkErrorNumberAndReturnStatus();
 
@@ -251,6 +252,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     std::string getGpuUnBindEntry() const override;
     std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
     void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
+    std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -311,6 +313,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     std::string getGpuUnBindEntry() const override;
     std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
     void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
+    std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -373,6 +376,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::string getGpuBindEntry() const override;
     std::string getGpuUnBindEntry() const override;
     void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
+    std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
