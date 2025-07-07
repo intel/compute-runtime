@@ -521,7 +521,15 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     auto svmCpuAllocation = allocationData.type == AllocationType::svmCpu;
     if (svmCpuAllocation) {
         // add padding in case reserved addr is not aligned
-        alignedStorageSize = alignUp(cSize, cAlignment);
+
+        auto &productHelper = getGmmHelper(allocationData.rootDeviceIndex)->getRootDeviceEnvironment().getHelper<ProductHelper>();
+        if (alignedStorageSize >= 2 * MemoryConstants::megaByte &&
+            productHelper.is2MBLocalMemAlignmentEnabled()) {
+            alignedStorageSize = alignUp(cSize, MemoryConstants::pageSize2M);
+        } else {
+            alignedStorageSize = alignUp(cSize, cAlignment);
+        }
+
         alignedVirtualAddressRangeSize = alignedStorageSize + cAlignment;
     }
 

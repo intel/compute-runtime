@@ -5876,6 +5876,57 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenMultipleLocalMemory
     EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, Given2MBLocalMemAlignmentEnabledWhenAllocatingSvmCpuAllocLargerThan2MBThenAlignStorageSizeTo2MB) {
+    auto mockProductHelper = new MockProductHelper;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    ASSERT_TRUE(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper->is2MBLocalMemAlignmentEnabled());
+
+    mock->ioctlExpected.gemCreateExt = 1;
+    mock->ioctlExpected.gemMmapOffset = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    AllocationData allocationData;
+    allocationData.size = 2.5 * MemoryConstants::megaByte;
+    allocationData.alignment = MemoryConstants::pageSize64k;
+    allocationData.type = AllocationType::svmCpu;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+
+    const size_t expectedAllocSize = alignUp(allocationData.size, MemoryConstants::pageSize2M);
+
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithAlignment(allocationData));
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(AllocationType::svmCpu, allocation->getAllocationType());
+
+    EXPECT_EQ(expectedAllocSize, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(expectedAllocSize, allocation->getMmapSize());
+
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(allocation->getMmapPtr(), allocation->getUnderlyingBuffer());
+    EXPECT_EQ(nullptr, allocation->getDriverAllocatedCpuPtr());
+
+    EXPECT_NE(0llu, allocation->getGpuAddress());
+    EXPECT_NE(reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()), allocation->getGpuAddress());
+
+    auto bo = allocation->getBO();
+    ASSERT_NE(nullptr, bo);
+
+    EXPECT_NE(0llu, bo->peekAddress());
+
+    auto gmmHelper = device->getGmmHelper();
+    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapStandard)), bo->peekAddress());
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapStandard)), bo->peekAddress());
+
+    EXPECT_EQ(reinterpret_cast<void *>(allocation->getGpuAddress()), alignUp(allocation->getReservedAddressPtr(), allocationData.alignment));
+    EXPECT_EQ(expectedAllocSize + allocationData.alignment, allocation->getReservedAddressSize());
+    EXPECT_GT(allocation->getReservedAddressSize(), bo->peekSize());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationThenAllocationIsFilledWithCorrectData) {
