@@ -563,15 +563,15 @@ char **getEnviron() {
 
 namespace ULT {
 
-static char **mockEnviron = nullptr;
+static char *defaultTestEnviron[] = {nullptr};
+static char **mockEnviron = defaultTestEnviron;
 
 char **getCurrentEnviron() {
-    return mockEnviron ? mockEnviron : environ;
+    return mockEnviron;
 }
 
 void setMockEnviron(char **mock) {
-    mockEnviron = mock;
+    mockEnviron = mock ? mock : defaultTestEnviron;
 }
-
 } // namespace ULT
 } // namespace NEO
