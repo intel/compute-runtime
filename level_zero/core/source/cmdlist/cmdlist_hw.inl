@@ -2308,6 +2308,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool
     return ZE_RESULT_SUCCESS;
 }
 
+inline bool canUseImmediateFill(size_t size, size_t patternSize, size_t offset, size_t maxWgSize) {
+    return patternSize == 1 || (patternSize <= 4 &&
+                                isAligned<sizeof(uint32_t)>(offset) &&
+                                isAligned<sizeof(uint32_t) * 4>(size) &&
+                                (size <= maxWgSize || isAligned(size / (sizeof(uint32_t) * 4), maxWgSize)));
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    const void *pattern,
@@ -2392,8 +2399,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
-    const auto maxWgSize = this->device->getDeviceInfo().maxWorkGroupSize;
-    bool useImmediateFill = patternSize == 1 || (patternSize <= 4 && isAligned<sizeof(uint32_t)>(dstAllocation.offset) && isAligned<sizeof(uint32_t) * 4>(size) && (size <= maxWgSize || isAligned(size, maxWgSize)));
+    bool useImmediateFill = canUseImmediateFill(size, patternSize, dstAllocation.offset, this->device->getDeviceInfo().maxWorkGroupSize);
     auto builtin = useImmediateFill
                        ? BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless)
                        : BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless);
@@ -4113,9 +4119,10 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFillKernelArguments(size_t baseO
                                                                     size_t dstSize,
                                                                     CmdListFillKernelArguments &outArguments,
                                                                     Kernel *kernel) {
-    constexpr auto dataTypeSize = sizeof(uint32_t) * 4;
     const auto maxWgSize = this->device->getDeviceInfo().maxWorkGroupSize;
-    if (patternSize == 1 || (patternSize <= 4 && isAligned<sizeof(uint32_t)>(baseOffset) && isAligned<dataTypeSize>(dstSize) && (dstSize <= maxWgSize || isAligned(dstSize, maxWgSize)))) {
+    if (canUseImmediateFill(dstSize, patternSize, baseOffset, maxWgSize)) {
+        constexpr auto dataTypeSize = sizeof(uint32_t) * 4;
+
         size_t middleSize = dstSize;
         outArguments.mainOffset = baseOffset;
         outArguments.leftRemainingBytes = sizeof(uint32_t) - (baseOffset % sizeof(uint32_t));
