@@ -48,6 +48,21 @@ HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithAppendLaunchKernelFailur
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 }
 
+HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithDataSizeNotAlignedToBothSizeOfFillDataAndMaxWgsThenUseFill) {
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    const auto patternSize = 4;
+    const auto allocSize = sizeof(uint32_t) * 4 * device->getDeviceInfo().maxWorkGroupSize + 1;
+    size_t patternTagsVectorSizeBefore = commandList->patternTags.size();
+    CmdListMemoryCopyParams copyParams = {};
+    ze_result_t result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t patternTagsVectorSize = commandList->patternTags.size();
+    EXPECT_NE(patternTagsVectorSize, patternTagsVectorSizeBefore);
+    EXPECT_EQ(0u, commandList->patternAllocations.size());
+}
+
 HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithPatternSizeLessOrEqualThanFourButUnalignedSizeThenUseFill) {
     auto commandList = std::make_unique<WhiteBox<MockCommandList<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
