@@ -33,6 +33,7 @@ class SysmanProductHelper;
 
 constexpr std::string_view deviceDir("device");
 constexpr std::string_view sysDevicesDir("/sys/devices/");
+constexpr std::string_view mediaDirSuffix("1");
 
 typedef std::pair<std::string, std::string> valuePair;
 
@@ -121,7 +122,10 @@ class SysmanKmdInterface {
     static std::unique_ptr<SysmanKmdInterface> create(NEO::Drm &drm, SysmanProductHelper *pSysmanProductHelper);
 
     virtual std::string getBasePath(uint32_t subDeviceId) const = 0;
+    virtual std::string getBasePathForFreqDomain(uint32_t subDeviceId, zes_freq_domain_t frequencyDomainNumber) const = 0;
     virtual std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) = 0;
+    virtual std::string getSysfsPathForFreqDomain(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory,
+                                                  zes_freq_domain_t frequencyDomainNumber) = 0;
     virtual std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) = 0;
     virtual std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) = 0;
     virtual ze_result_t getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
@@ -178,6 +182,7 @@ class SysmanKmdInterface {
     virtual std::vector<zes_power_domain_t> getPowerDomains() const = 0;
     virtual void setSysmanDeviceDirName(const bool isIntegratedDevice) = 0;
     virtual std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) = 0;
+    virtual std::string getFreqMediaDomainBasePath() = 0;
     const std::string getSysmanDeviceDirName() const;
     ze_result_t checkErrorNumberAndReturnStatus();
 
@@ -209,7 +214,10 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     ~SysmanKmdInterfaceI915Upstream() override;
 
     std::string getBasePath(uint32_t subDeviceId) const override;
+    std::string getBasePathForFreqDomain(uint32_t subDeviceId, zes_freq_domain_t frequencyDomainNumber) const override;
     std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
+    std::string getSysfsPathForFreqDomain(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory,
+                                          zes_freq_domain_t frequencyDomainNumber) override;
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
     std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) override;
     ze_result_t getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
@@ -253,6 +261,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
     void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
     std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
+    std::string getFreqMediaDomainBasePath() override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -270,7 +279,10 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     ~SysmanKmdInterfaceI915Prelim() override;
 
     std::string getBasePath(uint32_t subDeviceId) const override;
+    std::string getBasePathForFreqDomain(uint32_t subDeviceId, zes_freq_domain_t frequencyDomainNumber) const override;
     std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
+    std::string getSysfsPathForFreqDomain(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory,
+                                          zes_freq_domain_t frequencyDomainNumber) override;
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
     std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) override;
     ze_result_t getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
@@ -314,6 +326,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
     void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
     std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
+    std::string getFreqMediaDomainBasePath() override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -331,7 +344,10 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     ~SysmanKmdInterfaceXe() override;
 
     std::string getBasePath(uint32_t subDeviceId) const override;
+    std::string getBasePathForFreqDomain(uint32_t subDeviceId, zes_freq_domain_t frequencyDomainNumber) const override;
     std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
+    std::string getSysfsPathForFreqDomain(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory,
+                                          zes_freq_domain_t frequencyDomainNumber) override;
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
     std::string getEngineBasePath(uint32_t subDeviceId) const override;
     std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) override;
@@ -377,6 +393,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::string getGpuUnBindEntry() const override;
     void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
     std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
+    std::string getFreqMediaDomainBasePath() override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

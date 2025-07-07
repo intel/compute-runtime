@@ -85,21 +85,33 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndReadSymLinkFailsWhenCall
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingSysfsFileNamesThenProperPathsAreReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     bool baseDirectoryExists = true;
-    EXPECT_STREQ("device/tile0/gt0/freq0/min_freq", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinFrequency, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/max_freq", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxFrequency, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/cur_freq", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCurrentFrequency, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/act_freq", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameActualFrequency, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/rpe_freq", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameEfficientFrequency, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/rp0_freq", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxValueFrequency, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/rpn_freq", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinValueFrequency, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/throttle/status", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonStatus, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/throttle/reason_pl1", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL1, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/throttle/reason_pl2", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL2, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/throttle/reason_pl4", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL4, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq0/throttle/reason_thermal", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonThermal, 0, baseDirectoryExists).c_str());
+    zes_freq_domain_t frequencyDomainNumber = ZES_FREQ_DOMAIN_GPU;
+    for (int index = 0; index < 2; index++) {
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/min_freq").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMinFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/max_freq").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMaxFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/cur_freq").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameCurrentFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/act_freq").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameActualFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/rpe_freq").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameEfficientFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/rp0_freq").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMaxValueFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/rpn_freq").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMinValueFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/throttle/status").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameThrottleReasonStatus, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/throttle/reason_pl1").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameThrottleReasonPL1, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/throttle/reason_pl2").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameThrottleReasonPL2, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/throttle/reason_pl4").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameThrottleReasonPL4, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq0/throttle/reason_thermal").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameThrottleReasonThermal, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq_vram_rp0").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMaxMemoryFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        EXPECT_STREQ(("device/tile0/gt" + std::to_string(index) + "/freq_vram_rpn").c_str(), pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMinMemoryFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
+        frequencyDomainNumber = ZES_FREQ_DOMAIN_MEDIA;
+    }
+    EXPECT_STREQ("", pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMinDefaultFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
     EXPECT_STREQ("device/tile0/physical_vram_size_bytes", pSysmanKmdInterface->getSysfsFilePathForPhysicalMemorySize(0).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq_vram_rp0", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxMemoryFrequency, 0, baseDirectoryExists).c_str());
-    EXPECT_STREQ("device/tile0/gt0/freq_vram_rpn", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinMemoryFrequency, 0, baseDirectoryExists).c_str());
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingSysfsFileNameIfBaseDirectoryDoesNotExistThenEmptyPathIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    bool baseDirectoryExists = false;
+    zes_freq_domain_t frequencyDomainNumber = ZES_FREQ_DOMAIN_MEDIA;
+    EXPECT_STREQ("", pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMaxFrequency, 0, baseDirectoryExists, frequencyDomainNumber).c_str());
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCallingGetPowerLimitFilePathsThenProperPathsAreReturned) {

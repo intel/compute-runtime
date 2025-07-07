@@ -28,6 +28,10 @@ std::string SysmanKmdInterfaceI915Upstream::getBasePath(uint32_t subDeviceId) co
     return getBasePathI915(subDeviceId);
 }
 
+std::string SysmanKmdInterfaceI915Upstream::getBasePathForFreqDomain(uint32_t subDeviceId, zes_freq_domain_t frequencyDomainNumber) const {
+    return getBasePath(subDeviceId);
+}
+
 void SysmanKmdInterfaceI915Upstream::initSysfsNameToFileMap(SysmanProductHelper *pSysmanProductHelper) {
     sysfsNameToFileMap[SysfsName::sysfsNameMinFrequency] = std::make_pair("rps_min_freq_mhz", "gt_min_freq_mhz");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxFrequency] = std::make_pair("rps_max_freq_mhz", "gt_max_freq_mhz");
@@ -81,6 +85,11 @@ std::string SysmanKmdInterfaceI915Upstream::getSysfsFilePath(SysfsName sysfsName
     // All sysfs accesses are expected to be covered
     DEBUG_BREAK_IF(1);
     return {};
+}
+
+std::string SysmanKmdInterfaceI915Upstream::getSysfsPathForFreqDomain(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory,
+                                                                      zes_freq_domain_t frequencyDomainNumber) {
+    return getSysfsFilePath(sysfsName, subDeviceId, prefixBaseDirectory);
 }
 
 std::string SysmanKmdInterfaceI915Upstream::getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) {
@@ -195,6 +204,10 @@ void SysmanKmdInterfaceI915Upstream::setSysmanDeviceDirName(const bool isIntegra
     if (!isIntegratedDevice) {
         updateSysmanDeviceDirName(sysmanDeviceDirName);
     }
+}
+
+std::string SysmanKmdInterfaceI915Upstream::getFreqMediaDomainBasePath() {
+    return "gt/gt1/";
 }
 
 } // namespace Sysman

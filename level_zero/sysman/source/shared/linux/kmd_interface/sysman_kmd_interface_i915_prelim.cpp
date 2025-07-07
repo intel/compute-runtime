@@ -90,6 +90,15 @@ std::string SysmanKmdInterfaceI915Prelim::getSysfsFilePath(SysfsName sysfsName, 
     return {};
 }
 
+std::string SysmanKmdInterfaceI915Prelim::getSysfsPathForFreqDomain(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory,
+                                                                    zes_freq_domain_t frequencyDomainNumber) {
+    return getSysfsFilePath(sysfsName, subDeviceId, prefixBaseDirectory);
+}
+
+std::string SysmanKmdInterfaceI915Prelim::getBasePathForFreqDomain(uint32_t subDeviceId, zes_freq_domain_t frequencyDomainNumber) const {
+    return getBasePath(subDeviceId);
+}
+
 std::string SysmanKmdInterfaceI915Prelim::getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) {
     std::string filePathPhysicalMemorySize = getBasePath(subDeviceId) +
                                              sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange].first;
@@ -248,6 +257,10 @@ void SysmanKmdInterfaceI915Prelim::setSysmanDeviceDirName(const bool isIntegrate
     if (!isIntegratedDevice) {
         updateSysmanDeviceDirName(sysmanDeviceDirName);
     }
+}
+
+std::string SysmanKmdInterfaceI915Prelim::getFreqMediaDomainBasePath() {
+    return "gt/gt1/";
 }
 
 } // namespace Sysman

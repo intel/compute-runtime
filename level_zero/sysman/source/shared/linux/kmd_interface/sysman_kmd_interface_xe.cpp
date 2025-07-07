@@ -35,6 +35,16 @@ std::string SysmanKmdInterfaceXe::getBasePath(uint32_t subDeviceId) const {
     return "device/tile" + std::to_string(subDeviceId) + "/gt" + std::to_string(subDeviceId) + "/";
 }
 
+std::string SysmanKmdInterfaceXe::getBasePathForFreqDomain(uint32_t subDeviceId, zes_freq_domain_t frequencyDomainNumber) const {
+    std::string basePath = "";
+    if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEDIA) {
+        basePath = "device/tile" + std::to_string(subDeviceId) + "/gt" + std::string(mediaDirSuffix) + "/";
+    } else {
+        basePath = getBasePath(subDeviceId);
+    }
+    return basePath;
+}
+
 /*
  *   Power related Syfs Nodes summary For XE supported platforms
  *     1. CARD
@@ -111,6 +121,22 @@ std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, uint32_t
     if (sysfsNameToFileMap.find(sysfsName) != sysfsNameToFileMap.end()) {
         std::string filePath = prefixBaseDirectory ? getBasePath(subDeviceId) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
         return filePath;
+    }
+    // All sysfs accesses are expected to be covered
+    DEBUG_BREAK_IF(1);
+    return {};
+}
+
+std::string SysmanKmdInterfaceXe::getSysfsPathForFreqDomain(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory,
+                                                            zes_freq_domain_t frequencyDomainNumber) {
+    if (sysfsNameToFileMap.find(sysfsName) != sysfsNameToFileMap.end()) {
+        if (frequencyDomainNumber == ZES_FREQ_DOMAIN_MEDIA) {
+            std::string filePath = prefixBaseDirectory ? getBasePathForFreqDomain(subDeviceId, frequencyDomainNumber) + sysfsNameToFileMap[sysfsName].first : sysfsNameToFileMap[sysfsName].second;
+            return filePath;
+        } else {
+            std::string filePath = getSysfsFilePath(sysfsName, subDeviceId, prefixBaseDirectory);
+            return filePath;
+        }
     }
     // All sysfs accesses are expected to be covered
     DEBUG_BREAK_IF(1);
@@ -276,6 +302,10 @@ ze_result_t SysmanKmdInterfaceXe::getBusyAndTotalTicksConfigsForVf(PmuInterface 
     }
 
     return result;
+}
+
+std::string SysmanKmdInterfaceXe::getFreqMediaDomainBasePath() {
+    return "device/tile0/gt1/";
 }
 
 std::string SysmanKmdInterfaceXe::getGpuBindEntry() const {

@@ -375,20 +375,20 @@ void LinuxFrequencyImp::getCurrentVoltage(double &voltage) {
 
 void LinuxFrequencyImp::init() {
 
-    const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
+    const std::string baseDir = pSysmanKmdInterface->getBasePathForFreqDomain(subdeviceId, frequencyDomainNumber);
     bool baseDirectoryExists = false;
 
     if (pSysfsAccess->directoryExists(baseDir)) {
         baseDirectoryExists = true;
     }
 
-    minFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinFrequency, subdeviceId, baseDirectoryExists);
-    maxFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxFrequency, subdeviceId, baseDirectoryExists);
-    requestFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCurrentFrequency, subdeviceId, baseDirectoryExists);
-    actualFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameActualFrequency, subdeviceId, baseDirectoryExists);
-    efficientFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameEfficientFrequency, subdeviceId, baseDirectoryExists);
-    maxValFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxValueFrequency, subdeviceId, baseDirectoryExists);
-    minValFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinValueFrequency, subdeviceId, baseDirectoryExists);
+    minFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMinFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
+    maxFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMaxFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
+    requestFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameCurrentFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
+    actualFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameActualFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
+    efficientFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameEfficientFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
+    maxValFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMaxValueFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
+    minValFreqFile = pSysmanKmdInterface->getSysfsPathForFreqDomain(SysfsName::sysfsNameMinValueFrequency, subdeviceId, baseDirectoryExists, frequencyDomainNumber);
     canControl = pSysmanProductHelper->isFrequencySetRangeSupported();
 
     if (pSysmanKmdInterface->isDefaultFrequencyAvailable()) {
@@ -424,7 +424,8 @@ std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSy
     std::vector<zes_freq_domain_t> freqDomains = {};
     if (areImagesSupported) {
         auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-        const std::string baseDir = "gt/gt1/";
+        auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+        auto baseDir = pSysmanKmdInterface->getFreqMediaDomainBasePath();
         if (pSysfsAccess->directoryExists(baseDir)) {
             freqDomains.push_back(ZES_FREQ_DOMAIN_MEDIA);
         }

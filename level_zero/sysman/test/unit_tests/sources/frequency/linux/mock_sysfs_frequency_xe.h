@@ -20,18 +20,31 @@ namespace Sysman {
 namespace ult {
 
 const std::string minFreqFile("device/tile0/gt0/freq0/min_freq");
+const std::string minFreqFileMedia("device/tile0/gt1/freq0/min_freq");
 const std::string maxFreqFile("device/tile0/gt0/freq0/max_freq");
+const std::string maxFreqFileMedia("device/tile0/gt1/freq0/max_freq");
 const std::string requestFreqFile("device/tile0/gt0/freq0/cur_freq");
+const std::string requestFreqFileMedia("device/tile0/gt1/freq0/cur_freq");
 const std::string actualFreqFile("device/tile0/gt0/freq0/act_freq");
+const std::string actualFreqFileMedia("device/tile0/gt1/freq0/act_freq");
 const std::string efficientFreqFile("device/tile0/gt0/freq0/rpe_freq");
+const std::string efficientFreqFileMedia("device/tile0/gt1/freq0/rpe_freq");
 const std::string maxValFreqFile("device/tile0/gt0/freq0/rp0_freq");
+const std::string maxValFreqFileMedia("device/tile0/gt1/freq0/rp0_freq");
 const std::string minValFreqFile("device/tile0/gt0/freq0/rpn_freq");
+const std::string minValFreqFileMedia("device/tile0/gt1/freq0/rpn_freq");
 const std::string throttleReasonStatusFile("device/tile0/gt0/freq0/throttle/status");
+const std::string throttleReasonStatusFileMedia("device/tile0/gt1/freq0/throttle/status");
 const std::string throttleReasonPL1File("device/tile0/gt0/freq0/throttle/reason_pl1");
+const std::string throttleReasonPL1FileMedia("device/tile0/gt1/freq0/throttle/reason_pl1");
 const std::string throttleReasonPL2File("device/tile0/gt0/freq0/throttle/reason_pl2");
+const std::string throttleReasonPL2FileMedia("device/tile0/gt1/freq0/throttle/reason_pl2");
 const std::string throttleReasonPL4File("device/tile0/gt0/freq0/throttle/reason_pl4");
+const std::string throttleReasonPL4FileMedia("device/tile0/gt1/freq0/throttle/reason_pl4");
 const std::string throttleReasonThermalFile("device/tile0/gt0/freq0/throttle/reason_thermal");
+const std::string throttleReasonThermalFileMedia("device/tile0/gt1/freq0/throttle/reason_thermal");
 const std::string throttleReasonFile("device/tile0/gt0/freq0/throttle_reason");
+const std::string throttleReasonFileMedia("device/tile0/gt1/freq0/throttle_reason");
 
 struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     std::string throttleReason = {};
@@ -66,19 +79,19 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ADDMETHOD_NOBASE(directoryExists, bool, true, (const std::string path));
 
     ze_result_t setValU32(const std::string file, uint32_t val) {
-        if (file.compare(throttleReasonStatusFile) == 0) {
+        if ((file.compare(throttleReasonStatusFile) == 0) || (file.compare(throttleReasonStatusFileMedia) == 0)) {
             throttleVal = val;
         }
-        if (file.compare(throttleReasonPL1File) == 0) {
+        if ((file.compare(throttleReasonPL1File) == 0) || (file.compare(throttleReasonPL1FileMedia) == 0)) {
             throttleReasonPL1Val = val;
         }
-        if (file.compare(throttleReasonPL2File) == 0) {
+        if ((file.compare(throttleReasonPL2File) == 0) || (file.compare(throttleReasonPL2FileMedia) == 0)) {
             throttleReasonPL2Val = val;
         }
-        if (file.compare(throttleReasonPL4File) == 0) {
+        if ((file.compare(throttleReasonPL4File) == 0) || (file.compare(throttleReasonPL4FileMedia) == 0)) {
             throttleReasonPL4Val = val;
         }
-        if (file.compare(throttleReasonThermalFile) == 0) {
+        if ((file.compare(throttleReasonThermalFile) == 0) || (file.compare(throttleReasonThermalFileMedia) == 0)) {
             throttleReasonThermalVal = val;
         }
 
@@ -90,34 +103,34 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
         if (mockReadDoubleValResult != ZE_RESULT_SUCCESS) {
             return mockReadDoubleValResult;
         }
-        if (file.compare(minFreqFile) == 0) {
+        if ((file.compare(minFreqFile) == 0) || (file.compare(minFreqFileMedia) == 0)) {
             val = mockMin;
-        } else if (file.compare(maxFreqFile) == 0) {
+        } else if ((file.compare(maxFreqFile) == 0) || (file.compare(maxFreqFileMedia) == 0)) {
             if (mockReadMaxResult != ZE_RESULT_SUCCESS) {
                 return mockReadMaxResult;
             }
             val = mockMax;
-        } else if (file.compare(requestFreqFile) == 0) {
+        } else if ((file.compare(requestFreqFile) == 0) || (file.compare(requestFreqFileMedia) == 0)) {
             if (mockReadRequestResult != ZE_RESULT_SUCCESS) {
                 return mockReadRequestResult;
             }
             val = mockRequest;
-        } else if (file.compare(actualFreqFile) == 0) {
+        } else if ((file.compare(actualFreqFile) == 0) || (file.compare(actualFreqFileMedia) == 0)) {
             if (mockReadActualResult != ZE_RESULT_SUCCESS) {
                 return mockReadActualResult;
             }
             val = mockActual;
-        } else if (file.compare(efficientFreqFile) == 0) {
+        } else if ((file.compare(efficientFreqFile) == 0) || (file.compare(efficientFreqFileMedia) == 0)) {
             if (mockReadEfficientResult != ZE_RESULT_SUCCESS) {
                 return mockReadEfficientResult;
             }
             val = mockEfficient;
-        } else if (file.compare(maxValFreqFile) == 0) {
+        } else if ((file.compare(maxValFreqFile) == 0) || (file.compare(maxValFreqFileMedia) == 0)) {
             if (mockReadMaxValResult != ZE_RESULT_SUCCESS) {
                 return mockReadMaxValResult;
             }
             val = mockMaxVal;
-        } else if (file.compare(minValFreqFile) == 0) {
+        } else if ((file.compare(minValFreqFile) == 0) || (file.compare(minValFreqFileMedia) == 0)) {
             if (mockReadMinValResult != ZE_RESULT_SUCCESS) {
                 return mockReadMinValResult;
             }
@@ -129,59 +142,59 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     }
 
     ze_result_t setVal(const std::string file, const double val) {
-        if (file.compare(minFreqFile) == 0) {
+        if ((file.compare(minFreqFile) == 0) || (file.compare(minFreqFileMedia) == 0)) {
             if (mockWriteMinResult != ZE_RESULT_SUCCESS) {
                 return mockWriteMinResult;
             }
             mockMin = val;
         }
-        if (file.compare(maxFreqFile) == 0) {
+        if ((file.compare(maxFreqFile) == 0) || (file.compare(maxFreqFileMedia) == 0)) {
             if (mockWriteMaxResult != ZE_RESULT_SUCCESS) {
                 return mockWriteMaxResult;
             }
             mockMax = val;
         }
-        if (file.compare(requestFreqFile) == 0) {
+        if ((file.compare(requestFreqFile) == 0) || (file.compare(requestFreqFileMedia) == 0)) {
             mockRequest = val;
         }
-        if (file.compare(actualFreqFile) == 0) {
+        if ((file.compare(actualFreqFile) == 0) || (file.compare(actualFreqFileMedia) == 0)) {
             mockActual = val;
         }
-        if (file.compare(efficientFreqFile) == 0) {
+        if ((file.compare(efficientFreqFile) == 0) || (file.compare(efficientFreqFileMedia) == 0)) {
             mockEfficient = val;
         }
-        if (file.compare(maxValFreqFile) == 0) {
+        if ((file.compare(maxValFreqFile) == 0) || (file.compare(maxValFreqFileMedia) == 0)) {
             mockMaxVal = val;
         }
-        if (file.compare(minValFreqFile) == 0) {
+        if ((file.compare(minValFreqFile) == 0) || (file.compare(minValFreqFileMedia) == 0)) {
             mockMinVal = val;
         }
         return ZE_RESULT_SUCCESS;
     }
 
     ze_result_t getValU32(const std::string file, uint32_t &val) {
-        if (file.compare(throttleReasonStatusFile) == 0) {
+        if ((file.compare(throttleReasonStatusFile) == 0) || (file.compare(throttleReasonStatusFileMedia) == 0)) {
             val = throttleVal;
         }
-        if (file.compare(throttleReasonPL1File) == 0) {
+        if ((file.compare(throttleReasonPL1File) == 0) || (file.compare(throttleReasonPL1FileMedia) == 0)) {
             if (mockReadPL1Error) {
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
             val = throttleReasonPL1Val;
         }
-        if (file.compare(throttleReasonPL2File) == 0) {
+        if ((file.compare(throttleReasonPL2File) == 0) || (file.compare(throttleReasonPL2FileMedia) == 0)) {
             if (mockReadPL2Error) {
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
             val = throttleReasonPL2Val;
         }
-        if (file.compare(throttleReasonPL4File) == 0) {
+        if ((file.compare(throttleReasonPL4File) == 0) || (file.compare(throttleReasonPL4FileMedia) == 0)) {
             if (mockReadPL4Error) {
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
             val = throttleReasonPL4Val;
         }
-        if (file.compare(throttleReasonThermalFile) == 0) {
+        if ((file.compare(throttleReasonThermalFile) == 0) || (file.compare(throttleReasonThermalFileMedia) == 0)) {
             if (mockReadThermalError) {
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }

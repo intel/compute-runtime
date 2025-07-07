@@ -49,12 +49,19 @@ class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
 
         sysfsAccess = static_cast<MockXeFrequencySysfsAccess *>(pSysmanKmdInterface->pSysfsAccess.get());
         sysfsAccess->setVal(minFreqFile, minFreq);
+        sysfsAccess->setVal(minFreqFileMedia, minFreq);
         sysfsAccess->setVal(maxFreqFile, maxFreq);
+        sysfsAccess->setVal(maxFreqFileMedia, maxFreq);
         sysfsAccess->setVal(requestFreqFile, request);
+        sysfsAccess->setVal(requestFreqFileMedia, request);
         sysfsAccess->setVal(actualFreqFile, actual);
+        sysfsAccess->setVal(actualFreqFileMedia, actual);
         sysfsAccess->setVal(efficientFreqFile, efficient);
+        sysfsAccess->setVal(efficientFreqFileMedia, efficient);
         sysfsAccess->setVal(maxValFreqFile, maxVal);
+        sysfsAccess->setVal(maxValFreqFileMedia, maxVal);
         sysfsAccess->setVal(minValFreqFile, minVal);
+        sysfsAccess->setVal(minValFreqFileMedia, minVal);
         step = 50;
         numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
         for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
