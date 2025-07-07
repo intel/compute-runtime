@@ -127,8 +127,13 @@ ze_result_t ZE_APICALL zeCommandListInstantiateGraphExp(ze_graph_handle_t hGraph
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    if (false == virtualGraph->validForInstantiation()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     auto execGraph = std::make_unique<ExecutableGraph>();
-    execGraph->instantiateFrom(*virtualGraph);
+    GraphInstatiateSettings settings{pNext};
+    execGraph->instantiateFrom(*virtualGraph, settings);
     *phExecutableGraph = execGraph.release();
 
     return ZE_RESULT_SUCCESS;

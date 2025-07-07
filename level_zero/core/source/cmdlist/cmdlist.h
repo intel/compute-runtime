@@ -31,6 +31,7 @@
 #include <map>
 #include <optional>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 struct _ze_command_list_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_COMMAND_LIST> {};
@@ -448,12 +449,13 @@ struct CommandList : _ze_command_list_handle_t {
         return this->captureTarget;
     }
 
+    Graph *releaseCaptureTarget() {
+        return std::exchange(this->captureTarget, nullptr);
+    }
+
     template <CaptureApi api, typename... TArgs>
     ze_result_t capture(TArgs... apiArgs) {
-        if (nullptr == this->captureTarget) {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return this->captureTarget->capture<api>(apiArgs...);
+        return L0::captureCommand<api>(*this, this->captureTarget, apiArgs...);
     }
 
     inline bool getIsWalkerWithProfilingEnqueued() {
