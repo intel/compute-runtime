@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/string.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/ze_api.h"
@@ -98,17 +99,88 @@ struct Closure {
     }
 };
 
+template <class ApiArgsT>
+concept HasPhWaitEvents = requires(ApiArgsT &apiArgs) {
+                              apiArgs.phWaitEvents;
+                          };
+
+template <class ApiArgsT>
+concept HasPhEvents = requires(ApiArgsT &apiArgs) {
+                          apiArgs.phEvents;
+                      };
+
+template <class ApiArgsT>
+concept HasHSignalEvent = requires(ApiArgsT &apiArgs) {
+                              apiArgs.hSignalEvent;
+                          };
+
 template <CaptureApi api, typename... TArgs>
+    requires HasPhWaitEvents<typename Closure<api>::ApiArgs>
 inline std::span<ze_event_handle_t> getCommandsWaitEventsList(TArgs... args) {
     typename Closure<api>::ApiArgs structuredApiArgs{args...};
     return std::span<ze_event_handle_t>{structuredApiArgs.phWaitEvents, structuredApiArgs.numWaitEvents};
 }
 
 template <CaptureApi api, typename... TArgs>
+    requires(HasPhEvents<typename Closure<api>::ApiArgs> && (false == HasPhWaitEvents<typename Closure<api>::ApiArgs>))
+inline std::span<ze_event_handle_t> getCommandsWaitEventsList(TArgs... args) {
+    typename Closure<api>::ApiArgs structuredApiArgs{args...};
+    return std::span<ze_event_handle_t>{structuredApiArgs.phEvents, structuredApiArgs.numEvents};
+}
+
+template <CaptureApi api, typename... TArgs>
+    requires(false == (HasPhEvents<typename Closure<api>::ApiArgs> || HasPhWaitEvents<typename Closure<api>::ApiArgs>))
+inline std::span<ze_event_handle_t> getCommandsWaitEventsList(TArgs... args) {
+    return std::span<ze_event_handle_t>{};
+}
+
+template <CaptureApi api, typename... TArgs>
+    requires HasHSignalEvent<typename Closure<api>::ApiArgs>
 inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
     typename Closure<api>::ApiArgs structuredApiArgs{args...};
     return structuredApiArgs.hSignalEvent;
 }
+
+template <CaptureApi api, typename... TArgs>
+    requires(api == CaptureApi::zeCommandListAppendSignalEvent)
+inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
+    typename Closure<api>::ApiArgs structuredApiArgs{args...};
+    return structuredApiArgs.hEvent;
+}
+
+template <CaptureApi api, typename... TArgs>
+    requires((false == HasHSignalEvent<typename Closure<api>::ApiArgs>) && (api != CaptureApi::zeCommandListAppendSignalEvent))
+inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
+    return nullptr;
+}
+
+struct IndirectArgsWithWaitEvents {
+    IndirectArgsWithWaitEvents() = default;
+    template <typename ApiArgsT>
+        requires HasPhWaitEvents<ApiArgsT>
+    IndirectArgsWithWaitEvents(const ApiArgsT &apiArgs) {
+        waitEvents.reserve(apiArgs.numWaitEvents);
+        for (uint32_t i = 0; i < apiArgs.numWaitEvents; ++i) {
+            waitEvents.push_back(apiArgs.phWaitEvents[i]);
+        }
+    }
+
+    template <typename ApiArgsT>
+        requires(HasPhEvents<ApiArgsT> && (false == HasPhWaitEvents<ApiArgsT>))
+    IndirectArgsWithWaitEvents(const ApiArgsT &apiArgs) {
+        waitEvents.reserve(apiArgs.numEvents);
+        for (uint32_t i = 0; i < apiArgs.numEvents; ++i) {
+            waitEvents.push_back(apiArgs.phEvents[i]);
+        }
+    }
+
+    StackVec<ze_event_handle_t, 8> waitEvents;
+};
+
+struct EmptyIndirectArgs {
+    template <typename ApiArgsT>
+    EmptyIndirectArgs(const ApiArgsT &apiArgs) {}
+};
 
 template <>
 struct Closure<CaptureApi::zeCommandListAppendMemoryCopy> {
@@ -124,11 +196,10 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryCopy> {
         ze_event_handle_t *phWaitEvents;
     } apiArgs;
 
-    struct IndirectArgs {
-        StackVec<ze_event_handle_t, 8> waitEvents;
-    } indirectArgs;
+    using IndirectArgs = IndirectArgsWithWaitEvents;
+    IndirectArgs indirectArgs;
 
-    Closure(const ApiArgs &apiArgs);
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
 
     ze_result_t instantiateTo(CommandList &executionTarget) const;
 };
@@ -144,18 +215,17 @@ struct Closure<CaptureApi::zeCommandListAppendBarrier> {
         ze_event_handle_t *phWaitEvents;
     } apiArgs;
 
-    struct IndirectArgs {
-        StackVec<ze_event_handle_t, 8> waitEvents;
-    } indirectArgs;
+    using IndirectArgs = IndirectArgsWithWaitEvents;
+    IndirectArgs indirectArgs;
 
-    Closure(const ApiArgs &apiArgs);
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
 
     ze_result_t instantiateTo(CommandList &executionTarget) const;
 };
 
 template <>
 struct Closure<CaptureApi::zeCommandListAppendWaitOnEvents> {
-    inline static constexpr bool isSupported = true;
+    static constexpr bool isSupported = true;
 
     struct ApiArgs {
         ze_command_list_handle_t hCommandList;
@@ -163,24 +233,469 @@ struct Closure<CaptureApi::zeCommandListAppendWaitOnEvents> {
         ze_event_handle_t *phEvents;
     } apiArgs;
 
-    struct IndirectArgs {
-        StackVec<ze_event_handle_t, 8> waitEvents;
-    } indirectArgs;
+    using IndirectArgs = IndirectArgsWithWaitEvents;
+    IndirectArgs indirectArgs;
 
-    Closure(const ApiArgs &apiArgs);
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
 
     ze_result_t instantiateTo(CommandList &executionTarget) const;
 };
 
 template <>
-inline std::span<ze_event_handle_t> getCommandsWaitEventsList<CaptureApi::zeCommandListAppendWaitOnEvents>(ze_command_list_handle_t, uint32_t numEvents, ze_event_handle_t *phEvents) {
-    return std::span<ze_event_handle_t>{phEvents, numEvents};
-}
+struct Closure<CaptureApi::zeCommandListAppendWriteGlobalTimestamp> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        uint64_t *dstptr;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    using IndirectArgs = IndirectArgsWithWaitEvents;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
 
 template <>
-inline ze_event_handle_t getCommandsSignalEvent<CaptureApi::zeCommandListAppendWaitOnEvents>(ze_command_list_handle_t, uint32_t numEvents, ze_event_handle_t *phEvents) {
-    return nullptr;
-}
+struct Closure<CaptureApi::zeCommandListAppendMemoryRangesBarrier> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        uint32_t numRanges;
+        const size_t *pRangeSizes;
+        const void **pRanges;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            rangeSizes.resize(apiArgs.numRanges);
+            ranges.resize(apiArgs.numRanges);
+            std::copy_n(apiArgs.pRangeSizes, apiArgs.numRanges, rangeSizes.begin());
+            std::copy_n(apiArgs.pRanges, apiArgs.numRanges, ranges.begin());
+        }
+        StackVec<size_t, 1> rangeSizes;
+        StackVec<const void *, 1> ranges;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendMemoryFill> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        void *ptr;
+        const void *pattern;
+        size_t patternSize;
+        size_t size;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            pattern.resize(apiArgs.patternSize);
+            memcpy_s(pattern.data(), pattern.size(), apiArgs.pattern, apiArgs.patternSize);
+        }
+        StackVec<uint8_t, 16> pattern;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendMemoryCopyRegion> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        void *dstptr;
+        const ze_copy_region_t *dstRegion;
+        uint32_t dstPitch;
+        uint32_t dstSlicePitch;
+        const void *srcptr;
+        const ze_copy_region_t *srcRegion;
+        uint32_t srcPitch;
+        uint32_t srcSlicePitch;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            dstRegion = *apiArgs.dstRegion;
+            srcRegion = *apiArgs.srcRegion;
+        }
+        ze_copy_region_t dstRegion;
+        ze_copy_region_t srcRegion;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendMemoryCopyFromContext> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        void *dstptr;
+        ze_context_handle_t hContextSrc;
+        const void *srcptr;
+        size_t size;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    using IndirectArgs = IndirectArgsWithWaitEvents;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendImageCopy> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        ze_image_handle_t hDstImage;
+        ze_image_handle_t hSrcImage;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    using IndirectArgs = IndirectArgsWithWaitEvents;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendImageCopyRegion> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        ze_image_handle_t hDstImage;
+        ze_image_handle_t hSrcImage;
+        const ze_image_region_t *pDstRegion;
+        const ze_image_region_t *pSrcRegion;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            dstRegion = *apiArgs.pDstRegion;
+            srcRegion = *apiArgs.pSrcRegion;
+        }
+        ze_image_region_t dstRegion;
+        ze_image_region_t srcRegion;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendImageCopyToMemory> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        void *dstptr;
+        ze_image_handle_t hSrcImage;
+        const ze_image_region_t *pSrcRegion;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            srcRegion = *apiArgs.pSrcRegion;
+        }
+        ze_image_region_t srcRegion;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendImageCopyFromMemory> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        ze_image_handle_t hDstImage;
+        const void *srcptr;
+        const ze_image_region_t *pDstRegion;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            dstRegion = *apiArgs.pDstRegion;
+        }
+        ze_image_region_t dstRegion;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendMemoryPrefetch> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        const void *ptr;
+        size_t size;
+    } apiArgs;
+
+    using IndirectArgs = EmptyIndirectArgs;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendMemAdvise> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        ze_device_handle_t hDevice;
+        const void *ptr;
+        size_t size;
+        ze_memory_advice_t advice;
+    } apiArgs;
+
+    using IndirectArgs = EmptyIndirectArgs;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendSignalEvent> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        ze_event_handle_t hEvent;
+    } apiArgs;
+
+    using IndirectArgs = EmptyIndirectArgs;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendEventReset> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        ze_event_handle_t hEvent;
+    } apiArgs;
+
+    using IndirectArgs = EmptyIndirectArgs;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        uint32_t numEvents;
+        ze_event_handle_t *phEvents;
+        void *dstptr;
+        const size_t *pOffsets;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            events.resize(apiArgs.numEvents);
+            offsets.resize(apiArgs.numEvents);
+            std::copy_n(apiArgs.phEvents, apiArgs.numEvents, events.begin());
+            if (apiArgs.pOffsets) {
+                std::copy_n(apiArgs.pOffsets, apiArgs.numEvents, offsets.begin());
+            }
+        }
+
+        StackVec<ze_event_handle_t, 1> events;
+        StackVec<size_t, 1> offsets;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        uint32_t numSemaphores;
+        ze_external_semaphore_ext_handle_t *phSemaphores;
+        ze_external_semaphore_signal_params_ext_t *signalParams;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            semaphores.resize(apiArgs.numSemaphores);
+            std::copy_n(apiArgs.phSemaphores, apiArgs.numSemaphores, semaphores.begin());
+            signalParams = *apiArgs.signalParams;
+        }
+        StackVec<ze_external_semaphore_ext_handle_t, 1> semaphores;
+        ze_external_semaphore_signal_params_ext_t signalParams;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        uint32_t numSemaphores;
+        ze_external_semaphore_ext_handle_t *phSemaphores;
+        ze_external_semaphore_wait_params_ext_t *waitParams;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            semaphores.resize(apiArgs.numSemaphores);
+            std::copy_n(apiArgs.phSemaphores, apiArgs.numSemaphores, semaphores.begin());
+            waitParams = *apiArgs.waitParams;
+        }
+        StackVec<ze_external_semaphore_ext_handle_t, 1> semaphores;
+        ze_external_semaphore_wait_params_ext_t waitParams;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendImageCopyToMemoryExt> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        void *dstptr;
+        ze_image_handle_t hSrcImage;
+        const ze_image_region_t *pSrcRegion;
+        uint32_t destRowPitch;
+        uint32_t destSlicePitch;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            srcRegion = *apiArgs.pSrcRegion;
+        }
+        ze_image_region_t srcRegion;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        ze_image_handle_t hDstImage;
+        const void *srcptr;
+        const ze_image_region_t *pDstRegion;
+        uint32_t srcRowPitch;
+        uint32_t srcSlicePitch;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs) : IndirectArgsWithWaitEvents(apiArgs) {
+            dstRegion = *apiArgs.pDstRegion;
+        }
+        ze_image_region_t dstRegion;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
 
 using ClosureVariants = std::variant<
 #define RR_CAPTURED_API(X) Closure<CaptureApi::X>,

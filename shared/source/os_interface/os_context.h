@@ -62,7 +62,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
                                              bool &startInContext);
     virtual void reInitializeContext() {}
 
-    inline static constexpr uint8_t getUmdPowerHintMax() { return NEO::OsContext::powerHintMax; }
+    static constexpr uint8_t getUmdPowerHintMax() { return NEO::OsContext::powerHintMax; }
     uint8_t getUmdPowerHintValue() { return powerHintValue; }
     void setUmdPowerHintValue(uint8_t powerHintValue) { this->powerHintValue = powerHintValue; }
 

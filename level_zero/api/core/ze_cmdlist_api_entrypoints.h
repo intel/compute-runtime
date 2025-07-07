@@ -51,7 +51,7 @@ ze_result_t zeCommandListAppendWriteGlobalTimestamp(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     auto cmdList = L0::CommandList::fromHandle(hCommandList);
-    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>(hCommandList, hSignalEvent, numWaitEvents, phWaitEvents);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>(hCommandList, dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
     }

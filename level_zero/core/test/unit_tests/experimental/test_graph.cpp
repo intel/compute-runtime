@@ -379,6 +379,8 @@ TEST(GraphTestApiCapture, GivenCommandListInRecordStateThenCaptureCommandsInstea
     zet_kernel_handle_t kernel = nullptr;
     ze_external_semaphore_ext_handle_t sem = nullptr;
     ze_event_handle_t eventHandle = &event;
+    ze_external_semaphore_signal_params_ext_t semSignalParams = {};
+    ze_external_semaphore_wait_params_ext_t semWaitParams = {};
     uint32_t kernelCount = 1;
 
     uint64_t memA[16] = {};
@@ -397,46 +399,62 @@ TEST(GraphTestApiCapture, GivenCommandListInRecordStateThenCaptureCommandsInstea
     ze_group_count_t groupCount = {1, 1, 1};
 
     L0::Graph graph(&ctx, true);
-    auto err = ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &graph, nullptr);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, err);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &graph, nullptr));
 
-    err = L0::zeCommandListAppendBarrier(&cmdlist, nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
-
-    err = L0::zeCommandListAppendMemoryCopy(&cmdlist, memA, memB, sizeof(memA), nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
-
-    err = L0::zeCommandListAppendWaitOnEvents(&cmdlist, 1, &eventHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
-
-    ASSERT_EQ(3U, graph.getCapturedCommands().size());
-    EXPECT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(graph.getCapturedCommands()[0].index()));
-    EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryCopy, static_cast<CaptureApi>(graph.getCapturedCommands()[1].index()));
-    EXPECT_EQ(CaptureApi::zeCommandListAppendWaitOnEvents, static_cast<CaptureApi>(graph.getCapturedCommands()[2].index()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendBarrier(&cmdlist, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopy(&cmdlist, memA, memB, sizeof(memA), nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWaitOnEvents(&cmdlist, 1, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWriteGlobalTimestamp(&cmdlist, memA, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryRangesBarrier(&cmdlist, 1, &rangeSize, &memRange, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryFill(&cmdlist, memA, memB, 4, sizeof(memA), nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopyRegion(&cmdlist, memA, &copyRegion, 16, 16, memB, &copyRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopyFromContext(&cmdlist, memA, &otherCtx, memB, 4, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopy(&cmdlist, imgA, imgB, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyRegion(&cmdlist, imgA, imgB, &imgRegion, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemory(&cmdlist, memA, imgA, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemory(&cmdlist, imgA, memA, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryPrefetch(&cmdlist, memA, 4));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemAdvise(&cmdlist, device, memA, 4, ZE_MEMORY_ADVICE_BIAS_CACHED));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendSignalEvent(&cmdlist, &event));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendEventReset(&cmdlist, &event));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendQueryKernelTimestamps(&cmdlist, 1, &eventHandle, memA, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendSignalExternalSemaphoreExt(&cmdlist, 1, &sem, &semSignalParams, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWaitExternalSemaphoreExt(&cmdlist, 1, &sem, &semWaitParams, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemoryExt(&cmdlist, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemoryExt(&cmdlist, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
 
     // temporarily unsupported
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendWriteGlobalTimestamp(&cmdlist, memA, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendMemoryRangesBarrier(&cmdlist, 1, &rangeSize, &memRange, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendMemoryFill(&cmdlist, memA, memB, 4, sizeof(memA), nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendMemoryCopyRegion(&cmdlist, memA, &copyRegion, 16, 16, memB, &copyRegion, 16, 16, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendMemoryCopyFromContext(&cmdlist, memA, &otherCtx, memB, 4, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendImageCopy(&cmdlist, imgA, imgB, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendImageCopyRegion(&cmdlist, imgA, imgB, &imgRegion, &imgRegion, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendImageCopyToMemory(&cmdlist, memA, imgA, &imgRegion, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendImageCopyFromMemory(&cmdlist, imgA, memA, &imgRegion, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendMemoryPrefetch(&cmdlist, memA, 4));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendMemAdvise(&cmdlist, device, memA, 4, ZE_MEMORY_ADVICE_BIAS_CACHED));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendSignalEvent(&cmdlist, &event));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendEventReset(&cmdlist, &event));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendQueryKernelTimestamps(&cmdlist, 1, &eventHandle, memA, nullptr, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchKernel(&cmdlist, kernel, &groupCount, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchCooperativeKernel(&cmdlist, kernel, &groupCount, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchKernelIndirect(&cmdlist, kernel, &groupCount, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchMultipleKernelsIndirect(&cmdlist, 1, &kernel, &kernelCount, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendSignalExternalSemaphoreExt(&cmdlist, 1, &sem, nullptr, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendWaitExternalSemaphoreExt(&cmdlist, 1, &sem, nullptr, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendImageCopyToMemoryExt(&cmdlist, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendImageCopyFromMemoryExt(&cmdlist, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
+
+    ze_graph_handle_t hgraph = &graph;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(&cmdlist, &hgraph, nullptr));
+
+    ASSERT_EQ(21U, graph.getCapturedCommands().size());
+    uint32_t i = 0;
+    EXPECT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryCopy, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendWaitOnEvents, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendWriteGlobalTimestamp, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryRangesBarrier, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryFill, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryCopyRegion, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryCopyFromContext, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendImageCopy, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendImageCopyRegion, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendImageCopyToMemory, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendImageCopyFromMemory, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryPrefetch, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendMemAdvise, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendSignalEvent, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendEventReset, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendQueryKernelTimestamps, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendImageCopyToMemoryExt, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendImageCopyFromMemoryExt, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
 }
 
 TEST(GraphForks, GivenUnknownChildCommandlistThenJoinDoesNothing) {
@@ -695,25 +713,57 @@ TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandli
     };
 
     MockContextSpecificCmdList ctx;
+    MockContextSpecificCmdList otherCtx;
     Mock<CommandList> cmdlist;
     Mock<Event> event;
+    ze_image_handle_t imgA = nullptr;
+    ze_image_handle_t imgB = nullptr;
+    zes_device_handle_t device = nullptr;
+    ze_external_semaphore_ext_handle_t sem = nullptr;
     ze_event_handle_t eventHandle = &event;
+    ze_external_semaphore_signal_params_ext_t semSignalParams = {};
+    ze_external_semaphore_wait_params_ext_t semWaitParams = {};
 
     uint64_t memA[16] = {};
     uint64_t memB[16] = {};
+    const void *memRange = memA;
+    size_t rangeSize = 4;
+    ze_copy_region_t copyRegion = {};
+    copyRegion.width = 1;
+    copyRegion.height = 1;
+    copyRegion.depth = 1;
+    ze_image_region_t imgRegion = {};
+    imgRegion.width = 1;
+    imgRegion.height = 1;
+    imgRegion.depth = 1;
 
     L0::Graph srcGraph(&ctx, true);
-    auto err = ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &srcGraph, nullptr);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, err);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &srcGraph, nullptr));
 
-    err = L0::zeCommandListAppendBarrier(&cmdlist, nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendBarrier(&cmdlist, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopy(&cmdlist, memA, memB, sizeof(memA), nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWaitOnEvents(&cmdlist, 1, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWriteGlobalTimestamp(&cmdlist, memA, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryRangesBarrier(&cmdlist, 1, &rangeSize, &memRange, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryFill(&cmdlist, memA, memB, 4, sizeof(memA), nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopyRegion(&cmdlist, memA, &copyRegion, 16, 16, memB, &copyRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopyFromContext(&cmdlist, memA, &otherCtx, memB, 4, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopy(&cmdlist, imgA, imgB, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyRegion(&cmdlist, imgA, imgB, &imgRegion, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemory(&cmdlist, memA, imgA, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemory(&cmdlist, imgA, memA, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryPrefetch(&cmdlist, memA, 4));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemAdvise(&cmdlist, device, memA, 4, ZE_MEMORY_ADVICE_BIAS_CACHED));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendSignalEvent(&cmdlist, &event));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendEventReset(&cmdlist, &event));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendQueryKernelTimestamps(&cmdlist, 1, &eventHandle, memA, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendSignalExternalSemaphoreExt(&cmdlist, 1, &sem, &semSignalParams, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWaitExternalSemaphoreExt(&cmdlist, 1, &sem, &semWaitParams, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemoryExt(&cmdlist, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemoryExt(&cmdlist, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
 
-    err = L0::zeCommandListAppendMemoryCopy(&cmdlist, memA, memB, sizeof(memA), nullptr, 0, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
-
-    err = L0::zeCommandListAppendWaitOnEvents(&cmdlist, 1, &eventHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, err);
+    ze_graph_handle_t hgraph = &srcGraph;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(&cmdlist, &hgraph, nullptr));
 
     std::unique_ptr<Mock<CommandList>> graphHwCommands{new Mock<CommandList>()};
     ctx.cmdListToReturn = graphHwCommands.get();
@@ -722,10 +772,46 @@ TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandli
     EXPECT_EQ(0U, graphHwCommands->appendBarrierCalled);
     EXPECT_EQ(0U, graphHwCommands->appendMemoryCopyCalled);
     EXPECT_EQ(0U, graphHwCommands->appendWaitOnEventsCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendWriteGlobalTimestampCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendMemoryRangesBarrierCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendMemoryFillCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendMemoryCopyRegionCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendMemoryCopyFromContextCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendImageCopyCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendImageCopyRegionCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendImageCopyToMemoryCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendImageCopyFromMemoryCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendMemoryPrefetchCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendMemAdviseCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendSignalEventCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendEventResetCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendQueryKernelTimestampsCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendSignalExternalSemaphoresCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendWaitExternalSemaphoresCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendImageCopyToMemoryExtCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendImageCopyFromMemoryExtCalled);
     execGraph.instantiateFrom(srcGraph);
     EXPECT_EQ(1U, graphHwCommands->appendBarrierCalled);
     EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyCalled);
     EXPECT_EQ(1U, graphHwCommands->appendWaitOnEventsCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendWriteGlobalTimestampCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendMemoryRangesBarrierCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendMemoryFillCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyRegionCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyFromContextCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendImageCopyCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendImageCopyRegionCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendImageCopyToMemoryCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendImageCopyFromMemoryCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendMemoryPrefetchCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendMemAdviseCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendSignalEventCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendEventResetCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendQueryKernelTimestampsCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendSignalExternalSemaphoresCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendWaitExternalSemaphoresCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendImageCopyToMemoryExtCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendImageCopyFromMemoryExtCalled);
 
     graphHwCommands.release();
 }
