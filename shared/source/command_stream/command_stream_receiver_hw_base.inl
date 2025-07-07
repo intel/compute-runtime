@@ -2342,6 +2342,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::handleBatchedDispatchImplicitFlu
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressHeapless(Device &device, LinearStream &commandStream) {
+}
+
+template <typename GfxFamily>
 inline BatchBuffer CommandStreamReceiverHw<GfxFamily>::prepareBatchBufferForSubmission(LinearStream &commandStreamTask,
                                                                                        size_t commandStreamStartTask,
                                                                                        LinearStream &commandStreamCSR,
