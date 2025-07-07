@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -464,7 +464,14 @@ BOOL verQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUIN
     }
     return FALSE;
 }
-
+LPWCH mockEnvStringsW = nullptr;
+BOOL mockFreeEnvStringsWResult = TRUE;
+LPWCH getEnvironmentStringsW() {
+    return mockEnvStringsW;
+}
+BOOL freeEnvironmentStringsW(LPWCH) {
+    return mockFreeEnvStringsWResult;
+}
 } // namespace SysCalls
 
 bool isShutdownInProgress() {

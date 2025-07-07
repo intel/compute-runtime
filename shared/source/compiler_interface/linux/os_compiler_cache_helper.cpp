@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,8 +14,10 @@
 
 #include "os_inc.h"
 
+#include <cstring>
 #include <dlfcn.h>
 #include <link.h>
+#include <unistd.h>
 
 namespace NEO {
 bool createCompilerCachePath(std::string &cacheDir) {
@@ -80,5 +82,15 @@ size_t getFileSize(const std::string &path) {
         return static_cast<size_t>(st.st_size);
     }
     return 0u;
+}
+
+bool isAnyIgcEnvVarSet() {
+    char **envp = NEO::SysCalls::getEnviron();
+    for (int i = 0; envp && envp[i] != nullptr; i++) {
+        if (strncmp(envp[i], "IGC_", 4) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 } // namespace NEO

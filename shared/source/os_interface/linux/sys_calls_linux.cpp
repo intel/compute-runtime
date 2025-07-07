@@ -34,7 +34,9 @@
 namespace NEO {
 
 namespace SysCalls {
-
+char **getEnviron() {
+    return environ;
+}
 void exit(int code) {
     std::exit(code);
 }

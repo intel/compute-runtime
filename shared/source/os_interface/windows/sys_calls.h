@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,10 @@ DWORD getFileVersionInfoSizeW(LPCWSTR lptstrFilename, LPDWORD lpdwHandle);
 BOOL getFileVersionInfoW(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
 BOOL verQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);
 DWORD getLastError();
-
+extern LPWCH mockEnvStringsW;
+extern BOOL mockFreeEnvStringsWResult;
+LPWCH getEnvironmentStringsW();
+BOOL freeEnvironmentStringsW(LPWCH);
 } // namespace SysCalls
 
 } // namespace NEO
