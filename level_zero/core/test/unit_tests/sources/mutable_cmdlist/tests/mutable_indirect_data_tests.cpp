@@ -175,5 +175,24 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(data[2], gwsCrossThread[1]);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableIndirectDataTest,
+            givenInlineDataWhenSettingDimensionDataInInlineThenDataSetInInline) {
+    constexpr L0::MCL::CrossThreadDataOffset inlineSize = 64;
+
+    this->crossThreadDataSize = 256;
+    this->inlineSize = inlineSize;
+
+    undefineOffsets();
+    this->offsets.workDimensions = 8;
+    createMutableIndirectOffset();
+
+    uint32_t workDimensions = 2;
+    this->indirectData->setWorkDimensions(workDimensions);
+
+    auto workDimensionsInline = reinterpret_cast<uint32_t *>(ptrOffset(this->inlineData.get(), this->offsets.workDimensions));
+    EXPECT_EQ(workDimensions, workDimensionsInline[0]);
+}
+
 } // namespace ult
 } // namespace L0

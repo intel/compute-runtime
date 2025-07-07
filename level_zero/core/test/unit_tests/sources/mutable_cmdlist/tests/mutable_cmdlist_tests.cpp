@@ -26,6 +26,16 @@ using MutableCommandListTest = Test<MutableCommandListFixture<false>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
+            givenInvalidProductWhenCreatingCommandListThenNoObjectCreated) {
+    ze_result_t returnValue;
+
+    auto mcl = MutableCommandList::create(IGFX_MAX_PRODUCT, device, this->engineGroupType, 0, returnValue, false);
+    EXPECT_EQ(nullptr, mcl);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, returnValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
             givenMutableCommandListWhenGettingCommandIdThenGetCorrectFlags) {
     EXPECT_EQ(0u, mutableCommandList->nextCommandId);
     EXPECT_FALSE(mutableCommandList->nextAppendKernelMutable);
@@ -192,6 +202,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
     itUsm1 = std::find_if(whiteBoxAllocations.addedAllocations.begin(),
                           whiteBoxAllocations.addedAllocations.end(),
                           [&usm1Allocation](const L0::MCL::AllocationReference &ref) {
@@ -224,6 +237,56 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
+            givenMutableCommandListWhenAppendingKernelWithImageArgumentThenNoVariableCreated) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+
+    // set kernel arg 0 => image, buffer
+    resizeKernelArg(2);
+    NEO::ArgDescriptor kernelArgImage = {NEO::ArgDescriptor::argTImage};
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0] = kernelArgImage;
+
+    prepareKernelArg(1, L0::MCL::VariableType::buffer, kernelAllMask);
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[1].getTraits().addressQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier::AddrConstant;
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // only buffer created
+    ASSERT_EQ(1u, mutation.variables.size());
+    // at index 1
+    EXPECT_EQ(1u, mutation.variables[0].kernelArguments.argIndex);
+}
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListWhenAppendingKernelWithOnlySlmArgumentThenSlmVariableCreated) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+
+    // set kernel arg 0 => slm
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::slmBuffer, kernelAllMask);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, mutation.variables.size());
+    EXPECT_EQ(0u, mutation.variables[0].kernelArguments.argIndex);
+    EXPECT_EQ(L0::MCL::VariableType::slmBuffer, mutation.variables[0].var->getType());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
             givenMutableCommandListAndKernelBufferNullArgumentsWhenAppendingKernelAndMutatingIntoNullOrBufferKernelArgumentsThenCorrectValuesPatched) {
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
 
@@ -247,7 +310,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     // set kernel arg 0,1,=> buffer1, buffer2
     resizeKernelArg(2);
     prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0].getTraits().addressQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier::AddrUnknown;
     prepareKernelArg(1, L0::MCL::VariableType::buffer, kernelAllMask);
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[1].getTraits().addressQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier::AddrUnknown;
 
     result = kernel->setArgBuffer(0, sizeof(void *), &usm1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -414,6 +479,71 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     memcpy(&valueVariablePatchValue, immediatePatchFullAddress, sizeof(uint32_t));
     EXPECT_EQ(value2, valueVariablePatchValue);
+
+    kernelBufferArg.pNext = nullptr;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
+    EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoKernelArgumentsFlagSelectedWhenAppendingKernelAndMutatingArgumentsThenErrorIsReturned) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &kernelBufferArg;
+
+    kernelBufferArg.argIndex = 0;
+    kernelBufferArg.argSize = sizeof(void *);
+    kernelBufferArg.commandId = commandId;
+    kernelBufferArg.pArgValue = nullptr;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoKernelArgumentAtGivenIndexWhenAppendingKernelAndMutatingArgumentsThenErrorIsReturned) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &kernelBufferArg;
+
+    kernelBufferArg.argIndex = 0;
+    kernelBufferArg.argSize = sizeof(void *);
+    kernelBufferArg.commandId = commandId;
+    kernelBufferArg.pArgValue = nullptr;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -474,6 +604,74 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(mutatedGroupCount.groupCountZ, numWorkGroupsBuffer[2]);
 
     EXPECT_EQ(3u, *workDimBuffer);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoGroupCountFlagSelectedWhenAppendingKernelAndMutatingGroupCountThenErrorIsReturned) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &groupCountDesc;
+
+    ze_group_count_t mutatedGroupCount = {8, 2, 2};
+
+    groupCountDesc.commandId = commandId;
+    groupCountDesc.pGroupCount = &mutatedGroupCount;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoGroupCountVariableAvailableWhenAppendingKernelAndMutatingGroupCountThenErrorIsReturned) {
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (auto &varDesc : mutation.variables) {
+        if (varDesc.varType == static_cast<uint32_t>(ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT)) {
+            varDesc.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+        }
+    }
+
+    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &groupCountDesc;
+
+    ze_group_count_t mutatedGroupCount = {8, 2, 2};
+
+    groupCountDesc.commandId = commandId;
+    groupCountDesc.pGroupCount = &mutatedGroupCount;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -542,6 +740,72 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
+            givenMutableCommandListAndNoGroupSizeFlagSelectedWhenAppendingKernelAndMutatingGroupSizeThenErrorIsReturned) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &groupSizeDesc;
+
+    groupSizeDesc.commandId = commandId;
+    groupSizeDesc.groupSizeX = 1;
+    groupSizeDesc.groupSizeY = 1;
+    groupSizeDesc.groupSizeZ = 2;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoGroupSizeVariableAvailableWhenAppendingKernelAndMutatingGroupSizeThenErrorIsReturned) {
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE | ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (auto &varDesc : mutation.variables) {
+        if (varDesc.varType == static_cast<uint32_t>(ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE)) {
+            varDesc.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+        }
+    }
+
+    ze_mutable_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &groupSizeDesc;
+
+    groupSizeDesc.commandId = commandId;
+    groupSizeDesc.groupSizeX = 1;
+    groupSizeDesc.groupSizeY = 1;
+    groupSizeDesc.groupSizeZ = 2;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
             givenMutableCommandListWhenKernelDispatchIsSelectedToMutateGlobalOffsetThenUpdatePayloadUponMutation) {
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
 
@@ -592,6 +856,72 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(mutatedGlobalOffsetX, globalOffsetBuffer[0]);
     EXPECT_EQ(mutatedGlobalOffsetY, globalOffsetBuffer[1]);
     EXPECT_EQ(mutatedGlobalOffsetZ, globalOffsetBuffer[2]);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoGlobalOffsetFlagSelectedWhenAppendingKernelAndMutatingGlobalOffsetThenErrorIsReturned) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_global_offset_exp_desc_t globalOffsetDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &globalOffsetDesc;
+
+    globalOffsetDesc.commandId = commandId;
+    globalOffsetDesc.offsetX = 1;
+    globalOffsetDesc.offsetY = 2;
+    globalOffsetDesc.offsetZ = 3;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoGlobalOffsetVariableAvailableWhenAppendingKernelAndMutatingGlobalOffsetThenErrorIsReturned) {
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET | ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (auto &varDesc : mutation.variables) {
+        if (varDesc.varType == static_cast<uint32_t>(ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET)) {
+            varDesc.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+        }
+    }
+
+    ze_mutable_global_offset_exp_desc_t globalOffsetDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXP_DESC};
+
+    mutableCommandsDesc.pNext = &globalOffsetDesc;
+
+    globalOffsetDesc.commandId = commandId;
+    globalOffsetDesc.offsetX = 1;
+    globalOffsetDesc.offsetY = 2;
+    globalOffsetDesc.offsetZ = 3;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -805,6 +1135,66 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(newEventAddress, walkerPostSyncAddress);
+
+    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
+    EXPECT_EQ(newEventAddress, walkerPostSyncAddress);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoSignalEventFlagSelectedWhenAppendingKernelAndMutatingSignalEventThenErrorIsReturned) {
+    auto originalEvent = createTestEvent(false, false, false, false);
+    auto mutatedEvent = createTestEvent(false, false, false, false);
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, originalEvent->toHandle(), 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, mutatedEvent->toHandle());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoSignalEventVariableAvailableWhenAppendingKernelAndMutatingSignalEventThenErrorIsReturned) {
+    auto originalEvent = createTestEvent(false, false, false, false);
+    auto mutatedEvent = createTestEvent(false, false, false, false);
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, originalEvent->toHandle(), 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (auto &varDesc : mutation.variables) {
+        if (varDesc.varType == static_cast<uint32_t>(ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT)) {
+            varDesc.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+        }
+    }
+
+    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, mutatedEvent->toHandle());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1011,6 +1401,51 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
+            givenKernelWithWaitRegularEventAndPrefetchEnabledWhenMutatedIntoDifferentEventThenDataIsUpdated) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    debugManager.flags.EnableMemoryPrefetch.set(1);
+
+    auto event = createTestEvent(false, false, false, false);
+    auto eventHandle = event->toHandle();
+    auto newEvent = createTestEvent(false, false, false, false);
+    auto newEventHandle = newEvent->toHandle();
+
+    // mutation point
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // use event 1 as wait event
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+
+    auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+    auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+    auto waitAddress = event->getCompletionFieldGpuAddress(this->device);
+    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
+    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
             givenKernelWithWaitRegularEventWhenNoopAndMutateIntoEventThenDataIsUpdatedAndCommandNoopedAndRestored) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
@@ -1191,6 +1626,104 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     // semaphore wait command for mutated event remains the same
     EXPECT_EQ(waitAddress2, semWait2Cmd->getSemaphoreGraphicsAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoWaitEventFlagSelectedWhenAppendingKernelAndMutatingWaitEventThenErrorIsReturned) {
+    auto originalEvent = createTestEvent(false, false, false, false);
+    auto originalHandle = originalEvent->toHandle();
+    auto mutatedEvent = createTestEvent(false, false, false, false);
+    auto mutatedHandle = mutatedEvent->toHandle();
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &originalHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &mutatedHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListAndNoWaitEventVariableAvailableWhenAppendingKernelAndMutatingWaitEventThenErrorIsReturned) {
+    auto originalEvent = createTestEvent(false, false, false, false);
+    auto originalHandle = originalEvent->toHandle();
+    auto mutatedEvent = createTestEvent(false, false, false, false);
+    auto mutatedHandle = mutatedEvent->toHandle();
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &originalHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (auto &varDesc : mutation.variables) {
+        if (varDesc.varType == static_cast<uint32_t>(ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS)) {
+            varDesc.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+        }
+    }
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &mutatedHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenNotSupportedKernelLaunchModeWhenMutationPointActiveThenErrorCodeReturned) {
+    mutableCommandIdDesc.flags = 0;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    this->testLaunchParams.isBuiltInKernel = true;
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+
+    this->testLaunchParams.isBuiltInKernel = false;
+    this->testLaunchParams.isIndirect = true;
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenNotSupportedKernelLaunchModeWhenMutationPointNotActiveThenSuccessCodeReturned) {
+    this->testLaunchParams.isBuiltInKernel = true;
+    auto result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    this->testLaunchParams.isBuiltInKernel = false;
+    this->testLaunchParams.isIndirect = true;
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenNotSupportedKernelFlagsWhenAppendingKernelThenErrorCodeReturned) {
+    mutableCommandIdDesc.flags = 0;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE, result);
 }
 
 using MutableCommandListInOrderTest = Test<MutableCommandListFixture<true>>;

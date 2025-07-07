@@ -21,6 +21,15 @@ using MutableCommandListKernelTest = Test<MutableCommandListFixture<false>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
+            givenNoKernelsWhenKernelIsaMutationFlagSelectedThenErrorReturned) {
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
             givenTwoKernelsWhenFirstAppendedAndSecondMutatedThenDataIsChangedAndCommandIsPatched) {
     using WalkerType = typename FamilyType::PorWalkerType;
 
@@ -388,6 +397,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(maxIsaSize, mutation.kernelGroup->getMaxIsaSize());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenTwoKernelsWithCompatibleKernelFlagsWhenProvidingKernelsToGroupThenErrorReturned) {
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE, result);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE, result);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesPrintf = false;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = true;
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE, result);
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = false;
+    this->module->allocatePrivateMemoryPerDispatch = true;
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE, result);
+}
+
 HWTEST2_F(MutableCommandListKernelTest,
           givenPrefetchEnabledWhenAppendCalledThenSetAllRequiredParams,
           IsAtLeastXeHpcCore) {
@@ -548,6 +582,59 @@ HWTEST2_F(MutableCommandListKernelTest,
         ASSERT_NE(nullptr, noopCmd);
         itor++;
     }
+}
+
+HWTEST2_F(MutableCommandListKernelTest,
+          givenKernelsWithScratchWhenKernelIsAppendedThenScratchPatchIndexIsUndefined,
+          IsWithinXeCoreAndXe3Core) {
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x100;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = 0x200;
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_NE(0u, mutableCommandList->mutations.size());
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+    EXPECT_TRUE(mutation.kernelGroup->isScratchNeeded());
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto scratchPatchIndex = mutation.kernelGroup->getScratchAddressPatchIndex();
+    EXPECT_TRUE(isUndefined(scratchPatchIndex));
+}
+
+HWTEST2_F(MutableCommandListKernelTest,
+          givenKernelsWithScratchWhenKernelIsAppendedThenScratchMethodsTakeNoAction,
+          IsWithinXeCoreAndXe3Core) {
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x100;
+    mockKernelImmData2->kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = 0x200;
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_NE(0u, mutableCommandList->mutations.size());
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+    EXPECT_TRUE(mutation.kernelGroup->isScratchNeeded());
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    constexpr size_t scratchPatchIndex = 0;
+
+    auto &kernelsInGroup = mutation.kernelGroup->getKernelsInGroup();
+    ASSERT_EQ(2u, kernelsInGroup.size());
+    mutableCommandList->updateCmdListScratchPatchCommand(scratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker());
+    mutableCommandList->updateScratchAddress(scratchPatchIndex, *kernelsInGroup[0]->getMutableComputeWalker(), *kernelsInGroup[1]->getMutableComputeWalker());
+
+    auto scratchPatchAddress = mutableCommandList->getCurrentScratchPatchAddress(scratchPatchIndex);
+    EXPECT_EQ(0u, scratchPatchAddress);
 }
 
 } // namespace ult

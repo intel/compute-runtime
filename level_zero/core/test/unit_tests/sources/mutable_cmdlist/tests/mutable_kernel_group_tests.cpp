@@ -127,5 +127,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(expectedCrossThreadSize, actualCrossThreadDataSize);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableKernelGroupTest,
+            givenMutableKernelGroupWhenSettingScratchPatchIndexThenIndexIsSet) {
+    using WalkerType = typename FamilyType::PorWalkerType;
+
+    createMutableComputeWalker<FamilyType, WalkerType>();
+    createMutableKernelGroup();
+
+    size_t scratchIndex = 2;
+    mockMutableKernelGroup->setScratchAddressPatchIndex(2);
+    EXPECT_EQ(scratchIndex, mockMutableKernelGroup->getScratchAddressPatchIndex());
+}
+
 } // namespace ult
 } // namespace L0

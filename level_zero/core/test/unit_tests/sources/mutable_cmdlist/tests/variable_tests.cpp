@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/variable_fixture.h"
 
@@ -47,6 +48,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     const void *argValue = &groupCountValues;
 
     Variable *groupCount = getVariable(L0::MCL::VariableType::groupCount);
+    EXPECT_EQ(groupCount, this->variableDispatch->getGroupCountVar());
 
     auto ret = groupCount->setValue(kernelDispatchVariableSize, 0, argValue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -107,6 +109,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(groupCountValues[2], numWorkGroupsPatch[2]);
     EXPECT_EQ(groupCountValues[2], globalWorkSizePatch[2]);
 
+    groupCountValues[0] = 4;
+    groupCountValues[1] = 1;
+    groupCountValues[2] = 1;
+    ret = groupCount->setValue(kernelDispatchVariableSize, 0, argValue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_TRUE(groupCount->desc.commitRequired);
+    EXPECT_TRUE(this->variableDispatch->doCommitVariableDispatch());
+
+    groupCount->commitVariable();
+    EXPECT_EQ(1u, *workDimPatch);
+
     ret = groupCount->setValue(kernelDispatchVariableSize, 0, argValue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
@@ -166,6 +179,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     const void *argValue = &groupSizeValues;
 
     Variable *groupSize = getVariable(L0::MCL::VariableType::groupSize);
+    EXPECT_EQ(groupSize, this->variableDispatch->getGroupSizeVar());
+
+    auto &mclKernelExt = L0::MCL::MclKernelExt::get(this->kernel.get());
+    mclKernelExt.setGroupSizeVariable(groupSize);
+    EXPECT_EQ(groupSize, mclKernelExt.getGroupSizeVariable());
 
     auto ret = groupSize->setValue(kernelDispatchVariableSize, 0, argValue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -386,6 +404,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     const void *argValue = &globalOffsetValues;
 
     Variable *globalOffset = getVariable(L0::MCL::VariableType::globalOffset);
+    EXPECT_EQ(globalOffset, this->variableDispatch->getGlobalOffsetVar());
 
     auto ret = globalOffset->setValue(kernelDispatchVariableSize, 0, argValue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -615,6 +634,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     createVariableDispatch(false, false, false, true);
     Variable *slmArgument = getVariable(L0::MCL::VariableType::slmBuffer);
+    EXPECT_EQ(slmArgument, this->variableDispatch->getLastSlmArgumentVariable());
+
     EXPECT_EQ(nullptr, slmArgument->slmValue.nextSlmVariable);
     EXPECT_EQ(0u, slmArgument->slmValue.slmOffsetValue);
 
@@ -893,6 +914,39 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     slmLastArgument->commitVariable();
     EXPECT_EQ(slmFirstSize + slmSecondSize, this->kernelDispatch->slmTotalSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
+            givenGroupCountAndSizeAndGlobalOffsetVariablesWhenPassingIncorrectVariableToDispatchThenErrorIsReturned) {
+    Variable *groupCount = nullptr;
+    Variable *groupSize = nullptr;
+
+    createVariable(L0::MCL::VariableType::groupCount, false, -1, -1);
+    groupCount = getVariable(L0::MCL::VariableType::groupCount);
+    createVariable(L0::MCL::VariableType::groupSize, false, -1, -1);
+    groupSize = getVariable(L0::MCL::VariableType::groupSize);
+
+    this->kernelDispatch = std::make_unique<::L0::MCL::KernelDispatch>();
+
+    uint32_t initialGroupCount[3] = {1, 1, 1};
+    uint32_t initialGroupSize[3] = {1, 1, 1};
+    uint32_t initialGlobalOffset[3] = {1, 1, 1};
+
+    L0::MCL::MutableKernelDispatchParameters dispatchParams = {
+        initialGroupCount,   // groupCount
+        initialGroupSize,    // groupSize
+        initialGlobalOffset, // globalOffset
+    };
+
+    auto result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), groupCount, nullptr, nullptr, nullptr, nullptr, dispatchParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), nullptr, groupSize, nullptr, nullptr, nullptr, dispatchParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = this->mutableCommandList->addVariableDispatch(*this->mockKernelImmData->kernelDescriptor, *kernelDispatch.get(), nullptr, nullptr, groupCount, nullptr, nullptr, dispatchParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1215,6 +1269,77 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
+            givenBufferVariableWhenImageArgIsSetAsKernelArgInVariableThenErrorIsReturned) {
+    resizeKernelArg(1);
+    NEO::ArgDescriptor kernelArgImage = {NEO::ArgDescriptor::argTImage};
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0] = kernelArgImage;
+
+    createVariable(L0::MCL::VariableType::buffer, true, -1, -1);
+
+    auto ret = this->variable->setAsKernelArg(this->kernelHandle, 0);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
+            givenBufferVariableWhenArgIndexUsedBiggerThanMaxArgSizeThenErrorIsReturned) {
+    resizeKernelArg(1);
+
+    createVariable(L0::MCL::VariableType::buffer, true, -1, -1);
+
+    auto ret = this->variable->setAsKernelArg(this->kernelHandle, 255);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
+            givenBufferVariableNotDefinedStateWhenAddKernelArgUsageThenErrorIsReturned) {
+    createVariable(L0::MCL::VariableType::buffer, true, -1, -1);
+    this->variable->desc.state = L0::MCL::VariableDescriptor::State::declared;
+
+    L0::MCL::IndirectObjectHeapOffset relativeIohOffset = 0;
+    L0::MCL::CommandBufferOffset relativeWalkerOffset = 0;
+
+    auto ret = this->variable->addKernelArgUsage(this->kernelArgPtr,
+                                                 relativeIohOffset, reinterpret_cast<L0::MCL::IndirectObjectHeapOffset>(this->cmdListIndirectCpuBase),
+                                                 undefined<L0::MCL::SurfaceStateHeapOffset>,
+                                                 0, 0,
+                                                 relativeWalkerOffset, this->mutableComputeWalker.get(),
+                                                 this->inlineData);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
+            givenWaitVariableWhenAddKernelArgUsageThenErrorIsReturned) {
+    createVariable(L0::MCL::VariableType::waitEvent, true, -1, -1);
+
+    L0::MCL::IndirectObjectHeapOffset relativeIohOffset = 0;
+    L0::MCL::CommandBufferOffset relativeWalkerOffset = 0;
+
+    auto ret = this->variable->addKernelArgUsage(this->kernelArgPtr,
+                                                 relativeIohOffset, reinterpret_cast<L0::MCL::IndirectObjectHeapOffset>(this->cmdListIndirectCpuBase),
+                                                 undefined<L0::MCL::SurfaceStateHeapOffset>,
+                                                 0, 0,
+                                                 relativeWalkerOffset, this->mutableComputeWalker.get(),
+                                                 this->inlineData);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
+            givenBufferVariableWhenSetAsWaitEventThenErrorIsReturned) {
+    auto event = this->createTestEvent(true, false, false, false);
+    ASSERT_NE(nullptr, event);
+
+    createVariable(L0::MCL::VariableType::buffer, true, -1, -1);
+
+    auto ret = this->variable->setAsWaitEvent(event);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableInOrderTest,
             givenSignalEventRegularNoCounterBasedSignalScopeTimestampWhenMutatingVariableThenNewPostSyncAddressSet) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -1358,6 +1483,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(inOrderPatchCmds[0].skipPatching);
     if (this->qwordIndirect) {
         EXPECT_TRUE(inOrderPatchCmds[1].skipPatching);
+    }
+
+    this->mutableCommandList->enablePatching(0);
+    EXPECT_FALSE(inOrderPatchCmds[0].skipPatching);
+    if (this->qwordIndirect) {
+        this->mutableCommandList->enablePatching(1);
+        EXPECT_FALSE(inOrderPatchCmds[1].skipPatching);
     }
 }
 

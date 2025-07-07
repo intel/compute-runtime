@@ -106,6 +106,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(generateLocalId, cpuBuffer->getGenerateLocalId());
     EXPECT_EQ(walkOrder, cpuBuffer->getWalkOrder());
 
+    walkOrder = 3;
+    mutableWalker->setGenerateLocalId(generateLocalId, walkOrder, 3);
+    EXPECT_EQ(0u, cpuBuffer->getEmitLocalId());
+    EXPECT_EQ(generateLocalId, cpuBuffer->getGenerateLocalId());
+    EXPECT_EQ(walkOrder, cpuBuffer->getWalkOrder());
+
     this->stageCommit = false;
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, true);
     cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
