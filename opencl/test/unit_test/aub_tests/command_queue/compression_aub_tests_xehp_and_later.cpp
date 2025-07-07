@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,12 @@ struct CompressionXeHPAndLater : public AUBFixture,
     void SetUp() override {
         REQUIRE_64BIT_OR_SKIP();
 
+        auto &ftrTable = defaultHwInfo->featureTable;
+        if ((!ftrTable.flags.ftrFlatPhysCCS) ||
+            (!ftrTable.flags.ftrLocalMemory && useLocalMemory)) {
+            GTEST_SKIP();
+        }
+
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         debugManager.flags.RenderCompressedBuffersEnabled.set(true);
         debugManager.flags.RenderCompressedImagesEnabled.set(true);
@@ -55,11 +61,6 @@ struct CompressionXeHPAndLater : public AUBFixture,
             GTEST_SKIP();
         }
 
-        auto &ftrTable = device->getHardwareInfo().featureTable;
-        if ((!ftrTable.flags.ftrFlatPhysCCS) ||
-            (!ftrTable.flags.ftrLocalMemory && useLocalMemory)) {
-            GTEST_SKIP();
-        }
         context->contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
     }
     void TearDown() override {
