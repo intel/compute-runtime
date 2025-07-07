@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ enum RelocTypeZebin : uint32_t {
 };
 
 namespace SectionNames {
+inline constexpr ConstStringRef text = ".text";
 inline constexpr ConstStringRef textPrefix = ".text.";
 inline constexpr ConstStringRef functions = ".text.Intel_Symbol_Table_Void_Program";
 inline constexpr ConstStringRef dataConst = ".data.const";

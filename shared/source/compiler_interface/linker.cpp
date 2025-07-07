@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
+#include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -191,7 +192,7 @@ bool LinkerInput::addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegme
     relocationInfo.relocationSegmentName = sectionName;
 
     if (SegmentType::instructions == relocationInfo.relocationSegment) {
-        auto kernelName = sectionName.substr(Zebin::Elf::SectionNames::textPrefix.length());
+        auto kernelName = Zebin::getKernelNameFromSectionName(ConstStringRef(sectionName)).str();
         if (auto instructionSegmentId = getInstructionSegmentId(nameToSegmentId, kernelName)) {
             addElfTextSegmentRelocation(relocationInfo, *instructionSegmentId);
             parseRelocationForExtFuncUsage(relocationInfo, kernelName);
@@ -247,7 +248,7 @@ bool LinkerInput::addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentId
             traits.exportsGlobalConstants |= isConstDataSegment(segment);
         }
     } else if (symbolType == Elf::STT_FUNC) {
-        auto kernelName = symbolSectionName.substr(NEO::Zebin::Elf::SectionNames::textPrefix.length());
+        auto kernelName = Zebin::getKernelNameFromSectionName(ConstStringRef(symbolSectionName)).str();
         if (auto segId = getInstructionSegmentId(nameToSegmentId, kernelName)) {
             symbolInfo.instructionSegmentId = *segId;
         } else {
@@ -696,7 +697,7 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
         } else if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == perThreadOff) {
             RelocatedSymbol<SymbolInfo> symbol;
 
-            auto kernelName = outUnresolvedExternals[vecIndex].unresolvedRelocation.relocationSegmentName.substr(Zebin::Elf::SectionNames::textPrefix.length());
+            auto kernelName = Zebin::getKernelNameFromSectionName(ConstStringRef(outUnresolvedExternals[vecIndex].unresolvedRelocation.relocationSegmentName)).str();
 
             auto kernelDescriptor = std::find_if(kernelDescriptors.begin(), kernelDescriptors.end(), [&kernelName](const KernelDescriptor *obj) { return obj->kernelMetadata.kernelName == kernelName; });
             if (kernelDescriptor != std::end(kernelDescriptors)) {

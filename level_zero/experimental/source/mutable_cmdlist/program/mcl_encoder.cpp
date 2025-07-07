@@ -391,7 +391,7 @@ void MclEncoder::parseZebin(ArrayRef<const uint8_t> zebin) {
                 dataVar = data;
             } else if (secNameRef == SectionNames::dataConstString) {
                 dataString = data;
-            } else if (secNameRef == SectionNames::functions) {
+            } else if ((secNameRef == SectionNames::functions) || (secNameRef == SectionNames::text)) {
                 refExternalFunctions = data;
             }
         }

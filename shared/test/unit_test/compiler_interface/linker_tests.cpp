@@ -446,29 +446,31 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeObjectPointingToDataConstSectionWh
 }
 
 TEST(LinkerInputTests, GivenGlobalSymbolOfTypeFuncPointingToFunctionsSectionWhenDecodingElfThenTraitExportsFunctionsIsSetAndExportedFunctionsSegmentIdIsSet) {
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    for (auto functionsSectionName : {Zebin::Elf::SectionNames::functions, Zebin::Elf::SectionNames::text}) {
+        MockElf<NEO::Elf::EI_CLASS_64> elf64;
 
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
-    sectionNames[1] = Zebin::Elf::SectionNames::functions.str();
-    elf64.setupSecionNames(std::move(sectionNames));
-    elf64.overrideSymbolName = true;
+        std::unordered_map<uint32_t, std::string> sectionNames;
+        sectionNames[0] = ".text.abc";
+        sectionNames[1] = functionsSectionName.str();
+        elf64.setupSecionNames(std::move(sectionNames));
+        elf64.overrideSymbolName = true;
 
-    elf64.addSymbol(0, 0, 32, 1, Elf::STT_FUNC, Elf::STB_GLOBAL);
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0},
-                                                                  {Zebin::Elf::SectionNames::externalFunctions.str(), 1}};
+        elf64.addSymbol(0, 0, 32, 1, Elf::STT_FUNC, Elf::STB_GLOBAL);
+        NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0},
+                                                                      {Zebin::Elf::SectionNames::externalFunctions.str(), 1}};
 
-    NEO::LinkerInput linkerInput = {};
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-    EXPECT_TRUE(linkerInput.isValid());
-    EXPECT_TRUE(linkerInput.getTraits().exportsFunctions);
-    EXPECT_EQ(1, linkerInput.getExportedFunctionsSegmentId());
-    auto &symbol = linkerInput.getSymbols().at("0");
-    EXPECT_EQ(0U, symbol.offset);
-    EXPECT_EQ(32U, symbol.size);
-    EXPECT_EQ(SegmentType::instructions, symbol.segment);
-    EXPECT_EQ(1U, symbol.instructionSegmentId);
-    EXPECT_TRUE(symbol.global);
+        NEO::LinkerInput linkerInput = {};
+        linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+        EXPECT_TRUE(linkerInput.isValid());
+        EXPECT_TRUE(linkerInput.getTraits().exportsFunctions);
+        EXPECT_EQ(1, linkerInput.getExportedFunctionsSegmentId()) << functionsSectionName.str();
+        auto &symbol = linkerInput.getSymbols().at("0");
+        EXPECT_EQ(0U, symbol.offset);
+        EXPECT_EQ(32U, symbol.size);
+        EXPECT_EQ(SegmentType::instructions, symbol.segment);
+        EXPECT_EQ(1U, symbol.instructionSegmentId);
+        EXPECT_TRUE(symbol.global);
+    }
 }
 
 TEST(LinkerInputTests, GivenGlobalSymbolOfTypeDifferentThantObjectOrFuncWhenDecodingElfThenItIsIgnored) {
@@ -607,40 +609,42 @@ TEST(LinkerInputTests, GivenGlobalDataRelocationWithLocalSymbolPointingToConstDa
 }
 
 TEST(LinkerInputTests, GivenInstructionRelocationWithLocalSymbolPointingToFunctionsWhendDecodingElfThenRelocationsInfoAndSymbolInfoAreCreated) {
-    NEO::LinkerInput linkerInput = {};
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+    for (auto functionsSectionName : {Zebin::Elf::SectionNames::functions, Zebin::Elf::SectionNames::text}) {
+        NEO::LinkerInput linkerInput = {};
+        MockElf<NEO::Elf::EI_CLASS_64> elf64;
 
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
-    sectionNames[1] = Zebin::Elf::SectionNames::functions.str();
+        std::unordered_map<uint32_t, std::string> sectionNames;
+        sectionNames[0] = ".text.abc";
+        sectionNames[1] = functionsSectionName.str();
 
-    elf64.setupSecionNames(std::move(sectionNames));
-    elf64.addReloc(64, 10, Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
+        elf64.setupSecionNames(std::move(sectionNames));
+        elf64.addReloc(64, 10, Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
 
-    elf64.overrideSymbolName = true;
-    elf64.addSymbol(0, 0x10, 0x40, 1, Elf::STT_FUNC, Elf::STB_LOCAL);
+        elf64.overrideSymbolName = true;
+        elf64.addSymbol(0, 0x10, 0x40, 1, Elf::STT_FUNC, Elf::STB_LOCAL);
 
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0},
-                                                                  {Zebin::Elf::SectionNames::externalFunctions.str(), 1}};
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-    EXPECT_TRUE(linkerInput.isValid());
-    auto &symbol = linkerInput.getSymbols().at("0");
-    EXPECT_FALSE(symbol.global);
-    EXPECT_EQ(0x10U, symbol.offset);
-    EXPECT_EQ(0x40U, symbol.size);
-    EXPECT_EQ(SegmentType::instructions, symbol.segment);
-    EXPECT_EQ(1U, symbol.instructionSegmentId);
+        NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0},
+                                                                      {Zebin::Elf::SectionNames::externalFunctions.str(), 1}};
+        linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+        EXPECT_TRUE(linkerInput.isValid());
+        auto &symbol = linkerInput.getSymbols().at("0");
+        EXPECT_FALSE(symbol.global);
+        EXPECT_EQ(0x10U, symbol.offset);
+        EXPECT_EQ(0x40U, symbol.size);
+        EXPECT_EQ(SegmentType::instructions, symbol.segment);
+        EXPECT_EQ(1U, symbol.instructionSegmentId);
 
-    auto &instructionRelocsPerSeg = linkerInput.getRelocationsInInstructionSegments();
-    EXPECT_EQ(1U, instructionRelocsPerSeg.size());
-    auto &relocations = instructionRelocsPerSeg[0];
-    EXPECT_EQ(1U, relocations.size());
-    EXPECT_EQ(64U, relocations[0].offset);
-    EXPECT_EQ(10U, relocations[0].addend);
-    EXPECT_EQ(SegmentType::instructions, relocations[0].relocationSegment);
-    EXPECT_EQ("0", relocations[0].symbolName);
-    EXPECT_EQ(LinkerInput::RelocationInfo::Type::address, relocations[0].type);
-    EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfInstructionSegments);
+        auto &instructionRelocsPerSeg = linkerInput.getRelocationsInInstructionSegments();
+        EXPECT_EQ(1U, instructionRelocsPerSeg.size());
+        auto &relocations = instructionRelocsPerSeg[0];
+        EXPECT_EQ(1U, relocations.size());
+        EXPECT_EQ(64U, relocations[0].offset);
+        EXPECT_EQ(10U, relocations[0].addend);
+        EXPECT_EQ(SegmentType::instructions, relocations[0].relocationSegment);
+        EXPECT_EQ("0", relocations[0].symbolName);
+        EXPECT_EQ(LinkerInput::RelocationInfo::Type::address, relocations[0].type);
+        EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfInstructionSegments);
+    }
 }
 
 using LinkerTests = Test<DeviceFixture>;

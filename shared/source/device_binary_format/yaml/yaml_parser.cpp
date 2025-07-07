@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,7 +122,10 @@ bool isValidInlineCollectionFormat(const char *context, const char *contextEnd) 
         if (isWhitespace(*context)) {
             context++;
         } else if (false == endNum) {
-            if (isAlphaNumeric(*context)) {
+            if (*context == ']') {
+                context++;
+                endCollection = true;
+            } else if (isAlphaNumeric(*context)) {
                 consumeAlphaNum(context);
                 endNum = true;
             } else {

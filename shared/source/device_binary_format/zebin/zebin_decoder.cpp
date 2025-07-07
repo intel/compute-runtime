@@ -242,6 +242,8 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
         case Elf::SHT_PROGBITS:
             if (sectionName.startsWith(Elf::SectionNames::textPrefix.data())) {
                 out.textKernelSections.push_back(&elfSectionHeader);
+            } else if (sectionName == Elf::SectionNames::text) {
+                out.textSections.push_back(&elfSectionHeader);
             } else if (sectionName == Elf::SectionNames::dataConst) {
                 out.constDataSections.push_back(&elfSectionHeader);
             } else if (sectionName == Elf::SectionNames::dataGlobalConst) {
@@ -254,7 +256,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
             } else if (sectionName.startsWith(Elf::SectionNames::debugPrefix.data())) {
                 // ignoring intentionally
             } else {
-                outErrReason.append("DeviceBinaryFormat::zebin : Unhandled SHT_PROGBITS section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::textPrefix.str() + "KERNEL_NAME, " + Elf::SectionNames::dataConst.str() + ", " + Elf::SectionNames::dataGlobal.str() + " and " + Elf::SectionNames::debugPrefix.str() + "* .\n");
+                outErrReason.append("DeviceBinaryFormat::zebin : Unhandled SHT_PROGBITS section : " + sectionName.str() + " currently supports only : " + Elf::SectionNames::text.str() + " (aliased to " + Elf::SectionNames::functions.str() + "), " + Elf::SectionNames::textPrefix.str() + "KERNEL_NAME, " + Elf::SectionNames::dataConst.str() + ", " + Elf::SectionNames::dataGlobal.str() + " and " + Elf::SectionNames::debugPrefix.str() + "* .\n");
                 return DecodeError::invalidBinary;
             }
             break;
@@ -339,6 +341,7 @@ DecodeError validateZebinSectionsCount(const ZebinSections<numBits> &sections, s
     valid &= validateZebinSectionsCountAtMost(sections.symtabSections, Elf::SectionNames::symtab, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.spirvSections, Elf::SectionNames::spv, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.noteIntelGTSections, Elf::SectionNames::noteIntelGT, 1U, outErrReason, outWarning);
+    valid &= validateZebinSectionsCountAtMost(sections.textSections, Elf::SectionNames::text, 1U, outErrReason, outWarning);
     return valid ? DecodeError::success : DecodeError::invalidBinary;
 }
 
@@ -358,6 +361,18 @@ ConstStringRef getZeInfoFromZebin(const ArrayRef<const uint8_t> zebin, std::stri
     return Elf::isElf<Elf::EI_CLASS_32>(zebin)
                ? extractZeInfoMetadataString<Elf::EI_CLASS_32>(zebin, outErrReason, outWarning)
                : extractZeInfoMetadataString<Elf::EI_CLASS_64>(zebin, outErrReason, outWarning);
+}
+
+template <Elf::ElfIdentifierClass numBits>
+void handleTextSection(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, ZebinSections<numBits> &zebinSections) {
+    if (zebinSections.textSections.empty()) {
+        return;
+    }
+
+    zebinSections.textKernelSections.push_back(zebinSections.textSections[0]);
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = NEO::Zebin::Elf::SectionNames::externalFunctions.str();
+    dst.kernelInfos.push_back(kernelInfo.release());
 }
 
 template DecodeError decodeZebin<Elf::EI_CLASS_32>(ProgramInfo &dst, NEO::Elf::Elf<Elf::EI_CLASS_32> &elf, std::string &outErrReason, std::string &outWarning);
@@ -420,6 +435,8 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
         return decodeZeInfoError;
     }
 
+    handleTextSection(dst, elf, zebinSections);
+
     for (auto &kernelInfo : dst.kernelInfos) {
         ConstStringRef kernelName(kernelInfo->kernelDescriptor.kernelMetadata.kernelName);
         auto kernelInstructions = getKernelHeap(kernelName, elf, zebinSections);
@@ -457,12 +474,20 @@ ArrayRef<const uint8_t> getKernelHeap(ConstStringRef &kernelName, Elf::Elf<numBi
     ConstStringRef sectionHeaderNamesString(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());
     for (auto *textSection : zebinSections.textKernelSections) {
         ConstStringRef sectionName = ConstStringRef(sectionHeaderNamesString.begin() + textSection->header->name);
-        auto sufix = sectionName.substr(static_cast<int>(Elf::SectionNames::textPrefix.length()));
-        if (sufix == kernelName) {
+        if (getKernelNameFromSectionName(sectionName) == kernelName) {
             return textSection->data;
         }
     }
     return {};
+}
+
+ConstStringRef getKernelNameFromSectionName(ConstStringRef sectionName) {
+    if (sectionName.startsWith(NEO::Zebin::Elf::SectionNames::textPrefix)) {
+        return sectionName.substr(NEO::Zebin::Elf::SectionNames::textPrefix.length());
+    } else {
+        DEBUG_BREAK_IF(sectionName != NEO::Zebin::Elf::SectionNames::text);
+        return Zebin::Elf::SectionNames::externalFunctions;
+    }
 }
 
 template ArrayRef<const uint8_t> getKernelGtpinInfo<Elf::EI_CLASS_32>(ConstStringRef &kernelName, Elf::Elf<Elf::EI_CLASS_32> &elf, const ZebinSections<Elf::EI_CLASS_32> &zebinSections);

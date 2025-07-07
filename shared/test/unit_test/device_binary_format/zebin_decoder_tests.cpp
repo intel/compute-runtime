@@ -150,12 +150,13 @@ TEST(ExtractZebinSections, GivenUnknownElfProgbitsSectionThenFail) {
     auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, decodeError);
     EXPECT_TRUE(warnings.empty()) << warnings;
-    auto expectedError = "DeviceBinaryFormat::zebin : Unhandled SHT_PROGBITS section : someSection currently supports only : .text.KERNEL_NAME, .data.const, .data.global and .debug_* .\n";
+    auto expectedError = "DeviceBinaryFormat::zebin : Unhandled SHT_PROGBITS section : someSection currently supports only : .text (aliased to .text.Intel_Symbol_Table_Void_Program), .text.KERNEL_NAME, .data.const, .data.global and .debug_* .\n";
     EXPECT_STREQ(expectedError, errors.c_str());
 }
 
 TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     NEO::Elf::ElfEncoder<> elfEncoder;
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::text, std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someKernel", std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someOtherKernel", std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, std::string{});
@@ -189,6 +190,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_TRUE(errors.empty()) << errors;
 
+    ASSERT_EQ(1U, sections.textSections.size());
     ASSERT_EQ(2U, sections.textKernelSections.size());
     ASSERT_EQ(2U, sections.gtpinInfoSections.size());
 
@@ -204,6 +206,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
 
     auto stringSection = decodedElf.sectionHeaders[decodedElf.elfFileHeader->shStrNdx];
     const char *strings = stringSection.data.toArrayRef<const char>().begin();
+    EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::text.data(), strings + sections.textSections[0]->header->name);
     EXPECT_STREQ((NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someKernel").c_str(), strings + sections.textKernelSections[0]->header->name);
     EXPECT_STREQ((NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someOtherKernel").c_str(), strings + sections.textKernelSections[1]->header->name);
     EXPECT_STREQ((NEO::Zebin::Elf::SectionNames::gtpinInfo.str() + "someKernel").c_str(), strings + sections.gtpinInfoSections[0]->header->name);
@@ -4408,6 +4411,23 @@ TEST(DecodeZebinTest, givenGtpinInfoSectionsWhenDecodingZebinThenProperlySetIgcI
     EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_EQ(0, memcmp(reinterpret_cast<const uint8_t *>(kernelInfo1->igcInfoForGtpin), mockGtpinData1.data(), mockGtpinData1.size()));
     EXPECT_EQ(0, memcmp(reinterpret_cast<const uint8_t *>(kernelInfo2->igcInfoForGtpin), mockGtpinData2.data(), mockGtpinData2.size()));
+}
+
+TEST(DecodeZebinTest, givenTextSectionThenTreatItAsExternalFunctions) {
+    std::string errors, warnings;
+    ZebinTestData::ValidEmptyProgram zebin;
+    const uint8_t data[0x10]{0u};
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someOtherKernel", ArrayRef<const uint8_t>::fromAny(data, 0x10));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::text, ArrayRef<const uint8_t>::fromAny(data, 0x10));
+
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::ProgramInfo programInfo;
+    auto err = decodeZebin(programInfo, elf, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    ASSERT_EQ(2U, programInfo.kernelInfos.size());
+    EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::externalFunctions.data(), programInfo.kernelInfos[1]->kernelDescriptor.kernelMetadata.kernelName.c_str());
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenValidExecutionEnvironmentThenPopulateKernelDescriptorProperly) {
