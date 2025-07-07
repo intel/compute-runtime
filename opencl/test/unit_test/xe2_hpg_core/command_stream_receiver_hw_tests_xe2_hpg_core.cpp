@@ -689,8 +689,7 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenCompressibleDstBuffersWhenAppendBlitCommand
     const auto &rootDeviceEnvironment = context->getDevice(0)->getRootDeviceEnvironment();
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, rootDeviceEnvironment);
 
-    auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-    auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    auto compressionFormat = 2;
 
     EXPECT_EQ(compressionFormat, bltCmd->getCompressionFormat());
 }
@@ -723,8 +722,7 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenCompressibleSrcBuffersWhenAppendBlitCommand
     const auto &rootDeviceEnvironment = context->getDevice(0)->getRootDeviceEnvironment();
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, rootDeviceEnvironment);
 
-    auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-    auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    auto compressionFormat = 2;
 
     EXPECT_EQ(compressionFormat, bltCmd->getCompressionFormat());
 }

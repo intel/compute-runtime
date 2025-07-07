@@ -578,7 +578,7 @@ HWTEST2_F(BlitTests, givenXe2HpgCoreWhenDstGraphicAlloctionWhenAppendBlitCommand
     BlitProperties properties = {};
     DebugManagerStateRestore dbgRestore;
 
-    uint32_t newCompressionFormat = 1;
+    uint32_t newCompressionFormat = 2;
     debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
@@ -620,7 +620,7 @@ HWTEST2_F(BlitTests, givenXe2HpgCoreWhenDstGraphicAlloctionAndStatelessFlagSetAn
     BlitProperties properties = {};
     DebugManagerStateRestore dbgRestore;
 
-    uint32_t newCompressionFormat = 1;
+    uint32_t newCompressionFormat = 2;
     debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
@@ -641,7 +641,7 @@ HWTEST2_F(BlitTests, givenXe2HpgCoreWhenSrcGraphicAlloctionWhenAppendBlitCommand
     BlitProperties properties = {};
     DebugManagerStateRestore dbgRestore;
 
-    uint32_t newCompressionFormat = 1;
+    uint32_t newCompressionFormat = 2;
     debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
@@ -683,7 +683,7 @@ HWTEST2_F(BlitTests, givenXe2HpgCoreWhenSrcGraphicAlloctionAndStatelessFlagSetAn
     BlitProperties properties = {};
     DebugManagerStateRestore dbgRestore;
 
-    uint32_t newCompressionFormat = 1;
+    uint32_t newCompressionFormat = 2;
     debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
