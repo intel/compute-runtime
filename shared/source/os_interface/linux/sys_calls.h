@@ -59,5 +59,6 @@ long sysconf(int name);
 int mkfifo(const char *pathname, mode_t mode);
 int pidfdopen(pid_t pid, unsigned int flags);
 int pidfdgetfd(int pidfd, int targetfd, unsigned int flags);
+char **getEnviron();
 } // namespace SysCalls
 } // namespace NEO

@@ -16,6 +16,9 @@
 #include <unistd.h>
 #include <vector>
 
+extern "C" {
+extern char **environ;
+}
 namespace NEO {
 namespace SysCalls {
 
@@ -103,5 +106,10 @@ extern std::string dlOpenFilePathPassed;
 extern std::string mkfifoPathNamePassed;
 
 extern long sysconfReturn;
+char **getEnviron();
 } // namespace SysCalls
+namespace ULT {
+char **getCurrentEnviron();
+void setMockEnviron(char **mock);
+} // namespace ULT
 } // namespace NEO

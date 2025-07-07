@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 
 #include <ShlObj.h>
 #include <algorithm>
+#include <wchar.h>
 
 namespace NEO {
 std::string getKnownFolderPath(REFKNOWNFOLDERID rfid) {
@@ -95,6 +96,26 @@ size_t getFileSize(const std::string &path) {
     }
     SysCalls::findClose(hFind);
     return static_cast<size_t>((ffd.nFileSizeHigh * (MAXDWORD + 1)) + ffd.nFileSizeLow);
+}
+bool isAnyIgcEnvVarSet() {
+    LPWCH envStrings = SysCalls::getEnvironmentStringsW();
+    if (envStrings == nullptr) {
+        return false;
+    }
+
+    for (LPWCH var = envStrings; *var != L'\0';) {
+        if (wcsncmp(var, L"IGC_", 4) == 0) {
+            SysCalls::freeEnvironmentStringsW(envStrings);
+            return true;
+        }
+        while (*var != L'\0') {
+            ++var;
+        }
+        ++var;
+    }
+
+    SysCalls::freeEnvironmentStringsW(envStrings);
+    return false;
 }
 
 } // namespace NEO

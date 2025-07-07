@@ -465,7 +465,14 @@ BOOL verQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUIN
     }
     return FALSE;
 }
-
+LPWCH mockEnvStringsW = nullptr;
+BOOL mockFreeEnvStringsWResult = TRUE;
+LPWCH getEnvironmentStringsW() {
+    return mockEnvStringsW;
+}
+BOOL freeEnvironmentStringsW(LPWCH) {
+    return mockFreeEnvStringsWResult;
+}
 } // namespace SysCalls
 
 bool isShutdownInProgress() {
@@ -475,5 +482,4 @@ bool isShutdownInProgress() {
 unsigned int readEnablePreemptionRegKey() {
     return 1;
 }
-
 } // namespace NEO

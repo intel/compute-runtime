@@ -291,4 +291,33 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenPrintDebugMessagesWhenCacheIsEnable
     EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult\\directory\\\n\n");
 }
 
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigIsEnabledOrDisabledAsExpected) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
+    mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
+    DWORD getFileAttributesResultMock = FILE_ATTRIBUTE_DIRECTORY;
+    VariableBackup<DWORD> pathExistsMockBackup(&SysCalls::getFileAttributesResult, getFileAttributesResultMock);
+    wchar_t envBlockNoIgc[] = L"NEO_CACHE_PERSISTENT=1\0NEO_CACHE_MAX_SIZE=22\0NEO_CACHE_DIR=ult\\directory\\\0\0";
+    SysCalls::mockEnvStringsW = envBlockNoIgc;
+
+    auto cacheConfig = getDefaultCompilerCacheConfig();
+    EXPECT_TRUE(cacheConfig.enabled);
+    EXPECT_EQ(cacheConfig.cacheDir, "ult\\directory\\");
+
+    wchar_t envBlockWithIgc[] = L"IGC_DEBUG=1\0NEO_CACHE_PERSISTENT=1\0NEO_CACHE_MAX_SIZE=22\0NEO_CACHE_DIR=ult\\directory\\\0\0";
+    SysCalls::mockEnvStringsW = envBlockWithIgc;
+
+    cacheConfig = getDefaultCompilerCacheConfig();
+    EXPECT_FALSE(cacheConfig.enabled);
+
+    SysCalls::mockEnvStringsW = envBlockNoIgc;
+
+    cacheConfig = getDefaultCompilerCacheConfig();
+    EXPECT_TRUE(cacheConfig.enabled);
+    EXPECT_EQ(cacheConfig.cacheDir, "ult\\directory\\");
+}
+
 } // namespace NEO

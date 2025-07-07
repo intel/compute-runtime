@@ -555,6 +555,23 @@ int pidfdgetfd(int pid, int targetfd, unsigned int flags) {
     }
     return 0;
 }
+char **getEnviron() {
+    return NEO::ULT::getCurrentEnviron();
+}
 
 } // namespace SysCalls
+
+namespace ULT {
+
+static char **mockEnviron = nullptr;
+
+char **getCurrentEnviron() {
+    return mockEnviron ? mockEnviron : environ;
+}
+
+void setMockEnviron(char **mock) {
+    mockEnviron = mock;
+}
+
+} // namespace ULT
 } // namespace NEO
