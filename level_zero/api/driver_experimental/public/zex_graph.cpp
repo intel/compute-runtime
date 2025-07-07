@@ -177,11 +177,22 @@ ze_result_t ZE_APICALL zeExecutableGraphDestroyExp(ze_executable_graph_handle_t 
 }
 
 ze_result_t ZE_APICALL zeCommandListIsGraphCaptureEnabledExp(ze_command_list_handle_t hCommandList) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    if (nullptr == cmdList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return cmdList->getCaptureTarget() ? ZE_RESULT_QUERY_TRUE : ZE_RESULT_QUERY_FALSE;
 }
 
 ze_result_t ZE_APICALL zeGraphIsEmptyExp(ze_graph_handle_t hGraph) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto graph = L0::Graph::fromHandle(hGraph);
+    if (nullptr == graph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (false == graph->valid()) {
+        return ZE_RESULT_ERROR_INVALID_GRAPH;
+    }
+    return graph->empty() ? ZE_RESULT_QUERY_TRUE : ZE_RESULT_QUERY_FALSE;
 }
 
 ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const char *filePath, void *pNext) {

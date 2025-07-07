@@ -10,12 +10,21 @@
 
 #include "zex_common.h"
 
+#if defined(__cplusplus)
+#define EXTENDED_ENUM(ENUM_T, VALUE) static_cast<ENUM_T>(VALUE) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+#else
+#define EXTENDED_ENUM(ENUM_T, VALUE) VALUE
+#endif
+
 #ifndef ZE_RECORD_REPLAY_GRAPH_EXP_NAME
 /// @brief Record and Replay Graph Extension Name
 #define ZE_RECORD_REPLAY_GRAPH_EXP_NAME "ZE_experimental_record_replay_graph"
 
 typedef struct _ze_graph_handle_t *ze_graph_handle_t;
 typedef struct _ze_executable_graph_handle_t *ze_executable_graph_handle_t;
+#define ZE_RESULT_QUERY_TRUE EXTENDED_ENUM(ze_result_t, 0x7fff0000)
+#define ZE_RESULT_QUERY_FALSE EXTENDED_ENUM(ze_result_t, 0x7fff0001)
+#define ZE_RESULT_ERROR_INVALID_GRAPH EXTENDED_ENUM(ze_result_t, 0x7fff0002)
 
 #if defined(__cplusplus)
 extern "C" {

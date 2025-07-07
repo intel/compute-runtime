@@ -292,19 +292,87 @@ TEST(GraphTestApiInstantiate, GivenUnclosedGraphThenInstantiateFails) {
     EXPECT_EQ(nullptr, execGraph);
 }
 
-TEST(GraphTestDebugApis, WhenIsGraphCaptureEnabledIsCalledThenReturnUnsupportedFeature) {
+TEST(GraphTestDebugApis, GivenNullGraphWhenIsGraphCaptureEnabledIsCalledThenReturnError) {
     GraphsCleanupGuard graphCleanup;
-    Mock<CommandList> cmdlist;
-    auto err = ::zeCommandListIsGraphCaptureEnabledExp(&cmdlist);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, err);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ::zeCommandListIsGraphCaptureEnabledExp(nullptr));
 }
 
-TEST(GraphTestDebugApis, WhenGraphIsEmptyIsCalledThenReturnUnsupportedFeature) {
+TEST(GraphTestDebugApis, GivenCommandListWithoutCaptureEnabledWhenIsGraphCaptureEnabledIsCalledThenReturnFalse) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
-    L0::Graph srcGraph(&ctx, true);
-    auto err = ::zeGraphIsEmptyExp(&srcGraph);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, err);
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, ::zeCommandListIsGraphCaptureEnabledExp(&cmdlist));
+}
+
+TEST(GraphTestDebugApis, GivenCommandListWithCaptureEnabledWhenIsGraphCaptureEnabledIsCalledThenReturnTrue) {
+    GraphsCleanupGuard graphCleanup;
+    Mock<Context> ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+
+    Graph srcGraph(&ctx, true);
+    cmdlist.setCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+
+    EXPECT_EQ(ZE_RESULT_QUERY_TRUE, ::zeCommandListIsGraphCaptureEnabledExp(&cmdlist));
+
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, nullptr, 0U, nullptr);
+
+    srcGraph.stopCapturing();
+    cmdlist.setCaptureTarget(nullptr);
+
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, ::zeCommandListIsGraphCaptureEnabledExp(&cmdlist));
+}
+
+TEST(GraphTestDebugApis, GivenNullGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ::zeGraphIsEmptyExp(nullptr));
+}
+
+TEST(GraphTestDebugApis, GivenInvalidGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+    Mock<Context> ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    MockGraphCmdListWithContext subCmdlist{&ctx};
+    Mock<Event> forkEvent;
+
+    Graph srcGraph(&ctx, true);
+    cmdlist.setCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &forkEvent, 0U, nullptr);
+
+    Graph *srcSubGraph = nullptr;
+    srcGraph.forkTo(subCmdlist, srcSubGraph, forkEvent);
+    srcSubGraph->stopCapturing();
+    subCmdlist.setCaptureTarget(nullptr);
+    srcGraph.stopCapturing();
+    cmdlist.setCaptureTarget(nullptr);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GRAPH, ::zeGraphIsEmptyExp(&srcGraph));
+}
+
+TEST(GraphTestDebugApis, GivenEmptyGraphWhenGraphIsEmptyIsCalledThenTrue) {
+    GraphsCleanupGuard graphCleanup;
+    Mock<Context> ctx;
+    Graph srcGraph(&ctx, true);
+
+    EXPECT_EQ(ZE_RESULT_QUERY_TRUE, ::zeGraphIsEmptyExp(&srcGraph));
+}
+
+TEST(GraphTestDebugApis, GivenNonEmptyGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+    Mock<Context> ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+
+    Graph srcGraph(&ctx, true);
+    cmdlist.setCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(cmdlist, false);
+
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, nullptr, 0U, nullptr);
+
+    srcGraph.stopCapturing();
+    cmdlist.setCaptureTarget(nullptr);
+
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, ::zeGraphIsEmptyExp(&srcGraph));
 }
 
 TEST(GraphTestDebugApis, WhenGraphDumpContentsIsCalledThenReturnUnsupportedFeature) {
@@ -537,6 +605,7 @@ TEST(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly) {
     EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyCalled);
     graphHwCommands.release();
 
+    ctx.cmdListToReturn = nullptr;
     graphHwCommands.reset(new Mock<CommandList>());
     ctx.cmdListToReturn = graphHwCommands.get();
 
@@ -557,6 +626,7 @@ TEST(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly) {
     ASSERT_EQ(1U, execMultiGraph.getSubgraphs().size());
     EXPECT_TRUE(execMultiGraph.getSubgraphs()[0]->isSubGraph());
     EXPECT_TRUE(execMultiGraph.getSubgraphs()[0]->empty());
+    ctx.cmdListToReturn = nullptr;
     graphHwCommands.release();
 }
 
@@ -813,6 +883,7 @@ TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandli
     EXPECT_EQ(1U, graphHwCommands->appendImageCopyToMemoryExtCalled);
     EXPECT_EQ(1U, graphHwCommands->appendImageCopyFromMemoryExtCalled);
 
+    ctx.cmdListToReturn = nullptr;
     graphHwCommands.release();
 }
 
@@ -876,6 +947,7 @@ TEST(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppend
 
     ExecutableGraph execGraph;
     execGraph.instantiateFrom(srcGraph);
+    ctx.cmdListToReturn = nullptr;
     graphHwCommands.release();
 
     auto res = execGraph.execute(&cmdlist, nullptr, nullptr, 0, nullptr);

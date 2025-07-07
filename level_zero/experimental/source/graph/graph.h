@@ -776,6 +776,10 @@ struct Graph : _ze_graph_handle_t {
         return closed() && unjoinedForks.empty() && std::all_of(subGraphs.begin(), subGraphs.end(), [](auto it) { return it->validForInstantiation(); });
     }
 
+    bool valid() const {
+        return unjoinedForks.empty() && std::all_of(subGraphs.begin(), subGraphs.end(), [](auto it) { return it->valid(); });
+    }
+
     bool closed() const {
         return wasCapturingStopped;
     }
