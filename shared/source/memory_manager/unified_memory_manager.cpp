@@ -169,6 +169,9 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
             allocationIter->svmData->isSavedForReuse = false;
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
+            if (updateAllocIdOnGet) {
+                svmAllocsManager->updateAllocId(*allocationIter->svmData);
+            }
             allocations.erase(allocationIter);
             return allocationPtr;
         }
@@ -638,6 +641,17 @@ void SVMAllocsManager::setUnifiedAllocationProperties(GraphicsAllocation *alloca
     allocation->setCoherent(svmProperties.coherent);
 }
 
+void SVMAllocsManager::updateAllocId(SvmAllocationData &svmAllocData) {
+    std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
+    std::unique_lock<std::shared_mutex> lock(mtx);
+    internalAllocationsMap.erase(svmAllocData.getAllocId());
+    svmAllocData.setAllocId(++this->allocationsCounter);
+    for (auto alloc : svmAllocData.gpuAllocations.getGraphicsAllocations()) {
+        OPTIONAL_UNRECOVERABLE_IF(nullptr == alloc);
+        internalAllocationsMap.insert({svmAllocData.getAllocId(), alloc});
+    }
+}
+
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
     insertSVMAlloc(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), svmAllocData);
 }
@@ -939,6 +953,9 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
     if (usmDeviceAllocationsCacheEnabled && device.usmReuseInfo.getMaxAllocationsSavedForReuseSize() > 0u) {
         device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner(device.isAnyDirectSubmissionLightEnabled());
         this->initUsmDeviceAllocationsCache(device);
+        if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
+            this->usmDeviceAllocationsCache->updateAllocIdOnGet = true;
+        }
     }
 
     bool usmHostAllocationsCacheEnabled = NEO::ApiSpecificConfig::isHostAllocationCacheEnabled() &&
@@ -950,6 +967,9 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
     if (usmHostAllocationsCacheEnabled && this->memoryManager->usmReuseInfo.getMaxAllocationsSavedForReuseSize() > 0u) {
         device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner(device.isAnyDirectSubmissionLightEnabled());
         this->initUsmHostAllocationsCache();
+        if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
+            this->usmHostAllocationsCache->updateAllocIdOnGet = true;
+        }
     }
 }
 

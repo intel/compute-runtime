@@ -205,6 +205,55 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenInsertingAllocationThenDo
     }
 }
 
+TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenGettingAllocationThenUpdateAllocIdIfBoolIsSet) {
+    SVMAllocsManager::SvmAllocationCache allocationCache;
+    MockMemoryManager memoryManager;
+    MockSVMAllocsManager svmAllocsManager(&memoryManager);
+    svmAllocsManager.allocationsCounter.store(1u);
+
+    allocationCache.memoryManager = &memoryManager;
+    allocationCache.svmAllocsManager = &svmAllocsManager;
+    memoryManager.usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+
+    void *ptr = addrToPtr(0xFULL);
+    MockGraphicsAllocation gpuGfxAllocation;
+    SvmAllocationData svmAllocData(mockRootDeviceIndex);
+    svmAllocData.gpuAllocations.addAllocation(&gpuGfxAllocation);
+    svmAllocData.setAllocId(1u);
+    svmAllocsManager.insertSVMAlloc(ptr, svmAllocData);
+
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    {
+        allocationCache.updateAllocIdOnGet = false;
+        EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, false));
+        auto reusedPtr = allocationCache.get(1u, unifiedMemoryProperties);
+        EXPECT_EQ(ptr, reusedPtr);
+        EXPECT_EQ(1u, svmAllocData.getAllocId());
+        EXPECT_EQ(1u, svmAllocsManager.allocationsCounter.load());
+        EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(1u));
+        auto allocMapEntry = svmAllocsManager.internalAllocationsMap.find(1u);
+        EXPECT_EQ(&gpuGfxAllocation, allocMapEntry->second);
+        EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(2u));
+        allocationCache.allocations.clear();
+    }
+
+    {
+        allocationCache.updateAllocIdOnGet = true;
+        EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, false));
+        auto reusedPtr = allocationCache.get(1u, unifiedMemoryProperties);
+        EXPECT_EQ(ptr, reusedPtr);
+        EXPECT_EQ(2u, svmAllocData.getAllocId());
+        EXPECT_EQ(2u, svmAllocsManager.allocationsCounter.load());
+        EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(1u));
+        EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(2u));
+        auto allocMapEntry = svmAllocsManager.internalAllocationsMap.find(2u);
+        EXPECT_EQ(&gpuGfxAllocation, allocMapEntry->second);
+        allocationCache.allocations.clear();
+    }
+}
+
 struct SvmAllocationCacheTestFixture {
     SvmAllocationCacheTestFixture() : executionEnvironment(defaultHwInfo.get()) {}
     void setUp() {
@@ -293,6 +342,21 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigAndProductHelper
         device->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
         svmManager->initUsmAllocationsCaches(*device);
         EXPECT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
+    }
+
+    for (auto csrType = 0u;
+         csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum);
+         ++csrType) {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.SetCommandStreamReceiver.set(csrType);
+        raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
+        mockAilConfigurationHelper.limitAmountOfDeviceMemoryForRecyclingReturn = false;
+        device->initUsmReuseLimits();
+        auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+        EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
+        svmManager->initUsmAllocationsCaches(*device);
+        ASSERT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
+        EXPECT_EQ(csrType != 0u, svmManager->usmDeviceAllocationsCache->updateAllocIdOnGet);
     }
 }
 
@@ -1301,6 +1365,20 @@ HWTEST_F(SvmHostAllocationCacheTest, givenOclApiSpecificConfigAndProductHelperAn
         device->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
         svmManager->initUsmAllocationsCaches(*device);
         EXPECT_NE(nullptr, svmManager->usmHostAllocationsCache);
+    }
+
+    for (auto csrType = 0u;
+         csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum);
+         ++csrType) {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.SetCommandStreamReceiver.set(csrType);
+        raii.mockProductHelper->isHostUsmAllocationReuseSupportedResult = true;
+        device->getMemoryManager()->initUsmReuseLimits();
+        auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+        EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
+        svmManager->initUsmAllocationsCaches(*device);
+        ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
+        EXPECT_EQ(csrType != 0u, svmManager->usmHostAllocationsCache->updateAllocIdOnGet);
     }
 }
 
