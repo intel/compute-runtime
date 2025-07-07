@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/tools/source/debug/eu_thread.h"
@@ -152,12 +153,13 @@ TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithEv
     euThread.verifyStopped(1);
     euThread.stopThread(1u);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     EXPECT_FALSE(euThread.verifyStopped(2));
     EXPECT_TRUE(euThread.isRunning());
 
-    auto message = ::testing::internal::GetCapturedStderr();
+    auto message = capture.getCapturedStderr();
     // Trim message and remove timestamp + first space
     size_t pos = message.find(']');
     message.erase(0, pos + 2);
@@ -207,12 +209,13 @@ TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithOd
 
     euThread.verifyStopped(1);
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     EXPECT_TRUE(euThread.verifyStopped(7));
     EXPECT_TRUE(euThread.isStopped());
 
-    auto message = ::testing::internal::GetCapturedStderr();
+    auto message = capture.getCapturedStderr();
     // Trim message and remove timestamp + first space
     size_t pos = message.find(']');
     message.erase(0, pos + 2);
@@ -230,12 +233,13 @@ TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateRunningAndVerifyingStopWithOd
     euThread.verifyStopped(1);
     euThread.resumeThread();
 
-    ::testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
 
     EXPECT_TRUE(euThread.verifyStopped(1));
     EXPECT_TRUE(euThread.isStopped());
 
-    auto message = ::testing::internal::GetCapturedStderr();
+    auto message = capture.getCapturedStderr();
     // Trim message and remove timestamp + first space
     size_t pos = message.find(']');
     message.erase(0, pos + 2);
