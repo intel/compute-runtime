@@ -5889,7 +5889,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, Given2MBLocalMemAlignmen
     mock->ioctlExpected.gemClose = 1;
 
     AllocationData allocationData;
-    allocationData.size = 2.5 * MemoryConstants::megaByte;
+    allocationData.size = 2 * MemoryConstants::megaByte + 512 * MemoryConstants::kiloByte;
     allocationData.alignment = MemoryConstants::pageSize64k;
     allocationData.type = AllocationType::svmCpu;
     allocationData.rootDeviceIndex = rootDeviceIndex;
