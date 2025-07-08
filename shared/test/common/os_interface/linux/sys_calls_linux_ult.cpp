@@ -566,6 +566,30 @@ namespace ULT {
 static char *defaultTestEnviron[] = {nullptr};
 static char **mockEnviron = defaultTestEnviron;
 
+MockEnvironBackup::MockEnvironBackup(char **newEnviron)
+    : mockEnvironBackup(&mockEnviron, newEnviron) {
+}
+
+int MockEnvironBackup::defaultStatMock(const std::string &filePath, struct stat *statbuf) noexcept {
+    statbuf->st_mode = S_IFDIR;
+    return 0;
+}
+
+std::vector<char *> MockEnvironBackup::buildEnvironFromMap(
+    const std::unordered_map<std::string, std::string> &envs,
+    std::vector<std::string> &storage) {
+    storage.clear();
+    for (const auto &kv : envs) {
+        storage.push_back(kv.first + "=" + kv.second);
+    }
+    std::vector<char *> result;
+    for (auto &str : storage) {
+        result.push_back(const_cast<char *>(str.c_str()));
+    }
+    result.push_back(nullptr);
+    return result;
+}
+
 char **getCurrentEnviron() {
     return mockEnviron;
 }
@@ -573,5 +597,6 @@ char **getCurrentEnviron() {
 void setMockEnviron(char **mock) {
     mockEnviron = mock ? mock : defaultTestEnviron;
 }
+
 } // namespace ULT
 } // namespace NEO
