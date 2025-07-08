@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include <atomic>
 #include <cstdint>
@@ -14,6 +15,7 @@
 #include <poll.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <unordered_map>
 #include <vector>
 
 extern "C" {
@@ -111,5 +113,17 @@ char **getEnviron();
 namespace ULT {
 char **getCurrentEnviron();
 void setMockEnviron(char **mock);
+
+class MockEnvironBackup {
+  public:
+    MockEnvironBackup(char **newEnviron);
+    ~MockEnvironBackup() = default;
+
+    static int defaultStatMock(const std::string &filePath, struct stat *statbuf) noexcept;
+    static std::vector<char *> buildEnvironFromMap(const std::unordered_map<std::string, std::string> &envs, std::vector<std::string> &storage);
+
+  private:
+    VariableBackup<char **> mockEnvironBackup;
+};
 } // namespace ULT
 } // namespace NEO
