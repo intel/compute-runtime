@@ -206,7 +206,6 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
             ipcData.handle = handle;
             ipcData.type = type;
         } else if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
-            printf("opaque type used\n");
             ipcData.memoryType = type;
             ipcData.processId = NEO::SysCalls::getCurrentProcessId();
             ipcData.type = IpcHandleType::fdHandle;
