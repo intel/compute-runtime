@@ -135,6 +135,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(mutableCommandList->updatedCommandList);
+
+    mutableCommandList->toggleCommandListUpdated();
+    EXPECT_TRUE(mutableCommandList->updatedCommandList);
 
     auto &bufferVarMutDesc = mutation.variables[0];
     EXPECT_EQ(ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS, bufferVarMutDesc.varType);
@@ -490,6 +494,30 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
     EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListWhenAppendingKernelWithPointerPrivateQualifierThenMutationVariableNotCreated) {
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(commandId, mutableCommandList->nextCommandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernel1Bit);
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0].getTraits().addressQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier::AddrPrivate;
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, mutation.variables.size());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

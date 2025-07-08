@@ -174,6 +174,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     createMutableComputeWalker<FamilyType, WalkerType>(0);
     createVariableDispatch(false, true, false, false);
     this->kernelDispatch->kernelData->numLocalIdChannels = 3;
+    this->kernelDispatch->kernelData->simdSize = 32;
 
     uint32_t groupSizeValues[3] = {4, 2, 1};
     const void *argValue = &groupSizeValues;
@@ -342,6 +343,109 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     EXPECT_FALSE(variableDispatch->localIdGenerationByRuntime);
     EXPECT_EQ(0u, variableDispatch->perThreadDataSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
+            givenKernelChannelsZeroAndGroupSizeVariableInNonCommitDispatchWhenSettingGroupSizeThenGenerateLocalIdsDisabledAndKernelStartOffsetAdded) {
+    using WalkerType = typename FamilyType::PorWalkerType;
+
+    this->stageCommitMode = false;
+    createMutableComputeWalker<FamilyType, WalkerType>(0);
+    createVariableDispatch(false, true, false, false);
+    this->kernelDispatch->kernelData->numLocalIdChannels = 0;
+    this->kernelDispatch->kernelData->kernelStartAddress = 0x4000;
+    this->kernelDispatch->kernelData->skipPerThreadDataLoad = 0x100;
+    uint64_t kernelStartAddress = this->kernelDispatch->kernelData->kernelStartAddress + this->kernelDispatch->kernelData->skipPerThreadDataLoad;
+
+    uint32_t groupSizeValues[3] = {4, 2, 1};
+    const void *argValue = &groupSizeValues;
+
+    Variable *groupSize = getVariable(L0::MCL::VariableType::groupSize);
+
+    auto ret = groupSize->setValue(kernelDispatchVariableSize, 0, argValue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    WalkerType *walkerCmdCpuBuffer = reinterpret_cast<WalkerType *>(this->cpuWalkerBuffer);
+    WalkerType *walkerCmdGpuBuffer = reinterpret_cast<WalkerType *>(this->walkerBuffer);
+
+    EXPECT_EQ(0u, walkerCmdCpuBuffer->getLocalXMaximum());
+    EXPECT_EQ(0u, walkerCmdCpuBuffer->getLocalYMaximum());
+    EXPECT_EQ(0u, walkerCmdCpuBuffer->getLocalZMaximum());
+
+    EXPECT_EQ(0u, walkerCmdCpuBuffer->getEmitLocalId());
+    EXPECT_EQ(false, walkerCmdCpuBuffer->getGenerateLocalId());
+    EXPECT_EQ(kernelStartAddress, walkerCmdCpuBuffer->getInterfaceDescriptor().getKernelStartPointer());
+
+    EXPECT_EQ(0u, walkerCmdGpuBuffer->getLocalXMaximum());
+    EXPECT_EQ(0u, walkerCmdGpuBuffer->getLocalYMaximum());
+    EXPECT_EQ(0u, walkerCmdGpuBuffer->getLocalZMaximum());
+
+    EXPECT_EQ(0u, walkerCmdGpuBuffer->getEmitLocalId());
+    EXPECT_EQ(false, walkerCmdGpuBuffer->getGenerateLocalId());
+    EXPECT_EQ(kernelStartAddress, walkerCmdCpuBuffer->getInterfaceDescriptor().getKernelStartPointer());
+
+    EXPECT_FALSE(variableDispatch->localIdGenerationByRuntime);
+    EXPECT_EQ(0u, variableDispatch->perThreadDataSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
+            givenSwLocalIdGenerationForcedAndGroupSizeVariableInNonCommitDispatchWhenSettingGroupSizeThenGenerateLocalIdsDisabledAndKernelStartOffsetNotAdded) {
+    using WalkerType = typename FamilyType::PorWalkerType;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableHwGenerationLocalIds.set(false);
+
+    this->usePerThread = true;
+    this->stageCommitMode = false;
+    createMutableComputeWalker<FamilyType, WalkerType>(0);
+    createVariableDispatch(false, true, false, false);
+    this->kernelDispatch->kernelData->numLocalIdChannels = 3;
+    this->kernelDispatch->kernelData->kernelStartAddress = 0x4000;
+    this->kernelDispatch->kernelData->skipPerThreadDataLoad = 0x100;
+    uint64_t kernelStartAddress = this->kernelDispatch->kernelData->kernelStartAddress;
+
+    uint32_t groupSizeValues[3] = {4, 2, 1};
+    const void *argValue = &groupSizeValues;
+
+    Variable *groupSize = getVariable(L0::MCL::VariableType::groupSize);
+
+    auto ret = groupSize->setValue(kernelDispatchVariableSize, 0, argValue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    WalkerType *walkerCmdCpuBuffer = reinterpret_cast<WalkerType *>(this->cpuWalkerBuffer);
+    WalkerType *walkerCmdGpuBuffer = reinterpret_cast<WalkerType *>(this->walkerBuffer);
+
+    EXPECT_EQ(0u, walkerCmdCpuBuffer->getLocalXMaximum());
+    EXPECT_EQ(0u, walkerCmdCpuBuffer->getLocalYMaximum());
+    EXPECT_EQ(0u, walkerCmdCpuBuffer->getLocalZMaximum());
+
+    EXPECT_EQ(0u, walkerCmdCpuBuffer->getEmitLocalId());
+    EXPECT_EQ(false, walkerCmdCpuBuffer->getGenerateLocalId());
+    EXPECT_EQ(kernelStartAddress, walkerCmdCpuBuffer->getInterfaceDescriptor().getKernelStartPointer());
+
+    EXPECT_EQ(0u, walkerCmdGpuBuffer->getLocalXMaximum());
+    EXPECT_EQ(0u, walkerCmdGpuBuffer->getLocalYMaximum());
+    EXPECT_EQ(0u, walkerCmdGpuBuffer->getLocalZMaximum());
+
+    EXPECT_EQ(0u, walkerCmdGpuBuffer->getEmitLocalId());
+    EXPECT_EQ(false, walkerCmdGpuBuffer->getGenerateLocalId());
+
+    EXPECT_EQ(kernelStartAddress, walkerCmdCpuBuffer->getInterfaceDescriptor().getKernelStartPointer());
+
+    EXPECT_TRUE(variableDispatch->localIdGenerationByRuntime);
+    EXPECT_NE(0u, variableDispatch->perThreadDataSize);
+
+    uint32_t *lwsOffsetPatch = reinterpret_cast<uint32_t *>(ptrOffset(this->crossThreadData.get(), this->offsets.localWorkSize));
+    EXPECT_EQ(groupSizeValues[0], lwsOffsetPatch[0]);
+    EXPECT_EQ(groupSizeValues[1], lwsOffsetPatch[1]);
+    EXPECT_EQ(groupSizeValues[2], lwsOffsetPatch[2]);
+
+    groupSizeValues[0] = 2;
+    ret = groupSize->setValue(kernelDispatchVariableSize, 0, argValue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(groupSizeValues[0], lwsOffsetPatch[0]);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

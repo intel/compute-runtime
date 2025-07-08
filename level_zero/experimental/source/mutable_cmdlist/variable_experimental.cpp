@@ -19,13 +19,14 @@ namespace L0::MCL {
 using State = VariableDescriptor::State;
 
 Variable *Variable::createFromInfo(ze_command_list_handle_t hCmdList, Program::Decoder::VarInfo &varInfo) {
-    auto var = new Variable(MutableCommandList::fromHandle(hCmdList), varInfo.name);
+    auto var = new Variable(MutableCommandList::fromHandle(hCmdList));
 
     auto &desc = var->getDesc();
     desc.type = varInfo.type;
     desc.size = varInfo.size;
     desc.isTemporary = varInfo.tmp;
     desc.isScalable = varInfo.scalable;
+    desc.name = varInfo.name;
     if (varInfo.type == VariableType::buffer) {
         var->setBufferUsages(std::move(varInfo.bufferUsages));
     } else if (varInfo.type == VariableType::value) {
@@ -177,6 +178,20 @@ ze_result_t Variable::selectImmediateAddKernelArgUsageHandler(const NEO::ArgDesc
         return addKernelArgUsageImmediateAsChunk(kernelArg, iohOffset, iohFullOffset, walkerCmdOffset, mutableComputeWalker, inlineData);
     } else {
         return addKernelArgUsageImmediateAsContinuous(kernelArg, iohOffset, iohFullOffset, walkerCmdOffset, mutableComputeWalker, inlineData);
+    }
+}
+
+void Variable::setDescExperimentalValues(const InterfaceVariableDescriptor *ifaceVarDesc) {
+    desc.name = ifaceVarDesc->name == nullptr ? "" : std::string(ifaceVarDesc->name);
+
+    if (ifaceVarDesc->isTemporary) {
+        desc.isTemporary = true;
+        if (ifaceVarDesc->isConstSize) {
+            desc.size = ifaceVarDesc->size;
+        } else if (ifaceVarDesc->isScalable) {
+            desc.isScalable = true;
+            desc.eleSize = ifaceVarDesc->size;
+        }
     }
 }
 

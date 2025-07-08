@@ -18,6 +18,7 @@ namespace L0 {
 namespace ult {
 
 using MutableCommandListKernelTest = Test<MutableCommandListFixture<false>>;
+using MutableCommandListKernelInOrderTest = Test<MutableCommandListFixture<true>>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
@@ -92,7 +93,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto event = createTestEvent(false, false, false, false);
     auto eventAddress = event->getGpuAddress(this->device);
 
-    mutableCommandIdDesc.flags = kernelIsaMutationFlags | ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags | ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -120,6 +121,57 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    walkerCmdBuffer = mutation.kernelGroup->getCurrentMutableKernel()->getMutableComputeWalker()->getWalkerCmdPointer();
+    walkerCmd = reinterpret_cast<WalkerType *>(walkerCmdBuffer);
+
+    walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
+    EXPECT_EQ(eventAddress, walkerPostSyncAddress);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelInOrderTest,
+            givenTwoKernelsWithSignalCbEventWhenFirstAppendedAndSecondMutatedThenMutableWalkerPostSyncPreserved) {
+    using WalkerType = typename FamilyType::PorWalkerType;
+
+    auto event = createTestEvent(true, false, false, false);
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags | ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_NE(0u, mutableCommandList->mutations.size());
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, event->toHandle(), 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint64_t eventAddress = event->getInOrderExecInfo()->getBaseDeviceAddress() + event->getInOrderExecInfo()->getAllocationOffset();
+    if (event->getInOrderExecInfo()->isHostStorageDuplicated()) {
+        eventAddress = event->getInOrderExecInfo()->getBaseHostGpuAddress();
+    }
+
+    ASSERT_NE(nullptr, mutation.kernelGroup->getCurrentMutableKernel());
+
+    auto walkerCmdBuffer = mutation.kernelGroup->getCurrentMutableKernel()->getMutableComputeWalker()->getWalkerCmdPointer();
+    auto walkerCmd = reinterpret_cast<WalkerType *>(walkerCmdBuffer);
+
+    auto walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
+    EXPECT_EQ(eventAddress, walkerPostSyncAddress);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    walkerCmdBuffer = mutation.kernelGroup->getCurrentMutableKernel()->getMutableComputeWalker()->getWalkerCmdPointer();
+    walkerCmd = reinterpret_cast<WalkerType *>(walkerCmdBuffer);
 
     walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(eventAddress, walkerPostSyncAddress);
@@ -585,6 +637,26 @@ HWTEST2_F(MutableCommandListKernelTest,
 }
 
 HWTEST2_F(MutableCommandListKernelTest,
+          givenPrefetchDisabledWhenAppendingKernelThenKernelGroupHasNoPrefetchCaptured,
+          IsAtLeastXeHpcCore) {
+    debugManager.flags.EnableMemoryPrefetch.set(0);
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+
+    ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    mutableCommandList->close();
+
+    EXPECT_EQ(nullptr, mutation.kernelGroup->getIohForPrefetch());
+}
+
+HWTEST2_F(MutableCommandListKernelTest,
           givenKernelsWithScratchWhenKernelIsAppendedThenScratchPatchIndexIsUndefined,
           IsWithinXeCoreAndXe3Core) {
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x100;
@@ -635,6 +707,42 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     auto scratchPatchAddress = mutableCommandList->getCurrentScratchPatchAddress(scratchPatchIndex);
     EXPECT_EQ(0u, scratchPatchAddress);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenMutationFlagsHasNoIsaMutationWhenUpdatingKernelIsaThenReturnError) {
+    mutableCommandIdDesc.flags = 0;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenTwoMutationKernelsWhenUpdatingTheSameKernelIsaThenReturnError) {
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_HANDLE, result);
 }
 
 } // namespace ult

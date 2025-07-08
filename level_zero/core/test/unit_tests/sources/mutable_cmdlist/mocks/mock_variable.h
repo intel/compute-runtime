@@ -46,7 +46,7 @@ struct WhiteBox<::L0::MCL::Variable>
     using BaseClass::usedInDispatch;
     using BaseClass::valueUsages;
 
-    WhiteBox() : ::L0::MCL::Variable(nullptr, "") {}
+    WhiteBox() : ::L0::MCL::Variable(nullptr) {}
 };
 
 using Variable = WhiteBox<::L0::MCL::Variable>;

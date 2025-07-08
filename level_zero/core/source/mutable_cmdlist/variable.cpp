@@ -34,30 +34,19 @@
 namespace L0::MCL {
 using State = VariableDescriptor::State;
 
-Variable::Variable(MutableCommandList *cmdList, const std::string &varName) {
+Variable::Variable(MutableCommandList *cmdList) {
     this->cmdList = cmdList;
     this->desc = {};
-    desc.name = varName;
 }
 
 Variable *Variable::create(ze_command_list_handle_t hCmdList, const InterfaceVariableDescriptor *ifaceVarDesc) {
-    std::string varName = ifaceVarDesc->name == nullptr ? "" : std::string(ifaceVarDesc->name);
-
-    auto var = new Variable(MutableCommandList::fromHandle(hCmdList), varName);
+    auto var = new Variable(MutableCommandList::fromHandle(hCmdList));
     auto &desc = var->getDesc();
 
     desc.isStageCommit = ifaceVarDesc->isStageCommit;
     desc.immediateValueChunks = ifaceVarDesc->immediateValueChunks;
 
-    if (ifaceVarDesc->isTemporary) {
-        desc.isTemporary = true;
-        if (ifaceVarDesc->isConstSize) {
-            desc.size = ifaceVarDesc->size;
-        } else if (ifaceVarDesc->isScalable) {
-            desc.isScalable = true;
-            desc.eleSize = ifaceVarDesc->size;
-        }
-    }
+    var->setDescExperimentalValues(ifaceVarDesc);
 
     return var;
 }

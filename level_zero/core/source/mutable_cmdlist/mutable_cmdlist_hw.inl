@@ -164,9 +164,9 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                     mutableWaitEvent.waitEvents.event = event;
                     mutableWaitEvent.waitEvents.waitEventIndex = i;
                     if (CommandListImp::isInOrderExecutionEnabled() && event->isCounterBased()) {
-                        omitWaitEventResidency = true;
                         mutableWaitEvent.waitEvents.waitEventPackets = event->getInOrderExecInfo()->getNumDevicePartitionsToWait();
                         if (!isCbEventBoundToCmdList(event)) {
+                            omitWaitEventResidency = true;
                             auto deviceCounterAlloc = event->getInOrderExecInfo()->getDeviceCounterAllocation();
                             addToResidencyContainer(getDeviceCounterAllocForResidency(deviceCounterAlloc));
                         }
@@ -181,10 +181,8 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                         addToResidencyContainer(eventPoolAlloc);
                     }
                 }
-                if (omitWaitEventResidency) {
-                    launchParams.omitAddingWaitEventsResidency = true;
-                    launchParams.outListCommands = &this->appendCmdsToPatch;
-                }
+                launchParams.omitAddingWaitEventsResidency = omitWaitEventResidency;
+                launchParams.outListCommands = &this->appendCmdsToPatch;
             }
         }
 
@@ -906,36 +904,30 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
     auto &viewKernelExt = MclKernelExt::get(viewKernel);
     viewKernelExt.cleanArgumentVariables();
 
-    if (viewKernelAppendLaunchParams.groupCountVariable != nullptr ||
-        viewKernelAppendLaunchParams.groupSizeVariable != nullptr ||
-        viewKernelAppendLaunchParams.globalOffsetVariable != nullptr ||
-        viewKernelAppendLaunchParams.lastSlmArgumentVariable != nullptr) {
+    uint32_t initialGroupCount[3] = {threadGroupDimensions.groupCountX, threadGroupDimensions.groupCountY, threadGroupDimensions.groupCountZ};
 
-        uint32_t initialGroupCount[3] = {threadGroupDimensions.groupCountX, threadGroupDimensions.groupCountY, threadGroupDimensions.groupCountZ};
+    MutableKernelDispatchParameters dispatchParams = {
+        initialGroupCount,                                                 // groupCount
+        static_cast<L0::KernelImp *>(viewKernel)->getGroupSize(),          // groupSize
+        static_cast<L0::KernelImp *>(viewKernel)->getGlobalOffsets(),      // globalOffset
+        viewKernel->getPerThreadDataSizeForWholeThreadGroup(),             // perThreadSize
+        viewKernel->getRequiredWorkgroupOrder(),                           // walkOrder
+        viewKernel->getNumThreadsPerThreadGroup(),                         // numThreadsPerThreadGroup
+        viewKernel->getThreadExecutionMask(),                              // threadExecutionMask
+        viewKernel->getMaxWgCountPerTile(getBase()->getEngineGroupType()), // maxWorkGroupCountPerTile
+        0,                                                                 // maxCooperativeGroupCount
+        launchParams.localRegionSize,                                      // localRegionSize
+        launchParams.requiredPartitionDim,                                 // requiredPartitionDim
+        launchParams.requiredDispatchWalkOrder,                            // requiredDispatchWalkOrder
+        viewKernel->requiresGenerationOfLocalIdsByRuntime(),               // generationOfLocalIdsByRuntime
+        launchParams.isCooperative};                                       // cooperativeDispatch
 
-        MutableKernelDispatchParameters dispatchParams = {
-            initialGroupCount,                                                 // groupCount
-            static_cast<L0::KernelImp *>(viewKernel)->getGroupSize(),          // groupSize
-            static_cast<L0::KernelImp *>(viewKernel)->getGlobalOffsets(),      // globalOffset
-            viewKernel->getPerThreadDataSizeForWholeThreadGroup(),             // perThreadSize
-            viewKernel->getRequiredWorkgroupOrder(),                           // walkOrder
-            viewKernel->getNumThreadsPerThreadGroup(),                         // numThreadsPerThreadGroup
-            viewKernel->getThreadExecutionMask(),                              // threadExecutionMask
-            viewKernel->getMaxWgCountPerTile(getBase()->getEngineGroupType()), // maxWorkGroupCountPerTile
-            0,                                                                 // maxCooperativeGroupCount
-            launchParams.localRegionSize,                                      // localRegionSize
-            launchParams.requiredPartitionDim,                                 // requiredPartitionDim
-            launchParams.requiredDispatchWalkOrder,                            // requiredDispatchWalkOrder
-            viewKernel->requiresGenerationOfLocalIdsByRuntime(),               // generationOfLocalIdsByRuntime
-            launchParams.isCooperative};                                       // cooperativeDispatch
-
-        retVal = addVariableDispatch(viewKernel->getKernelDescriptor(), *viewKernelDispatch,
-                                     viewKernelAppendLaunchParams.groupSizeVariable,
-                                     viewKernelAppendLaunchParams.groupCountVariable,
-                                     viewKernelAppendLaunchParams.globalOffsetVariable,
-                                     viewKernelAppendLaunchParams.lastSlmArgumentVariable,
-                                     viewKernelMutableComputeWalker, dispatchParams);
-    }
+    retVal = addVariableDispatch(viewKernel->getKernelDescriptor(), *viewKernelDispatch,
+                                 viewKernelAppendLaunchParams.groupSizeVariable,
+                                 viewKernelAppendLaunchParams.groupCountVariable,
+                                 viewKernelAppendLaunchParams.globalOffsetVariable,
+                                 viewKernelAppendLaunchParams.lastSlmArgumentVariable,
+                                 viewKernelMutableComputeWalker, dispatchParams);
 
     return retVal;
 }

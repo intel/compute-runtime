@@ -133,36 +133,6 @@ CommandList *MutableCommandListImp::getBase() {
     return base;
 }
 
-ze_result_t MutableCommandListImp::getVariable(const InterfaceVariableDescriptor *varDesc, Variable **outVariable) {
-    *outVariable = nullptr;
-
-    std::string varName = varDesc->name == nullptr ? "" : std::string(varDesc->name);
-
-    if (false == varName.empty()) {
-        auto it = variableMap.find(varName);
-        if (it != variableMap.end()) {
-            *outVariable = it->second;
-            return ZE_RESULT_SUCCESS;
-        }
-    }
-
-    auto var = std::unique_ptr<Variable>(Variable::create(this->base, varDesc));
-    if (false == varName.empty()) {
-        variableMap.insert(std::make_pair(varName, var.get()));
-    }
-
-    if (var->getDesc().isTemporary) {
-        tempMem.variables.push_back(var.get());
-    }
-
-    *outVariable = var.get();
-    variableStorage.push_back(std::move(var));
-
-    this->hasStageCommitVariables |= varDesc->isStageCommit;
-
-    return ZE_RESULT_SUCCESS;
-}
-
 void MutableCommandListImp::processResidencyContainer(bool baseCmdListClosed) {
     if (this->finalizeCommandListResidency) {
         auto &cmdListResidency = this->base->getCmdContainer().getResidencyContainer();
@@ -652,17 +622,14 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
 
         UNRECOVERABLE_IF(kernelGroup == nullptr);
         auto oldMutableKernel = kernelGroup->getCurrentMutableKernel();
+        // when old mutable kernel handle is the same as new, then return error
         if (oldMutableKernel->getKernel() == kernel) {
-            continue;
+            return ZE_RESULT_ERROR_INVALID_KERNEL_HANDLE;
         }
         auto oldKernelComputeWalker = oldMutableKernel->getMutableComputeWalker();
 
-        // select new mutable kernel, when not found - old kernel remains as current - error
         kernelGroup->setCurrentMutableKernel(kernel);
         auto newMutableKernel = kernelGroup->getCurrentMutableKernel();
-        if (newMutableKernel == oldMutableKernel) {
-            return ZE_RESULT_ERROR_INVALID_KERNEL_HANDLE;
-        }
 
         // remove old kernel from mutable residency
         {

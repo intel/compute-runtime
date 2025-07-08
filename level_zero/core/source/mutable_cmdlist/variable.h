@@ -89,7 +89,7 @@ struct VariableDescriptor {
 struct Variable : public VariableHandle {
     static constexpr uint32_t directFlag = 0x1U;
     Variable() = delete;
-    Variable(MutableCommandList *mcl, const std::string &name);
+    Variable(MutableCommandList *mcl);
 
     static Variable *create(ze_command_list_handle_t hCmdList, const InterfaceVariableDescriptor *ifaceVarDesc);
     static Variable *fromHandle(VariableHandle *handle) { return static_cast<Variable *>(handle); }
@@ -259,6 +259,7 @@ struct Variable : public VariableHandle {
         uint32_t globalOffset[3] = {undefined<uint32_t>, undefined<uint32_t>, undefined<uint32_t>};
     };
 
+    void setDescExperimentalValues(const InterfaceVariableDescriptor *ifaceVarDesc);
     bool hasKernelArgCorrectType(const NEO::ArgDescriptor &arg);
 
     ze_result_t setBufferVariable(size_t size, const void *argVal);

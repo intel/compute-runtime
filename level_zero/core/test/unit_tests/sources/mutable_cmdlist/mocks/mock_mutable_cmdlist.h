@@ -104,6 +104,7 @@ struct WhiteBox<::L0::MCL::MutableCommandListImp> : public ::L0::MCL::MutableCom
     using BaseClass::nextCommandId;
     using BaseClass::parseDispatchedKernel;
     using BaseClass::stageCommitVariables;
+    using BaseClass::updatedCommandList;
     using BaseClass::variableStorage;
 
     WhiteBox() : ::L0::MCL::MutableCommandListImp(nullptr) {}
