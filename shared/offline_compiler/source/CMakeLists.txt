@@ -81,7 +81,6 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
     ${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX}sku_info.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/directory.h
-    ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.h
     ${NEO_SHARED_DIRECTORY}/utilities/logger.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/logger.h
@@ -350,6 +349,7 @@ set(CLOC_LIB_SRCS
 )
 add_library(${OCLOC_NAME}_lib SHARED ${CLOC_LIB_SRCS}
             ${NEO_SOURCE_DIR}/shared/source/utilities/debug_settings_reader_creator.cpp
+            ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
 )
 add_subdirectories()
 

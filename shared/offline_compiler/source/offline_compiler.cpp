@@ -30,6 +30,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/io_functions.h"
 
@@ -964,6 +965,11 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     } else {
         appendExtensionsToInternalOptions(hwInfo, options, internalOptions);
         appendExtraInternalOptions(internalOptions);
+    }
+    NEO::EnvironmentVariableReader envReader;
+
+    if (envReader.getSetting("ONEAPI_PVC_SEND_WAR_WA", true) == false) {
+        CompilerOptions::concatenateAppend(internalOptions, NEO::CompilerOptions::optDisableSendWarWa);
     }
     parseDebugSettings();
 

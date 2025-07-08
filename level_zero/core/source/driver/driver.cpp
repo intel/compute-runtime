@@ -53,6 +53,8 @@ void DriverImp::initialize(ze_result_t *result) {
     envVariables.fp64Emulation =
         envReader.getSetting("NEO_FP64_EMULATION", false);
 
+    bool oneApiPvcWa = envReader.getSetting("ONEAPI_PVC_SEND_WAR_WA", true);
+
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
 
@@ -69,6 +71,7 @@ void DriverImp::initialize(ze_result_t *result) {
     }
 
     executionEnvironment->setMetricsEnabled(envVariables.metrics);
+    executionEnvironment->setOneApiPvcWaEnv(oneApiPvcWa);
 
     executionEnvironment->incRefInternal();
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);

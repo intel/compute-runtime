@@ -325,5 +325,19 @@ HWTEST_F(BuiltInTestsL0, givenDeviceWithUnregisteredBinaryBuiltinWhenGettingBuil
     }
 }
 
+HWTEST_F(BuiltInTestsL0, givenOneApiPvcSendWarWaEnvFalseWhenGettingBuiltinThenIntermediateFormatIsUsed) {
+    pDevice->incRefInternal();
+    pDevice->getExecutionEnvironment()->setOneApiPvcWaEnv(false);
+
+    MockDeviceForBuiltinTests testDevice(pDevice);
+    testDevice.builtins.reset(new BuiltinFunctionsLibImpl(&testDevice, pDevice->getBuiltIns()));
+    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::count); builtId++) {
+        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
+    }
+
+    EXPECT_TRUE(testDevice.createModuleCalled);
+    EXPECT_EQ(ZE_MODULE_FORMAT_IL_SPIRV, testDevice.formatForModule);
+}
+
 } // namespace ult
 } // namespace L0

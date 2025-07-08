@@ -9,6 +9,7 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -353,9 +354,11 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
     }
 
     StackVec<BuiltInCodeType, 2> supportedTypes{};
-    if (!NEO::debugManager.flags.RebuildPrecompiledKernels.get()) {
+    bool requiresRebuild = !device->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv();
+    if (!requiresRebuild && !NEO::debugManager.flags.RebuildPrecompiledKernels.get()) {
         supportedTypes.push_back(BuiltInCodeType::binary);
     }
+
     supportedTypes.push_back(BuiltInCodeType::intermediate);
 
     NEO::BuiltinCode builtinCode{};

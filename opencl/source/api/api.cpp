@@ -98,6 +98,9 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             if (envReader.getSetting("NEO_FP64_EMULATION", false)) {
                 executionEnvironment->setFP64EmulationEnabled();
             }
+            bool oneApiPvcWa = envReader.getSetting("ONEAPI_PVC_SEND_WAR_WA", true);
+            executionEnvironment->setOneApiPvcWaEnv(oneApiPvcWa);
+
             auto allDevices = DeviceFactory::createDevices(*executionEnvironment);
             executionEnvironment->decRefInternal();
             if (allDevices.empty()) {

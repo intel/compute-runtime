@@ -112,6 +112,9 @@ std::string Program::getInternalOptions() const {
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
     CompilerOptions::applyExtraInternalOptions(internalOptions, hwInfo, compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
 
+    if (pClDevice->getDevice().getExecutionEnvironment()->isOneApiPvcWaEnv() == false) {
+        NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::CompilerOptions::optDisableSendWarWa);
+    }
     return internalOptions;
 }
 
@@ -217,6 +220,8 @@ cl_int Program::createProgramFromBinary(
             auto isVmeUsed = containsVmeUsage(this->buildInfos[rootDeviceIndex].kernelInfoArray);
             bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn, isVmeUsed) ||
                            AddressingModeHelper::containsBindlessKernel(decodedSingleDeviceBinary.programInfo.kernelInfos);
+
+            rebuild |= !clDevice.getDevice().getExecutionEnvironment()->isOneApiPvcWaEnv();
 
             bool flagRebuild = debugManager.flags.RebuildPrecompiledKernels.get();
 

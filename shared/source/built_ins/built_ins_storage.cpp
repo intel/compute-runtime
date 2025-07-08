@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -190,7 +191,8 @@ BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::
 
     if (requestedCodeType == BuiltinCode::ECodeType::any) {
         uint32_t codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::binary);
-        if (debugManager.flags.RebuildPrecompiledKernels.get()) {
+        bool requiresRebuild = !device.getExecutionEnvironment()->isOneApiPvcWaEnv();
+        if (requiresRebuild || debugManager.flags.RebuildPrecompiledKernels.get()) {
             codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::source);
         }
         for (uint32_t e = static_cast<uint32_t>(BuiltinCode::ECodeType::count);

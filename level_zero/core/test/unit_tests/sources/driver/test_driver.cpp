@@ -540,6 +540,40 @@ TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImp
     EXPECT_TRUE(globalDriverHandles->empty());
 }
 
+TEST_F(DriverImpTest, givenOneApiPvcSendWarWaEnvWhenCreatingExecutionEnvironmentThenCorrectEnvValueIsStored) {
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    {
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "1"}};
+        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+        ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+        DriverImp driverImp;
+        driverImp.initialize(&result);
+
+        ASSERT_FALSE(globalDriverHandles->empty());
+        auto driverHandle = static_cast<L0::DriverHandleImp *>((*globalDriverHandles)[0]);
+        EXPECT_TRUE(driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv());
+
+        delete driverHandle;
+        globalDriverHandles->clear();
+    }
+    {
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ONEAPI_PVC_SEND_WAR_WA", "0"}};
+        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+        ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+        DriverImp driverImp;
+        driverImp.initialize(&result);
+
+        ASSERT_FALSE(globalDriverHandles->empty());
+        auto driverHandle = static_cast<L0::DriverHandleImp *>((*globalDriverHandles)[0]);
+        EXPECT_FALSE(driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv());
+
+        delete driverHandle;
+        globalDriverHandles->clear();
+    }
+}
+
 TEST_F(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
