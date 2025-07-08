@@ -48,8 +48,9 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     void prepareKernelArg(uint16_t argIndex, L0::MCL::VariableType varType, uint32_t kernelMask);
     std::vector<L0::MCL::Variable *> getVariableList(uint64_t commandId, L0::MCL::VariableType varType, L0::Kernel *kernelOption);
     void overridePatchedScratchAddress(uint64_t scratchAddress);
+    void enableCooperativeSyncBuffer(uint32_t kernelMask);
+    void setupGroupCountOffsets(uint32_t kernelMask);
 
-    DebugManagerStateRestore restorer;
     ze_mutable_command_id_exp_desc_t mutableCommandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
     ze_mutable_commands_exp_desc_t mutableCommandsDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
 
@@ -73,6 +74,8 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     uint64_t externalEventCounterValue = 0x10;
     uint64_t *externalEventDeviceAddress = nullptr;
     uint64_t externalEventIncrementValue = 0x2;
+
+    uint32_t kernelArgCount = 0;
 
     ze_event_pool_handle_t eventPoolHandle = nullptr;
     ze_kernel_handle_t kernelHandle = nullptr;

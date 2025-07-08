@@ -211,6 +211,9 @@ struct Variable : public VariableHandle {
         kernelDispatch.globalOffset[1] = globalOffset[1];
         kernelDispatch.globalOffset[2] = globalOffset[2];
     }
+    inline MutableCommandList *getCmdList() const {
+        return cmdList;
+    }
 
   protected:
     struct ImmediateValueChunkProperties {

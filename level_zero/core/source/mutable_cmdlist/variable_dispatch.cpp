@@ -22,6 +22,8 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/sync_buffer_handler.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist_imp.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
 #include "level_zero/core/source/mutable_cmdlist/variable.h"
@@ -87,13 +89,28 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
         this->totalLwsSize *= this->groupSize[dimension];
         this->threadGroupCount *= this->groupCount[dimension];
     }
-    this->slmTotalSize = kernelDispatch->slmTotalSize;
-    if ((this->isCooperative || this->calculateRegion) && this->slmTotalSize > 0) {
-        Variable *var = groupSizeVar != nullptr ? groupSizeVar : lastSlmArgumentVar != nullptr ? lastSlmArgumentVar
+    Variable *calcVar = groupSizeVar != nullptr ? groupSizeVar : lastSlmArgumentVar != nullptr ? lastSlmArgumentVar
                                                                                                : nullptr;
-        if (var != nullptr) {
-            this->alignedSlmSize = var->getAlignedSlmSize(this->slmTotalSize);
-        }
+
+    this->slmTotalSize = kernelDispatch->slmTotalSize;
+    if (calcVar != nullptr && (this->isCooperative || this->calculateRegion) && this->slmTotalSize > 0) {
+        this->alignedSlmSize = calcVar->getAlignedSlmSize(this->slmTotalSize);
+    }
+
+    if (calcVar != nullptr && this->isCooperative) {
+        auto device = calcVar->getCmdList()->getBase()->getDevice();
+        const uint32_t workDim = 3;
+        const size_t localWorkSize[] = {groupSize[0], groupSize[1], groupSize[2]};
+        this->maxCooperativeGroupCount = NEO::KernelHelper::getMaxWorkGroupCount(*device->getNEODevice(),
+                                                                                 kernelDispatch->kernelData->grfCount,
+                                                                                 kernelDispatch->kernelData->simdSize,
+                                                                                 kernelDispatch->kernelData->barrierCount,
+                                                                                 this->alignedSlmSize,
+                                                                                 workDim,
+                                                                                 localWorkSize,
+                                                                                 this->cmdListEngineType,
+                                                                                 this->partitionCount > 1,
+                                                                                 false);
     }
 
     // SLM kernel is when SLM arguments or SLM inline is present

@@ -219,6 +219,39 @@ void MutableCommandListFixtureInit::resizeKernelArg(uint32_t resize) {
     kernel2->slmArgSizes.resize(resize);
     kernel2->kernelArgHandlers.resize(resize);
     mockKernelImmData2->resizeExplicitArgs(resize);
+
+    this->kernelArgCount = resize;
+}
+
+void MutableCommandListFixtureInit::enableCooperativeSyncBuffer(uint32_t kernelMask) {
+    CrossThreadDataOffset offset = this->crossThreadOffset + (this->kernelArgCount * this->nextArgOffset);
+    if (kernelMask & kernel1Bit) {
+        mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
+        mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress.stateless = offset;
+        mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress.pointerSize = sizeof(uint64_t);
+    }
+    if (kernelMask & kernel2Bit) {
+        mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
+        mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress.stateless = offset;
+        mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress.pointerSize = sizeof(uint64_t);
+    }
+}
+
+void MutableCommandListFixtureInit::setupGroupCountOffsets(uint32_t kernelMask) {
+    CrossThreadDataOffset offset = this->crossThreadOffset + (this->kernelArgCount * this->nextArgOffset) + 64;
+    if (kernelMask & kernel1Bit) {
+        auto &dispatchTraits = mockKernelImmData->kernelDescriptor->payloadMappings.dispatchTraits;
+        dispatchTraits.globalWorkSize[0] = offset + 3 * sizeof(uint32_t);
+        dispatchTraits.numWorkGroups[0] = dispatchTraits.globalWorkSize[0] + 3 * sizeof(uint32_t);
+        dispatchTraits.workDim = dispatchTraits.numWorkGroups[0] + 3 * sizeof(uint32_t);
+    }
+
+    if (kernelMask & kernel2Bit) {
+        auto &dispatchTraits = mockKernelImmData2->kernelDescriptor->payloadMappings.dispatchTraits;
+        dispatchTraits.globalWorkSize[0] = this->crossThreadOffset + 3 * sizeof(uint32_t);
+        dispatchTraits.numWorkGroups[0] = dispatchTraits.globalWorkSize[0] + 3 * sizeof(uint32_t);
+        dispatchTraits.workDim = dispatchTraits.numWorkGroups[0] + 3 * sizeof(uint32_t);
+    }
 }
 
 void MutableCommandListFixtureInit::prepareKernelArg(uint16_t argIndex, L0::MCL::VariableType varType, uint32_t kernelMask) {
