@@ -361,7 +361,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
-HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorrectKernelIsUsed, HeaplessSupportedMatcher) {
+HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorrectKernelIsUsed, HeaplessSupport) {
     if (is32bit) {
         GTEST_SKIP();
     }

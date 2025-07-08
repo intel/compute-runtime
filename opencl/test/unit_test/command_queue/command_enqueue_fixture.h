@@ -176,11 +176,4 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
     bool expectedKernelSystemMemory = false;
 };
 
-struct HeaplessSupportedMatcher {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessAllowed;
-    }
-};
-
 } // namespace NEO

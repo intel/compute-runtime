@@ -136,13 +136,6 @@ struct AuxBuiltinsMatcher {
     }
 };
 
-struct HeaplessSupportedMatcher {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessAllowed;
-    }
-};
-
 HWTEST2_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingAuxTranslationBuiltinThenResourceSizeIsNonZero, MatchAny) {
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
 
@@ -1753,7 +1746,7 @@ TEST_F(BuiltInTests, GivenTypeInvalidWhenGettingBuiltinCodeThenKernelIsEmpty) {
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
-HWTEST2_F(BuiltInTests, GivenImagesAndHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, GivenImagesAndHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupport) {
 
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
@@ -1769,7 +1762,7 @@ HWTEST2_F(BuiltInTests, GivenImagesAndHeaplessBuiltinTypeSourceWhenGettingBuilti
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dBufferHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
 }
 
-HWTEST2_F(BuiltInTests, GivenHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, GivenHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupport) {
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
 
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBufferStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
@@ -2039,7 +2032,7 @@ HWTEST_F(BuiltInOwnershipWrapperTests, givenBuiltInOwnershipWrapperWhenAskedForT
     EXPECT_FALSE(std::is_copy_assignable<BuiltInOwnershipWrapper>::value);
 }
 
-HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
 
     if (is32bit) {
         GTEST_SKIP();
@@ -2070,7 +2063,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToBufferStatelessHeaplessIsUsedThen
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
 
-HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToSystemBufferRectStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToSystemBufferRectStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -2110,7 +2103,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToSystemBufferRectStatelessHeapless
     }
 }
 
-HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToLocalBufferRectStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToLocalBufferRectStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -2150,7 +2143,7 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToLocalBufferRectStatelessHeaplessI
     }
 }
 
-HWTEST2_F(BuiltInTests, whenBuilderFillSystemBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, whenBuilderFillSystemBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -2185,7 +2178,7 @@ HWTEST2_F(BuiltInTests, whenBuilderFillSystemBufferStatelessHeaplessIsUsedThenPa
     }
 }
 
-HWTEST2_F(BuiltInTests, whenBuilderFillLocalBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupportedMatcher) {
+HWTEST2_F(BuiltInTests, whenBuilderFillLocalBufferStatelessHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
     if (is32bit) {
         GTEST_SKIP();
     }

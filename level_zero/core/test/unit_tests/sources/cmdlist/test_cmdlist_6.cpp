@@ -736,14 +736,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenImageCopyFromMemoryThenBui
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 }
 
-struct HeaplessSupportedMatch {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessAllowed;
-    }
-};
-
-HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyFromMemoryThenCorrectRowAndSlicePitchArePassed, HeaplessSupportedMatch) {
+HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyFromMemoryThenCorrectRowAndSlicePitchArePassed, HeaplessSupport) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     for (bool heaplessEnabled : {false, true}) {
@@ -794,7 +787,7 @@ HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyFromMemoryThenCorrect
     }
 }
 
-HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyToMemoryThenCorrectRowAndSlicePitchArePassed, HeaplessSupportedMatch) {
+HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyToMemoryThenCorrectRowAndSlicePitchArePassed, HeaplessSupport) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     for (bool heaplessEnabled : {false, true}) {

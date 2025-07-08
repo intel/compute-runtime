@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/test/common/helpers/includes/test_traits_common.h"
+
 using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
 using IsXeCore = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE_HPC_CORE>;
 using IsNotXeCore = IsNotWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE_HPC_CORE>;
@@ -94,5 +96,17 @@ struct IsStatelessBufferPreferredForProduct {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
         return !IsStatefulBufferPreferredForProduct::isMatched<productFamily>();
+    }
+};
+
+struct HeaplessSupport {
+    template <PRODUCT_FAMILY productFamily>
+    static consteval bool isMatched() {
+        using T = TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>;
+        if constexpr (requires { T::heaplessAllowed; }) {
+            return static_cast<bool>(T::heaplessAllowed);
+        } else {
+            return false;
+        }
     }
 };

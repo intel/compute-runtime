@@ -281,7 +281,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessThenStatelessKernelIsU
     EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
 }
 
-HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessHeaplessThenCorrectKernelIsUsed, HeaplessSupportedMatcher) {
+HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessHeaplessThenCorrectKernelIsUsed, HeaplessSupport) {
 
     if (is32bit) {
         GTEST_SKIP();
