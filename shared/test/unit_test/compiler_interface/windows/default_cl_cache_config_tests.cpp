@@ -293,7 +293,7 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenPrintDebugMessagesWhenCacheIsEnable
 
 TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigIsEnabledOrDisabledAsExpected) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(false);
 
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
@@ -303,15 +303,10 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigI
     wchar_t envBlockNoIgc[] = L"NEO_CACHE_PERSISTENT=1\0NEO_CACHE_MAX_SIZE=22\0NEO_CACHE_DIR=ult\\directory\\\0\0";
     SysCalls::mockEnvStringsW = envBlockNoIgc;
 
-    StreamCapture capture;
-    capture.captureStdout();
-
     auto cacheConfig = getDefaultCompilerCacheConfig();
-    std::string output = capture.getCapturedStdout();
 
     EXPECT_TRUE(cacheConfig.enabled);
     EXPECT_EQ(cacheConfig.cacheDir, "ult\\directory\\");
-    EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult\\directory\\\n\n");
 
     wchar_t envBlockWithIgc[] = L"IGC_DEBUG=1\0NEO_CACHE_PERSISTENT=1\0NEO_CACHE_MAX_SIZE=22\0NEO_CACHE_DIR=ult\\directory\\\0\0";
     SysCalls::mockEnvStringsW = envBlockWithIgc;
@@ -320,14 +315,32 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigI
     EXPECT_FALSE(cacheConfig.enabled);
 
     SysCalls::mockEnvStringsW = envBlockNoIgc;
-    StreamCapture capture2;
-    capture2.captureStdout();
     cacheConfig = getDefaultCompilerCacheConfig();
-    output = capture2.getCapturedStdout();
 
     EXPECT_TRUE(cacheConfig.enabled);
     EXPECT_EQ(cacheConfig.cacheDir, "ult\\directory\\");
-    EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult\\directory\\\n\n");
+}
+
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetWhenGetDefaultCacheConfigThenWarningIsPrinted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
+    mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
+    DWORD getFileAttributesResultMock = FILE_ATTRIBUTE_DIRECTORY;
+    VariableBackup<DWORD> pathExistsMockBackup(&SysCalls::getFileAttributesResult, getFileAttributesResultMock);
+
+    wchar_t envBlockWithIgc[] = L"IGC_DEBUG=1\0NEO_CACHE_PERSISTENT=1\0NEO_CACHE_MAX_SIZE=22\0NEO_CACHE_DIR=ult\\directory\\\0\0";
+    SysCalls::mockEnvStringsW = envBlockWithIgc;
+
+    StreamCapture capture;
+    capture.captureStdout();
+    auto cacheConfig = getDefaultCompilerCacheConfig();
+    std::string output = capture.getCapturedStdout();
+
+    EXPECT_FALSE(cacheConfig.enabled);
+    EXPECT_STREQ(output.c_str(), "WARNING: Detected IGC_* environment variable(s). Compiler cache is disabled.\n");
 }
 
 } // namespace NEO

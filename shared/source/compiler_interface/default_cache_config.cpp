@@ -34,6 +34,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
 
         if (isAnyIgcEnvVarSet()) {
             ret.enabled = false;
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "WARNING: Detected IGC_* environment variable(s). Compiler cache is disabled.\n");
             return ret;
         }
 
