@@ -389,7 +389,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenNeoCachePersistentSetToZeroWhenGetDefau
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigIsEnabledOrDisabledAsExpected) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintDebugMessages.set(false);
 
     std::unordered_map<std::string, std::string> mockableEnvs;
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
@@ -421,14 +421,9 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigIsEna
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, statMock);
 
-    testing::internal::CaptureStdout();
-
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    std::string output = testing::internal::GetCapturedStdout();
-
     EXPECT_TRUE(cacheConfig.enabled);
     EXPECT_EQ(cacheConfig.cacheDir, "ult/directory/");
-    EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult/directory/\n\n");
 
     mockableEnvs["IGC_DEBUG"] = "1";
     environVec = buildEnviron(mockableEnvs, envStorage);
@@ -439,14 +434,56 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigIsEna
     mockableEnvs.erase("IGC_DEBUG");
     environVec = buildEnviron(mockableEnvs, envStorage);
     NEO::ULT::setMockEnviron(environVec.data());
-    testing::internal::CaptureStdout();
     cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    output = testing::internal::GetCapturedStdout();
-
     EXPECT_TRUE(cacheConfig.enabled);
     EXPECT_EQ(cacheConfig.cacheDir, "ult/directory/");
-    EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult/directory/\n\n");
 
     NEO::ULT::setMockEnviron(nullptr);
 }
+
+TEST(ClCacheDefaultConfigLinuxTest, GivenIgcEnvVarSetWhenGetDefaultCacheConfigThenWarningIsPrinted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+
+    std::unordered_map<std::string, std::string> mockableEnvs;
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
+    mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
+    mockableEnvs["IGC_DEBUG"] = "1";
+
+    auto statMock = [](const std::string &filePath, struct stat *statbuf) noexcept {
+        statbuf->st_mode = S_IFDIR;
+        return 0;
+    };
+
+    auto buildEnviron = [](const std::unordered_map<std::string, std::string> &envs, std::vector<std::string> &storage) {
+        storage.clear();
+        for (const auto &kv : envs) {
+            storage.push_back(kv.first + "=" + kv.second);
+        }
+        std::vector<char *> result;
+        for (auto &str : storage) {
+            result.push_back(const_cast<char *>(str.c_str()));
+        }
+        result.push_back(nullptr);
+        return result;
+    };
+
+    std::vector<std::string> envStorage;
+    auto environVec = buildEnviron(mockableEnvs, envStorage);
+    NEO::ULT::setMockEnviron(environVec.data());
+
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, statMock);
+
+    testing::internal::CaptureStdout();
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_FALSE(cacheConfig.enabled);
+    EXPECT_STREQ(output.c_str(), "WARNING: Detected IGC_* environment variable(s). Compiler cache is disabled.\n");
+
+    NEO::ULT::setMockEnviron(nullptr);
+}
+
 } // namespace NEO
