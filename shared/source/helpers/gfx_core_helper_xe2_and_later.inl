@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
 namespace NEO {
@@ -21,6 +22,16 @@ void GfxCoreHelperHw<Family>::applyAdditionalCompressionSettings(Gmm &gmm, bool 
     if (debugManager.flags.PrintGmmCompressionParams.get()) {
         printf("\n\tFlags.Info.NotCompressed: %u", gmm.resourceParams.Flags.Info.NotCompressed);
     }
+}
+
+template <>
+bool GfxCoreHelperHw<Family>::isCompressionAppliedForImportedResource(Gmm &gmm) const {
+    auto gmmFlags = gmm.gmmResourceInfo->getResourceFlags();
+    if (!gmmFlags->Info.NotCompressed) {
+        return true;
+    }
+
+    return false;
 }
 
 template <typename GfxFamily>

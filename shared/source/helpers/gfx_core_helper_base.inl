@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
@@ -661,6 +662,16 @@ size_t GfxCoreHelperHw<GfxFamily>::getPreemptionAllocationAlignment() const {
 
 template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const {}
+
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::isCompressionAppliedForImportedResource(Gmm &gmm) const {
+    auto gmmFlags = gmm.gmmResourceInfo->getResourceFlags();
+    if (gmmFlags->Info.MediaCompressed || gmmFlags->Info.RenderCompressed) {
+        return true;
+    }
+
+    return false;
+}
 
 template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const {
