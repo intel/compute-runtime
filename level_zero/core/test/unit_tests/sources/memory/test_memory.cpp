@@ -743,7 +743,7 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithUncachedFlagThenLocallyUncached
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MemoryTest, whenAllocatingHostMemoryWithoutDescriptorThenThenCachedResourceIsCreated) {
+TEST_F(MemoryTest, whenAllocatingHostMemoryWithoutDescriptorThenCachedResourceIsCreated) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -760,7 +760,7 @@ TEST_F(MemoryTest, whenAllocatingHostMemoryWithoutDescriptorThenThenCachedResour
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MemoryTest, whenAllocatingDeviceMemoryWithoutDescriptorThenThenCachedResourceIsCreated) {
+TEST_F(MemoryTest, whenAllocatingDeviceMemoryWithoutDescriptorThenCachedResourceIsCreated) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -779,7 +779,7 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryWithoutDescriptorThenThenCachedReso
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MemoryTest, whenAllocatingSharedMemoryWithoutDescriptorThenCachedResourceWithCpuInitialPlacementIsCreated) {
+TEST_F(MemoryTest, whenAllocatingSharedMemoryWithoutDescriptorsThenCachedResourceWithCpuInitialPlacementIsCreated) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -787,6 +787,64 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithoutDescriptorThenCachedResource
     ze_result_t result = context->allocSharedMem(device->toHandle(),
                                                  nullptr,
                                                  nullptr,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 0u);
+    EXPECT_EQ(allocData->allocationFlagsProperty.allocFlags.usmInitialPlacementCpu, 1u);
+    EXPECT_EQ(allocData->allocationFlagsProperty.allocFlags.usmInitialPlacementGpu, 0u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenAllocatingHostMemoryWithDefaultDescriptorThenCachedResourceIsCreated) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_result_t result = context->allocHostMem(&defaultHostMemDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 0u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenAllocatingDeviceMemoryWithDefaultDescriptorThenCachedResourceIsCreated) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &defaultDeviceMemDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 0u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, whenAllocatingSharedMemoryWithDefaultDescriptorsThenCachedResourceWithCpuInitialPlacementIsCreated) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &defaultDeviceMemDesc,
+                                                 &defaultHostMemDesc,
                                                  size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);

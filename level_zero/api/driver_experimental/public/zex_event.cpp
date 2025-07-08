@@ -49,7 +49,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
     constexpr uint32_t supportedBasedFlags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
 
     auto device = Device::fromHandle(toInternalType(hDevice));
-    auto counterBasedEventDesc = desc ? desc : &DefaultDescriptors::counterBasedEventDesc;
+    auto counterBasedEventDesc = desc ? desc : &defaultCounterBasedEventDesc;
 
     if (!hDevice || !phEvent) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
