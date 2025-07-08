@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -343,9 +345,11 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
     }
 
     StackVec<BuiltInCodeType, 2> supportedTypes{};
-    if (!NEO::debugManager.flags.RebuildPrecompiledKernels.get()) {
+    bool requiresRebuild = !device->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv();
+    if (!requiresRebuild && !NEO::debugManager.flags.RebuildPrecompiledKernels.get()) {
         supportedTypes.push_back(BuiltInCodeType::binary);
     }
+
     supportedTypes.push_back(BuiltInCodeType::intermediate);
 
     NEO::BuiltinCode builtinCode{};

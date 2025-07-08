@@ -2246,6 +2246,31 @@ TEST_F(ProgramTests, GivenGtpinReraFlagWhenBuildingProgramThenCorrectOptionsAreS
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
 }
 
+TEST_F(ProgramTests, givenOneApiPvcSendWarWaEnvFalseWhenBuildingProgramThenInternalOptionIsAdded) {
+    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pDevice = pContext->getDevice(0);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
+    program->sourceCode = "__kernel mock() {}";
+    program->createdFrom = Program::CreatedFrom::source;
+
+    cl_int retVal = program->build(program->getDevices(), "");
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // Check internal build options that were applied
+    EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::optDisableSendWarWa)) << cip->buildInternalOptions;
+
+    cip->buildOptions.clear();
+    cip->buildInternalOptions.clear();
+    pDevice->getExecutionEnvironment()->setOneApiPvcWaEnv(false);
+
+    retVal = program->build(program->getDevices(), CompilerOptions::concatenate(CompilerOptions::gtpinRera, CompilerOptions::finiteMathOnly).c_str());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // Check internal build options that were applied
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::optDisableSendWarWa)) << cip->buildInternalOptions;
+}
+
 TEST_F(ProgramTests, GivenFailureDuringProcessGenBinaryWhenProcessGenBinariesIsCalledThenErrorIsReturned) {
     auto program = std::make_unique<FailingGenBinaryProgram>(toClDeviceVector(*pClDevice));
 

@@ -65,6 +65,11 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     }
     bool isFP64EmulationEnabled() const { return fp64EmulationEnabled; }
 
+    void setOneApiPvcWaEnv(bool val) {
+        oneApiPvcWaEnv = val;
+    }
+    bool isOneApiPvcWaEnv() const { return oneApiPvcWaEnv; }
+
     DirectSubmissionController *initializeDirectSubmissionController();
     void initializeUnifiedMemoryReuseCleaner(bool isAnyDirectSubmissionLightEnabled);
 
@@ -89,6 +94,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void restoreCcsMode();
     bool metricsEnabled = false;
     bool fp64EmulationEnabled = false;
+    bool oneApiPvcWaEnv = true;
 
     DeviceHierarchyMode deviceHierarchyMode = DeviceHierarchyMode::composite;
     DebuggingMode debuggingEnabledMode = DebuggingMode::disabled;

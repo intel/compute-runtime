@@ -1980,6 +1980,15 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCo
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
+TEST_F(BuiltInTests, givenOneApiPvcSendWarWaEnvFalseWhenGettingBuiltinCodeThenSourceCodeTypeIsUsed) {
+    pDevice->getExecutionEnvironment()->setOneApiPvcWaEnv(false);
+    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::source, code.type);
+    EXPECT_NE(0u, code.resource.size());
+    EXPECT_EQ(pDevice, code.targetDevice);
+}
+
 using BuiltInOwnershipWrapperTests = BuiltInTests;
 
 TEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnlockOnDestruction) {
