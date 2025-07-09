@@ -216,7 +216,7 @@ class SVMAllocsManager {
         SVMAllocsManager *svmAllocsManager = nullptr;
         MemoryManager *memoryManager = nullptr;
         bool enablePerformanceLogging = false;
-        bool updateAllocIdOnGet = false;
+        bool requireUpdatingAllocsForIndirectAccess = false;
     };
 
     enum class FreePolicyType : uint32_t {
@@ -261,7 +261,8 @@ class SVMAllocsManager {
     void trimUSMHostAllocCache();
     void insertSVMAlloc(const SvmAllocationData &svmData);
     void removeSVMAlloc(const SvmAllocationData &svmData);
-    void updateAllocId(SvmAllocationData &svmData);
+    void reinsertToAllocsForIndirectAccess(SvmAllocationData &svmData);
+    void removeFromAllocsForIndirectAccess(SvmAllocationData &svmData);
     size_t getNumAllocs() const { return svmAllocs.getNumAllocs(); }
     MOCKABLE_VIRTUAL size_t getNumDeferFreeAllocs() const { return svmDeferFreeAllocs.getNumAllocs(); }
     SortedVectorBasedAllocationTracker *getSVMAllocs() { return &svmAllocs; }

@@ -226,8 +226,10 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenGettingAllocationThenUpda
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     {
-        allocationCache.updateAllocIdOnGet = false;
+        allocationCache.requireUpdatingAllocsForIndirectAccess = false;
+        EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(1u));
         EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, false));
+        EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(1u));
         auto reusedPtr = allocationCache.get(1u, unifiedMemoryProperties);
         EXPECT_EQ(ptr, reusedPtr);
         EXPECT_EQ(1u, svmAllocData.getAllocId());
@@ -237,11 +239,17 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenGettingAllocationThenUpda
         EXPECT_EQ(&gpuGfxAllocation, allocMapEntry->second);
         EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(2u));
         allocationCache.allocations.clear();
+        svmAllocsManager.internalAllocationsMap.clear();
     }
 
     {
-        allocationCache.updateAllocIdOnGet = true;
+        svmAllocsManager.internalAllocationsMap.insert({svmAllocData.getAllocId(), &gpuGfxAllocation});
+        EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(1u));
+        EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(2u));
+        allocationCache.requireUpdatingAllocsForIndirectAccess = true;
         EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, false));
+        EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(1u));
+        EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(2u));
         auto reusedPtr = allocationCache.get(1u, unifiedMemoryProperties);
         EXPECT_EQ(ptr, reusedPtr);
         EXPECT_EQ(2u, svmAllocData.getAllocId());
@@ -356,7 +364,7 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigAndProductHelper
         EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
         svmManager->initUsmAllocationsCaches(*device);
         ASSERT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
-        EXPECT_EQ(csrType != 0u, svmManager->usmDeviceAllocationsCache->updateAllocIdOnGet);
+        EXPECT_EQ(csrType != 0u, svmManager->usmDeviceAllocationsCache->requireUpdatingAllocsForIndirectAccess);
     }
 }
 
@@ -1378,7 +1386,7 @@ HWTEST_F(SvmHostAllocationCacheTest, givenOclApiSpecificConfigAndProductHelperAn
         EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
         svmManager->initUsmAllocationsCaches(*device);
         ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
-        EXPECT_EQ(csrType != 0u, svmManager->usmHostAllocationsCache->updateAllocIdOnGet);
+        EXPECT_EQ(csrType != 0u, svmManager->usmHostAllocationsCache->requireUpdatingAllocsForIndirectAccess);
     }
 }
 

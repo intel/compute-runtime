@@ -93,6 +93,9 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         if (waitForCompletion) {
             svmAllocsManager->waitForEnginesCompletion(svmData);
         }
+        if (requireUpdatingAllocsForIndirectAccess) {
+            svmAllocsManager->removeFromAllocsForIndirectAccess(*svmData);
+        }
         svmData->isSavedForReuse = true;
         allocations.emplace(std::lower_bound(allocations.begin(), allocations.end(), size), size, ptr, svmData, waitForCompletion);
     }
@@ -169,8 +172,9 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
             allocationIter->svmData->isSavedForReuse = false;
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
-            if (updateAllocIdOnGet) {
-                svmAllocsManager->updateAllocId(*allocationIter->svmData);
+            if (requireUpdatingAllocsForIndirectAccess) {
+                allocationIter->svmData->setAllocId(++svmAllocsManager->allocationsCounter);
+                svmAllocsManager->reinsertToAllocsForIndirectAccess(*allocationIter->svmData);
             }
             allocations.erase(allocationIter);
             return allocationPtr;
@@ -641,15 +645,19 @@ void SVMAllocsManager::setUnifiedAllocationProperties(GraphicsAllocation *alloca
     allocation->setCoherent(svmProperties.coherent);
 }
 
-void SVMAllocsManager::updateAllocId(SvmAllocationData &svmAllocData) {
+void SVMAllocsManager::reinsertToAllocsForIndirectAccess(SvmAllocationData &svmData) {
     std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
     std::unique_lock<std::shared_mutex> lock(mtx);
-    internalAllocationsMap.erase(svmAllocData.getAllocId());
-    svmAllocData.setAllocId(++this->allocationsCounter);
-    for (auto alloc : svmAllocData.gpuAllocations.getGraphicsAllocations()) {
+    for (auto alloc : svmData.gpuAllocations.getGraphicsAllocations()) {
         OPTIONAL_UNRECOVERABLE_IF(nullptr == alloc);
-        internalAllocationsMap.insert({svmAllocData.getAllocId(), alloc});
+        internalAllocationsMap.insert({svmData.getAllocId(), alloc});
     }
+}
+
+void SVMAllocsManager::removeFromAllocsForIndirectAccess(SvmAllocationData &svmData) {
+    std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
+    std::unique_lock<std::shared_mutex> lock(mtx);
+    internalAllocationsMap.erase(svmData.getAllocId());
 }
 
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
@@ -954,7 +962,7 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
         device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner(device.isAnyDirectSubmissionLightEnabled());
         this->initUsmDeviceAllocationsCache(device);
         if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
-            this->usmDeviceAllocationsCache->updateAllocIdOnGet = true;
+            this->usmDeviceAllocationsCache->requireUpdatingAllocsForIndirectAccess = true;
         }
     }
 
@@ -968,7 +976,7 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
         device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner(device.isAnyDirectSubmissionLightEnabled());
         this->initUsmHostAllocationsCache();
         if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
-            this->usmHostAllocationsCache->updateAllocIdOnGet = true;
+            this->usmHostAllocationsCache->requireUpdatingAllocsForIndirectAccess = true;
         }
     }
 }
