@@ -58,7 +58,9 @@ const KernelInfo *Program::getKernelInfo(
 }
 
 size_t Program::getNumKernels() const {
-    auto numKernels = buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray.size();
+    auto pClDevice = this->getDevicesInProgram();
+    auto rootDeviceIndex = pClDevice.at(0)->getRootDeviceIndex();
+    auto numKernels = buildInfos[rootDeviceIndex].kernelInfoArray.size();
     auto usesExportedFunctions = (exportedFunctionsKernelId != std::numeric_limits<size_t>::max());
     if (usesExportedFunctions) {
         numKernels--;
