@@ -27,6 +27,7 @@ DEVICE(0xFD81, PtlHwConfig)
 #if SUPPORT_XE2_HPG_CORE
 #ifdef SUPPORT_BMG
 DEVICE(0xE202, BmgHwConfig)
+NAMEDDEVICE(0xE209, BmgHwConfig, "Intel(R) Arc(TM) B580 Graphics")
 NAMEDDEVICE(0xE20B, BmgHwConfig, "Intel(R) Arc(TM) B580 Graphics")
 NAMEDDEVICE(0xE20C, BmgHwConfig, "Intel(R) Arc(TM) B570 Graphics")
 DEVICE(0xE20D, BmgHwConfig)

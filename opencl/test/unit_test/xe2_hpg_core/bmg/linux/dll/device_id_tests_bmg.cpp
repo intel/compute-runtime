@@ -10,8 +10,9 @@
 using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenBmgSupportedDeviceIdThenDeviceDescriptorTableExists) {
-    std::array<DeviceDescriptor, 13> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 14> expectedDescriptors = {{
         {0xE202, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
+        {0xE209, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
         {0xE20B, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
         {0xE20C, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
         {0xE20D, &BmgHwConfig::hwInfo, &BmgHwConfig::setupHardwareInfo},
