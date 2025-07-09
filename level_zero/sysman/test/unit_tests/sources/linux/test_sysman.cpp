@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 
 namespace NEO {
 namespace SysCalls {
@@ -21,6 +22,7 @@ extern bool allowFakeDevicePath;
 } // namespace NEO
 
 namespace L0 {
+extern bool sysmanInitFromCore;
 namespace Sysman {
 namespace ult {
 
@@ -522,6 +524,23 @@ TEST(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysm
     auto pSysmanDeviceImp = std::make_unique<L0::Sysman::SysmanDeviceImp>(execEnv, 0);
     auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pSysmanDeviceImp->pOsSysman);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxSysmanImp->init());
+}
+
+TEST(SysmanTest, GivenDrmDriverModelWhenInitFailsDueToMissingZesInitSupportThenCleanupIsCalled) {
+    VariableBackup<SysmanProductHelperCreateFunctionType> sysmanProductHelperBackup(&sysmanProductHelperFactory[defaultHwInfo->platform.eProductFamily], []() -> std::unique_ptr<SysmanProductHelper> { return std::make_unique<MockSysmanProductHelper>(); });
+    VariableBackup<bool> sysmanInitFromCoreBackup(&sysmanInitFromCore, true);
+    auto execEnv = std::make_unique<NEO::ExecutionEnvironment>();
+    execEnv->prepareRootDeviceEnvironments(1);
+    execEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+    execEnv->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    execEnv->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModel>(NEO::DriverModelType::drm));
+
+    auto driverModel = static_cast<NEO::MockDriverModel *>(execEnv->rootDeviceEnvironments[0]->osInterface->getDriverModel());
+
+    auto pSysmanDeviceImp = std::make_unique<L0::Sysman::SysmanDeviceImp>(execEnv.release(), 0);
+    auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pSysmanDeviceImp->pOsSysman);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxSysmanImp->init());
+    EXPECT_EQ(1u, driverModel->cleanupCalled);
 }
 
 TEST(SysmanErrorCodeTest, GivenDifferentErrorCodesWhenCallingGetResultThenVerifyProperZeResultErrorIsReturned) {

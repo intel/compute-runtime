@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <cstdint>
 #include <functional>
@@ -21,6 +22,7 @@ class MockDriverModel : public NEO::DriverModel {
   public:
     MockDriverModel() : MockDriverModel(NEO::DriverModelType::unknown) {}
     MockDriverModel(DriverModelType driverModelType) : DriverModel(driverModelType) {}
+    ADDMETHOD_NOBASE_VOIDRETURN(cleanup, ());
 
     void setGmmInputArgs(void *args) override {}
 

@@ -43,6 +43,7 @@ ze_result_t LinuxSysmanImp::init() {
     if (osInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+    osInterface.getDriverModel()->cleanup();
 
     pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
     DEBUG_BREAK_IF(nullptr == pSysmanProductHelper);
@@ -72,7 +73,6 @@ ze_result_t LinuxSysmanImp::init() {
     rootPath = NEO::getPciRootPath(myDeviceFd).value_or("");
     pSysfsAccess->getRealPath(deviceDir, gtDevicePath);
 
-    osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     pPmuInterface = PmuInterface::create(this);
     return result;
 }
