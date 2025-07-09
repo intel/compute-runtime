@@ -8,6 +8,8 @@
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
+#include "implicit_args.h"
+
 namespace L0 {
 
 void KernelImp::patchRegionParams(const CmdListKernelLaunchParams &launchParams, const ze_group_count_t &threadGroupDimensions) {}

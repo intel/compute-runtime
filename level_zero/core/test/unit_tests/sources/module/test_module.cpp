@@ -538,7 +538,7 @@ HWTEST_F(ModuleTest, givenUnalignedHostBufferWhenSurfaceStateProgrammedThenUnali
 using ModuleUncachedBufferTest = Test<ModuleFixture>;
 
 struct KernelImpUncachedTest : public KernelImp {
-    using KernelImp::kernelRequiresUncachedMocsCount;
+    using KernelImp::state;
 };
 
 HWTEST2_F(ModuleUncachedBufferTest,
@@ -602,7 +602,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     uint32_t argIndex = 0u;
     kernelImp->setKernelArgUncached(argIndex, true);
-    kernelImp->kernelRequiresUncachedMocsCount++;
+    kernelImp->state.kernelRequiresUncachedMocsCount++;
     kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc, nullptr);
     EXPECT_FALSE(kernelImp->getKernelRequiresUncachedMocs());
 
@@ -675,7 +675,7 @@ HWTEST2_F(ModuleUncachedBufferTest,
 
     uint32_t argIndex = 0u;
     kernelImp->setKernelArgUncached(argIndex, true);
-    kernelImp->kernelRequiresUncachedMocsCount++;
+    kernelImp->state.kernelRequiresUncachedMocsCount++;
     kernelImp->setArgBufferWithAlloc(argIndex, reinterpret_cast<uintptr_t>(devicePtr), gpuAlloc, nullptr);
     EXPECT_TRUE(kernelImp->getKernelRequiresUncachedMocs());
 
@@ -3884,7 +3884,7 @@ HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAll
     kernelDesc.pKernelName = "test";
     kernel->initialize(&kernelDesc);
 
-    auto &container = kernel->internalResidencyContainer;
+    auto &container = kernel->state.internalResidencyContainer;
     auto printfPos = std::find(container.begin(), container.end(), kernel->getPrintfBufferAllocation());
     EXPECT_NE(container.end(), printfPos);
 }

@@ -13,6 +13,8 @@
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
+#include "implicit_args.h"
+
 namespace L0 {
 namespace ult {
 
@@ -38,49 +40,27 @@ template <>
 struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using BaseClass = ::L0::KernelImp;
     using BaseClass::BaseClass;
-    using ::L0::KernelImp::argumentsResidencyContainer;
     using ::L0::KernelImp::cooperativeSupport;
     using ::L0::KernelImp::createPrintfBuffer;
-    using ::L0::KernelImp::crossThreadData;
-    using ::L0::KernelImp::crossThreadDataSize;
-    using ::L0::KernelImp::dynamicStateHeapData;
-    using ::L0::KernelImp::dynamicStateHeapDataSize;
-    using ::L0::KernelImp::groupSize;
     using ::L0::KernelImp::heaplessEnabled;
-    using ::L0::KernelImp::implicitArgsResidencyContainerIndices;
     using ::L0::KernelImp::implicitScalingEnabled;
-    using ::L0::KernelImp::internalResidencyContainer;
-    using ::L0::KernelImp::isBindlessOffsetSet;
-    using ::L0::KernelImp::kernelHasIndirectAccess;
     using ::L0::KernelImp::kernelImmData;
-    using ::L0::KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
     using ::L0::KernelImp::localDispatchSupport;
     using ::L0::KernelImp::maxWgCountPerTileCcs;
     using ::L0::KernelImp::maxWgCountPerTileCooperative;
     using ::L0::KernelImp::maxWgCountPerTileRcs;
     using ::L0::KernelImp::module;
-    using ::L0::KernelImp::numThreadsPerThreadGroup;
     using ::L0::KernelImp::patchBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::patchBindlessSurfaceState;
     using ::L0::KernelImp::patchSamplerBindlessOffsetsInCrossThreadData;
-    using ::L0::KernelImp::perThreadDataForWholeThreadGroup;
-    using ::L0::KernelImp::perThreadDataSize;
-    using ::L0::KernelImp::perThreadDataSizeForWholeThreadGroup;
-    using ::L0::KernelImp::pImplicitArgs;
     using ::L0::KernelImp::printfBuffer;
     using ::L0::KernelImp::rcsAvailable;
     using ::L0::KernelImp::regionGroupBarrierIndex;
-    using ::L0::KernelImp::requiredWorkgroupOrder;
     using ::L0::KernelImp::setAssertBuffer;
-    using ::L0::KernelImp::slmArgsTotalSize;
-    using ::L0::KernelImp::suggestGroupSizeCache;
+    using ::L0::KernelImp::state;
     using ::L0::KernelImp::surfaceStateAlignment;
     using ::L0::KernelImp::surfaceStateAlignmentMask;
-    using ::L0::KernelImp::surfaceStateHeapData;
-    using ::L0::KernelImp::surfaceStateHeapDataSize;
     using ::L0::KernelImp::syncBufferIndex;
-    using ::L0::KernelImp::unifiedMemoryControls;
-    using ::L0::KernelImp::usingSurfaceStateHeap;
     using ::L0::KernelImp::walkerInlineDataSize;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address,
@@ -110,7 +90,7 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {}
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
         if (enableForcingOfGenerateLocalIdByHw) {
-            kernelRequiresGenerationOfLocalIdsByRuntime = !forceGenerateLocalIdByHw;
+            state.kernelRequiresGenerationOfLocalIdsByRuntime = !forceGenerateLocalIdByHw;
         }
     }
     ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) override {

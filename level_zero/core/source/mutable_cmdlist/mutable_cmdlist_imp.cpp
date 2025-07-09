@@ -24,6 +24,8 @@
 #include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
 
+#include "implicit_args.h"
+
 #include <algorithm>
 #include <memory>
 

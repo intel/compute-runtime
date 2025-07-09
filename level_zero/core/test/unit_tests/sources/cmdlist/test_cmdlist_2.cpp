@@ -2038,7 +2038,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    kernel->kernelRequiresUncachedMocsCount++;
+    kernel->state.kernelRequiresUncachedMocsCount++;
 
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2050,7 +2050,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     result = commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    kernel->kernelRequiresUncachedMocsCount--;
+    kernel->state.kernelRequiresUncachedMocsCount--;
 
     result = commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2243,7 +2243,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     size_t queueUsedSize = cmdQueueStream.getUsed();
     auto gpuReturnAddress = cmdQueueStream.getGpuBase() + queueUsedSize;
 
-    kernel->kernelRequiresUncachedMocsCount++;
+    kernel->state.kernelRequiresUncachedMocsCount++;
 
     result = commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

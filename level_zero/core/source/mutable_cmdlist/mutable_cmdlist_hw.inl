@@ -36,6 +36,7 @@
 #include "level_zero/experimental/source/mutable_cmdlist/mutable_cmdlist_hw_experimental.inl"
 
 #include "encode_surface_state_args.h"
+#include "implicit_args.h"
 
 #include <cstddef>
 #include <optional>

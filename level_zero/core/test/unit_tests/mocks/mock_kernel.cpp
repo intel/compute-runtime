@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,11 +41,11 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
     NEO::populateKernelDescriptor(descriptor, kernelTokens, 8);
     immutableData.kernelDescriptor = &descriptor;
     immutableData.kernelInfo = &info;
-    crossThreadData.reset(new uint8_t[100]);
+    state.crossThreadData.reset(new uint8_t[100]);
 
-    groupSize[0] = 1;
-    groupSize[1] = 1;
-    groupSize[2] = 1;
+    state.groupSize[0] = 1;
+    state.groupSize[1] = 1;
+    state.groupSize[2] = 1;
 }
 Mock<::L0::KernelImp>::~Mock() {
     delete immutableData.isaGraphicsAllocation.release();

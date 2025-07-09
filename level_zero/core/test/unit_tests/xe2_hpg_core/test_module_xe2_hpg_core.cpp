@@ -14,6 +14,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
+#include "implicit_args.h"
+
 namespace NEO {
 class Device;
 } // namespace NEO
@@ -81,8 +83,8 @@ XE2_HPG_CORETEST_F(Xe2KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThre
         for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.numThreadsPerThreadGroup);
-            kernel.groupSize[0] = kernel.groupSize[1] = kernel.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.state.numThreadsPerThreadGroup);
+            kernel.state.groupSize[0] = kernel.state.groupSize[1] = kernel.state.groupSize[2] = 0;
         }
     }
     {
@@ -104,8 +106,8 @@ XE2_HPG_CORETEST_F(Xe2KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThre
         for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.numThreadsPerThreadGroup);
-            kernel.groupSize[0] = kernel.groupSize[1] = kernel.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.state.numThreadsPerThreadGroup);
+            kernel.state.groupSize[0] = kernel.state.groupSize[1] = kernel.state.groupSize[2] = 0;
         }
     }
 }

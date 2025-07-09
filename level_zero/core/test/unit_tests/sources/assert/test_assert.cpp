@@ -94,14 +94,14 @@ TEST(KernelAssert, GivenKernelWithAssertWhenSettingAssertBufferThenAssertBufferI
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.stateless = 0;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.pointerSize = sizeof(uintptr_t);
-    kernel.crossThreadData = std::make_unique<uint8_t[]>(16);
-    kernel.crossThreadDataSize = sizeof(uint8_t[16]);
+    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(16);
+    kernel.state.crossThreadDataSize = sizeof(uint8_t[16]);
 
     kernel.setAssertBuffer();
 
     auto assertBufferAddress = assertHandler->getAssertBuffer()->getGpuAddressToPatch();
 
-    EXPECT_TRUE(memcmp(kernel.crossThreadData.get(), &assertBufferAddress, sizeof(assertBufferAddress)) == 0);
+    EXPECT_TRUE(memcmp(kernel.state.crossThreadData.get(), &assertBufferAddress, sizeof(assertBufferAddress)) == 0);
     EXPECT_TRUE(std::find(kernel.getInternalResidencyContainer().begin(), kernel.getInternalResidencyContainer().end(), assertHandler->getAssertBuffer()) != kernel.getInternalResidencyContainer().end());
 }
 
@@ -121,8 +121,8 @@ TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThe
     kernel.descriptor.kernelAttributes.flags.requiresImplicitArgs = true;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.stateless = 0;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.pointerSize = sizeof(uintptr_t);
-    kernel.crossThreadData = std::make_unique<uint8_t[]>(16);
-    kernel.crossThreadDataSize = sizeof(uint8_t[16]);
+    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(16);
+    kernel.state.crossThreadDataSize = sizeof(uint8_t[16]);
 
     module.kernelImmData = &kernel.immutableData;
     char heap[8];
@@ -155,8 +155,8 @@ TEST(KernelAssert, GivenNoAssertHandlerWhenKernelWithAssertSetsAssertBufferThenA
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.stateless = 0;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.pointerSize = sizeof(uintptr_t);
-    kernel.crossThreadData = std::make_unique<uint8_t[]>(16);
-    kernel.crossThreadDataSize = sizeof(uint8_t[16]);
+    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(16);
+    kernel.state.crossThreadDataSize = sizeof(uint8_t[16]);
 
     kernel.setAssertBuffer();
     EXPECT_NE(nullptr, neoDevice->getRootDeviceEnvironmentRef().assertHandler.get());

@@ -208,20 +208,20 @@ Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalS
 }
 
 void MutableCommandListFixtureInit::resizeKernelArg(uint32_t resize) {
-    kernel->kernelArgInfos.resize(resize);
-    kernel->isArgUncached.resize(resize);
-    kernel->argumentsResidencyContainer.resize(resize);
-    kernel->slmArgOffsetValues.resize(resize);
-    kernel->slmArgSizes.resize(resize);
-    kernel->kernelArgHandlers.resize(resize);
+    kernel->state.kernelArgInfos.resize(resize);
+    kernel->state.isArgUncached.resize(resize);
+    kernel->state.argumentsResidencyContainer.resize(resize);
+    kernel->state.slmArgOffsetValues.resize(resize);
+    kernel->state.slmArgSizes.resize(resize);
+    kernel->state.kernelArgHandlers.resize(resize);
     mockKernelImmData->resizeExplicitArgs(resize);
 
-    kernel2->kernelArgInfos.resize(resize);
-    kernel2->isArgUncached.resize(resize);
-    kernel2->argumentsResidencyContainer.resize(resize);
-    kernel2->slmArgOffsetValues.resize(resize);
-    kernel2->slmArgSizes.resize(resize);
-    kernel2->kernelArgHandlers.resize(resize);
+    kernel2->state.kernelArgInfos.resize(resize);
+    kernel2->state.isArgUncached.resize(resize);
+    kernel2->state.argumentsResidencyContainer.resize(resize);
+    kernel2->state.slmArgOffsetValues.resize(resize);
+    kernel2->state.slmArgSizes.resize(resize);
+    kernel2->state.kernelArgHandlers.resize(resize);
     mockKernelImmData2->resizeExplicitArgs(resize);
 
     this->kernelArgCount = resize;
@@ -315,11 +315,11 @@ void MutableCommandListFixtureInit::prepareKernelArg(uint16_t argIndex, L0::MCL:
         argSlm.pointerSize = 8;
 
         if (kernelMask & kernel1Bit) {
-            memset(ptrOffset(kernel->crossThreadData.get(), argSlm.slmOffset), 0, 8);
+            memset(ptrOffset(kernel->state.crossThreadData.get(), argSlm.slmOffset), 0, 8);
             mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgSlm;
         }
         if (kernelMask & kernel2Bit) {
-            memset(ptrOffset(kernel2->crossThreadData.get(), argSlm.slmOffset), 0, 8);
+            memset(ptrOffset(kernel2->state.crossThreadData.get(), argSlm.slmOffset), 0, 8);
             mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgSlm;
         }
     }

@@ -39,6 +39,7 @@
 
 #include "encode_dispatch_kernel_args_ext.h"
 #include "encode_surface_state_args.h"
+#include "implicit_args.h"
 
 #include <algorithm>
 #include <type_traits>

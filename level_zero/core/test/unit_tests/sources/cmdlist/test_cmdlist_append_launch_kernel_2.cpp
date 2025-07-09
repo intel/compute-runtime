@@ -237,7 +237,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
     kernel.module = mockModule.get();
-    kernel.crossThreadDataSize = 0x60u;
+    kernel.state.crossThreadDataSize = 0x60u;
     kernel.descriptor.kernelAttributes.flags.passInlineData = true;
 
     uint32_t globalWorkSizeXOffset = 0x40u;
@@ -869,8 +869,8 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
 
         ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
         kernel->initialize(&kernelDesc);
-        kernel->kernelRequiresGenerationOfLocalIdsByRuntime = kernelRequiresGenerationOfLocalIdsByRuntime;
-        kernel->requiredWorkgroupOrder = requiredWorkgroupOrder;
+        kernel->state.kernelRequiresGenerationOfLocalIdsByRuntime = kernelRequiresGenerationOfLocalIdsByRuntime;
+        kernel->state.requiredWorkgroupOrder = requiredWorkgroupOrder;
         kernel->setCrossThreadData(sizeof(uint64_t));
 
         EXPECT_TRUE(kernel->getKernelDescriptor().kernelAttributes.flags.requiresImplicitArgs);

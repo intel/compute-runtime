@@ -17,6 +17,7 @@
 #include "level_zero/core/source/gen12lp/definitions/cache_flush_gen12lp.inl"
 
 #include "cmdlist_extended.inl"
+#include "implicit_args.h"
 
 namespace L0 {
 

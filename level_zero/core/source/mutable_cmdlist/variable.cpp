@@ -31,6 +31,8 @@
 #include "level_zero/core/source/mutable_cmdlist/usage.h"
 #include "level_zero/core/source/mutable_cmdlist/variable_dispatch.h"
 
+#include "implicit_args.h"
+
 namespace L0::MCL {
 using State = VariableDescriptor::State;
 

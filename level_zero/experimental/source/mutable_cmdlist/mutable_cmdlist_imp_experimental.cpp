@@ -20,6 +20,8 @@
 #include "level_zero/experimental/source/mutable_cmdlist/program/mcl_encoder.h"
 #include "level_zero/experimental/source/mutable_cmdlist/program/mcl_program.h"
 
+#include "implicit_args.h"
+
 #include <algorithm>
 #include <memory>
 

@@ -221,14 +221,14 @@ void CommandListPrivateHeapsFixture::setUp() {
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.numSamplers = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.tableOffset = 16;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.borderColor = 0;
-    kernel->dynamicStateHeapData.reset(new uint8_t[512]);
-    kernel->dynamicStateHeapDataSize = 512;
+    kernel->state.dynamicStateHeapData.reset(new uint8_t[512]);
+    kernel->state.dynamicStateHeapDataSize = 512;
 
     mockKernelImmData->mockKernelInfo->heapInfo.surfaceStateHeapSize = 128;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
-    kernel->surfaceStateHeapDataSize = 128;
-    kernel->surfaceStateHeapData.reset(new uint8_t[256]);
+    kernel->state.surfaceStateHeapDataSize = 128;
+    kernel->state.surfaceStateHeapData.reset(new uint8_t[256]);
 
     bindlessHeapsHelper = device->getNEODevice()->getBindlessHeapsHelper();
 }
@@ -301,8 +301,8 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
 
         auto surfaceStateSize = device->getNEODevice()->getGfxCoreHelper().getSamplerStateSize();
 
-        kernel->dynamicStateHeapDataSize = static_cast<uint32_t>(surfaceStateSize * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
-        kernel->dynamicStateHeapData.reset(new uint8_t[kernel->dynamicStateHeapDataSize]);
+        kernel->state.dynamicStateHeapDataSize = static_cast<uint32_t>(surfaceStateSize * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
+        kernel->state.dynamicStateHeapData.reset(new uint8_t[kernel->state.dynamicStateHeapDataSize]);
 
         mockKernelImmData->mockKernelDescriptor->payloadMappings.samplerTable = mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable;
     }
@@ -312,8 +312,8 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
     mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.tableOffset = 0x40;
     mockKernelImmData->mockKernelDescriptor->kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
 
-    kernel->surfaceStateHeapDataSize = mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize;
-    kernel->surfaceStateHeapData.reset(new uint8_t[kernel->surfaceStateHeapDataSize]);
+    kernel->state.surfaceStateHeapDataSize = mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize;
+    kernel->state.surfaceStateHeapData.reset(new uint8_t[kernel->state.surfaceStateHeapDataSize]);
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -555,14 +555,14 @@ void ImmediateFlushTaskCsrSharedHeapCmdListFixture::setUp() {
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.numSamplers = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.tableOffset = 16;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.borderColor = 0;
-    kernel->dynamicStateHeapData.reset(new uint8_t[512]);
-    kernel->dynamicStateHeapDataSize = 512;
+    kernel->state.dynamicStateHeapData.reset(new uint8_t[512]);
+    kernel->state.dynamicStateHeapDataSize = 512;
 
     mockKernelImmData->mockKernelInfo->heapInfo.surfaceStateHeapSize = 128;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
-    kernel->surfaceStateHeapDataSize = 128;
-    kernel->surfaceStateHeapData.reset(new uint8_t[256]);
+    kernel->state.surfaceStateHeapDataSize = 128;
+    kernel->state.surfaceStateHeapData.reset(new uint8_t[256]);
 }
 
 void ImmediateFlushTaskPrivateHeapCmdListFixture::setUp() {

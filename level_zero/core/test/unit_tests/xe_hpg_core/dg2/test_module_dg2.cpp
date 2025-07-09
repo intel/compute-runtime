@@ -61,13 +61,13 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCa
 
     kernel.initialize(&desc);
 
-    auto surfaceStateHeapRef = ArrayRef<uint8_t>(kernel.surfaceStateHeapData.get(), kernel.immutableData.surfaceStateHeapSize);
+    auto surfaceStateHeapRef = ArrayRef<uint8_t>(kernel.state.surfaceStateHeapData.get(), kernel.immutableData.surfaceStateHeapSize);
     patchWithImplicitSurface(ArrayRef<uint8_t>(), surfaceStateHeapRef,
                              0,
                              *device->getDebugSurface(), kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress,
                              *device->getNEODevice(), device->isImplicitScalingCapable());
 
-    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.state.surfaceStateHeapData.get());
     debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
 
     EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, debugSurfaceState->getL1CacheControlCachePolicy());
@@ -112,14 +112,14 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
 
     kernel.initialize(&desc);
 
-    auto surfaceStateHeapRef = ArrayRef<uint8_t>(kernel.surfaceStateHeapData.get(), kernel.immutableData.surfaceStateHeapSize);
+    auto surfaceStateHeapRef = ArrayRef<uint8_t>(kernel.state.surfaceStateHeapData.get(), kernel.immutableData.surfaceStateHeapSize);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(nullptr);
     patchWithImplicitSurface(ArrayRef<uint8_t>(), surfaceStateHeapRef,
                              0,
                              *device->getDebugSurface(), kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress,
                              *device->getNEODevice(), device->isImplicitScalingCapable());
 
-    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.state.surfaceStateHeapData.get());
     debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
 
     EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, debugSurfaceState->getL1CacheControlCachePolicy());

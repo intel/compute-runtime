@@ -45,9 +45,9 @@ HWTEST_F(CommandListAppendLaunchKernelMockModule, givenKernelWithIndirectAllocat
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DetectIndirectAccessInKernel.set(1);
     mockKernelImmData->kernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = true;
-    kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
-    kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
-    kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+    kernel->state.unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
+    kernel->state.unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
+    kernel->state.unifiedMemoryControls.indirectHostAllocationsAllowed = true;
 
     EXPECT_TRUE(kernel->hasIndirectAllocationsAllowed());
 
@@ -63,9 +63,9 @@ HWTEST_F(CommandListAppendLaunchKernelMockModule, givenKernelWithIndirectAllocat
     {
         returnValue = commandList->reset();
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
-        kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
-        kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = false;
+        kernel->state.unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
+        kernel->state.unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
+        kernel->state.unifiedMemoryControls.indirectHostAllocationsAllowed = false;
 
         returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -75,9 +75,9 @@ HWTEST_F(CommandListAppendLaunchKernelMockModule, givenKernelWithIndirectAllocat
     {
         returnValue = commandList->reset();
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
-        kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
-        kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = false;
+        kernel->state.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+        kernel->state.unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
+        kernel->state.unifiedMemoryControls.indirectHostAllocationsAllowed = false;
 
         returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -88,9 +88,9 @@ HWTEST_F(CommandListAppendLaunchKernelMockModule, givenKernelWithIndirectAllocat
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsNotAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
     createKernel();
-    kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
-    kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
-    kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = false;
+    kernel->state.unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
+    kernel->state.unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
+    kernel->state.unifiedMemoryControls.indirectHostAllocationsAllowed = false;
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -988,7 +988,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
     kernel.module = mockModule.get();
-    kernel.groupSize[0] = 2;
+    kernel.state.groupSize[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.workDim = 4;
@@ -1005,7 +1005,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
                                                      nullptr, 0, nullptr, false);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    kernel.groupSize[2] = 2;
+    kernel.state.groupSize[2] = 2;
     result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),
                                                      *static_cast<ze_group_count_t *>(alloc),
                                                      nullptr, 0, nullptr, false);
@@ -1543,7 +1543,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
           IsAtLeastXeCore) {
     NEO::MockGraphicsAllocation mockAllocation;
     NEO::GraphicsAllocation *allocation = &mockAllocation;
-    kernel->argumentsResidencyContainer.push_back(allocation);
+    kernel->state.argumentsResidencyContainer.push_back(allocation);
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -1570,7 +1570,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
           IsAtLeastXeCore) {
     NEO::MockGraphicsAllocation mockAllocation;
     NEO::GraphicsAllocation *allocation = &mockAllocation;
-    kernel->internalResidencyContainer.push_back(allocation);
+    kernel->state.internalResidencyContainer.push_back(allocation);
 
     auto kernelIsaAllocation = kernel->getImmutableData()->getIsaGraphicsAllocation();
 

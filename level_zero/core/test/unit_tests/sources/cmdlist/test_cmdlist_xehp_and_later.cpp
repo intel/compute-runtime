@@ -2000,7 +2000,7 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
     uint32_t cachedStatlessMocs = getMocs(true);
     EXPECT_EQ((cachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 
-    kernel->kernelRequiresUncachedMocsCount++;
+    kernel->state.kernelRequiresUncachedMocsCount++;
 
     csrUsedBefore = csrStream.getUsed();
     result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
@@ -2148,7 +2148,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     uint32_t cachedStatlessMocs = getMocs(true);
     EXPECT_EQ((cachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 
-    kernel->kernelRequiresUncachedMocsCount++;
+    kernel->state.kernelRequiresUncachedMocsCount++;
 
     csrUsedBefore = csrStream.getUsed();
     result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
@@ -2967,9 +2967,9 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
     kernel.descriptor.kernelAttributes.flags.passInlineData = false;
-    kernel.perThreadDataSizeForWholeThreadGroup = 0;
-    kernel.crossThreadDataSize = 64;
-    kernel.crossThreadData = std::make_unique<uint8_t[]>(kernel.crossThreadDataSize);
+    kernel.state.perThreadDataSizeForWholeThreadGroup = 0;
+    kernel.state.crossThreadDataSize = 64;
+    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(kernel.state.crossThreadDataSize);
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0);
@@ -2999,9 +2999,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughIohSpaceWhenLaunchingKern
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = mockModule.get();
     kernel.descriptor.kernelAttributes.flags.passInlineData = false;
-    kernel.perThreadDataSizeForWholeThreadGroup = 0;
-    kernel.crossThreadDataSize = 64;
-    kernel.crossThreadData = std::make_unique<uint8_t[]>(kernel.crossThreadDataSize);
+    kernel.state.perThreadDataSizeForWholeThreadGroup = 0;
+    kernel.state.crossThreadDataSize = 64;
+    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(kernel.state.crossThreadDataSize);
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0);

@@ -16,6 +16,8 @@
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
 #include <level_zero/ze_api.h>
 
+#include "implicit_args.h"
+
 namespace L0::MCL {
 
 MutableKernel::MutableKernel(ze_kernel_handle_t kernelHandle, uint32_t inlineDataSize, uint32_t maxPerThreadDataSize)

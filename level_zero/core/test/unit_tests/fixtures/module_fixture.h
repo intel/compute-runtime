@@ -16,6 +16,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
+#include "implicit_args.h"
+
 namespace NEO {
 class ExecutionEnvironment;
 struct KernelDescriptor;
@@ -86,33 +88,13 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     class MockKernel : public WhiteBox<L0::KernelImp> {
       public:
-        using KernelImp::argumentsResidencyContainer;
-        using KernelImp::crossThreadData;
-        using KernelImp::crossThreadDataSize;
-        using KernelImp::dynamicStateHeapData;
-        using KernelImp::dynamicStateHeapDataSize;
-        using KernelImp::internalResidencyContainer;
-        using KernelImp::isArgUncached;
-        using KernelImp::kernelArgHandlers;
-        using KernelImp::kernelArgInfos;
-        using KernelImp::kernelHasIndirectAccess;
         using KernelImp::kernelImmData;
-        using KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
-        using KernelImp::kernelRequiresUncachedMocsCount;
         using KernelImp::patchBindlessOffsetsInCrossThreadData;
-        using KernelImp::perThreadDataForWholeThreadGroup;
-        using KernelImp::perThreadDataSizeForWholeThreadGroup;
-        using KernelImp::pImplicitArgs;
         using KernelImp::printfBuffer;
         using KernelImp::privateMemoryGraphicsAllocation;
-        using KernelImp::requiredWorkgroupOrder;
-        using KernelImp::slmArgOffsetValues;
-        using KernelImp::slmArgSizes;
+        using KernelImp::state;
         using KernelImp::surfaceStateAlignment;
         using KernelImp::surfaceStateAlignmentMask;
-        using KernelImp::surfaceStateHeapData;
-        using KernelImp::surfaceStateHeapDataSize;
-        using KernelImp::unifiedMemoryControls;
         using KernelImp::walkerInlineDataSize;
 
         MockKernel(MockModule *mockModule) : WhiteBox<L0::KernelImp>(mockModule) {

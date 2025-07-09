@@ -21,6 +21,7 @@
 #include "level_zero/core/source/module/module.h"
 
 #include "encode_surface_state_args.h"
+#include "implicit_args.h"
 #include "neo_igfxfmid.h"
 
 namespace L0 {
@@ -43,7 +44,7 @@ struct KernelHw : public KernelImp {
         auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
 
         auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
-        bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize),
+        bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(),
                                                                          argInfo.bufferOffset, static_cast<uint32_t>(offset));
         bool offsetedAddress = false;
         if (false == offsetWasPatched) {
@@ -59,18 +60,18 @@ struct KernelHw : public KernelImp {
         auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
         if (NEO::isValidOffset(argInfo.bindful)) {
-            surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), argInfo.bindful);
+            surfaceStateAddress = ptrOffset(state.surfaceStateHeapData.get(), argInfo.bindful);
             surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
 
         } else if (NEO::isValidOffset(argInfo.bindless)) {
-            isBindlessOffsetSet[argIndex] = false;
-            usingSurfaceStateHeap[argIndex] = false;
+            state.isBindlessOffsetSet[argIndex] = false;
+            state.usingSurfaceStateHeap[argIndex] = false;
             if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper() && !offsetedAddress) {
                 surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
-                isBindlessOffsetSet[argIndex] = true;
+                state.isBindlessOffsetSet[argIndex] = true;
             } else {
-                usingSurfaceStateHeap[argIndex] = true;
-                surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE));
+                state.usingSurfaceStateHeap[argIndex] = true;
+                surfaceStateAddress = ptrOffset(state.surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE));
             }
         }
 
@@ -90,7 +91,7 @@ struct KernelHw : public KernelImp {
         }
 
         if (l3Enabled == false) {
-            this->kernelRequiresQueueUncachedMocsCount++;
+            this->state.kernelRequiresQueueUncachedMocsCount++;
         }
         auto isDebuggerActive = neoDevice->getDebugger() != nullptr;
         NEO::EncodeSurfaceStateArgs args;

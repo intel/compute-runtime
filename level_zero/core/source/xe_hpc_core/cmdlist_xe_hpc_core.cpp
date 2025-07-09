@@ -18,6 +18,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_xehp_and_later.inl"
 
 #include "cmdlist_extended.inl"
+#include "implicit_args.h"
 
 namespace L0 {
 

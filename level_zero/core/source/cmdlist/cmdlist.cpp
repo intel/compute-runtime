@@ -25,6 +25,8 @@
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/experimental/source/graph/graph.h"
 
+#include "implicit_args.h"
+
 namespace L0 {
 
 CommandList::~CommandList() {

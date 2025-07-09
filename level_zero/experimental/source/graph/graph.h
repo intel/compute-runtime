@@ -79,7 +79,7 @@ struct CommandList;
 
 template <CaptureApi api>
 struct Closure {
-    inline static constexpr bool isSupported = false;
+    static constexpr bool isSupported = false;
 
     struct ApiArgs {
         template <typename ArgsT>
@@ -112,7 +112,7 @@ inline ze_event_handle_t getCommandsSignalEvent(TArgs... args) {
 
 template <>
 struct Closure<CaptureApi::zeCommandListAppendMemoryCopy> {
-    inline static constexpr bool isSupported = true;
+    static constexpr bool isSupported = true;
 
     struct ApiArgs {
         ze_command_list_handle_t hCommandList;
@@ -135,7 +135,7 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryCopy> {
 
 template <>
 struct Closure<CaptureApi::zeCommandListAppendBarrier> {
-    inline static constexpr bool isSupported = true;
+    static constexpr bool isSupported = true;
 
     struct ApiArgs {
         ze_command_list_handle_t hCommandList;
@@ -218,8 +218,8 @@ struct Graph : _ze_graph_handle_t {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
 
-        using ApirArgsT = typename Closure<api>::ApiArgs;
-        auto capturedArgs = ApirArgsT{apiArgs...};
+        using ApiArgsT = typename Closure<api>::ApiArgs;
+        auto capturedArgs = ApiArgsT{apiArgs...};
         commands.push_back(CapturedCommand{Closure<api>(capturedArgs)});
         return ZE_RESULT_SUCCESS;
     }

@@ -1766,7 +1766,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
-    memset(kernel->dynamicStateHeapData.get(), 0, kernel->dynamicStateHeapDataSize);
+    memset(kernel->state.dynamicStateHeapData.get(), 0, kernel->state.dynamicStateHeapDataSize);
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1831,8 +1831,8 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
-    mockKernel.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
-    mockKernel.crossThreadDataSize = 4 * sizeof(uint64_t);
+    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
+    mockKernel.state.crossThreadDataSize = 4 * sizeof(uint64_t);
     mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
 
@@ -1902,17 +1902,17 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
-    mockKernel.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
-    mockKernel.crossThreadDataSize = 4 * sizeof(uint64_t);
+    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
+    mockKernel.state.crossThreadDataSize = 4 * sizeof(uint64_t);
     const auto surfStateSize = static_cast<uint32_t>(device->getNEODevice()->getGfxCoreHelper().getRenderSurfaceStateSize());
-    mockKernel.surfaceStateHeapData = std::make_unique<uint8_t[]>(surfStateSize);
-    mockKernel.surfaceStateHeapDataSize = surfStateSize;
+    mockKernel.state.surfaceStateHeapData = std::make_unique<uint8_t[]>(surfStateSize);
+    mockKernel.state.surfaceStateHeapDataSize = surfStateSize;
     mockKernel.info.heapInfo.surfaceStateHeapSize = surfStateSize;
     mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
-    mockKernel.usingSurfaceStateHeap.resize(1, false);
-    mockKernel.isBindlessOffsetSet.resize(1, false);
-    mockKernel.usingSurfaceStateHeap[0] = true;
+    mockKernel.state.usingSurfaceStateHeap.resize(1, false);
+    mockKernel.state.isBindlessOffsetSet.resize(1, false);
+    mockKernel.state.usingSurfaceStateHeap[0] = true;
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -1955,7 +1955,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     auto offsetInHeap = ptrDiff(sshHeap->getSpace(0), sshHeap->getCpuBase()) - surfStateSize;
     uint64_t bindlessSshBaseOffset = ptrDiff(sshHeap->getGraphicsAllocation()->getGpuAddress(), sshHeap->getGraphicsAllocation()->getGpuBaseAddress()) + offsetInHeap;
     auto patchValue = device->getNEODevice()->getGfxCoreHelper().getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSshBaseOffset));
-    auto patchLocation = reinterpret_cast<uint32_t *>(mockKernel.crossThreadData.get());
+    auto patchLocation = reinterpret_cast<uint32_t *>(mockKernel.state.crossThreadData.get());
     EXPECT_EQ(patchValue, *patchLocation);
 }
 
@@ -2745,7 +2745,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_TRUE(commandList->stateBaseAddressTracking);
     EXPECT_TRUE(commandListImmediate->stateBaseAddressTracking);
 
-    kernel->kernelRequiresUncachedMocsCount++;
+    kernel->state.kernelRequiresUncachedMocsCount++;
 
     auto &cmdStream = *commandList->getCmdContainer().getCommandStream();
 
@@ -2829,7 +2829,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_TRUE(commandList->stateBaseAddressTracking);
     EXPECT_TRUE(commandListImmediate->stateBaseAddressTracking);
 
-    kernel->kernelRequiresUncachedMocsCount = 0;
+    kernel->state.kernelRequiresUncachedMocsCount = 0;
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -2873,7 +2873,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csrImmediate.commandStream;
 
-    kernel->kernelRequiresUncachedMocsCount = 1;
+    kernel->state.kernelRequiresUncachedMocsCount = 1;
 
     size_t csrBefore = csrStream.getUsed();
     result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
@@ -2910,7 +2910,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto &finalState = commandList->finalStreamState.stateBaseAddress;
     auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
 
-    kernel->kernelRequiresUncachedMocsCount = 1;
+    kernel->state.kernelRequiresUncachedMocsCount = 1;
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csrImmediate.commandStream;
@@ -2936,7 +2936,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
     EXPECT_EQ((uncachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 
-    kernel->kernelRequiresUncachedMocsCount = 0;
+    kernel->state.kernelRequiresUncachedMocsCount = 0;
 
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2984,7 +2984,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto &finalState = commandList->finalStreamState.stateBaseAddress;
     auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
 
-    kernel->kernelRequiresUncachedMocsCount = 0;
+    kernel->state.kernelRequiresUncachedMocsCount = 0;
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csrImmediate.commandStream;
@@ -3010,7 +3010,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
     EXPECT_EQ((cachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 
-    kernel->kernelRequiresUncachedMocsCount = 1;
+    kernel->state.kernelRequiresUncachedMocsCount = 1;
 
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

@@ -51,11 +51,11 @@ TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSi
 
     Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
-    kernel.crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData));
-    kernel.crossThreadDataSize = sizeof(uint32_t[6]);
-    kernel.groupSize[0] = 2;
-    kernel.groupSize[1] = 3;
-    kernel.groupSize[2] = 5;
+    kernel.state.crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData));
+    kernel.state.crossThreadDataSize = sizeof(uint32_t[6]);
+    kernel.state.groupSize[0] = 2;
+    kernel.state.groupSize[1] = 3;
+    kernel.state.groupSize[2] = 5;
 
     kernel.KernelImp::setGroupCount(7, 11, 13);
     auto crossThread = kernel.KernelImp::getCrossThreadData();
@@ -70,7 +70,7 @@ TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSi
     EXPECT_EQ(11U, numGroups[1]);
     EXPECT_EQ(13U, numGroups[2]);
 
-    kernel.crossThreadData.release();
+    kernel.state.crossThreadData.release();
     alignedFree(crossThreadData);
 }
 
@@ -85,9 +85,9 @@ TEST_F(KernelImpTest, givenExecutionMaskWithoutReminderWhenProgrammingItsValueTh
     kernel.module = &module;
 
     const std::array<uint32_t, 4> testedSimd = {{1, 8, 16, 32}};
-    kernel.groupSize[0] = 0;
-    kernel.groupSize[1] = 0;
-    kernel.groupSize[2] = 0;
+    kernel.state.groupSize[0] = 0;
+    kernel.state.groupSize[1] = 0;
+    kernel.state.groupSize[2] = 0;
 
     for (auto simd : testedSimd) {
         descriptor.kernelAttributes.simdSize = simd;
@@ -138,88 +138,89 @@ TEST_F(KernelImpTest, WhenSuggestingGroupSizeThenCacheValues) {
     Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
     kernel.module = &module;
+    auto &suggestGroupSizeCache = kernel.state.suggestGroupSizeCache;
 
-    EXPECT_EQ(kernel.suggestGroupSizeCache.size(), 0u);
+    EXPECT_EQ(suggestGroupSizeCache.size(), 0u);
     EXPECT_EQ(kernel.getSlmTotalSize(), 0u);
 
     uint32_t groupSize[3];
     kernel.KernelImp::suggestGroupSize(256, 1, 1, groupSize, groupSize + 1, groupSize + 2);
 
-    EXPECT_EQ(kernel.suggestGroupSizeCache.size(), 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].slmArgsTotalSize, 0u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[0], 256u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[0], 8u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[0], groupSize[0]);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[1], groupSize[1]);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[2], groupSize[2]);
+    EXPECT_EQ(suggestGroupSizeCache.size(), 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].slmArgsTotalSize, 0u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[0], 256u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[0], 8u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[0], groupSize[0]);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[1], groupSize[1]);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[2], groupSize[2]);
 
     kernel.KernelImp::suggestGroupSize(256, 1, 1, groupSize, groupSize + 1, groupSize + 2);
 
-    EXPECT_EQ(kernel.suggestGroupSizeCache.size(), 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].slmArgsTotalSize, 0u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[0], 256u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[0], 8u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[0], groupSize[0]);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[1], groupSize[1]);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[2], groupSize[2]);
+    EXPECT_EQ(suggestGroupSizeCache.size(), 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].slmArgsTotalSize, 0u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[0], 256u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[0], 8u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[0], groupSize[0]);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[1], groupSize[1]);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[2], groupSize[2]);
 
     kernel.KernelImp::suggestGroupSize(2048, 1, 1, groupSize, groupSize + 1, groupSize + 2);
 
-    EXPECT_EQ(kernel.suggestGroupSizeCache.size(), 2u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].slmArgsTotalSize, 0u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[0], 256u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[0], 8u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].slmArgsTotalSize, 0u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].groupSize[0], 2048u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].groupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].groupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].suggestedGroupSize[0], 8u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].suggestedGroupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].suggestedGroupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[0], groupSize[0]);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[1], groupSize[1]);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[2], groupSize[2]);
+    EXPECT_EQ(suggestGroupSizeCache.size(), 2u);
+    EXPECT_EQ(suggestGroupSizeCache[0].slmArgsTotalSize, 0u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[0], 256u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[0], 8u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[1].slmArgsTotalSize, 0u);
+    EXPECT_EQ(suggestGroupSizeCache[1].groupSize[0], 2048u);
+    EXPECT_EQ(suggestGroupSizeCache[1].groupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[1].groupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[1].suggestedGroupSize[0], 8u);
+    EXPECT_EQ(suggestGroupSizeCache[1].suggestedGroupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[1].suggestedGroupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[0], groupSize[0]);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[1], groupSize[1]);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[2], groupSize[2]);
 
-    kernel.slmArgsTotalSize = 1;
+    kernel.state.slmArgsTotalSize = 1;
     kernel.KernelImp::suggestGroupSize(2048, 1, 1, groupSize, groupSize + 1, groupSize + 2);
 
-    EXPECT_EQ(kernel.suggestGroupSizeCache.size(), 3u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].slmArgsTotalSize, 0u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[0], 256u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].groupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[0], 8u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].slmArgsTotalSize, 0u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].groupSize[0], 2048u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].groupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].groupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].suggestedGroupSize[0], 8u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].suggestedGroupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[1].suggestedGroupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[2].slmArgsTotalSize, 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[2].groupSize[0], 2048u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[2].groupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[2].groupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[2].suggestedGroupSize[0], 8u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[2].suggestedGroupSize[1], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[2].suggestedGroupSize[2], 1u);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[0], groupSize[0]);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[1], groupSize[1]);
-    EXPECT_EQ(kernel.suggestGroupSizeCache[0].suggestedGroupSize[2], groupSize[2]);
+    EXPECT_EQ(suggestGroupSizeCache.size(), 3u);
+    EXPECT_EQ(suggestGroupSizeCache[0].slmArgsTotalSize, 0u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[0], 256u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].groupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[0], 8u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[1].slmArgsTotalSize, 0u);
+    EXPECT_EQ(suggestGroupSizeCache[1].groupSize[0], 2048u);
+    EXPECT_EQ(suggestGroupSizeCache[1].groupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[1].groupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[1].suggestedGroupSize[0], 8u);
+    EXPECT_EQ(suggestGroupSizeCache[1].suggestedGroupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[1].suggestedGroupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[2].slmArgsTotalSize, 1u);
+    EXPECT_EQ(suggestGroupSizeCache[2].groupSize[0], 2048u);
+    EXPECT_EQ(suggestGroupSizeCache[2].groupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[2].groupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[2].suggestedGroupSize[0], 8u);
+    EXPECT_EQ(suggestGroupSizeCache[2].suggestedGroupSize[1], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[2].suggestedGroupSize[2], 1u);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[0], groupSize[0]);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[1], groupSize[1]);
+    EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[2], groupSize[2]);
 }
 
 class KernelImpSuggestGroupSize : public DeviceFixture, public ::testing::TestWithParam<uint32_t> {
@@ -502,12 +503,12 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     Mock<KernelImp> kernel;
     kernel.module = &module;
     kernel.kernelImmData = &kernelImmData;
-    kernel.dynamicStateHeapData.reset(new uint8_t[64 + sizeof(SamplerState)]);
-    kernel.dynamicStateHeapDataSize = 64 + sizeof(SamplerState);
+    kernel.state.dynamicStateHeapData.reset(new uint8_t[64 + sizeof(SamplerState)]);
+    kernel.state.dynamicStateHeapDataSize = 64 + sizeof(SamplerState);
 
     kernel.setInlineSamplers();
 
-    auto samplerState = reinterpret_cast<const SamplerState *>(kernel.dynamicStateHeapData.get() + 64U);
+    auto samplerState = reinterpret_cast<const SamplerState *>(kernel.state.dynamicStateHeapData.get() + 64U);
     EXPECT_TRUE(samplerState->getNonNormalizedCoordinateEnable());
     EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_WRAP, samplerState->getTcxAddressControlMode());
     EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_WRAP, samplerState->getTcyAddressControlMode());
@@ -548,13 +549,13 @@ HWTEST2_F(KernelTest, givenTwoInlineSamplersWithBindlessAddressingWhenSettingInl
     Mock<KernelImp> kernel;
     kernel.module = &module;
     kernel.kernelImmData = &kernelImmData;
-    kernel.dynamicStateHeapData.reset(new uint8_t[borderColorStateSize + 2 * sizeof(SamplerState)]);
-    kernel.dynamicStateHeapDataSize = borderColorStateSize + 2 * sizeof(SamplerState);
+    kernel.state.dynamicStateHeapData.reset(new uint8_t[borderColorStateSize + 2 * sizeof(SamplerState)]);
+    kernel.state.dynamicStateHeapDataSize = borderColorStateSize + 2 * sizeof(SamplerState);
 
     kernel.setInlineSamplers();
 
-    const SamplerState *samplerState = reinterpret_cast<const SamplerState *>(kernel.dynamicStateHeapData.get() + borderColorStateSize);
-    const SamplerState *samplerState2 = reinterpret_cast<const SamplerState *>(kernel.dynamicStateHeapData.get() + sizeof(SamplerState) + borderColorStateSize);
+    const SamplerState *samplerState = reinterpret_cast<const SamplerState *>(kernel.state.dynamicStateHeapData.get() + borderColorStateSize);
+    const SamplerState *samplerState2 = reinterpret_cast<const SamplerState *>(kernel.state.dynamicStateHeapData.get() + sizeof(SamplerState) + borderColorStateSize);
 
     EXPECT_TRUE(samplerState->getNonNormalizedCoordinateEnable());
     EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_CLAMP, samplerState->getTcxAddressControlMode());
