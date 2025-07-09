@@ -241,6 +241,20 @@ void MutableCommandListFixtureInit::enableCooperativeSyncBuffer(uint32_t kernelM
     }
 }
 
+void MutableCommandListFixtureInit::enableRegionBarrierBuffer(uint32_t kernelMask) {
+    CrossThreadDataOffset offset = this->crossThreadOffset + (this->kernelArgCount * this->nextArgOffset) + 32;
+    if (kernelMask & kernel1Bit) {
+        mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier = true;
+        mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer.stateless = offset;
+        mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer.pointerSize = sizeof(uint64_t);
+    }
+    if (kernelMask & kernel2Bit) {
+        mockKernelImmData2->kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier = true;
+        mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer.stateless = offset;
+        mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer.pointerSize = sizeof(uint64_t);
+    }
+}
+
 void MutableCommandListFixtureInit::setupGroupCountOffsets(uint32_t kernelMask) {
     CrossThreadDataOffset offset = this->crossThreadOffset + (this->kernelArgCount * this->nextArgOffset) + 64;
     if (kernelMask & kernel1Bit) {
@@ -252,7 +266,7 @@ void MutableCommandListFixtureInit::setupGroupCountOffsets(uint32_t kernelMask) 
 
     if (kernelMask & kernel2Bit) {
         auto &dispatchTraits = mockKernelImmData2->kernelDescriptor->payloadMappings.dispatchTraits;
-        dispatchTraits.globalWorkSize[0] = this->crossThreadOffset + 3 * sizeof(uint32_t);
+        dispatchTraits.globalWorkSize[0] = offset + 3 * sizeof(uint32_t);
         dispatchTraits.numWorkGroups[0] = dispatchTraits.globalWorkSize[0] + 3 * sizeof(uint32_t);
         dispatchTraits.workDim = dispatchTraits.numWorkGroups[0] + 3 * sizeof(uint32_t);
     }

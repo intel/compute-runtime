@@ -320,6 +320,7 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::l3FlushAfterPostSyncRequired;
+    using BaseClass::localDispatchSupport;
     using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;
