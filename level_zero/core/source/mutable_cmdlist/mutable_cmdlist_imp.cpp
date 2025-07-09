@@ -674,6 +674,18 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
 
             newKernelDispatch->syncBufferNoopPatchIndex = oldKernelDispatch->syncBufferNoopPatchIndex;
             newKernelDispatch->regionBarrierNoopPatchIndex = oldKernelDispatch->regionBarrierNoopPatchIndex;
+
+            if (newKernelDispatch->syncBufferNoopPatchIndex != undefined<size_t> &&
+                newKernelDispatch->kernelData->usesSyncBuffer == false) {
+                // disable noop patch index if sync buffer is not used
+                disableAddressNoopPatch(newKernelDispatch->syncBufferNoopPatchIndex);
+            }
+
+            if (newKernelDispatch->regionBarrierNoopPatchIndex != undefined<size_t> &&
+                newKernelDispatch->kernelData->usesRegionGroupBarrier == false) {
+                // disable noop patch index if region barrier buffer is not used
+                disableAddressNoopPatch(newKernelDispatch->regionBarrierNoopPatchIndex);
+            }
         }
 
         // copy post sync and payload from old walker host view into new walker host view

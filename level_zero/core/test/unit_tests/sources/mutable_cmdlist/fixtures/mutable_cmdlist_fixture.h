@@ -50,6 +50,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     void overridePatchedScratchAddress(uint64_t scratchAddress);
     void enableCooperativeSyncBuffer(uint32_t kernelMask);
     void setupGroupCountOffsets(uint32_t kernelMask);
+    bool isAllocationInMutableResidency(MutableCommandList *mcl, NEO::GraphicsAllocation *allocation) const;
 
     ze_mutable_command_id_exp_desc_t mutableCommandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
     ze_mutable_commands_exp_desc_t mutableCommandsDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};

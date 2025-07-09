@@ -1164,6 +1164,11 @@ HWTEST_F(CommandQueueCreate, givenCommandsToPatchWithNoopSpacePatchWhenPatchComm
     commandList->commandsToPatch.push_back(commandToPatch);
     commandQueue->patchCommands(*commandList, 0, false);
     EXPECT_EQ(0, memcmp(patchBuffer.get(), zeroBuffer.get(), dataSize));
+
+    memset(patchBuffer.get(), 0xFF, dataSize);
+    commandList->commandsToPatch[0].pDestination = nullptr;
+    commandQueue->patchCommands(*commandList, 0, false);
+    EXPECT_NE(0, memcmp(patchBuffer.get(), zeroBuffer.get(), dataSize));
 }
 
 } // namespace ult

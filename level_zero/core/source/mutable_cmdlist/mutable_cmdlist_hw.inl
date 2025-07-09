@@ -929,12 +929,24 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
                                  viewKernelAppendLaunchParams.lastSlmArgumentVariable,
                                  viewKernelMutableComputeWalker, dispatchParams);
 
+    viewKernelAppendLaunchParams.groupCountVariable->resetGroupCountVariable();
+    if (viewKernelAppendLaunchParams.groupSizeVariable != nullptr) {
+        viewKernelAppendLaunchParams.groupSizeVariable->resetGroupSizeVariable();
+    }
+    if (viewKernelAppendLaunchParams.globalOffsetVariable != nullptr) {
+        viewKernelAppendLaunchParams.globalOffsetVariable->resetGlobalOffsetVariable();
+    }
+    if (viewKernelAppendLaunchParams.lastSlmArgumentVariable != nullptr) {
+        viewKernelAppendLaunchParams.lastSlmArgumentVariable->resetSlmVariable();
+    }
+
     return retVal;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset) {
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
+    UNRECOVERABLE_IF(noopPatchIndex >= commandsToPatch.size());
     auto &noopPatch = commandsToPatch[noopPatchIndex];
 
     noopPatch.pDestination = newCpuPtr;
@@ -961,11 +973,21 @@ size_t MutableCommandListCoreFamily<gfxCoreFamily>::createNewCmdListNoopPatchDat
 template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset) {
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
+    UNRECOVERABLE_IF(noopPatchIndex >= commandsToPatch.size());
     auto &noopPatch = commandsToPatch[noopPatchIndex];
 
     cpuPtr = noopPatch.pDestination;
     patchSize = noopPatch.patchSize;
     offset = noopPatch.offset;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void MutableCommandListCoreFamily<gfxCoreFamily>::disableAddressNoopPatch(size_t noopPatchIndex) {
+    auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
+    UNRECOVERABLE_IF(noopPatchIndex >= commandsToPatch.size());
+    auto &noopPatch = commandsToPatch[noopPatchIndex];
+
+    noopPatch.pDestination = nullptr;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

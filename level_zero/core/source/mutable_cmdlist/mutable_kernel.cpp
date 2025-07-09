@@ -103,15 +103,14 @@ void MutableKernel::makeKernelResidencySnapshotContainer(bool saveSyncAndRegionA
             }
             idx++;
         }
+        // sync buffer and region barrier allcocations are taken from current use, not from kernel internal residency
         if (this->kernelDispatch->syncBuffer != nullptr) {
+            this->syncBufferSnapshotResidencyIndex = kernelResidencySnapshotContainer.size();
             kernelResidencySnapshotContainer.emplace_back(this->kernelDispatch->syncBuffer);
-            this->syncBufferSnapshotResidencyIndex = idx;
-            idx++;
         }
         if (this->kernelDispatch->regionBarrier != nullptr) {
+            this->regionBarrierSnapshotResidencyIndex = kernelResidencySnapshotContainer.size();
             kernelResidencySnapshotContainer.emplace_back(this->kernelDispatch->regionBarrier);
-            this->regionBarrierSnapshotResidencyIndex = idx;
-            idx++;
         }
     }
 

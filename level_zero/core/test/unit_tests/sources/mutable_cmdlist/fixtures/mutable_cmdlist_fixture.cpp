@@ -31,7 +31,9 @@ void MutableCommandListFixtureInit::setUp(bool createInOrder) {
     mockKernelImmData2->crossThreadDataTemplate.reset(new uint8_t[crossThreadInitSize]);
 
     mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.indirectDataPointerAddress.offset = 0;
+    mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.indirectDataPointerAddress.pointerSize = sizeof(void *);
     mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.offset = 8;
+    mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = sizeof(void *);
 
     {
         std::initializer_list<ZebinTestData::AppendElfAdditionalSection> additionalSections = {};
@@ -65,7 +67,9 @@ void MutableCommandListFixtureInit::setUp(bool createInOrder) {
     mockKernelImmData->crossThreadDataSize = crossThreadInitSize;
     mockKernelImmData->crossThreadDataTemplate.reset(new uint8_t[crossThreadInitSize]);
     mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.indirectDataPointerAddress.offset = 0;
+    mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.indirectDataPointerAddress.pointerSize = sizeof(void *);
     mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.offset = 8;
+    mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = sizeof(void *);
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
     createKernel(kernel.get());
@@ -337,6 +341,16 @@ void MutableCommandListFixtureInit::overridePatchedScratchAddress(uint64_t scrat
             cmd.scratchAddressAfterPatch = scratchAddress;
         }
     }
+}
+
+bool MutableCommandListFixtureInit::isAllocationInMutableResidency(MutableCommandList *mcl, NEO::GraphicsAllocation *allocation) const {
+    auto &whiteBoxAllocations = static_cast<L0::ult::WhiteBoxMutableResidencyAllocations &>(mcl->mutableAllocations);
+    auto allocationIt = std::find_if(whiteBoxAllocations.addedAllocations.begin(),
+                                     whiteBoxAllocations.addedAllocations.end(),
+                                     [&allocation](const L0::MCL::AllocationReference &ref) {
+                                         return ref.allocation == allocation;
+                                     });
+    return allocationIt != whiteBoxAllocations.addedAllocations.end();
 }
 
 } // namespace ult

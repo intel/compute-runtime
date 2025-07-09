@@ -190,7 +190,9 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             break;
         }
         case CommandToPatch::NoopSpace: {
-            memset(commandToPatch.pDestination, 0, commandToPatch.patchSize);
+            if (commandToPatch.pDestination != nullptr) {
+                memset(commandToPatch.pDestination, 0, commandToPatch.patchSize);
+            }
             break;
         }
         default: {

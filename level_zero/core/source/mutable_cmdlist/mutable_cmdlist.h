@@ -168,6 +168,7 @@ struct MutableCommandList {
     virtual void updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset) = 0;
     virtual size_t createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset) = 0;
     virtual void fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset) = 0;
+    virtual void disableAddressNoopPatch(size_t noopPatchIndex) = 0;
     virtual void addVariableToCommitList(Variable *variable) = 0;
 
     virtual void toggleCommandListUpdated() = 0;
