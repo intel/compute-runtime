@@ -50,8 +50,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::singleTemporaryAllocationsList;
     using MemoryManager::supportsMultiStorageResources;
     using MemoryManager::temporaryAllocations;
-    using MemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory;
-    using MemoryManager::unMapPhysicalHostMemoryFromVirtualMemory;
     using MemoryManager::useNonSvmHostPtrAlloc;
     using MemoryManager::usmReuseInfo;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
@@ -312,6 +310,24 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize);
     }
 
+    bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override {
+        // Need to call actual unMapPhysicalDeviceMemoryFromVirtualMemory to ensure the virtual memory is unmapped.
+        bool retVal = OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(physicalAllocation, gpuRange, bufferSize, osContext, rootDeviceIndex);
+        if (failUnMapPhysicalToVirtualMemory) { // Return false if unmapping is supposed to fail.
+            return false;
+        }
+        return retVal;
+    }
+
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override {
+        // Need to call actual unMapPhysicalDeviceMemoryFromVirtualMemory to ensure the virtual memory is unmapped.
+        bool retVal = OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize);
+        if (failUnMapPhysicalToVirtualMemory) { // Return false if unmapping is supposed to fail.
+            return false;
+        }
+        return retVal;
+    }
+
     void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) override {
         registerIpcExportedAllocationCalled++;
     }
@@ -387,6 +403,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool callBasePopulateOsHandles = true;
     bool callBaseAllocateGraphicsMemoryForNonSvmHostPtr = true;
     bool failMapPhysicalToVirtualMemory = false;
+    bool failUnMapPhysicalToVirtualMemory = false;
     bool returnMockGAFromDevicePool = false;
     bool returnMockGAFromHostPool = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;

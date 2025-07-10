@@ -54,6 +54,17 @@ class MockBufferObject : public BufferObject {
         return BufferObject::exec(used, startOffset, flags, requiresCoherency, osContext, vmHandleId, drmContextId,
                                   residency, residencyCount, execObjectsStorage, completionGpuAddress, completionValue);
     }
+
+    int unbind(OsContext *osContext, uint32_t vmHandleId) override {
+        errno = 0;
+        if (unbindErrno != 0) {
+            errno = unbindErrno;
+            return -1;
+        }
+        return BufferObject::unbind(osContext, vmHandleId);
+    }
+
+    int unbindErrno = 0;
 };
 
 class MockDrmAllocation : public DrmAllocation {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -462,9 +462,10 @@ TEST(BaseMemoryManagerTest, givenCalltoMapAndUnMapThenVirtialAddressSetUnSetOnPh
     EXPECT_NE(nullptr, allocationBuffer);
     uint64_t gpuAddress = 0x1234;
     size_t size = 4096;
-    memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(allocationBuffer, gpuAddress, size);
+    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(allocationBuffer, gpuAddress, size));
     EXPECT_EQ(gpuAddress, allocationBuffer->getGpuAddress());
-    memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(allocationBuffer, gpuAddress, size, nullptr, 0u);
+
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(allocationBuffer, gpuAddress, size, nullptr, 0u));
     EXPECT_NE(gpuAddress, allocationBuffer->getGpuAddress());
     memoryManager.freeGraphicsMemory(allocationBuffer);
 }

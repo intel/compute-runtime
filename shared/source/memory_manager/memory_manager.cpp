@@ -336,14 +336,15 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
         return;
     }
     bool rootEnvAvailable = executionEnvironment.rootDeviceEnvironments.size() > 0;
+    uint32_t rootDevIdx = gfxAllocation->getRootDeviceIndex();
 
     if (rootEnvAvailable) {
-        if (executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr) {
-            executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper()->releaseSSToReusePool(gfxAllocation->getBindlessInfo());
+        if (executionEnvironment.rootDeviceEnvironments[rootDevIdx]->getBindlessHeapsHelper() != nullptr) {
+            executionEnvironment.rootDeviceEnvironments[rootDevIdx]->getBindlessHeapsHelper()->releaseSSToReusePool(gfxAllocation->getBindlessInfo());
         }
 
-        if (this->peekExecutionEnvironment().rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->memoryOperationsInterface) {
-            this->peekExecutionEnvironment().rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->memoryOperationsInterface->free(nullptr, *gfxAllocation);
+        if (this->peekExecutionEnvironment().rootDeviceEnvironments[rootDevIdx]->memoryOperationsInterface) {
+            this->peekExecutionEnvironment().rootDeviceEnvironments[rootDevIdx]->memoryOperationsInterface->free(nullptr, *gfxAllocation);
         }
     }
 
@@ -359,7 +360,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     }
     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Free allocation, gpu address = ", std::hex, gfxAllocation->getGpuAddress());
 
-    getLocalMemoryUsageBankSelector(gfxAllocation->getAllocationType(), gfxAllocation->getRootDeviceIndex())->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());
+    getLocalMemoryUsageBankSelector(gfxAllocation->getAllocationType(), rootDevIdx)->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());
     freeGraphicsMemoryImpl(gfxAllocation, isImportedAllocation);
 }
 
