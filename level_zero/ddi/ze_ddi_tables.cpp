@@ -318,6 +318,8 @@ DriverDispatch::DriverDispatch() {
     this->toolsDevice.pfnGetDebugProperties = L0::zetDeviceGetDebugProperties;
     this->toolsDeviceExp.pfnGetConcurrentMetricGroupsExp = L0::zetDeviceGetConcurrentMetricGroupsExp;
     this->toolsDeviceExp.pfnCreateMetricGroupsFromMetricsExp = L0::zetDeviceCreateMetricGroupsFromMetricsExp;
+    this->toolsDeviceExp.pfnEnableMetricsExp = L0::zetDeviceEnableMetricsExp;
+    this->toolsDeviceExp.pfnDisableMetricsExp = L0::zetDeviceDisableMetricsExp;
     this->toolsContext.pfnActivateMetricGroups = L0::zetContextActivateMetricGroups;
     this->toolsCommandList.pfnAppendMetricStreamerMarker = L0::zetCommandListAppendMetricStreamerMarker;
     this->toolsCommandList.pfnAppendMetricQueryBegin = L0::zetCommandListAppendMetricQueryBegin;

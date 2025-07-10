@@ -1673,13 +1673,13 @@ TEST_F(MultiDeviceMetricEnumerationTest, givenMultipleDevicesAndMetricsIsDisable
     // Activate metric group.
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
     // Disable Metrics with an activated metric group returns error
-    EXPECT_EQ(zetIntelDeviceDisableMetricsExp(devices[0]->toHandle()), ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+    EXPECT_EQ(zetDeviceDisableMetricsExp(devices[0]->toHandle()), ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
     // De-Activate all metric groups.
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
     // Disable Metrics with all groups deactivated should return success
-    EXPECT_EQ(zetIntelDeviceDisableMetricsExp(devices[0]->toHandle()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetDeviceDisableMetricsExp(devices[0]->toHandle()), ZE_RESULT_SUCCESS);
     // Multiple Disables continue to return success
-    EXPECT_EQ(zetIntelDeviceDisableMetricsExp(devices[0]->toHandle()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetDeviceDisableMetricsExp(devices[0]->toHandle()), ZE_RESULT_SUCCESS);
     // Activate metric group on a disabled device should be failure
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), devices[0]->toHandle(), 1, &metricGroupHandle), ZE_RESULT_ERROR_UNINITIALIZED);
 

@@ -832,12 +832,7 @@ bool runtimeEnableTest() {
         EXPECT(metricGroupCountBeforeEnable == 0u);
         LOG(zmu::LogLevel::INFO) << "MetricGroup Count Before Runtime Enabling: " << metricGroupCountBeforeEnable << "\n";
 
-        typedef ze_result_t (*pfzetIntelDeviceEnableMetricsExp)(zet_device_handle_t hDevice);
-        pfzetIntelDeviceEnableMetricsExp zetIntelDeviceEnableMetricsExp = nullptr;
-        ze_result_t result = zeDriverGetExtensionFunctionAddress(executionCtxt->getDriverHandle(0), "zetIntelDeviceEnableMetricsExp", reinterpret_cast<void **>(&zetIntelDeviceEnableMetricsExp));
-        VALIDATECALL(result);
-
-        auto status = zetIntelDeviceEnableMetricsExp(executionCtxt->getDeviceHandle(0));
+        auto status = zetDeviceEnableMetricsExp(executionCtxt->getDeviceHandle(0));
         VALIDATECALL(status);
 
         uint32_t metricGroupCountAfterEnable = 0;

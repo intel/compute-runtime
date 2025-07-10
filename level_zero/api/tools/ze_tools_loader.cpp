@@ -307,6 +307,8 @@ zetGetDeviceExpProcAddrTable(
 
     fillDdiEntry(pDdiTable->pfnGetConcurrentMetricGroupsExp, L0::globalDriverDispatch.toolsDeviceExp.pfnGetConcurrentMetricGroupsExp, version, ZE_API_VERSION_1_11);
     fillDdiEntry(pDdiTable->pfnCreateMetricGroupsFromMetricsExp, L0::globalDriverDispatch.toolsDeviceExp.pfnCreateMetricGroupsFromMetricsExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnEnableMetricsExp, L0::globalDriverDispatch.toolsDeviceExp.pfnEnableMetricsExp, version, ZE_API_VERSION_1_13);
+    fillDdiEntry(pDdiTable->pfnDisableMetricsExp, L0::globalDriverDispatch.toolsDeviceExp.pfnDisableMetricsExp, version, ZE_API_VERSION_1_13);
 
     return result;
 }

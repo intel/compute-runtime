@@ -245,7 +245,7 @@ TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneThenReturnSuccess) {
     auto deviceImp = static_cast<DeviceImp *>(device);
     deviceImp->metricContext.reset(mockDeviceContext);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelDeviceEnableMetricsExp(device->toHandle()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDeviceEnableMetricsExp(device->toHandle()));
     deviceImp->metricContext.reset();
 }
 
@@ -260,9 +260,9 @@ TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneMultipleTimesThenEnableIsDon
     auto deviceImp = static_cast<DeviceImp *>(device);
     deviceImp->metricContext.reset(mockDeviceContext);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelDeviceEnableMetricsExp(device->toHandle()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDeviceEnableMetricsExp(device->toHandle()));
     EXPECT_EQ(metricSource->enableCallCount, 1u);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelDeviceEnableMetricsExp(device->toHandle()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDeviceEnableMetricsExp(device->toHandle()));
     EXPECT_EQ(metricSource->enableCallCount, 1u);
     deviceImp->metricContext.reset();
 }
@@ -278,7 +278,7 @@ TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneAndNoSourcesAreAvailableThen
     auto deviceImp = static_cast<DeviceImp *>(device);
     deviceImp->metricContext.reset(mockDeviceContext);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zetIntelDeviceEnableMetricsExp(device->toHandle()));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zetDeviceEnableMetricsExp(device->toHandle()));
     EXPECT_EQ(metricSource->enableCallCount, 1u);
     deviceImp->metricContext.reset();
 }

@@ -394,6 +394,18 @@ zetMetricTracerDecodeExp(
         pMetricEntries);
 }
 
+ze_result_t ZE_APICALL
+zetDeviceEnableMetricsExp(
+    zet_device_handle_t hDevice) {
+    return L0::metricsEnable(hDevice);
+}
+
+ze_result_t ZE_APICALL
+zetDeviceDisableMetricsExp(
+    zet_device_handle_t hDevice) {
+    return L0::metricsDisable(hDevice);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -851,5 +863,17 @@ zetMetricTracerDecodeExp(
         pMetricEntriesCountPerSet,
         pMetricEntriesCount,
         pMetricEntries);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetDeviceEnableMetricsExp(
+    zet_device_handle_t hDevice) {
+    return L0::zetDeviceEnableMetricsExp(hDevice);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetDeviceDisableMetricsExp(
+    zet_device_handle_t hDevice) {
+    return L0::zetDeviceDisableMetricsExp(hDevice);
 }
 } // extern "C"
