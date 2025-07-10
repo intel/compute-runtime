@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ bool PreemptionHelper::allowThreadGroupPreemption(const PreemptionFlags &flags) 
 
 bool PreemptionHelper::allowMidThreadPreemption(const PreemptionFlags &flags) {
     return (flags.flags.disabledMidThreadPreemptionKernel == 0) &&
-           !(flags.flags.vmeKernel && !flags.flags.deviceSupportsVmePreemption);
+           !(flags.flags.vmeKernel);
 }
 
 PreemptionMode PreemptionHelper::taskPreemptionMode(PreemptionMode devicePreemptionMode, const PreemptionFlags &flags) {
@@ -89,7 +89,6 @@ PreemptionFlags PreemptionHelper::createPreemptionLevelFlags(Device &device, con
         flags.flags.vmeKernel = kernelDescriptor->kernelAttributes.flags.usesVme;
         flags.flags.usesFencesForReadWriteImages = kernelDescriptor->kernelAttributes.flags.usesFencesForReadWriteImages;
     }
-    flags.flags.deviceSupportsVmePreemption = device.getDeviceInfo().vmeAvcSupportsPreemption;
     flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.flags.waDisablePerCtxtPreemptionGranularityControl;
     flags.flags.disableLSQCROPERFforOCL = device.getHardwareInfo().workaroundTable.flags.waDisableLSQCROPERFforOCL;
     return flags;
