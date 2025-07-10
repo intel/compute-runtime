@@ -26,6 +26,11 @@ struct IpcCounterBasedEventData;
 ContextExt *createContextExt(DriverHandle *driverHandle);
 void destroyContextExt(ContextExt *ctxExt);
 
+struct ContextSettings {
+    bool enablePidfdOrSockets = true;
+    bool enableSvmHeapReservation = true;
+};
+
 struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     ContextImp(DriverHandle *driverHandle);
     ~ContextImp() override;
@@ -166,6 +171,7 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
 
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
+    ContextSettings contextSettings;
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
     bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) override;

@@ -64,6 +64,26 @@ DriverHandle *ContextImp::getDriverHandle() {
 ContextImp::ContextImp(DriverHandle *driverHandle) {
     this->driverHandle = static_cast<DriverHandleImp *>(driverHandle);
     this->contextExt = createContextExt(driverHandle);
+
+    bool platformSupportSvmHeapReservation = true;
+    for (auto &device : this->driverHandle->devices) {
+        auto &productHelper = device->getNEODevice()->getProductHelper();
+        if (!productHelper.isSvmHeapReservationSupported()) {
+            platformSupportSvmHeapReservation = false;
+            break;
+        }
+    }
+    contextSettings.enableSvmHeapReservation = platformSupportSvmHeapReservation;
+
+    bool pidfdOrSocket = true;
+    for (auto &device : this->driverHandle->devices) {
+        auto &productHelper = device->getNEODevice()->getProductHelper();
+        if (!productHelper.isPidFdOrSocketForIpcSupported()) {
+            pidfdOrSocket = false;
+            break;
+        }
+    }
+    contextSettings.enablePidfdOrSockets = pidfdOrSocket;
 }
 
 ContextImp::~ContextImp() {
@@ -779,14 +799,7 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
         ipcType = InternalIpcMemoryType::hostUnifiedMemory;
     }
 
-    bool pidfdOrSocket = true;
-    for (auto &device : this->driverHandle->devices) {
-        auto &productHelper = device->getNEODevice()->getProductHelper();
-        if (!productHelper.isPidFdOrSocketForIpcSupported()) {
-            pidfdOrSocket = false;
-            break;
-        }
-    }
+    bool pidfdOrSocket = contextSettings.enablePidfdOrSockets;
     uint32_t loopCount = numIpcHandles ? *numIpcHandles : 1u;
     for (uint32_t i = 0u; i < loopCount; i++) {
         uint64_t handle = 0;
@@ -1192,12 +1205,7 @@ ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
         reserveOnSvmHeap = true;
     }
 
-    bool platformSupportSvmHeapReservation = true;
-    for (auto &device : this->driverHandle->devices) {
-        auto &productHelper = device->getNEODevice()->getProductHelper();
-        platformSupportSvmHeapReservation &= productHelper.isSvmHeapReservationSupported();
-    }
-    reserveOnSvmHeap &= platformSupportSvmHeapReservation;
+    reserveOnSvmHeap &= contextSettings.enableSvmHeapReservation;
     reserveOnSvmHeap &= NEO::debugManager.flags.EnableReservingInSvmRange.get();
 
     NEO::AddressRange addressRange{};
