@@ -600,14 +600,16 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
 #endif
 
 const ze_device_mem_alloc_desc_t defaultDeviceMemDesc = {
-    .stype = ze_structure_type_t::ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,
-    .pNext = nullptr,
-    .flags = static_cast<ze_device_mem_alloc_flags_t>(ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED),
-    .ordinal = 0};
+    ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,                                        // stype
+    nullptr,                                                                        // pNext
+    static_cast<ze_device_mem_alloc_flags_t>(ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED), // flags
+    0                                                                               // ordinal
+};
 
 const ze_host_mem_alloc_desc_t defaultHostMemDesc = {
-    .stype = ze_structure_type_t::ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,
-    .pNext = nullptr,
-    .flags = static_cast<ze_host_mem_alloc_flags_t>(ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED | ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT)};
+    ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,                                                                                     // stype
+    nullptr,                                                                                                                   // pNext
+    static_cast<ze_host_mem_alloc_flags_t>(ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED | ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) // flags
+};
 
 #endif
