@@ -2006,7 +2006,7 @@ class MockCommandStreamReceiverHostPtrCreate : public MockCommandStreamReceiver 
 TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAllocationForHostSurfaceThenHostPtrTaskCountAssignmentWillIncrease) {
     auto mockCsr = std::make_unique<MockCommandStreamReceiverHostPtrCreate>(executionEnvironment, 0u, device->getDeviceBitfield());
     mockCsr->internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*mockCsr.get());
-    mockCsr->osContext = &commandStreamReceiver->getOsContext();
+    mockCsr->setupContext(commandStreamReceiver->getOsContext());
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     size_t size = 100;
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
@@ -2053,7 +2053,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, whenCreatingAllocationFromHostPtrSurf
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver commandStreamReceiver(executionEnvironment, 0u, deviceBitfield);
     auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(&commandStreamReceiver, EngineDescriptorHelper::getDefaultDescriptor(deviceBitfield));
-    commandStreamReceiver.osContext = osContext;
+    commandStreamReceiver.setupContext(*osContext);
     EXPECT_EQ(0, commandStreamReceiver.hostPtrSurfaceCreationMutexLockCount);
     commandStreamReceiver.createAllocationForHostSurface(surface, true);
     EXPECT_EQ(1, commandStreamReceiver.hostPtrSurfaceCreationMutexLockCount);

@@ -1380,7 +1380,7 @@ HWTEST_F(CommandQueueTests, givenDirectSubmissionAndSharedImageWhenReleasingShar
     EXPECT_EQ(result, CL_SUCCESS);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&cmdQ.getGpgpuCommandStreamReceiver());
-    ultCsr->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&ultCsr->directSubmissionAvailable, true};
     ultCsr->callBaseSendRenderStateCacheFlush = false;
     ultCsr->flushReturnValue = SubmissionStatus::success;
     EXPECT_FALSE(ultCsr->renderStateCacheFlushed);

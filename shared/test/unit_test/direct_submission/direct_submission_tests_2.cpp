@@ -2166,7 +2166,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingEnabledWh
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
     ultCsr->setupContext(*osContext);
-    ultCsr->blitterDirectSubmissionAvailable = true;
+    VariableBackup<bool> blitterDirectSubmissionAvailable{&ultCsr->blitterDirectSubmissionAvailable, true};
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>(*ultCsr);
     ultCsr->blitterDirectSubmission.reset(directSubmission);

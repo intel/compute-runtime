@@ -1080,6 +1080,7 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramCorre
     auto eventNode = timestamp.peekNodes()[0];
     auto compareAddress = eventNode->getGpuAddress() + eventNode->getContextEndOffset();
     EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(++lrrCmd, 0, compareAddress, 1, CompareOperation::equal, true, false, true));
+    csr.blitterDirectSubmission.reset();
 }
 
 HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramProgramRelaxedOrderingOnlyIfAllowed, IsAtLeastXeHpcCore) {
@@ -1166,6 +1167,7 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenTagUpdateWhenFlushingThenDisableRelaxedO
     flushBcsTask(&csr, blitProperties, false, *pDevice);
     EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
     EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    csr.blitterDirectSubmission.reset();
 }
 
 HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommands) {

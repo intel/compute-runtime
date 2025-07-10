@@ -1228,17 +1228,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenGpuHangOnPrintEnqueueOutputWh
     EXPECT_EQ(WaitStatus::gpuHang, waitStatus);
 }
 
-template <typename FamilyType>
-struct MockCsrHwDirectSubmission : public MockCsrHw2<FamilyType> {
-    using MockCsrHw2<FamilyType>::MockCsrHw2;
-    bool isDirectSubmissionEnabled() const override {
-        return true;
-    }
-};
-
-using CommandStreamReceiverFlushTaskTestsWithCustomCsr = UltCommandStreamReceiverTestWithCsrT<MockCsrHwDirectSubmission>;
-
-HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithCustomCsr, givenEnabledDirectSubmissionUpdateTaskCountFromWaitSetWhenFlushTaskThenPipeControlAndBBSIsFlushed) {
+HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenEnabledDirectSubmissionUpdateTaskCountFromWaitSetWhenFlushTaskThenPipeControlAndBBSIsFlushed) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UpdateTaskCountFromWait.set(1);
 
@@ -1246,7 +1236,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithCustomCsr, givenEnable
     CommandQueueHw<FamilyType> commandQueue(&context, pClDevice, 0, false);
     commandQueue.taskCount = 10;
 
-    auto mockCsr = static_cast<MockCsrHwDirectSubmission<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
+    auto mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
     mockCsr->useNewResourceImplicitFlush = false;
     mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
@@ -1264,6 +1254,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithCustomCsr, givenEnable
     EXPECT_NE(itorPipeControl, cmdList.end());
     EXPECT_NE(itorBBS, cmdList.end());
     EXPECT_EQ(mockCsr->flushCalledCount, 1u);
+    mockCsr->directSubmission.reset();
 }
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrInBatchingModeWhenDcFlushIsRequiredThenPipeControlIsNotRegistredForNooping) {

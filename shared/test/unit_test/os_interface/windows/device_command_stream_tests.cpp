@@ -1177,6 +1177,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenFlushMonitorFenceTh
     csr->flushMonitorFence(false);
 
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
+    mockCsr->directSubmission.reset();
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenCsrFlushMonitorFenceCalledThenFlushCalled) {
@@ -1202,6 +1203,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 0u);
     csr->flushMonitorFence(false);
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
+    mockCsr->blitterDirectSubmission.reset();
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerThanFenceValueToWaitWhenWaitFromCpuThenFlushMonitorFenceWithNotifyEnabledFlag) {
@@ -1248,6 +1250,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerTha
 
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 2u);
     EXPECT_TRUE(directSubmission->lastNotifyKmdParamValue);
+    mockCsr->directSubmission.reset();
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsError) {
@@ -1398,6 +1401,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
 
     EXPECT_EQ(expectedSize, actualDispatchSize);
     memoryManager->freeGraphicsMemory(commandBuffer);
+    mockCsr->blitterDirectSubmission.reset();
 }
 
 TEST_F(WddmCommandStreamTest, givenResidencyLoggingAvailableWhenFlushingCommandBufferThenNotifiesResidencyLogger) {
@@ -1487,7 +1491,7 @@ TEST_F(SemaphorWaitForResidencyTest, givenPagingFenceNotUpdatedThenDontSignalFla
 
     auto controller = mockCsr->peekExecutionEnvironment().initializeDirectSubmissionController();
     controller->stopThread();
-    mockCsr->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&mockCsr->directSubmissionAvailable, true};
 
     mockCsr->getResidencyAllocations().push_back(buffer);
     mockCsr->flush(batchBuffer, mockCsr->getResidencyAllocations());
@@ -1516,7 +1520,7 @@ TEST_F(SemaphorWaitForResidencyTest, givenBufferAllocationThenSignalFlagForPagin
     wddm->currentPagingFenceValue = 100u;
     auto controller = mockCsr->peekExecutionEnvironment().initializeDirectSubmissionController();
     controller->stopThread();
-    mockCsr->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&mockCsr->directSubmissionAvailable, true};
 
     mockCsr->flush(batchBuffer, mockCsr->getResidencyAllocations());
     EXPECT_FALSE(batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling);
@@ -1533,7 +1537,7 @@ TEST_F(SemaphorWaitForResidencyTest, givenBufferHostMemoryAllocationThenSignalFl
     wddm->currentPagingFenceValue = 100u;
     auto controller = mockCsr->peekExecutionEnvironment().initializeDirectSubmissionController();
     controller->stopThread();
-    mockCsr->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&mockCsr->directSubmissionAvailable, true};
 
     mockCsr->flush(batchBuffer, mockCsr->getResidencyAllocations());
     EXPECT_FALSE(batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling);
@@ -1550,7 +1554,7 @@ TEST_F(SemaphorWaitForResidencyTest, givenAnotherFlushWithSamePagingFenceValueTh
     wddm->currentPagingFenceValue = 100u;
     auto controller = mockCsr->peekExecutionEnvironment().initializeDirectSubmissionController();
     controller->stopThread();
-    mockCsr->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&mockCsr->directSubmissionAvailable, true};
 
     mockCsr->flush(batchBuffer, mockCsr->getResidencyAllocations());
     EXPECT_FALSE(batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling);

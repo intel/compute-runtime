@@ -193,6 +193,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
     ~UltCommandStreamReceiver() override {
         this->downloadAllocationImpl = nullptr;
+        if (initialOsContext) {
+            BaseClass::setupContext(*initialOsContext);
+        }
     }
     static CommandStreamReceiver *create(bool withAubDump,
                                          ExecutionEnvironment &executionEnvironment,
@@ -524,9 +527,19 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     void stopDirectSubmission(bool blocking, bool needsLock) override {
         stopDirectSubmissionCalled = true;
         stopDirectSubmissionCalledBlocking = blocking;
+        if (initialOsContext) {
+            BaseClass::setupContext(*initialOsContext);
+        }
         if (this->callBaseStopDirectSubmission) {
             BaseClass::stopDirectSubmission(blocking, needsLock);
         }
+    }
+
+    void setupContext(OsContext &osContext) override {
+        if (!initialOsContext) {
+            initialOsContext = this->osContext;
+        }
+        BaseClass::setupContext(osContext);
     }
 
     bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
@@ -623,6 +636,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
     std::atomic<bool> latestDownloadAllocationsBlocking = false;
+    OsContext *initialOsContext = nullptr;
 
     bool renderStateCacheFlushed = false;
     bool cpuCopyForHostPtrSurfaceAllowed = false;

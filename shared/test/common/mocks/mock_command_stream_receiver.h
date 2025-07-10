@@ -69,6 +69,11 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         memset(const_cast<TagAddressType *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(TagAddressType));
         gpuHangCheckPeriod = {};
     }
+    ~MockCommandStreamReceiver() override {
+        if (initialOsContext) {
+            BaseClass::setupContext(*initialOsContext);
+        }
+    }
 
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
@@ -265,6 +270,13 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         this->pagingFenceValueToUnblock = pagingFenceValue;
     }
 
+    void setupContext(OsContext &osContext) override {
+        if (!initialOsContext) {
+            initialOsContext = this->osContext;
+        }
+        BaseClass::setupContext(osContext);
+    }
+
     static constexpr size_t tagSize = 256;
     static volatile TagAddressType mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;
@@ -296,6 +308,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool getAcLineConnectedReturnValue = true;
     bool submitDependencyUpdateReturnValue = true;
     std::atomic<uint64_t> pagingFenceValueToUnblock{0u};
+    OsContext *initialOsContext = nullptr;
 };
 
 class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {

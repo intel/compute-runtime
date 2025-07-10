@@ -105,6 +105,7 @@ HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenStopThenRingIsNot
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     csr.blitterDirectSubmission.reset(&directSubmission);
+    csr.osContext = nullptr;
     csr.setupContext(*osContext);
 
     bool ret = directSubmission.initialize(true);
@@ -148,6 +149,7 @@ HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionAndWaitForCompleti
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
     csr.blitterDirectSubmission.reset(&directSubmission);
+    csr.callBaseStopDirectSubmission = false;
     csr.setupContext(*osContext);
 
     bool ret = directSubmission.initialize(true);

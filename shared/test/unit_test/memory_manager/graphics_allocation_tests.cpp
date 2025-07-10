@@ -363,7 +363,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationWhenAssignedTaskCountAb
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
-    csr.osContext = osContext.get();
+    csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount::getTaskCountCalleedTimes = 0;
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.hostPtrTaskCountAssignment = 1;
@@ -376,7 +376,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountHigherTha
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
-    csr.osContext = osContext.get();
+    csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(10u, 0u);
     *csr.getTagAddress() = 5;
@@ -390,7 +390,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThan
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
-    csr.osContext = osContext.get();
+    csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(5u, 0u);
     csr.taskCount = 10;
@@ -404,7 +404,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountNotUsedLo
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
-    csr.osContext = osContext.get();
+    csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(GraphicsAllocation::objectNotResident, 0u);
     csr.taskCount = 10;
@@ -418,7 +418,7 @@ HWTEST_F(GraphicsAllocationTests, givenGraphicsAllocationAllocTaskCountLowerThan
     executionEnvironment.initializeMemoryManager();
     auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor()));
     MockCommandStreamReceiver csr(executionEnvironment, 0, 1);
-    csr.osContext = osContext.get();
+    csr.setupContext(*osContext);
     MockGraphicsAllocationTaskCount graphicsAllocation;
     graphicsAllocation.updateTaskCount(5u, 0u);
     csr.taskCount = 10;

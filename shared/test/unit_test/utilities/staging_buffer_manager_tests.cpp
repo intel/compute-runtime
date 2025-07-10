@@ -459,7 +459,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenDirectSubmissionEnabled
     constexpr size_t numOfChunkCopies = 8;
     constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies;
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
-    ultCsr->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&ultCsr->directSubmissionAvailable, true};
     ultCsr->callFlushTagUpdate = false;
 
     auto usmBuffer = allocateDeviceBuffer(totalCopySize);

@@ -898,7 +898,7 @@ HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileDirectSubmissionComm
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
-    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable, true};
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -919,7 +919,7 @@ HWTEST_F(CommandListCreate, givenMetricsImmediateCopyOnlySingleTileDirectSubmiss
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
-    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable, true};
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -939,7 +939,7 @@ HWTEST_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenCh
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
-    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable, true};
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     EXPECT_NE(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
@@ -1100,7 +1100,7 @@ HWTEST_F(CommandListCreate, givenDirectSubmissionFlatRingBufferFlagDisabledImmed
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
-    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable, true};
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -1128,7 +1128,7 @@ HWTEST_F(CommandListCreateImplicitScaling, givenImmediateCopyOnlyDirectSubmissio
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
-    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable, true};
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
 
@@ -1141,7 +1141,7 @@ HWTEST_F(CommandListCreate, givenCopyOnlySingleTileDirectSubmissionCommandListWh
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0, false);
-    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    VariableBackup<bool> directSubmissionAvailable{&reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable, true};
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
