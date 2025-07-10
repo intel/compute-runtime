@@ -170,18 +170,6 @@ HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenEnabledAndPreferredE2ECWhe
     EXPECT_TRUE(gmm->isCompressionEnabled());
 }
 
-HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenGmmCreatedFromExistingGmmWithCompressionThenCompressionTrueForSecondResource, IsAtLeastXe2HpgCore) {
-    auto gmm = std::make_unique<MockGmm>(getGmmHelper());
-    gmm->resourceParams.Flags.Info.NotCompressed = 0;
-
-    auto &gfxCoreHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    gfxCoreHelper.applyAdditionalCompressionSettings(*gmm, false);
-    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotCompressed);
-
-    auto gmmRes2 = std::make_unique<Gmm>(getGmmHelper(), gmm->gmmResourceInfo->peekGmmResourceInfo(), false);
-    EXPECT_TRUE(gmmRes2->isCompressionEnabled());
-}
-
 HWTEST2_F(GmmAdditionalCompressionSettingsTests, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingForBuffersThenSetValidFlags, IsAtLeastXe2HpgCore) {
     DebugManagerStateRestore restore;
     GmmRequirements gmmRequirements{};

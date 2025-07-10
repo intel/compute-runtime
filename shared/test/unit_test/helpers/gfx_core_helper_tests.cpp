@@ -11,7 +11,6 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
@@ -1257,32 +1256,6 @@ HWTEST_F(GfxCoreHelperTest, whenSetCompressedFlagThenProperFlagSet) {
 
     gfxCoreHelper.applyRenderCompressionFlag(*gmm, 0);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
-}
-
-HWTEST2_F(GfxCoreHelperTest, whenSetNotCompressedFlagThenProperValueReturned, IsAtLeastXe2HpgCore) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    auto gmmFlags = gmm->gmmResourceInfo->getResourceFlags();
-    gmmFlags->Info.NotCompressed = 0;
-    EXPECT_TRUE(gfxCoreHelper.isCompressionAppliedForImportedResource(*gmm));
-}
-
-HWTEST2_F(GfxCoreHelperTest, whenSetRenderCompressedFlagThenProperValueReturned, IsAtMostDg2) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    auto gmmFlags = gmm->gmmResourceInfo->getResourceFlags();
-    gmmFlags->Info.RenderCompressed = 1;
-    gmmFlags->Info.MediaCompressed = 0;
-    EXPECT_TRUE(gfxCoreHelper.isCompressionAppliedForImportedResource(*gmm));
-}
-
-HWTEST2_F(GfxCoreHelperTest, whenSetMediaCompressedFlagThenProperValueReturned, IsAtMostDg2) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    auto gmmFlags = gmm->gmmResourceInfo->getResourceFlags();
-    gmmFlags->Info.RenderCompressed = 0;
-    gmmFlags->Info.MediaCompressed = 1;
-    EXPECT_TRUE(gfxCoreHelper.isCompressionAppliedForImportedResource(*gmm));
 }
 
 HWTEST_F(GfxCoreHelperTest, whenAdjustPreemptionSurfaceSizeIsCalledThenCsrSizeDoesntChange) {
