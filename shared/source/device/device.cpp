@@ -1085,9 +1085,19 @@ void Device::stopDirectSubmissionAndWaitForCompletion() {
 }
 
 void Device::pollForCompletion() {
+    if (allEngines.size() == 0 || !getDefaultEngine().commandStreamReceiver->isAubMode()) {
+        return;
+    }
+
     for (auto &engine : allEngines) {
         auto csr = engine.commandStreamReceiver;
         csr->pollForCompletion();
+    }
+
+    for (auto &subDevice : subdevices) {
+        if (subDevice != nullptr) {
+            subDevice->pollForCompletion();
+        }
     }
 }
 

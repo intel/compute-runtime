@@ -500,6 +500,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return commandStreamReceiverType;
     }
 
+    void setType(CommandStreamReceiverType commandStreamReceiverType) {
+        this->commandStreamReceiverType = commandStreamReceiverType;
+    }
+
     void pollForCompletion(bool skipTaskCountCheck) override {
         pollForCompletionCalled++;
     }

@@ -1770,6 +1770,7 @@ void DeviceImp::releaseResources() {
         allocationsForReuse->freeAllGraphicsAllocations(neoDevice);
         allocationsForReuse.reset();
     }
+    neoDevice->pollForCompletion();
 
     neoDevice->decRefInternal();
     neoDevice = nullptr;

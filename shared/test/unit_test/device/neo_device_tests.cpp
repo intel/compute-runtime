@@ -2706,7 +2706,7 @@ TEST(GroupDevicesTest, givenNullInputInDeviceVectorWhenGroupDevicesThenEmptyVect
     EXPECT_TRUE(groupedDevices.empty());
 }
 
-HWTEST_F(DeviceTests, givenDeviceWhenPollForCompletionCalledThenPollForCompletionCalledOnAllCommandStreamReceivers) {
+HWTEST_F(DeviceTests, givenVariousCsrModeWhenDevicePollForCompletionIsCalledThenPollForCompletionIsCalledCorrectlyOnCommandStreamReceivers) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     std::vector<uint32_t> csrCallCounts;
     csrCallCounts.reserve(device->commandStreamReceivers.size());
@@ -2716,10 +2716,87 @@ HWTEST_F(DeviceTests, givenDeviceWhenPollForCompletionCalledThenPollForCompletio
         csrCallCounts.push_back(csr.pollForCompletionCalled);
     }
 
+    device->getUltCommandStreamReceiver<FamilyType>().setType(CommandStreamReceiverType::hardwareWithAub);
     device->pollForCompletion();
 
     for (uint32_t csrIndex = 0; csrIndex < device->commandStreamReceivers.size(); csrIndex++) {
         auto &csr = device->getUltCommandStreamReceiverFromIndex<FamilyType>(csrIndex);
-        EXPECT_EQ(csrCallCounts[csrIndex] + 1, csr.pollForCompletionCalled);
+        EXPECT_EQ(++csrCallCounts[csrIndex], csr.pollForCompletionCalled);
     }
+
+    device->getUltCommandStreamReceiver<FamilyType>().setType(CommandStreamReceiverType::hardware);
+    device->pollForCompletion();
+
+    for (uint32_t csrIndex = 0; csrIndex < device->commandStreamReceivers.size(); csrIndex++) {
+        auto &csr = device->getUltCommandStreamReceiverFromIndex<FamilyType>(csrIndex);
+        EXPECT_EQ(csrCallCounts[csrIndex], csr.pollForCompletionCalled);
+    }
+}
+
+HWTEST_F(DeviceTests, givenDeviceWithNoEnginesWhenPollForCompletionIsCalledThenEarlyReturnAndDontCrash) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    auto &allEngines = const_cast<std::vector<NEO::EngineControl> &>(device->getAllEngines());
+    allEngines.clear();
+
+    EXPECT_EQ(device->allEngines.size(), 0u);
+    EXPECT_NO_THROW(device->pollForCompletion());
+}
+
+HWTEST_F(DeviceTests, givenRootDeviceWhenPollForCompletionIsCalledThenPollForCompletionIsCalledOnAllSubDevices) {
+    UltDeviceFactory factory{1, 2};
+    auto rootDevice = factory.rootDevices[0];
+    for (auto subDevice : factory.subDevices) {
+        auto *mockSubDevice = static_cast<MockSubDevice *>(subDevice);
+        EXPECT_FALSE(mockSubDevice->pollForCompletionCalled);
+    }
+
+    rootDevice->getUltCommandStreamReceiver<FamilyType>().setType(CommandStreamReceiverType::hardwareWithAub);
+    rootDevice->pollForCompletion();
+
+    for (auto subDevice : factory.subDevices) {
+        auto *mockSubDevice = static_cast<MockSubDevice *>(subDevice);
+        EXPECT_TRUE(mockSubDevice->pollForCompletionCalled);
+    }
+}
+
+HWTEST_F(DeviceTests, givenMaskedSubDevicesWhenCallingPollForCompletionOnRootDeviceThenPollForCompletionIsCalledOnlyOnMaskedDevices) {
+    constexpr uint32_t numSubDevices = 3;
+    constexpr uint32_t numMaskedSubDevices = 2;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.2");
+
+    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->parseAffinityMask();
+    UltDeviceFactory deviceFactory{1, numSubDevices, *executionEnvironment.release()};
+    auto rootDevice = deviceFactory.rootDevices[0];
+    EXPECT_NE(nullptr, rootDevice);
+    EXPECT_EQ(numMaskedSubDevices, rootDevice->getNumSubDevices());
+
+    for (auto subDevice : rootDevice->getSubDevices()) {
+        if (subDevice != nullptr) {
+            auto *mockSubDevice = static_cast<MockSubDevice *>(subDevice);
+            EXPECT_FALSE(mockSubDevice->pollForCompletionCalled);
+        }
+    }
+
+    rootDevice->getUltCommandStreamReceiver<FamilyType>().setType(CommandStreamReceiverType::hardwareWithAub);
+    rootDevice->pollForCompletion();
+
+    unsigned int callCount = 0;
+    for (auto subDevice : rootDevice->getSubDevices()) {
+        if (subDevice != nullptr) {
+            auto *mockSubDevice = static_cast<MockSubDevice *>(subDevice);
+            if (mockSubDevice->pollForCompletionCalled) {
+                callCount++;
+            }
+        }
+    }
+    EXPECT_EQ(callCount, numMaskedSubDevices);
 }

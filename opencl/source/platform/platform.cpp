@@ -46,9 +46,7 @@ Platform::~Platform() {
     for (auto clDevice : this->clDevices) {
         clDevice->getDevice().getRootDeviceEnvironmentRef().debugger.reset(nullptr);
         clDevice->getDevice().stopDirectSubmissionAndWaitForCompletion();
-        if (clDevice->getDevice().getDefaultEngine().commandStreamReceiver->isAubMode()) {
-            clDevice->getDevice().pollForCompletion();
-        }
+        clDevice->getDevice().pollForCompletion();
         clDevice->decRefInternal();
     }
 

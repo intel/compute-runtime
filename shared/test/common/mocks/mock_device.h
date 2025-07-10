@@ -44,7 +44,13 @@ struct MockSubDevice : public SubDevice {
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
     bool failOnCreateEngine = false;
+    bool pollForCompletionCalled = false;
+
     bool createEngine(EngineTypeUsage engineTypeUsage) override;
+    void pollForCompletion() override {
+        pollForCompletionCalled = true;
+        Device::pollForCompletion();
+    }
 };
 
 class MockDevice : public RootDevice {
@@ -173,6 +179,11 @@ class MockDevice : public RootDevice {
         Device::stopDirectSubmissionAndWaitForCompletion();
     }
 
+    void pollForCompletion() override {
+        pollForCompletionCalled = true;
+        Device::pollForCompletion();
+    }
+
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const override {
         if (callBaseGetGlobalMemorySize) {
             return Device::getGlobalMemorySize(deviceBitfield);
@@ -192,6 +203,7 @@ class MockDevice : public RootDevice {
     size_t maxParameterSizeFromIGC = 0u;
     bool rtDispatchGlobalsForceAllocation = true;
     bool stopDirectSubmissionCalled = false;
+    bool pollForCompletionCalled = false;
     ReleaseHelper *mockReleaseHelper = nullptr;
     AILConfiguration *mockAilConfigurationHelper = nullptr;
     uint64_t getGlobalMemorySizeReturn = 0u;
