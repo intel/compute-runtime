@@ -827,6 +827,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
 
             ctx.spaceForResidency += estimateCommandListResidencySize(commandList);
         }
+
+        this->isWalkerWithProfilingEnqueued = commandList->getIsWalkerWithProfilingEnqueued();
     }
 
     this->getCsr()->getResidencyAllocations().reserve(ctx.spaceForResidency);
@@ -1387,6 +1389,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncRegular(
     args.dcFlushEnable = this->csr->getDcFlushSupport();
     args.workloadPartitionOffset = this->partitionCount > 1;
     args.notifyEnable = this->csr->isUsedNotifyEnableForPostSync();
+    args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
     NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdStream,
         NEO::PostSyncMode::immediateData,

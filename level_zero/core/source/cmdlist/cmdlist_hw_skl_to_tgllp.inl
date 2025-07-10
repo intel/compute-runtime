@@ -329,6 +329,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline NEO::PipeControlArgs CommandListCoreFamily<gfxCoreFamily>::createBarrierFlags() {
     NEO::PipeControlArgs args;
+    args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
     return args;
 }
 

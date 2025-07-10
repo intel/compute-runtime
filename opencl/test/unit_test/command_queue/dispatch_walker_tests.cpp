@@ -31,6 +31,7 @@
 #include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -1385,30 +1386,61 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
     }
 }
 
-HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsAndLocalWorkSizeIsSetThenIohRequiresMoreSpace) {
-    debugManager.flags.EnableHwGenerationLocalIds.set(0);
+HWTEST_F(DispatchWalkerTest, givenProfilingEnabledWhenProgrammingWalkerThenSetIsWalkerWithProfilingEnqueued) {
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
-    size_t workGroupSize[3] = {683, 1, 1};
+    size_t workGroupSize[3] = {2, 5, 10};
     cl_uint dimensions = 1;
 
+    auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
+
     kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1u;
-    UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(kernelInfo.kernelDescriptor);
-    MockKernel kernelWithImplicitArgs(program.get(), kernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernelWithImplicitArgs.initialize());
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
+    MockKernel kernelWithoutImplicitArgs(program.get(), kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernelWithoutImplicitArgs.initialize());
 
-    DispatchInfo dispatchInfoWithImplicitArgs(pClDevice, const_cast<MockKernel *>(&kernelWithImplicitArgs), dimensions, workItems, workGroupSize, globalOffsets);
-    dispatchInfoWithImplicitArgs.setNumberOfWorkgroups({1, 1, 1});
-    dispatchInfoWithImplicitArgs.setTotalNumberOfWorkgroups({1, 1, 1});
+    DispatchInfo dispatchInfoWithoutImplicitArgs(pClDevice, const_cast<MockKernel *>(&kernelWithoutImplicitArgs), dimensions, workItems, workGroupSize, globalOffsets);
+    dispatchInfoWithoutImplicitArgs.setNumberOfWorkgroups({1, 1, 1});
+    dispatchInfoWithoutImplicitArgs.setTotalNumberOfWorkgroups({1, 1, 1});
+    MultiDispatchInfo multiDispatchInfoWithoutImplicitArgs(&kernelWithoutImplicitArgs);
+    multiDispatchInfoWithoutImplicitArgs.push(dispatchInfoWithoutImplicitArgs);
+    HardwareInterfaceWalkerArgs walkerArgsWithoutImplicitArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgsWithoutImplicitArgs.blockedCommandsData = blockedCommandsData.get();
+    auto *event = new MockEvent<Event>(nullptr, 0, 0, 0);
 
-    auto iohSizeWithImplicitArgsWithoutLWS = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernelWithImplicitArgs, workGroupSize, pClDevice->getRootDeviceEnvironment());
+    {
+        walkerArgsWithoutImplicitArgs.event = event;
+        HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
+            *pCmdQ,
+            multiDispatchInfoWithoutImplicitArgs,
+            CsrDependencies(),
+            walkerArgsWithoutImplicitArgs);
 
-    dispatchInfoWithImplicitArgs.setLWS({683, 1, 1});
+        EXPECT_FALSE(pCmdQ->getAndClearIsWalkerWithProfilingEnqueued());
+    }
 
-    auto lws = dispatchInfoWithImplicitArgs.getLocalWorkgroupSize();
-    kernelWithImplicitArgs.setLocalWorkSizeValues(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
+    reinterpret_cast<MockCommandQueue *>(pCmdQ)->setProfilingEnabled();
+    {
+        walkerArgsWithoutImplicitArgs.event = nullptr;
+        HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
+            *pCmdQ,
+            multiDispatchInfoWithoutImplicitArgs,
+            CsrDependencies(),
+            walkerArgsWithoutImplicitArgs);
 
-    auto iohSizeWithImplicitArgsWithLWS = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernelWithImplicitArgs, workGroupSize, pClDevice->getRootDeviceEnvironment());
+        EXPECT_FALSE(pCmdQ->getAndClearIsWalkerWithProfilingEnqueued());
+    }
 
-    EXPECT_LE(iohSizeWithImplicitArgsWithoutLWS, iohSizeWithImplicitArgsWithLWS);
+    {
+        walkerArgsWithoutImplicitArgs.event = event;
+        HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
+            *pCmdQ,
+            multiDispatchInfoWithoutImplicitArgs,
+            CsrDependencies(),
+            walkerArgsWithoutImplicitArgs);
+
+        EXPECT_EQ(pClDevice->getRootDeviceEnvironment().getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling(), pCmdQ->getAndClearIsWalkerWithProfilingEnqueued());
+    }
+
+    event->release();
 }

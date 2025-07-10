@@ -79,6 +79,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::isBlitterDirectSubmissionEnabled;
     using BaseClass::isDirectSubmissionEnabled;
     using BaseClass::isPerDssBackedBufferSent;
+    using BaseClass::isWalkerWithProfilingEnqueued;
     using BaseClass::makeResident;
     using BaseClass::pageTableManagerInitialized;
     using BaseClass::perDssBackedBuffer;

@@ -1239,3 +1239,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSuppo
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSupportedThenFalseReturned, IsAtMostXeCore) {
     EXPECT_FALSE(productHelper->isPidFdOrSocketForIpcSupported());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
+    EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
+}

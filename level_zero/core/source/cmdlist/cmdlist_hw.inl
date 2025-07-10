@@ -157,6 +157,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     taskCountUpdateFenceRequired = false;
     textureCacheFlushPending = false;
     closedCmdList = false;
+    isWalkerWithProfilingEnqueued = false;
 
     this->inOrderPatchCmds.clear();
 
@@ -273,6 +274,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo, this->l3FlushAfterPostSyncRequired);
     this->useAdditionalBlitProperties = productHelper.useAdditionalBlitProperties();
     this->isPostImageWriteFlushRequired = releaseHelper ? releaseHelper->isPostImageWriteFlushRequired() : false;
+    this->shouldRegisterEnqueuedWalkerWithProfiling = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
 
     if (NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         this->defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
@@ -448,6 +450,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         if (!launchParams.isKernelSplitOperation) {
             event->resetKernelCountAndPacketUsedCount();
         }
+
+        if (event->isEventTimestampFlagSet() && this->shouldRegisterEnqueuedWalkerWithProfiling) {
+            this->isWalkerWithProfilingEnqueued = true;
+        }
     }
 
     if (!handleCounterBasedEventOperations(event, launchParams.omitAddingEventResidency)) {
@@ -501,6 +507,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
             event->setKernelWithPrintfDeviceMutex(kernel->getDevicePrintfKernelMutex());
         }
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
+
+        if (event->isEventTimestampFlagSet() && this->shouldRegisterEnqueuedWalkerWithProfiling) {
+            this->isWalkerWithProfilingEnqueued = true;
+        }
     }
 
     if (!handleCounterBasedEventOperations(event, false)) {
@@ -547,6 +557,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     if (hEvent) {
         event = Event::fromHandle(hEvent);
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
+
+        if (this->shouldRegisterEnqueuedWalkerWithProfiling && event->isEventTimestampFlagSet()) {
+            this->isWalkerWithProfilingEnqueued = true;
+        }
     }
 
     if (!handleCounterBasedEventOperations(event, false)) {
@@ -1476,6 +1490,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
+    if (signalEvent) {
+        if (signalEvent->isEventTimestampFlagSet() && this->shouldRegisterEnqueuedWalkerWithProfiling) {
+            this->isWalkerWithProfilingEnqueued = true;
+        }
+    }
+
     Kernel *builtinKernel = nullptr;
 
     builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
@@ -2351,6 +2371,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         signalEvent = Event::fromHandle(hSignalEvent);
         launchParams.isHostSignalScopeEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
         dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
+        if (signalEvent->isEventTimestampFlagSet() && this->shouldRegisterEnqueuedWalkerWithProfiling) {
+            this->isWalkerWithProfilingEnqueued = true;
+        }
     }
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
@@ -3267,6 +3290,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
         args.dcFlushEnable = true;
         args.workloadPartitionOffset = partitionCount > 1;
         args.textureCacheInvalidationEnable = textureFlushRequired;
+        args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *cmdStream,
@@ -3484,6 +3508,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     } else {
         NEO::PipeControlArgs args;
         args.blockSettingPostSyncProperties = true;
+        args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandContainer.getCommandStream(),
@@ -4291,6 +4316,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
         NEO::PipeControlArgs args;
         args.dcFlushEnable = getDcFlushRequired(!!descriptor->writeScope);
         args.dcFlushEnable &= dstAllocationStruct.needsFlush;
+        args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandContainer.getCommandStream(),
@@ -4428,6 +4454,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
         NEO::PipeControlArgs pipeControlArgs;
         pipeControlArgs.dcFlushEnable = getDcFlushRequired(signalScope);
         pipeControlArgs.workloadPartitionOffset = eventOperations.workPartitionOperation;
+        pipeControlArgs.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
 
         const auto &productHelper = this->device->getNEODevice()->getRootDeviceEnvironment().template getHelper<NEO::ProductHelper>();
         if (productHelper.isDirectSubmissionConstantCacheInvalidationNeeded(this->device->getHwInfo())) {
@@ -4853,6 +4880,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programEventL3Flush(Event *event) {
     NEO::PipeControlArgs args;
     args.dcFlushEnable = true;
     args.workloadPartitionOffset = partitionCount > 1;
+    args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
 
     NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdListStream,

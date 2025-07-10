@@ -1098,4 +1098,9 @@ uint32_t ProductHelperHw<gfxProduct>::getNumRtStacksPerDSSForAllocation(const Ha
     return RayTracingHelper::getAsyncNumRTStacksPerDss();
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() const {
+    return false;
+}
+
 } // namespace NEO

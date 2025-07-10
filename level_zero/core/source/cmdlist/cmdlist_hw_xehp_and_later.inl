@@ -632,6 +632,7 @@ NEO::PipeControlArgs CommandListCoreFamily<gfxCoreFamily>::createBarrierFlags() 
     args.hdcPipelineFlush = true;
     args.unTypedDataPortCacheFlush = true;
     args.textureCacheInvalidationEnable = this->consumeTextureCacheFlushPending();
+    args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
     return args;
 }
 

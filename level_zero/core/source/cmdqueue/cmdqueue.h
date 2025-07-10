@@ -84,6 +84,12 @@ struct CommandQueue : _ze_command_queue_handle_t {
     TaskCountType getTaskCount() const { return taskCount; }
     void setTaskCount(TaskCountType newTaskCount) { taskCount = newTaskCount; }
 
+    inline bool getAndClearIsWalkerWithProfilingEnqueued() {
+        bool retVal = this->isWalkerWithProfilingEnqueued;
+        this->isWalkerWithProfilingEnqueued = false;
+        return retVal;
+    }
+
   protected:
     bool frontEndTrackingEnabled() const;
 
@@ -104,6 +110,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool dispatchCmdListBatchBufferAsPrimary = false;
     bool heaplessModeEnabled = false;
     bool heaplessStateInitEnabled = false;
+    bool isWalkerWithProfilingEnqueued = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,

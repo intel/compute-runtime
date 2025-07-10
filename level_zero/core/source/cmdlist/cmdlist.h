@@ -456,6 +456,16 @@ struct CommandList : _ze_command_list_handle_t {
         return this->captureTarget->capture<api>(apiArgs...);
     }
 
+    inline bool getIsWalkerWithProfilingEnqueued() {
+        return this->isWalkerWithProfilingEnqueued;
+    }
+
+    inline bool getAndClearIsWalkerWithProfilingEnqueued() {
+        bool retVal = this->isWalkerWithProfilingEnqueued;
+        this->isWalkerWithProfilingEnqueued = false;
+        return retVal;
+    }
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
@@ -553,6 +563,8 @@ struct CommandList : _ze_command_list_handle_t {
     bool l3FlushAfterPostSyncRequired = false;
     bool textureCacheFlushPending = false;
     bool closedCmdList = false;
+    bool isWalkerWithProfilingEnqueued = false;
+    bool shouldRegisterEnqueuedWalkerWithProfiling = false;
 
     Graph *captureTarget = nullptr;
 };

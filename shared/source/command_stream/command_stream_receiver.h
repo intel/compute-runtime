@@ -681,6 +681,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool isEnginePrologueSent = false;
     bool areExceptionsSent = false;
     bool isPerDssBackedBufferSent = false;
+    bool isWalkerWithProfilingEnqueued = false;
     bool gsbaFor32BitProgrammed = false;
     bool gsbaStateDirty = true;
     bool bindingTableBaseAddressRequired = false;

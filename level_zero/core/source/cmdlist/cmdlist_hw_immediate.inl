@@ -263,15 +263,17 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
     NEO::LinearStream *optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
 
     NEO::ImmediateDispatchFlags dispatchFlags{
-        &this->requiredStreamState,     // requiredState
-        sshCpuPointer,                  // sshCpuBase
-        optionalEpilogueCmdStream,      // optionalEpilogueCmdStream
-        appendOperation,                // dispatchOperation
-        this->isSyncModeQueue,          // blockingAppend
-        requireTaskCountUpdate,         // requireTaskCountUpdate
-        hasRelaxedOrderingDependencies, // hasRelaxedOrderingDependencies
-        hasStallingCmds                 // hasStallingCmds
+        &this->requiredStreamState,         // requiredState
+        sshCpuPointer,                      // sshCpuBase
+        optionalEpilogueCmdStream,          // optionalEpilogueCmdStream
+        appendOperation,                    // dispatchOperation
+        this->isSyncModeQueue,              // blockingAppend
+        requireTaskCountUpdate,             // requireTaskCountUpdate
+        hasRelaxedOrderingDependencies,     // hasRelaxedOrderingDependencies
+        hasStallingCmds,                    // hasStallingCmds
+        this->isWalkerWithProfilingEnqueued // isWalkerWithProfilingEnqueued
     };
+    this->isWalkerWithProfilingEnqueued = false;
     CommandListImp::storeReferenceTsToMappedEvents(true);
 
     return getCsr(false)->flushImmediateTask(cmdStreamTask,
@@ -294,15 +296,17 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
     NEO::LinearStream *optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
 
     NEO::ImmediateDispatchFlags dispatchFlags{
-        nullptr,                        // requiredState
-        sshCpuPointer,                  // sshCpuBase
-        optionalEpilogueCmdStream,      // optionalEpilogueCmdStream
-        appendOperation,                // dispatchOperation
-        this->isSyncModeQueue,          // blockingAppend
-        requireTaskCountUpdate,         // requireTaskCountUpdate
-        hasRelaxedOrderingDependencies, // hasRelaxedOrderingDependencies
-        hasStallingCmds                 // hasStallingCmds
+        nullptr,                            // requiredState
+        sshCpuPointer,                      // sshCpuBase
+        optionalEpilogueCmdStream,          // optionalEpilogueCmdStream
+        appendOperation,                    // dispatchOperation
+        this->isSyncModeQueue,              // blockingAppend
+        requireTaskCountUpdate,             // requireTaskCountUpdate
+        hasRelaxedOrderingDependencies,     // hasRelaxedOrderingDependencies
+        hasStallingCmds,                    // hasStallingCmds
+        this->isWalkerWithProfilingEnqueued // isWalkerWithProfilingEnqueued
     };
+    this->isWalkerWithProfilingEnqueued = false;
     CommandListImp::storeReferenceTsToMappedEvents(true);
 
     return getCsr(false)->flushImmediateTaskStateless(cmdStreamTask,
@@ -348,6 +352,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         false                                                             // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
 
+    dispatchFlags.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
     dispatchFlags.optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
 
     auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject));
@@ -1805,6 +1810,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
+
+    this->isWalkerWithProfilingEnqueued |= this->cmdQImmediate->getAndClearIsWalkerWithProfilingEnqueued();
 
     CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(signalEvent,
                                                                       nullptr,

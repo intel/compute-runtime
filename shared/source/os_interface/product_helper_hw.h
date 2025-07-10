@@ -211,6 +211,7 @@ class ProductHelperHw : public ProductHelper {
     void adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, const HardwareInfo &hwInfo) const override;
     uint32_t getSyncNumRTStacksPerDss(const HardwareInfo &hwInfo) const override;
     uint32_t getNumRtStacksPerDSSForAllocation(const HardwareInfo &hwInfo) const override;
+    bool shouldRegisterEnqueuedWalkerWithProfiling() const override;
 
     ~ProductHelperHw() override = default;
 

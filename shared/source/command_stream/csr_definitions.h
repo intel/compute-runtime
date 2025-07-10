@@ -127,6 +127,7 @@ struct DispatchFlags {
     bool stateCacheInvalidation = false;
     bool isStallingCommandsOnNextFlushRequired = false;
     bool isDcFlushRequiredOnStallingCommandsOnNextFlush = false;
+    bool isWalkerWithProfilingEnqueued = false;
 };
 
 struct CsrSizeRequestFlags {
@@ -147,6 +148,7 @@ struct ImmediateDispatchFlags {
     bool requireTaskCountUpdate = false;
     bool hasRelaxedOrderingDependencies = false;
     bool hasStallingCmds = false;
+    bool isWalkerWithProfilingEnqueued = false;
 };
 
 } // namespace NEO

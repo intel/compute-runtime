@@ -415,6 +415,20 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return this->isCacheFlushOnNextBcsWriteRequired && this->isImageWriteOperation(cmdType);
     }
 
+    bool getShouldRegisterEnqueuedWalkerWithProfiling() {
+        return this->shouldRegisterEnqueuedWalkerWithProfiling;
+    }
+
+    void registerWalkerWithProfilingEnqueued() {
+        this->isWalkerWithProfilingEnqueued = true;
+    }
+
+    bool getAndClearIsWalkerWithProfilingEnqueued() {
+        bool retVal = this->isWalkerWithProfilingEnqueued;
+        this->isWalkerWithProfilingEnqueued = false;
+        return retVal;
+    }
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);
@@ -529,6 +543,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool isForceStateless = false;
     bool l3FlushedAfterCpuRead = true;
     bool l3FlushAfterPostSyncEnabled = false;
+    bool isWalkerWithProfilingEnqueued = false;
+    bool shouldRegisterEnqueuedWalkerWithProfiling = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandQueue>);

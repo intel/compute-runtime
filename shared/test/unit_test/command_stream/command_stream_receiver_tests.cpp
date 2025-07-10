@@ -6498,3 +6498,49 @@ HWTEST_F(CommandStreamReceiverHwTest, givenImmediateFlushTaskCmdListDispatchWhen
 
     EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.disableFlatRingBuffer);
 }
+
+HWTEST_F(CommandStreamReceiverHwTest, GivenWaitOnWalkerPostSyncWhenImmediateFlushTaskCalledThenExpectIsWalkerWithProfilingEnqueuedFlagTrue) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    {
+        immediateFlushTaskFlags.isWalkerWithProfilingEnqueued = false;
+        commandStreamReceiver.flushImmediateTask(commandStream,
+                                                 commandStream.getUsed(),
+                                                 immediateFlushTaskFlags,
+                                                 *pDevice);
+
+        EXPECT_FALSE(commandStreamReceiver.isWalkerWithProfilingEnqueued);
+    }
+
+    {
+        immediateFlushTaskFlags.isWalkerWithProfilingEnqueued = true;
+        commandStreamReceiver.flushImmediateTask(commandStream,
+                                                 commandStream.getUsed(),
+                                                 immediateFlushTaskFlags,
+                                                 *pDevice);
+
+        EXPECT_TRUE(commandStreamReceiver.isWalkerWithProfilingEnqueued);
+    }
+
+    {
+        immediateFlushTaskFlags.isWalkerWithProfilingEnqueued = false;
+        commandStreamReceiver.isWalkerWithProfilingEnqueued = true;
+        commandStreamReceiver.flushImmediateTask(commandStream,
+                                                 commandStream.getUsed(),
+                                                 immediateFlushTaskFlags,
+                                                 *pDevice);
+
+        EXPECT_TRUE(commandStreamReceiver.isWalkerWithProfilingEnqueued);
+    }
+
+    {
+        immediateFlushTaskFlags.isWalkerWithProfilingEnqueued = true;
+        commandStreamReceiver.isWalkerWithProfilingEnqueued = true;
+        commandStreamReceiver.flushImmediateTask(commandStream,
+                                                 commandStream.getUsed(),
+                                                 immediateFlushTaskFlags,
+                                                 *pDevice);
+
+        EXPECT_TRUE(commandStreamReceiver.isWalkerWithProfilingEnqueued);
+    }
+}

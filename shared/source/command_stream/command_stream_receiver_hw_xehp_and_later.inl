@@ -199,6 +199,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
     args.dcFlushEnable = this->dcFlushSupport && dcFlushRequired;
     args.hdcPipelineFlush = true;
     args.unTypedDataPortCacheFlush = true;
+    args.isWalkerWithProfilingEnqueued |= this->isWalkerWithProfilingEnqueued;
+    this->isWalkerWithProfilingEnqueued = false;
     if (isMultiTileOperationEnabled()) {
         args.workloadPartitionOffset = true;
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,

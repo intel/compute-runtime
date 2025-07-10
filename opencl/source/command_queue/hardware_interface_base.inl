@@ -155,12 +155,17 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getRootDeviceEnvironment());
     }
 
+    if (commandQueue.getShouldRegisterEnqueuedWalkerWithProfiling() && commandQueue.isProfilingEnabled() && walkerArgs.event) {
+        commandQueue.registerWalkerWithProfilingEnqueued();
+    }
+
     if (PauseOnGpuProperties::gpuScratchRegWriteAllowed(debugManager.flags.GpuScratchRegWriteAfterWalker.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount())) {
         uint32_t registerOffset = debugManager.flags.GpuScratchRegWriteRegisterOffset.get();
         uint32_t registerData = debugManager.flags.GpuScratchRegWriteRegisterData.get();
 
         PipeControlArgs args;
         args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, commandQueue.getDevice().getRootDeviceEnvironment());
+        args.isWalkerWithProfilingEnqueued = commandQueue.getAndClearIsWalkerWithProfilingEnqueued();
         MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandStream,
             PostSyncMode::noWrite,
