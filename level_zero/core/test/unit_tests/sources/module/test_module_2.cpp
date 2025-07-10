@@ -478,5 +478,34 @@ TEST_F(ModuleTests, givenFP64EmulationEnabledWhenCreatingModuleThenEnableFP64Gen
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, BuildOptions::enableFP64GenEmu));
 };
 
+TEST_F(ModuleTests, whenLibraryCompilationFlagIsEnabledThenEmitLibCompileErrorsIsAppendedToApiOptions) {
+    auto mockModule = std::make_unique<L0::ult::MockModule>(device, nullptr, ModuleType::user);
+    ASSERT_NE(nullptr, mockModule.get());
+
+    {
+        std::string apiOptions;
+        std::string internalBuildOptions;
+        const char *buildFlags = "-library-compilation";
+
+        mockModule->createBuildOptions(buildFlags, apiOptions, internalBuildOptions);
+
+        EXPECT_TRUE(mockModule->isFunctionSymbolExportEnabled);
+        EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-ze-emit-lib-compile-errors"));
+        EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-library-compilation"));
+    }
+
+    {
+        std::string apiOptions;
+        std::string internalBuildOptions;
+        const char *buildFlags = "-some-other-flag";
+
+        mockModule->createBuildOptions(buildFlags, apiOptions, internalBuildOptions);
+
+        EXPECT_FALSE(mockModule->isFunctionSymbolExportEnabled);
+        EXPECT_FALSE(NEO::CompilerOptions::contains(apiOptions, "-ze-emit-lib-compile-errors"));
+        EXPECT_FALSE(NEO::CompilerOptions::contains(apiOptions, "-library-compilation"));
+    }
+}
+
 } // namespace ult
 } // namespace L0

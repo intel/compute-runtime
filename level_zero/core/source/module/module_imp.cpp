@@ -73,6 +73,8 @@ NEO::ConstStringRef optAutoGrf = "-ze-intel-enable-auto-large-GRF-mode";
 NEO::ConstStringRef enableLibraryCompile = "-library-compilation";
 NEO::ConstStringRef enableGlobalVariableSymbols = "-ze-take-global-address";
 NEO::ConstStringRef enableFP64GenEmu = "-ze-fp64-gen-emu";
+NEO::ConstStringRef emitLibCompileErrors = "-ze-emit-lib-compile-errors";
+
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
@@ -927,6 +929,9 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         moveOptLevelOption(apiOptions, apiOptions);
         moveProfileFlagsOption(apiOptions, apiOptions);
         this->isFunctionSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);
+        if (this->isFunctionSymbolExportEnabled) {
+            NEO::CompilerOptions::concatenateAppend(apiOptions, BuildOptions::emitLibCompileErrors.str());
+        }
         this->isGlobalSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableGlobalVariableSymbols, BuildOptions::enableGlobalVariableSymbols);
 
         if (getDevice()->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv() == false) {
