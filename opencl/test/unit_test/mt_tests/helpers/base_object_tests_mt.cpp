@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"

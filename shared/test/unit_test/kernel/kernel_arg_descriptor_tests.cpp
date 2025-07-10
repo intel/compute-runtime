@@ -302,7 +302,7 @@ TEST(ArgDescriptorAs, GivenMismatchedArgTypeThenAborts) {
 
 TEST(ArgDescriptorCopyAssign, WhenCopyAssignedThenCopiesExtendedTypeInfo) {
     NEO::ArgDescriptor arg0;
-    arg0.getExtendedTypeInfo().isAccelerator = true;
+    arg0.getExtendedTypeInfo().isMediaBlockImage = true;
 
     NEO::ArgDescriptor arg1{arg0};
     NEO::ArgDescriptor arg2;

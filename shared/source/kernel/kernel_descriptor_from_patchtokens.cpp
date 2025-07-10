@@ -276,7 +276,6 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
         DEBUG_BREAK_IF(token.Type != iOpenCL::SAMPLER_OBJECT_VME &&
                        token.Type != iOpenCL::SAMPLER_OBJECT_VE &&
                        token.Type != iOpenCL::SAMPLER_OBJECT_VD);
-        dst.payloadMappings.explicitArgs[argNum].getExtendedTypeInfo().isAccelerator = true;
         dst.kernelAttributes.flags.usesVme |= (token.Type == iOpenCL::SAMPLER_OBJECT_VME);
     }
 }

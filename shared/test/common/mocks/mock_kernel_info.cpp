@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,16 +14,6 @@ namespace NEO {
 void populatePointerKernelArg(KernelDescriptor &kernelDesc, ArgDescPointer &dst,
                               CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful, CrossThreadDataOffset bindless,
                               KernelDescriptor::AddressingMode addressingMode);
-}
-
-void MockKernelInfo::addArgAccelerator(uint32_t index, SurfaceStateHeapOffset bindful,
-                                       CrossThreadDataOffset mbBlockType, CrossThreadDataOffset sadAdjustMode,
-                                       CrossThreadDataOffset searchPathType, CrossThreadDataOffset subpixelMode) {
-    addArgSampler(index, bindful);
-    argAsSmp(index).samplerType = iOpenCL::SAMPLER_OBJECT_VME;
-    argAt(index).getExtendedTypeInfo().isAccelerator = true;
-    addExtendedVmeDescriptor(index, mbBlockType, sadAdjustMode, searchPathType, subpixelMode);
-    kernelDescriptor.kernelAttributes.flags.usesVme = true;
 }
 
 void MockKernelInfo::addArgBuffer(uint32_t index, CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful, CrossThreadDataOffset bindless) {

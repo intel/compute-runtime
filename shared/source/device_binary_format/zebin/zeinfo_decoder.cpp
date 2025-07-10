@@ -1256,9 +1256,6 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
             using SamplerType = Types::Kernel::PayloadArgument::SamplerType;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(true);
             auto &extendedInfo = arg.getExtendedTypeInfo();
-            extendedInfo.isAccelerator = (src.samplerType == SamplerType::samplerTypeVME) ||
-                                         (src.samplerType == SamplerType::samplerTypeVE) ||
-                                         (src.samplerType == SamplerType::samplerTypeVD);
             const bool usesVme = src.samplerType == SamplerType::samplerTypeVME;
             extendedInfo.hasVmeExtendedDescriptor = usesVme;
             dst.kernelAttributes.flags.usesVme = usesVme;

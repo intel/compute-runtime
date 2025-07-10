@@ -5,7 +5,6 @@
  *
  */
 
-#include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -25,7 +24,6 @@ struct VABaseObjectTests : public ::testing::Test {
 
 typedef ::testing::Types<
     MockPlatform,
-    IntelAccelerator,
     MockCommandQueue>
     BaseObjectTypes;
 

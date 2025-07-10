@@ -646,7 +646,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSamplerKernelArgumentThenKe
     EXPECT_EQ(samplerArg.Offset, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().bindful);
     EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().bindless));
     EXPECT_EQ(samplerArg.Type, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().samplerType);
-    EXPECT_FALSE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isAccelerator);
     EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().needsPatch);
     EXPECT_FALSE(dst.kernelAttributes.flags.usesVme);
 }
@@ -668,7 +667,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSamplerKernelArgumentWhenSa
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].is<NEO::ArgDescriptor::argTSampler>());
         EXPECT_EQ(samplerArg.Type, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().samplerType);
-        EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isAccelerator);
         EXPECT_TRUE(dst.kernelAttributes.flags.usesVme);
     }
 
@@ -678,7 +676,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSamplerKernelArgumentWhenSa
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].is<NEO::ArgDescriptor::argTSampler>());
         EXPECT_EQ(samplerArg.Type, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().samplerType);
-        EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isAccelerator);
         EXPECT_FALSE(dst.kernelAttributes.flags.usesVme);
     }
 
@@ -688,7 +685,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSamplerKernelArgumentWhenSa
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].is<NEO::ArgDescriptor::argTSampler>());
         EXPECT_EQ(samplerArg.Type, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().samplerType);
-        EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isAccelerator);
         EXPECT_FALSE(dst.kernelAttributes.flags.usesVme);
     }
 }

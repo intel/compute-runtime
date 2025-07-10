@@ -248,10 +248,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
                          size_t argSize,
                          const void *argVal);
 
-    cl_int setArgAccelerator(uint32_t argIndex,
-                             size_t argSize,
-                             const void *argVal);
-
     void storeKernelArg(uint32_t argIndex,
                         KernelArgType argType,
                         void *argObject,

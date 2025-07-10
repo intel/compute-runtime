@@ -5852,13 +5852,11 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
     EXPECT_EQ(undefined<uint8_t>, sampler0.size);
 
     auto &sampler1 = args[1].as<ArgDescSampler>();
-    EXPECT_TRUE(args[1].getExtendedTypeInfo().isAccelerator);
     EXPECT_EQ(80U, sampler1.bindful);
     EXPECT_EQ(1U, sampler1.index);
     EXPECT_EQ(undefined<uint8_t>, sampler1.size);
 
     auto &sampler2 = args[2].as<ArgDescSampler>();
-    EXPECT_TRUE(args[2].getExtendedTypeInfo().isAccelerator);
     EXPECT_EQ(96U, sampler2.bindful);
     EXPECT_EQ(0U, sampler2.metadataPayload.samplerSnapWa);
     EXPECT_EQ(4U, sampler2.metadataPayload.samplerNormalizedCoords);
@@ -5867,7 +5865,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
     EXPECT_EQ(undefined<uint8_t>, sampler2.size);
 
     auto &sampler3 = args[3].as<ArgDescSampler>();
-    EXPECT_TRUE(args[3].getExtendedTypeInfo().isAccelerator);
     EXPECT_TRUE(args[3].getExtendedTypeInfo().hasVmeExtendedDescriptor);
     EXPECT_EQ(12U, sampler3.bindless);
     auto vmePayload = static_cast<NEO::ArgDescVme *>(kd.payloadMappings.explicitArgsExtendedDescriptors[3].get());

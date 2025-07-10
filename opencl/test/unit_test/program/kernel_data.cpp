@@ -182,24 +182,6 @@ TEST_F(KernelDataTest, GivenSamplerArgumentWhenBuildingThenProgramIsCorrect) {
     EXPECT_EQ_VAL(samplerData.Offset, pKernelInfo->getArgDescriptorAt(3).as<ArgDescSampler>().bindful);
 }
 
-TEST_F(KernelDataTest, GivenAcceleratorArgumentWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchSamplerKernelArgument samplerData;
-    samplerData.Token = PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT;
-    samplerData.ArgumentNumber = 3;
-    samplerData.Offset = 0x40;
-    samplerData.Type = iOpenCL::SAMPLER_OBJECT_VME;
-    samplerData.Size = sizeof(samplerData);
-
-    pPatchList = &samplerData;
-    patchListSize = samplerData.Size;
-
-    buildAndDecode();
-
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).is<ArgDescriptor::argTSampler>());
-    EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(3).getExtendedTypeInfo().isAccelerator);
-    EXPECT_EQ_VAL(samplerData.Offset, pKernelInfo->getArgDescriptorAt(3).as<ArgDescSampler>().bindful);
-}
-
 TEST_F(KernelDataTest, GivenBindingTableStateWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchBindingTableState bindingTableState;
     bindingTableState.Token = PATCH_TOKEN_BINDING_TABLE_STATE;

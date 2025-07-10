@@ -5,7 +5,6 @@
  *
  */
 
-#include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/api/api.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/context/context.h"
@@ -94,7 +93,6 @@ class MockObject<Program> : public MockObjectBase<Program> {
 
 typedef ::testing::Types<
     MockPlatform,
-    IntelAccelerator,
     // Context,
     // Program,
     // Kernel,
@@ -105,7 +103,6 @@ typedef ::testing::Types<
 
 typedef ::testing::Types<
     MockPlatform,
-    IntelAccelerator,
     Context,
     Program,
     Buffer,

@@ -16,7 +16,6 @@
 #include "opencl/test/unit_test/api/cl_get_program_info_tests.inl"
 #include "opencl/test/unit_test/api/cl_get_supported_image_formats_tests.inl"
 #include "opencl/test/unit_test/api/cl_icd_get_platform_ids_khr_tests.inl"
-#include "opencl/test/unit_test/api/cl_intel_accelerator_tests.inl"
 #include "opencl/test/unit_test/api/cl_intel_tracing_tests.inl"
 #include "opencl/test/unit_test/api/cl_link_program_tests.inl"
 #include "opencl/test/unit_test/api/cl_release_command_queue_tests.inl"

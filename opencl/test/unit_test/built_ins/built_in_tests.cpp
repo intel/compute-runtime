@@ -27,7 +27,6 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
-#include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"

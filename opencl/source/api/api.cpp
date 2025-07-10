@@ -22,7 +22,6 @@
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 
-#include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/api/additional_extensions.h"
 #include "opencl/source/api/api_enter.h"
 #include "opencl/source/cl_device/cl_device.h"
@@ -4473,40 +4472,13 @@ cl_accelerator_intel CL_API_CALL clCreateAcceleratorINTEL(
     cl_int *errcodeRet) {
 
     TRACING_ENTER(ClCreateAcceleratorINTEL, &context, &acceleratorType, &descriptorSize, &descriptor, &errcodeRet);
-    cl_int retVal = CL_SUCCESS;
+    cl_int retVal = CL_INVALID_ACCELERATOR_TYPE_INTEL;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context,
                    "acceleratorType", acceleratorType,
                    "descriptorSize", descriptorSize,
                    "descriptor", NEO::fileLoggerInstance().infoPointerToString(descriptor, descriptorSize));
     cl_accelerator_intel accelerator = nullptr;
-
-    do {
-        retVal = validateObjects(context);
-
-        if (retVal != CL_SUCCESS) {
-            retVal = CL_INVALID_CONTEXT;
-            break;
-        }
-
-        Context *pContext = castToObject<Context>(context);
-
-        DEBUG_BREAK_IF(!pContext);
-
-        switch (acceleratorType) {
-        case CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL:
-            accelerator = VmeAccelerator::create(
-                pContext,
-                acceleratorType,
-                descriptorSize,
-                descriptor,
-                retVal);
-            break;
-        default:
-            retVal = CL_INVALID_ACCELERATOR_TYPE_INTEL;
-        }
-
-    } while (false);
 
     if (errcodeRet) {
         *errcodeRet = retVal;
@@ -4520,22 +4492,9 @@ cl_int CL_API_CALL clRetainAcceleratorINTEL(
     cl_accelerator_intel accelerator) {
 
     TRACING_ENTER(ClRetainAcceleratorINTEL, &accelerator);
-    cl_int retVal = CL_SUCCESS;
+    cl_int retVal = CL_INVALID_ACCELERATOR_INTEL;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("accelerator", accelerator);
-
-    IntelAccelerator *pAccelerator = nullptr;
-
-    do {
-        pAccelerator = castToObject<IntelAccelerator>(accelerator);
-
-        if (!pAccelerator) {
-            retVal = CL_INVALID_ACCELERATOR_INTEL;
-            break;
-        }
-
-        pAccelerator->retain();
-    } while (false);
 
     TRACING_EXIT(ClRetainAcceleratorINTEL, &retVal);
     return retVal;
@@ -4549,27 +4508,13 @@ cl_int CL_API_CALL clGetAcceleratorInfoINTEL(
     size_t *paramValueSizeRet) {
 
     TRACING_ENTER(ClGetAcceleratorInfoINTEL, &accelerator, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
-    cl_int retVal = CL_SUCCESS;
+    cl_int retVal = CL_INVALID_ACCELERATOR_INTEL;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("accelerator", accelerator,
                    "paramName", paramName,
                    "paramValueSize", paramValueSize,
                    "paramValue", NEO::fileLoggerInstance().infoPointerToString(paramValue, paramValueSize),
                    "paramValueSizeRet", paramValueSizeRet);
-    IntelAccelerator *pAccelerator = nullptr;
-
-    do {
-        pAccelerator = castToObject<IntelAccelerator>(accelerator);
-
-        if (!pAccelerator) {
-            retVal = CL_INVALID_ACCELERATOR_INTEL;
-            break;
-        }
-
-        retVal = pAccelerator->getInfo(
-            paramName, paramValueSize, paramValue, paramValueSizeRet);
-
-    } while (false);
 
     TRACING_EXIT(ClGetAcceleratorInfoINTEL, &retVal);
     return retVal;
@@ -4579,26 +4524,9 @@ cl_int CL_API_CALL clReleaseAcceleratorINTEL(
     cl_accelerator_intel accelerator) {
 
     TRACING_ENTER(ClReleaseAcceleratorINTEL, &accelerator);
-    cl_int retVal = CL_SUCCESS;
-    if (wasPlatformTeardownCalled) {
-        TRACING_EXIT(ClReleaseAcceleratorINTEL, &retVal);
-        return CL_SUCCESS;
-    }
+    cl_int retVal = CL_INVALID_ACCELERATOR_INTEL;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("accelerator", accelerator);
-
-    IntelAccelerator *pAccelerator = nullptr;
-
-    do {
-        pAccelerator = castToObject<IntelAccelerator>(accelerator);
-
-        if (!pAccelerator) {
-            retVal = CL_INVALID_ACCELERATOR_INTEL;
-            break;
-        }
-
-        pAccelerator->release();
-    } while (false);
 
     TRACING_EXIT(ClReleaseAcceleratorINTEL, &retVal);
     return retVal;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,9 +19,6 @@ namespace NEO {
 
 class MockKernelInfo : public KernelInfo {
   public:
-    void addArgAccelerator(uint32_t index, SurfaceStateHeapOffset bindful = undefined<CrossThreadDataOffset>,
-                           CrossThreadDataOffset mbBlockType = undefined<CrossThreadDataOffset>, CrossThreadDataOffset sadAdjustMode = undefined<CrossThreadDataOffset>,
-                           CrossThreadDataOffset searchPathType = undefined<CrossThreadDataOffset>, CrossThreadDataOffset subpixelMode = undefined<CrossThreadDataOffset>);
     void addArgBuffer(uint32_t index, CrossThreadDataOffset stateless = undefined<CrossThreadDataOffset>, uint8_t pointerSize = 0, SurfaceStateHeapOffset bindful = undefined<SurfaceStateHeapOffset>, CrossThreadDataOffset bindless = undefined<CrossThreadDataOffset>);
     void addArgDevQueue(uint32_t index, CrossThreadDataOffset stateless = undefined<CrossThreadDataOffset>, uint8_t pointerSize = 0, SurfaceStateHeapOffset bindful = undefined<SurfaceStateHeapOffset>);
     void addArgImage(uint32_t index, SurfaceStateHeapOffset offset = undefined<CrossThreadDataOffset>, uint32_t type = iOpenCL::IMAGE_MEMORY_OBJECT_2D, bool isTransformable = false);
