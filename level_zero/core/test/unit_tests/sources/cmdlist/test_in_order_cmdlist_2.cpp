@@ -357,6 +357,45 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
     }
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWithCopyOffloadFlagWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeCore) {
+    NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(-1);
+
+    ze_command_list_handle_t cmdListHandle;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT;
+    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    auto dcFlushRequired = device->getProductHelper().isDcFlushAllowed();
+
+    {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+        auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+
+        if (dcFlushRequired) {
+            EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        } else {
+            EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
+            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+        }
+
+        zeCommandListDestroy(cmdListHandle);
+    }
+
+    {
+        cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+        auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+        EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        zeCommandListDestroy(cmdListHandle);
+    }
+}
+
 HWTEST_F(CopyOffloadInOrderTests, givenNonDualStreamOffloadWhenCreatingCmdListThenAcceptOffloadHint) {
     zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffloadDesc = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES};
     copyOffloadDesc.copyOffloadEnabled = true;

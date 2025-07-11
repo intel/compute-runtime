@@ -175,6 +175,13 @@ typedef enum _zex_intel_queue_copy_operations_offload_hint_exp_version_t {
     ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zex_intel_queue_copy_operations_offload_hint_exp_version_t;
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Command queue flag for enabling copy operations offload
+///
+/// If set, try to offload copy operations to different engines. Applicable only for compute queues.
+/// This is only a hint. Driver may ignore it per append call, based on platform capabilities or internal heuristics.
+#define ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT ZE_BIT(2)
+
 #ifndef ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME
 /// @brief Extension name for query to read the Intel Level Zero Driver Version String
 #define ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME "ZE_intel_get_driver_version_string"

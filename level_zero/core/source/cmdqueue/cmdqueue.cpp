@@ -368,6 +368,10 @@ QueueProperties CommandQueue::extractQueueProperties(const ze_command_queue_desc
 
     auto baseProperties = static_cast<const ze_base_desc_t *>(desc.pNext);
 
+    if ((desc.flags & ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT) == ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT) {
+        queueProperties.copyOffloadHint = true;
+    }
+
     while (baseProperties) {
         if (static_cast<uint32_t>(baseProperties->stype) == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES) {
             queueProperties.interruptHint = static_cast<const zex_intel_queue_allocate_msix_hint_exp_desc_t *>(desc.pNext)->uniqueMsix;
