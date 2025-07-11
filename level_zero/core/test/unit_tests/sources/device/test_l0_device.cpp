@@ -4439,6 +4439,15 @@ TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenResourcesRelea
     EXPECT_TRUE(deviceImp->resourcesReleased);
 }
 
+TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenDirectSubmissionIsStopped) {
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    EXPECT_FALSE(neoDevice->stopDirectSubmissionCalled);
+    neoDevice->incRefInternal();
+    deviceImp->releaseResources();
+    EXPECT_TRUE(neoDevice->stopDirectSubmissionCalled);
+    neoDevice->decRefInternal();
+}
+
 HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlagsThenCooperativeKernelsAreSupported) {
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
         bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const override {

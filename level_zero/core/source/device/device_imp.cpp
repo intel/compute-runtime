@@ -1717,6 +1717,8 @@ void DeviceImp::releaseResources() {
 
     UNRECOVERABLE_IF(neoDevice == nullptr);
 
+    neoDevice->stopDirectSubmissionAndWaitForCompletion();
+
     if (this->globalTimestampAllocation) {
         driverHandle->getSvmAllocsManager()->freeSVMAlloc(this->globalTimestampAllocation);
     }
