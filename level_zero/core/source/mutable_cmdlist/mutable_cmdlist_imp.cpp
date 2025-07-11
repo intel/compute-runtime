@@ -622,9 +622,9 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
 
         UNRECOVERABLE_IF(kernelGroup == nullptr);
         auto oldMutableKernel = kernelGroup->getCurrentMutableKernel();
-        // when old mutable kernel handle is the same as new, then return error
+        // when old mutable kernel handle is the same as new, then skip mutation
         if (oldMutableKernel->getKernel() == kernel) {
-            return ZE_RESULT_ERROR_INVALID_KERNEL_HANDLE;
+            continue;
         }
         auto oldKernelComputeWalker = oldMutableKernel->getMutableComputeWalker();
 

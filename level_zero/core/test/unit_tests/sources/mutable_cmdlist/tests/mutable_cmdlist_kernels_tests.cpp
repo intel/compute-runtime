@@ -730,7 +730,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
-            givenTwoMutationKernelsWhenUpdatingTheSameKernelIsaThenReturnError) {
+            givenTwoMutationKernelsWhenUpdatingTheSameKernelIsaThenReturnSuccess) {
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
@@ -743,7 +743,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_HANDLE, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
