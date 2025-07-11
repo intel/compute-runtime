@@ -75,6 +75,11 @@ struct MclAllocations {
 };
 
 struct AppendMutation {
+    AppendMutation() {
+        constexpr size_t estimatedKernelArgumentPerAppendCount = 40 + 2; // kernel args + 2 for group size and group count per kernel in kernel group
+        // reference to variables is used in append but NOT for kernel group (ISA mutation) and their descriptors
+        variables.reserve(estimatedKernelArgumentPerAppendCount);
+    }
     MutationVariables variables;
     MutableKernelGroup *kernelGroup = nullptr;
     ze_mutable_command_exp_flags_t mutationFlags = 0;
@@ -94,6 +99,9 @@ struct MutableResidencyAllocations {
     void removeAllocation(NEO::GraphicsAllocation *allocation);
     void populateInputResidencyContainer(NEO::ResidencyContainer &cmdListResidency, bool baseCmdListClosed);
     void cleanResidencyContainer();
+    void reserveSpace(size_t size) {
+        addedAllocations.reserve(size);
+    }
 
   protected:
     std::vector<AllocationReference> addedAllocations;

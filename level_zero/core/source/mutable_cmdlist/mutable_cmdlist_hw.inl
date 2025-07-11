@@ -121,11 +121,42 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::addKernelIndirectDataMemoryPre
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) {
+    constexpr size_t estimatedMutableAppendCount = 500;
+    // base dispatch variables are group count/size and optionally global offset
+    constexpr size_t estimatedDispatchVariablesCount = 2;
+    constexpr size_t estimatedKernelArgumentPerAppendCount = 40;
+    constexpr size_t estimatedAllocationsPerAppendCount = estimatedKernelArgumentPerAppendCount + 1; // at least 1 for the kernel ISA
+    // this is for regular variables without kernel ISA mutation, which goes into mutable_kernel.cpp
+    constexpr size_t estimatedVariablesPerAppendCount = estimatedKernelArgumentPerAppendCount + estimatedDispatchVariablesCount;
+    // commit variables are group count/size and optionally last slm argument per append
+    constexpr size_t estimatedCommitVariablesPerAppend = estimatedDispatchVariablesCount;
+    constexpr size_t estimatedDifferentKernelUsed = 25;
+
     auto ret = CommandListCoreFamily<gfxCoreFamily>::initialize(device, engineGroupType, flags);
     CommandListCoreFamily<gfxCoreFamily>::allowCbWaitEventsNoopDispatch = true;
     this->maxPerThreadDataSize = static_cast<uint32_t>(device->getDeviceInfo().maxWorkGroupSize * 3 * sizeof(uint16_t));
     this->iohAlignment = NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment();
     this->inlineDataSize = getInlineDataSize();
+
+    // this is a unique ptr storage for all variables
+    this->variableStorage.reserve(estimatedMutableAppendCount * estimatedVariablesPerAppendCount);
+    // this is for dispatch variables that can be used to commit at close
+    this->stageCommitVariables.reserve(estimatedMutableAppendCount * estimatedCommitVariablesPerAppend);
+    // this is container for mutable residency allocations
+    this->mutableAllocations.reserveSpace(estimatedMutableAppendCount * estimatedAllocationsPerAppendCount);
+    // this is a unique ptr storage for mutable compute walker commands
+    this->mutableWalkerCmds.reserve(estimatedMutableAppendCount * estimatedDifferentKernelUsed); // product of appends and possible kernels in kernel groups
+
+    // this is a unique ptr storage for all kernel data used at any given append/dispatch (offsets, sizes, addresses)
+    this->dispatchs.reserve(estimatedMutableAppendCount);
+    // number of mutation points, aggregate pointers to all objects stored as pointers in different other classes
+    this->mutations.reserve(estimatedMutableAppendCount);
+    // this is a unique ptr storage for all kernel groups created at mutation points
+    this->mutableKernelGroups.reserve(estimatedMutableAppendCount);
+
+    // this is a unique ptr storage for all kernel meta data - its ISA GPUVA, properties, etc.
+    this->kernelData.reserve(estimatedDifferentKernelUsed);
+
     return ret;
 }
 

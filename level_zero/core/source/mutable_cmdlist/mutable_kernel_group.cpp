@@ -15,6 +15,7 @@
 namespace L0::MCL {
 
 MutableKernelGroup::MutableKernelGroup(uint32_t numKernels, ze_kernel_handle_t *kernelHandles, uint32_t inlineDataSize, uint32_t maxPerThreadDataSize) {
+    this->kernelsInAppend.reserve(numKernels);
     for (uint32_t i = 0; i < numKernels; i++) {
         auto mutableKernel = std::make_unique<MutableKernel>(kernelHandles[i], inlineDataSize, maxPerThreadDataSize);
 

@@ -21,6 +21,17 @@ namespace L0::MCL {
 MutableKernel::MutableKernel(ze_kernel_handle_t kernelHandle, uint32_t inlineDataSize, uint32_t maxPerThreadDataSize)
     : inlineDataSize(inlineDataSize),
       maxPerThreadDataSize(maxPerThreadDataSize) {
+    // group count/size
+    constexpr size_t estimatedDispatchVariablesCount = 2;
+    // kernel arguments
+    constexpr size_t estimatedKernelArgumentPerAppendCount = 40;
+    // kernel args and extra group count/size
+    constexpr size_t estimatedVariablesPerAppend = estimatedKernelArgumentPerAppendCount + estimatedDispatchVariablesCount;
+    // space for internal allocations like ISA, private, const, global buffers, etc.
+    constexpr size_t estimatedInternalResidencyCount = 10;
+    // reference to variables is used in append but for a given kernel for kernel group (ISA mutation) and their descriptors
+    this->kernelVariables.reserve(estimatedVariablesPerAppend);
+    this->kernelResidencySnapshotContainer.reserve(estimatedInternalResidencyCount);
     this->kernel = L0::Kernel::fromHandle(kernelHandle);
 }
 
