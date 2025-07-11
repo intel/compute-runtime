@@ -200,6 +200,9 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     ContextExt *getContextExt() override {
         return contextExt;
     }
+    uint32_t getNumDevices() const {
+        return numDevices;
+    }
 
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);

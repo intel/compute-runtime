@@ -3029,6 +3029,62 @@ TEST_F(MemoryAccessPropertiesSharedCrossDeviceCapsTest,
     EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
 }
 
+struct MemoryAccessPropertiesMultiDevicesSingleRootDeviceTest : public Test<MultiDeviceFixtureHierarchy> {
+    void SetUp() override {
+        this->deviceHierarchyMode = NEO::DeviceHierarchyMode::flat;
+        this->numRootDevices = 1;
+        MultiDeviceFixtureHierarchy::setUp();
+    }
+};
+TEST_F(MemoryAccessPropertiesMultiDevicesSingleRootDeviceTest,
+       givenSingleRootAndMultiDevicesWhenCallingGetMemoryAccessPropertiesThenSharedCrossDeviceAccessSupportIsReturned) {
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_memory_access_properties_t properties;
+    auto result = device->getMemoryAccessProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities =
+        ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT |
+        ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC;
+    EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
+}
+
+struct MemoryAccessPropertiesMultiDevicesMultiRootDeviceTest : public Test<MultiDeviceFixtureHierarchy> {
+    void SetUp() override {
+        this->deviceHierarchyMode = NEO::DeviceHierarchyMode::flat;
+        this->numRootDevices = 2;
+        MultiDeviceFixtureHierarchy::setUp();
+    }
+};
+TEST_F(MemoryAccessPropertiesMultiDevicesMultiRootDeviceTest,
+       givenMultiRootAndMultiSubDevicesWhenCallingGetMemoryAccessPropertiesThenSharedCrossDeviceAccessSupportIsNotExposed) {
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_memory_access_properties_t properties;
+    auto result = device->getMemoryAccessProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities = 0;
+    EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
+}
+
+struct MemoryAccessPropertiesSingleExposedDeviceTest : public Test<MultiDeviceFixtureHierarchy> {
+    void SetUp() override {
+        this->deviceHierarchyMode = NEO::DeviceHierarchyMode::composite;
+        this->numRootDevices = 1;
+        MultiDeviceFixtureHierarchy::setUp();
+    }
+};
+TEST_F(MemoryAccessPropertiesSingleExposedDeviceTest,
+       givenSingleExposedDevicesWhenCallingGetMemoryAccessPropertiesThenSharedCrossDeviceAccessSupportIsNotExposed) {
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_memory_access_properties_t properties;
+    auto result = device->getMemoryAccessProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities = 0;
+    EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
+}
+
 using MultipleDevicesP2PDevice0Access0Atomic0Device1Access0Atomic0Test = MultipleDevicesP2PFixture<0, 0>;
 TEST_F(MultipleDevicesP2PDevice0Access0Atomic0Device1Access0Atomic0Test, WhenCallingGetP2PPropertiesWithBothDevicesHavingNoAccessSupportThenNoSupportIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
