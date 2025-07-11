@@ -876,7 +876,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (allocationData.gpuAddress) {
         return allocateGraphicsMemoryWithGpuVa(allocationData);
     }
-    if (peek64kbPagesEnabled(allocationData.rootDeviceIndex) && allocationData.flags.allow64kbPages) {
+    if (peek64kbPagesEnabled(allocationData.rootDeviceIndex) && allocationData.flags.allow64kbPages && MemoryConstants::pageSize64k >= allocationData.alignment) {
         return allocateGraphicsMemory64kb(allocationData);
     }
     return allocateGraphicsMemoryWithAlignment(allocationData);
