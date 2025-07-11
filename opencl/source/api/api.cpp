@@ -4888,6 +4888,11 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
         }
     } else {
         retVal = pCommandQueue->enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
+
+        if (event) {
+            auto pEvent = castToObjectOrAbort<Event>(*event);
+            pEvent->setCmdType(CL_COMMAND_SVM_MEMCPY);
+        }
     }
     TRACING_EXIT(ClEnqueueSvmMemcpy, &retVal);
     return retVal;
@@ -4925,7 +4930,7 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if ((svmPtr == nullptr) || (size == 0)) {
+    if ((svmPtr == nullptr) && (size != 0)) {
         retVal = CL_INVALID_VALUE;
         TRACING_EXIT(ClEnqueueSvmMemFill, &retVal);
         return retVal;

@@ -185,6 +185,37 @@ TEST_F(ClEnqueueSVMMemcpyTests, GivenZeroSizeWhenCopyingSVMMemoryThenSuccessIsRe
     }
 }
 
+TEST_F(ClEnqueueSVMMemcpyTests, GivenZeroSizeWhenCopyingSVMMemoryWithEventThenProperCmdTypeIsSet) {
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        void *pDstSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
+        EXPECT_NE(nullptr, pDstSvm);
+        void *pSrcSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
+        EXPECT_NE(nullptr, pSrcSvm);
+
+        cl_event event = nullptr;
+        auto retVal = clEnqueueSVMMemcpy(
+            pCommandQueue, // cl_command_queue command_queue
+            CL_FALSE,      // cl_bool blocking_copy
+            pDstSvm,       // void *dst_ptr
+            pSrcSvm,       // const void *src_ptr
+            0,             // size_t size
+            0,             // cl_uint num_events_in_wait_list
+            nullptr,       // const cl_event *event_wait_list
+            &event         // cl_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_MEMCPY;
+        cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+        EXPECT_EQ(expectedCmd, actualCmd);
+
+        clSVMFree(pContext, pDstSvm);
+        clSVMFree(pContext, pSrcSvm);
+        clReleaseEvent(event);
+    }
+}
+
 TEST_F(ClEnqueueSVMMemcpyTests, GivenInvalidPtrAndZeroSizeWhenCopyingSVMMemoryThenSuccessIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {

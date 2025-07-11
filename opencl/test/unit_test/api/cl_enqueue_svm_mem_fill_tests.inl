@@ -29,8 +29,8 @@ TEST_F(ClEnqueueSVMMemFillTests, GivenInvalidCommandQueueWhenFillingSVMMemoryThe
         0,       // size_t pattern_size
         0,       // size_t size
         0,       // cl_uint num_events_in_wait_list
-        nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cl_event *event_wait_list
+        nullptr  // cl_event *event
     );
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
@@ -38,68 +38,90 @@ TEST_F(ClEnqueueSVMMemFillTests, GivenInvalidCommandQueueWhenFillingSVMMemoryThe
 TEST_F(ClEnqueueSVMMemFillTests, GivenNullSVMPtrWhenFillingSVMMemoryThenInvalidValueErrorIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
+        cl_uint pattern = 0;
         auto retVal = clEnqueueSVMMemFill(
-            pCommandQueue, // cl_command_queue command_queue
-            nullptr,       // void *svm_ptr
-            nullptr,       // const void *pattern
-            0,             // size_t pattern_size
-            256,           // size_t size
-            0,             // cl_uint num_events_in_wait_list
-            nullptr,       // cl_evebt *event_wait_list
-            nullptr        // cL_event *event
+            pCommandQueue,   // cl_command_queue command_queue
+            nullptr,         // void *svm_ptr
+            &pattern,        // const void *pattern
+            sizeof(pattern), // size_t pattern_size
+            256,             // size_t size
+            0,               // cl_uint num_events_in_wait_list
+            nullptr,         // cl_event *event_wait_list
+            nullptr          // cl_event *event
         );
         EXPECT_EQ(CL_INVALID_VALUE, retVal);
     }
 }
 
-TEST_F(ClEnqueueSVMMemFillTests, GivenRegionSizeZeroWhenFillingSVMMemoryThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueSVMMemFillTests, GivenRegionSizeZeroWhenFillingSVMMemoryThenSuccessIsReturned) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
 
+        cl_uint pattern = 0;
         auto retVal = clEnqueueSVMMemFill(
-            pCommandQueue, // cl_command_queue command_queue
-            ptrSvm,        // void *svm_ptr
-            nullptr,       // const void *pattern
-            0,             // size_t pattern_size
-            0,             // size_t size
-            0,             // cl_uint num_events_in_wait_list
-            nullptr,       // cl_evebt *event_wait_list
-            nullptr        // cL_event *event
+            pCommandQueue,   // cl_command_queue command_queue
+            ptrSvm,          // void *svm_ptr
+            &pattern,        // const void *pattern
+            sizeof(pattern), // size_t pattern_size
+            0,               // size_t size
+            0,               // cl_uint num_events_in_wait_list
+            nullptr,         // cl_event *event_wait_list
+            nullptr          // cl_event *event
         );
-        EXPECT_EQ(CL_INVALID_VALUE, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, ptrSvm);
     }
 }
 
+TEST_F(ClEnqueueSVMMemFillTests, GivenNullSVMPtrWithRegionSizeZeroWhenFillingSVMMemoryThenSuccessIsReturned) {
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        cl_uint pattern = 0;
+        auto retVal = clEnqueueSVMMemFill(
+            pCommandQueue,   // cl_command_queue command_queue
+            nullptr,         // void *svm_ptr
+            &pattern,        // const void *pattern
+            sizeof(pattern), // size_t pattern_size
+            0,               // size_t size
+            0,               // cl_uint num_events_in_wait_list
+            nullptr,         // cl_event *event_wait_list
+            nullptr          // cl_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+}
+
 TEST_F(ClEnqueueSVMMemFillTests, GivenNullEventWaitListAndNonZeroEventsWhenFillingSVMMemoryThenInvalidEventWaitListIsReturned) {
+    cl_uint pattern = 0;
     auto retVal = clEnqueueSVMMemFill(
-        pCommandQueue, // cl_command_queue command_queue
-        nullptr,       // void *svm_ptr
-        nullptr,       // const void *pattern
-        0,             // size_t pattern_size
-        0,             // size_t size
-        1,             // cl_uint num_events_in_wait_list
-        nullptr,       // cl_evebt *event_wait_list
-        nullptr        // cL_event *event
+        pCommandQueue,   // cl_command_queue command_queue
+        nullptr,         // void *svm_ptr
+        &pattern,        // const void *pattern
+        sizeof(pattern), // size_t pattern_size
+        0,               // size_t size
+        1,               // cl_uint num_events_in_wait_list
+        nullptr,         // cl_event *event_wait_list
+        nullptr          // cl_event *event
     );
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
 TEST_F(ClEnqueueSVMMemFillTests, GivenNonNullEventWaitListAndZeroEventsWhenFillingSVMMemoryThenInvalidEventWaitListIsReturned) {
+    cl_uint pattern = 0;
     UserEvent uEvent(pContext);
     cl_event eventWaitList[] = {&uEvent};
     auto retVal = clEnqueueSVMMemFill(
-        pCommandQueue, // cl_command_queue command_queue
-        nullptr,       // void *svm_ptr
-        nullptr,       // const void *pattern
-        0,             // size_t pattern_size
-        0,             // size_t size
-        0,             // cl_uint num_events_in_wait_list
-        eventWaitList, // cl_evebt *event_wait_list
-        nullptr        // cL_event *event
+        pCommandQueue,   // cl_command_queue command_queue
+        nullptr,         // void *svm_ptr
+        &pattern,        // const void *pattern
+        sizeof(pattern), // size_t pattern_size
+        0,               // size_t size
+        0,               // cl_uint num_events_in_wait_list
+        eventWaitList,   // cl_event *event_wait_list
+        nullptr          // cl_event *event
     );
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
@@ -110,15 +132,16 @@ TEST_F(ClEnqueueSVMMemFillTests, GivenValidParametersWhenFillingSVMMemoryThenSuc
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
 
+        cl_uint pattern = 0;
         auto retVal = clEnqueueSVMMemFill(
-            pCommandQueue, // cl_command_queue command_queue
-            ptrSvm,        // void *svm_ptr
-            nullptr,       // const void *pattern
-            0,             // size_t pattern_size
-            256,           // size_t size
-            0,             // cl_uint num_events_in_wait_list
-            nullptr,       // cl_evebt *event_wait_list
-            nullptr        // cL_event *event
+            pCommandQueue,   // cl_command_queue command_queue
+            ptrSvm,          // void *svm_ptr
+            &pattern,        // const void *pattern
+            sizeof(pattern), // size_t pattern_size
+            256,             // size_t size
+            0,               // cl_uint num_events_in_wait_list
+            nullptr,         // cl_event *event_wait_list
+            nullptr          // cl_event *event
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -134,15 +157,16 @@ TEST_F(ClEnqueueSVMMemFillTests, GivenQueueIncapableWhenFillingSvmBufferThenInva
     void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
     EXPECT_NE(nullptr, ptrSvm);
 
+    cl_uint pattern = 0;
     auto retVal = clEnqueueSVMMemFill(
-        pCommandQueue, // cl_command_queue command_queue
-        ptrSvm,        // void *svm_ptr
-        nullptr,       // const void *pattern
-        0,             // size_t pattern_size
-        256,           // size_t size
-        0,             // cl_uint num_events_in_wait_list
-        nullptr,       // cl_evebt *event_wait_list
-        nullptr        // cL_event *event
+        pCommandQueue,   // cl_command_queue command_queue
+        ptrSvm,          // void *svm_ptr
+        &pattern,        // const void *pattern
+        sizeof(pattern), // size_t pattern_size
+        256,             // size_t size
+        0,               // cl_uint num_events_in_wait_list
+        nullptr,         // cl_event *event_wait_list
+        nullptr          // cl_event *event
     );
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 
