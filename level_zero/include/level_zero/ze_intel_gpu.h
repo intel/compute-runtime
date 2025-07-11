@@ -595,6 +595,33 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
     uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
     ze_event_handle_t *phWaitEvents);      ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieves a string describing the last error code returned by the
+///        default driver in the current thread.
+///
+/// @details
+///     - String returned is thread local.
+///     - String is only updated on calls returning an error, i.e., not on calls
+///       returning ::ZE_RESULT_SUCCESS.
+///     - String may be empty if driver considers error code is already explicit
+///       enough to describe cause.
+///     - Memory pointed to by ppString is owned by the driver.
+///     - String returned is null-terminated.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ppString`
+ze_result_t ZE_APICALL
+zerDriverGetLastErrorDescription(
+    const char **ppString ///< [in,out] pointer to a null-terminated array of characters describing
+                          ///< cause of error.
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

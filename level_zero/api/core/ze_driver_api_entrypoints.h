@@ -75,6 +75,9 @@ ze_context_handle_t zerDriverGetDefaultContext() {
     return L0::DriverHandle::fromHandle(L0::globalDriverHandles->front())->getDefaultContext();
 }
 
+ze_result_t zerDriverGetLastErrorDescription(const char **ppString) {
+    return L0::DriverHandle::fromHandle(L0::globalDriverHandles->front())->getErrorDescription(ppString);
+}
 } // namespace L0
 
 extern "C" {
@@ -157,5 +160,8 @@ ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(
 
 ze_context_handle_t ZE_APICALL zerDriverGetDefaultContext() {
     return L0::zerDriverGetDefaultContext();
+}
+ze_result_t ZE_APICALL zerDriverGetLastErrorDescription(const char **ppString) {
+    return L0::zerDriverGetLastErrorDescription(ppString);
 }
 }

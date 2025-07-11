@@ -32,6 +32,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexDriverGetHostPointerBaseAddress);
     RETURN_FUNC_PTR_IF_EXIST(zeDriverGetDefaultContext);
     RETURN_FUNC_PTR_IF_EXIST(zerDriverGetDefaultContext);
+    RETURN_FUNC_PTR_IF_EXIST(zerDriverGetLastErrorDescription);
 
     RETURN_FUNC_PTR_IF_EXIST(zerDeviceTranslateToIdentifier);
     RETURN_FUNC_PTR_IF_EXIST(zerIdentifierTranslateToDeviceHandle);
