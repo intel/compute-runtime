@@ -2080,6 +2080,29 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateG
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateByKmdThenAlignmentIsCorrect) {
+    mock->ioctlHelper.reset(new MockIoctlHelper(*mock));
+    mock->queryMemoryInfo();
+
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (debugManager.flags.UseGemCreateExtInAllocateMemoryByKMD.get() == 0 ||
+        !productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+        mock->ioctlExpected.gemCreate = 1;
+    } else {
+        mock->ioctlExpected.gemCreateExt = 1;
+    }
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.alignment = 8388608;
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    auto gmm = allocation->getDefaultGmm();
+    EXPECT_EQ(gmm->resourceParams.BaseAlignment, allocationData.alignment);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenAllocateMemoryByKMDWhenPreferCompressedThenCompressionEnabled) {
     DebugManagerStateRestore restorer;
     debugManager.flags.RenderCompressedBuffersEnabled.set(true);
