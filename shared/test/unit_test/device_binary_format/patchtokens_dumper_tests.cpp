@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -534,7 +534,6 @@ TEST(KernelDumper, givenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     auto allocateStatelessConstantMemorySurfaceWithInitialization = initToken<SPatchAllocateStatelessConstantMemorySurfaceWithInitialization>(PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_WITH_INITIALIZATION);
     auto allocateStatelessGlobalMemorySurfaceWithInitialization = initToken<SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization>(PATCH_TOKEN_ALLOCATE_GLOBAL_MEMORY_SURFACE_WITH_INITIALIZATION);
     auto allocateStatelessPrintfSurface = initToken<SPatchAllocateStatelessPrintfSurface>(PATCH_TOKEN_ALLOCATE_PRINTF_SURFACE);
-    auto allocateStatelessDefaultDeviceQueueSurface = initToken<SPatchAllocateStatelessDefaultDeviceQueueSurface>(PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT);
     auto inlineVmeSamplerInfo = initToken<SPatchItemHeader>(PATCH_TOKEN_INLINE_VME_SAMPLER_INFO);
     auto gtpinFreeGrfInfo = initToken<SPatchGtpinFreeGRFInfo>(PATCH_TOKEN_GTPIN_FREE_GRF_INFO);
     auto stateSip = initToken<SPatchStateSIP>(PATCH_TOKEN_STATE_SIP);
@@ -559,7 +558,6 @@ TEST(KernelDumper, givenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     kernel.tokens.allocateStatelessConstantMemorySurfaceWithInitialization = &allocateStatelessConstantMemorySurfaceWithInitialization;
     kernel.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization = &allocateStatelessGlobalMemorySurfaceWithInitialization;
     kernel.tokens.allocateStatelessPrintfSurface = &allocateStatelessPrintfSurface;
-    kernel.tokens.allocateStatelessDefaultDeviceQueueSurface = &allocateStatelessDefaultDeviceQueueSurface;
     kernel.tokens.inlineVmeSamplerInfo = &inlineVmeSamplerInfo;
     kernel.tokens.gtpinFreeGrfInfo = &gtpinFreeGrfInfo;
     kernel.tokens.stateSip = &stateSip;
@@ -730,14 +728,6 @@ Kernel-scope tokens section size : )==="
              << sizeof(SPatchAllocateStatelessPrintfSurface) << R"===()
   {
       uint32_t   PrintfSurfaceIndex;// = 0
-      uint32_t   SurfaceStateHeapOffset;// = 0
-      uint32_t   DataParamOffset;// = 0
-      uint32_t   DataParamSize;// = 0
-  }
-  struct SPatchAllocateStatelessDefaultDeviceQueueSurface :
-         SPatchItemHeader (Token=46(PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT), Size=)==="
-             << sizeof(SPatchAllocateStatelessDefaultDeviceQueueSurface) << R"===()
-  {
       uint32_t   SurfaceStateHeapOffset;// = 0
       uint32_t   DataParamOffset;// = 0
       uint32_t   DataParamSize;// = 0
@@ -1535,31 +1525,6 @@ TEST(KernelArgDumper, givenStatelessConstantMemoryObjectKernelArgThenProperlyCre
     expected << R"===(  | Kernel argument of type BUFFER
   |   struct SPatchStatelessConstantMemoryObjectKernelArgument :
   |          SPatchItemHeader (Token=31(PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT), Size=)==="
-             << sizeof(objectArg) << R"===()
-  |   {
-  |       uint32_t   ArgumentNumber;// = 0
-  |       uint32_t   SurfaceStateHeapOffset;// = 0
-  |       uint32_t   DataParamOffset;// = 0
-  |       uint32_t   DataParamSize;// = 0
-  |       uint32_t   LocationIndex;// = 0
-  |       uint32_t   LocationIndex2;// = 0
-  |       uint32_t   IsEmulationArgument;// = 0
-  |   }
-  |   Buffer Metadata:
-)===";
-    EXPECT_STREQ(expected.str().c_str(), generated.c_str());
-}
-
-TEST(KernelArgDumper, givenStatelessDeviceQueueObjectKernelArgThenProperlyCreatesDump) {
-    NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
-    auto objectArg = PatchTokensTestData::initToken<iOpenCL::SPatchStatelessDeviceQueueKernelArgument>(iOpenCL::PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT);
-    kernelArg.objectArg = &objectArg;
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::buffer;
-    auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
-    std::stringstream expected;
-    expected << R"===(  | Kernel argument of type BUFFER
-  |   struct SPatchStatelessDeviceQueueKernelArgument :
-  |          SPatchItemHeader (Token=46(PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT), Size=)==="
              << sizeof(objectArg) << R"===()
   |   {
   |       uint32_t   ArgumentNumber;// = 0

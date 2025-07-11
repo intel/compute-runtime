@@ -329,20 +329,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     kernelDescriptor.kernelAttributes.numArgsStateful = 0;
     kernelTokens.tokens.allocateStatelessPrintfSurface = nullptr;
 
-    iOpenCL::SPatchAllocateStatelessDefaultDeviceQueueSurface defaultDeviceQueueSurface = {};
-    defaultDeviceQueueSurface.DataParamOffset = 2;
-    defaultDeviceQueueSurface.DataParamSize = 3;
-    defaultDeviceQueueSurface.SurfaceStateHeapOffset = 7;
-    kernelTokens.tokens.allocateStatelessDefaultDeviceQueueSurface = &defaultDeviceQueueSurface;
-    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_EQ(defaultDeviceQueueSurface.DataParamOffset, kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.stateless);
-    EXPECT_EQ(defaultDeviceQueueSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.pointerSize);
-    EXPECT_EQ(defaultDeviceQueueSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful);
-    EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindless));
-    EXPECT_EQ(1u, kernelDescriptor.kernelAttributes.numArgsStateful);
-    kernelDescriptor.kernelAttributes.numArgsStateful = 0;
-    kernelTokens.tokens.allocateStatelessDefaultDeviceQueueSurface = nullptr;
-
     EXPECT_EQ(0U, kernelDescriptor.kernelAttributes.perThreadSystemThreadSurfaceSize);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.stateless));
     EXPECT_EQ(0U, kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.pointerSize);
@@ -374,9 +360,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     kernelTokens.tokens.allocateSyncBuffer = &syncBuffer;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesSyncBuffer);
-    EXPECT_EQ(defaultDeviceQueueSurface.DataParamOffset, kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.stateless);
-    EXPECT_EQ(defaultDeviceQueueSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.pointerSize);
-    EXPECT_EQ(defaultDeviceQueueSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.bindful);
+
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.bindless));
     EXPECT_EQ(1u, kernelDescriptor.kernelAttributes.numArgsStateful);
     kernelDescriptor.kernelAttributes.numArgsStateful = 0;
@@ -765,35 +749,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithStatelessConstantMemoryObje
     EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescPointer>().bindless));
     EXPECT_EQ(NEO::KernelArgMetadata::AddrConstant, dst.payloadMappings.explicitArgs[1].getTraits().addressQualifier);
     EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().needsPatch);
-}
-
-TEST(KernelDescriptorFromPatchtokens, GivenKernelWithStatelessDeviceQueueKernelArgumentThenKernelDescriptorIsProperlyPopulated) {
-    std::vector<uint8_t> storage;
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
-
-    iOpenCL::SPatchStatelessDeviceQueueKernelArgument deviceQueueArg = {};
-    deviceQueueArg.Token = iOpenCL::PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT;
-    deviceQueueArg.ArgumentNumber = 1;
-    deviceQueueArg.DataParamOffset = 2;
-    deviceQueueArg.DataParamSize = 4;
-    deviceQueueArg.SurfaceStateHeapOffset = 128;
-
-    kernelTokens.tokens.kernelArgs.resize(2);
-    kernelTokens.tokens.kernelArgs[1].objectArg = &deviceQueueArg;
-    NEO::KernelDescriptor dst = {};
-    NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
-    EXPECT_EQ(1U, dst.kernelAttributes.numArgsToPatch);
-    ASSERT_EQ(2U, dst.payloadMappings.explicitArgs.size());
-    EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].is<NEO::ArgDescriptor::argTPointer>());
-    EXPECT_EQ(deviceQueueArg.DataParamOffset, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescPointer>().stateless);
-    EXPECT_EQ(deviceQueueArg.DataParamSize, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescPointer>().pointerSize);
-    EXPECT_EQ(deviceQueueArg.SurfaceStateHeapOffset, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescPointer>().bindful);
-    EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescPointer>().bindless));
-    EXPECT_EQ(NEO::KernelArgMetadata::AddrGlobal, dst.payloadMappings.explicitArgs[1].getTraits().addressQualifier);
-    EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().needsPatch);
-
-    EXPECT_FALSE(dst.payloadMappings.explicitArgs[0].getExtendedTypeInfo().isDeviceQueue);
-    EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isDeviceQueue);
 }
 
 TEST(KernelDescriptorFromPatchtokens, GivenKernelWithByValueArgumentsThenKernelDescriptorIsProperlyPopulated) {

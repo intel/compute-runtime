@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,9 +109,6 @@ inline void assignArg(KernelFromPatchtokens &kernel, const SPatchItemHeader *src
         break;
     case PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT:
         argNum = getArgNum<SPatchStatelessConstantMemoryObjectKernelArgument>(src);
-        break;
-    case PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT:
-        argNum = getArgNum<SPatchStatelessDeviceQueueKernelArgument>(src);
         break;
     }
 
@@ -356,9 +353,6 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
         break;
     case PATCH_TOKEN_ALLOCATE_STATELESS_EVENT_POOL_SURFACE:
         break;
-    case PATCH_TOKEN_ALLOCATE_STATELESS_DEFAULT_DEVICE_QUEUE_SURFACE:
-        assignToken(out.tokens.allocateStatelessDefaultDeviceQueueSurface, token);
-        break;
     case PATCH_TOKEN_STRING:
         assignToken(out.tokens.strings, token);
         break;
@@ -395,7 +389,6 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
     case PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT:
     case PATCH_TOKEN_STATELESS_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT:
     case PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT:
-    case PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT:
         assignArg(out, token);
         break;
 

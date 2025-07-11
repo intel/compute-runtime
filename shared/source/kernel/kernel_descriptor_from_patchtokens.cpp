@@ -196,10 +196,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatele
     populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.printfSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
-void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessDefaultDeviceQueueSurface &token) {
-    populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
-}
-
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateSystemThreadSurface &token) {
     dst.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = token.Offset;
     dst.kernelAttributes.perThreadSystemThreadSurfaceSize = token.PerThreadSystemThreadSurfaceSize;
@@ -317,17 +313,6 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
     populatePointerKernelArg(dst, argPointer, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
-void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPatchStatelessDeviceQueueKernelArgument &token) {
-    markArgAsPatchable(dst, argNum);
-
-    auto &argPointer = dst.payloadMappings.explicitArgs[argNum].as<ArgDescPointer>(true);
-    dst.payloadMappings.explicitArgs[argNum].getTraits().addressQualifier = KernelArgMetadata::AddrGlobal;
-
-    dst.payloadMappings.explicitArgs[argNum].getExtendedTypeInfo().isDeviceQueue = true;
-
-    populatePointerKernelArg(dst, argPointer, token, dst.kernelAttributes.bufferAddressingMode);
-}
-
 void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPatchDataParameterBuffer &token) {
     markArgAsPatchable(dst, argNum);
 
@@ -395,9 +380,6 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
             break;
         case PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT:
             populateKernelArgDescriptor(dst, argNum, *reinterpret_cast<const SPatchStatelessConstantMemoryObjectKernelArgument *>(src.objectArg));
-            break;
-        case PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT:
-            populateKernelArgDescriptor(dst, argNum, *reinterpret_cast<const SPatchStatelessDeviceQueueKernelArgument *>(src.objectArg));
             break;
         }
     }
@@ -485,7 +467,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessConstantMemorySurfaceWithInitialization);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessPrintfSurface);
-    populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessDefaultDeviceQueueSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateSyncBuffer);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateRTGlobalBuffer);
 

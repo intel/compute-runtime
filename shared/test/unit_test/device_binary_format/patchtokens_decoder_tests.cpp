@@ -35,7 +35,6 @@ bool hasEmptyTokensInfo(const NEO::PatchTokenBinary::KernelFromPatchtokens &kern
     empty &= nullptr == toks.allocateStatelessConstantMemorySurfaceWithInitialization;
     empty &= nullptr == toks.allocateStatelessGlobalMemorySurfaceWithInitialization;
     empty &= nullptr == toks.allocateStatelessPrintfSurface;
-    empty &= nullptr == toks.allocateStatelessDefaultDeviceQueueSurface;
     empty &= nullptr == toks.inlineVmeSamplerInfo;
     empty &= nullptr == toks.gtpinFreeGrfInfo;
     empty &= nullptr == toks.stateSip;
@@ -327,7 +326,6 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
     auto allocateStatelessConstantMemorySurfaceWithInitializationOff = pushBackToken<SPatchAllocateStatelessConstantMemorySurfaceWithInitialization>(PATCH_TOKEN_ALLOCATE_STATELESS_CONSTANT_MEMORY_SURFACE_WITH_INITIALIZATION, storage);
     auto allocateStatelessGlobalMemorySurfaceWithInitializationOff = pushBackToken<SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization>(PATCH_TOKEN_ALLOCATE_STATELESS_GLOBAL_MEMORY_SURFACE_WITH_INITIALIZATION, storage);
     auto allocateStatelessPrintfSurfaceOff = pushBackToken<SPatchAllocateStatelessPrintfSurface>(PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE, storage);
-    auto allocateStatelessDefaultDeviceQueueSurfaceOff = pushBackToken<SPatchAllocateStatelessDefaultDeviceQueueSurface>(PATCH_TOKEN_ALLOCATE_STATELESS_DEFAULT_DEVICE_QUEUE_SURFACE, storage);
     auto inlineVmeSamplerInfoOff = pushBackToken<SPatchInlineVMESamplerInfo>(PATCH_TOKEN_INLINE_VME_SAMPLER_INFO, storage);
     auto gtpinFreeGrfInfoOff = pushBackToken<SPatchGtpinFreeGRFInfo>(PATCH_TOKEN_GTPIN_FREE_GRF_INFO, storage);
     auto gtpinInfoOff = pushBackToken<SPatchItemHeader>(PATCH_TOKEN_GTPIN_INFO, storage);
@@ -362,7 +360,6 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
     EXPECT_TRUE(tokenOffsetMatched(base, allocateStatelessConstantMemorySurfaceWithInitializationOff, decodedKernel.tokens.allocateStatelessConstantMemorySurfaceWithInitialization));
     EXPECT_TRUE(tokenOffsetMatched(base, allocateStatelessGlobalMemorySurfaceWithInitializationOff, decodedKernel.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization));
     EXPECT_TRUE(tokenOffsetMatched(base, allocateStatelessPrintfSurfaceOff, decodedKernel.tokens.allocateStatelessPrintfSurface));
-    EXPECT_TRUE(tokenOffsetMatched(base, allocateStatelessDefaultDeviceQueueSurfaceOff, decodedKernel.tokens.allocateStatelessDefaultDeviceQueueSurface));
     EXPECT_TRUE(tokenOffsetMatched(base, inlineVmeSamplerInfoOff, decodedKernel.tokens.inlineVmeSamplerInfo));
     EXPECT_TRUE(tokenOffsetMatched(base, gtpinFreeGrfInfoOff, decodedKernel.tokens.gtpinFreeGrfInfo));
     EXPECT_TRUE(tokenOffsetMatched(base, gtpinInfoOff, decodedKernel.tokens.gtpinInfo));
@@ -479,17 +476,11 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgPatchtokensThenDecodingSucceeds
     statelessConstantMemTok.Size = sizeof(statelessConstantMemTok);
     statelessConstantMemTok.ArgumentNumber = 5;
 
-    iOpenCL::SPatchStatelessDeviceQueueKernelArgument statelessDeviceQueueTok = {};
-    statelessDeviceQueueTok.Token = iOpenCL::PATCH_TOKEN::PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT;
-    statelessDeviceQueueTok.Size = sizeof(iOpenCL::SPatchGlobalMemoryObjectKernelArgument);
-    statelessDeviceQueueTok.ArgumentNumber = 4;
-
     auto samplerOff = pushBackToken(samplerTok, storage);
     auto imageOff = pushBackToken(imageTok, storage);
     auto globalMemOff = pushBackToken(globalMemTok, storage);
     auto statelessGlobalMemOff = pushBackToken(statelessGlobalMemTok, storage);
     auto statelessConstantMemOff = pushBackToken(statelessConstantMemTok, storage);
-    auto statelessDeviceQueueOff = pushBackToken(statelessDeviceQueueTok, storage);
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
@@ -522,10 +513,6 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgPatchtokensThenDecodingSucceeds
     EXPECT_TRUE(tokenOffsetMatched(base, statelessConstantMemOff, decodedKernel.tokens.kernelArgs[statelessConstantMemTok.ArgumentNumber].objectArg));
     EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectType::buffer, decodedKernel.tokens.kernelArgs[statelessConstantMemTok.ArgumentNumber].objectType);
     EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[statelessConstantMemTok.ArgumentNumber].objectTypeSpecialized);
-
-    EXPECT_TRUE(tokenOffsetMatched(base, statelessDeviceQueueOff, decodedKernel.tokens.kernelArgs[statelessDeviceQueueTok.ArgumentNumber].objectArg));
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectType::buffer, decodedKernel.tokens.kernelArgs[statelessDeviceQueueTok.ArgumentNumber].objectType);
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[statelessDeviceQueueTok.ArgumentNumber].objectTypeSpecialized);
 
     for (int i = 0; i < 6; ++i) {
         EXPECT_EQ(nullptr, decodedKernel.tokens.kernelArgs[i].argInfo);

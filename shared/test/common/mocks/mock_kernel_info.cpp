@@ -22,11 +22,6 @@ void MockKernelInfo::addArgBuffer(uint32_t index, CrossThreadDataOffset stateles
     populatePointerKernelArg(kernelDescriptor, argAt(index).as<ArgDescPointer>(true), stateless, pointerSize, bindful, bindless, kernelDescriptor.kernelAttributes.bufferAddressingMode);
 }
 
-void MockKernelInfo::addArgDevQueue(uint32_t index, CrossThreadDataOffset stateless, uint8_t pointerSize, SurfaceStateHeapOffset bindful) {
-    addArgBuffer(index, stateless, pointerSize, bindful);
-    argAt(index).getExtendedTypeInfo().isDeviceQueue = true;
-}
-
 void MockKernelInfo::addArgImage(uint32_t index, SurfaceStateHeapOffset offset, uint32_t type, bool isTransformable) {
     resizeArgsIfIndexTooBig(index);
 

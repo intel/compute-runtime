@@ -20,7 +20,6 @@ namespace NEO {
 class MockKernelInfo : public KernelInfo {
   public:
     void addArgBuffer(uint32_t index, CrossThreadDataOffset stateless = undefined<CrossThreadDataOffset>, uint8_t pointerSize = 0, SurfaceStateHeapOffset bindful = undefined<SurfaceStateHeapOffset>, CrossThreadDataOffset bindless = undefined<CrossThreadDataOffset>);
-    void addArgDevQueue(uint32_t index, CrossThreadDataOffset stateless = undefined<CrossThreadDataOffset>, uint8_t pointerSize = 0, SurfaceStateHeapOffset bindful = undefined<SurfaceStateHeapOffset>);
     void addArgImage(uint32_t index, SurfaceStateHeapOffset offset = undefined<CrossThreadDataOffset>, uint32_t type = iOpenCL::IMAGE_MEMORY_OBJECT_2D, bool isTransformable = false);
     void addArgImmediate(uint32_t index, uint16_t size = 0, CrossThreadDataOffset offset = undefined<CrossThreadDataOffset>, uint16_t sourceOffset = 0, bool isDataParameterKernelArgument = false);
     void addArgLocal(uint32_t index, CrossThreadDataOffset slmOffset, uint8_t requiredSlmAlignment);

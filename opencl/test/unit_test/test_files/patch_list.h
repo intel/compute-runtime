@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,8 +96,6 @@ enum PATCH_TOKEN
     PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO,           // 42	@SPatchAllocateConstantMemorySurfaceProgramBinaryInfo@
     PATCH_TOKEN_ALLOCATE_STATELESS_GLOBAL_MEMORY_SURFACE_WITH_INITIALIZATION,   // 43	@SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization@
     PATCH_TOKEN_ALLOCATE_STATELESS_CONSTANT_MEMORY_SURFACE_WITH_INITIALIZATION, // 44	@SPatchAllocateStatelessConstantMemorySurfaceWithInitialization@
-    PATCH_TOKEN_ALLOCATE_STATELESS_DEFAULT_DEVICE_QUEUE_SURFACE,                // 45	@SPatchAllocateStatelessDefaultDeviceQueueSurface@
-    PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT,            // 46	@SPatchStatelessDeviceQueueKernelArgument@
     PATCH_TOKEN_GLOBAL_POINTER_PROGRAM_BINARY_INFO,                // 47	@SPatchGlobalPointerProgramBinaryInfo@
     PATCH_TOKEN_CONSTANT_POINTER_PROGRAM_BINARY_INFO,              // 48	@SPatchConstantPointerProgramBinaryInfo@
     PATCH_TOKEN_CONSTRUCTOR_DESTRUCTOR_KERNEL_PROGRAM_BINARY_INFO, // 49	- (Unused)
