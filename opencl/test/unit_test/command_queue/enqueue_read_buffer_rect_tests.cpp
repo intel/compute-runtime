@@ -706,7 +706,7 @@ HWTEST_F(EnqueueReadBufferRectStatelessTest, WhenReadingBufferRectStatelessThenS
 
 using EnqueueReadBufferRectStatefulTest = EnqueueReadBufferRectHw;
 
-HWTEST_F(EnqueueReadBufferRectStatefulTest, WhenReadingBufferRectStatefulThenSuccessIsReturned) {
+HWTEST2_F(EnqueueReadBufferRectStatefulTest, WhenReadingBufferRectStatefulThenSuccessIsReturned, IsStatefulBufferPreferredForProduct) {
 
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
     if (pCmdQ->getHeaplessModeEnabled()) {

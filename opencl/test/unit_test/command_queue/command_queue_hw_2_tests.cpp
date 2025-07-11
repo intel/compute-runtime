@@ -314,7 +314,14 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinP
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferRectCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    auto builtIn = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo) ? EBuiltInOps::copyBufferRectStatelessHeapless : EBuiltInOps::copyBufferRect;
+
+    auto builtIn = EBuiltInOps::copyBufferRect;
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
+        builtIn = EBuiltInOps::copyBufferRectStatelessHeapless;
+    } else if (pCmdQ->getDevice().getCompilerProductHelper().isForceToStatelessRequired()) {
+        builtIn = EBuiltInOps::copyBufferRectStateless;
+    }
+
     setUpImpl(builtIn);
 
     BufferDefaults::context = context;
