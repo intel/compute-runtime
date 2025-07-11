@@ -837,10 +837,13 @@ ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_propert
     pMemAccessProperties->sharedSingleDeviceAllocCapabilities =
         static_cast<ze_memory_access_cap_flags_t>(productHelper.getSingleDeviceSharedMemCapabilities(isKmdMigrationAvailable));
 
+    auto defaultContext = static_cast<ContextImp *>(getDriverHandle()->getDefaultContext());
+    auto multiDeviceWithSingleRoot = defaultContext->getNumDevices() > 1 && defaultContext->rootDeviceIndices.size() == 1;
+
     pMemAccessProperties->sharedCrossDeviceAllocCapabilities = {};
-    if (isKmdMigrationAvailable &&
-        memoryManager->hasPageFaultsEnabled(*this->getNEODevice()) &&
-        NEO::debugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.get() == 1) {
+    if (multiDeviceWithSingleRoot || (isKmdMigrationAvailable &&
+                                      memoryManager->hasPageFaultsEnabled(*this->getNEODevice()) &&
+                                      NEO::debugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.get() == 1)) {
         pMemAccessProperties->sharedCrossDeviceAllocCapabilities = ZE_MEMORY_ACCESS_CAP_FLAG_RW |
                                                                    ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT |
                                                                    ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC |
