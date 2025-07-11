@@ -222,4 +222,9 @@ uint64_t L0GfxCoreHelperHw<Family>::getOaTimestampValidBits() const {
     return oaTimestampValidBits;
 };
 
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::supportMetricsAggregation() const {
+    return false;
+}
+
 } // namespace L0

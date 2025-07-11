@@ -1332,5 +1332,20 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenUnsup
     }
 }
 
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenValidIpSamplingSourceComputeMetricScopesAreEnumeratedOnce, EustallSupportedPlatforms) {
+
+    MetricDeviceContext &metricsDevContext = testDevices[0]->getMetricDeviceContext();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, metricsDevContext.enableMetricApi());
+
+    metricsDevContext.setComputeMetricScopeInitialized();
+
+    auto &metricSource = metricsDevContext.getMetricSource<IpSamplingMetricSourceImp>();
+    EXPECT_EQ(metricSource.isAvailable(), true);
+
+    uint32_t metricScopesCount = 0;
+    metricsDevContext.metricScopesGet(context->toHandle(), &metricScopesCount, nullptr);
+    EXPECT_EQ(metricScopesCount, 0u);
+}
+
 } // namespace ult
 } // namespace L0

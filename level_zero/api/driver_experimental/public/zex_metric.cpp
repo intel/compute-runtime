@@ -119,6 +119,14 @@ ze_result_t ZE_APICALL zetIntelMetricDecodeCalculateMultipleValuesExp(zet_intel_
                                                    pSetCount, pMetricReportCountPerSet, pTotalMetricReportCount, pMetricResults);
 }
 
+ze_result_t ZE_APICALL zetIntelMetricScopesGetExp(zet_context_handle_t hContext, zet_device_handle_t hDevice, uint32_t *pMetricScopesCount, zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
+    return L0::metricScopesGet(hContext, hDevice, pMetricScopesCount, phMetricScopes);
+}
+
+ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(zet_intel_metric_scope_exp_handle_t hMetricScope, zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties) {
+    return L0::metricScopeGetProperties(hMetricScope, pMetricScopeProperties);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -249,6 +257,14 @@ ze_result_t ZE_APICALL zetIntelMetricDecodeCalculateMultipleValuesExp(zet_metric
     return L0::zetIntelMetricDecodeCalculateMultipleValuesExp(
         hMetricDecoder, rawDataSize, offset, pRawData, hCalculateOperation, pSetCount,
         pMetricReportCountPerSet, pTotalMetricReportCount, pMetricResults);
+}
+
+ze_result_t ZE_APICALL zetIntelMetricScopesGetExp(zet_context_handle_t hContext, zet_device_handle_t hDevice, uint32_t *pMetricScopesCount, zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
+    return L0::zetIntelMetricScopesGetExp(hContext, hDevice, pMetricScopesCount, phMetricScopes);
+}
+
+ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(zet_intel_metric_scope_exp_handle_t hMetricScope, zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties) {
+    return L0::zetIntelMetricScopeGetPropertiesExp(hMetricScope, pMetricScopeProperties);
 }
 
 } // extern "C"

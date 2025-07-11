@@ -57,6 +57,11 @@ class MockMetricSource : public L0::MetricSource {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     bool canDisable() override { return false; }
+    void initMetricScopes(MetricDeviceContext &metricDeviceContext) override {
+        if (!metricDeviceContext.isComputeMetricScopesInitialized()) {
+            initComputeMetricScopes(metricDeviceContext);
+        }
+    };
 
     ~MockMetricSource() override = default;
 };
@@ -188,6 +193,23 @@ class MockMetricDeviceContext : public MetricDeviceContext {
 
     void setMockMetricSource(MockMetricSource *metricSource) {
         metricSources[MetricSource::metricSourceTypeOa] = std::unique_ptr<MockMetricSource>(metricSource);
+    }
+    void setMockMetricSourceAtIndex(uint32_t index, MockMetricSource *metricSource) {
+        metricSources[index] = std::unique_ptr<MockMetricSource>(metricSource);
+    }
+
+    void setMultiDeviceCapable(bool capable) {
+        multiDeviceCapable = capable;
+    }
+};
+
+class MockMetricScope : public MetricScopeImp {
+  public:
+    ~MockMetricScope() override = default;
+    MockMetricScope(zet_intel_metric_scope_properties_exp_t &properties)
+        : MetricScopeImp(properties) {}
+    ze_result_t getProperties(zet_intel_metric_scope_properties_exp_t *pProperties) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 };
 
