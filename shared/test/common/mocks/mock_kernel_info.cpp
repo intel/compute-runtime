@@ -94,22 +94,6 @@ void MockKernelInfo::addExtendedMetadata(uint32_t index, const std::string &argN
     extendedMetadata[index] = {argName, type, accessQualifier, addressQualifier, typeQualifiers};
 }
 
-void MockKernelInfo::addExtendedVmeDescriptor(uint32_t index, CrossThreadDataOffset mbBlockType, CrossThreadDataOffset sadAdjustMode, CrossThreadDataOffset searchPathType, CrossThreadDataOffset subpixelMode) {
-    auto &explicitArgsExtendedDescriptors = kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors;
-    if (index >= explicitArgsExtendedDescriptors.size()) {
-        explicitArgsExtendedDescriptors.resize(index + 1);
-    }
-
-    auto vmeDescriptor = std::make_unique<ArgDescVme>();
-    vmeDescriptor->mbBlockType = mbBlockType;
-    vmeDescriptor->sadAdjustMode = sadAdjustMode;
-    vmeDescriptor->searchPathType = searchPathType;
-    vmeDescriptor->subpixelMode = subpixelMode;
-    explicitArgsExtendedDescriptors[index] = std::move(vmeDescriptor);
-
-    argAt(index).getExtendedTypeInfo().hasVmeExtendedDescriptor = true;
-}
-
 void MockKernelInfo::populatePointerArg(ArgDescPointer &arg, uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful) {
     populatePointerKernelArg(kernelDescriptor, arg, stateless, pointerSize, bindful, bindful, kernelDescriptor.kernelAttributes.bufferAddressingMode);
 }

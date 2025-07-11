@@ -29,7 +29,6 @@
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/implicit_args_helper.h"
-#include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/local_ids_cache.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"

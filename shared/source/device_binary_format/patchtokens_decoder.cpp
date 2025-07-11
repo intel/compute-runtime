@@ -56,7 +56,7 @@ inline void assignToken(const T *&dst, const SPatchItemHeader *src) {
     dst = reinterpret_cast<const T *>(src);
 }
 
-inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, size_t argNum, ArgObjectType type = ArgObjectType::none, ArgObjectTypeSpecialized typeSpecialized = ArgObjectTypeSpecialized::none) {
+inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, size_t argNum, ArgObjectType type) {
     if (kernel.tokens.kernelArgs.size() < argNum + 1) {
         kernel.tokens.kernelArgs.resize(argNum + 1);
     }
@@ -67,12 +67,6 @@ inline KernelArgFromPatchtokens &getKernelArg(KernelFromPatchtokens &kernel, siz
         kernel.decodeStatus = DecodeError::invalidBinary;
         DBG_LOG(LogPatchTokens, "\n Mismatched metadata for kernel arg :", argNum);
         DEBUG_BREAK_IF(true);
-    }
-
-    if (arg.objectTypeSpecialized == ArgObjectTypeSpecialized::none) {
-        arg.objectTypeSpecialized = typeSpecialized;
-    } else if (typeSpecialized != ArgObjectTypeSpecialized::none) {
-        UNRECOVERABLE_IF(arg.objectTypeSpecialized != typeSpecialized);
     }
 
     return arg;
@@ -259,19 +253,6 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
         break;
     case DATA_PARAMETER_SAMPLER_NORMALIZED_COORDS:
         getKernelArg(out, argNum, ArgObjectType::sampler).metadata.sampler.normalizedCoords = token;
-        break;
-
-    case DATA_PARAMETER_VME_MB_BLOCK_TYPE:
-        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.mbBlockType = token;
-        break;
-    case DATA_PARAMETER_VME_SUBPIXEL_MODE:
-        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.subpixelMode = token;
-        break;
-    case DATA_PARAMETER_VME_SAD_ADJUST_MODE:
-        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.sadAdjustMode = token;
-        break;
-    case DATA_PARAMETER_VME_SEARCH_PATH_TYPE:
-        getKernelArg(out, argNum, ArgObjectType::none, ArgObjectTypeSpecialized::vme).metadataSpecialized.vme.searchPathType = token;
         break;
 
     case DATA_PARAMETER_PARENT_EVENT:

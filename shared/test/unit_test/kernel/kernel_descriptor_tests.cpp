@@ -79,8 +79,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.localMemoryStatelessWindowSize);
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres);
 
-    EXPECT_EQ(0U, desc.payloadMappings.explicitArgsExtendedDescriptors.size());
-
     EXPECT_TRUE(desc.kernelMetadata.kernelName.empty());
     EXPECT_TRUE(desc.kernelMetadata.kernelLanguageAttributes.empty());
     EXPECT_TRUE(desc.kernelMetadata.printfStringsMap.empty());

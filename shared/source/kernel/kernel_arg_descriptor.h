@@ -150,7 +150,6 @@ struct ArgDescriptor final {
                 bool isMediaBlockImage : 1;
                 bool isTransformable : 1;
                 bool needsPatch : 1;
-                bool hasVmeExtendedDescriptor : 1;
             };
             uint32_t packed;
         };
@@ -370,9 +369,5 @@ inline ArgDescriptor::ArgDescriptor(ArgType type) : type(type) {
         break;
     }
 }
-
-struct ArgDescriptorExtended {
-    virtual ~ArgDescriptorExtended() = default;
-};
 
 } // namespace NEO

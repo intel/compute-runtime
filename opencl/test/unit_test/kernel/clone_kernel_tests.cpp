@@ -41,7 +41,6 @@ class CloneKernelTest : public MultiRootDeviceWithSubDevicesFixture {
         pKernelInfo = std::make_unique<MockKernelInfo>();
 
         pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.resize(1);
-        pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors.resize(1);
 
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
         pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 72;

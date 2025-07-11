@@ -16,7 +16,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -5813,30 +5812,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
                   offset:          8
                   size:            4
                   arg_index:       2
-                - arg_type:        arg_bypointer
-                  offset:          12
-                  size:            0
-                  arg_index:       3
-                  addrmode:        bindless
-                  addrspace:       sampler
-                  access_type:     readwrite
-                  sampler_type:    vme
-                - arg_type:        vme_mb_block_type
-                  offset:          20
-                  size:            4
-                  arg_index:       3
-                - arg_type:        vme_subpixel_mode
-                  offset:          24
-                  size:            4
-                  arg_index:       3
-                - arg_type:        vme_sad_adjust_mode
-                  offset:          28
-                  size:            4
-                  arg_index:       3
-                - arg_type:        vme_search_path_type
-                  offset:          32
-                  size:            4
-                  arg_index:       3
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::success, err);
@@ -5864,17 +5839,8 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
     EXPECT_EQ(2U, sampler2.index);
     EXPECT_EQ(undefined<uint8_t>, sampler2.size);
 
-    auto &sampler3 = args[3].as<ArgDescSampler>();
-    EXPECT_TRUE(args[3].getExtendedTypeInfo().hasVmeExtendedDescriptor);
-    EXPECT_EQ(12U, sampler3.bindless);
-    auto vmePayload = static_cast<NEO::ArgDescVme *>(kd.payloadMappings.explicitArgsExtendedDescriptors[3].get());
-    EXPECT_EQ(20U, vmePayload->mbBlockType);
-    EXPECT_EQ(24U, vmePayload->subpixelMode);
-    EXPECT_EQ(28U, vmePayload->sadAdjustMode);
-    EXPECT_EQ(32U, vmePayload->searchPathType);
-
     EXPECT_TRUE(kd.kernelAttributes.flags.usesSamplers);
-    EXPECT_TRUE(kd.kernelAttributes.flags.usesVme);
+    EXPECT_FALSE(kd.kernelAttributes.flags.usesVme);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessSamplerArgumentWithMetadataThenKernelDescriptorIsPopulated) {

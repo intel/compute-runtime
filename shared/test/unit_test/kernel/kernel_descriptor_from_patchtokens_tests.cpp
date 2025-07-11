@@ -7,7 +7,6 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
@@ -1011,49 +1010,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSlmArgumentAndMetadataThenK
         EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bufferOffset));
         EXPECT_EQ(slmDesc.SourceOffset, dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().requiredSlmAlignment);
         EXPECT_EQ(slmDesc.Offset, dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().slmOffset);
-    }
-}
-
-TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSamplerArgumentAndMetadataWhenSamplerTypeIsVmeThenKernelDescriptorIsProperlyPopulated) {
-    std::vector<uint8_t> storage;
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
-    kernelTokens.tokens.kernelArgs.resize(1);
-    kernelTokens.tokens.kernelArgs[0].objectType = NEO::PatchTokenBinary::ArgObjectType::sampler;
-    {
-        NEO::KernelDescriptor dst = {};
-        NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
-        EXPECT_TRUE(dst.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::argTSampler>());
-        EXPECT_TRUE(dst.kernelAttributes.flags.usesSamplers);
-        EXPECT_FALSE(dst.payloadMappings.explicitArgs[0].getExtendedTypeInfo().hasVmeExtendedDescriptor);
-        EXPECT_TRUE(dst.payloadMappings.explicitArgsExtendedDescriptors.empty());
-    }
-    {
-        kernelTokens.tokens.kernelArgs[0].objectTypeSpecialized = NEO::PatchTokenBinary::ArgObjectTypeSpecialized::vme;
-        iOpenCL::SPatchDataParameterBuffer mbBlockType = {};
-        iOpenCL::SPatchDataParameterBuffer subpixelMode = {};
-        iOpenCL::SPatchDataParameterBuffer sadAdjustMode = {};
-        iOpenCL::SPatchDataParameterBuffer searchPathType = {};
-        mbBlockType.Offset = 2;
-        subpixelMode.Offset = 3;
-        sadAdjustMode.Offset = 5;
-        searchPathType.Offset = 7;
-
-        kernelTokens.tokens.kernelArgs[0].metadataSpecialized.vme.mbBlockType = &mbBlockType;
-        kernelTokens.tokens.kernelArgs[0].metadataSpecialized.vme.subpixelMode = &subpixelMode;
-        kernelTokens.tokens.kernelArgs[0].metadataSpecialized.vme.sadAdjustMode = &sadAdjustMode;
-        kernelTokens.tokens.kernelArgs[0].metadataSpecialized.vme.searchPathType = &searchPathType;
-
-        NEO::KernelDescriptor dst = {};
-        NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
-        EXPECT_TRUE(dst.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::argTSampler>());
-        EXPECT_TRUE(dst.kernelAttributes.flags.usesSamplers);
-        EXPECT_TRUE(dst.payloadMappings.explicitArgs[0].getExtendedTypeInfo().hasVmeExtendedDescriptor);
-        ASSERT_EQ(1U, dst.payloadMappings.explicitArgsExtendedDescriptors.size());
-        auto argVme = reinterpret_cast<NEO::ArgDescVme *>(dst.payloadMappings.explicitArgsExtendedDescriptors[0].get());
-        EXPECT_EQ(mbBlockType.Offset, argVme->mbBlockType);
-        EXPECT_EQ(subpixelMode.Offset, argVme->subpixelMode);
-        EXPECT_EQ(sadAdjustMode.Offset, argVme->sadAdjustMode);
-        EXPECT_EQ(searchPathType.Offset, argVme->searchPathType);
     }
 }
 

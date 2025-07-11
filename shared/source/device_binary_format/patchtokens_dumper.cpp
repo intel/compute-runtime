@@ -730,7 +730,7 @@ std::string asString(const KernelFromPatchtokens &kern) {
     return stream.str();
 }
 
-std::string asString(ArgObjectType type, ArgObjectTypeSpecialized typeSpecialized) {
+std::string asString(ArgObjectType type) {
     std::string typeAsStr;
     switch (type) {
     default:
@@ -750,20 +750,12 @@ std::string asString(ArgObjectType type, ArgObjectTypeSpecialized typeSpecialize
         break;
     }
 
-    switch (typeSpecialized) {
-    default:
-        UNRECOVERABLE_IF(ArgObjectTypeSpecialized::none != typeSpecialized);
-        break;
-    case ArgObjectTypeSpecialized::vme:
-        typeAsStr += " [ VME ]";
-    }
-
     return typeAsStr;
 }
 
 std::string asString(const KernelArgFromPatchtokens &arg, const std::string &indent) {
     std::stringstream stream;
-    stream << indent << "Kernel argument of type " << asString(arg.objectType, arg.objectTypeSpecialized) << "\n";
+    stream << indent << "Kernel argument of type " << asString(arg.objectType) << "\n";
     std::string indentLevel1 = indent + "  ";
     std::string indentLevel2 = indentLevel1 + "  ";
     dumpOrNull(arg.argInfo, "", stream, indentLevel1);
@@ -800,17 +792,6 @@ std::string asString(const KernelArgFromPatchtokens &arg, const std::string &ind
     case ArgObjectType::slm:
         stream << indentLevel1 << "Slm Metadata:\n";
         dumpOrNull(arg.metadata.slm.token, "", stream, indentLevel2);
-        break;
-    }
-    switch (arg.objectTypeSpecialized) {
-    default:
-        break;
-    case ArgObjectTypeSpecialized::vme:
-        stream << indentLevel1 << "Vme Metadata:\n";
-        dumpOrNull(arg.metadataSpecialized.vme.mbBlockType, "", stream, indentLevel2);
-        dumpOrNull(arg.metadataSpecialized.vme.sadAdjustMode, "", stream, indentLevel2);
-        dumpOrNull(arg.metadataSpecialized.vme.searchPathType, "", stream, indentLevel2);
-        dumpOrNull(arg.metadataSpecialized.vme.subpixelMode, "", stream, indentLevel2);
         break;
     }
 

@@ -1855,80 +1855,6 @@ TEST(KernelArgDumper, givenSlmKernelArgWithMetadataTokensThenProperlyCreatesDump
     EXPECT_STREQ(expected.str().c_str(), generated.c_str());
 }
 
-TEST(KernelArgDumper, givenVmeKernelArgWithMetadataTokensThenProperlyCreatesDump) {
-    NEO::PatchTokenBinary::KernelArgFromPatchtokens kernelArg = {};
-    kernelArg.objectType = NEO::PatchTokenBinary::ArgObjectType::image;
-    kernelArg.objectTypeSpecialized = NEO::PatchTokenBinary::ArgObjectTypeSpecialized::vme;
-    auto mbBlockType = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_MB_BLOCK_TYPE);
-    auto subpixelMode = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_SUBPIXEL_MODE);
-    auto sadAdjustMode = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_SAD_ADJUST_MODE);
-    auto searchPathType = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_VME_SEARCH_PATH_TYPE);
-
-    kernelArg.metadataSpecialized.vme.mbBlockType = &mbBlockType;
-    kernelArg.metadataSpecialized.vme.subpixelMode = &subpixelMode;
-    kernelArg.metadataSpecialized.vme.sadAdjustMode = &sadAdjustMode;
-    kernelArg.metadataSpecialized.vme.searchPathType = &searchPathType;
-    auto generated = NEO::PatchTokenBinary::asString(kernelArg, "  | ");
-    std::stringstream expected;
-    expected << R"===(  | Kernel argument of type IMAGE [ VME ]
-  |   Image Metadata:
-  |   Vme Metadata:
-  |     struct SPatchDataParameterBuffer :
-  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
-  |     {
-  |         uint32_t   Type;// = 23(DATA_PARAMETER_VME_MB_BLOCK_TYPE)
-  |         uint32_t   ArgumentNumber;// = 0
-  |         uint32_t   Offset;// = 0
-  |         uint32_t   DataSize;// = 0
-  |         uint32_t   SourceOffset;// = 0
-  |         uint32_t   LocationIndex;// = 0
-  |         uint32_t   LocationIndex2;// = 0
-  |         uint32_t   IsEmulationArgument;// = 0
-  |     }
-  |     struct SPatchDataParameterBuffer :
-  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
-  |     {
-  |         uint32_t   Type;// = 25(DATA_PARAMETER_VME_SAD_ADJUST_MODE)
-  |         uint32_t   ArgumentNumber;// = 0
-  |         uint32_t   Offset;// = 0
-  |         uint32_t   DataSize;// = 0
-  |         uint32_t   SourceOffset;// = 0
-  |         uint32_t   LocationIndex;// = 0
-  |         uint32_t   LocationIndex2;// = 0
-  |         uint32_t   IsEmulationArgument;// = 0
-  |     }
-  |     struct SPatchDataParameterBuffer :
-  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
-  |     {
-  |         uint32_t   Type;// = 26(DATA_PARAMETER_VME_SEARCH_PATH_TYPE)
-  |         uint32_t   ArgumentNumber;// = 0
-  |         uint32_t   Offset;// = 0
-  |         uint32_t   DataSize;// = 0
-  |         uint32_t   SourceOffset;// = 0
-  |         uint32_t   LocationIndex;// = 0
-  |         uint32_t   LocationIndex2;// = 0
-  |         uint32_t   IsEmulationArgument;// = 0
-  |     }
-  |     struct SPatchDataParameterBuffer :
-  |            SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << sizeof(iOpenCL::SPatchDataParameterBuffer) << R"===()
-  |     {
-  |         uint32_t   Type;// = 24(DATA_PARAMETER_VME_SUBPIXEL_MODE)
-  |         uint32_t   ArgumentNumber;// = 0
-  |         uint32_t   Offset;// = 0
-  |         uint32_t   DataSize;// = 0
-  |         uint32_t   SourceOffset;// = 0
-  |         uint32_t   LocationIndex;// = 0
-  |         uint32_t   LocationIndex2;// = 0
-  |         uint32_t   IsEmulationArgument;// = 0
-  |     }
-)===";
-    EXPECT_STREQ(expected.str().c_str(), generated.c_str());
-}
-
 TEST(PatchTokenDumper, givenAnyTokenThenDumpingIsHandled) {
     constexpr uint32_t maxTokenSize = 4096;
 
@@ -2004,7 +1930,14 @@ TEST(PatchTokenDumper, givenAnyTokenThenDumpingIsHandled) {
                                                     iOpenCL::DATA_PARAMETER_STAGE_IN_GRID_ORIGIN,
                                                     iOpenCL::DATA_PARAMETER_STAGE_IN_GRID_SIZE};
 
+    auto ignoreToken = [](int token) { return token == iOpenCL::DATA_PARAMETER_VME_MB_BLOCK_TYPE ||
+                                              token == iOpenCL::DATA_PARAMETER_VME_SUBPIXEL_MODE ||
+                                              token == iOpenCL::DATA_PARAMETER_VME_SAD_ADJUST_MODE ||
+                                              token == iOpenCL::DATA_PARAMETER_VME_SEARCH_PATH_TYPE; };
     for (int i = 0; i < iOpenCL::NUM_DATA_PARAMETER_TOKENS; ++i) {
+        if (ignoreToken(i)) {
+            continue;
+        }
         kernelDataParamToken->Type = i;
         decodedKernel = {};
         NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(kernelToDecode.blobs.kernelInfo, decodedKernel);

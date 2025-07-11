@@ -496,28 +496,22 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgPatchtokensThenDecodingSucceeds
     ASSERT_EQ(6U, decodedKernel.tokens.kernelArgs.size());
     EXPECT_TRUE(tokenOffsetMatched(base, samplerOff, decodedKernel.tokens.kernelArgs[samplerTok.ArgumentNumber].objectArg));
     EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectType::sampler, decodedKernel.tokens.kernelArgs[samplerTok.ArgumentNumber].objectType);
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[samplerTok.ArgumentNumber].objectTypeSpecialized);
 
     EXPECT_TRUE(tokenOffsetMatched(base, imageOff, decodedKernel.tokens.kernelArgs[imageTok.ArgumentNumber].objectArg));
     EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectType::image, decodedKernel.tokens.kernelArgs[imageTok.ArgumentNumber].objectType);
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[imageTok.ArgumentNumber].objectTypeSpecialized);
 
     EXPECT_TRUE(tokenOffsetMatched(base, globalMemOff, decodedKernel.tokens.kernelArgs[globalMemTok.ArgumentNumber].objectArg));
     EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectType::buffer, decodedKernel.tokens.kernelArgs[globalMemTok.ArgumentNumber].objectType);
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[globalMemTok.ArgumentNumber].objectTypeSpecialized);
 
     EXPECT_TRUE(tokenOffsetMatched(base, statelessGlobalMemOff, decodedKernel.tokens.kernelArgs[statelessGlobalMemTok.ArgumentNumber].objectArg));
     EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectType::buffer, decodedKernel.tokens.kernelArgs[statelessGlobalMemTok.ArgumentNumber].objectType);
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[statelessGlobalMemTok.ArgumentNumber].objectTypeSpecialized);
 
     EXPECT_TRUE(tokenOffsetMatched(base, statelessConstantMemOff, decodedKernel.tokens.kernelArgs[statelessConstantMemTok.ArgumentNumber].objectArg));
     EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectType::buffer, decodedKernel.tokens.kernelArgs[statelessConstantMemTok.ArgumentNumber].objectType);
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[statelessConstantMemTok.ArgumentNumber].objectTypeSpecialized);
 
     for (int i = 0; i < 6; ++i) {
         EXPECT_EQ(nullptr, decodedKernel.tokens.kernelArgs[i].argInfo);
         EXPECT_EQ(0U, decodedKernel.tokens.kernelArgs[i].byValMap.size());
-        EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[i].objectTypeSpecialized);
     }
 }
 
@@ -694,11 +688,6 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgMetadataPatchtokensThenDecoding
     ASSERT_EQ(NEO::PatchTokenBinary::ArgObjectType::image, decodedKernel.tokens.kernelArgs[1].objectType);
     ASSERT_EQ(NEO::PatchTokenBinary::ArgObjectType::sampler, decodedKernel.tokens.kernelArgs[2].objectType);
     ASSERT_EQ(NEO::PatchTokenBinary::ArgObjectType::slm, decodedKernel.tokens.kernelArgs[3].objectType);
-
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[0].objectTypeSpecialized);
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[1].objectTypeSpecialized);
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[2].objectTypeSpecialized);
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::none, decodedKernel.tokens.kernelArgs[3].objectTypeSpecialized);
 
     auto base = storage.data();
     EXPECT_TRUE(tokenOffsetMatched(base, arg0BufferOffsetOff, decodedKernel.tokens.kernelArgs[0].metadata.buffer.bufferOffset));
@@ -887,40 +876,6 @@ TEST(KernelDecoder, GivenKernelWithByValArgMetadataPatchtokensThenDecodingSuccee
     EXPECT_TRUE(tokenOffsetMatched(base, arg0Val1Off, decodedKernel.tokens.kernelArgs[0].byValMap[1]));
     EXPECT_TRUE(tokenOffsetMatched(base, arg1SlmOff, decodedKernel.tokens.kernelArgs[1].metadata.slm.token));
     EXPECT_TRUE(tokenOffsetMatched(base, arg1SlmOff, decodedKernel.tokens.kernelArgs[1].byValMap[0]));
-}
-
-TEST(KernelDecoder, GivenKernelWithVmeMetadataPatchtokensThenDecodingSucceedsAndTokensAreProperlyAssigned) {
-    std::vector<uint8_t> storage;
-    storage.reserve(128);
-    auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
-
-    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
-
-    auto arg0VmeBlockTypeOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_VME_MB_BLOCK_TYPE, storage, 0U, 0U);
-    auto arg0VmeSubpixelModeOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_VME_SUBPIXEL_MODE, storage, 0U, 0U);
-    auto arg0VmeSadAdjustModeOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_VME_SAD_ADJUST_MODE, storage, 0U, 0U);
-    auto arg0VmeSearchPathTypeOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_VME_SEARCH_PATH_TYPE, storage, 0U, 0U);
-
-    ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
-    auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
-    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
-
-    NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
-    bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
-    EXPECT_TRUE(decodeSuccess);
-    EXPECT_EQ(NEO::DecodeError::success, decodedKernel.decodeStatus);
-    EXPECT_TRUE(decodedKernel.unhandledTokens.empty());
-
-    ASSERT_EQ(1U, decodedKernel.tokens.kernelArgs.size());
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectType::none, decodedKernel.tokens.kernelArgs[0].objectType);
-    EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::vme, decodedKernel.tokens.kernelArgs[0].objectTypeSpecialized);
-    ;
-
-    auto base = storage.data();
-    EXPECT_TRUE(tokenOffsetMatched(base, arg0VmeBlockTypeOff, decodedKernel.tokens.kernelArgs[0].metadataSpecialized.vme.mbBlockType));
-    EXPECT_TRUE(tokenOffsetMatched(base, arg0VmeSubpixelModeOff, decodedKernel.tokens.kernelArgs[0].metadataSpecialized.vme.subpixelMode));
-    EXPECT_TRUE(tokenOffsetMatched(base, arg0VmeSadAdjustModeOff, decodedKernel.tokens.kernelArgs[0].metadataSpecialized.vme.sadAdjustMode));
-    EXPECT_TRUE(tokenOffsetMatched(base, arg0VmeSearchPathTypeOff, decodedKernel.tokens.kernelArgs[0].metadataSpecialized.vme.searchPathType));
 }
 
 TEST(KernelDecoder, GivenKernelWithOutOfBoundsTokenThenDecodingFails) {

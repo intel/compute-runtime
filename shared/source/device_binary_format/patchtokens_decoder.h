@@ -32,11 +32,6 @@ enum class ArgObjectType : uint32_t {
     slm
 };
 
-enum class ArgObjectTypeSpecialized : uint32_t {
-    none = 0,
-    vme
-};
-
 using StackVecUnhandledTokens = StackVec<const SPatchItemHeader *, 4>;
 using StackVecByValMap = StackVec<const SPatchDataParameterBuffer *, 8>;
 using StackVecStrings = StackVec<const SPatchString *, 4>;
@@ -45,7 +40,6 @@ struct KernelArgFromPatchtokens {
     const SPatchKernelArgumentInfo *argInfo = nullptr;
     const SPatchItemHeader *objectArg = nullptr;
     ArgObjectType objectType = ArgObjectType::none;
-    ArgObjectTypeSpecialized objectTypeSpecialized = ArgObjectTypeSpecialized::none;
     StackVecByValMap byValMap;
     union {
         struct {

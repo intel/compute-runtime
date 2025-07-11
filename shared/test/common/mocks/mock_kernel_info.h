@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/program/kernel_info.h"
 
 #include "patch_g7.h"
@@ -62,8 +61,6 @@ class MockKernelInfo : public KernelInfo {
     void setLocalIds(const std::array<uint8_t, 3> &localIds);
 
   private:
-    void addExtendedVmeDescriptor(uint32_t index, CrossThreadDataOffset mbBlockType, CrossThreadDataOffset sadAdjustMode, CrossThreadDataOffset searchPathType, CrossThreadDataOffset subpixelMode);
-
     void populatePointerArg(ArgDescPointer &arg, uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful);
 
     void resizeArgsIfIndexTooBig(uint32_t index);

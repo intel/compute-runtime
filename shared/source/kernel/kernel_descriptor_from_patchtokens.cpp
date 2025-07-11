@@ -9,7 +9,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 
 #include <sstream>
@@ -423,23 +422,6 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
         auto &asBufferArg = dst.payloadMappings.explicitArgs[argNum].as<ArgDescPointer>(true);
         asBufferArg.requiredSlmAlignment = src.metadata.slm.token->SourceOffset;
         asBufferArg.slmOffset = src.metadata.slm.token->Offset;
-    } break;
-    }
-
-    switch (src.objectTypeSpecialized) {
-    default:
-        UNRECOVERABLE_IF(PatchTokenBinary::ArgObjectTypeSpecialized::none != src.objectTypeSpecialized);
-        break;
-    case PatchTokenBinary::ArgObjectTypeSpecialized::vme: {
-        dst.payloadMappings.explicitArgs[argNum].getExtendedTypeInfo().hasVmeExtendedDescriptor = true;
-        dst.payloadMappings.explicitArgsExtendedDescriptors.resize(dst.payloadMappings.explicitArgs.size());
-
-        auto vmeDescriptor = std::make_unique<ArgDescVme>();
-        vmeDescriptor->mbBlockType = getOffset(src.metadataSpecialized.vme.mbBlockType);
-        vmeDescriptor->subpixelMode = getOffset(src.metadataSpecialized.vme.subpixelMode);
-        vmeDescriptor->sadAdjustMode = getOffset(src.metadataSpecialized.vme.sadAdjustMode);
-        vmeDescriptor->searchPathType = getOffset(src.metadataSpecialized.vme.searchPathType);
-        dst.payloadMappings.explicitArgsExtendedDescriptors[argNum] = std::move(vmeDescriptor);
     } break;
     }
 

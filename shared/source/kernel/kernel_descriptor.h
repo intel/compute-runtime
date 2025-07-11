@@ -216,8 +216,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             ArgDescInlineDataPointer indirectDataPointerAddress;
             ArgDescInlineDataPointer scratchPointerAddress;
         } implicitArgs;
-
-        std::vector<std::unique_ptr<ArgDescriptorExtended>> explicitArgsExtendedDescriptors;
     } payloadMappings;
 
     StackVec<const ArgDescPointer *, 8> getImplicitArgBindlessCandidatesVec() const {
