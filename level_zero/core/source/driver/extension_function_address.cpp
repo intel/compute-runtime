@@ -101,6 +101,11 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexKernelSetVariableGroupSize);
     RETURN_FUNC_PTR_IF_EXIST(zexVariableGetInfo);
     RETURN_FUNC_PTR_IF_EXIST(zexCommandListGetVariablesList);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMILoadRegReg);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMILoadRegMem);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMILoadRegImm);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMIStoreRegMem);
+    RETURN_FUNC_PTR_IF_EXIST(zexCommandListAppendMIMath);
 
     // Metrics
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerCreateExp);

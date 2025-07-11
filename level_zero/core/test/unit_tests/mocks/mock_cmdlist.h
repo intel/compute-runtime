@@ -565,27 +565,6 @@ struct Mock<CommandList> : public CommandList {
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents));
 
-    ADDMETHOD_NOBASE(appendMILoadRegImm, ze_result_t, ZE_RESULT_SUCCESS,
-                     (uint32_t reg,
-                      uint32_t value,
-                      bool isBcs));
-
-    ADDMETHOD_NOBASE(appendMILoadRegReg, ze_result_t, ZE_RESULT_SUCCESS,
-                     (uint32_t reg1,
-                      uint32_t reg2));
-
-    ADDMETHOD_NOBASE(appendMILoadRegMem, ze_result_t, ZE_RESULT_SUCCESS,
-                     (uint32_t reg1,
-                      uint64_t address));
-
-    ADDMETHOD_NOBASE(appendMIStoreRegMem, ze_result_t, ZE_RESULT_SUCCESS,
-                     (uint32_t reg1,
-                      uint64_t address));
-
-    ADDMETHOD_NOBASE(appendMIMath, ze_result_t, ZE_RESULT_SUCCESS,
-                     (void *aluArray,
-                      size_t aluCount));
-
     ADDMETHOD_NOBASE(appendMIBBStart, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint64_t address,
                       size_t predication,

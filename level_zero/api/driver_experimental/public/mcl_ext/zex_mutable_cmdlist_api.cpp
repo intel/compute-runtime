@@ -267,6 +267,66 @@ zexCommandListAppendStoreRegVariable(
 }
 
 ze_result_t ZE_APICALL
+zexCommandListAppendMILoadRegReg(
+    ze_command_list_handle_t hCommandList,
+    zex_mcl_alu_reg_t destination,
+    zex_mcl_alu_reg_t source) {
+    hCommandList = toInternalType(hCommandList);
+    if (nullptr == hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return MutableCommandList::fromHandle(hCommandList)->appendMILoadRegReg(getMclAluReg(destination), getMclAluReg(source));
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMILoadRegMem(
+    ze_command_list_handle_t hCommandList,
+    zex_mcl_alu_reg_t reg,
+    uint64_t address) {
+    hCommandList = toInternalType(hCommandList);
+    if (nullptr == hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return MutableCommandList::fromHandle(hCommandList)->appendMILoadRegMem(getMclAluReg(reg), address);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMILoadRegImm(
+    ze_command_list_handle_t hCommandList,
+    zex_mcl_alu_reg_t destination,
+    uint32_t val) {
+    hCommandList = toInternalType(hCommandList);
+    if (nullptr == hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return MutableCommandList::fromHandle(hCommandList)->appendMILoadRegImm(getMclAluReg(destination), val);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMIStoreRegMem(
+    ze_command_list_handle_t hCommandList,
+    zex_mcl_alu_reg_t reg,
+    uint64_t address) {
+    hCommandList = toInternalType(hCommandList);
+    if (nullptr == hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return MutableCommandList::fromHandle(hCommandList)->appendMIStoreRegMem(getMclAluReg(reg), address);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMIMath(
+    ze_command_list_handle_t hCommandList,
+    zex_mcl_alu_operation_t *opArray,
+    size_t noOperations) {
+    hCommandList = toInternalType(hCommandList);
+    if (nullptr == hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return MutableCommandList::fromHandle(hCommandList)->appendMIMath(reinterpret_cast<void *>(opArray), noOperations);
+}
+
+ze_result_t ZE_APICALL
 zexCommandListTempMemSetEleCount(
     ze_command_list_handle_t hCommandList,
     size_t eleCount) {
@@ -484,6 +544,46 @@ zexCommandListAppendStoreRegVariable(
     zex_variable_handle_t hVariable) {
 
     return L0::MCL::zexCommandListAppendStoreRegVariable(hCommandList, reg, hVariable);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMILoadRegReg(
+    ze_command_list_handle_t hCommandList,
+    zex_mcl_alu_reg_t destination,
+    zex_mcl_alu_reg_t source) {
+    return L0::MCL::zexCommandListAppendMILoadRegReg(hCommandList, destination, source);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMILoadRegMem(
+    ze_command_list_handle_t hCommandList,
+    zex_mcl_alu_reg_t reg,
+    uint64_t address) {
+    return L0::MCL::zexCommandListAppendMILoadRegMem(hCommandList, reg, address);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMILoadRegImm(
+    ze_command_list_handle_t hCommandList,
+    zex_mcl_alu_reg_t destination,
+    uint32_t val) {
+    return L0::MCL::zexCommandListAppendMILoadRegImm(hCommandList, destination, val);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMIStoreRegMem(
+    ze_command_list_handle_t hCommandList,
+    zex_mcl_alu_reg_t reg,
+    uint64_t address) {
+    return L0::MCL::zexCommandListAppendMIStoreRegMem(hCommandList, reg, address);
+}
+
+ze_result_t ZE_APICALL
+zexCommandListAppendMIMath(
+    ze_command_list_handle_t hCommandList,
+    zex_mcl_alu_operation_t *opArray,
+    size_t noOperations) {
+    return L0::MCL::zexCommandListAppendMIMath(hCommandList, opArray, noOperations);
 }
 
 ze_result_t ZE_APICALL

@@ -170,11 +170,6 @@ struct CommandListCoreFamily : public CommandListImp {
                                  uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
-    ze_result_t appendMILoadRegImm(uint32_t reg, uint32_t value, bool isBcs) override;
-    ze_result_t appendMILoadRegReg(uint32_t reg1, uint32_t reg2) override;
-    ze_result_t appendMILoadRegMem(uint32_t reg1, uint64_t address) override;
-    ze_result_t appendMIStoreRegMem(uint32_t reg1, uint64_t address) override;
-    ze_result_t appendMIMath(void *aluArray, size_t aluCount) override;
     ze_result_t appendMIBBStart(uint64_t address, size_t predication, bool secondLevel) override;
     ze_result_t appendMIBBEnd() override;
     ze_result_t appendMINoop() override;

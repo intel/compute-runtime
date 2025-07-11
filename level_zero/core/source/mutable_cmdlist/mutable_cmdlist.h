@@ -126,6 +126,11 @@ struct MutableCommandList {
     virtual ze_result_t appendJump(Label *label, const InterfaceOperandDescriptor *condition) = 0;
     virtual ze_result_t appendMILoadRegVariable(MclAluReg reg, Variable *variable) = 0;
     virtual ze_result_t appendMIStoreRegVariable(MclAluReg reg, Variable *variable) = 0;
+    virtual ze_result_t appendMILoadRegImm(MclAluReg reg, uint32_t value) = 0;
+    virtual ze_result_t appendMILoadRegReg(MclAluReg reg1, MclAluReg reg2) = 0;
+    virtual ze_result_t appendMILoadRegMem(MclAluReg reg1, uint64_t address) = 0;
+    virtual ze_result_t appendMIStoreRegMem(MclAluReg reg1, uint64_t address) = 0;
+    virtual ze_result_t appendMIMath(void *aluArray, size_t aluCount) = 0;
 
     virtual ze_result_t tempMemSetElementCount(size_t elementCount) = 0;
     virtual ze_result_t tempMemGetSize(size_t *tempMemSize) = 0;
