@@ -22,6 +22,7 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_builder.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -30,51 +31,6 @@
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 
 using namespace NEO;
-
-void cloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src) {
-    for (auto &srcDi : src) {
-        dst.push(srcDi);
-    }
-    dst.setBuiltinOpParams(src.peekBuiltinOpParams());
-}
-
-struct MockBuilder : BuiltinDispatchInfoBuilder {
-    using BuiltinDispatchInfoBuilder::BuiltinDispatchInfoBuilder;
-    bool buildDispatchInfos(MultiDispatchInfo &d) const override {
-        wasBuildDispatchInfosWithBuiltinOpParamsCalled = true;
-        paramsReceived.multiDispatchInfo.setBuiltinOpParams(d.peekBuiltinOpParams());
-        return true;
-    }
-    bool buildDispatchInfos(MultiDispatchInfo &d, Kernel *kernel,
-                            const uint32_t dim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset) const override {
-        paramsReceived.kernel = kernel;
-        paramsReceived.gws = gws;
-        paramsReceived.elws = elws;
-        paramsReceived.offset = offset;
-        wasBuildDispatchInfosWithKernelParamsCalled = true;
-
-        DispatchInfoBuilder<NEO::SplitDispatch::Dim::d3D, NEO::SplitDispatch::SplitMode::noSplit> dispatchInfoBuilder(clDevice);
-        dispatchInfoBuilder.setKernel(paramsToUse.kernel);
-        dispatchInfoBuilder.setDispatchGeometry(dim, paramsToUse.gws, paramsToUse.elws, paramsToUse.offset);
-        dispatchInfoBuilder.bake(d);
-
-        cloneMdi(paramsReceived.multiDispatchInfo, d);
-        return true;
-    }
-
-    mutable bool wasBuildDispatchInfosWithBuiltinOpParamsCalled = false;
-    mutable bool wasBuildDispatchInfosWithKernelParamsCalled = false;
-    struct Params {
-        MultiDispatchInfo multiDispatchInfo;
-        Kernel *kernel = nullptr;
-        Vec3<size_t> gws = Vec3<size_t>{0, 0, 0};
-        Vec3<size_t> elws = Vec3<size_t>{0, 0, 0};
-        Vec3<size_t> offset = Vec3<size_t>{0, 0, 0};
-    };
-
-    mutable Params paramsReceived;
-    Params paramsToUse;
-};
 
 using MultiIoqCmdQSynchronizationTest = CommandQueueHwBlitTest<false>;
 
@@ -270,9 +226,10 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueWriteImageCallWhenBuiltin
 }
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
-
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-    setUpImpl(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(false, pCmdQ->getHeaplessModeEnabled()));
+
+    const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
+    setUpImpl(EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(useStateless, pCmdQ->getHeaplessModeEnabled()));
 
     std::unique_ptr<Image> dstImage(ImageHelperUlt<ImageUseHostPtr<Image2dDefaults>>::create(context));
 

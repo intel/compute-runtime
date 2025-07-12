@@ -20,9 +20,11 @@
 #include "opencl/test/unit_test/command_queue/enqueue_read_image_fixture.h"
 #include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
+#include "opencl/test/unit_test/mocks/mock_builder.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_image.h"
 
 using namespace NEO;
 
@@ -725,7 +727,9 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenHostPtr
 HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitchIsSetToSlicePitch) {
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(false, pCmdQ->getHeaplessModeEnabled());
+
+    const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(useStateless, pCmdQ->getHeaplessModeEnabled());
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         pCmdQ->getClDevice());
@@ -940,7 +944,9 @@ typedef EnqueueReadImageMipMapTest MipMapReadImageTest;
 HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalledThenProperMipLevelIsSet) {
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
-    EBuiltInOps::Type eBuiltInOp = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(false, pCmdQ->getHeaplessModeEnabled());
+
+    const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
+    EBuiltInOps::Type eBuiltInOp = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(useStateless, pCmdQ->getHeaplessModeEnabled());
     auto imageType = (cl_mem_object_type)GetParam();
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         eBuiltInOp,
@@ -1243,4 +1249,62 @@ HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledFor3DImage
     EXPECT_EQ(2ul, mockCommandQueueHw.enqueueReadImageCounter);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+}
+
+HWTEST_F(EnqueueReadImageTest, given4gbImageAndIsForceStatelessIsFalseWhenEnqueueReadImageCallThenSuccessIsReturned) {
+    struct FourGbMockImage : MockImageBase {
+        size_t getSize() const override { return static_cast<size_t>(4ull * MemoryConstants::gigaByte); }
+    };
+
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ);
+    mockCmdQ->isForceStateless = false;
+
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(true, pCmdQ->getHeaplessModeEnabled());
+
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
+
+    // substitute original builder with mock builder
+    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+
+    FourGbMockImage srcImage;
+    auto imageDesc = srcImage.getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
+    char ptr[1] = {};
+
+    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        *pClDevice));
+
+    EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    auto status = mockCmdQ->enqueueReadImage(&srcImage,
+                                             CL_FALSE,
+                                             origin,
+                                             region,
+                                             0,
+                                             0,
+                                             ptr,
+                                             nullptr,
+                                             0,
+                                             0,
+                                             nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+    EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+        rootDeviceIndex,
+        copyBuiltIn,
+        std::move(oldBuilder));
+    EXPECT_EQ(mockBuilder, newBuilder.get());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,3 +35,5 @@ class MockMultiDispatchInfo : public MultiDispatchInfo {
         }
     }
 };
+
+void cloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src);

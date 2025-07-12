@@ -42,6 +42,7 @@ struct MockImageBase : public Image {
     void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) override {}
     void transformImage2dArrayTo3d(void *memory) override {}
     void transformImage3dTo2dArray(void *memory) override {}
+    size_t getSize() const override { return 0; }
 };
 
 } // namespace NEO
