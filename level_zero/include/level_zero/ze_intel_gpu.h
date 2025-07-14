@@ -646,4 +646,14 @@ const ze_host_mem_alloc_desc_t defaultHostMemDesc = {
     static_cast<ze_host_mem_alloc_flags_t>(ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED | ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) // flags
 };
 
+const ze_command_queue_desc_t defaultCommandQueueDesc = {
+    .stype = ze_structure_type_t::ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
+    .pNext = nullptr,
+    .ordinal = 0,
+    .index = 0,
+    .flags = static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT),
+    .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
+    .priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
+};
+
 #endif
