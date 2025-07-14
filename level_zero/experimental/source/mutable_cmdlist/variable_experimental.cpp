@@ -195,4 +195,29 @@ void Variable::setDescExperimentalValues(const InterfaceVariableDescriptor *ifac
     }
 }
 
+ze_result_t Variable::addKernelArgUsageStatefulBuffer(const NEO::ArgDescriptor &kernelArg, IndirectObjectHeapOffset iohOffset, SurfaceStateHeapOffset sshOffset) {
+    const auto &arg = kernelArg.as<NEO::ArgDescPointer>();
+    if (sshOffset != undefined<SurfaceStateHeapOffset>) {
+        if (NEO::isValidOffset(arg.bufferOffset)) {
+            if (NEO::isValidOffset(arg.bindful)) {
+                bufferUsages.bindful.push_back(sshOffset + arg.bindful);
+            } else if (NEO::isValidOffset(arg.bindless)) {
+                bufferUsages.bindless.push_back(iohOffset + arg.bindless);
+            } else {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            bufferUsages.bufferOffset.push_back(iohOffset + arg.bufferOffset);
+        } else {
+            if (NEO::isValidOffset(arg.bindful)) {
+                bufferUsages.bindfulWithoutOffset.push_back(sshOffset + arg.bindful);
+            } else if (NEO::isValidOffset(arg.bindless)) {
+                bufferUsages.bindlessWithoutOffset.push_back(iohOffset + arg.bindless);
+            } else {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0::MCL

@@ -280,6 +280,7 @@ struct Variable : public VariableHandle {
                                                   CommandBufferOffset walkerCmdOffset, MutableComputeWalker *mutableComputeWalker, bool inlineData);
     ze_result_t addKernelArgUsageImmediateAsContinuous(const NEO::ArgDescriptor &kernelArg, IndirectObjectHeapOffset iohOffset, IndirectObjectHeapOffset iohFullOffset,
                                                        CommandBufferOffset walkerCmdOffset, MutableComputeWalker *mutableComputeWalker, bool inlineData);
+    ze_result_t addKernelArgUsageStatefulBuffer(const NEO::ArgDescriptor &kernelArg, IndirectObjectHeapOffset iohOffset, SurfaceStateHeapOffset sshOffset);
     void handleFlags(uint32_t flags);
     ze_result_t selectImmediateSetValueHandler(size_t size, const void *argVal);
     ze_result_t selectImmediateAddKernelArgUsageHandler(const NEO::ArgDescriptor &kernelArg, IndirectObjectHeapOffset iohOffset, IndirectObjectHeapOffset iohFullOffset,
