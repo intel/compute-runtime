@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/basic_math.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include <level_zero/ze_api.h>
@@ -43,6 +45,9 @@ ze_result_t zeCommandListAppendMemoryFill(
     auto ret = cmdList->capture<CaptureApi::zeCommandListAppendMemoryFill>(hCommandList, ptr, pattern, patternSize, size, hEvent, numWaitEvents, phWaitEvents);
     if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
         return ret;
+    }
+    if (false == Math::isPow2(patternSize)) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
     }
 
     CmdListMemoryCopyParams memoryCopyParams = {};

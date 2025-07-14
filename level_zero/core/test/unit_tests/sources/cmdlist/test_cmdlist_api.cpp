@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,16 @@ TEST(zeCommandListAppendMemoryFill, whenCalledThenRedirectedToObject) {
     auto res = zeCommandListAppendMemoryFill(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
                                              sizeof(value), bufferSize, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST(zeCommandListAppendMemoryFill, whenPatternSizeNotPowerOf2ThenReturnError) {
+    MockCommandList commandList;
+    size_t bufferSize = 4096u;
+
+    int value = 0;
+    auto res = zeCommandListAppendMemoryFill(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
+                                             3u, bufferSize, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, res);
 }
 
 TEST(zeCommandListAppendWaitOnEvent, whenCalledThenRedirectedToObject) {
