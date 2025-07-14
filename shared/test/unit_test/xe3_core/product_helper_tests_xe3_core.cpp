@@ -92,7 +92,7 @@ XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenCheckingIsUsmReuseSup
     }
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
-        EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
+        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
     }
 }

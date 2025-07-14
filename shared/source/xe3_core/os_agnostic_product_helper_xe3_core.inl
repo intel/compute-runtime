@@ -74,12 +74,12 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(c
 
 template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
-    return true;
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
 template <>
 bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
-    return true;
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
 } // namespace NEO
