@@ -7,13 +7,9 @@
 
 #pragma once
 
-#include "shared/source/command_stream/wait_status.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-
-#include <optional>
 
 ////////////////////////////////////////////////////////////////////////////////
 // MockCommandQueue - Core implementation
@@ -59,19 +55,9 @@ class MockCommandQueue : public CommandQueue {
         bcsQueueEngineType = std::nullopt;
     }
 
-    void insertBcsEngine(aub_stream::EngineType bcsEngineType) {
-        const auto index = NEO::EngineHelpers::getBcsIndex(bcsEngineType);
-        const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::regular);
-        bcsEngines[index] = engine;
-        bcsQueueEngineType = bcsEngineType;
-        bcsInitialized = true;
-    }
+    void insertBcsEngine(aub_stream::EngineType bcsEngineType);
 
-    size_t countBcsEngines() const {
-        return std::count_if(bcsEngines.begin(), bcsEngines.end(), [](const EngineControl *engine) {
-            return engine != nullptr && engine->getEngineUsage() == EngineUsage::regular;
-        });
-    }
+    size_t countBcsEngines() const;
 
     void setProfilingEnabled() {
         commandQueueProperties |= CL_QUEUE_PROFILING_ENABLE;
@@ -79,18 +65,16 @@ class MockCommandQueue : public CommandQueue {
     void setOoqEnabled() {
         commandQueueProperties |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     }
-    MockCommandQueue() : CommandQueue(nullptr, nullptr, 0, false) {}
-    MockCommandQueue(Context &context) : MockCommandQueue(&context, context.getDevice(0), nullptr, false) {}
-    MockCommandQueue(Context *context, ClDevice *device, const cl_queue_properties *props, bool internalUsage)
-        : CommandQueue(context, device, props, internalUsage) {
-    }
+    MockCommandQueue();
+    MockCommandQueue(Context &context);
+    MockCommandQueue(Context *context, ClDevice *device, const cl_queue_properties *props, bool internalUsage);
 
     LinearStream &getCS(size_t minRequiredSize) override {
         requestedCmdStreamSize = minRequiredSize;
         return CommandQueue::getCS(minRequiredSize);
     }
 
-    void releaseIndirectHeap(IndirectHeap::Type heap) override {
+    void releaseIndirectHeap(IndirectHeapType heap) override {
         releaseIndirectHeapCalled = true;
         CommandQueue::releaseIndirectHeap(heap);
     }
@@ -171,10 +155,7 @@ class MockCommandQueue : public CommandQueue {
     cl_int enqueueSVMMemFill(void *svmPtr, const void *pattern, size_t patternSize, size_t size, cl_uint numEventsInWaitList,
                              const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
 
-    cl_int enqueueMarkerWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
-        enqueueMarkerWithWaitListCalled = true;
-        return CL_SUCCESS;
-    }
+    cl_int enqueueMarkerWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override;
 
     cl_int enqueueMigrateMemObjects(cl_uint numMemObjects, const cl_mem *memObjects, cl_mem_migration_flags flags,
                                     cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
@@ -257,15 +238,7 @@ class MockCommandQueue : public CommandQueue {
         return false;
     };
 
-    bool isCompleted(TaskCountType gpgpuTaskCount, const Range<CopyEngineState> &bcsStates) override {
-        isCompletedCalled++;
-
-        if (!device || !getGpgpuCommandStreamReceiver().getTagAddress()) {
-            return true;
-        }
-
-        return CommandQueue::isCompleted(gpgpuTaskCount, bcsStates);
-    }
+    bool isCompleted(TaskCountType gpgpuTaskCount, const Range<CopyEngineState> &bcsStates) override;
 
     bool enqueueMarkerWithWaitListCalled = false;
     bool releaseIndirectHeapCalled = false;

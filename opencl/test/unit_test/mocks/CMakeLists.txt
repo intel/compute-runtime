@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,6 +13,7 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_device.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cl_execution_environment.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_queue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.h
