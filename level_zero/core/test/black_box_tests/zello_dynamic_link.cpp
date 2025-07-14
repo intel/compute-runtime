@@ -29,31 +29,9 @@ int main(int argc, char *argv[]) {
         numModules = 3;
     }
     // Setup
-    SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
-
-    uint32_t driverCount = 0;
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, nullptr));
-    if (driverCount == 0) {
-        std::cerr << "No driver handle found!" << std::endl;
-        std::terminate();
-    }
-    ze_driver_handle_t driverHandle;
-    driverCount = 1;
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
-
-    uint32_t deviceCount = 0;
-    SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, nullptr));
-    if (deviceCount == 0) {
-        std::cerr << "No device found!" << std::endl;
-        std::terminate();
-    }
-    ze_device_handle_t device;
-    deviceCount = 1;
-    SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, &device));
-
-    ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
-    ze_context_handle_t context;
-    SUCCESS_OR_TERMINATE(zeContextCreate(driverHandle, &contextDesc, &context));
+    ze_context_handle_t context = nullptr;
+    auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
+    auto device = devices[0];
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
@@ -238,7 +216,6 @@ int main(int argc, char *argv[]) {
     if (circularDep) {
         SUCCESS_OR_TERMINATE(zeModuleDestroy(exportModule2));
     }
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
 

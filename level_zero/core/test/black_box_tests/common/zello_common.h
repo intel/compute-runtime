@@ -9,6 +9,7 @@
 
 #include "level_zero/driver_experimental/zex_event.h"
 #include <level_zero/ze_api.h>
+#include <level_zero/ze_intel_gpu.h>
 
 #include <bitset>
 #include <fstream>
@@ -21,6 +22,7 @@
 namespace LevelZeroBlackBoxTests {
 template <bool terminateOnFailure, typename ResulT>
 inline void validate(ResulT result, const char *message);
+extern decltype(&zerDriverGetDefaultContext) zerDriverGetDefaultContextFunc;
 } // namespace LevelZeroBlackBoxTests
 
 #define SUCCESS_OR_TERMINATE(CALL) LevelZeroBlackBoxTests::validate<true>(CALL, #CALL)
@@ -133,7 +135,7 @@ void initialize(ze_driver_handle_t &driver, ze_context_handle_t &context, ze_dev
 
 bool checkImageSupport(ze_device_handle_t hDevice, bool test1D, bool test2D, bool test3D, bool testArray);
 
-void teardown(ze_context_handle_t context, ze_command_queue_handle_t cmdQueue);
+void teardown(ze_command_queue_handle_t cmdQueue);
 
 void printDeviceProperties(const ze_device_properties_t &props);
 

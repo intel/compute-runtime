@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -840,7 +840,6 @@ int main(int argc, char *argv[]) {
         auto device = devices[0];
 
         result = supportedTests[test](argc, argv, context, driverHandle, device);
-        SUCCESS_OR_TERMINATE(zeContextDestroy(context));
         LevelZeroBlackBoxTests::printResult(aubMode, result, blackBoxName, test);
     }
     result = aubMode ? true : result;

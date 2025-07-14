@@ -88,7 +88,6 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE_BOOL(debugInfo[0] != 0xff);
 
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     delete[] debugInfo;
 

@@ -380,8 +380,6 @@ int main(int argc, char *argv[]) {
     result &= result2DArray;
     LevelZeroBlackBoxTests::printResult(aubMode, result1DArray, blackBoxNameExt + " 2DARRAY");
 
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-
     result = aubMode ? true : result;
     return (result ? 0 : 1);
 }

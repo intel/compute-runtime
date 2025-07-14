@@ -117,7 +117,6 @@ int main(int argc, char *argv[]) {
     testAppendMemoryCopyFill(context, device, outputValidationSuccessful, cmdQueue, maxElemenets, useInitFill);
 
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
 

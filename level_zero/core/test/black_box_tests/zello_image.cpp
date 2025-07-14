@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
         testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success3D, ZE_IMAGE_TYPE_3D);
         LevelZeroBlackBoxTests::printResult(aubMode, success1D, blackBoxName, caseName);
     }
-    LevelZeroBlackBoxTests::teardown(context, cmdQueue);
+    LevelZeroBlackBoxTests::teardown(cmdQueue);
 
     bool outputValidationSuccessful = !((do1D && !success1D) || (do2D && !success2D) || (do3D && !success3D));
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;

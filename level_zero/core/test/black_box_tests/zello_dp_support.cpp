@@ -40,8 +40,6 @@ int main(int argc, char *argv[]) {
         std::cout << "DPAS supported" << std::endl;
     }
 
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);

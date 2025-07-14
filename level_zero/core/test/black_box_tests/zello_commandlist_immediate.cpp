@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -537,8 +537,6 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeEventDestroy(event2));
         SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool2));
     }
-
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;

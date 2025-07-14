@@ -333,8 +333,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);

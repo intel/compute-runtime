@@ -164,8 +164,6 @@ int main(int argc, char *argv[]) {
 
     outputValidationSuccessful = testLocalBarrier(context, device);
 
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
 
     int resultOnFailure = aubMode ? 0 : 1;

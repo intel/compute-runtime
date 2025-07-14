@@ -1768,8 +1768,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-
     if (outputValidated) {
         std::cout << "\nZello  bindless kernel PASSED " << std::endl;
     } else {

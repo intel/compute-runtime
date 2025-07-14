@@ -19,6 +19,7 @@
 #endif
 
 namespace LevelZeroBlackBoxTests {
+decltype(&zerDriverGetDefaultContext) zerDriverGetDefaultContextFunc = nullptr;
 
 struct LoadedDriverExtensions {
     std::vector<ze_driver_extension_properties_t> extensions;
@@ -451,8 +452,16 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
     }
 
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
-    ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-    SUCCESS_OR_TERMINATE(zeContextCreate(driverHandle, &contextDesc, &context));
+
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerDriverGetDefaultContext", reinterpret_cast<void **>(&zerDriverGetDefaultContextFunc)));
+
+    context = zerDriverGetDefaultContextFunc();
+    if (!context) {
+        const char *description = nullptr;
+        SUCCESS_OR_TERMINATE(zeDriverGetLastErrorDescription(driverHandle, &description));
+        std::cerr << "Failed to get default context: " << (description ? description : "Unknown error") << "\n";
+        std::terminate();
+    }
 
     uint32_t deviceCount = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, nullptr));
@@ -500,9 +509,8 @@ bool checkImageSupport(ze_device_handle_t hDevice, bool test1D, bool test2D, boo
     return true;
 }
 
-void teardown(ze_context_handle_t context, ze_command_queue_handle_t cmdQueue) {
+void teardown(ze_command_queue_handle_t cmdQueue) {
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 }
 
 void printDeviceProperties(const ze_device_properties_t &props) {

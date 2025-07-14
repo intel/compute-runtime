@@ -161,7 +161,6 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
     delete[] initDataSrc;
     delete[] initDataDst;

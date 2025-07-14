@@ -103,13 +103,12 @@ void runPrintfKernel(const ze_module_handle_t &module, const ze_kernel_handle_t 
     SUCCESS_OR_TERMINATE(commandHandler.synchronize());
 }
 
-void cleanUp(ze_context_handle_t context, ze_module_handle_t module, ze_module_handle_t module2, ze_kernel_handle_t *kernels, uint32_t kernelsCount) {
+void cleanUp(ze_module_handle_t module, ze_module_handle_t module2, ze_kernel_handle_t *kernels, uint32_t kernelsCount) {
     for (uint32_t i = 0; i < kernelsCount; i++) {
         SUCCESS_OR_TERMINATE(zeKernelDestroy(kernels[i]));
     }
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module2));
-    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 }
 
 int main(int argc, char *argv[]) {
@@ -225,14 +224,14 @@ int main(int argc, char *argv[]) {
             }
 
             if (validatePrintfOutput && !printfValidated) {
-                cleanUp(context, module, module2, kernels, kernelsCount);
+                cleanUp(module, module2, kernels, kernelsCount);
                 std::cerr << "\nZello Printf FAILED " << std::endl;
                 return -1;
             }
         }
     }
 
-    cleanUp(context, module, module2, kernels, kernelsCount);
+    cleanUp(module, module2, kernels, kernelsCount);
     std::cout << "\nZello Printf PASSED " << std::endl;
 
     return 0;
