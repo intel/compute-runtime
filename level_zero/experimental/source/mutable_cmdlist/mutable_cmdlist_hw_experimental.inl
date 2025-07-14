@@ -62,35 +62,20 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMILoadRegImm(MclA
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMILoadRegReg(MclAluReg reg1, MclAluReg reg2) {
-    using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
-    MI_LOAD_REGISTER_REG cmd = GfxFamily::cmdInitLoadRegisterReg;
-    cmd.setSourceRegisterAddress(regToMMIO(reg2));
-    cmd.setDestinationRegisterAddress(regToMMIO(reg1));
-    auto buffer = this->commandContainer.getCommandStream()->getSpace(sizeof(cmd));
-    *reinterpret_cast<MI_LOAD_REGISTER_REG *>(buffer) = cmd;
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMILoadRegReg(MclAluReg dstReg, MclAluReg srcReg) {
+    NEO::EncodeSetMMIO<GfxFamily>::encodeREG(this->commandContainer, regToMMIO(dstReg), regToMMIO(srcReg), this->isCopyOnly(false));
     return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMILoadRegMem(MclAluReg reg1, uint64_t address) {
-    using MI_LOAD_REGISTER_MEM = typename GfxFamily::MI_LOAD_REGISTER_MEM;
-    MI_LOAD_REGISTER_MEM cmd = GfxFamily::cmdInitLoadRegisterMem;
-    cmd.setRegisterAddress(regToMMIO(reg1));
-    cmd.setMemoryAddress(address);
-    auto buffer = this->commandContainer.getCommandStream()->getSpace(sizeof(cmd));
-    *reinterpret_cast<MI_LOAD_REGISTER_MEM *>(buffer) = cmd;
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMILoadRegMem(MclAluReg reg, uint64_t address) {
+    NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(this->commandContainer, regToMMIO(reg), address, this->isCopyOnly(false));
     return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMIStoreRegMem(MclAluReg reg1, uint64_t address) {
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
-    MI_STORE_REGISTER_MEM cmd0 = GfxFamily::cmdInitStoreRegisterMem;
-    cmd0.setRegisterAddress(regToMMIO(reg1));
-    cmd0.setMemoryAddress(address);
-    auto buffer = this->commandContainer.getCommandStream()->getSpace(sizeof(cmd0));
-    *reinterpret_cast<MI_STORE_REGISTER_MEM *>(buffer) = cmd0;
+ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMIStoreRegMem(MclAluReg reg, uint64_t address) {
+    NEO::EncodeStoreMMIO<GfxFamily>::encode(*this->commandContainer.getCommandStream(), regToMMIO(reg), address, false, nullptr, this->isCopyOnly(false));
     return ZE_RESULT_SUCCESS;
 }
 

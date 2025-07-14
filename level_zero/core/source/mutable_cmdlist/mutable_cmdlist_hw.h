@@ -77,9 +77,9 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     ze_result_t appendMILoadRegVariable(MclAluReg reg, Variable *variable) override;
     ze_result_t appendMIStoreRegVariable(MclAluReg reg, Variable *variable) override;
     ze_result_t appendMILoadRegImm(MclAluReg reg, uint32_t value) override;
-    ze_result_t appendMILoadRegReg(MclAluReg reg1, MclAluReg reg2) override;
-    ze_result_t appendMILoadRegMem(MclAluReg reg1, uint64_t address) override;
-    ze_result_t appendMIStoreRegMem(MclAluReg reg1, uint64_t address) override;
+    ze_result_t appendMILoadRegReg(MclAluReg dstReg, MclAluReg srcReg) override;
+    ze_result_t appendMILoadRegMem(MclAluReg reg, uint64_t address) override;
+    ze_result_t appendMIStoreRegMem(MclAluReg reg, uint64_t address) override;
     ze_result_t appendMIMath(void *aluArray, size_t aluCount) override;
     void programStateBaseAddressHook(size_t cmdBufferOffset, bool surfaceBaseAddressModify) override;
     void setBufferSurfaceState(void *address, NEO::GraphicsAllocation *alloc, Variable *variable) override;
