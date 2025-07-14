@@ -338,6 +338,12 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenCallingGetBusyAndTotalT
     EXPECT_EQ(pPmuInterface->mockTotalTicksConfig, configPair.second);
 }
 
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenCallingReadPcieDowngradeAttributeWithInvalidSysfsNodeThenUnsupportedIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    uint32_t val;
+    EXPECT_EQ(pSysmanKmdInterface->readPcieDowngradeAttribute("unknown", val), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

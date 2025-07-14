@@ -185,6 +185,7 @@ class SysmanKmdInterface {
     virtual std::string getFreqMediaDomainBasePath() = 0;
     const std::string getSysmanDeviceDirName() const;
     ze_result_t checkErrorNumberAndReturnStatus();
+    virtual ze_result_t readPcieDowngradeAttribute(std::string sysfsName, uint32_t &val) { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -394,6 +395,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
     std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
     std::string getFreqMediaDomainBasePath() override;
+    ze_result_t readPcieDowngradeAttribute(std::string sysfsName, uint32_t &val) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

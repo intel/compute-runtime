@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,9 +87,24 @@ int32_t convertLinkSpeedToPciGen(double speed) {
 }
 
 ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
     initPci();
+    void *pNext = pProperties->pNext;
     *pProperties = pciProperties;
-    return ZE_RESULT_SUCCESS;
+    pProperties->pNext = pNext;
+
+    while (pNext) {
+        result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        auto pExtProps = reinterpret_cast<zet_base_properties_t *>(const_cast<void *>(pNext));
+        if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES && pOsPci->isPciDowngradePropertiesAvailable) {
+            auto pDowngradeExpProps = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_properties_t *>(pExtProps);
+            *pDowngradeExpProps = pciDowngradeProperties;
+            result = ZE_RESULT_SUCCESS;
+            break;
+        }
+        pNext = pExtProps->pNext;
+    }
+    return result;
 }
 
 ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {
@@ -128,13 +143,22 @@ ze_result_t PciImp::pciGetState(zes_pci_state_t *pState) {
     return pOsPci->getState(pState);
 }
 
+ze_result_t PciImp::pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
+    initPci();
+    return pOsPci->pciLinkSpeedUpdateExp(downgradeUpgrade, pendingAction);
+}
+
 ze_result_t PciImp::pciGetStats(zes_pci_stats_t *pStats) {
     initPci();
     return pOsPci->getStats(pStats);
 }
 
 void PciImp::pciGetStaticFields() {
+    pciDowngradeProperties.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES;
+    pciProperties.pNext = &pciDowngradeProperties;
     pOsPci->getProperties(&pciProperties);
+    pciProperties.pNext = nullptr;
+
     resizableBarSupported = pOsPci->resizableBarSupported();
     std::string bdf;
     pOsPci->getPciBdf(pciProperties);

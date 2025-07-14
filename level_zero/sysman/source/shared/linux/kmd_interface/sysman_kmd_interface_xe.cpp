@@ -321,5 +321,15 @@ void SysmanKmdInterfaceXe::setSysmanDeviceDirName(const bool isIntegratedDevice)
     updateSysmanDeviceDirName(sysmanDeviceDirName);
 }
 
+ze_result_t SysmanKmdInterfaceXe::readPcieDowngradeAttribute(std::string sysfsName, uint32_t &val) {
+    std::map<std::string, std::string_view> pciSysfsNameToFileMap = {{"pcieDowngradeCapable", "device/auto_link_downgrade_capable"}, {"pcieDowngradeStatus", "device/auto_link_downgrade_status"}};
+    auto key = pciSysfsNameToFileMap.find(sysfsName);
+    if (key == pciSysfsNameToFileMap.end()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t result = pSysfsAccess->read(key->second.data(), val);
+    return result;
+}
+
 } // namespace Sysman
 } // namespace L0

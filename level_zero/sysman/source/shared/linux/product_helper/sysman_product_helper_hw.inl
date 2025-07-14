@@ -382,6 +382,16 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
 };
 
 template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isPcieDowngradeSupported() {
+    return false;
+};
+
+template <PRODUCT_FAMILY gfxProduct>
+int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
+    return -1;
+};
+
+template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
     return false;
 }

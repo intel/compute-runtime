@@ -11,3 +11,4 @@ usr/include/level_zero/driver_experimental/zex_event.h
 usr/include/level_zero/driver_experimental/zex_graph.h
 usr/include/level_zero/driver_experimental/zex_memory.h
 usr/include/level_zero/driver_experimental/zex_module.h
+usr/include/level_zero/zes_intel_gpu_sysman.h

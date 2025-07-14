@@ -125,13 +125,13 @@ typedef struct {
 
 namespace GfspHeciConstants {
 enum Cmd {
-    setEccConfigurationCmd8 = 0x8,
-    getEccConfigurationCmd9 = 0x9,
-    setEccConfigurationCmd15 = 0xf,
-    getEccConfigurationCmd16 = 0x10
+    setConfigurationCmd8 = 0x8,
+    getConfigurationCmd9 = 0x9,
+    setConfigurationCmd15 = 0xf,
+    getConfigurationCmd16 = 0x10
 };
 
-enum SetEccCmd15BytePostition {
+enum SetCmd15BytePostition {
     request = 0,
     response = 0
 };
@@ -172,6 +172,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableAndNonMovableClass 
     ze_result_t fwGetEccConfigurable(ze_bool_t *pConfigurable) override;
     ze_result_t fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState, uint8_t *defaultState) override;
     ze_result_t fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) override;
+    ze_result_t fwSetDowngradeConfig(uint8_t newState, uint8_t *pendingState) override;
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
     void fwGetMemoryHealthIndicator(zes_mem_health_t *health) override;
     void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) override;

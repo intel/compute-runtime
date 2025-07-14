@@ -200,6 +200,10 @@ ze_result_t SysmanDeviceImp::pciGetBars(uint32_t *pCount, zes_pci_bar_properties
     return pPci->pciGetInitializedBars(pCount, pProperties);
 }
 
+ze_result_t SysmanDeviceImp::pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
+    return pPci->pciLinkSpeedUpdateExp(downgradeUpgrade, pendingAction);
+}
+
 ze_result_t SysmanDeviceImp::pciGetStats(zes_pci_stats_t *pStats) {
     return pPci->pciGetStats(pStats);
 }

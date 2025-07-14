@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
 #include <level_zero/zes_api.h>
 
 #include <algorithm>
@@ -619,6 +620,9 @@ void testSysmanPci(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  PCI tests ---- " << std::endl;
     zes_pci_properties_t properties = {};
+    zes_intel_pci_link_speed_downgrade_exp_properties_t extProps = {};
+    extProps.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES;
+    properties.pNext = &extProps;
     VALIDATECALL(zesDevicePciGetProperties(device, &properties));
     if (verbose) {
         std::cout << "properties.address.domain = " << std::hex << properties.address.domain << std::endl;
@@ -631,6 +635,8 @@ void testSysmanPci(ze_device_handle_t &device) {
         std::cout << "properties.haveBandwidthCounters = " << static_cast<uint32_t>(properties.haveBandwidthCounters) << std::endl;
         std::cout << "properties.havePacketCounters = " << static_cast<uint32_t>(properties.havePacketCounters) << std::endl;
         std::cout << "properties.haveReplayCounters = " << static_cast<uint32_t>(properties.haveReplayCounters) << std::endl;
+        std::cout << "properties.pciLinkSpeedUpdateCapable = " << static_cast<bool>(extProps.pciLinkSpeedUpdateCapable) << std::endl;
+        std::cout << "properties.maxPciGenSupported = " << static_cast<int32_t>(extProps.maxPciGenSupported) << std::endl;
     }
 
     uint32_t count = 0;
@@ -677,6 +683,18 @@ void testSysmanPci(ze_device_handle_t &device) {
             std::cout << "pci_bar_properties_1_2_t.resizableBarSupported = " << static_cast<uint32_t>(pciBarExtProps[i].resizableBarSupported) << std::endl;
             std::cout << "pci_bar_properties_1_2_t.resizableBarEnabled = " << static_cast<uint32_t>(pciBarExtProps[i].resizableBarEnabled) << std::endl;
         }
+    }
+
+    zes_pci_state_t pciState = {};
+    zes_intel_pci_link_speed_downgrade_exp_state_t extState = {};
+    extState.stype = ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE;
+    pciState.pNext = &extState;
+    VALIDATECALL(zesDevicePciGetState(device, &pciState));
+    if (verbose) {
+        std::cout << "pciState.speed.gen = " << std::dec << pciState.speed.gen << std::endl;
+        std::cout << "pciState.speed.width = " << std::dec << pciState.speed.width << std::endl;
+        std::cout << "pciState.speed.maxBandWidth = " << std::dec << pciState.speed.maxBandwidth << std::endl;
+        std::cout << "pciState.pciLinkSpeedDowngradeStatus = " << static_cast<bool>(extState.pciLinkSpeedDowngradeStatus) << std::endl;
     }
 }
 

@@ -30,8 +30,9 @@ static int mockGetOpromCodeVersion = IGSC_SUCCESS;
 static int mockGetOpromDataVersion = IGSC_SUCCESS;
 static int mockGetPscVersion = IGSC_SUCCESS;
 
+bool mockSetPcieDowngradeConfigFailure = false;
 std::vector<uint32_t>
-    mockSupportedHeciCmds = {GfspHeciConstants::Cmd::getEccConfigurationCmd16, GfspHeciConstants::Cmd::setEccConfigurationCmd15};
+    mockSupportedHeciCmds = {GfspHeciConstants::Cmd::getConfigurationCmd16, GfspHeciConstants::Cmd::setConfigurationCmd15};
 uint8_t mockEccCurrentState = 1;
 uint8_t mockEccPendingState = 1;
 uint8_t mockEccDefaultState = 1;
@@ -39,11 +40,15 @@ uint8_t mockEccHeciCmd16Val = 1;
 
 void restoreEccMockVars() {
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.insert(mockSupportedHeciCmds.end(), {GfspHeciConstants::Cmd::getEccConfigurationCmd16, GfspHeciConstants::Cmd::setEccConfigurationCmd15});
+    mockSupportedHeciCmds.insert(mockSupportedHeciCmds.end(), {GfspHeciConstants::Cmd::getConfigurationCmd16, GfspHeciConstants::Cmd::setConfigurationCmd15});
     mockEccCurrentState = 1;
     mockEccPendingState = 1;
     mockEccDefaultState = 1;
     mockEccHeciCmd16Val = 1;
+}
+
+void restorePcieDowngradeMockVars() {
+    mockSetPcieDowngradeConfigFailure = false;
 }
 
 int mockDeviceIfrGetStatusExt(struct igsc_device_handle *handle, uint32_t *supportedTests, uint32_t *hwCapabilities, uint32_t *ifrApplied, uint32_t *prevErrors, uint32_t *pendingReset) {
@@ -87,10 +92,10 @@ static int mockGetEccAvailable(struct igsc_device_handle *handle, uint32_t gfspC
     }
 
     switch (gfspCmd) {
-    case GfspHeciConstants::Cmd::getEccConfigurationCmd16:
+    case GfspHeciConstants::Cmd::getConfigurationCmd16:
         outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccAvailable] = mockEccHeciCmd16Val;
         return IGSC_SUCCESS;
-    case GfspHeciConstants::Cmd::getEccConfigurationCmd9:
+    case GfspHeciConstants::Cmd::getConfigurationCmd9:
         outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::currentState] = mockEccCurrentState;
         outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::pendingState] = mockEccPendingState;
         return IGSC_SUCCESS;
@@ -106,10 +111,10 @@ static int mockGetEccConfigurable(struct igsc_device_handle *handle, uint32_t gf
     }
 
     switch (gfspCmd) {
-    case GfspHeciConstants::Cmd::getEccConfigurationCmd16:
+    case GfspHeciConstants::Cmd::getConfigurationCmd16:
         outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccConfigurable] = mockEccHeciCmd16Val;
         return IGSC_SUCCESS;
-    case GfspHeciConstants::Cmd::getEccConfigurationCmd9:
+    case GfspHeciConstants::Cmd::getConfigurationCmd9:
         outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::currentState] = mockEccCurrentState;
         outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::pendingState] = mockEccPendingState;
         return IGSC_SUCCESS;
@@ -125,26 +130,34 @@ static int mockGetEccConfig(struct igsc_device_handle *handle, uint32_t gfspCmd,
     }
 
     switch (gfspCmd) {
-    case GfspHeciConstants::Cmd::getEccConfigurationCmd16:
+    case GfspHeciConstants::Cmd::getConfigurationCmd16:
         outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccCurrentState] = mockEccCurrentState;
         outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccPendingState] = mockEccPendingState;
         outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccDefaultState] = mockEccDefaultState;
         return IGSC_SUCCESS;
-    case GfspHeciConstants::Cmd::getEccConfigurationCmd9:
+    case GfspHeciConstants::Cmd::getConfigurationCmd9:
         outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::currentState] = mockEccCurrentState;
         outBuffer[GfspHeciConstants::GetEccCmd9BytePostition::pendingState] = mockEccPendingState;
         outBuffer[GfspHeciConstants::GetEccCmd16BytePostition::eccDefaultState] = 0xff;
         return IGSC_SUCCESS;
-    case GfspHeciConstants::Cmd::setEccConfigurationCmd15:
-        outBuffer[GfspHeciConstants::SetEccCmd15BytePostition::response] = inBuffer[GfspHeciConstants::SetEccCmd15BytePostition::request];
+    case GfspHeciConstants::Cmd::setConfigurationCmd15:
+        outBuffer[GfspHeciConstants::SetCmd15BytePostition::response] = inBuffer[GfspHeciConstants::SetCmd15BytePostition::request];
         return IGSC_SUCCESS;
-    case GfspHeciConstants::Cmd::setEccConfigurationCmd8:
+    case GfspHeciConstants::Cmd::setConfigurationCmd8:
         outBuffer[GfspHeciConstants::SetEccCmd8BytePostition::responsePendingState] = inBuffer[GfspHeciConstants::SetEccCmd8BytePostition::setRequest];
         outBuffer[GfspHeciConstants::SetEccCmd8BytePostition::responseCurrentState] = mockEccCurrentState;
         return IGSC_SUCCESS;
     default:
         return IGSC_ERROR_NOT_SUPPORTED;
     }
+}
+
+static int mockSetPcieDowngradeConfig(struct igsc_device_handle *handle, uint32_t gfspCmd, uint8_t *inBuffer, size_t inBufferSize, uint8_t *outBuffer, size_t outBufferSize, size_t *actualOutBufferSize) {
+    if (mockSetPcieDowngradeConfigFailure) {
+        return IGSC_ERROR_NOT_SUPPORTED;
+    }
+    outBuffer[GfspHeciConstants::SetCmd15BytePostition::response] = inBuffer[GfspHeciConstants::SetCmd15BytePostition::request];
+    return IGSC_SUCCESS;
 }
 
 static int mockIgscDeviceFwVersion(struct igsc_device_handle *handle,
@@ -585,7 +598,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccAvailableSu
     osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccAvailable);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd16);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getConfigurationCmd16);
     ze_bool_t pAvailable;
 
     std::vector<uint8_t> possibleEccStates = {0, 1};
@@ -610,7 +623,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingF
     osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccAvailable);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getConfigurationCmd9);
 
     ze_bool_t pAvailable;
     auto ret = pFwUtilImp->fwGetEccAvailable(&pAvailable);
@@ -631,7 +644,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedAndEccStateIsNon
 
     ze_bool_t pAvailable;
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getConfigurationCmd9);
     mockEccCurrentState = 0xff;
     mockEccPendingState = 0x1;
 
@@ -676,7 +689,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigurabl
     osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfigurable);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd16);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getConfigurationCmd16);
     ze_bool_t pConfigurable;
 
     std::vector<uint8_t> possibleEccStates = {0, 1};
@@ -701,7 +714,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingF
     osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfigurable);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getConfigurationCmd9);
 
     ze_bool_t pConfigurable;
     auto ret = pFwUtilImp->fwGetEccConfigurable(&pConfigurable);
@@ -722,7 +735,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedAndEccStateIsNon
 
     ze_bool_t pConfigurable;
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getConfigurationCmd9);
     mockEccCurrentState = 0xff;
     mockEccPendingState = 0x1;
 
@@ -767,7 +780,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsSupportedThenWhenCallingFwGetEccConfigSuces
     osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfig);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd16);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getConfigurationCmd16);
     mockEccCurrentState = 1;
     mockEccPendingState = 1;
     mockEccDefaultState = 1;
@@ -793,7 +806,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd16IsNotSupportedBut9IsSupportedThenWhenCallingF
     osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfig);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getConfigurationCmd9);
     uint8_t currentState;
     uint8_t pendingState;
     uint8_t defaultState;
@@ -850,8 +863,8 @@ TEST(LinuxFwEccTest, GivenHeciCmd15IsSupportedThenWhenCallingFwSetEccConfigSuces
     osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfig);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd16);
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::setEccConfigurationCmd15);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getConfigurationCmd16);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::setConfigurationCmd15);
     mockEccCurrentState = 0;
 
     uint8_t currentState;
@@ -875,7 +888,7 @@ TEST(LinuxFwEccTest, GivenHeciCmd15IsSupportedThenWhenCallingFwSetEccConfigAndFw
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
     mockSupportedHeciCmds.clear();
     mockSupportedHeciCmds.push_back(0xff);
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::setEccConfigurationCmd15);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::setConfigurationCmd15);
     mockEccCurrentState = 0;
 
     uint8_t currentState;
@@ -917,8 +930,8 @@ TEST(LinuxFwEccTest, GivenHeciCmd15IsNotSupportedButCmd8IsSupportedThenWhenCalli
     osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockGetEccConfig);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
     mockSupportedHeciCmds.clear();
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getEccConfigurationCmd9);
-    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::setEccConfigurationCmd8);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::getConfigurationCmd9);
+    mockSupportedHeciCmds.push_back(GfspHeciConstants::Cmd::setConfigurationCmd8);
     mockEccCurrentState = 0;
 
     uint8_t currentState;
@@ -928,6 +941,57 @@ TEST(LinuxFwEccTest, GivenHeciCmd15IsNotSupportedButCmd8IsSupportedThenWhenCalli
     EXPECT_EQ(currentState, mockEccCurrentState);
     EXPECT_EQ(pendingState, newState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwPcieDowngradeTest, GivenUnavailableHeciFunctionPointersWhenCallingPcieSetConfigThenFailureIsReturned) {
+    restorePcieDowngradeMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+
+    uint8_t pendingState;
+    uint8_t newState = 1;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFwUtilImp->fwSetDowngradeConfig(newState, &pendingState));
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwPcieDowngradeTest, GivenHeciCmd15IsSupportedThenWhenCallingFwSetDowngradeConfigSucessIsReturned) {
+    restorePcieDowngradeMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockSetPcieDowngradeConfig);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+
+    uint8_t pendingState;
+    uint8_t newState = 1;
+    auto ret = pFwUtilImp->fwSetDowngradeConfig(newState, &pendingState);
+    EXPECT_EQ(pendingState, newState);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    delete pFwUtilImp->libraryHandle;
+    pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(LinuxFwPcieDowngradeTest, GivenHeciCmd15IsSupportedThenWhenCallingFwSetDowngradeConfigAndTheCallFailsThenFailureIsReturned) {
+    restorePcieDowngradeMockVars();
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
+    osLibHandle->funcMap["igsc_gfsp_heci_cmd"] = reinterpret_cast<void *>(&mockSetPcieDowngradeConfig);
+    pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
+    mockSetPcieDowngradeConfigFailure = true;
+
+    uint8_t pendingState;
+    uint8_t newState = 1;
+    auto ret = pFwUtilImp->fwSetDowngradeConfig(newState, &pendingState);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;

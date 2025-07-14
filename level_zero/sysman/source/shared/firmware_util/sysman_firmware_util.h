@@ -34,6 +34,7 @@ class FirmwareUtil {
     virtual ze_result_t fwGetEccConfigurable(ze_bool_t *pConfigurable) = 0;
     virtual ze_result_t fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState, uint8_t *defaultState) = 0;
     virtual ze_result_t fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) = 0;
+    virtual ze_result_t fwSetDowngradeConfig(uint8_t newState, uint8_t *pendingState) = 0;
     virtual void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) = 0;
     virtual void fwGetMemoryHealthIndicator(zes_mem_health_t *health) = 0;
     virtual void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) = 0;

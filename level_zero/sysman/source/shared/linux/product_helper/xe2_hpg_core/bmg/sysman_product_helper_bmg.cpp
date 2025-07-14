@@ -1756,6 +1756,17 @@ bool SysmanProductHelperHw<gfxProduct>::isLateBindingSupported() {
     return true;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isPcieDowngradeSupported() {
+    return true;
+}
+
+template <>
+int32_t SysmanProductHelperHw<gfxProduct>::maxPcieGenSupported() {
+    constexpr int32_t maxPcieGenSupported = 5;
+    return maxPcieGenSupported;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

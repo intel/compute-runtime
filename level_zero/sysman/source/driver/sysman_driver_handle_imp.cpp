@@ -17,6 +17,7 @@
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/os_sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 
 #include <cstring>
 #include <vector>
@@ -27,6 +28,22 @@ namespace Sysman {
 struct SysmanDriverHandleImp *globalSysmanDriver;
 
 SysmanDriverHandleImp::SysmanDriverHandleImp() = default;
+
+void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
+#define RETURN_FUNC_PTR_IF_EXIST(name)    \
+    {                                     \
+        if (functionName == #name) {      \
+            void *ret = ((void *)(name)); \
+            return ret;                   \
+        }                                 \
+    }
+
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelDevicePciLinkSpeedUpdateExp);
+
+#undef RETURN_FUNC_PTR_IF_EXIST
+
+    return nullptr;
+}
 
 void SysmanDriverHandleImp::updateUuidMap(SysmanDevice *sysmanDevice) {
     std::vector<std::string> uuidArr;
@@ -90,6 +107,10 @@ ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executi
 }
 
 ze_result_t SysmanDriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, void **pfunc) {
+    *pfunc = getSysmanExtensionFunctionAddress(pFuncName);
+    if (*pfunc) {
+        return ZE_RESULT_SUCCESS;
+    }
     *pfunc = ExtensionFunctionAddressHelper::getExtensionFunctionAddress(pFuncName);
     if (*pfunc) {
         return ZE_RESULT_SUCCESS;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,6 +63,9 @@ TEST_F(SysmanDriverHandleTest,
 
     auto result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zexDriverImportUnKnownPointer", &funPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDevicePciLinkSpeedUpdateExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult

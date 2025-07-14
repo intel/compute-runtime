@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,6 +10,7 @@ set(L0_TESTS_SYSMAN_PCI_LINUX
 
 list(APPEND L0_TESTS_SYSMAN_PCI_LINUX
      ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_pci.cpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_pci_xe.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_pci.h
 )
 

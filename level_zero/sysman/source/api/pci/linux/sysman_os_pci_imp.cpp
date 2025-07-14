@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
 
 #include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
@@ -28,6 +30,23 @@ const std::string LinuxPciImp::resourceFile("device/resource");
 
 ze_result_t LinuxPciImp::getProperties(zes_pci_properties_t *pProperties) {
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+
+    void *pNext = pProperties->pNext;
+    while (pNext) {
+        auto pExtProps = reinterpret_cast<zet_base_properties_t *>(pNext);
+        if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES) {
+            auto pDowngradeExtProps = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_properties_t *>(pExtProps);
+            auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+            uint32_t downgradeCapable;
+            if (pSysmanKmdInterface->readPcieDowngradeAttribute("pcieDowngradeCapable", downgradeCapable) == ZE_RESULT_SUCCESS) {
+                pDowngradeExtProps->pciLinkSpeedUpdateCapable = downgradeCapable;
+                pDowngradeExtProps->maxPciGenSupported = pSysmanProductHelper->maxPcieGenSupported();
+                isPciDowngradePropertiesAvailable = true;
+            }
+            break;
+        }
+        pNext = pExtProps->pNext;
+    }
     return pSysmanProductHelper->getPciProperties(pProperties);
 }
 
@@ -292,8 +311,68 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
 }
 
 ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
-    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    state->qualityIssues = 0;
+    state->stabilityIssues = 0;
+    state->status = ZES_PCI_LINK_STATUS_UNKNOWN;
+
+    state->speed.gen = -1;
+    state->speed.width = -1;
+    state->speed.maxBandwidth = -1;
+
+    const void *pNext = state->pNext;
+    while (pNext) {
+        result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        auto pExtProps = reinterpret_cast<zet_base_properties_t *>(const_cast<void *>(pNext));
+        if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE) {
+            auto pDowngradeExpState = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_state_t *>(pExtProps);
+            auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+            uint32_t downgradeStatus;
+            result = pSysmanKmdInterface->readPcieDowngradeAttribute("pcieDowngradeStatus", downgradeStatus);
+            if (result == ZE_RESULT_SUCCESS) {
+                pDowngradeExpState->pciLinkSpeedDowngradeStatus = downgradeStatus;
+            }
+            break;
+        }
+        pNext = pExtProps->pNext;
+    }
+    return result;
+}
+
+ze_result_t LinuxPciImp::pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+
+    if (!pSysmanProductHelper->isPcieDowngradeSupported()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
+    if (pFwInterface == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    uint8_t requestedState = 0x0;
+    if (downgradeUpgrade) {
+        requestedState = 0x1;
+    }
+    uint8_t pendingState = requestedState;
+    ze_result_t result = pFwInterface->fwSetDowngradeConfig(requestedState, &pendingState);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    *pendingAction = ZES_DEVICE_ACTION_NONE;
+    uint32_t currentState = 0x0;
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    result = pSysmanKmdInterface->readPcieDowngradeAttribute("pcieDowngradeStatus", currentState);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    if (currentState != pendingState) {
+        *pendingAction = ZES_DEVICE_ACTION_COLD_SYSTEM_REBOOT;
+    }
+
+    return result;
 }
 
 ze_result_t LinuxPciImp::getStats(zes_pci_stats_t *stats) {

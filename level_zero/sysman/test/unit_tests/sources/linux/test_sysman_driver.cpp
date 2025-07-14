@@ -262,6 +262,9 @@ TEST_F(SysmanDriverHandleTest,
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportExternalPointer", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDevicePciLinkSpeedUpdateExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportUnKnownPointer", &funPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }

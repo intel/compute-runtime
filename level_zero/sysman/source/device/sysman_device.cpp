@@ -320,6 +320,14 @@ ze_result_t SysmanDevice::pciGetBars(zes_device_handle_t hDevice, uint32_t *pCou
     return pSysmanDevice->pciGetBars(pCount, pProperties);
 }
 
+ze_result_t SysmanDevice::pciLinkSpeedUpdateExp(zes_device_handle_t hDevice, ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pSysmanDevice->pciLinkSpeedUpdateExp(downgradeUpgrade, pendingAction);
+}
+
 ze_result_t SysmanDevice::pciGetStats(zes_device_handle_t hDevice, zes_pci_stats_t *pStats) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {
