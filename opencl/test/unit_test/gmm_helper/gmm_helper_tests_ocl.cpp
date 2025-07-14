@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -336,12 +336,33 @@ TEST_F(GmmCompressionTests, givenNV12FormatWhenQueryingThenDisallow) {
     EXPECT_FALSE(queryGmm->isCompressionEnabled());
 }
 
+TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndXe2CompressionFtrSetWhenQueryingThenDisallowOnGmmXe2CompFormat) {
+    auto mockGmmClient = static_cast<MockGmmClientContext *>(getGmmClientContext());
+    imgInfo.surfaceFormat = &SurfaceFormats::readOnlyDepth()[2].surfaceFormat;
+
+    localPlatformDevice->featureTable.flags.ftrXe2Compression = true;
+    uint8_t validFormat = static_cast<uint8_t>(GMM_XE2_UNIFIED_COMP_FORMAT::GMM_XE2_UNIFIED_COMP_FORMAT_R32);
+    uint8_t invalidFormat = static_cast<uint8_t>(GMM_XE2_UNIFIED_COMP_FORMAT::GMM_XE2_UNIFIED_COMP_FORMAT_INVALID);
+
+    mockGmmClient->compressionFormatToReturn = invalidFormat;
+    auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
+    auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
+    auto compressionFormat = getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+    EXPECT_EQ(compressionFormat, invalidFormat);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled());
+
+    mockGmmClient->compressionFormatToReturn = validFormat;
+    queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
+    EXPECT_TRUE(queryGmm->isCompressionEnabled());
+}
+
 TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndFlatCcsFtrSetWhenQueryingThenDisallowOnGmmFlatCcsFormat) {
     auto mockGmmClient = static_cast<MockGmmClientContext *>(getGmmClientContext());
     imgInfo.surfaceFormat = &SurfaceFormats::readOnlyDepth()[2].surfaceFormat;
 
+    localPlatformDevice->featureTable.flags.ftrXe2Compression = false;
     localPlatformDevice->featureTable.flags.ftrFlatPhysCCS = true;
-    uint8_t validFormat = static_cast<uint8_t>(GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID);
+    uint8_t validFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_R32U);
     uint8_t invalidFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
 
     mockGmmClient->compressionFormatToReturn = invalidFormat;
@@ -360,9 +381,10 @@ TEST_F(GmmCompressionTests, givenInvalidCompressionFormatAndFlatCcsFtrNotSetWhen
     auto mockGmmClient = static_cast<MockGmmClientContext *>(getGmmClientContext());
     imgInfo.surfaceFormat = &SurfaceFormats::readOnlyDepth()[2].surfaceFormat;
 
+    localPlatformDevice->featureTable.flags.ftrXe2Compression = false;
     localPlatformDevice->featureTable.flags.ftrFlatPhysCCS = false;
+    uint8_t validFormat = static_cast<uint8_t>(GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_RGB32);
     uint8_t invalidFormat = static_cast<uint8_t>(GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID);
-    uint8_t validFormat = static_cast<uint8_t>(GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID);
     mockGmmClient->compressionFormatToReturn = invalidFormat;
 
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);

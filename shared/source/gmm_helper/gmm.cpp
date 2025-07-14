@@ -208,7 +208,9 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
     }
 
     bool compressionFormatSupported = false;
-    if (hardwareInfo->featureTable.flags.ftrFlatPhysCCS) {
+    if (hardwareInfo->featureTable.flags.ftrXe2Compression) {
+        compressionFormatSupported = compressionFormat != GMM_XE2_UNIFIED_COMP_FORMAT::GMM_XE2_UNIFIED_COMP_FORMAT_INVALID;
+    } else if (hardwareInfo->featureTable.flags.ftrFlatPhysCCS) {
         compressionFormatSupported = compressionFormat != GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID;
     } else {
         compressionFormatSupported = compressionFormat != GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID;
