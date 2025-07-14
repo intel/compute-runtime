@@ -2578,6 +2578,68 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListInOrderTest,
+            givenKernelWithWaitCbTimestampEventBelongingToDifferentCmdListWhenMutateIntoDifferentEventThenDataIsUpdated) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto event = createTestEvent(true, false, true, false);
+    auto eventHandle = event->toHandle();
+    auto newEvent = createTestEvent(true, false, true, false);
+    auto newEventHandle = newEvent->toHandle();
+
+    auto externalCmdList = createMutableCmdList();
+    // attach event 1 to the external command list
+    auto result = externalCmdList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    // attach event 2 to the external command list
+    result = externalCmdList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = externalCmdList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // mutation point
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // use event 1 as wait event
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+
+    auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+    auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+    uint64_t waitAddress = 0;
+    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
+        waitAddress = event->getInOrderExecInfo()->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    } else {
+        waitAddress = event->getCompletionFieldGpuAddress(this->device);
+    }
+    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
+        waitAddress = newEvent->getInOrderExecInfo()->getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
+    } else {
+        waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
+    }
+    EXPECT_EQ(waitAddress, semWaitCmd->getSemaphoreGraphicsAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
             givenKernelWithWaitCbEventBelongingToDifferentCmdListWhenNoopedAndMutatedBackThenDataIsUpdatedAndCommandNoopedAndRestored) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;

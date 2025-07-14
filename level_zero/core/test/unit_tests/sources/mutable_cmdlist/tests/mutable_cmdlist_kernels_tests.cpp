@@ -641,7 +641,10 @@ HWTEST2_F(MutableCommandListKernelTest,
           givenPrefetchDisabledWhenAppendingKernelThenKernelGroupHasNoPrefetchCaptured,
           IsAtLeastXeHpcCore) {
     debugManager.flags.EnableMemoryPrefetch.set(0);
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+
+    auto event = createTestEvent(false, false, false, false);
+    auto eventHandle = event->toHandle();
 
     ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};
 
@@ -651,7 +654,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto &mutation = mutableCommandList->mutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams));
     mutableCommandList->close();
 
     EXPECT_EQ(nullptr, mutation.kernelGroup->getIohForPrefetch());
