@@ -74,11 +74,14 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::setAssertBuffer;
     using ::L0::KernelImp::slmArgsTotalSize;
     using ::L0::KernelImp::suggestGroupSizeCache;
+    using ::L0::KernelImp::surfaceStateAlignment;
+    using ::L0::KernelImp::surfaceStateAlignmentMask;
     using ::L0::KernelImp::surfaceStateHeapData;
     using ::L0::KernelImp::surfaceStateHeapDataSize;
     using ::L0::KernelImp::syncBufferIndex;
     using ::L0::KernelImp::unifiedMemoryControls;
     using ::L0::KernelImp::usingSurfaceStateHeap;
+    using ::L0::KernelImp::walkerInlineDataSize;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address,
                                NEO::GraphicsAllocation *alloc) override {}

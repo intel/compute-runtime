@@ -928,4 +928,14 @@ uint32_t GfxCoreHelperHw<Family>::getQueuePriorityLevels() const {
     return 2;
 }
 
+template <typename Family>
+uintptr_t GfxCoreHelperHw<Family>::getSurfaceBaseAddressAlignmentMask() const {
+    return EncodeSurfaceState<Family>::getSurfaceBaseAddressAlignmentMask();
+}
+
+template <typename Family>
+uintptr_t GfxCoreHelperHw<Family>::getSurfaceBaseAddressAlignment() const {
+    return EncodeSurfaceState<Family>::getSurfaceBaseAddressAlignment();
+}
+
 } // namespace NEO

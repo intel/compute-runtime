@@ -216,6 +216,9 @@ class GfxCoreHelper {
     virtual bool isCacheFlushPriorImageReadRequired() const = 0;
 
     virtual uint32_t getQueuePriorityLevels() const = 0;
+    virtual uint32_t getDefaultWalkerInlineDataSize() const = 0;
+    virtual uintptr_t getSurfaceBaseAddressAlignmentMask() const = 0;
+    virtual uintptr_t getSurfaceBaseAddressAlignment() const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -269,6 +272,13 @@ class GfxCoreHelperHw : public GfxCoreHelper {
         using InterfaceDescriptorType = typename DefaultWalkerType::InterfaceDescriptorType;
         return GfxFamily::template getInitInterfaceDescriptor<InterfaceDescriptorType>().KERNELSTARTPOINTER_ALIGN_SIZE;
     }
+
+    uint32_t getDefaultWalkerInlineDataSize() const override {
+        using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+        return DefaultWalkerType::getInlineDataSize();
+    }
+    uintptr_t getSurfaceBaseAddressAlignmentMask() const override;
+    uintptr_t getSurfaceBaseAddressAlignment() const override;
 
     uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 

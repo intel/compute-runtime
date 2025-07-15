@@ -239,6 +239,8 @@ struct KernelImp : Kernel {
         return kernelArgInfos;
     }
 
+    uint32_t getIndirectSize() const override;
+
   protected:
     KernelImp() = default;
 
@@ -248,7 +250,7 @@ struct KernelImp : Kernel {
 
     void createPrintfBuffer();
     void setAssertBuffer();
-    virtual void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) = 0;
+    MOCKABLE_VIRTUAL void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor);
     void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
     uint32_t getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const;
     ze_result_t validateWorkgroupSize() const;
@@ -268,6 +270,8 @@ struct KernelImp : Kernel {
     NEO::GraphicsAllocation *printfBuffer = nullptr;
     size_t syncBufferIndex = std::numeric_limits<size_t>::max();
     size_t regionGroupBarrierIndex = std::numeric_limits<size_t>::max();
+    uintptr_t surfaceStateAlignmentMask = 0;
+    uintptr_t surfaceStateAlignment = 0;
 
     uint32_t groupSize[3] = {0u, 0u, 0u};
     uint32_t numThreadsPerThreadGroup = 1u;
@@ -286,6 +290,7 @@ struct KernelImp : Kernel {
     uint32_t perThreadDataSizeForWholeThreadGroupAllocated = 0;
     uint32_t perThreadDataSizeForWholeThreadGroup = 0u;
     uint32_t perThreadDataSize = 0u;
+    uint32_t walkerInlineDataSize = 0;
 
     UnifiedMemoryControls unifiedMemoryControls;
     std::vector<uint32_t> slmArgSizes;

@@ -1959,3 +1959,19 @@ TEST_F(GfxCoreHelperTest, whenGetQueuePriorityLevelsQueriedThen2IsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(2u, gfxCoreHelper.getQueuePriorityLevels());
 }
+
+HWTEST_F(GfxCoreHelperTest, whenGettingWalkerInlineDataSizeThenCorrectValueReturned) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(DefaultWalkerType::getInlineDataSize(), gfxCoreHelper.getDefaultWalkerInlineDataSize());
+}
+
+HWTEST_F(GfxCoreHelperTest, whenGettingSurfaceBaseAddressAlignmentMaskThenCorrectValueReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignmentMask(), gfxCoreHelper.getSurfaceBaseAddressAlignmentMask());
+}
+
+HWTEST_F(GfxCoreHelperTest, whenGettingSurfaceBaseAddressAlignmentThenCorrectValueReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment(), gfxCoreHelper.getSurfaceBaseAddressAlignment());
+}

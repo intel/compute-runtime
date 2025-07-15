@@ -1078,6 +1078,9 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     this->rcsAvailable = gfxHelper.isRcsAvailable(hwInfo);
     this->cooperativeSupport = productHelper.isCooperativeEngineSupported(hwInfo);
+    this->walkerInlineDataSize = gfxHelper.getDefaultWalkerInlineDataSize();
+    this->surfaceStateAlignmentMask = gfxHelper.getSurfaceBaseAddressAlignmentMask();
+    this->surfaceStateAlignment = gfxHelper.getSurfaceBaseAddressAlignment();
 
     if (isaAllocation->getAllocationType() == NEO::AllocationType::kernelIsaInternal && this->kernelImmData->getIsaParentAllocation() == nullptr) {
         isaAllocation->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
@@ -1619,6 +1622,41 @@ KernelExt *KernelImp::getExtension(uint32_t extensionType) {
         return this->pExtension.get();
     }
     return nullptr;
+}
+
+uint32_t KernelImp::getIndirectSize() const {
+    uint32_t totalPayloadSize = getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
+
+    if (getKernelDescriptor().kernelAttributes.flags.passInlineData) {
+        if (totalPayloadSize > this->walkerInlineDataSize) {
+            totalPayloadSize -= this->walkerInlineDataSize;
+        } else {
+            totalPayloadSize = 0;
+        }
+    }
+
+    return totalPayloadSize;
+}
+
+void KernelImp::evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) {
+    auto &gfxHelper = module->getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+
+    size_t localWorkSizes[3];
+    localWorkSizes[0] = this->groupSize[0];
+    localWorkSizes[1] = this->groupSize[1];
+    localWorkSizes[2] = this->groupSize[2];
+
+    std::array<uint8_t, 3> kernelWalkOrder{
+        kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
+        kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
+        kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]};
+
+    kernelRequiresGenerationOfLocalIdsByRuntime = gfxHelper.isRuntimeLocalIdsGenerationRequired(kernelDescriptor.kernelAttributes.numLocalIdChannels,
+                                                                                                localWorkSizes,
+                                                                                                kernelWalkOrder,
+                                                                                                kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder,
+                                                                                                requiredWorkgroupOrder,
+                                                                                                kernelDescriptor.kernelAttributes.simdSize);
 }
 
 } // namespace L0

@@ -108,9 +108,12 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         using KernelImp::requiredWorkgroupOrder;
         using KernelImp::slmArgOffsetValues;
         using KernelImp::slmArgSizes;
+        using KernelImp::surfaceStateAlignment;
+        using KernelImp::surfaceStateAlignmentMask;
         using KernelImp::surfaceStateHeapData;
         using KernelImp::surfaceStateHeapDataSize;
         using KernelImp::unifiedMemoryControls;
+        using KernelImp::walkerInlineDataSize;
 
         MockKernel(MockModule *mockModule) : WhiteBox<L0::KernelImp>(mockModule) {
             implicitArgsVersion = 0;

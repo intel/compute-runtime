@@ -81,10 +81,13 @@ struct WhiteBoxKernelHw : public KernelHw<gfxCoreFamily> {
     using ::L0::KernelImp::perThreadDataSizeForWholeThreadGroup;
     using ::L0::KernelImp::printfBuffer;
     using ::L0::KernelImp::requiredWorkgroupOrder;
+    using ::L0::KernelImp::surfaceStateAlignment;
+    using ::L0::KernelImp::surfaceStateAlignmentMask;
     using ::L0::KernelImp::surfaceStateHeapData;
     using ::L0::KernelImp::surfaceStateHeapDataSize;
     using ::L0::KernelImp::unifiedMemoryControls;
     using ::L0::KernelImp::usingSurfaceStateHeap;
+    using ::L0::KernelImp::walkerInlineDataSize;
 
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
 
@@ -108,6 +111,12 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasUnknownArgThenUnknowKernelArgHa
     kernel->initialize(&desc);
     EXPECT_EQ(kernel->kernelArgHandlers[0], &KernelImp::setArgUnknown);
     EXPECT_EQ(mockKernelImmData->getDescriptor().payloadMappings.explicitArgs[0].type, NEO::ArgDescriptor::argTUnknown);
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+
+    EXPECT_EQ(gfxCoreHelper.getSurfaceBaseAddressAlignment(), kernel->surfaceStateAlignment);
+    EXPECT_EQ(gfxCoreHelper.getSurfaceBaseAddressAlignmentMask(), kernel->surfaceStateAlignmentMask);
+    EXPECT_EQ(gfxCoreHelper.getDefaultWalkerInlineDataSize(), kernel->walkerInlineDataSize);
 }
 
 TEST_F(KernelInitTest, givenKernelToInitAndPreemptionEnabledWhenItHasUnknownArgThenUnknowKernelArgHandlerAssigned) {
