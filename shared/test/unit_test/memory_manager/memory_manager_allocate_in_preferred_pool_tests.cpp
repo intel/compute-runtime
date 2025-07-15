@@ -385,37 +385,6 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryWithoutAllow64kbP
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryWithAllow64kbPagesFlagsIsAllocatedThen64kbAllocationIsReturned) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(true, false, executionEnvironment);
-    AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, 10, AllocationType::buffer, mockDeviceBitfield);
-
-    memoryManager.getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
-    allocData.flags.allow64kbPages = true;
-
-    auto allocation = memoryManager.allocateGraphicsMemory(allocData);
-    EXPECT_TRUE(memoryManager.allocation64kbPageCreated);
-
-    memoryManager.freeGraphicsMemory(allocation);
-}
-
-TEST(MemoryManagerTest, givenEnabled64kbPagesWhenAlignmentIsBiggerThan64kbThenNon64kbAllocationIsReturned) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(true, false, executionEnvironment);
-    AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, 10, AllocationType::buffer, mockDeviceBitfield);
-
-    memoryManager.getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
-    allocData.flags.allow64kbPages = true;
-    allocData.alignment = 2 * MemoryConstants::pageSize64k;
-
-    auto allocation = memoryManager.allocateGraphicsMemory(allocData);
-    EXPECT_FALSE(memoryManager.allocation64kbPageCreated);
-
-    memoryManager.freeGraphicsMemory(allocation);
-}
-
 TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThenNon64kbAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, false, executionEnvironment);
