@@ -6521,6 +6521,7 @@ TEST_F(DeviceSimpleTests, whenWorkgroupSizeCheckedThenSizeLimitIs1kOrLess) {
 
 HWTEST_F(DeviceSimpleTests, givenGpuHangWhenSynchronizingDeviceThenErrorIsPropagated) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.resourcesInitialized = true;
     csr.waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
 
     auto result = zeDeviceSynchronize(device);
@@ -6540,6 +6541,7 @@ HWTEST_F(DeviceSimpleTests, givenNoGpuHangWhenSynchronizingDeviceThenCallWaitFor
         csr->flushStamp->setStamp(flushStampToWait++);
         csr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
         csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
+        csr->resourcesInitialized = true;
     }
 
     auto &secondaryCsrs = neoDevice->getSecondaryCsrs();
@@ -6551,6 +6553,7 @@ HWTEST_F(DeviceSimpleTests, givenNoGpuHangWhenSynchronizingDeviceThenCallWaitFor
         csr->flushStamp->setStamp(flushStampToWait++);
         csr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
         csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
+        csr->resourcesInitialized = true;
     }
 
     auto result = zeDeviceSynchronize(device);
@@ -6575,6 +6578,48 @@ HWTEST_F(DeviceSimpleTests, givenNoGpuHangWhenSynchronizingDeviceThenCallWaitFor
     }
 }
 
+HWTEST_F(DeviceSimpleTests, whenSynchronizingDeviceThenIgnoreUninitializedCsrs) {
+    auto &engines = neoDevice->getAllEngines();
+
+    TaskCountType taskCountToWait = 1u;
+    FlushStamp flushStampToWait = 4u;
+    for (auto &engine : engines) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+        csr->latestSentTaskCount = 0u;
+        csr->latestFlushedTaskCount = 0u;
+        csr->taskCount = taskCountToWait++;
+        csr->flushStamp->setStamp(flushStampToWait++);
+        csr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+        csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
+        csr->resourcesInitialized = false;
+    }
+
+    auto &secondaryCsrs = neoDevice->getSecondaryCsrs();
+    for (auto &secondaryCsr : secondaryCsrs) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryCsr.get());
+        csr->latestSentTaskCount = 0u;
+        csr->latestFlushedTaskCount = 0u;
+        csr->taskCount = taskCountToWait++;
+        csr->flushStamp->setStamp(flushStampToWait++);
+        csr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+        csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
+        csr->resourcesInitialized = false;
+    }
+
+    auto result = zeDeviceSynchronize(device);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (auto &engine : engines) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+        EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyInputParams.size());
+    }
+
+    for (auto &secondaryCsr : secondaryCsrs) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryCsr.get());
+        EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyInputParams.size());
+    }
+}
+
 HWTEST_F(DeviceSimpleTests, givenGpuHangOnSecondaryCsrWhenSynchronizingDeviceThenErrorIsPropagated) {
     if (neoDevice->getSecondaryCsrs().empty()) {
         GTEST_SKIP();
@@ -6583,12 +6628,14 @@ HWTEST_F(DeviceSimpleTests, givenGpuHangOnSecondaryCsrWhenSynchronizingDeviceThe
 
     for (auto &engine : engines) {
         auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+        csr->resourcesInitialized = true;
         csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::ready;
     }
 
     auto &secondaryCsrs = neoDevice->getSecondaryCsrs();
     for (auto &secondaryCsr : secondaryCsrs) {
         auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryCsr.get());
+        csr->resourcesInitialized = true;
         csr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
     }
 

@@ -46,6 +46,11 @@ _default_config:
     params:
       - --verbose
 
+zello_arg_slm:
+  bmg:
+  dg2:
+  pvc.b0:
+
 zello_atomic_inc:
   dg2:
   pvc.b0:
