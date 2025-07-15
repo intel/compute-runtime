@@ -3516,3 +3516,22 @@ HWTEST_F(CommandQueueTests, GivenOOQCommandQueueWhenIsGpgpuSubmissionForBcsRequi
     containsCrossEngineDependency = true;
     EXPECT_TRUE(mockCmdQ->isGpgpuSubmissionForBcsRequired(false, dependencies, containsCrossEngineDependency, false));
 }
+
+HWTEST2_F(CommandQueueTests, givenCmdQueueWhenNotStatelessPlatformThenStatelessIsDisabled, IsAtMostXeHpgCore) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+
+    EXPECT_FALSE(mockCmdQ->isForceStateless);
+}
+
+HWTEST2_F(CommandQueueTests, givenCmdQueueWhenPlatformWithStatelessNotDisableWithDebugKeyThenStatelessIsDisabled, IsAtMostXeHpgCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableForceToStateless.set(1);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+
+    EXPECT_FALSE(mockCmdQ->isForceStateless);
+}

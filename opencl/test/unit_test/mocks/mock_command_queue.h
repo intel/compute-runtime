@@ -281,6 +281,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::isBlitAuxTranslationRequired;
     using BaseClass::isCacheFlushOnNextBcsWriteRequired;
     using BaseClass::isCompleted;
+    using BaseClass::isForceStateless;
     using BaseClass::isGpgpuSubmissionForBcsRequired;
     using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::latestSentEnqueueType;

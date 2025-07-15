@@ -1020,3 +1020,24 @@ HWTEST2_F(OoqCommandQueueHwBlitTest, givenBarrierBeforeFirstKernelWhenEnqueueNDR
     const auto memFenceStateItor = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
     EXPECT_NE(ccsHwParser.cmdList.end(), memFenceStateItor);
 }
+
+HWTEST2_F(CommandQueuePvcAndLaterTests, givenCmdQueueWhenStatelessPlatformThenStatelessIsEnabled, IsAtLeastXeHpcCore) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+
+    EXPECT_TRUE(mockCmdQ->isForceStateless);
+}
+
+using CommandQueueWithinXeHpcAndXe3Tests = ::testing::Test;
+
+HWTEST2_F(CommandQueueWithinXeHpcAndXe3Tests, givenCmdQueueWhenPlatformWithStatelessDisableWithDebugKeyThenStatelessIsDisabled, IsWithinXeHpcCoreAndXe3Core) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableForceToStateless.set(1);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+
+    EXPECT_FALSE(mockCmdQ->isForceStateless);
+}
