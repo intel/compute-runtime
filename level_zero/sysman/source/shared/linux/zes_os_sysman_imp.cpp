@@ -408,20 +408,20 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     return result;
 }
 
-std::string LinuxSysmanImp::getAddressFromPath(std::string &rootPortPath) {
+std::string LinuxSysmanImp::getAddressFromPath(std::string &cardBusPath) {
     size_t loc;
-    loc = rootPortPath.find_last_of('/'); // we get the pci address of the root port  from rootPortPath
-    return rootPortPath.substr(loc + 1, std::string::npos);
+    loc = cardBusPath.find_last_of('/'); // we get the pci address of the upstream port from card bus Path
+    auto uspAddress = cardBusPath.substr(loc + 1, std::string::npos);
+    loc = uspAddress.find_last_of('.'); // we remove the function number from the pci address
+    return uspAddress.substr(0, loc);
 }
 
 ze_result_t LinuxSysmanImp::osColdReset() {
     const std::string slotPath("/sys/bus/pci/slots/");        // holds the directories matching to the number of slots in the PC
     std::string cardBusPath;                                  // will hold the PCIe upstream port path (the address of the PCIe slot).
                                                               // will hold the absolute real path (not symlink) to the selected Device
-    cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);   // e.g cardBusPath=/sys/devices/pci0000:89/0000:89:02.0/
-    std::string uspAddress = getAddressFromPath(cardBusPath); // e.g upstreamPortAddress = 0000:8a:00.0
-    size_t dotPos = uspAddress.rfind(".");
-    uspAddress = uspAddress.substr(0, dotPos); // update upstreamPortAddress e.g upstreamPortAddress = 0000:8a:00
+    cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);   // e.g cardBusPath=/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0
+    std::string uspAddress = getAddressFromPath(cardBusPath); // e.g upstreamPortAddress = 0000:8a:00
 
     std::vector<std::string> dir;
     ze_result_t result = pFsAccess->listDirectory(slotPath, dir); // get list of slot directories from  /sys/bus/pci/slots/
