@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/utilities/range.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include <span>
 
 using namespace NEO::Elf;
 
@@ -401,10 +402,10 @@ TEST(ElfEncoder, WhenDefaultAlignmentIsRaisedThenSegmentDataAbideByIt) {
     auto &header64 = *reinterpret_cast<ElfFileHeader<EI_CLASS_64> *>(elfData64.data());
     auto sectionHeaders = reinterpret_cast<NEO::Elf::ElfSectionHeader<EI_CLASS_64> *>(elfData64.data() + static_cast<size_t>(header64.shOff));
     auto programHeaders = reinterpret_cast<NEO::Elf::ElfProgramHeader<EI_CLASS_64> *>(elfData64.data() + static_cast<size_t>(header64.phOff));
-    for (const auto &section : NEO::createRange(sectionHeaders, header64.shNum)) {
+    for (const auto &section : std::span(sectionHeaders, header64.shNum)) {
         EXPECT_EQ(0U, section.offset % 8U);
     }
-    for (const auto &segment : NEO::createRange(programHeaders, header64.phNum)) {
+    for (const auto &segment : std::span(programHeaders, header64.phNum)) {
         EXPECT_EQ(0U, segment.offset % alignment);
         EXPECT_LE(alignment, segment.align);
     }

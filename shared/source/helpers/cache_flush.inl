@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,13 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/l3_range.h"
-#include "shared/source/utilities/range.h"
+
+#include <span>
 
 namespace NEO {
 
 template <typename GfxFamily>
-inline void flushGpuCache(LinearStream *commandStream, const Range<L3Range> &ranges, uint64_t postSyncAddress, const RootDeviceEnvironment &rootDeviceEnvironment) {
+inline void flushGpuCache(LinearStream *commandStream, const std::span<L3Range> &ranges, uint64_t postSyncAddress, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using L3_FLUSH_EVICTION_POLICY = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
     auto templ = GfxFamily::cmdInitL3ControlWithPostSync;
     templ.getBase().setHdcPipelineFlush(true);
@@ -24,8 +25,8 @@ inline void flushGpuCache(LinearStream *commandStream, const Range<L3Range> &ran
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto isA0Stepping = GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, productHelper);
 
-    for (const L3Range *it = &*ranges.begin(), *last = &*ranges.rbegin(), *end = &*ranges.end(); it != end; ++it) {
-        if ((it == last) && (postSyncAddress != 0)) {
+    for (auto it = ranges.begin(), end = ranges.end(); it != end; ++it) {
+        if ((it + 1 == end) && (postSyncAddress != 0)) {
             auto l3Control = commandStream->getSpaceForCmd<typename GfxFamily::L3_CONTROL>();
             auto cmd = GfxFamily::cmdInitL3ControlWithPostSync;
 
@@ -49,7 +50,7 @@ inline void flushGpuCache(LinearStream *commandStream, const Range<L3Range> &ran
 }
 
 template <typename GfxFamily>
-inline size_t getSizeNeededToFlushGpuCache(const Range<L3Range> &ranges, bool usePostSync) {
+inline size_t getSizeNeededToFlushGpuCache(const std::span<L3Range> &ranges, bool usePostSync) {
     size_t size = ranges.size() * sizeof(typename GfxFamily::L3_CONTROL);
     if (usePostSync) {
         UNRECOVERABLE_IF(ranges.size() == 0);

@@ -67,7 +67,7 @@ HWTEST_F(CommandQueueHwTest, whenCallingIsCompletedThenTestTaskCountValue) {
     cmdQ.bcsEngines[0] = &control;
     cmdQ.bcsStates[0] = state;
 
-    Range<CopyEngineState> states{&state};
+    std::span<CopyEngineState> states{&state, 1};
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
     EXPECT_EQ(0u, bcsCsr->downloadAllocationsCalledCount);

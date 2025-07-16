@@ -248,7 +248,7 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
     return ZE_RESULT_SUCCESS;
 }
 
-void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, NEO::Range<ze_event_handle_t> events) {
+void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events) {
     if (captureTarget) {
         // already recording, look for joins
         for (auto evh : events) {

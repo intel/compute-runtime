@@ -628,7 +628,7 @@ HWTEST_F(ProfilingTests, givenDebugFlagSetWhenWaitingForTimestampThenPrint) {
     StreamCapture capture;
     capture.captureStdout();
 
-    Range<CopyEngineState> copyEngineStates;
+    std::span<CopyEngineState> copyEngineStates;
     WaitStatus status;
 
     container->add(node.get());

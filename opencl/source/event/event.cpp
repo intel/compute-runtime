@@ -20,7 +20,6 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/perf_counter.h"
-#include "shared/source/utilities/range.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -35,6 +34,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <span>
 
 namespace NEO {
 Event::Event(
@@ -483,7 +483,7 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
         }
     }
 
-    Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
+    std::span<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
     auto waitStatus = WaitStatus::notReady;
     auto waitedOnTimestamps = cmdQueue->waitForTimestamps(states, waitStatus, this->timestampPacketContainer.get(), nullptr);
     waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, waitedOnTimestamps);
@@ -773,7 +773,7 @@ bool Event::isCompleted() {
         return true;
     }
 
-    Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
+    std::span<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
 
     if (cmdQueue->isCompleted(getCompletionStamp(), states)) {
         gpuStateWaited = true;

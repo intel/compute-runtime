@@ -21,7 +21,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/sync_buffer_handler.h"
-#include "shared/source/utilities/range.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -43,6 +42,7 @@
 #include "opencl/source/utilities/cl_logger.h"
 
 #include <algorithm>
+#include <span>
 
 namespace NEO {
 struct RootDeviceEnvironment;
@@ -821,7 +821,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     bool anyUncacheableArgs = false;
-    for (auto surface : createRange(surfaces, surfaceCount)) {
+    for (auto surface : std::span(surfaces, surfaceCount)) {
         surface->makeResident(csr);
         if (!surface->allowsL3Caching()) {
             anyUncacheableArgs = true;
@@ -1059,7 +1059,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
         }
 
         allSurfaces.reserve(allSurfaces.size() + surfaceCount);
-        for (auto &surface : createRange(surfaces, surfaceCount)) {
+        for (auto &surface : std::span(surfaces, surfaceCount)) {
             allSurfaces.push_back(surface->duplicate());
         }
 
@@ -1137,7 +1137,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             timestampPacketDependencies.cacheFlushNodes.makeResident(getGpgpuCommandStreamReceiver());
         }
 
-        for (auto surface : createRange(surfaces, surfaceCount)) {
+        for (auto surface : std::span(surfaces, surfaceCount)) {
             surface->makeResident(getGpgpuCommandStreamReceiver());
         }
         bool stateCacheInvalidationNeeded = false;

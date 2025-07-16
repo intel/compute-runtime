@@ -7,13 +7,13 @@
 
 #pragma once
 
-#include "shared/source/utilities/range.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/ze_api.h"
 
 #include <atomic>
 #include <memory>
+#include <span>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -99,9 +99,9 @@ struct Closure {
 };
 
 template <CaptureApi api, typename... TArgs>
-inline NEO::Range<ze_event_handle_t> getCommandsWaitEventsList(TArgs... args) {
+inline std::span<ze_event_handle_t> getCommandsWaitEventsList(TArgs... args) {
     typename Closure<api>::ApiArgs structuredApiArgs{args...};
-    return NEO::Range<ze_event_handle_t>{structuredApiArgs.phWaitEvents, structuredApiArgs.numWaitEvents};
+    return std::span<ze_event_handle_t>{structuredApiArgs.phWaitEvents, structuredApiArgs.numWaitEvents};
 }
 
 template <CaptureApi api, typename... TArgs>
@@ -173,8 +173,8 @@ struct Closure<CaptureApi::zeCommandListAppendWaitOnEvents> {
 };
 
 template <>
-inline NEO::Range<ze_event_handle_t> getCommandsWaitEventsList<CaptureApi::zeCommandListAppendWaitOnEvents>(ze_command_list_handle_t, uint32_t numEvents, ze_event_handle_t *phEvents) {
-    return NEO::Range<ze_event_handle_t>{phEvents, numEvents};
+inline std::span<ze_event_handle_t> getCommandsWaitEventsList<CaptureApi::zeCommandListAppendWaitOnEvents>(ze_command_list_handle_t, uint32_t numEvents, ze_event_handle_t *phEvents) {
+    return std::span<ze_event_handle_t>{phEvents, numEvents};
 }
 
 template <>
@@ -314,7 +314,7 @@ struct Graph : _ze_graph_handle_t {
     std::unordered_map<CapturedCommandId, ForkJoinInfo> joinedForks;
 };
 
-void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, NEO::Range<ze_event_handle_t> events);
+void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events);
 void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Graph &captureTarget, ze_event_handle_t event);
 
 template <CaptureApi api, typename... TArgs>

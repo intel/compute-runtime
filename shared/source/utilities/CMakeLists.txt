@@ -33,7 +33,6 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_counter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/range.h
     ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object.h
     ${CMAKE_CURRENT_SOURCE_DIR}/shared_pool_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/software_tags.cpp
