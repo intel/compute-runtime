@@ -838,7 +838,7 @@ ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_propert
         static_cast<ze_memory_access_cap_flags_t>(productHelper.getSingleDeviceSharedMemCapabilities(isKmdMigrationAvailable));
 
     auto defaultContext = static_cast<ContextImp *>(getDriverHandle()->getDefaultContext());
-    auto multiDeviceWithSingleRoot = defaultContext->getNumDevices() > 1 && defaultContext->rootDeviceIndices.size() == 1;
+    auto multiDeviceWithSingleRoot = defaultContext->rootDeviceIndices.size() == 1 && (defaultContext->getNumDevices() > 1 || isSubdevice);
 
     pMemAccessProperties->sharedCrossDeviceAllocCapabilities = {};
     if (multiDeviceWithSingleRoot || (isKmdMigrationAvailable &&
