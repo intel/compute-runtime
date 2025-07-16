@@ -222,6 +222,26 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::dataGlobalZeroInit.data(), strings + sections.globalZeroInitDataSections[0]->header->name);
 }
 
+TEST(ExtractZebinSections, GivenEmptyTextSectionThenIgnoresIt) {
+    NEO::Elf::ElfEncoder<> elfEncoder;
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::text, ArrayRef<const uint8_t>{});
+
+    auto encodedElf = elfEncoder.encode();
+    std::string elferrors;
+    std::string elfwarnings;
+    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elferrors, elfwarnings);
+
+    ZebinSections sections;
+    std::string errors;
+    std::string warnings;
+    auto decodeError = extractZebinSections(decodedElf, sections, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, decodeError);
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(errors.empty()) << errors;
+
+    EXPECT_EQ(0U, sections.textSections.size());
+}
+
 TEST(ExtractZebinSections, GivenMispelledConstDataSectionThenAllowItButEmitWarning) {
     NEO::Elf::ElfEncoder<> elfEncoder;
     elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, ".data.global_const", std::string{});

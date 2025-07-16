@@ -249,7 +249,9 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
             if (sectionName.startsWith(Elf::SectionNames::textPrefix.data())) {
                 out.textKernelSections.push_back(&elfSectionHeader);
             } else if (sectionName == Elf::SectionNames::text) {
-                out.textSections.push_back(&elfSectionHeader);
+                if (false == elfSectionHeader.data.empty()) {
+                    out.textSections.push_back(&elfSectionHeader);
+                }
             } else if (sectionName == Elf::SectionNames::dataConst) {
                 out.constDataSections.push_back(&elfSectionHeader);
             } else if (sectionName == Elf::SectionNames::dataGlobalConst) {
