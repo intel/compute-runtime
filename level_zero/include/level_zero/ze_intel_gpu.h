@@ -596,8 +596,8 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
     ze_kernel_handle_t hKernel,            ///< [in] handle of the kernel object
     const ze_group_count_t groupCounts,    ///< [in] thread group counts
     const ze_group_size_t groupSizes,      ///< [in] thread group sizes
-    void **pArguments,                     ///< [in] kernel arguments; pointer to list where each argument represents a pointer to the argument value on specific index
-    void *pNext,                           ///< [in][optional] extensions
+    const void **pArguments,               ///< [in] kernel arguments; pointer to list where each argument represents a pointer to the argument value on specific index
+    const void *pNext,                     ///< [in][optional] extensions
     ze_event_handle_t hSignalEvent,        ///< [in][optional] handle of the event to signal on completion
     uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
     ze_event_handle_t *phWaitEvents);      ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching

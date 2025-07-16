@@ -3673,7 +3673,7 @@ TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, givenIncorrectGroupSizeW
     Mock<::L0::KernelImp> kernel;
     kernel.module = mockModule.get();
 
-    void *arguments = nullptr;
+    const void *arguments = nullptr;
     retVal = zeCommandListAppendLaunchKernelWithArguments(commandList->toHandle(), kernel.toHandle(), groupCounts, groupSizes, &arguments, nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, retVal);
 }
@@ -3739,7 +3739,7 @@ TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, whenAppendLaunchKernelWi
     uint8_t argImmediate[16]{};
     size_t argSlm = 0x60;
 
-    void *arguments[] = {&argBuffer, &argImage, &argSampler, &argImmediate, &argSlm};
+    const void *arguments[] = {&argBuffer, &argImage, &argSampler, &argImmediate, &argSlm};
     retVal = zeCommandListAppendLaunchKernelWithArguments(commandList->toHandle(), kernel.toHandle(), groupCounts, groupSizes, arguments, nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
 

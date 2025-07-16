@@ -595,8 +595,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithArgument
                                                                                   const ze_group_count_t groupCounts,
                                                                                   const ze_group_size_t groupSizes,
 
-                                                                                  void **pArguments,
-                                                                                  void *pNext,
+                                                                                  const void **pArguments,
+                                                                                  const void *pNext,
                                                                                   ze_event_handle_t hSignalEvent,
                                                                                   uint32_t numWaitEvents,
                                                                                   ze_event_handle_t *phWaitEvents) {
@@ -627,7 +627,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithArgument
         switch (arg.type) {
         case NEO::ArgDescriptor::argTPointer:
             if (arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal) {
-                argSize = *reinterpret_cast<size_t *>(argValue);
+                argSize = *reinterpret_cast<const size_t *>(argValue);
                 argValue = nullptr;
             }
             break;
@@ -646,7 +646,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithArgument
     L0::CmdListKernelLaunchParams launchParams = {};
     launchParams.skipInOrderNonWalkerSignaling = this->skipInOrderNonWalkerSignalingAllowed(hSignalEvent);
 
-    result = this->obtainLaunchParamsFromExtensions(reinterpret_cast<ze_base_desc_t *>(pNext), launchParams, hKernel);
+    result = this->obtainLaunchParamsFromExtensions(reinterpret_cast<const ze_base_desc_t *>(pNext), launchParams, hKernel);
 
     if (result != ZE_RESULT_SUCCESS) {
         return result;

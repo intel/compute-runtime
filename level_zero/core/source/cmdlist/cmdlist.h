@@ -131,8 +131,8 @@ struct CommandList : _ze_command_list_handle_t {
                                                         const ze_group_count_t groupCounts,
                                                         const ze_group_size_t groupSizes,
 
-                                                        void **pArguments,
-                                                        void *pNext,
+                                                        const void **pArguments,
+                                                        const void *pNext,
                                                         ze_event_handle_t hSignalEvent,
                                                         uint32_t numWaitEvents,
                                                         ze_event_handle_t *phWaitEvents) = 0;
