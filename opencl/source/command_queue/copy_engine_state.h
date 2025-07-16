@@ -13,8 +13,8 @@
 
 namespace NEO {
 struct CopyEngineState {
-    aub_stream::EngineType engineType = aub_stream::EngineType::NUM_ENGINES;
     TaskCountType taskCount = 0;
+    aub_stream::EngineType engineType = aub_stream::EngineType::NUM_ENGINES;
     bool csrClientRegistered = false;
 
     bool isValid() const {

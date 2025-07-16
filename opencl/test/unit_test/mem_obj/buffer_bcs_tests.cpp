@@ -629,7 +629,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenAllBcsEnginesReadyWhenWaitingForEventThe
     ultCsr2.initializeTagAllocation();
     ultCsr2.setupContext(osContext);
 
-    CopyEngineState copyEngineState = {aub_stream::EngineType::ENGINE_BCS2, 2, false};
+    CopyEngineState copyEngineState = {2, aub_stream::EngineType::ENGINE_BCS2, false};
     EngineControl engineControl = {&ultCsr2, &osContext};
     auto bcs2Index = EngineHelpers::getBcsIndex(aub_stream::EngineType::ENGINE_BCS2);
     mockCmdQ->bcsStates[bcs2Index] = copyEngineState;
