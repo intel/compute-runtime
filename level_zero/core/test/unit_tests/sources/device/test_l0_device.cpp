@@ -3074,14 +3074,29 @@ struct MemoryAccessPropertiesSingleExposedDeviceTest : public Test<MultiDeviceFi
         MultiDeviceFixtureHierarchy::setUp();
     }
 };
+
 TEST_F(MemoryAccessPropertiesSingleExposedDeviceTest,
-       givenSingleExposedDevicesWhenCallingGetMemoryAccessPropertiesThenSharedCrossDeviceAccessSupportIsNotExposed) {
+       givenSingleExposedDevicesWhenCallingGetMemoryAccessPropertiesForRootDeviceThenSharedCrossDeviceAccessSupportIsNotExposed) {
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
     auto result = device->getMemoryAccessProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities = 0;
+    EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
+}
+
+TEST_F(MemoryAccessPropertiesSingleExposedDeviceTest,
+       givenSingleExposedDevicesWhenCallingGetMemoryAccessPropertiesForSubDeviceThenSharedCrossDeviceAccessSupportIsExposed) {
+    L0::Device *rootDevice = driverHandle->devices[0];
+    auto device = static_cast<L0::DeviceImp *>(rootDevice)->subDevices[0];
+    ze_device_memory_access_properties_t properties;
+    auto result = device->getMemoryAccessProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities =
+        ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT |
+        ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC;
     EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
 }
 
