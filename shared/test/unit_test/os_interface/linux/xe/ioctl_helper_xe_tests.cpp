@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
@@ -2100,6 +2102,38 @@ TEST_F(IoctlHelperXeTest, whenCallingVmBindThenPatIndexIsSet) {
     ASSERT_EQ(1u, drm->vmBindInputs.size());
 
     EXPECT_EQ(drm->vmBindInputs[0].bind.pat_index, expectedPatIndex);
+}
+
+TEST_F(IoctlHelperXeTest, whenCallingVmUnbindThenPatIndexIsSetToDefault) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+    uint64_t bindPatIndex = 0xba;
+    GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
+    bool compressed = false;
+    bool cachable = false;
+    uint64_t defaultPatIndex = executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cachable);
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = 0x1234;
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
+    vmBindParams.patIndex = bindPatIndex;
+
+    drm->vmBindInputs.clear();
+    drm->syncInputs.clear();
+    drm->waitUserFenceInputs.clear();
+    ASSERT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
+    ASSERT_EQ(1u, drm->vmBindInputs.size());
+
+    EXPECT_EQ(drm->vmBindInputs[0].bind.pat_index, defaultPatIndex);
 }
 
 TEST_F(IoctlHelperXeTest, whenBindingDrmContextWithoutVirtualEnginesThenProperEnginesAreSelected) {

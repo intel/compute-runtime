@@ -10,6 +10,7 @@
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
@@ -1472,7 +1473,14 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
 
     bind.bind.range = vmBindParams.length;
     bind.bind.obj_offset = vmBindParams.offset;
-    bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
+    if (isBind) {
+        bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
+    } else {
+        GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
+        bool compressed = false;
+        bool cachable = false;
+        bind.bind.pat_index = static_cast<uint16_t>(drm.getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cachable));
+    }
     bind.bind.extensions = vmBindParams.extensions;
     bind.bind.flags = static_cast<uint32_t>(vmBindParams.flags);
 
