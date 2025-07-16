@@ -18,7 +18,7 @@
 #include <mutex>
 #include <vector>
 
-struct _ze_command_queue_handle_t : BaseHandle {};
+struct _ze_command_queue_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_COMMAND_QUEUE> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_command_queue_handle_t>);
 
 namespace NEO {

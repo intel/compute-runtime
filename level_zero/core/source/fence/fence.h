@@ -15,7 +15,7 @@
 #include <chrono>
 #include <limits>
 
-struct _ze_fence_handle_t : BaseHandle {};
+struct _ze_fence_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_FENCE> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_fence_handle_t>);
 
 namespace L0 {

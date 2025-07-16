@@ -8,7 +8,7 @@
 #pragma once
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
-struct _ze_sampler_handle_t : BaseHandle {};
+struct _ze_sampler_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_SAMPLER> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_sampler_handle_t>);
 
 namespace L0 {

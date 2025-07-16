@@ -28,7 +28,7 @@
 struct _ze_event_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_EVENT> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_event_handle_t>);
 
-struct _ze_event_pool_handle_t : BaseHandle {};
+struct _ze_event_pool_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_EVENT_POOL> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_event_pool_handle_t>);
 
 namespace NEO {

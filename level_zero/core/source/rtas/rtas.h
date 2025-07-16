@@ -9,14 +9,19 @@
 
 #include "shared/source/os_interface/os_library.h"
 
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 
 #include <string>
 
-struct _ze_rtas_builder_exp_handle_t {};
-struct _ze_rtas_parallel_operation_exp_handle_t {};
-struct _ze_rtas_builder_ext_handle_t {};
-struct _ze_rtas_parallel_operation_ext_handle_t {};
+struct _ze_rtas_builder_exp_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_rtas_builder_exp_handle_t>);
+struct _ze_rtas_parallel_operation_exp_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_rtas_parallel_operation_exp_handle_t>);
+struct _ze_rtas_builder_ext_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_rtas_builder_ext_handle_t>);
+struct _ze_rtas_parallel_operation_ext_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_rtas_parallel_operation_ext_handle_t>);
 
 namespace L0 {
 /*

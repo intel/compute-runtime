@@ -11,7 +11,7 @@
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
-struct _ze_module_build_log_handle_t : BaseHandle {};
+struct _ze_module_build_log_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_MODULE_BUILD_LOG> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_module_build_log_handle_t>);
 
 namespace L0 {

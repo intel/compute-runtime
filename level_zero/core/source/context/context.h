@@ -17,6 +17,9 @@
 struct _ze_context_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_CONTEXT> {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_context_handle_t>);
 
+struct _ze_physical_mem_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_PHYSICAL_MEM> {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_physical_mem_handle_t>);
+
 namespace NEO {
 class Device;
 }
