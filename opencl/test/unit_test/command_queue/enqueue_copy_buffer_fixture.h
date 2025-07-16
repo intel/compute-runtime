@@ -65,9 +65,9 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
             pCmdQ,
             srcBuffer,
             dstBuffer,
-            0,
-            0,
-            sizeof(float),
+            srcOffset,
+            dstOffset,
+            copySize,
             0,
             nullptr,
             nullptr);
@@ -83,5 +83,8 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
     MockContext context;
     Buffer *srcBuffer = nullptr;
     Buffer *dstBuffer = nullptr;
+    size_t copySize = sizeof(float);
+    size_t srcOffset = 0;
+    size_t dstOffset = 0;
 };
 } // namespace NEO

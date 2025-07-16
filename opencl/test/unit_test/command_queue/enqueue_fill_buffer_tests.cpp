@@ -394,14 +394,14 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorre
     auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;
     auto scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
 
-    EXPECT_EQ(0u, indirectDataPointerAddress.offset);
-    if (indirectDataPointerAddress.pointerSize != 0) {
+    if (NEO::isDefined(indirectDataPointerAddress.pointerSize)) {
+        EXPECT_EQ(0u, indirectDataPointerAddress.offset);
         EXPECT_EQ(8u, indirectDataPointerAddress.pointerSize);
     }
-    if (scratchPointerAddress.offset != 0) {
+    if (NEO::isDefined(scratchPointerAddress.offset)) {
         EXPECT_EQ(8u, scratchPointerAddress.offset);
+        EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
     }
-    EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }

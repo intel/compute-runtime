@@ -226,9 +226,9 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
     BuiltinOpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
-    dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
-    dc.dstOffset = {EnqueueCopyBufferTraits::dstOffset, 0, 0};
-    dc.size = {EnqueueCopyBufferTraits::size, 0, 0};
+    dc.srcOffset = {srcOffset, 0, 0};
+    dc.dstOffset = {dstOffset, 0, 0};
+    dc.size = {copySize, 0, 0};
 
     MultiDispatchInfo multiDispatchInfo(dc);
     builder.buildDispatchInfos(multiDispatchInfo);
@@ -403,9 +403,9 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentZeroMatchesSourceAd
     BuiltinOpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
-    dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
-    dc.dstOffset = {EnqueueCopyBufferTraits::dstOffset, 0, 0};
-    dc.size = {EnqueueCopyBufferTraits::size, 0, 0};
+    dc.srcOffset = {srcOffset, 0, 0};
+    dc.dstOffset = {dstOffset, 0, 0};
+    dc.size = {copySize, 0, 0};
 
     MultiDispatchInfo multiDispatchInfo(dc);
     builder.buildDispatchInfos(multiDispatchInfo);
@@ -433,9 +433,9 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     BuiltinOpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
-    dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
-    dc.dstOffset = {EnqueueCopyBufferTraits::dstOffset, 0, 0};
-    dc.size = {EnqueueCopyBufferTraits::size, 0, 0};
+    dc.srcOffset = {srcOffset, 0, 0};
+    dc.dstOffset = {dstOffset, 0, 0};
+    dc.size = {copySize, 0, 0};
 
     MultiDispatchInfo multiDispatchInfo(dc);
     builder.buildDispatchInfos(multiDispatchInfo);
