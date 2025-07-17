@@ -4458,6 +4458,7 @@ TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenDirectSubmissi
     auto deviceImp = static_cast<DeviceImp *>(device);
     EXPECT_FALSE(neoDevice->stopDirectSubmissionCalled);
     neoDevice->incRefInternal();
+    driverHandle->getSvmAllocsManager()->cleanupUSMAllocCaches();
     deviceImp->releaseResources();
     EXPECT_TRUE(neoDevice->stopDirectSubmissionCalled);
     neoDevice->decRefInternal();
