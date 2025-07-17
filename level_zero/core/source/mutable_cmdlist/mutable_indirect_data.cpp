@@ -119,12 +119,4 @@ void MutableIndirectData::setCrossThreadData(ArrayRef<const uint8_t> crossThread
              crossThreadData.begin(), crossThreadData.size());
 }
 
-void MutableIndirectData::copyIndirectData(MutableIndirectData *destinationIndirectData) {
-    destinationIndirectData->setCrossThreadData(this->crossThreadData);
-
-    if (this->perThreadData.empty() == false) {
-        destinationIndirectData->setPerThreadData(this->perThreadData);
-    }
-}
-
 }; // namespace L0::MCL

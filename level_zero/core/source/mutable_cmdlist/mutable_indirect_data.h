@@ -50,8 +50,10 @@ class MutableIndirectData {
     const Offsets &getIndirectDataOffsets() const {
         return *offsets;
     }
+    void copyIndirectData(MutableIndirectData *destinationIndirectData) {
+        destinationIndirectData->setCrossThreadData(this->crossThreadData);
+    }
 
-    void copyIndirectData(MutableIndirectData *destinationIndirectData);
     void setAddress(CrossThreadDataOffset offset, uint64_t address, size_t addressSize);
 
   protected:

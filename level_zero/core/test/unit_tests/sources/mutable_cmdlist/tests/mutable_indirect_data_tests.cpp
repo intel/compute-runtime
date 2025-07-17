@@ -194,5 +194,34 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(workDimensions, workDimensionsInline[0]);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableIndirectDataTest,
+            givenPerThreadDataExistsWhenCopyingDataToDestinationThenPerThreadDataIsNotCopiedToDestination) {
+    this->perThreadDataSize = 64;
+    this->crossThreadDataSize = 64;
+
+    createMutableIndirectOffset();
+
+    auto dstPerThreadData = std::move(this->perThreadData);
+    auto dstCrossThreadData = std::move(this->crossThreadData);
+    auto dstIndirectData = std::move(this->indirectData);
+
+    memset(dstPerThreadData.get(), 0, this->perThreadDataSize);
+    memset(dstCrossThreadData.get(), 0, this->crossThreadDataSize);
+
+    createMutableIndirectOffset();
+    ASSERT_NE(nullptr, this->perThreadData.get());
+    ASSERT_NE(nullptr, this->crossThreadData.get());
+    ASSERT_NE(nullptr, this->indirectData.get());
+
+    memset(this->perThreadData.get(), 0xFF, this->perThreadDataSize);
+    memset(this->crossThreadData.get(), 0xFF, this->crossThreadDataSize);
+
+    this->indirectData->copyIndirectData(dstIndirectData.get());
+
+    EXPECT_NE(0, memcmp(dstPerThreadData.get(), this->perThreadData.get(), this->perThreadDataSize));
+    EXPECT_EQ(0, memcmp(dstCrossThreadData.get(), this->crossThreadData.get(), this->crossThreadDataSize));
+}
+
 } // namespace ult
 } // namespace L0
