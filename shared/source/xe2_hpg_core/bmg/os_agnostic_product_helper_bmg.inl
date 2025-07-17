@@ -51,4 +51,9 @@ void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize)
     requiredScratchSize *= 2;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::checkBcsForDirectSubmissionStop() const {
+    return true;
+}
+
 } // namespace NEO

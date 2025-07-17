@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -456,6 +457,120 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenDebugFlagSetWhenTaskCountNotUpda
     EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
     EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
     EXPECT_EQ(0u, csr->flushTagUpdateCalledTimes);
+}
+
+struct DirectSubmissionCheckForCopyEngineIdleTests : public ::testing::Test {
+    void SetUp() override {
+        controller = std::make_unique<DirectSubmissionControllerMock>();
+        executionEnvironment.prepareRootDeviceEnvironments(2);
+        executionEnvironment.initializeMemoryManager();
+        executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
+
+        DeviceBitfield deviceBitfield(1);
+        ccsCsr = std::make_unique<TagUpdateMockCommandStreamReceiver>(executionEnvironment, 0, deviceBitfield);
+        bcsCsr = std::make_unique<TagUpdateMockCommandStreamReceiver>(executionEnvironment, 0, deviceBitfield);
+        ccsOsContext.reset(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+        bcsOsContext.reset(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+        ccsCsr->setupContext(*ccsOsContext);
+        bcsCsr->setupContext(*bcsOsContext);
+
+        controller->timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+        controller->registerDirectSubmission(ccsCsr.get());
+        controller->registerDirectSubmission(bcsCsr.get());
+        bcsCsr->taskCount.store(10u);
+        ccsCsr->taskCount.store(10u);
+        controller->checkNewSubmissions();
+    }
+
+    void TearDown() override {
+        controller->unregisterDirectSubmission(ccsCsr.get());
+        controller->unregisterDirectSubmission(bcsCsr.get());
+    }
+
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), true, 2u};
+
+    std::unique_ptr<OsContext> osContext;
+    std::unique_ptr<TagUpdateMockCommandStreamReceiver> ccsCsr;
+    std::unique_ptr<OsContext> ccsOsContext;
+
+    std::unique_ptr<TagUpdateMockCommandStreamReceiver> bcsCsr;
+    std::unique_ptr<OsContext> bcsOsContext;
+    std::unique_ptr<DirectSubmissionControllerMock> controller;
+};
+
+TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmissionStopWhenCCSIdleAndCopyEngineBusyThenDontTerminateDirectSubmission) {
+    ccsCsr->setLatestFlushedTaskCount(10u);
+    bcsCsr->setLatestFlushedTaskCount(10u);
+
+    ccsCsr->isBusyReturnValue = false;
+    bcsCsr->isBusyReturnValue = true;
+    controller->directSubmissions[bcsCsr.get()].isStopped = false;
+    controller->checkNewSubmissions();
+    EXPECT_EQ(controller->directSubmissions[ccsCsr.get()].taskCount, 10u);
+
+    if (ccsCsr->getProductHelper().checkBcsForDirectSubmissionStop()) {
+        EXPECT_FALSE(controller->directSubmissions[ccsCsr.get()].isStopped);
+        EXPECT_EQ(0u, ccsCsr->stopDirectSubmissionCalledTimes);
+    } else {
+        EXPECT_TRUE(controller->directSubmissions[ccsCsr.get()].isStopped);
+        EXPECT_EQ(1u, ccsCsr->stopDirectSubmissionCalledTimes);
+    }
+}
+
+TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmissionStopWhenCCSIdleAndCopyEngineUpdatedTaskCountThenDontTerminateDirectSubmission) {
+    ccsCsr->setLatestFlushedTaskCount(10u);
+    bcsCsr->setLatestFlushedTaskCount(10u);
+
+    ccsCsr->isBusyReturnValue = false;
+    bcsCsr->isBusyReturnValue = false;
+    controller->directSubmissions[bcsCsr.get()].isStopped = false;
+    bcsCsr->taskCount.store(20u);
+
+    controller->checkNewSubmissions();
+    EXPECT_EQ(controller->directSubmissions[ccsCsr.get()].taskCount, 10u);
+
+    if (ccsCsr->getProductHelper().checkBcsForDirectSubmissionStop()) {
+        EXPECT_FALSE(controller->directSubmissions[ccsCsr.get()].isStopped);
+        EXPECT_EQ(0u, ccsCsr->stopDirectSubmissionCalledTimes);
+    } else {
+        EXPECT_TRUE(controller->directSubmissions[ccsCsr.get()].isStopped);
+        EXPECT_EQ(1u, ccsCsr->stopDirectSubmissionCalledTimes);
+    }
+}
+
+TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmissionStopWhenCCSIdleAndCopyEngineBusyAndDifferentDeviceThenTerminateDirectSubmission) {
+    DeviceBitfield deviceBitfield(1);
+    TagUpdateMockCommandStreamReceiver secondDeviceCsr(executionEnvironment, 1, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 1, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+    secondDeviceCsr.setupContext(*osContext);
+    controller->registerDirectSubmission(&secondDeviceCsr);
+    secondDeviceCsr.taskCount.store(10u);
+    controller->checkNewSubmissions();
+
+    secondDeviceCsr.setLatestFlushedTaskCount(10u);
+    bcsCsr->setLatestFlushedTaskCount(10u);
+
+    secondDeviceCsr.isBusyReturnValue = false;
+    bcsCsr->isBusyReturnValue = true;
+    controller->directSubmissions[bcsCsr.get()].isStopped = false;
+    controller->checkNewSubmissions();
+    EXPECT_EQ(controller->directSubmissions[&secondDeviceCsr].taskCount, 10u);
+    EXPECT_TRUE(controller->directSubmissions[&secondDeviceCsr].isStopped);
+    EXPECT_EQ(1u, secondDeviceCsr.stopDirectSubmissionCalledTimes);
+}
+
+TEST_F(DirectSubmissionCheckForCopyEngineIdleTests, givenCheckBcsForDirectSubmissionStopWhenCopyEngineNotStartedThenTerminateDirectSubmission) {
+    ccsCsr->setLatestFlushedTaskCount(10u);
+    bcsCsr->setLatestFlushedTaskCount(10u);
+
+    ccsCsr->isBusyReturnValue = false;
+    bcsCsr->isBusyReturnValue = true;
+    controller->directSubmissions[bcsCsr.get()].isStopped = true;
+
+    controller->checkNewSubmissions();
+    EXPECT_EQ(controller->directSubmissions[ccsCsr.get()].taskCount, 10u);
+    EXPECT_TRUE(controller->directSubmissions[ccsCsr.get()].isStopped);
+    EXPECT_EQ(1u, ccsCsr->stopDirectSubmissionCalledTimes);
 }
 
 } // namespace NEO

@@ -274,6 +274,7 @@ class ProductHelper {
     virtual void adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getSyncNumRTStacksPerDss(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getNumRtStacksPerDSSForAllocation(const HardwareInfo &hwInfo) const = 0;
+    virtual bool checkBcsForDirectSubmissionStop() const = 0;
     virtual bool shouldRegisterEnqueuedWalkerWithProfiling() const = 0;
 
     virtual bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const = 0;

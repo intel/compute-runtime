@@ -1099,6 +1099,11 @@ uint32_t ProductHelperHw<gfxProduct>::getNumRtStacksPerDSSForAllocation(const Ha
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::checkBcsForDirectSubmissionStop() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() const {
     return false;
 }

@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include <chrono>
 #include <thread>
@@ -111,21 +112,28 @@ void DirectSubmissionController::checkNewSubmissions() {
 
     std::lock_guard<std::mutex> lock(this->directSubmissionsMutex);
     bool shouldRecalculateTimeout = false;
+    std::optional<TaskCountType> bcsTaskCount{};
     for (auto &directSubmission : this->directSubmissions) {
         auto csr = directSubmission.first;
         auto &state = directSubmission.second;
-
-        if (timeoutMode == TimeoutElapsedMode::bcsOnly && !EngineHelpers::isBcs(csr->getOsContext().getEngineType())) {
+        auto isBcs = EngineHelpers::isBcs(csr->getOsContext().getEngineType());
+        if (timeoutMode == TimeoutElapsedMode::bcsOnly && !isBcs) {
             continue;
         }
-
+        if (isBcs) {
+            bcsTaskCount = state.taskCount;
+        }
         auto taskCount = csr->peekTaskCount();
         if (taskCount == state.taskCount) {
             if (state.isStopped) {
                 continue;
             }
+            bool isCopyEngineIdle = true;
+            if (!isBcs && csr->getProductHelper().checkBcsForDirectSubmissionStop()) {
+                isCopyEngineIdle = isCopyEngineOnDeviceIdle(csr->getRootDeviceIndex(), bcsTaskCount);
+            }
             auto lock = csr->obtainUniqueOwnership();
-            if (!isCsrIdleDetectionEnabled || isDirectSubmissionIdle(csr, lock)) {
+            if (!isCsrIdleDetectionEnabled || (isCopyEngineIdle && isDirectSubmissionIdle(csr, lock))) {
                 csr->stopDirectSubmission(false, false);
                 state.isStopped = true;
                 shouldRecalculateTimeout = true;
@@ -167,6 +175,27 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
     }
     csrLock.lock();
     return !csr->isBusyWithoutHang(lastHangCheckTime);
+}
+
+bool DirectSubmissionController::isCopyEngineOnDeviceIdle(uint32_t rootDeviceIndex, std::optional<TaskCountType> &bcsTaskCount) {
+    CommandStreamReceiver *bcsCsr = nullptr;
+    TaskCountType registeredTaskCount = 0;
+    for (auto &directSubmission : this->directSubmissions) {
+        auto csr = directSubmission.first;
+        if (csr->getRootDeviceIndex() == rootDeviceIndex && EngineHelpers::isBcs(csr->getOsContext().getEngineType())) {
+            if (!directSubmission.second.isStopped) {
+                registeredTaskCount = bcsTaskCount.value_or(directSubmission.second.taskCount);
+                bcsCsr = csr;
+            }
+            break;
+        }
+    }
+    if (bcsCsr == nullptr) {
+        return true;
+    }
+
+    auto lock = bcsCsr->obtainUniqueOwnership();
+    return (bcsCsr->peekTaskCount() == registeredTaskCount) && isDirectSubmissionIdle(bcsCsr, lock);
 }
 
 SteadyClock::time_point DirectSubmissionController::getCpuTimestamp() {
