@@ -301,7 +301,7 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetOrUnsetThenCacheConfigI
     DWORD getFileAttributesResultMock = FILE_ATTRIBUTE_DIRECTORY;
     VariableBackup<DWORD> pathExistsMockBackup(&SysCalls::getFileAttributesResult, getFileAttributesResultMock);
     wchar_t envBlockNoIgc[] = L"NEO_CACHE_PERSISTENT=1\0NEO_CACHE_MAX_SIZE=22\0NEO_CACHE_DIR=ult\\directory\\\0\0";
-    SysCalls::mockEnvStringsW = envBlockNoIgc;
+    VariableBackup<LPWCH> mockEnvStringsWBackup(&SysCalls::mockEnvStringsW, envBlockNoIgc);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
@@ -332,7 +332,7 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenIgcEnvVarSetWhenGetDefaultCacheConf
     VariableBackup<DWORD> pathExistsMockBackup(&SysCalls::getFileAttributesResult, getFileAttributesResultMock);
 
     wchar_t envBlockWithIgc[] = L"IGC_DEBUG=1\0NEO_CACHE_PERSISTENT=1\0NEO_CACHE_MAX_SIZE=22\0NEO_CACHE_DIR=ult\\directory\\\0\0";
-    SysCalls::mockEnvStringsW = envBlockWithIgc;
+    VariableBackup<LPWCH> mockEnvStringsWBackup(&SysCalls::mockEnvStringsW, envBlockWithIgc);
 
     StreamCapture capture;
     capture.captureStdout();
