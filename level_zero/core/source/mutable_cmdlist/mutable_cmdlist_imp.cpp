@@ -690,7 +690,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
             }
         }
 
-        // copy post sync and payload from old walker host view into new walker host view
+        // copy post sync and possible indirect/scratch pointers from old walker host view into new walker host view
         auto newKernelComputeWalker = newMutableKernel->getMutableComputeWalker();
         newKernelComputeWalker->copyWalkerDataToHostBuffer(oldKernelComputeWalker);
 
@@ -700,8 +700,8 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
             this->updateScratchAddress(scratchAddressPatchIndex, *oldKernelComputeWalker, *newKernelComputeWalker);
         }
 
-        // save new host view into command buffer
-        newKernelComputeWalker->saveCpuBufferIntoGpuBuffer(false);
+        // save new host view inline data/post sync into command buffer
+        newKernelComputeWalker->saveCpuBufferIntoGpuBuffer(false, true);
 
         // update reminder variables (signal/wait events variables) with new compute walker to have correct reference for new post sync addresses
         for (auto &mutableVariableDescriptor : selectedAppend.variables) {

@@ -582,7 +582,8 @@ void VariableDispatch::commitChanges(const NEO::Device &device) {
         .updateSlm = this->commitSlmSize};
     mutableCommandWalker->updateSpecificFields(device, args);
 
-    mutableCommandWalker->saveCpuBufferIntoGpuBuffer(true);
+    // save only dispatch part of walker (since this part was processed in group count/size mutation)
+    mutableCommandWalker->saveCpuBufferIntoGpuBuffer(true, false);
 
     cleanCommitVariableDispatch();
 }

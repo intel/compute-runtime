@@ -83,7 +83,7 @@ struct MutableComputeWalker {
 
     virtual void copyWalkerDataToHostBuffer(MutableComputeWalker *sourceWalker) = 0;
     virtual void updateWalkerScratchPatchAddress(GpuAddress scratchPatchAddress) = 0;
-    virtual void saveCpuBufferIntoGpuBuffer(bool useDispatchPart) = 0;
+    virtual void saveCpuBufferIntoGpuBuffer(bool useDispatchPart, bool useInlinePostSyncPart) = 0;
 
   protected:
     void *walker;

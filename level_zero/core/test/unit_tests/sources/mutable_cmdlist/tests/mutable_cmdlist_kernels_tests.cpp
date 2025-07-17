@@ -9,6 +9,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -91,6 +92,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenTwoKernelsWithSignalEventWhenFirstAppendedAndSecondMutatedThenPostSyncIsPreserved) {
     using WalkerType = typename FamilyType::PorWalkerType;
 
+    auto kernelIsaAddress = kernel->getIsaAllocation()->getGpuAddress();
+
+    auto kernel2IsaAddress = kernelIsaAddress + 0x20000;
+    static_cast<NEO::MockGraphicsAllocation *>(kernel2->getIsaAllocation())->gpuAddress = kernel2IsaAddress;
+
     auto event = createTestEvent(false, false, false, false);
     auto eventAddress = event->getGpuAddress(this->device);
 
@@ -128,6 +134,24 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(eventAddress, walkerPostSyncAddress);
+
+    // kernel ISA will be updated after mandatory group count mutation
+    EXPECT_EQ(kernelIsaAddress, walkerCmd->getInterfaceDescriptor().getKernelStartPointer());
+
+    ze_group_count_t mutatedGroupCount = {8, 2, 1};
+    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    groupCountDesc.commandId = commandId;
+    groupCountDesc.pGroupCount = &mutatedGroupCount;
+    mutableCommandsDesc.pNext = &groupCountDesc;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // kernel 2 isa set
+    EXPECT_EQ(kernel2IsaAddress, walkerCmd->getInterfaceDescriptor().getKernelStartPointer());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

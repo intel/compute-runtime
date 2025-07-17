@@ -50,27 +50,48 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableHwCommandTest,
             givenMutableComputeWalkerMatchesComputeWalkerWhenObjectIsCreatedAndCopiedFromCpuMemoryThenExactCopyIsExpected) {
     using WalkerType = typename FamilyType::PorWalkerType;
+    constexpr size_t dispatchPartSize = offsetof(WalkerType, TheStructure.Common.PostSync);
+    constexpr size_t walkerSize = sizeof(WalkerType);
+    constexpr size_t inlinePostSyncSize = walkerSize - dispatchPartSize;
+
+    void *inlinePostSyncCmdBuffer = ptrOffset(this->cmdBufferGpuPtr, dispatchPartSize);
 
     auto walkerTemplate = FamilyType::template getInitGpuWalker<WalkerType>();
     createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, false);
+    void *inlinePostSyncCpuBuffer = ptrOffset(this->cmdBufferCpuPtr, dispatchPartSize);
+    auto cpuBufferWalkerCmd = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
+    // dummy post sync address in inline/post sync part of walker
+    cpuBufferWalkerCmd->getPostSync().setDestinationAddress(0x2000);
+    // dummy kernel start address in dispatch part of walker
+    cpuBufferWalkerCmd->getInterfaceDescriptor().setKernelStartPointer(0xFF000);
 
-    mutableWalker->saveCpuBufferIntoGpuBuffer(false);
-
+    // true, true will do the full copy of compute walker
+    mutableWalker->saveCpuBufferIntoGpuBuffer(true, true);
     EXPECT_EQ(0, memcmp(this->cmdBufferCpuPtr, this->cmdBufferGpuPtr, this->walkerCmdSize));
-
-    createDefaultMutableWalker<FamilyType, WalkerType>(&walkerTemplate, true, false);
-    auto cpuBuffer = reinterpret_cast<WalkerType *>(this->cmdBufferCpuPtr);
-    // dummy address to mutate in next step
-    cpuBuffer->getPostSync().setDestinationAddress(0x2000);
-
-    uint64_t postSyncAddress = 0x1000;
-    mutableWalker->setPostSyncAddress(postSyncAddress, 0);
 
     memset(this->cmdBufferGpuPtr, 0, this->walkerCmdSize);
 
-    // true parameter will not save post syncs to gpu buffer
-    mutableWalker->saveCpuBufferIntoGpuBuffer(true);
+    // true, false parameter will not save post syncs to gpu buffer, but kernel ISA start address
+    mutableWalker->saveCpuBufferIntoGpuBuffer(true, false);
     EXPECT_NE(0, memcmp(this->cmdBufferCpuPtr, this->cmdBufferGpuPtr, this->walkerCmdSize));
+    EXPECT_EQ(0, memcmp(this->cmdBufferCpuPtr, this->cmdBufferGpuPtr, dispatchPartSize));
+    EXPECT_NE(0, memcmp(inlinePostSyncCpuBuffer, inlinePostSyncCmdBuffer, inlinePostSyncSize));
+
+    memset(this->cmdBufferGpuPtr, 0, this->walkerCmdSize);
+
+    // false, true parameter will save post syncs to gpu buffer, but not kernel ISA start address
+    mutableWalker->saveCpuBufferIntoGpuBuffer(false, true);
+    EXPECT_NE(0, memcmp(this->cmdBufferCpuPtr, this->cmdBufferGpuPtr, this->walkerCmdSize));
+    EXPECT_NE(0, memcmp(this->cmdBufferCpuPtr, this->cmdBufferGpuPtr, dispatchPartSize));
+    EXPECT_EQ(0, memcmp(inlinePostSyncCpuBuffer, inlinePostSyncCmdBuffer, inlinePostSyncSize));
+
+    memset(this->cmdBufferGpuPtr, 0, this->walkerCmdSize);
+
+    // false, false will not copy any data
+    mutableWalker->saveCpuBufferIntoGpuBuffer(false, false);
+    EXPECT_NE(0, memcmp(this->cmdBufferCpuPtr, this->cmdBufferGpuPtr, this->walkerCmdSize));
+    EXPECT_NE(0, memcmp(this->cmdBufferCpuPtr, this->cmdBufferGpuPtr, dispatchPartSize));
+    EXPECT_NE(0, memcmp(inlinePostSyncCpuBuffer, inlinePostSyncCmdBuffer, inlinePostSyncSize));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

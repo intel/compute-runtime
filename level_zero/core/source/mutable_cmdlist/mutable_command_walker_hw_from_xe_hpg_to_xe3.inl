@@ -278,20 +278,6 @@ void MutableComputeWalkerHw<GfxFamily>::updateWalkerScratchPatchAddress(GpuAddre
 }
 
 template <typename GfxFamily>
-void MutableComputeWalkerHw<GfxFamily>::saveCpuBufferIntoGpuBuffer(bool useDispatchPart) {
-    using WalkerType = typename GfxFamily::DefaultWalkerType;
-    auto walkerCmdHostBuffer = reinterpret_cast<WalkerType *>(this->cpuBuffer);
-    auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
-
-    if (useDispatchPart) {
-        constexpr size_t dispatchPartSize = offsetof(WalkerType, TheStructure.Common.PostSync);
-        memcpy_s(this->walker, dispatchPartSize, this->cpuBuffer, dispatchPartSize);
-    } else {
-        *walkerCmd = *walkerCmdHostBuffer;
-    }
-}
-
-template <typename GfxFamily>
 void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &device,
                                                              MutableWalkerSpecificFieldsArguments &args) {
     using WalkerType = typename GfxFamily::DefaultWalkerType;
@@ -341,7 +327,7 @@ void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &
 
             walkerCmd->getRawData(computeDispatchAllWalkerEnableIndex) = cpuBufferWalker->getRawData(computeDispatchAllWalkerEnableIndex);
         } else {
-            this->saveCpuBufferIntoGpuBuffer(true);
+            this->saveCpuBufferIntoGpuBuffer(true, false);
         }
     }
 }

@@ -50,7 +50,7 @@ struct MutableComputeWalkerHw : public MutableComputeWalker, NEO::NonCopyableAnd
 
     void copyWalkerDataToHostBuffer(MutableComputeWalker *sourceWalker) override;
     void updateWalkerScratchPatchAddress(GpuAddress scratchPatchAddress) override;
-    void saveCpuBufferIntoGpuBuffer(bool useDispatchPart) override;
+    void saveCpuBufferIntoGpuBuffer(bool useDispatchPart, bool useInlinePostSyncPart) override;
 
   protected:
     template <typename WalkerType>

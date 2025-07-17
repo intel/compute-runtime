@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/ptr_math.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker_hw.h"
 
@@ -69,6 +70,26 @@ void MutableComputeWalkerHw<GfxFamily>::updateSlmSize(const NEO::Device &device,
     }
 
     this->setSlmSize(slmSize);
+}
+
+template <typename GfxFamily>
+void MutableComputeWalkerHw<GfxFamily>::saveCpuBufferIntoGpuBuffer(bool useDispatchPart, bool useInlinePostSyncPart) {
+    using WalkerType = typename GfxFamily::DefaultWalkerType;
+    constexpr size_t dispatchPartSize = offsetof(WalkerType, TheStructure.Common.PostSync);
+    constexpr size_t walkerSize = sizeof(WalkerType);
+    constexpr size_t inlinePostSyncSize = walkerSize - dispatchPartSize;
+
+    if (useDispatchPart && useInlinePostSyncPart) {
+        memcpy_s(this->walker, walkerSize, this->cpuBuffer, walkerSize);
+    } else {
+        if (useDispatchPart) {
+            memcpy_s(this->walker, dispatchPartSize, this->cpuBuffer, dispatchPartSize);
+        } else if (useInlinePostSyncPart) {
+            auto cmdBufferInlinePostSync = ptrOffset(this->walker, dispatchPartSize);
+            auto hostViewInlinePostSync = ptrOffset(this->cpuBuffer, dispatchPartSize);
+            memcpy_s(cmdBufferInlinePostSync, inlinePostSyncSize, hostViewInlinePostSync, inlinePostSyncSize);
+        }
+    }
 }
 
 } // namespace L0::MCL
