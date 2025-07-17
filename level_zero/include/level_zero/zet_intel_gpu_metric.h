@@ -203,10 +203,6 @@ typedef enum _zet_intel_metric_calculate_exp_version_t {
     ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zet_intel_metric_calculate_exp_version_t;
 
-#ifndef ZET_STRUCTURE_TYPE_INTEL_METRIC_CALCULATE_PROPERTIES_EXP
-#define ZET_STRUCTURE_TYPE_INTEL_METRIC_CALCULATE_PROPERTIES_EXP 0x7fffffff
-#endif // ZET_STRUCTURE_TYPE_INTEL_METRIC_CALCULATE_PROPERTIES_EXP
-
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Query an metric group calculate properties
 /// This structure can be passed in the 'pNext' of zet_metric_group_properties_t
@@ -436,60 +432,8 @@ ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevic
 /// is returned.
 ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice);
 
-#ifndef ZET_INTEL_METRIC_SCOPES_EXP_NAME
-/// @brief Extension name to query Intel Metric Scopes operations
-#define ZET_INTEL_METRIC_SCOPES_EXP_NAME "ZET_intel_metric_scopes"
-#endif // ZET_INTEL_METRIC_SCOPES_EXP_NAME
-typedef enum _zet_intel_metric_scopes_exp_version_t {
-    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                       ///< version 1.0
-    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_0, ///< latest known version
-    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
-} zet_intel_metric_scopes_exp_version_t;
-
-/// @brief Handle of metric scope
-struct _zet_intel_metric_scope_exp_handle_t {};
-typedef struct _zet_intel_metric_scope_exp_handle_t *zet_intel_metric_scope_exp_handle_t;
-
-#define ZET_INTEL_MAX_METRIC_SCOPE_NAME_EXP 64u
-#define ZET_INTEL_MAX_METRIC_SCOPE_DESCRIPTION_EXP 128u
-
-#ifndef ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP
-#define ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP 0x7fffffff
-#endif // ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP
-
-/// @brief Query an metric scope properties
-typedef struct _zet_intel_metric_scope_properties_exp_t {
-    zet_structure_type_ext_t stype;                               ///< [in] type of this structure
-    void *pNext;                                                  ///< [in][optional] must be null or a pointer to an extension-specific
-                                                                  ///< structure (i.e. contains stype and pNext).
-    uint16_t iD;                                                  ///< [out ]ID will be equal to the index of the metric scope in the
-                                                                  ///> array returned by zetMetricScopesGet()
-    char name[ZET_INTEL_MAX_METRIC_SCOPE_NAME_EXP];               ///< [out] name of the metric scope, which is unique for the device.
-                                                                  ///< The name is expected to be a human readable string.
-                                                                  ///< The name can be used to identify the metric scope in the UI.
-    char description[ZET_INTEL_MAX_METRIC_SCOPE_DESCRIPTION_EXP]; ///< [out] description of the metric scope, which is unique for the device.
-                                                                  ///< The description is expected to be a human readable string.
-                                                                  ///< The description can be used to provide additional information about
-                                                                  ///< the metric scope in the UI.
-} zet_intel_metric_scope_properties_exp_t;
-
-ze_result_t ZE_APICALL zetIntelMetricScopesGetExp(
-    zet_context_handle_t hContext,                        ///< [in] handle of the context object
-    zet_device_handle_t hDevice,                          ///< [in] handle of the device
-    uint32_t *pMetricScopesCount,                         ///< [in,out] pointer to the number of metric scopes available for the device.
-                                                          ///< If set to zero, then the driver shall update the value with the total
-                                                          ///< number of metric scopes available for the device.
-    zet_intel_metric_scope_exp_handle_t *phMetricScopes); ///< [out][optional] [range(0, *pMetricScopesCount)] array of metric scopes handles
-                                                          ///< available for the device. If pMetricScopesCount is greater than zero but
-                                                          ///< less than the total number of metric scopes available for the device,
-                                                          ///< then driver shall only return that number of metric scopes.
-
-ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(
-    zet_intel_metric_scope_exp_handle_t hMetricScope,                 ///< [in] handle of the metric scope
-    zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties); ///< [out] pointer to the metric scope properties structure
-
 #if defined(__cplusplus)
 } // extern "C"
 #endif
 
-#endif //_ZET_INTEL_GPU_METRIC_H
+#endif

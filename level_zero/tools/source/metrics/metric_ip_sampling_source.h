@@ -65,7 +65,6 @@ class IpSamplingMetricSourceImp : public MetricSource {
 
     uint32_t metricSourceCount = 0;
     bool canDisable() override;
-    void initMetricScopes(MetricDeviceContext &metricDeviceContext) override;
 
   protected:
     ze_result_t cacheMetricGroup();

@@ -149,9 +149,4 @@ uint64_t L0GfxCoreHelperHw<Family>::getIpSamplingIpMask() const {
     return 0;
 }
 
-template <typename Family>
-bool L0GfxCoreHelperHw<Family>::supportMetricsAggregation() const {
-    return false;
-}
-
 } // namespace L0

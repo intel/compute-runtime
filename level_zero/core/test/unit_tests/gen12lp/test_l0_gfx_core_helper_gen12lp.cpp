@@ -115,13 +115,5 @@ GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGetIpSamplingIpMaskIsC
     EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingIpMask());
 }
 
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenL0GfxCoreHelperWhenCheckingMetricsAggregationSupportThenReturnFalse) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
-    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-
-    EXPECT_FALSE(l0GfxCoreHelper.supportMetricsAggregation());
-}
-
 } // namespace ult
 } // namespace L0

@@ -284,12 +284,6 @@ bool IpSamplingMetricSourceImp::canDisable() {
     return !activationTracker->isAnyMetricGroupActivated();
 }
 
-void IpSamplingMetricSourceImp::initMetricScopes(MetricDeviceContext &metricDeviceContext) {
-    if (!metricDeviceContext.isComputeMetricScopesInitialized()) {
-        initComputeMetricScopes(metricDeviceContext);
-    }
-}
-
 IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,
                                                    std::vector<IpSamplingMetricImp> &metrics) : IpSamplingMetricGroupBase(metricSource) {
     this->metrics.reserve(metrics.size());

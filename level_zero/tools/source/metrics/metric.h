@@ -68,7 +68,6 @@ struct CommandList;
 struct MetricStreamer;
 struct MetricProgrammable;
 class MetricDeviceContext;
-struct MetricScopeImp;
 class MetricSource {
   public:
     static constexpr uint32_t metricSourceTypeUndefined = 0u;
@@ -110,12 +109,10 @@ class MetricSource {
                                             zet_metric_handle_t *phExcludedMetrics,
                                             zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) = 0;
     virtual bool canDisable() = 0;
-    virtual void initMetricScopes(MetricDeviceContext &metricDeviceContext) = 0;
 
   protected:
     uint32_t type = MetricSource::metricSourceTypeUndefined;
     void getMetricGroupSourceIdProperty(zet_base_properties_t *property);
-    void initComputeMetricScopes(MetricDeviceContext &metricDeviceContext);
 };
 
 class MultiDomainDeferredActivationTracker {
@@ -140,7 +137,7 @@ class MetricDeviceContext {
 
   public:
     MetricDeviceContext(Device &device);
-    ~MetricDeviceContext() {}
+    virtual ~MetricDeviceContext() {}
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups);
     ze_result_t activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
     ze_result_t activateMetricGroups();
@@ -151,13 +148,8 @@ class MetricDeviceContext {
                                   zet_metric_group_sampling_type_flag_t samplingType,
                                   zet_metric_group_handle_t *pMetricGroupHandle);
     bool isImplicitScalingCapable() const;
-    Device &getDevice() const {
-        return device;
-    }
-    uint32_t getSubDeviceIndex() const {
-        return subDeviceIndex;
-    }
-
+    Device &getDevice() const;
+    uint32_t getSubDeviceIndex() const;
     template <typename T>
     T &getMetricSource() const;
     void setSubDeviceIndex(uint32_t subDeviceIndex) { this->subDeviceIndex = subDeviceIndex; }
@@ -180,25 +172,8 @@ class MetricDeviceContext {
                                     uint32_t *pExcludedMetricCount,
                                     zet_metric_handle_t *phExcludedMetrics,
                                     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation);
-    ze_result_t metricScopesGet(zet_context_handle_t hContext,
-                                uint32_t *pMetricScopesCount,
-                                zet_intel_metric_scope_exp_handle_t *phMetricScopes);
     bool areMetricGroupsFromSameDeviceHierarchy(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
     void setMetricsCollectionAllowed(bool status) { isMetricsCollectionAllowed = status; }
-    bool isMultiDeviceCapable() const {
-        return multiDeviceCapable;
-    }
-    void addMetricScope(std::unique_ptr<MetricScopeImp> metricScope) {
-        metricScopes.push_back(std::move(metricScope));
-    }
-
-    void setComputeMetricScopeInitialized() {
-        computeMetricScopesInitialized = true;
-    }
-
-    bool isComputeMetricScopesInitialized() const {
-        return computeMetricScopesInitialized;
-    }
 
   protected:
     bool areMetricGroupsFromSameSource(uint32_t count, zet_metric_group_handle_t *phMetricGroups, uint32_t *sourceType);
@@ -206,22 +181,17 @@ class MetricDeviceContext {
     bool areMetricsFromSameDeviceHierarchy(uint32_t count, zet_metric_handle_t *phMetrics);
 
     std::map<uint32_t, std::unique_ptr<MetricSource>> metricSources;
-    bool multiDeviceCapable = false;
 
   private:
     bool enable();
     bool canDisable();
     void disable();
-    void initMetricScopes();
-
     struct Device &device;
+    bool multiDeviceCapable = false;
     uint32_t subDeviceIndex = 0;
     bool isMetricsCollectionAllowed = false;
     bool isEnableChecked = false;
     std::mutex enableMetricsMutex;
-    std::vector<std::unique_ptr<MetricScopeImp>> metricScopes{};
-    bool metricScopesInitialized = false;
-    bool computeMetricScopesInitialized = false;
 };
 
 struct Metric : _zet_metric_handle_t {
@@ -488,27 +458,6 @@ struct MetricCalcOpImp : public MetricCalcOp {
     bool isMultiDevice = false;
 };
 
-struct MetricScope : _zet_intel_metric_scope_exp_handle_t {
-    virtual ~MetricScope() = default;
-    MetricScope() {}
-
-    static MetricScope *fromHandle(zet_intel_metric_scope_exp_handle_t handle) {
-        return static_cast<MetricScope *>(handle);
-    }
-    inline zet_intel_metric_scope_exp_handle_t toHandle() { return this; }
-};
-
-struct MetricScopeImp : public MetricScope {
-    ~MetricScopeImp() override = default;
-    MetricScopeImp(zet_intel_metric_scope_properties_exp_t &properties) : properties(properties){};
-
-    virtual ze_result_t getProperties(zet_intel_metric_scope_properties_exp_t *pProperties);
-    static std::unique_ptr<MetricScopeImp> create(zet_intel_metric_scope_properties_exp_t &scopeProperties);
-
-  private:
-    zet_intel_metric_scope_properties_exp_t properties;
-};
-
 // MetricGroup.
 ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups);
 
@@ -586,8 +535,5 @@ ze_result_t metricDecodeCalculateMultipleValues(zet_intel_metric_decoder_exp_han
 
 ze_result_t metricsEnable(zet_device_handle_t hDevice);
 ze_result_t metricsDisable(zet_device_handle_t hDevice);
-ze_result_t metricScopesGet(zet_context_handle_t hContext, zet_device_handle_t hDevice, uint32_t *pMetricScopesCount,
-                            zet_intel_metric_scope_exp_handle_t *phMetricScopes);
-ze_result_t metricScopeGetProperties(zet_intel_metric_scope_exp_handle_t hMetricScope, zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties);
 
 } // namespace L0

@@ -72,7 +72,6 @@ class OaMetricSourceImp : public MetricSource {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     bool canDisable() override;
-    void initMetricScopes(MetricDeviceContext &metricDeviceContext) override;
 
   protected:
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;

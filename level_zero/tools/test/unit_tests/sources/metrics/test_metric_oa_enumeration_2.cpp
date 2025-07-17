@@ -104,20 +104,6 @@ TEST_F(MetricEnumerationTest, givenTTypedValueWhenCopyValueIsCalledReturnsFilled
     }
 }
 
-TEST_F(MetricEnumerationTest, GivenValidOASourceComputeMetricScopesAreEnumeratedOnce) {
-    MetricDeviceContext &metricsDevContext = device->getMetricDeviceContext();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, metricsDevContext.enableMetricApi());
-
-    metricsDevContext.setComputeMetricScopeInitialized();
-
-    auto &metricSource = metricsDevContext.getMetricSource<OaMetricSourceImp>();
-    EXPECT_EQ(metricSource.isAvailable(), true);
-
-    uint32_t metricScopesCount = 0;
-    metricsDevContext.metricScopesGet(context->toHandle(), &metricScopesCount, nullptr);
-    EXPECT_EQ(metricScopesCount, 0u);
-}
-
 using MetricEnumerationMultiDeviceTest = Test<MetricMultiDeviceFixture>;
 
 TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCalledThenOpenMetricsSubDeviceWillBeCalled) {

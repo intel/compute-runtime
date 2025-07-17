@@ -9,15 +9,11 @@
 
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_info.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 
@@ -30,48 +26,6 @@ void MetricSource::getMetricGroupSourceIdProperty(zet_base_properties_t *propert
 
     zet_intel_metric_source_id_exp_t *groupProperty = reinterpret_cast<zet_intel_metric_source_id_exp_t *>(property);
     groupProperty->sourceId = type;
-}
-
-void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceContext) {
-
-    auto createScope = [&metricDeviceContext](const std::string &name, const std::string &desc, uint32_t id) {
-        zet_intel_metric_scope_properties_exp_t scopeProperties = {ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP, nullptr};
-        scopeProperties.iD = id;
-        snprintf(scopeProperties.name, ZET_INTEL_MAX_METRIC_SCOPE_NAME_EXP, "%s", name.c_str());
-        snprintf(scopeProperties.description, ZET_INTEL_MAX_METRIC_SCOPE_NAME_EXP, "%s", desc.c_str());
-
-        auto metricScopeImp = MetricScopeImp::create(scopeProperties);
-        DEBUG_BREAK_IF(metricScopeImp == nullptr);
-        metricDeviceContext.addMetricScope(std::move(metricScopeImp));
-    };
-
-    if (metricDeviceContext.isMultiDeviceCapable()) {
-
-        auto deviceImp = static_cast<DeviceImp *>(&metricDeviceContext.getDevice());
-        uint32_t subDeviceCount = deviceImp->numSubDevices;
-        for (uint32_t i = 0; i < subDeviceCount; i++) {
-            std::string scopeName = "COMPUTE_TILE_" + std::to_string(i);
-            std::string scopeDesc = "Metrics results for tile " + std::to_string(i);
-
-            createScope(scopeName, scopeDesc, i);
-        }
-
-        auto &l0GfxCoreHelper = metricDeviceContext.getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-        if (l0GfxCoreHelper.supportMetricsAggregation()) {
-            std::string scopeName = "DEVICE_AGGREGATED";
-            std::string scopeDesc = "Metrics results aggregated at device level";
-
-            createScope(scopeName, scopeDesc, subDeviceCount);
-        }
-    } else {
-        auto subDeviceIndex = metricDeviceContext.getSubDeviceIndex();
-        std::string scopeName = "COMPUTE_TILE_" + std::to_string(subDeviceIndex);
-        std::string scopeDesc = "Metrics results for tile " + std::to_string(subDeviceIndex);
-
-        createScope(scopeName, scopeDesc, subDeviceIndex);
-    }
-
-    metricDeviceContext.setComputeMetricScopeInitialized();
 }
 
 MetricDeviceContext::MetricDeviceContext(Device &inputDevice) : device(inputDevice) {
@@ -139,11 +93,6 @@ ze_result_t MetricDeviceContext::metricGroupGet(uint32_t *pCount, zet_metric_gro
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t availableCount = 0;
     uint32_t requestCount = *pCount;
-
-    if (!metricScopesInitialized) {
-        initMetricScopes();
-    }
-
     for (auto const &entry : metricSources) {
         auto const &metricSource = entry.second;
 
@@ -247,6 +196,14 @@ ze_result_t MetricDeviceContext::activateMetricGroups() {
         metricSource->activateMetricGroupsAlreadyDeferred();
     }
     return ZE_RESULT_SUCCESS;
+}
+
+uint32_t MetricDeviceContext::getSubDeviceIndex() const {
+    return subDeviceIndex;
+}
+
+Device &MetricDeviceContext::getDevice() const {
+    return device;
 }
 
 void MetricDeviceContext::enableMetricApiForDevice(zet_device_handle_t hDevice, bool &isFailed) {
@@ -645,53 +602,6 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     return metricSource.calcOperationCreate(*this, pCalculateDesc, pExcludedMetricCount, phExcludedMetrics, phCalculateOperation);
 }
 
-std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_properties_exp_t &scopeProperties) {
-    return std::make_unique<MetricScopeImp>(scopeProperties);
-}
-
-void MetricDeviceContext::initMetricScopes() {
-
-    for (auto const &entry : metricSources) {
-        auto const &metricSource = entry.second;
-
-        if (!metricSource->isAvailable()) {
-            continue;
-        }
-        metricSource->initMetricScopes(*this);
-    }
-
-    metricScopesInitialized = true;
-}
-
-ze_result_t MetricDeviceContext::metricScopesGet(zet_context_handle_t hContext, uint32_t *pMetricScopesCount,
-                                                 zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
-
-    if (!metricScopesInitialized) {
-        initMetricScopes();
-    }
-
-    if (*pMetricScopesCount == 0) {
-        *pMetricScopesCount = static_cast<uint32_t>(metricScopes.size());
-        return ZE_RESULT_SUCCESS;
-    }
-
-    // User is expected to allocate space.
-    DEBUG_BREAK_IF(phMetricScopes == nullptr);
-
-    *pMetricScopesCount = std::min(*pMetricScopesCount, static_cast<uint32_t>(metricScopes.size()));
-
-    for (uint32_t i = 0; i < *pMetricScopesCount; i++) {
-        phMetricScopes[i] = metricScopes[i]->toHandle();
-    }
-
-    return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t MetricScopeImp::getProperties(zet_intel_metric_scope_properties_exp_t *pProperties) {
-    *pProperties = properties;
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t MultiDeviceMetricImp::getProperties(zet_metric_properties_t *pProperties) {
     return subDeviceMetrics[0]->getProperties(pProperties);
 }
@@ -1058,23 +968,6 @@ ze_result_t metricsEnable(zet_device_handle_t hDevice) {
 
 ze_result_t metricsDisable(zet_device_handle_t hDevice) {
     return MetricDeviceContext::disableMetricApiForDevice(hDevice);
-}
-
-ze_result_t metricScopesGet(
-    zet_context_handle_t hContext,
-    zet_device_handle_t hDevice,
-    uint32_t *pMetricScopesCount,
-    zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
-
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
-    return deviceImp->getMetricDeviceContext().metricScopesGet(hContext, pMetricScopesCount, phMetricScopes);
-}
-
-ze_result_t metricScopeGetProperties(
-    zet_intel_metric_scope_exp_handle_t hMetricScope,
-    zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties) {
-
-    return static_cast<MetricScopeImp *>(MetricScopeImp::fromHandle(hMetricScope))->getProperties(pMetricScopeProperties);
 }
 
 } // namespace L0
