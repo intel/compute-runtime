@@ -365,6 +365,50 @@ HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherenc
     alignedFree(stateBuffer);
 }
 
+HWTEST2_F(CommandEncodeStatesTest, givenTemplateSurfaceStateBufferWhenEncodingSurfaceStateAndTemplatePointerSetThenUseTemplateMemory, MatchAny) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    void *templateStateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
+    ASSERT_NE(nullptr, templateStateBuffer);
+    RENDER_SURFACE_STATE *templateState = reinterpret_cast<RENDER_SURFACE_STATE *>(templateStateBuffer);
+
+    // set unique field not used in encoder
+    constexpr uint32_t pitch = 4;
+    templateState->setSurfacePitch(pitch);
+
+    void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
+    ASSERT_NE(nullptr, stateBuffer);
+    RENDER_SURFACE_STATE *state = reinterpret_cast<RENDER_SURFACE_STATE *>(stateBuffer);
+
+    memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
+
+    size_t size = 0x1000;
+    uint64_t gpuAddr = 0;
+
+    NEO::EncodeSurfaceStateArgs args;
+    args.outMemory = stateBuffer;
+    args.inTemplateMemory = templateStateBuffer;
+    args.graphicsAddress = gpuAddr;
+    args.size = size;
+    args.mocs = 1;
+    args.cpuCoherent = false;
+    args.numAvailableDevices = 1;
+    args.gmmHelper = pDevice->getGmmHelper();
+    args.areMultipleSubDevicesInContext = false;
+
+    pDevice->getGfxCoreHelper().encodeBufferSurfaceState(args);
+    EXPECT_EQ(pitch, state->getSurfacePitch());
+
+    memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
+    args.inTemplateMemory = nullptr;
+
+    pDevice->getGfxCoreHelper().encodeBufferSurfaceState(args);
+    EXPECT_EQ(1u, state->getSurfacePitch()); // getter adds 1 to default value 0
+
+    alignedFree(stateBuffer);
+    alignedFree(templateStateBuffer);
+}
+
 HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStateBaseAddressCalledThenStateBaseAddressAreNotSet, IsHeapfulSupported) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     cmdContainer->dirtyHeaps = 0;

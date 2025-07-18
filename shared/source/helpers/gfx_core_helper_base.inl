@@ -684,7 +684,11 @@ template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(args.outMemory);
-    *surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    if (args.inTemplateMemory != nullptr) {
+        *surfaceState = *reinterpret_cast<RENDER_SURFACE_STATE *>(args.inTemplateMemory);
+    } else {
+        *surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    }
 
     EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }
