@@ -32,6 +32,7 @@ Variable *Variable::createFromInfo(ze_command_list_handle_t hCmdList, Program::D
     } else if (varInfo.type == VariableType::value) {
         var->setValueUsages(std::move(varInfo.valueUsages));
     }
+    desc.apiVariable = true;
 
     return var;
 }
@@ -183,6 +184,7 @@ ze_result_t Variable::selectImmediateAddKernelArgUsageHandler(const NEO::ArgDesc
 
 void Variable::setDescExperimentalValues(const InterfaceVariableDescriptor *ifaceVarDesc) {
     desc.name = ifaceVarDesc->name == nullptr ? "" : std::string(ifaceVarDesc->name);
+    desc.apiVariable = ifaceVarDesc->api;
 
     if (ifaceVarDesc->isTemporary) {
         desc.isTemporary = true;
@@ -196,28 +198,36 @@ void Variable::setDescExperimentalValues(const InterfaceVariableDescriptor *ifac
 }
 
 ze_result_t Variable::addKernelArgUsageStatefulBuffer(const NEO::ArgDescriptor &kernelArg, IndirectObjectHeapOffset iohOffset, SurfaceStateHeapOffset sshOffset) {
-    const auto &arg = kernelArg.as<NEO::ArgDescPointer>();
-    if (sshOffset != undefined<SurfaceStateHeapOffset>) {
-        if (NEO::isValidOffset(arg.bufferOffset)) {
-            if (NEO::isValidOffset(arg.bindful)) {
-                bufferUsages.bindful.push_back(sshOffset + arg.bindful);
-            } else if (NEO::isValidOffset(arg.bindless)) {
-                bufferUsages.bindless.push_back(iohOffset + arg.bindless);
+    if (desc.apiVariable) {
+        const auto &arg = kernelArg.as<NEO::ArgDescPointer>();
+        if (sshOffset != undefined<SurfaceStateHeapOffset>) {
+            if (NEO::isValidOffset(arg.bufferOffset)) {
+                if (NEO::isValidOffset(arg.bindful)) {
+                    bufferUsages.bindful.push_back(sshOffset + arg.bindful);
+                } else if (NEO::isValidOffset(arg.bindless)) {
+                    bufferUsages.bindless.push_back(iohOffset + arg.bindless);
+                } else {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                }
+                bufferUsages.bufferOffset.push_back(iohOffset + arg.bufferOffset);
             } else {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            bufferUsages.bufferOffset.push_back(iohOffset + arg.bufferOffset);
-        } else {
-            if (NEO::isValidOffset(arg.bindful)) {
-                bufferUsages.bindfulWithoutOffset.push_back(sshOffset + arg.bindful);
-            } else if (NEO::isValidOffset(arg.bindless)) {
-                bufferUsages.bindlessWithoutOffset.push_back(iohOffset + arg.bindless);
-            } else {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                if (NEO::isValidOffset(arg.bindful)) {
+                    bufferUsages.bindfulWithoutOffset.push_back(sshOffset + arg.bindful);
+                } else if (NEO::isValidOffset(arg.bindless)) {
+                    bufferUsages.bindlessWithoutOffset.push_back(iohOffset + arg.bindless);
+                } else {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                }
             }
         }
     }
     return ZE_RESULT_SUCCESS;
+}
+
+void Variable::mutateStatefulBufferArg(GpuAddress bufferGpuAddress, NEO::GraphicsAllocation *bufferAllocation) {
+    if (desc.apiVariable) {
+        cmdList->setBufferSurfaceState(reinterpret_cast<void *>(bufferGpuAddress), bufferAllocation, this);
+    }
 }
 
 } // namespace L0::MCL

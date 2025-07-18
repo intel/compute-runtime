@@ -45,6 +45,7 @@ struct InterfaceVariableDescriptor {
     bool isConstSize = false;
     bool isStageCommit = false;
     bool immediateValueChunks = false;
+    bool api = false;
 };
 
 enum VariableType : uint8_t {
@@ -84,6 +85,7 @@ struct VariableDescriptor {
     bool isStageCommit = false;
     bool commitRequired = false;
     bool immediateValueChunks = false;
+    bool apiVariable = false;
 };
 
 struct Variable : public VariableHandle {
@@ -264,6 +266,7 @@ struct Variable : public VariableHandle {
 
     void setDescExperimentalValues(const InterfaceVariableDescriptor *ifaceVarDesc);
     bool hasKernelArgCorrectType(const NEO::ArgDescriptor &arg);
+    void mutateStatefulBufferArg(GpuAddress bufferGpuAddress, NEO::GraphicsAllocation *bufferAllocation);
 
     ze_result_t setBufferVariable(size_t size, const void *argVal);
     ze_result_t setValueVariable(size_t size, const void *argVal);

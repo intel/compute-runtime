@@ -121,6 +121,7 @@ zexCommandListGetVariable(
 
     auto outVariable = reinterpret_cast<Variable **>(phVariable);
     InterfaceVariableDescriptor varDesc = {};
+    varDesc.api = true;
     varDesc.name = pVariableDescriptor->name;
 
     if (pVariableDescriptor->pNext != nullptr) {

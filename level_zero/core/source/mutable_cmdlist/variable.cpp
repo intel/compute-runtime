@@ -421,7 +421,7 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
     }
 
     if (argValue != nullptr) {
-        cmdList->setBufferSurfaceState(reinterpret_cast<void *>(gpuAddress), newBufferAlloc, this);
+        mutateStatefulBufferArg(gpuAddress, newBufferAlloc);
         desc.state = State::initialized;
     }
     updateAllocationResidency(oldBufferAlloc, newBufferAlloc);
