@@ -827,19 +827,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmAllocationReuseS
     }
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXe2HpgCore) {
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
-        EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
-        EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
-    }
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
-        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
-    }
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsUnlockingLockedPtrNecessaryThenReturnFalse) {
     EXPECT_FALSE(productHelper->isUnlockingLockedPtrNecessary(pInHwInfo));
 }
