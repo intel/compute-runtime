@@ -26,6 +26,7 @@ template <>
 struct WhiteBox<::L0::DriverHandleImp> : public ::L0::DriverHandleImp {
     using ::L0::DriverHandleImp::devices;
     using ::L0::DriverHandleImp::enableProgramDebugging;
+    using ::L0::DriverHandleImp::stagingBufferManager;
     using ::L0::DriverHandleImp::svmAllocsManager;
 };
 

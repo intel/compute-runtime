@@ -1153,7 +1153,7 @@ void EncodeMiPredicate<Family>::encode(LinearStream &cmdStream, [[maybe_unused]]
 }
 
 template <typename Family>
-void EnodeUserInterrupt<Family>::encode(LinearStream &commandStream) {
+void EncodeUserInterrupt<Family>::encode(LinearStream &commandStream) {
     *commandStream.getSpaceForCmd<typename Family::MI_USER_INTERRUPT>() = Family::cmdInitUserInterrupt;
 }
 

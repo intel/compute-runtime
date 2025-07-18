@@ -1057,10 +1057,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOperationWithHostVisibleEventThenMar
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, hostVisibleEvent.get(), 0, nullptr, launchParams);
 
     EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
-
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, hostVisibleEvent.get(), 0, nullptr, copyParams);
+    auto usmHost = allocHostMem(1);
+    auto usmDevice = allocDeviceMem(1);
+    immCmdList->appendMemoryCopy(usmDevice, usmHost, 1, hostVisibleEvent.get(), 0, nullptr, copyParams);
 
     EXPECT_EQ(!immCmdList->dcFlushSupport, immCmdList->latestFlushIsHostVisible);
+    context->freeMem(usmHost);
+    context->freeMem(usmDevice);
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenRelaxedOrderingEnabledWhenDispatchingThenUseCorrectCsr, IsAtLeastXeHpcCore) {
@@ -2449,7 +2452,7 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetToZeroWhenA
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     uint32_t hostCopyData = 0;
-    size_t copySize = 2 * BlitterConstants::maxBlitWidth + BlitterConstants::maxBlitHeight + 1;
+    size_t copySize = sizeof(hostCopyData);
     debugManager.flags.ClearStandaloneInOrderTimestampAllocation.set(0);
     auto ret = cmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, copySize, events[0]->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(ret, ZE_RESULT_SUCCESS);

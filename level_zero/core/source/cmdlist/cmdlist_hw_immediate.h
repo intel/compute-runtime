@@ -19,6 +19,7 @@
 namespace NEO {
 struct SvmAllocationData;
 struct CompletionStamp;
+struct StagingTransferStatus;
 class LinearStream;
 } // namespace NEO
 
@@ -245,6 +246,10 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void handleInOrderNonWalkerSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result);
     CommandQueue *getCmdQImmediate(CopyOffloadMode copyOffloadMode) const;
     NEO::LinearStream *getOptionalEpilogueCmdStream(NEO::LinearStream *taskCmdStream, NEO::AppendOperations appendOperation);
+
+    bool isValidForStagingTransfer(const void *dstptr, const void *srcptr, size_t size, bool hasDependencies);
+    ze_result_t appendStagingMemoryCopy(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);
+    ze_result_t stagingStatusToL0(const NEO::StagingTransferStatus &status) const;
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;

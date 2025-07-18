@@ -89,6 +89,7 @@ struct DriverHandleImp : public DriverHandle {
     MOCKABLE_VIRTUAL void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType);
     ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) override;
     NEO::SVMAllocsManager *getSvmAllocsManager() override;
+    NEO::StagingBufferManager *getStagingBufferManager() override;
     ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices);
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,
@@ -174,6 +175,7 @@ struct DriverHandleImp : public DriverHandle {
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
     NEO::UsmMemAllocPool usmHostMemAllocPool;
     ze_context_handle_t defaultContext = nullptr;
+    std::unique_ptr<NEO::StagingBufferManager> stagingBufferManager;
 
     std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
     bool rtasLibraryUnavailable = false;

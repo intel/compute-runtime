@@ -25,6 +25,7 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/logger.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/context/context_imp.h"
@@ -108,6 +109,10 @@ void DriverHandleImp::setMemoryManager(NEO::MemoryManager *memoryManager) {
 
 NEO::SVMAllocsManager *DriverHandleImp::getSvmAllocsManager() {
     return this->svmAllocsManager;
+}
+
+NEO::StagingBufferManager *DriverHandleImp::getStagingBufferManager() {
+    return this->stagingBufferManager.get();
 }
 
 ze_result_t DriverHandleImp::getApiVersion(ze_api_version_t *version) {
@@ -227,6 +232,7 @@ DriverHandleImp::~DriverHandleImp() {
         this->externalSemaphoreController.reset();
     }
 
+    this->stagingBufferManager.reset();
     if (memoryManager != nullptr) {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
         if (this->svmAllocsManager) {
@@ -336,7 +342,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         Device::fromHandle(deviceToExpose)->setIdentifier(deviceIdentifier++);
     }
     createContext(&DefaultDescriptors::contextDesc, static_cast<uint32_t>(this->devicesToExpose.size()), this->devicesToExpose.data(), &defaultContext);
-
+    this->stagingBufferManager = std::make_unique<NEO::StagingBufferManager>(svmAllocsManager, this->rootDeviceIndices, this->deviceBitfields, false);
     return ZE_RESULT_SUCCESS;
 }
 

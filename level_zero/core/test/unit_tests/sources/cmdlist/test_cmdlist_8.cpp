@@ -1086,13 +1086,14 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrWh
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmSrcHostPtrWhenSizeTooLargeThenUseGpuMemcpy) {
+    debugManager.flags.ExperimentalH2DCpuCopyThreshold.set(64);
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockAppendMemoryLockedCopyTestImmediateCmdList<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 5 * MemoryConstants::megaByte, nullptr, 0, nullptr, copyParams);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 128, nullptr, 0, nullptr, copyParams);
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
 }
 
@@ -1128,7 +1129,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPtr
     ASSERT_FALSE(graphicsAllocation->isLocked());
 
     cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1 * MemoryConstants::megaByte, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
+    EXPECT_GT(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy) {

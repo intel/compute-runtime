@@ -2496,8 +2496,8 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenThereIsNoEnoughSpace
     EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    size_t src = 0;
+    size_t dst = 0;
 
     // reduce available cmd buffer size, so next command can't fit in 1st and we need to use 2nd cmd buffer
     size_t useSize = commandList->getCmdContainer().getCommandStream()->getMaxAvailableSpace() - commonImmediateCommandSize + 1;
@@ -2506,7 +2506,7 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListWhenThereIsNoEnoughSpace
 
     auto oldStreamPtr = commandList->getCmdContainer().getCommandStream()->getCpuBase();
     CmdListMemoryCopyParams copyParams = {};
-    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
+    auto result = commandList->appendMemoryCopy(&dst, &src, sizeof(size_t), nullptr, 0, nullptr, copyParams);
     auto newStreamPtr = commandList->getCmdContainer().getCommandStream()->getCpuBase();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2893,9 +2893,9 @@ TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmedia
     EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-    void *dstPtr = reinterpret_cast<void *>(0x2345);
-    auto result = commandList->appendMemoryCopyFromContext(dstPtr, nullptr, srcPtr, 8, nullptr, 0, nullptr, false);
+    size_t src = 0;
+    size_t dst = 0;
+    auto result = commandList->appendMemoryCopyFromContext(&dst, nullptr, &src, sizeof(size_t), nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -2953,9 +2953,9 @@ TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmedia
     EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-    void *dstPtr = reinterpret_cast<void *>(0x2345);
-    auto result = commandList->appendMemoryCopyFromContext(dstPtr, nullptr, srcPtr, 8, nullptr, 0, nullptr, false);
+    size_t src = 0;
+    size_t dst = 0;
+    auto result = commandList->appendMemoryCopyFromContext(&dst, nullptr, &src, sizeof(size_t), nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -2970,9 +2970,9 @@ TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmedia
     EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-    void *dstPtr = reinterpret_cast<void *>(0x2345);
-    auto result = commandList->appendMemoryCopyFromContext(dstPtr, nullptr, srcPtr, 8, nullptr, 0, nullptr, false);
+    size_t src = 0;
+    size_t dst = 0;
+    auto result = commandList->appendMemoryCopyFromContext(&dst, nullptr, &src, sizeof(size_t), nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 

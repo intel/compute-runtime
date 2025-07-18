@@ -753,7 +753,7 @@ struct EncodeMemoryFence {
 };
 
 template <typename GfxFamily>
-struct EnodeUserInterrupt {
+struct EncodeUserInterrupt {
     static void encode(LinearStream &commandStream);
 };
 

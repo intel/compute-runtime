@@ -761,6 +761,26 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
         return appendWriteToMemoryCalledCountReturnValue;
     }
 
+    ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr,
+                                             NEO::GraphicsAllocation *dstPtrAlloc,
+                                             uint64_t dstOffset,
+                                             void *srcPtr,
+                                             NEO::GraphicsAllocation *srcPtrAlloc,
+                                             uint64_t srcOffset,
+                                             uint64_t size,
+                                             uint64_t elementSize,
+                                             Builtin builtin,
+                                             L0::Event *signalEvent,
+                                             bool isStateless,
+                                             CmdListKernelLaunchParams &launchParams) override {
+        ++appendMemoryCopyKernelWithGACalledCount;
+        if (callAppendMemoryCopyKernelWithGABase) {
+            return BaseClass::appendMemoryCopyKernelWithGA(dstPtr, dstPtrAlloc, dstOffset, srcPtr, srcPtrAlloc, srcOffset,
+                                                           size, elementSize, builtin, signalEvent, isStateless, launchParams);
+        }
+        return appendMemoryCopyKernelWithGACalledCountReturnValue;
+    }
+
     void checkAssert() override {
         checkAssertCalled++;
     }
@@ -787,6 +807,10 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     bool callAppendWriteToMemoryBase = true;
     ze_result_t appendWriteToMemoryCalledCountReturnValue = ZE_RESULT_SUCCESS;
     uint32_t appendWriteToMemoryCalledCount = 0;
+
+    bool callAppendMemoryCopyKernelWithGABase = true;
+    ze_result_t appendMemoryCopyKernelWithGACalledCountReturnValue = ZE_RESULT_SUCCESS;
+    uint32_t appendMemoryCopyKernelWithGACalledCount = 0;
 };
 
 struct CmdListHelper {

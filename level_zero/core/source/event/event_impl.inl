@@ -17,6 +17,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/wait_util.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -386,6 +387,7 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
     }
 
     releaseTempInOrderTimestampNodes();
+    device->getDriverHandle()->getStagingBufferManager()->resetDetectedPtrs();
 }
 
 template <typename TagSizeT>

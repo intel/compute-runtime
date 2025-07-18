@@ -23,6 +23,7 @@ class Device;
 class MemoryManager;
 class SVMAllocsManager;
 class GraphicsAllocation;
+class StagingBufferManager;
 struct SvmAllocationData;
 } // namespace NEO
 
@@ -59,6 +60,7 @@ struct DriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
                                                                              bool *allocationRangeCovered) = 0;
 
     virtual NEO::SVMAllocsManager *getSvmAllocsManager() = 0;
+    virtual NEO::StagingBufferManager *getStagingBufferManager() = 0;
     virtual ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
                                            uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) = 0;
     virtual ze_result_t sysmanEventsListenEx(uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices,

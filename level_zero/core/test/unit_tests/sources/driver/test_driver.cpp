@@ -135,6 +135,29 @@ TEST_F(DriverHandleImpTest, givenDriverImpWhenCallingupdateRootDeviceBitFieldsTh
     EXPECT_EQ(newNeoDevice->getDeviceBitfield(), entry->second);
 }
 
+TEST_F(DriverHandleImpTest, givenDriverWhenFindAllocationDataForRangeWithDifferentAllocationsThenReturnFailure) {
+    ze_device_mem_alloc_desc_t devDesc = {};
+    devDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    void *ptr1 = nullptr;
+    void *ptr2 = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device, &devDesc, 100, 1, &ptr1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device, &devDesc, 100, 1, &ptr2));
+    NEO::SvmAllocationData *allocData{nullptr};
+    auto uintPtr1 = castToUint64(ptr1);
+    auto uintPtr2 = castToUint64(ptr2);
+    bool ret = true;
+    if (uintPtr1 > uintPtr2) {
+        auto diff = ptrDiff(ptr1, ptr2) + 1;
+        ret = driverHandle->findAllocationDataForRange(ptr2, diff, allocData);
+    } else {
+        auto diff = ptrDiff(ptr2, ptr1) + 1;
+        ret = driverHandle->findAllocationDataForRange(ptr1, diff, allocData);
+    }
+    EXPECT_FALSE(ret);
+    context->freeMem(ptr1);
+    context->freeMem(ptr2);
+}
+
 using DriverVersionTest = Test<DeviceFixture>;
 TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
     std::vector<std::pair<std::string, uint32_t>> additionalExtensions;

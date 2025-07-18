@@ -1208,10 +1208,10 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingCopy
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
     ultCsr->recordFlushedBatchBuffer = true;
 
-    void *srcPtr = reinterpret_cast<void *>(0x12000);
-    void *dstPtr = reinterpret_cast<void *>(0x23000);
+    size_t src = 0;
+    size_t dst = 0;
     CmdListMemoryCopyParams copyParams = {};
-    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
+    returnValue = commandList->appendMemoryCopy(&dst, &src, sizeof(size_t), nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
@@ -1230,10 +1230,10 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineSyncCmdListWhenAppendingCopyO
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
     ultCsr->recordFlushedBatchBuffer = true;
 
-    void *srcPtr = reinterpret_cast<void *>(0x12000);
-    void *dstPtr = reinterpret_cast<void *>(0x23000);
+    size_t src = 0;
+    size_t dst = 0;
     CmdListMemoryCopyParams copyParams = {};
-    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
+    returnValue = commandList->appendMemoryCopy(&dst, &src, sizeof(size_t), nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);

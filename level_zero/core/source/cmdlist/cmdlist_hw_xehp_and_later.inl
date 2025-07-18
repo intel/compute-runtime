@@ -479,7 +479,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             }
             appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, launchParams.outListCommands, false, true, launchParams.omitAddingEventResidency, false);
             if (compactEvent->isInterruptModeEnabled()) {
-                NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+                NEO::EncodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
             }
         } else if (event) {
             event->setPacketsInUse(partitionCount);

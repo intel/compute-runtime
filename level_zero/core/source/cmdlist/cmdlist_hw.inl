@@ -3325,7 +3325,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
     }
 
     if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1 || isCopyOnly(copyOffloadOperation)) && signalEvent && signalEvent->isInterruptModeEnabled()) {
-        NEO::EnodeUserInterrupt<GfxFamily>::encode(*cmdStream);
+        NEO::EncodeUserInterrupt<GfxFamily>::encode(*cmdStream);
     }
 }
 

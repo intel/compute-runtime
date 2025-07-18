@@ -59,4 +59,4 @@ template struct NEO::EncodeEnableRayTracing<Family>;
 template struct NEO::EncodeNoop<Family>;
 template struct NEO::EncodeStoreMemory<Family>;
 template struct NEO::EncodeMemoryFence<Family>;
-template struct NEO::EnodeUserInterrupt<Family>;
+template struct NEO::EncodeUserInterrupt<Family>;

@@ -24,6 +24,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/wait_util.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -695,6 +696,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
         });
+    } else if (this->isValidForStagingTransfer(dstptr, srcptr, size, numWaitEvents > 0)) {
+        return this->appendStagingMemoryCopy(dstptr, srcptr, size, hSignalEvent, memoryCopyParams);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
                                                                      numWaitEvents, phWaitEvents, memoryCopyParams);
@@ -1206,6 +1209,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                 }
 
                 this->storeFillPatternResourcesForReuse();
+                this->getDevice()->getDriverHandle()->getStagingBufferManager()->resetDetectedPtrs();
             }
 
             bool hangDetected = status == ZE_RESULT_ERROR_DEVICE_LOST;
@@ -1843,6 +1847,85 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                           requireTaskCountUpdate,
                           &mainAppendLock,
                           &mainLockForIndirect);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::stagingStatusToL0(const NEO::StagingTransferStatus &status) const {
+    if (status.waitStatus == NEO::WaitStatus::gpuHang) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+    return static_cast<ze_result_t>(status.chunkCopyStatus);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCopy(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams) {
+    auto relaxedOrdering = memoryCopyParams.relaxedOrderingDispatch;
+    bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(0, relaxedOrdering);
+    Event *event = nullptr;
+    if (hSignalEvent) {
+        event = Event::fromHandle(hSignalEvent);
+    }
+
+    NEO::ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) -> int32_t {
+        checkAvailableSpace(0, relaxedOrdering, commonImmediateCommandSize, false);
+        auto isFirstTransfer = (chunkDst == dstptr);
+        auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(dstptr, size);
+
+        if (isFirstTransfer) {
+            this->appendEventForProfiling(event, nullptr, true, false, false, isCopyOnly(true));
+        }
+        auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(chunkDst, chunkSrc, chunkSize, nullptr,
+                                                                          0, nullptr, memoryCopyParams);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
+
+        if (isLastTransfer) {
+            this->appendEventForProfiling(event, nullptr, false, false, false, isCopyOnly(true));
+            if (event && event->isInterruptModeEnabled()) {
+                NEO::EncodeUserInterrupt<GfxFamily>::encode(*this->commandContainer.getCommandStream());
+            }
+            if (Event::isAggregatedEvent(event)) {
+                this->appendSignalAggregatedEventAtomic(*event);
+            }
+        }
+        ret = flushImmediate(ret, true, hasStallingCmds, relaxedOrdering,
+                             NEO::AppendOperations::kernel, true, hSignalEvent, false, nullptr, nullptr);
+        return ret;
+    };
+
+    if (!this->handleCounterBasedEventOperations(event, false)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
+    auto ret = stagingStatusToL0(stagingBufferManager->performCopy(dstptr, srcptr, size, chunkCopy, getCsr(true)));
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    if (event && event->isCounterBased() && event->getInOrderIncrementValue() == 0) {
+        this->assignInOrderExecInfoToEvent(event);
+    } else if (event && !event->isCounterBased() && !event->isEventTimestampFlagSet()) {
+        ret = this->appendBarrier(hSignalEvent, 0, nullptr, relaxedOrdering);
+    }
+    return ret;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const void *dstptr, const void *srcptr, size_t size, bool hasDependencies) {
+    if (NEO::debugManager.flags.EnableCopyWithStagingBuffers.get() != 1) {
+        return false;
+    }
+    if (this->useAdditionalBlitProperties) {
+        return false;
+    }
+    auto driver = this->getDevice()->getDriverHandle();
+    auto importedAlloc = driver->findHostPointerAllocation(const_cast<void *>(srcptr), size, this->getDevice()->getRootDeviceIndex());
+    if (importedAlloc != nullptr) {
+        return false;
+    }
+    auto neoDevice = this->getDevice()->getNEODevice();
+    return driver->getStagingBufferManager()->isValidForStagingTransfer(*neoDevice, srcptr, size, hasDependencies);
 }
 
 } // namespace L0
