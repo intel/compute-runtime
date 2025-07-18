@@ -13,7 +13,9 @@ using namespace NEO;
 
 BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) { // NOLINT(readability-identifier-naming)
     if (fdwReason == DLL_PROCESS_DETACH) {
-        globalPlatformTeardown();
+        /* If lpvReserved is non-NULL with DLL_PROCESS_DETACH, the process is terminating,
+         * clean up should be skipped according to the DllMain spec. */
+        globalPlatformTeardown(lpvReserved != nullptr);
     }
     if (fdwReason == DLL_PROCESS_ATTACH) {
         globalPlatformSetup();

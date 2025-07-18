@@ -43,12 +43,7 @@ Platform::Platform(ExecutionEnvironment &executionEnvironmentIn) : executionEnvi
 Platform::~Platform() {
     executionEnvironment.prepareForCleanup();
 
-    for (auto clDevice : this->clDevices) {
-        clDevice->getDevice().getRootDeviceEnvironmentRef().debugger.reset(nullptr);
-        clDevice->getDevice().stopDirectSubmissionAndWaitForCompletion();
-        clDevice->getDevice().pollForCompletion();
-        clDevice->decRefInternal();
-    }
+    devicesCleanup(false);
 
     gtpinNotifyPlatformShutdown();
     executionEnvironment.decRefInternal();
@@ -233,6 +228,18 @@ ClDevice **Platform::getClDevices() {
     }
 
     return clDevices.data();
+}
+
+void Platform::devicesCleanup(bool processTermination) {
+    for (auto clDevice : this->clDevices) {
+        clDevice->getDevice().stopDirectSubmissionAndWaitForCompletion();
+        clDevice->getDevice().pollForCompletion();
+        if (processTermination) {
+            continue;
+        }
+        clDevice->getDevice().getRootDeviceEnvironmentRef().debugger.reset(nullptr);
+        clDevice->decRefInternal();
+    }
 }
 
 const PlatformInfo &Platform::getPlatformInfo() const {

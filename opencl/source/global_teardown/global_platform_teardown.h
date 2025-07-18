@@ -10,6 +10,6 @@
 namespace NEO {
 extern volatile bool wasPlatformTeardownCalled;
 
-void globalPlatformTeardown();
+void globalPlatformTeardown(bool processTermination);
 void globalPlatformSetup();
 } // namespace NEO

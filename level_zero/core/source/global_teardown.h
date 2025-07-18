@@ -13,6 +13,6 @@ namespace L0 {
 extern decltype(&zelLoaderTranslateHandle) loaderTranslateHandleFunc;
 extern decltype(&zelSetDriverTeardown) setDriverTeardownFunc;
 
-void globalDriverTeardown();
+void globalDriverTeardown(bool processTermination);
 void globalDriverSetup();
 } // namespace L0

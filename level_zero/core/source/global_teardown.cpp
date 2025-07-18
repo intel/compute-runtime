@@ -9,6 +9,7 @@
 
 #include "shared/source/os_interface/sys_calls_common.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/ddi/ze_ddi_tables.h"
@@ -31,9 +32,28 @@ void globalDriverSetup() {
     }
 }
 
-void globalDriverTeardown() {
-    if (levelZeroDriverInitialized) {
+void globalDriverTeardown(bool processTermination) {
+    globalDriverDispatch.core.isValidFlag = false;
+    globalDriverDispatch.tools.isValidFlag = false;
+    globalDriverDispatch.sysman.isValidFlag = false;
 
+    if (processTermination) {
+        if (globalDriverHandles == nullptr) {
+            return;
+        }
+        for (auto &globalDriverHandle : *globalDriverHandles) {
+            auto globalDriver = static_cast<L0::DriverHandleImp *>(DriverHandle::fromHandle(globalDriverHandle));
+            if (globalDriver == nullptr) {
+                continue;
+            }
+            for (auto *device : globalDriver->devices) {
+                device->getNEODevice()->stopDirectSubmissionAndWaitForCompletion();
+            }
+        }
+        return;
+    }
+
+    if (levelZeroDriverInitialized) {
         NEO::OsLibraryCreateProperties loaderLibraryProperties("ze_loader.dll");
         loaderLibraryProperties.performSelfLoad = true;
         std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc(loaderLibraryProperties)};
@@ -65,8 +85,5 @@ void globalDriverTeardown() {
         delete Sysman::globalSysmanDriver;
         Sysman::globalSysmanDriver = nullptr;
     }
-    globalDriverDispatch.core.isValidFlag = false;
-    globalDriverDispatch.tools.isValidFlag = false;
-    globalDriverDispatch.sysman.isValidFlag = false;
 }
 } // namespace L0
