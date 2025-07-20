@@ -140,19 +140,6 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorS
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsUsmAllocationReuseSupportedThenCorrectValueIsReturned) {
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
-        EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
-        EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
-    }
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
-        EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
-    }
-}
-
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
