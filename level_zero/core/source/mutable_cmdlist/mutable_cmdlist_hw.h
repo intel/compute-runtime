@@ -36,8 +36,6 @@ struct MutableAppendLaunchKernelWithParams {
 struct MutableAppendLaunchKernelEvents {
     CommandToPatch signalCmd;
 
-    size_t currentSignalEventDescriptorIndex = std::numeric_limits<size_t>::max();
-
     bool waitEvents = false;
     bool l3FlushEventSyncCmd = false;
     bool l3FlushEventTimestampSyncCmds = false;
@@ -113,7 +111,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     void storeKernelArgumentAndDispatchVariables(MutableAppendLaunchKernelWithParams &mutableParams,
                                                  CmdListKernelLaunchParams &launchParams,
                                                  Kernel *kernel,
-                                                 MutationVariables *variableDescriptors,
+                                                 KernelVariableDescriptor *kernelVariables,
                                                  ze_mutable_command_exp_flags_t mutableFlags);
     void storeSignalEventVariable(MutableAppendLaunchKernelEvents &mutableEventParams,
                                   CmdListKernelLaunchParams &launchParams,
@@ -126,7 +124,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
                                               std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList);
     void captureRegularWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                          std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList);
-    void captureCounterBasedTimestampSignalEventCommands(MutableVariableDescriptor &currentMutableSignalEvent,
+    void captureCounterBasedTimestampSignalEventCommands(SignalEventVariableDescriptor &currentMutableSignalEvent,
                                                          std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
                                                          std::vector<MutableStoreDataImm *> &variableStoreDataImmList);
     void captureStandaloneTimestampSignalEventCommands(std::vector<MutableStoreRegisterMem *> &variableStoreRegisterMem);

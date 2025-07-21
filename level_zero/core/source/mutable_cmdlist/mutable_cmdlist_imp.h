@@ -75,11 +75,6 @@ struct MclAllocations {
 };
 
 struct AppendMutation {
-    AppendMutation() {
-        constexpr size_t estimatedKernelArgumentPerAppendCount = 40 + 2; // kernel args + 2 for group size and group count per kernel in kernel group
-        // reference to variables is used in append but NOT for kernel group (ISA mutation) and their descriptors
-        variables.reserve(estimatedKernelArgumentPerAppendCount);
-    }
     MutationVariables variables;
     MutableKernelGroup *kernelGroup = nullptr;
     ze_mutable_command_exp_flags_t mutationFlags = 0;
@@ -168,11 +163,11 @@ struct MutableCommandListImp : public MutableCommandList {
     void createNativeBinary(ArrayRef<const uint8_t> module);
     KernelData *getKernelData(L0::Kernel *kernel);
 
-    MutationVariables *getVariableDescriptorContainer(AppendMutation &selectedAppend) {
+    KernelVariableDescriptor *getVariableDescriptorContainer(AppendMutation &selectedAppend) {
         if (selectedAppend.kernelGroup != nullptr) {
             return &selectedAppend.kernelGroup->getCurrentMutableKernel()->getKernelVariables();
         } else {
-            return &selectedAppend.variables;
+            return &selectedAppend.variables.kernelVariables;
         }
     }
 

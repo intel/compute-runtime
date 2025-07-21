@@ -363,6 +363,41 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
+            givenTwoKernelsWithBufferAndImageArgumentsWhenMutatingKernelsThenImageArgumentIsNotReset) {
+
+    // set kernel arg 0, 1 => buffer, image
+    resizeKernelArg(2);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
+
+    NEO::ArgDescriptor kernelArgImage = {NEO::ArgDescriptor::argTImage};
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[1] = kernelArgImage;
+    mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs[1] = kernelArgImage;
+
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+    for (auto &mutableKernel : mutation.kernelGroup->getKernelsInGroup()) {
+        ASSERT_EQ(2u, mutableKernel->getKernelVariables().kernelArguments.size());
+        // image at index 1
+        EXPECT_EQ(nullptr, mutableKernel->getKernelVariables().kernelArguments[1].kernelArgumentVariable);
+    }
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
             givenTwoKernelsOneWithBiggerPayloadSizeWhenFirstAppendedWithSmallerAndSecondMutatedThenBiggerPayloadSizeConsumedAsReserveAtAppendTime) {
     constexpr uint32_t kernel2CrossThreadInitSize = 2 * crossThreadInitSize;
 

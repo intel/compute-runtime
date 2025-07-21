@@ -29,7 +29,7 @@ class MutableKernel {
 
     MutableKernel(ze_kernel_handle_t kernelHandle, uint32_t inlineDataSize, uint32_t maxPerThreadDataSize);
 
-    MutationVariables &getKernelVariables() {
+    KernelVariableDescriptor &getKernelVariables() {
         return kernelVariables;
     }
 
@@ -82,7 +82,7 @@ class MutableKernel {
     bool checkKernelCompatible();
 
   protected:
-    MutationVariables kernelVariables;
+    KernelVariableDescriptor kernelVariables;
     NEO::ResidencyContainer kernelResidencySnapshotContainer;
 
     std::unique_ptr<MutableIndirectData> hostViewIndirectData;

@@ -19,30 +19,33 @@ namespace L0::MCL {
 struct Variable;
 
 struct KernelArgumentVariableDescriptor {
-    uint32_t argType = 0;
+    Variable *kernelArgumentVariable = nullptr;
     uint32_t argIndex = 0;
 };
 
 struct SignalEventVariableDescriptor {
+    Variable *eventVariable = nullptr;
     Event *event = nullptr;
 };
 
 struct WaitEventVariableDescriptor {
+    Variable *eventVariable = nullptr;
     Event *event = nullptr;
     uint32_t waitEventIndex = 0;
     uint32_t waitEventPackets = 0;
 };
 
-struct MutableVariableDescriptor {
-    Variable *var = nullptr;
-    union {
-        KernelArgumentVariableDescriptor kernelArguments;
-        SignalEventVariableDescriptor signalEvent;
-        WaitEventVariableDescriptor waitEvents;
-    };
-    ze_mutable_command_exp_flag_t varType;
+struct KernelVariableDescriptor {
+    std::vector<KernelArgumentVariableDescriptor> kernelArguments;
+    Variable *groupCount = nullptr;
+    Variable *groupSize = nullptr;
+    Variable *globalOffset = nullptr;
 };
 
-using MutationVariables = std::vector<MutableVariableDescriptor>;
+struct MutationVariables {
+    KernelVariableDescriptor kernelVariables;
+    SignalEventVariableDescriptor signalEvent;
+    std::vector<WaitEventVariableDescriptor> waitEvents;
+};
 
 } // namespace L0::MCL

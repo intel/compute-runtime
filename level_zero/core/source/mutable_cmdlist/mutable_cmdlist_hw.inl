@@ -178,10 +178,11 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
         if ((currentAppend.mutationFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS) == ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS) {
             if (numWaitEvents > 0) {
+                currentAppend.variables.waitEvents.reserve(numWaitEvents);
                 mutableEventParams.waitEvents = true;
                 bool omitWaitEventResidency = false;
                 for (uint32_t i = 0; i < numWaitEvents; i++) {
-                    MutableVariableDescriptor mutableWaitEvent = {};
+                    WaitEventVariableDescriptor mutableWaitEventDesc = {};
 
                     Event *event = Event::fromHandle(phWaitEvents[i]);
 
@@ -191,21 +192,21 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
                     variable->setAsWaitEvent(event);
 
-                    mutableWaitEvent.var = variable;
-                    mutableWaitEvent.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
-                    mutableWaitEvent.waitEvents.event = event;
-                    mutableWaitEvent.waitEvents.waitEventIndex = i;
+                    mutableWaitEventDesc.event = event;
+                    mutableWaitEventDesc.eventVariable = variable;
+                    mutableWaitEventDesc.waitEventIndex = i;
+
                     if (CommandListImp::isInOrderExecutionEnabled() && event->isCounterBased()) {
-                        mutableWaitEvent.waitEvents.waitEventPackets = event->getInOrderExecInfo()->getNumDevicePartitionsToWait();
+                        mutableWaitEventDesc.waitEventPackets = event->getInOrderExecInfo()->getNumDevicePartitionsToWait();
                         if (!isCbEventBoundToCmdList(event)) {
                             omitWaitEventResidency = true;
                             auto deviceCounterAlloc = event->getInOrderExecInfo()->getDeviceCounterAllocation();
                             addToResidencyContainer(getDeviceCounterAllocForResidency(deviceCounterAlloc));
                         }
                     } else {
-                        mutableWaitEvent.waitEvents.waitEventPackets = event->getPacketsToWait();
+                        mutableWaitEventDesc.waitEventPackets = event->getPacketsToWait();
                     }
-                    currentAppend.variables.push_back(mutableWaitEvent);
+                    currentAppend.variables.waitEvents.push_back(mutableWaitEventDesc);
 
                     NEO::GraphicsAllocation *eventPoolAlloc = event->getAllocation(this->device);
                     if (eventPoolAlloc) {
@@ -228,23 +229,23 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
     }
 
     if (this->nextAppendKernelMutable) {
-        if (mutableEventParams.currentSignalEventDescriptorIndex != std::numeric_limits<size_t>::max()) {
-            MutableVariableDescriptor &currentMutableSignalEvent = this->mutations[(nextCommandId - 1)].variables[mutableEventParams.currentSignalEventDescriptorIndex];
+        if (this->mutations[(nextCommandId - 1)].variables.signalEvent.eventVariable != nullptr) {
+            auto &signalEventVariableDesc = this->mutations[(nextCommandId - 1)].variables.signalEvent;
             MutableComputeWalker *walker = nullptr;
             MutablePipeControl *signalPipeControl = nullptr;
             if (mutableEventParams.counterBasedEvent) {
                 // both TS and L3 flush events need additional clean Store Data Imm -> signal cmd (CW or PC or StoreRegMem) -> sync SemWait
                 if (mutableEventParams.counterBasedTimestampEvent || mutableEventParams.l3FlushEvent) {
-                    auto &eventVariableSemaphoreWaitList = currentMutableSignalEvent.var->getSemWaitList();
-                    auto &eventVariableStoreDataImmList = currentMutableSignalEvent.var->getStoreDataImmList();
+                    auto &eventVariableSemaphoreWaitList = signalEventVariableDesc.eventVariable->getSemWaitList();
+                    auto &eventVariableStoreDataImmList = signalEventVariableDesc.eventVariable->getStoreDataImmList();
 
-                    captureCounterBasedTimestampSignalEventCommands(currentMutableSignalEvent,
+                    captureCounterBasedTimestampSignalEventCommands(signalEventVariableDesc,
                                                                     eventVariableSemaphoreWaitList, eventVariableStoreDataImmList);
                     walker = this->appendKernelMutableComputeWalker;
                 }
                 if (mutableEventParams.l3FlushEventTimestampSyncCmds) {
                     // L3 TS is signaled by StoreRegMem
-                    auto &eventVariableStoreRegMemList = currentMutableSignalEvent.var->getStoreRegMemList();
+                    auto &eventVariableStoreRegMemList = signalEventVariableDesc.eventVariable->getStoreRegMemList();
                     captureStandaloneTimestampSignalEventCommands(eventVariableStoreRegMemList);
                 } else if (mutableEventParams.l3FlushEventSyncCmd) {
                     // L3 Immediate is signaled by PC
@@ -258,14 +259,14 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                 }
             } else {
                 if (mutableEventParams.eventInsideInOrder) {
-                    auto &eventVariableSemaphoreWaitList = currentMutableSignalEvent.var->getSemWaitList();
-                    auto &eventVariableStoreDataImmList = currentMutableSignalEvent.var->getStoreDataImmList();
+                    auto &eventVariableSemaphoreWaitList = signalEventVariableDesc.eventVariable->getSemWaitList();
+                    auto &eventVariableStoreDataImmList = signalEventVariableDesc.eventVariable->getStoreDataImmList();
 
-                    captureCounterBasedTimestampSignalEventCommands(currentMutableSignalEvent,
+                    captureCounterBasedTimestampSignalEventCommands(signalEventVariableDesc,
                                                                     eventVariableSemaphoreWaitList, eventVariableStoreDataImmList);
                 }
                 if (mutableEventParams.l3FlushEventTimestampSyncCmds) {
-                    auto &eventVariableStoreRegMemList = currentMutableSignalEvent.var->getStoreRegMemList();
+                    auto &eventVariableStoreRegMemList = signalEventVariableDesc.eventVariable->getStoreRegMemList();
                     captureStandaloneTimestampSignalEventCommands(eventVariableStoreRegMemList);
                 } else if (mutableEventParams.l3FlushEventSyncCmd) {
                     auto signalPipeControlPtr = std::make_unique<MutablePipeControlHw<GfxFamily>>(mutableEventParams.signalCmd.pDestination);
@@ -275,33 +276,30 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                     walker = this->appendKernelMutableComputeWalker;
                 }
             }
-            currentMutableSignalEvent.var->setAsSignalEvent(currentMutableSignalEvent.signalEvent.event,
-                                                            walker,
-                                                            signalPipeControl);
-            NEO::GraphicsAllocation *eventAlloc = currentMutableSignalEvent.signalEvent.event->getAllocation(this->device);
+            signalEventVariableDesc.eventVariable->setAsSignalEvent(signalEventVariableDesc.event,
+                                                                    walker,
+                                                                    signalPipeControl);
+            NEO::GraphicsAllocation *eventAlloc = signalEventVariableDesc.event->getAllocation(this->device);
             if (eventAlloc) {
                 addToResidencyContainer(eventAlloc);
             }
         }
         if (mutableEventParams.waitEvents) {
-
             auto waitEventCmdToPatchIterator = this->appendCmdsToPatch.begin();
             if (waitEventCmdToPatchIterator->type == CommandToPatch::CommandType::PrefetchKernelMemory) {
                 waitEventCmdToPatchIterator++;
             }
 
             AppendMutation &currentAppend = this->mutations[(nextCommandId - 1)];
-
             for (uint32_t i = 0; i < numWaitEvents; i++) {
-                MutableVariableDescriptor &mutableWaitEvent = currentAppend.variables[i];
-                UNRECOVERABLE_IF(ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS != mutableWaitEvent.varType);
-                UNRECOVERABLE_IF(i != mutableWaitEvent.waitEvents.waitEventIndex);
+                WaitEventVariableDescriptor &mutableWaitEvent = currentAppend.variables.waitEvents[i];
+                UNRECOVERABLE_IF(i != mutableWaitEvent.waitEventIndex);
 
-                auto &variableSemWaitCmdList = mutableWaitEvent.var->getSemWaitList();
-                auto &variableLoadRegImmCmdList = mutableWaitEvent.var->getLoadRegImmList();
+                auto &variableSemWaitCmdList = mutableWaitEvent.eventVariable->getSemWaitList();
+                auto &variableLoadRegImmCmdList = mutableWaitEvent.eventVariable->getLoadRegImmList();
 
-                for (uint32_t packet = 0; packet < mutableWaitEvent.waitEvents.waitEventPackets; packet++) {
-                    if (CommandListImp::isInOrderExecutionEnabled() && mutableWaitEvent.waitEvents.event->isCounterBased() && (this->heaplessModeEnabled || !mutableWaitEvent.waitEvents.event->hasInOrderTimestampNode())) {
+                for (uint32_t packet = 0; packet < mutableWaitEvent.waitEventPackets; packet++) {
+                    if (CommandListImp::isInOrderExecutionEnabled() && mutableWaitEvent.event->isCounterBased() && (this->heaplessModeEnabled || !mutableWaitEvent.event->hasInOrderTimestampNode())) {
                         captureCounterBasedWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList, variableLoadRegImmCmdList);
                     } else {
                         captureRegularWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList);
@@ -338,7 +336,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
     }
 
     MutableAppendLaunchKernelWithParams mutableCmdlistAppendLaunchParams = {};
-    MutationVariables *currentVariables = nullptr;
+    KernelVariableDescriptor *currentKernelVariables = nullptr;
 
     if (this->nextAppendKernelMutable) {
         AppendMutation &currentAppend = this->mutations[(nextCommandId - 1)];
@@ -358,12 +356,12 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
             mutableCmdlistAppendLaunchParams.localRegionSizeFromApi = launchParams.localRegionSize;
             mutableCmdlistAppendLaunchParams.isCooperativeFromApi = launchParams.isCooperative;
 
-            currentVariables = &mutableCmdlistAppendLaunchParams.currentMutableKernel->getKernelVariables();
+            currentKernelVariables = &mutableCmdlistAppendLaunchParams.currentMutableKernel->getKernelVariables();
         } else {
-            currentVariables = &currentAppend.variables;
+            currentKernelVariables = &currentAppend.variables.kernelVariables;
         }
 
-        storeKernelArgumentAndDispatchVariables(mutableCmdlistAppendLaunchParams, launchParams, kernel, currentVariables, currentAppend.mutationFlags);
+        storeKernelArgumentAndDispatchVariables(mutableCmdlistAppendLaunchParams, launchParams, kernel, currentKernelVariables, currentAppend.mutationFlags);
 
         if (mutableCmdlistAppendLaunchParams.kernelMutation) {
             launchParams.reserveExtraPayloadSpace += mutableCmdlistAppendLaunchParams.extraPayloadSpaceForKernelGroup;
@@ -678,11 +676,11 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureRegularWaitEventCommand
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedTimestampSignalEventCommands(MutableVariableDescriptor &currentMutableSignalEvent,
+void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedTimestampSignalEventCommands(SignalEventVariableDescriptor &currentMutableSignalEvent,
                                                                                                   std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
                                                                                                   std::vector<MutableStoreDataImm *> &variableStoreDataImmList) {
     auto partitionCount = CommandListCoreFamily<gfxCoreFamily>::getPartitionCount();
-    uint32_t syncWaitEventPackets = currentMutableSignalEvent.signalEvent.event->getPacketsToWait();
+    uint32_t syncWaitEventPackets = currentMutableSignalEvent.event->getPacketsToWait();
     uint32_t clearEventOps = syncWaitEventPackets / partitionCount;
 
     variableSemaphoreWaitList.reserve(syncWaitEventPackets);
@@ -730,27 +728,21 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::storeKernelArgumentAndDispatchVariables(MutableAppendLaunchKernelWithParams &mutableParams,
                                                                                           CmdListKernelLaunchParams &launchParams,
                                                                                           Kernel *kernel,
-                                                                                          MutationVariables *variableDescriptors,
+                                                                                          KernelVariableDescriptor *kernelVariables,
                                                                                           ze_mutable_command_exp_flags_t mutableFlags) {
     if ((mutableFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT) == ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT) {
         InterfaceVariableDescriptor varDesc = {};
         varDesc.isStageCommit = true;
         getVariable(&varDesc, &mutableParams.groupCountVariable);
 
-        MutableVariableDescriptor mutableGroupCount = {};
-        mutableGroupCount.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
-        mutableGroupCount.var = mutableParams.groupCountVariable;
-        variableDescriptors->push_back(mutableGroupCount);
+        kernelVariables->groupCount = mutableParams.groupCountVariable;
     }
     if ((mutableFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE) == ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE) {
         InterfaceVariableDescriptor varDesc = {};
         varDesc.isStageCommit = true;
         getVariable(&varDesc, &mutableParams.groupSizeVariable);
 
-        MutableVariableDescriptor mutableGroupSize = {};
-        mutableGroupSize.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
-        mutableGroupSize.var = mutableParams.groupSizeVariable;
-        variableDescriptors->push_back(mutableGroupSize);
+        kernelVariables->groupSize = mutableParams.groupSizeVariable;
 
         this->enableReservePerThreadForLocalId = true;
         launchParams.reserveExtraPayloadSpace = this->maxPerThreadDataSize;
@@ -759,16 +751,16 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeKernelArgumentAndDispatch
         InterfaceVariableDescriptor varDesc = {};
         getVariable(&varDesc, &mutableParams.globalOffsetVariable);
 
-        MutableVariableDescriptor mutableGlobalOffset = {};
-        mutableGlobalOffset.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
-        mutableGlobalOffset.var = mutableParams.globalOffsetVariable;
-        variableDescriptors->push_back(mutableGlobalOffset);
+        kernelVariables->globalOffset = mutableParams.globalOffsetVariable;
     }
     if ((mutableFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS) == ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS) {
         // intercept kernel arguments
         auto &kernelArgs = kernel->getKernelDescriptor().payloadMappings.explicitArgs;
+        kernelVariables->kernelArguments.reserve(kernelArgs.size());
         uint32_t argCount = 0;
         for (const auto &arg : kernelArgs) {
+            KernelArgumentVariableDescriptor mutableKernelArgumentDesc = {};
+            mutableKernelArgumentDesc.argIndex = argCount;
             bool captureArgument = false;
             bool slmArgument = false;
             bool immediateArgument = arg.type == NEO::ArgDescriptor::argTValue;
@@ -789,12 +781,9 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeKernelArgumentAndDispatch
                 getVariable(&varDesc, &variable);
                 variable->setAsKernelArg(kernel->toHandle(), argCount);
 
-                MutableVariableDescriptor mutableKernelArgument = {};
-                mutableKernelArgument.var = variable;
-                mutableKernelArgument.kernelArguments.argIndex = argCount;
-                mutableKernelArgument.kernelArguments.argType = arg.type;
-                mutableKernelArgument.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
-                variableDescriptors->push_back(mutableKernelArgument);
+                mutableKernelArgumentDesc.kernelArgumentVariable = variable;
+
+                kernelVariables->kernelArguments.push_back(mutableKernelArgumentDesc);
 
                 mutableParams.kernelArgumentMutation = true;
 
@@ -804,7 +793,11 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeKernelArgumentAndDispatch
                     }
                     mutableParams.lastSlmArgumentVariable = variable;
                 }
+            } else {
+                // in case kernel argument is non-mutable (not captured), push it into kernel arguments vector anyway to preserve index order
+                kernelVariables->kernelArguments.push_back(mutableKernelArgumentDesc);
             }
+
             argCount++;
         }
     }
@@ -818,14 +811,10 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeSignalEventVariable(Mutab
                                                                            ze_mutable_command_exp_flags_t mutableFlags) {
     if ((mutableFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT) == ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT) {
         if (event != nullptr) {
-            MutableVariableDescriptor mutableSignalEvent = {};
-            mutableSignalEvent.signalEvent.event = event;
-            mutableSignalEvent.varType = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
 
             Variable *variable = nullptr;
             InterfaceVariableDescriptor varDesc = {};
             getVariable(&varDesc, &variable);
-            mutableSignalEvent.var = variable;
 
             launchParams.omitAddingEventResidency = event->getAllocation(this->device) != nullptr;
 
@@ -874,8 +863,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeSignalEventVariable(Mutab
                 }
             }
 
-            variableDescriptors->emplace_back(mutableSignalEvent);
-            mutableEventParams.currentSignalEventDescriptorIndex = variableDescriptors->size() - 1;
+            variableDescriptors->signalEvent.event = event;
+            variableDescriptors->signalEvent.eventVariable = variable;
         }
     }
 }

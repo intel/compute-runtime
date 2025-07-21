@@ -328,20 +328,51 @@ void MutableCommandListFixtureInit::prepareKernelArg(uint16_t argIndex, L0::MCL:
 std::vector<L0::MCL::Variable *> MutableCommandListFixtureInit::getVariableList(uint64_t commandId, L0::MCL::VariableType varType, L0::Kernel *kernelOption) {
     auto &selectedAppend = mutableCommandList->mutations[(commandId - 1)];
     std::vector<L0::MCL::Variable *> selectedVariables;
-    L0::MCL::MutationVariables *appendVariableDescriptors = nullptr;
-    if (kernelOption != nullptr) {
-        for (auto &mutableKernel : selectedAppend.kernelGroup->getKernelsInGroup()) {
-            if (mutableKernel->getKernel() == kernelOption) {
-                appendVariableDescriptors = &mutableKernel->getKernelVariables();
+    L0::MCL::KernelVariableDescriptor *kernelVariableDescriptors = nullptr;
+    if (varType == L0::MCL::VariableType::buffer ||
+        varType == L0::MCL::VariableType::value ||
+        varType == L0::MCL::VariableType::slmBuffer ||
+        varType == L0::MCL::VariableType::globalOffset ||
+        varType == L0::MCL::VariableType::groupCount ||
+        varType == L0::MCL::VariableType::groupSize) {
+        if (kernelOption != nullptr) {
+            for (auto &mutableKernel : selectedAppend.kernelGroup->getKernelsInGroup()) {
+                if (mutableKernel->getKernel() == kernelOption) {
+                    kernelVariableDescriptors = &mutableKernel->getKernelVariables();
+                }
+            }
+        } else {
+            kernelVariableDescriptors = &selectedAppend.variables.kernelVariables;
+        }
+        if (kernelVariableDescriptors != nullptr) {
+            if (varType == L0::MCL::VariableType::buffer ||
+                varType == L0::MCL::VariableType::value ||
+                varType == L0::MCL::VariableType::slmBuffer) {
+                for (auto &varDesc : kernelVariableDescriptors->kernelArguments) {
+                    if (varDesc.kernelArgumentVariable != nullptr &&
+                        varType == varDesc.kernelArgumentVariable->getDesc().type) {
+                        selectedVariables.push_back(varDesc.kernelArgumentVariable);
+                    }
+                }
+            }
+            if (varType == L0::MCL::VariableType::globalOffset && kernelVariableDescriptors->globalOffset != nullptr) {
+                selectedVariables.push_back(kernelVariableDescriptors->globalOffset);
+            }
+            if (varType == L0::MCL::VariableType::groupCount && kernelVariableDescriptors->groupCount != nullptr) {
+                selectedVariables.push_back(kernelVariableDescriptors->groupCount);
+            }
+            if (varType == L0::MCL::VariableType::groupSize && kernelVariableDescriptors->groupSize != nullptr) {
+                selectedVariables.push_back(kernelVariableDescriptors->groupSize);
             }
         }
-    } else {
-        appendVariableDescriptors = &selectedAppend.variables;
     }
-    if (appendVariableDescriptors != nullptr) {
-        for (auto &varDesc : *appendVariableDescriptors) {
-            if (varDesc.var->getType() == varType) {
-                selectedVariables.push_back(varDesc.var);
+    if (varType == L0::MCL::VariableType::signalEvent && selectedAppend.variables.signalEvent.eventVariable != nullptr) {
+        selectedVariables.push_back(selectedAppend.variables.signalEvent.eventVariable);
+    }
+    if (varType == L0::MCL::VariableType::waitEvent) {
+        for (auto &varDesc : selectedAppend.variables.waitEvents) {
+            if (varDesc.eventVariable != nullptr) {
+                selectedVariables.push_back(varDesc.eventVariable);
             }
         }
     }
