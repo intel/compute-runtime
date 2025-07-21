@@ -590,7 +590,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandWaitEventsExp(uint64_t co
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        auto waitEventHandle = phWaitEvents[eventNum];
+        auto waitEventHandle = toInternalType(phWaitEvents[eventNum]);
         auto inputEvent = Event::fromHandle(waitEventHandle);
         if (mutableWaitEventDesc->waitEvents.event == inputEvent) {
             continue;

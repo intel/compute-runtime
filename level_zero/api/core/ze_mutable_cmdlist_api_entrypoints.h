@@ -41,11 +41,7 @@ ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandWaitEventsExp(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     hCommandList = toInternalType(hCommandList);
-    std::vector<ze_event_handle_t> translatedEvents{};
-    for (auto i = 0u; i < numWaitEvents; i++) {
-        translatedEvents.push_back(toInternalType(phWaitEvents[i]));
-    }
-    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandWaitEventsExp(commandId, numWaitEvents, translatedEvents.data());
+    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandWaitEventsExp(commandId, numWaitEvents, phWaitEvents);
 }
 
 ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExp(
