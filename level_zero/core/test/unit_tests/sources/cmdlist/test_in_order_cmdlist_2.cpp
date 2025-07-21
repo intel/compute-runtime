@@ -3971,10 +3971,20 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
 
     auto itor = cmdList.begin();
 
+    bool aggregatedEventSplit = bcsSplit.events.aggregatedEventsMode;
+
     for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
         auto beginItor = itor;
 
-        auto signalSubCopyEventGpuVa = bcsSplit.events.subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device);
+        auto engineOffset = aggregatedEventSplit ? submissionId : (submissionId * numLinkCopyEngines);
+
+        uint64_t signalSubCopyEventGpuVa = 0;
+
+        if (aggregatedEventSplit) {
+            signalSubCopyEventGpuVa = bcsSplit.events.subcopy[engineOffset]->getInOrderExecInfo()->getBaseDeviceAddress();
+        } else {
+            signalSubCopyEventGpuVa = bcsSplit.events.subcopy[i + engineOffset]->getCompletionFieldGpuAddress(device);
+        }
 
         size_t numExpectedSemaphores = 0;
 
@@ -4005,20 +4015,38 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         ASSERT_NE(nullptr, genCmdCast<XY_COPY_BLT *>(*itor));
 
         if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            auto flushDwItor = find<MI_FLUSH_DW *>(++itor, cmdList.end());
-            ASSERT_NE(cmdList.end(), flushDwItor);
+            GenCmdList::iterator signalItor;
 
-            auto signalSubCopyEvent = genCmdCast<MI_FLUSH_DW *>(*flushDwItor);
-            ASSERT_NE(nullptr, signalSubCopyEvent);
+            if (aggregatedEventSplit) {
+                signalItor = find<MI_ATOMIC *>(++itor, cmdList.end());
 
-            while (signalSubCopyEvent->getDestinationAddress() != signalSubCopyEventGpuVa) {
-                flushDwItor = find<MI_FLUSH_DW *>(++flushDwItor, cmdList.end());
-                ASSERT_NE(cmdList.end(), flushDwItor);
-
-                signalSubCopyEvent = genCmdCast<MI_FLUSH_DW *>(*flushDwItor);
+                auto signalSubCopyEvent = genCmdCast<MI_ATOMIC *>(*signalItor);
                 ASSERT_NE(nullptr, signalSubCopyEvent);
+
+                while (signalSubCopyEvent->getMemoryAddress() != signalSubCopyEventGpuVa) {
+                    signalItor = find<MI_ATOMIC *>(++signalItor, cmdList.end());
+                    ASSERT_NE(cmdList.end(), signalItor);
+
+                    signalSubCopyEvent = genCmdCast<MI_ATOMIC *>(*signalItor);
+                    ASSERT_NE(nullptr, signalSubCopyEvent);
+                }
+            } else {
+                signalItor = find<MI_FLUSH_DW *>(++itor, cmdList.end());
+                ASSERT_NE(cmdList.end(), signalItor);
+
+                auto signalSubCopyEvent = genCmdCast<MI_FLUSH_DW *>(*signalItor);
+                ASSERT_NE(nullptr, signalSubCopyEvent);
+
+                while (signalSubCopyEvent->getDestinationAddress() != signalSubCopyEventGpuVa) {
+                    signalItor = find<MI_FLUSH_DW *>(++signalItor, cmdList.end());
+                    ASSERT_NE(cmdList.end(), signalItor);
+
+                    signalSubCopyEvent = genCmdCast<MI_FLUSH_DW *>(*signalItor);
+                    ASSERT_NE(nullptr, signalSubCopyEvent);
+                }
             }
-            itor = ++flushDwItor;
+
+            itor = ++signalItor;
         } else {
             ASSERT_TRUE(false);
         }
@@ -4038,18 +4066,39 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         ASSERT_TRUE(verifyInOrderDependency<FamilyType>(semaphoreItor, submissionId, counterGpuAddress, immCmdList.isQwordInOrderCounter(), true));
     }
 
-    for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
+    if (aggregatedEventSplit) {
+        semaphoreItor = find<MI_SEMAPHORE_WAIT *>(semaphoreItor, cmdList.end());
+        ASSERT_NE(cmdList.end(), semaphoreItor);
+
         auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
         ASSERT_NE(nullptr, subCopyEventSemaphore);
 
-        EXPECT_EQ(bcsSplit.events.subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device), subCopyEventSemaphore->getSemaphoreGraphicsAddress());
+        while (bcsSplit.events.subcopy[submissionId]->getInOrderExecInfo()->getBaseDeviceAddress() != subCopyEventSemaphore->getSemaphoreGraphicsAddress()) {
+            semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
+            ASSERT_NE(cmdList.end(), semaphoreItor);
+
+            auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+            ASSERT_NE(nullptr, subCopyEventSemaphore);
+        }
 
         itor = ++semaphoreItor;
+
+        EXPECT_EQ(nullptr, genCmdCast<MI_FLUSH_DW *>(*itor)); // no marker event
+
+    } else {
+        for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
+            auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+            ASSERT_NE(nullptr, subCopyEventSemaphore);
+
+            EXPECT_EQ(bcsSplit.events.subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device), subCopyEventSemaphore->getSemaphoreGraphicsAddress());
+
+            itor = ++semaphoreItor;
+        }
+
+        ASSERT_NE(nullptr, genCmdCast<MI_FLUSH_DW *>(*itor)); // marker event
     }
 
-    ASSERT_NE(nullptr, genCmdCast<MI_FLUSH_DW *>(*itor)); // marker event
-
-    if (immCmdList.isHeaplessModeEnabled()) {
+    if (immCmdList.isHeaplessModeEnabled() && !aggregatedEventSplit) {
         auto inOrderAtomicSignalling = genCmdCast<MI_ATOMIC *>(*(++itor));
         ASSERT_NE(nullptr, inOrderAtomicSignalling);
     }
@@ -4130,10 +4179,10 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
         EXPECT_FALSE(event->isCounterBased());
     }
     for (auto &event : bcsSplit.events.subcopy) {
-        EXPECT_FALSE(event->isCounterBased());
+        EXPECT_EQ(bcsSplit.events.aggregatedEventsMode, event->isCounterBased());
     }
     for (auto &event : bcsSplit.events.marker) {
-        EXPECT_FALSE(event->isCounterBased());
+        EXPECT_EQ(bcsSplit.events.aggregatedEventsMode, event->isCounterBased());
     }
 }
 
@@ -4173,6 +4222,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
 
     *immCmdList->getCsr(false)->getBarrierCountTagAddress() = 0u;
     immCmdList->getCsr(false)->getNextBarrierCount();
+    *immCmdList->inOrderExecInfo->getBaseHostAddress() = 0;
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
     // implicit dependencies
@@ -4194,6 +4244,8 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
     size_t offset = cmdStream->getUsed();
+
+    *immCmdList->inOrderExecInfo->getBaseHostAddress() = 0;
 
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 1, &eventHandle, copyParams);
 

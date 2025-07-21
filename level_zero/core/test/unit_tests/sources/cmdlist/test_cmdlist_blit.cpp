@@ -16,6 +16,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -1085,6 +1086,18 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
     uint32_t expectedEnginesCount = 4;
     uint32_t expectedNumRootDevices = 1;
 };
+
+HWTEST2_F(AggregatedBcsSplitTests, givenPlatformSupporingAggregatedSplitModeWhenInitializingThenEnableInBcsSplitObject, IsAtLeastXeHpcCore) {
+    debugManager.flags.SplitBcsAggregatedEventsMode.set(-1);
+
+    BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
+
+    bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, nullptr, cmdList->getCsr(false));
+
+    EXPECT_EQ(device->getL0GfxCoreHelper().bcsSplitAggregatedModeEnabled(), bcsSplit.events.aggregatedEventsMode);
+
+    bcsSplit.releaseResources();
+}
 
 HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, IsAtLeastXeHpcCore) {
     EXPECT_EQ(0u, bcsSplit->events.subcopy.size());

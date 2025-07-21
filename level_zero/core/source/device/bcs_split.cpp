@@ -13,6 +13,7 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/driver_experimental/zex_api.h"
 
 namespace L0 {
@@ -42,6 +43,12 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
 
     if (!this->cmdQs.empty()) {
         return true;
+    }
+
+    events.aggregatedEventsMode = device.getL0GfxCoreHelper().bcsSplitAggregatedModeEnabled();
+
+    if (NEO::debugManager.flags.SplitBcsAggregatedEventsMode.get() != -1) {
+        events.aggregatedEventsMode = !!NEO::debugManager.flags.SplitBcsAggregatedEventsMode.get();
     }
 
     setupEnginesMask(bcsSplitSettings);
@@ -133,12 +140,6 @@ std::vector<CommandQueue *> &BcsSplit::getCmdQsForSplit(NEO::TransferDirection d
 
     return this->cmdQs;
 }
-
-BcsSplit::Events::Events(BcsSplit &bcsSplit) : bcsSplit(bcsSplit) {
-    if (NEO::debugManager.flags.SplitBcsAggregatedEventsMode.get() != -1) {
-        aggregatedEventsMode = !!NEO::debugManager.flags.SplitBcsAggregatedEventsMode.get();
-    }
-};
 
 size_t BcsSplit::Events::obtainAggregatedEventsForSplit(Context *context) {
     for (size_t i = 0; i < this->marker.size(); i++) {

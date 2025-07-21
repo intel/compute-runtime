@@ -110,4 +110,9 @@ bool L0GfxCoreHelperHw<Family>::isDefaultCmdListWithCopyOffloadSupported(bool ad
     return (NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 2);
 }
 
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::bcsSplitAggregatedModeEnabled() const {
+    return false;
+}
+
 } // namespace L0

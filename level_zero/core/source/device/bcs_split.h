@@ -58,7 +58,7 @@ struct BcsSplit {
         size_t createAggregatedEvent(Context *context);
         uint64_t *getNextAllocationForAggregatedEvent();
 
-        Events(BcsSplit &bcsSplit);
+        Events(BcsSplit &bcsSplit) : bcsSplit(bcsSplit) {}
     } events;
 
     std::vector<CommandQueue *> cmdQs;
