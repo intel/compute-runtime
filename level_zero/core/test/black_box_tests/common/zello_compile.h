@@ -19,6 +19,7 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
 std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &options, const std::string &device, std::string &outCompilerLog);
 std::vector<uint8_t> compileToNative(const std::string &src, const std::string &deviceName, const std::string &revisionId, const std::string &options, const std::string &internalOptions, const std::string &statefulMode, std::string &outCompilerLog);
 
+extern const char *slmArgKernelSrc;
 extern const char *memcpyBytesTestKernelSrc;
 
 extern const char *memcpyBytesWithPrintfTestKernelSrc;
