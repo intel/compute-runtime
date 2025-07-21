@@ -613,7 +613,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
     PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandKernelsExp cmdlist: %p numKernels: %u\n", this, numKernels);
     for (uint32_t id = 0; id < numKernels; id++) {
         auto commandId = pCommandId[id];
-        auto kernelHandle = phKernels[id];
+        auto kernelHandle = toInternalType(phKernels[id]);
         auto kernel = Kernel::fromHandle(kernelHandle);
         AppendMutation &selectedAppend = this->mutations[(commandId - 1)];
         if (!kernelInstructionMutationEnabled(selectedAppend.mutationFlags)) {

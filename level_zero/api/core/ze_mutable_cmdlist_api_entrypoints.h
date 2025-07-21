@@ -68,12 +68,7 @@ ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
     uint64_t *pCommandId,
     ze_kernel_handle_t *phKernels) {
     hCommandList = toInternalType(hCommandList);
-    hCommandList = toInternalType(hCommandList);
-    std::vector<ze_kernel_handle_t> translatedKernels{};
-    for (auto i = 0u; i < numKernels; i++) {
-        translatedKernels.push_back(toInternalType(phKernels[i]));
-    }
-    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandKernelsExp(numKernels, pCommandId, translatedKernels.data());
+    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommandKernelsExp(numKernels, pCommandId, phKernels);
 }
 
 } // namespace L0
