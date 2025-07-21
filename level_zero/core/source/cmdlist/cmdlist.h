@@ -480,6 +480,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     bool isDualStreamCopyOffloadOperation(bool offloadOperation) const { return (getCopyOffloadModeForOperation(offloadOperation) == CopyOffloadModes::dualStream); }
     bool isNonDualStreamCopyOffloadOperation(bool offloadOperation) const { return offloadOperation && !isDualStreamCopyOffloadOperation(offloadOperation); }
+    void registerWalkerWithProfilingEnqueued(Event *event);
 
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     NEO::PrivateAllocsToReuseContainer ownedPrivateAllocations;

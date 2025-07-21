@@ -1106,6 +1106,22 @@ TEST(CommandList, WhenConsumeTextureCacheFlushPendingThenReturnsCurrentValueAndC
     }
 }
 
+TEST(CommandList, givenNullEventWhenRegisterWalkerWithProfilingEnqueuedThenReturnFalse) {
+    MockCommandList cmdlist;
+
+    {
+        cmdlist.shouldRegisterEnqueuedWalkerWithProfiling = false;
+        cmdlist.registerWalkerWithProfilingEnqueued(nullptr);
+        EXPECT_FALSE(cmdlist.isWalkerWithProfilingEnqueued);
+    }
+
+    {
+        cmdlist.shouldRegisterEnqueuedWalkerWithProfiling = true;
+        cmdlist.registerWalkerWithProfilingEnqueued(nullptr);
+        EXPECT_FALSE(cmdlist.isWalkerWithProfilingEnqueued);
+    }
+}
+
 class MockCommandQueueIndirectAccess : public Mock<CommandQueue> {
   public:
     MockCommandQueueIndirectAccess(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : Mock(device, csr, desc) {}

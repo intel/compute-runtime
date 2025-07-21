@@ -1574,4 +1574,10 @@ size_t CommandQueue::calculateHostPtrSizeForImage(const size_t *region, size_t r
     return Image::calculateHostPtrSize(region, dstRowPitch, dstSlicePitch, bytesPerPixel, image->getImageDesc().image_type);
 }
 
+void CommandQueue::registerWalkerWithProfilingEnqueued(Event *event) {
+    if (this->shouldRegisterEnqueuedWalkerWithProfiling && isProfilingEnabled() && event) {
+        this->isWalkerWithProfilingEnqueued = true;
+    }
+}
+
 } // namespace NEO

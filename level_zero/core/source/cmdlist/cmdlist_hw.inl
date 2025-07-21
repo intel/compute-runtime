@@ -451,9 +451,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
             event->resetKernelCountAndPacketUsedCount();
         }
 
-        if (event->isEventTimestampFlagSet() && this->shouldRegisterEnqueuedWalkerWithProfiling) {
-            this->isWalkerWithProfilingEnqueued = true;
-        }
+        registerWalkerWithProfilingEnqueued(event);
     }
 
     if (!handleCounterBasedEventOperations(event, launchParams.omitAddingEventResidency)) {
@@ -507,10 +505,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
             event->setKernelWithPrintfDeviceMutex(kernel->getDevicePrintfKernelMutex());
         }
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
-
-        if (event->isEventTimestampFlagSet() && this->shouldRegisterEnqueuedWalkerWithProfiling) {
-            this->isWalkerWithProfilingEnqueued = true;
-        }
+        registerWalkerWithProfilingEnqueued(event);
     }
 
     if (!handleCounterBasedEventOperations(event, false)) {
@@ -557,10 +552,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     if (hEvent) {
         event = Event::fromHandle(hEvent);
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
-
-        if (this->shouldRegisterEnqueuedWalkerWithProfiling && event->isEventTimestampFlagSet()) {
-            this->isWalkerWithProfilingEnqueued = true;
-        }
+        registerWalkerWithProfilingEnqueued(event);
     }
 
     if (!handleCounterBasedEventOperations(event, false)) {
@@ -1491,9 +1483,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     if (signalEvent) {
-        if (signalEvent->isEventTimestampFlagSet() && this->shouldRegisterEnqueuedWalkerWithProfiling) {
-            this->isWalkerWithProfilingEnqueued = true;
-        }
+        registerWalkerWithProfilingEnqueued(signalEvent);
     }
 
     Kernel *builtinKernel = nullptr;
@@ -2371,9 +2361,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         signalEvent = Event::fromHandle(hSignalEvent);
         launchParams.isHostSignalScopeEvent = signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
         dcFlush = getDcFlushRequired(signalEvent->isSignalScope());
-        if (signalEvent->isEventTimestampFlagSet() && this->shouldRegisterEnqueuedWalkerWithProfiling) {
-            this->isWalkerWithProfilingEnqueued = true;
-        }
+        registerWalkerWithProfilingEnqueued(signalEvent);
     }
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {

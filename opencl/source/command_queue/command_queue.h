@@ -415,14 +415,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return this->isCacheFlushOnNextBcsWriteRequired && this->isImageWriteOperation(cmdType);
     }
 
-    bool getShouldRegisterEnqueuedWalkerWithProfiling() {
-        return this->shouldRegisterEnqueuedWalkerWithProfiling;
-    }
-
-    void registerWalkerWithProfilingEnqueued() {
-        this->isWalkerWithProfilingEnqueued = true;
-    }
-
+    void registerWalkerWithProfilingEnqueued(Event *event);
     bool getAndClearIsWalkerWithProfilingEnqueued() {
         bool retVal = this->isWalkerWithProfilingEnqueued;
         this->isWalkerWithProfilingEnqueued = false;

@@ -233,4 +233,11 @@ NEO::CommandStreamReceiver *CommandList::getCsr(bool copyOffload) const {
 
     return static_cast<CommandQueueImp *>(queue)->getCsr();
 }
+
+void CommandList::registerWalkerWithProfilingEnqueued(Event *event) {
+    if (this->shouldRegisterEnqueuedWalkerWithProfiling && event && event->isEventTimestampFlagSet()) {
+        this->isWalkerWithProfilingEnqueued = true;
+    }
+}
+
 } // namespace L0

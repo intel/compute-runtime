@@ -348,6 +348,9 @@ using CommandList = WhiteBox<::L0::CommandListImp>;
 template <>
 struct Mock<CommandList> : public CommandList {
     using BaseClass = CommandList;
+    using BaseClass::isWalkerWithProfilingEnqueued;
+    using BaseClass::registerWalkerWithProfilingEnqueued;
+    using BaseClass::shouldRegisterEnqueuedWalkerWithProfiling;
 
     Mock(Device *device = nullptr);
     ~Mock() override;

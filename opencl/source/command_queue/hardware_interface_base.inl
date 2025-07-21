@@ -155,9 +155,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getRootDeviceEnvironment());
     }
 
-    if (commandQueue.getShouldRegisterEnqueuedWalkerWithProfiling() && commandQueue.isProfilingEnabled() && walkerArgs.event) {
-        commandQueue.registerWalkerWithProfilingEnqueued();
-    }
+    commandQueue.registerWalkerWithProfilingEnqueued(walkerArgs.event);
 
     if (PauseOnGpuProperties::gpuScratchRegWriteAllowed(debugManager.flags.GpuScratchRegWriteAfterWalker.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount())) {
         uint32_t registerOffset = debugManager.flags.GpuScratchRegWriteRegisterOffset.get();
