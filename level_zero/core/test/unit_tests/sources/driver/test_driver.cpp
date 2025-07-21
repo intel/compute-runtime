@@ -1176,7 +1176,7 @@ TEST(zeDriverHandleGetProperties, whenZeDriverGetPropertiesIsCalledThenGetProper
 
 using GetDriverPropertiesTest = Test<DeviceFixture>;
 
-TEST_F(GetDriverPropertiesTest, whenGettingDdiHandlesExtensionPropertiesThenSupportIsExposedOnlyWhenDebugKeyIsSet) {
+TEST_F(GetDriverPropertiesTest, whenGettingDdiHandlesExtensionPropertiesThenSupportCanBeDisabledViaDebugKey) {
     DebugManagerStateRestore restorer;
 
     ze_driver_properties_t driverProperties = {ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
@@ -1185,7 +1185,7 @@ TEST_F(GetDriverPropertiesTest, whenGettingDdiHandlesExtensionPropertiesThenSupp
 
     ze_result_t result = driverHandle->getProperties(&driverProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, ddiHandlesExtProperties.flags);
+    EXPECT_EQ(ze_driver_ddi_handle_ext_flag_t::ZE_DRIVER_DDI_HANDLE_EXT_FLAG_DDI_HANDLE_EXT_SUPPORTED, ddiHandlesExtProperties.flags);
 
     ddiHandlesExtProperties = {ZE_STRUCTURE_TYPE_DRIVER_DDI_HANDLES_EXT_PROPERTIES};
     NEO::debugManager.flags.EnableDdiHandlesExtension.set(0);
@@ -1775,6 +1775,7 @@ TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnC
     verifyExtensionDefinition(ZE_DEVICE_VECTOR_SIZES_EXT_NAME, ZE_DEVICE_VECTOR_SIZES_EXT_VERSION_1_0);
     verifyExtensionDefinition(ZE_MUTABLE_COMMAND_LIST_EXP_NAME, ZE_MUTABLE_COMMAND_LIST_EXP_VERSION_1_1);
     verifyExtensionDefinition(ZE_RTAS_EXT_NAME, ZE_RTAS_BUILDER_EXT_VERSION_1_0);
+    verifyExtensionDefinition(ZE_DRIVER_DDI_HANDLES_EXT_NAME, ZE_DRIVER_DDI_HANDLES_EXT_VERSION_1_0);
 
     // Driver experimental extensions
     verifyExtensionDefinition(ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME, ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_VERSION_CURRENT);
