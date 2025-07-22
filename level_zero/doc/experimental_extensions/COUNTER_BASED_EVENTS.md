@@ -172,12 +172,15 @@ ze_result_t zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent);
 ```
 
 # Regular command list
-Regular command list is a special use case for CB Events. Its state is additionally updated on every `zeCommandQueueExecuteCommandLists` call.  
+Regular command list is a special use case for CB Events. Counter state is additionally reset on every `zeCommandQueueExecuteCommandLists` call.  
 Any API call that relies on explicit counter memory/value (eg. `zexEventGetDeviceAddress`) needs to be called again to obtain new data. This includes IPC.  
 Other API calls that don't specify counter explicitly, are managed by the Driver.  
 
 **Each regular command list execution updates state of the events that will be signaled in that command list to "not ready".**  
-**This rule applies to `zeCommandQueueExecuteCommandLists` and `zeCommandListImmediateAppendCommandListsExp` API calls.**
+**This rule applies to `zeCommandQueueExecuteCommandLists` and `zeCommandListImmediateAppendCommandListsExp` API calls.**  
+**Internal command list counter is implicitly reset to 0 on every execution.**  
+**L0 doesn't allow to execute the same regular command list multiple times in parallel. It must be synchronized before next execution.**  
+**Any waiting operation on such Event, must ensure that it is waiting for the correct `zeCommandQueueExecuteCommandLists` call.**  
 
 ```cpp
 // in-order operations
@@ -186,19 +189,22 @@ zeCommandListAppendLaunchKernel(regularCmdList1, kernel, &groupCount, &event1, 0
 zeCommandListAppendLaunchKernel(regularCmdList1, kernel, &groupCount, nullptr, 0, nullptr);
 zeCommandListClose(regularCmdList1);
 
-zeCommandQueueExecuteCommandLists(cmdQueue, 1, &regularCmdList1, nullptr); // Command list has 3 operations. Counter updated to {1->2->3}
-zeCommandQueueExecuteCommandLists(cmdQueue, 1, &regularCmdList1, nullptr); // Execute again. Counter updated to {4->5->6}
+zeCommandQueueExecuteCommandLists(cmdQueue1, 1, &regularCmdList1, nullptr); // Command list has 3 operations. Counter updated to {1->2->3}
+zeCommandQueueSynchronize(cmdQueue1, timeout);
+zeCommandQueueExecuteCommandLists(cmdQueue1, 1, &regularCmdList1, nullptr); // Execute again. Counter implicitly reset to 0. GPU will again increment it to {1->2->3}
 
 // wait from different command list
-zeCommandListAppendLaunchKernel(regularCmdList2, kernel, &groupCount, nullptr, 1, &event1); // wait for counter=5 (second operation, after 2nd execute call)
+zeCommandListAppendLaunchKernel(regularCmdList2, kernel, &groupCount, nullptr, 1, &event1); // wait for counter=2 (second operation)
 zeCommandListClose(regularCmdList2);
-zeCommandQueueExecuteCommandLists(cmdQueue, 1, &regularCmdList2, nullptr); // wait for counter=5
+zeCommandQueueExecuteCommandLists(cmdQueue2, 1, &regularCmdList2, nullptr); // wait for counter=2, second execution of regularCmdList1
+zeCommandQueueSynchronize(cmdQueue2, timeout);
 
 // execute regularCmdList1 3rd time
-zeCommandQueueExecuteCommandLists(cmdQueue, 1, &regularCmdList1, nullptr); // Counter updated to {7->8->9}
+zeCommandQueueExecuteCommandLists(cmdQueue1, 1, &regularCmdList1, nullptr); // Counter reset and again updated to {1->2->3}
 
 // execute regularCmdList2 2nd time
-zeCommandQueueExecuteCommandLists(cmdQueue, 1, &regularCmdList2, nullptr); // wait for counter=8
+zeCommandQueueExecuteCommandLists(cmdQueue2, 1, &regularCmdList2, nullptr); // wait for counter=2, 3rd execution of regularCmdList1
+zeCommandQueueSynchronize(cmdQueue2, timeout);
 ```
 
 # Multi directional dependencies on Regular command lists
