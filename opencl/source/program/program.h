@@ -35,6 +35,9 @@ class ExecutionEnvironment;
 class Program;
 struct MetadataGeneration;
 struct KernelInfo;
+enum class DecodeError : uint8_t;
+struct ExternalFunctionInfo;
+
 template <>
 struct OpenCLObjectMapper<_cl_program> {
     typedef class Program DerivedType;

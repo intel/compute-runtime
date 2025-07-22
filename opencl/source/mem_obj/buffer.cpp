@@ -12,7 +12,6 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -24,7 +23,6 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/cpuintrinsics.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"

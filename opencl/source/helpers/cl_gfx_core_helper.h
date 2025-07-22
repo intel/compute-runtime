@@ -27,8 +27,9 @@ struct HardwareInfo;
 struct KernelInfo;
 struct MultiDispatchInfo;
 struct RootDeviceEnvironment;
-
 class ClGfxCoreHelper;
+enum class EngineGroupType : uint32_t;
+
 using createClGfxCoreHelperFunctionType = std::unique_ptr<ClGfxCoreHelper> (*)();
 
 class ClGfxCoreHelper : public ApiGfxCoreHelper {

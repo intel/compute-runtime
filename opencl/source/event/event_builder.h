@@ -14,6 +14,9 @@
 
 #include <type_traits>
 
+template <typename DataType>
+class ArrayRef;
+
 namespace NEO {
 
 class Event;

@@ -26,6 +26,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/enable_family_full_ocl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/error_mappers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info_status_mapper.h

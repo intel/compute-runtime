@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/command_container/encode_surface_state.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/xe3_core/hw_cmds_base.h"
 
 #include "opencl/source/command_queue/gpgpu_walker_xehp_and_later.inl"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,8 +32,10 @@ class HwTimeStamps;
 class TimestampPacketContainer;
 template <class T>
 class TagNode;
-
 enum PreemptionMode : uint32_t;
+class TagNodeBase;
+enum class MapOperationType;
+struct TimestampPacketDependencies;
 
 struct KernelOperation {
   protected:

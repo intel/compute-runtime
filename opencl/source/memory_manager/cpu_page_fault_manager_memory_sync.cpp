@@ -9,7 +9,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include "opencl/source/command_queue/command_queue.h"

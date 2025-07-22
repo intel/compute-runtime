@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,8 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/device/device.h"
 
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/context/context.h"
 
 namespace NEO {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,6 @@
 
 #include "surface_formats.h"
 
-#include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/array_count.h"
-
-#include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/image.h"
 

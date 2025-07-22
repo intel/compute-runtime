@@ -24,6 +24,7 @@ class GmmHelper;
 class GmmClientContext;
 struct PlatformInfo;
 struct HardwareInfo;
+class ClDevice;
 
 template <>
 struct OpenCLObjectMapper<_cl_platform_id> {

@@ -29,7 +29,6 @@ enum class InternalMemoryType : uint32_t;
 namespace NEO {
 struct MemoryProperties;
 class HeapAllocator;
-
 class AsyncEventsHandler;
 class CommandQueue;
 class Device;
@@ -42,6 +41,7 @@ class Program;
 class Platform;
 class TagAllocatorBase;
 class StagingBufferManager;
+class ClDevice;
 
 template <>
 struct OpenCLObjectMapper<_cl_context> {

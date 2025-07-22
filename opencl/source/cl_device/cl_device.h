@@ -43,6 +43,8 @@ struct SelectorCopyEngine;
 class GfxCoreHelper;
 class ProductHelper;
 class GTPinGfxCoreHelper;
+class CompilerProductHelper;
+enum class EngineGroupType : uint32_t;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {

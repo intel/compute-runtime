@@ -23,6 +23,8 @@ class ClDevice;
 class Device;
 class MemoryManager;
 struct EncodeSurfaceStateArgs;
+class GraphicsAllocation;
+class SharingHandler;
 
 using BufferCreateFunc = Buffer *(*)(Context *context,
                                      const MemoryProperties &memoryProperties,

@@ -21,6 +21,11 @@
 
 namespace NEO {
 struct BuiltinCode;
+class BuiltIns;
+class GraphicsAllocation;
+class Kernel;
+struct KernelInfo;
+
 typedef std::vector<char> BuiltinResourceT;
 
 class ClDeviceVector;

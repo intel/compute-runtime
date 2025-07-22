@@ -29,6 +29,7 @@ class GraphicsAllocation;
 struct KernelInfo;
 class MemoryManager;
 class Context;
+class MemObj;
 
 template <>
 struct OpenCLObjectMapper<_cl_mem> {

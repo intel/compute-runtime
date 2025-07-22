@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ namespace NEO {
 class MemObj;
 class Buffer;
 class GraphicsAllocation;
+class CommandStreamReceiver;
 
 struct EventsRequest {
     EventsRequest() = delete;

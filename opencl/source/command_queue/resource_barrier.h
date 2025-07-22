@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -14,6 +15,8 @@
 
 namespace NEO {
 class CommandQueue;
+class Surface;
+
 class BarrierCommand : NEO::NonCopyableAndNonMovableClass {
   public:
     BarrierCommand(CommandQueue *commandQueue, const cl_resource_barrier_descriptor_intel *descriptors, uint32_t numDescriptors);

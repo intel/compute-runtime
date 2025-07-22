@@ -19,10 +19,10 @@
 
 namespace NEO {
 class LinearStream;
-
 class Kernel;
 class ClDevice;
 struct TimestampPacketDependencies;
+class MemObj;
 
 class DispatchInfo {
 

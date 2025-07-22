@@ -8,7 +8,6 @@
 #include "unified_image.h"
 
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"

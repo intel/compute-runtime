@@ -8,9 +8,7 @@
 #include "opencl/source/context/context.h"
 
 #include "shared/source/ail/ail_configuration.h"
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -38,8 +36,6 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/source/sharings/sharing_factory.h"
-
-#include "d3d_sharing_functions.h"
 
 #include <algorithm>
 #include <memory>

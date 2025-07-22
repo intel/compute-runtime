@@ -42,6 +42,9 @@ class Surface;
 class PrintfHandler;
 class MultiDeviceKernel;
 class LocalIdsCache;
+class ExecutionEnvironment;
+class GfxCoreHelper;
+struct HardwareInfo;
 
 class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMovableClass {
   public:

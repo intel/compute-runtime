@@ -8,13 +8,11 @@
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
 #include "shared/source/device/device.h"
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {

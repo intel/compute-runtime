@@ -12,17 +12,13 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/os_time.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
 #include "opencl/source/cl_device/cl_device_info_map.h"
-#include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
-#include "opencl/source/platform/platform.h"
 
 namespace NEO {
 

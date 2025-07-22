@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "opencl/source/helpers/surface_formats.h"
@@ -21,6 +22,8 @@ struct HardwareInfo;
 struct KernelInfo;
 struct SurfaceFormatInfo;
 struct UnifiedSharingMemoryDescription;
+class MemoryManager;
+class SharingHandler;
 
 using ImageCreateFunc = Image *(*)(Context *context,
                                    const MemoryProperties &memoryProperties,

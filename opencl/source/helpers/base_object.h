@@ -18,6 +18,8 @@
 #include <condition_variable>
 #include <thread>
 
+struct _cl_mem;
+
 namespace NEO {
 
 #if defined(__clang__)

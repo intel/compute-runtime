@@ -8,7 +8,6 @@
 #include "api.h"
 
 #include "shared/source/aub/aub_center.h"
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -19,8 +18,6 @@
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
-#include "shared/source/utilities/heap_allocator.h"
-#include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "opencl/source/api/additional_extensions.h"
 #include "opencl/source/api/api_enter.h"

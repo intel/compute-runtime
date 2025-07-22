@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,10 @@
 namespace NEO {
 class Image;
 class Context;
+class GraphicsAllocation;
+enum class UnifiedSharingHandleType;
+struct ImageInfo;
+struct UnifiedSharingMemoryDescription;
 
 class UnifiedImage : public UnifiedSharing {
     using UnifiedSharing::UnifiedSharing;

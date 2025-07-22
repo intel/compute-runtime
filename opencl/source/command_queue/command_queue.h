@@ -26,6 +26,10 @@
 #include <optional>
 #include <span>
 
+namespace aub_stream {
+enum EngineType : uint32_t;
+} // namespace aub_stream
+
 namespace NEO {
 class BarrierCommand;
 class Buffer;
@@ -46,6 +50,13 @@ struct CsrSelectionArgs;
 struct MultiDispatchInfo;
 struct TimestampPacketDependencies;
 struct StagingTransferStatus;
+class CommandStreamReceiver;
+class CsrDependencies;
+class Device;
+class MemObj;
+class TagNodeBase;
+enum class MapOperationType;
+struct EngineControl;
 
 enum class QueuePriority {
     low,

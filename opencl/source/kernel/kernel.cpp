@@ -7,7 +7,6 @@
 
 #include "opencl/source/kernel/kernel.h"
 
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -34,19 +33,16 @@
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/lookup_array.h"
-#include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/event/event.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_validators.h"
@@ -63,14 +59,12 @@
 #include "patch_list.h"
 
 #include <algorithm>
-#include <cstdint>
 #include <ranges>
 #include <vector>
 
 using namespace iOpenCL;
 
 namespace NEO {
-class Surface;
 
 uint32_t Kernel::dummyPatchLocation = 0xbaddf00d;
 

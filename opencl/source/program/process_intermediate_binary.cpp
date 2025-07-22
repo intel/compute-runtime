@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/compiler_interface/linker.h"
 #include "shared/source/helpers/string.h"
 
 #include "program.h"

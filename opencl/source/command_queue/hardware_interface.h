@@ -11,6 +11,9 @@
 
 #include <cstdint>
 
+template <typename T>
+struct Vec3;
+
 namespace NEO {
 
 class CommandQueue;
@@ -30,9 +33,9 @@ struct TimestampPacketDependencies;
 struct KernelInfo;
 struct EncodeWalkerArgs;
 struct HardwareInfo;
-
 template <class T>
 class TagNode;
+enum class DebugPauseState : uint32_t;
 
 struct HardwareInterfaceWalkerArgs {
     size_t globalWorkSizes[3] = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,7 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
-#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
-#include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/compiler_options_parser.h"
@@ -22,13 +19,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
-#include "opencl/source/helpers/cl_validators.h"
-#include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
-
-#include <cstring>
-#include <iterator>
-#include <sstream>
 
 namespace NEO {
 

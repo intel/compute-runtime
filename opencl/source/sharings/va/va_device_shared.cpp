@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,6 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/va/va_device.h"
 
-#include <sys/stat.h>
-#include <system_error>
-#include <unistd.h>
 #include <va/va_backend.h>
 
 namespace NEO {

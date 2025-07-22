@@ -8,7 +8,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/api_intercept.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/api/api_enter.h"
