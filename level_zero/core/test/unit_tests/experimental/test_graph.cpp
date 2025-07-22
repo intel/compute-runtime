@@ -63,6 +63,33 @@ struct MockGraphCmdListWithContext : Mock<CommandList> {
     L0::Context *ctx = nullptr;
 };
 
+struct MockGraphContextReturningSpecificCmdList : Mock<Context> {
+    Mock<CommandList> *cmdListToReturn = nullptr;
+    ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
+        *commandList = cmdListToReturn;
+        cmdListToReturn = nullptr;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    MockGraphContextReturningSpecificCmdList() = default;
+    MockGraphContextReturningSpecificCmdList(const MockGraphContextReturningSpecificCmdList &) = delete;
+    MockGraphContextReturningSpecificCmdList &operator=(const MockGraphContextReturningSpecificCmdList &) = delete;
+    MockGraphContextReturningSpecificCmdList(MockGraphContextReturningSpecificCmdList &&) = delete;
+    MockGraphContextReturningSpecificCmdList &operator=(MockGraphContextReturningSpecificCmdList &&) = delete;
+    ~MockGraphContextReturningSpecificCmdList() override {
+        if (cmdListToReturn) {
+            delete static_cast<L0::CommandList *>(cmdListToReturn);
+        }
+    }
+};
+
+struct MockGraphContextReturningNewCmdList : Mock<Context> {
+    ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
+        *commandList = new Mock<CommandList>;
+        return ZE_RESULT_SUCCESS;
+    }
+};
+
 TEST(GraphTestApiCreate, GivenNonNullPNextThenGraphCreateReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
@@ -563,22 +590,15 @@ TEST(GraphForks, GivenRegularEventDependencyThenCommandlistDoesNotStartRecording
 
 TEST(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly) {
     GraphsCleanupGuard graphCleanup;
-    struct MockContextSpecificCmdList : Mock<Context> {
-        ze_command_list_handle_t cmdListToReturn = nullptr;
-        ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
-            *commandList = cmdListToReturn;
-            return ZE_RESULT_SUCCESS;
-        }
-    };
 
-    MockContextSpecificCmdList ctx;
+    MockGraphContextReturningSpecificCmdList ctx;
     Mock<CommandList> cmdlist;
     Mock<CommandList> subCmdlist;
     Mock<Event> signalEvents[3];
     Mock<Event> waitEvents[3];
     ze_event_handle_t waitEventsList[3] = {&waitEvents[0], &waitEvents[1], &waitEvents[2]};
-    std::unique_ptr<Mock<CommandList>> graphHwCommands{new Mock<CommandList>()};
-    ctx.cmdListToReturn = graphHwCommands.get();
+    ctx.cmdListToReturn = new Mock<CommandList>();
+    auto *graphCmdList = ctx.cmdListToReturn;
     uint64_t memA[16] = {};
     uint64_t memB[16] = {};
 
@@ -591,8 +611,8 @@ TEST(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly) {
     EXPECT_FALSE(srcGraph.isSubGraph());
 
     ASSERT_EQ(2U, srcGraph.getCapturedCommands().size());
-    ASSERT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[0].index()));
-    ASSERT_EQ(CaptureApi::zeCommandListAppendMemoryCopy, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[1].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[0].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryCopy, static_cast<CaptureApi>(srcGraph.getCapturedCommands()[1].index()));
 
     GraphInstatiateSettings instantiateAsMonolithic;
     instantiateAsMonolithic.forkPolicy = GraphInstatiateSettings::ForkPolicyMonolythicLevels;
@@ -601,13 +621,11 @@ TEST(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly) {
     EXPECT_FALSE(execGraph.isSubGraph());
     EXPECT_FALSE(execGraph.empty());
     EXPECT_TRUE(execGraph.getSubgraphs().empty());
-    EXPECT_EQ(1U, graphHwCommands->appendBarrierCalled);
-    EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyCalled);
-    graphHwCommands.release();
+    EXPECT_EQ(1U, graphCmdList->appendBarrierCalled);
+    EXPECT_EQ(1U, graphCmdList->appendMemoryCopyCalled);
 
-    ctx.cmdListToReturn = nullptr;
-    graphHwCommands.reset(new Mock<CommandList>());
-    ctx.cmdListToReturn = graphHwCommands.get();
+    ctx.cmdListToReturn = new Mock<CommandList>();
+    graphCmdList = ctx.cmdListToReturn;
 
     Graph *srcSubGraph = nullptr;
     srcGraph.forkTo(subCmdlist, srcSubGraph, signalEvents[0]);
@@ -621,30 +639,22 @@ TEST(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly) {
     execMultiGraph.instantiateFrom(srcGraph, instantiateAsMonolithic);
 
     EXPECT_FALSE(execMultiGraph.isSubGraph());
-    EXPECT_EQ(1U, graphHwCommands->appendBarrierCalled);
-    EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyCalled);
+    EXPECT_EQ(1U, graphCmdList->appendBarrierCalled);
+    EXPECT_EQ(1U, graphCmdList->appendMemoryCopyCalled);
     ASSERT_EQ(1U, execMultiGraph.getSubgraphs().size());
     EXPECT_TRUE(execMultiGraph.getSubgraphs()[0]->isSubGraph());
     EXPECT_TRUE(execMultiGraph.getSubgraphs()[0]->empty());
-    ctx.cmdListToReturn = nullptr;
-    graphHwCommands.release();
 }
 
 TEST(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecutableInterleavesParentAndChildCommandListBasedOnForks) {
     GraphsCleanupGuard graphCleanup;
-    struct MockContextSpecificCmdList : Mock<Context> {
-        ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
-            *commandList = new Mock<CommandList>;
-            return ZE_RESULT_SUCCESS;
-        }
-    };
 
     struct MockExecutableGraph : ExecutableGraph {
         using ExecutableGraph::ExecutableGraph;
         using ExecutableGraph::submissionChain;
     };
 
-    MockContextSpecificCmdList ctx;
+    MockGraphContextReturningNewCmdList ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
     MockGraphCmdListWithContext subCmdlist{&ctx};
     Mock<Event> forkEvent;
@@ -774,16 +784,8 @@ TEST(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThenW
 TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandlists) {
     GraphsCleanupGuard graphCleanup;
 
-    struct MockContextSpecificCmdList : Mock<Context> {
-        ze_command_list_handle_t cmdListToReturn = nullptr;
-        ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
-            *commandList = cmdListToReturn;
-            return ZE_RESULT_SUCCESS;
-        }
-    };
-
-    MockContextSpecificCmdList ctx;
-    MockContextSpecificCmdList otherCtx;
+    MockGraphContextReturningSpecificCmdList ctx;
+    MockGraphContextReturningSpecificCmdList otherCtx;
     Mock<CommandList> cmdlist;
     Mock<Event> event;
     ze_image_handle_t imgA = nullptr;
@@ -835,10 +837,10 @@ TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandli
     ze_graph_handle_t hgraph = &srcGraph;
     EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(&cmdlist, &hgraph, nullptr));
 
-    std::unique_ptr<Mock<CommandList>> graphHwCommands{new Mock<CommandList>()};
-    ctx.cmdListToReturn = graphHwCommands.get();
+    ctx.cmdListToReturn = new Mock<CommandList>();
     ExecutableGraph execGraph;
 
+    auto *graphHwCommands = ctx.cmdListToReturn;
     EXPECT_EQ(0U, graphHwCommands->appendBarrierCalled);
     EXPECT_EQ(0U, graphHwCommands->appendMemoryCopyCalled);
     EXPECT_EQ(0U, graphHwCommands->appendWaitOnEventsCalled);
@@ -882,9 +884,6 @@ TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandli
     EXPECT_EQ(1U, graphHwCommands->appendWaitExternalSemaphoresCalled);
     EXPECT_EQ(1U, graphHwCommands->appendImageCopyToMemoryExtCalled);
     EXPECT_EQ(1U, graphHwCommands->appendImageCopyFromMemoryExtCalled);
-
-    ctx.cmdListToReturn = nullptr;
-    graphHwCommands.release();
 }
 
 TEST(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenTakeCareOnlyOfEvents) {
@@ -924,19 +923,11 @@ TEST(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenT
 
 TEST(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppendIt) {
     GraphsCleanupGuard graphCleanup;
-    struct MockContextSpecificCmdList : Mock<Context> {
-        ze_command_list_handle_t cmdListToReturn = nullptr;
-        ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
-            *commandList = cmdListToReturn;
-            return ZE_RESULT_SUCCESS;
-        }
-    };
 
-    MockContextSpecificCmdList ctx;
+    MockGraphContextReturningSpecificCmdList ctx;
     Mock<CommandList> cmdlist;
 
-    std::unique_ptr<Mock<CommandList>> graphHwCommands{new Mock<CommandList>()};
-    ctx.cmdListToReturn = graphHwCommands.get();
+    ctx.cmdListToReturn = new Mock<CommandList>();
 
     Graph srcGraph(&ctx, true);
     cmdlist.setCaptureTarget(&srcGraph);
@@ -947,8 +938,6 @@ TEST(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppend
 
     ExecutableGraph execGraph;
     execGraph.instantiateFrom(srcGraph);
-    ctx.cmdListToReturn = nullptr;
-    graphHwCommands.release();
 
     auto res = execGraph.execute(&cmdlist, nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -959,14 +948,8 @@ TEST(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppend
 
 TEST(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToCommandListSubmitAlsoSubGraphsToRespectiveCommandLists) {
     GraphsCleanupGuard graphCleanup;
-    struct MockContextSpecificCmdList : Mock<Context> {
-        ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList) override {
-            *commandList = new Mock<CommandList>;
-            return ZE_RESULT_SUCCESS;
-        }
-    };
 
-    MockContextSpecificCmdList ctx;
+    MockGraphContextReturningNewCmdList ctx;
     MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
     MockGraphCmdListWithContext mainExecCmdlist{&ctx};
     MockGraphCmdListWithContext subCmdlist{&ctx};
