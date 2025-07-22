@@ -2139,6 +2139,9 @@ void Kernel::setEnqueuedLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t lo
     patchVecNonPointer(getCrossThreadDataRef(),
                        getDescriptor().payloadMappings.dispatchTraits.enqueuedLocalWorkSize,
                        {localWorkSizeX, localWorkSizeY, localWorkSizeZ});
+    if (pImplicitArgs) {
+        pImplicitArgs->setEnqueuedLocalSize(localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    }
 }
 
 void Kernel::setNumWorkGroupsValues(uint32_t numWorkGroupsX, uint32_t numWorkGroupsY, uint32_t numWorkGroupsZ) {

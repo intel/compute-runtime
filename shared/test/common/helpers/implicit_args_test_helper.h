@@ -14,6 +14,8 @@ constexpr uint32_t getImplicitArgsSize(uint32_t version) {
         return NEO::ImplicitArgsV0::getAlignedSize();
     } else if (version == 1) {
         return NEO::ImplicitArgsV1::getAlignedSize();
+    } else if (version == 2) {
+        return NEO::ImplicitArgsV2::getAlignedSize();
     }
     return 0;
 }

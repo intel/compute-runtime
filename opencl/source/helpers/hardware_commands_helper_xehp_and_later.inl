@@ -81,6 +81,10 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
             localWorkSize[0] = pImplicitArgs->v1.localSizeX;
             localWorkSize[1] = pImplicitArgs->v1.localSizeY;
             localWorkSize[2] = pImplicitArgs->v1.localSizeZ;
+        } else if (pImplicitArgs->v1.header.structVersion == 2) {
+            localWorkSize[0] = pImplicitArgs->v2.localSizeX;
+            localWorkSize[1] = pImplicitArgs->v2.localSizeY;
+            localWorkSize[2] = pImplicitArgs->v2.localSizeZ;
         } else {
             UNRECOVERABLE_IF(true);
         }

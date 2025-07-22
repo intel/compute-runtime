@@ -2302,7 +2302,7 @@ HWTEST_F(LinkerTests, givenImplicitArgRelocationAndImplicitArgsWithUnknownVersio
     DebugManagerStateRestore restore;
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
         uint32_t getImplicitArgsVersion() const override {
-            return 2; // unknown version
+            return 3; // unknown version
         }
     };
 

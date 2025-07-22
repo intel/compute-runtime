@@ -1328,6 +1328,7 @@ void KernelImp::patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.enqueuedLocalWorkSize, workgroupSize);
     if (state.pImplicitArgs) {
         state.pImplicitArgs->setLocalSize(x, y, z);
+        state.pImplicitArgs->setEnqueuedLocalSize(x, y, z);
     }
 }
 

@@ -141,6 +141,8 @@ TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThe
         EXPECT_EQ(assertBufferAddress, implicitArgs->v0.assertBufferPtr);
     } else if (implicitArgs->v1.header.structVersion == 1) {
         EXPECT_EQ(assertBufferAddress, implicitArgs->v1.assertBufferPtr);
+    } else if (implicitArgs->v2.header.structVersion == 2) {
+        EXPECT_EQ(assertBufferAddress, implicitArgs->v2.assertBufferPtr);
     }
 }
 

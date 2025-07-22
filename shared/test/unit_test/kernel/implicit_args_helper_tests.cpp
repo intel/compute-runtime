@@ -263,6 +263,8 @@ TEST(ImplicitArgsV1Test, givenImplicitArgsV1WhenSettingFieldsThenCorrectFieldsAr
     implicitArgs.setNumWorkDim(16);
     implicitArgs.setRtGlobalBufferPtr(0x1000123400);
     implicitArgs.setSimdWidth(32);
+    implicitArgs.setSyncBufferPtr(0x1234000);
+    implicitArgs.setEnqueuedLocalSize(2, 3, 4);
 
     EXPECT_EQ(0x4567000u, implicitArgs.v1.assertBufferPtr);
 
@@ -282,10 +284,64 @@ TEST(ImplicitArgsV1Test, givenImplicitArgsV1WhenSettingFieldsThenCorrectFieldsAr
     EXPECT_EQ(9u, implicitArgs.v1.localSizeY);
     EXPECT_EQ(11u, implicitArgs.v1.localSizeZ);
 
+    EXPECT_EQ(2u, implicitArgs.v1.enqueuedLocalSizeX);
+    EXPECT_EQ(3u, implicitArgs.v1.enqueuedLocalSizeY);
+    EXPECT_EQ(4u, implicitArgs.v1.enqueuedLocalSizeZ);
+
     EXPECT_EQ(0x5699000u, implicitArgs.v1.localIdTablePtr);
     EXPECT_EQ(0xff000u, implicitArgs.v1.printfBufferPtr);
     EXPECT_EQ(16u, implicitArgs.v1.numWorkDim);
     EXPECT_EQ(0x1000123400u, implicitArgs.v1.rtGlobalBufferPtr);
+    EXPECT_EQ(0x1234000u, implicitArgs.v1.syncBufferPtr);
+}
+
+TEST(ImplicitArgsV2Test, givenImplicitArgsV2WhenSettingFieldsThenCorrectFieldsAreSet) {
+    ImplicitArgs implicitArgs{};
+    implicitArgs.v2.header.structSize = ImplicitArgsV2::getSize();
+    implicitArgs.v2.header.structVersion = 2;
+
+    EXPECT_EQ(ImplicitArgsV2::getSize(), implicitArgs.getSize());
+
+    implicitArgs.setAssertBufferPtr(0x4567000);
+    implicitArgs.setGlobalOffset(5, 6, 7);
+    implicitArgs.setGlobalSize(1, 2, 3);
+    implicitArgs.setGroupCount(10, 20, 30);
+    implicitArgs.setLocalSize(8, 9, 11);
+    implicitArgs.setLocalIdTablePtr(0x5699000);
+    implicitArgs.setPrintfBuffer(0xff000);
+    implicitArgs.setNumWorkDim(16);
+    implicitArgs.setRtGlobalBufferPtr(0x1000123400);
+    implicitArgs.setSimdWidth(32);
+    implicitArgs.setSyncBufferPtr(0x1234000);
+    implicitArgs.setEnqueuedLocalSize(2, 3, 4);
+
+    EXPECT_EQ(0x4567000u, implicitArgs.v1.assertBufferPtr);
+
+    EXPECT_EQ(5u, implicitArgs.v2.globalOffsetX);
+    EXPECT_EQ(6u, implicitArgs.v2.globalOffsetY);
+    EXPECT_EQ(7u, implicitArgs.v2.globalOffsetZ);
+
+    EXPECT_EQ(1u, implicitArgs.v2.globalSizeX);
+    EXPECT_EQ(2u, implicitArgs.v2.globalSizeY);
+    EXPECT_EQ(3u, implicitArgs.v2.globalSizeZ);
+
+    EXPECT_EQ(10u, implicitArgs.v2.groupCountX);
+    EXPECT_EQ(20u, implicitArgs.v2.groupCountY);
+    EXPECT_EQ(30u, implicitArgs.v2.groupCountZ);
+
+    EXPECT_EQ(8u, implicitArgs.v2.localSizeX);
+    EXPECT_EQ(9u, implicitArgs.v2.localSizeY);
+    EXPECT_EQ(11u, implicitArgs.v2.localSizeZ);
+
+    EXPECT_EQ(2u, implicitArgs.v2.enqueuedLocalSizeX);
+    EXPECT_EQ(3u, implicitArgs.v2.enqueuedLocalSizeY);
+    EXPECT_EQ(4u, implicitArgs.v2.enqueuedLocalSizeZ);
+
+    EXPECT_EQ(0x5699000u, implicitArgs.v2.localIdTablePtr);
+    EXPECT_EQ(0xff000u, implicitArgs.v2.printfBufferPtr);
+    EXPECT_EQ(16u, implicitArgs.v2.numWorkDim);
+    EXPECT_EQ(0x1000123400u, implicitArgs.v2.rtGlobalBufferPtr);
+    EXPECT_EQ(0x1234000u, implicitArgs.v2.syncBufferPtr);
 }
 
 TEST(ImplicitArgsV1Test, givenImplicitArgsWithUnknownVersionWhenSettingFieldsThenFieldsAreNotPopulated) {
@@ -294,7 +350,7 @@ TEST(ImplicitArgsV1Test, givenImplicitArgsWithUnknownVersionWhenSettingFieldsThe
     memset(&implicitArgs, 0, sizeof(implicitArgs));
 
     implicitArgs.v1.header.structSize = ImplicitArgsV1::getSize();
-    implicitArgs.v1.header.structVersion = 2; // unknown version
+    implicitArgs.v1.header.structVersion = 3; // unknown version
 
     EXPECT_EQ(0u, implicitArgs.getSize());
 

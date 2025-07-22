@@ -629,6 +629,15 @@ void EncodeIndirectParams<Family>::encode(CommandContainer &container, uint64_t 
             setGroupCountIndirect(container, groupCountOffsetV1, implicitArgsGpuPtr, nullptr);
             setGlobalWorkSizeIndirect(container, globalSizeOffsetV1, implicitArgsGpuPtr, dispatchInterface->getGroupSize(), nullptr);
             setWorkDimIndirect(container, numWorkDimOffsetV1, implicitArgsGpuPtr, dispatchInterface->getGroupSize(), nullptr);
+        } else if (version == 2) {
+            constexpr CrossThreadDataOffset groupCountOffsetV2[] = {offsetof(ImplicitArgsV2, groupCountX), offsetof(ImplicitArgsV2, groupCountY), offsetof(ImplicitArgsV2, groupCountZ)};
+            constexpr CrossThreadDataOffset globalSizeOffsetV2[] = {offsetof(ImplicitArgsV2, globalSizeX), offsetof(ImplicitArgsV2, globalSizeY), offsetof(ImplicitArgsV2, globalSizeZ)};
+            constexpr auto numWorkDimOffsetV2 = offsetof(ImplicitArgsV2, numWorkDim);
+            setGroupCountIndirect(container, groupCountOffsetV2, implicitArgsGpuPtr, nullptr);
+            setGlobalWorkSizeIndirect(container, globalSizeOffsetV2, implicitArgsGpuPtr, dispatchInterface->getGroupSize(), nullptr);
+            setWorkDimIndirect(container, numWorkDimOffsetV2, implicitArgsGpuPtr, dispatchInterface->getGroupSize(), nullptr);
+        } else {
+            UNRECOVERABLE_IF(true);
         }
     }
     if (outArgs && !outArgs->commandsToPatch.empty()) {

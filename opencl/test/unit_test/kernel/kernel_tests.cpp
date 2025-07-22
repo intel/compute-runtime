@@ -3824,6 +3824,9 @@ TEST_F(KernelImplicitArgsTest, WhenKernelRequiresImplicitArgsThenImplicitArgsStr
         } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 1) {
             expectedImplicitArgs.v1.header.structVersion = 1;
             expectedImplicitArgs.v1.header.structSize = ImplicitArgsV1::getSize();
+        } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 2) {
+            expectedImplicitArgs.v2.header.structVersion = 2;
+            expectedImplicitArgs.v2.header.structSize = ImplicitArgsV2::getSize();
         }
         expectedImplicitArgs.setSimdWidth(32);
 
@@ -3852,6 +3855,9 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenSettingKernelParam
     } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 1) {
         expectedImplicitArgs.v1.header.structVersion = 1;
         expectedImplicitArgs.v1.header.structSize = ImplicitArgsV1::getSize();
+    } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 2) {
+        expectedImplicitArgs.v2.header.structVersion = 2;
+        expectedImplicitArgs.v2.header.structSize = ImplicitArgsV2::getSize();
     }
 
     expectedImplicitArgs.setNumWorkDim(3);
@@ -3936,6 +3942,9 @@ TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenCloneKernelThenImp
     } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 1) {
         expectedImplicitArgs.v1.header.structVersion = 1;
         expectedImplicitArgs.v1.header.structSize = ImplicitArgsV1::getSize();
+    } else if (pClDevice->getGfxCoreHelper().getImplicitArgsVersion() == 2) {
+        expectedImplicitArgs.v2.header.structVersion = 2;
+        expectedImplicitArgs.v2.header.structSize = ImplicitArgsV2::getSize();
     }
 
     expectedImplicitArgs.setNumWorkDim(3);
