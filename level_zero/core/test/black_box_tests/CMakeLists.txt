@@ -38,7 +38,6 @@ target_include_directories(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC
 set_target_properties(${L0_BLACK_BOX_TEST_SHARED_LIB} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
 
 set(TEST_TARGETS
-    zello_arg_slm
     zello_atomic_inc
     zello_bindless_kernel
     zello_commandlist_immediate

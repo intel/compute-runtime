@@ -23,12 +23,6 @@ namespace LevelZeroBlackBoxTests {
 template <bool terminateOnFailure, typename ResulT>
 inline void validate(ResulT result, const char *message);
 extern decltype(&zerDriverGetDefaultContext) zerDriverGetDefaultContextFunc;
-extern decltype(&zeDeviceSynchronize) zeDeviceSynchronizeFunc;
-extern decltype(&zeCommandListAppendLaunchKernelWithArguments) zeCommandListAppendLaunchKernelWithArgumentsFunc;
-extern decltype(&zerIdentifierTranslateToDeviceHandle) zerIdentifierTranslateToDeviceHandleFunc;
-extern decltype(&zerDeviceTranslateToIdentifier) zerDeviceTranslateToIdentifierFunc;
-extern decltype(&zerDriverGetLastErrorDescription) zerDriverGetLastErrorDescriptionFunc;
-
 } // namespace LevelZeroBlackBoxTests
 
 #define SUCCESS_OR_TERMINATE(CALL) LevelZeroBlackBoxTests::validate<true>(CALL, #CALL)
@@ -94,9 +88,9 @@ uint32_t getBufferLength(int argc, char *argv[], uint32_t defaultLength);
 
 void getErrorMax(int argc, char *argv[]);
 
-void printResult(bool aubMode, bool outputValidationSuccessful, const std::string_view blackBoxName, const std::string_view currentTest);
+void printResult(bool aubMode, bool outputValidationSuccessful, const std::string &blackBoxName, const std::string &currentTest);
 
-void printResult(bool aubMode, bool outputValidationSuccessful, const std::string_view blackBoxName);
+void printResult(bool aubMode, bool outputValidationSuccessful, const std::string &blackBoxName);
 
 uint32_t getCommandQueueOrdinal(ze_device_handle_t &device, bool useCooperativeFlag);
 

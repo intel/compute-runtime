@@ -146,33 +146,6 @@ std::vector<uint8_t> compileToNative(const std::string &src, const std::string &
     oclocFreeOutput(&numOutputs, &outputs, &ouputLengths, &outputNames);
     return ret;
 }
-const char *slmArgKernelSrc = R"===(
-__kernel void test_arg_slm(
-    __global unsigned int *outputSums,           // Output array for sums (global memory)
-    __local unsigned int *localIdArray,          // Local array for local IDs (shared memory)
-    __local unsigned int *globalIdArray          // Local array for global IDs (shared memory)
-) {
-    // Each work-item stores its local and global ID in local memory
-    localIdArray[get_local_id(0)] = get_local_id(0);
-    globalIdArray[get_local_id(0)] = get_global_id(0);
-
-    // Synchronize all work-items in the group
-    barrier(CLK_LOCAL_MEM_FENCE);
-
-    // Only the first work-item in the group performs the reduction
-    if(get_local_id(0) == 0){
-        unsigned int sumLocalIds = 0;
-        unsigned int sumGlobalIds = 0;
-        for(int i = 0; i < get_local_size(0); ++i){
-            sumLocalIds += localIdArray[i];
-            sumGlobalIds += globalIdArray[i];
-        }
-        // Store the results in the output array
-        outputSums[get_group_id(0)*2] = sumLocalIds;
-        outputSums[get_group_id(0)*2+1] = sumGlobalIds;
-    }
-}
-)===";
 
 const char *memcpyBytesTestKernelSrc = R"===(
 kernel void memcpy_bytes(__global char *dst, const __global char *src) {

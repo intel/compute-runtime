@@ -2247,27 +2247,23 @@ uint32_t DeviceImp::getEventMaxKernelCount() const {
 
 ze_result_t DeviceImp::synchronize() {
     for (auto &engine : neoDevice->getAllEngines()) {
-        if (engine.commandStreamReceiver->isInitialized()) {
-            auto waitStatus = engine.commandStreamReceiver->waitForTaskCountWithKmdNotifyFallback(
-                engine.commandStreamReceiver->peekTaskCount(),
-                engine.commandStreamReceiver->obtainCurrentFlushStamp(),
-                false,
-                NEO::QueueThrottle::MEDIUM);
-            if (waitStatus == NEO::WaitStatus::gpuHang) {
-                return ZE_RESULT_ERROR_DEVICE_LOST;
-            }
+        auto waitStatus = engine.commandStreamReceiver->waitForTaskCountWithKmdNotifyFallback(
+            engine.commandStreamReceiver->peekTaskCount(),
+            engine.commandStreamReceiver->obtainCurrentFlushStamp(),
+            false,
+            NEO::QueueThrottle::MEDIUM);
+        if (waitStatus == NEO::WaitStatus::gpuHang) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
         }
     }
     for (auto &secondaryCsr : neoDevice->getSecondaryCsrs()) {
-        if (secondaryCsr->isInitialized()) {
-            auto waitStatus = secondaryCsr->waitForTaskCountWithKmdNotifyFallback(
-                secondaryCsr->peekTaskCount(),
-                secondaryCsr->obtainCurrentFlushStamp(),
-                false,
-                NEO::QueueThrottle::MEDIUM);
-            if (waitStatus == NEO::WaitStatus::gpuHang) {
-                return ZE_RESULT_ERROR_DEVICE_LOST;
-            }
+        auto waitStatus = secondaryCsr->waitForTaskCountWithKmdNotifyFallback(
+            secondaryCsr->peekTaskCount(),
+            secondaryCsr->obtainCurrentFlushStamp(),
+            false,
+            NEO::QueueThrottle::MEDIUM);
+        if (waitStatus == NEO::WaitStatus::gpuHang) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
         }
     }
 
