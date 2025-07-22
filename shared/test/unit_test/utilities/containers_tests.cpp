@@ -1495,6 +1495,26 @@ TEST(StackVec, WhenResizingThenElementsAreCorrectlyManaged) {
     EXPECT_FALSE(contains(&vec, &*vec.begin()));
 }
 
+TEST(StackVec, GivenNoDefaultValueWhenResizingThenDontUseCopyAssignment) {
+    struct Element {
+        Element() = default;
+
+        Element(Element &&rhs) = default;
+        Element &operator=(Element &&rhs) = default;
+
+        Element(const Element &rhs) = delete;
+        Element &operator=(const Element &rhs) = delete;
+
+        int v = 9;
+    };
+
+    StackVec<Element, 5> vec;
+    vec.resize(3);
+    EXPECT_EQ(9, vec[0].v);
+    EXPECT_EQ(9, vec[1].v);
+    EXPECT_EQ(9, vec[2].v);
+}
+
 TEST(StackVec, WhenIteratingThenCorrectElementsAreReturned) {
     using Type = int;
     StackVec<Type, 5> v;

@@ -329,11 +329,11 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
     }
 
     void resize(size_t newSize) {
-        this->resizeImpl(newSize, nullptr);
+        this->resizeImpl(newSize);
     }
 
     void resize(size_t newSize, const DataType &value) {
-        resizeImpl(newSize, &value);
+        resizeImpl(newSize, value);
     }
 
     bool usesDynamicMem() const {
@@ -358,7 +358,11 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
     template <typename RhsDataType, size_t rhsOnStackCapacity, typename RhsStackSizeT>
     friend class StackVec;
 
-    void resizeImpl(size_t newSize, const DataType *value) {
+    template <typename... OptValueT>
+    void resizeImpl(size_t newSize, OptValueT &&...optValue) {
+        constexpr bool nonDefaultInitializer = sizeof...(OptValueT) > 0;
+        static_assert(!nonDefaultInitializer || std::is_copy_constructible<DataType>(), "Stackvec cannot resize with value if DataType is not copy-constructible!");
+
         // new size does not fit into internal mem
         if (newSize > onStackCaps) {
             ensureDynamicMem();
@@ -366,8 +370,8 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
 
         // memory already backed by stl vector
         if (usesDynamicMem()) {
-            if (value != nullptr) {
-                dynamicMem->resize(newSize, *value);
+            if constexpr (nonDefaultInitializer) {
+                dynamicMem->resize(newSize, std::forward<OptValueT>(optValue)...);
             } else {
                 dynamicMem->resize(newSize);
             }
@@ -382,19 +386,13 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
             return;
         }
 
-        // add new elements
-        if (value != nullptr) {
-            // copy-construct elements
-            while (onStackSize < newSize) {
-                new (reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize) DataType(*value);
-                ++onStackSize;
-            }
-        } else {
-            // default-construct elements
-            while (onStackSize < newSize) {
+        while (onStackSize < newSize) {
+            if constexpr (nonDefaultInitializer) {
+                new (reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize) DataType(std::forward<OptValueT>(optValue)...);
+            } else {
                 new (reinterpret_cast<DataType *>(onStackMemRawBytes) + onStackSize) DataType();
-                ++onStackSize;
             }
+            ++onStackSize;
         }
     }
 
