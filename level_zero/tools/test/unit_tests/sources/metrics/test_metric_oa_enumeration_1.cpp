@@ -3702,11 +3702,9 @@ TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIs
     };
 
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    uint32_t excludedMetricsCount = 0;
-    zet_metric_handle_t *phExcludedMetrics = nullptr;
+
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                                              device->toHandle(), &calculateDesc,
-                                                                                             &excludedMetricsCount, phExcludedMetrics,
                                                                                              &hCalculateOperation));
 }
 

@@ -199,7 +199,8 @@ ze_result_t ZE_APICALL zetIntelMetricTracerDecodeExp(
 typedef enum _zet_intel_metric_calculate_exp_version_t {
     ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0), ///< version 1.0
     ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_2_0 = ZE_MAKE_VERSION(2, 0),
-    ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_2_0, ///< latest known version
+    ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_3_0 = ZE_MAKE_VERSION(3, 0),
+    ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_3_0, ///< latest known version
     ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zet_intel_metric_calculate_exp_version_t;
 
@@ -285,17 +286,13 @@ zetIntelMetricCalculateOperationCreateExp(
     zet_device_handle_t hDevice,                                              ///< [in] handle of the device
     zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,                    ///< [in] pointer to structure with filters and operations to perform
                                                                               ///< at calculation time.
-    uint32_t *pExcludedMetricCount,                                           ///< [out] pointer to number of excluded metrics. These are metrics in the
-                                                                              ///< input list in pcalculateDesc that do not allow calculation
-    zet_metric_handle_t *phExcludedMetrics,                                   ///< [in,out] [range(0, *pCount)] array of handles of excluded metrics
-                                                                              ///< from the phCalculateOperation handle.
     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation); ///< [out] Calculate operation handle
 
 ze_result_t ZE_APICALL
 zetIntelMetricCalculateOperationDestroyExp(
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation); ///< [in] Calculate operation handle
 
-ze_result_t ZE_APICALL zetIntelMetricCalculateGetReportFormatExp(
+ze_result_t ZE_APICALL zetIntelMetricCalculateOperationGetReportFormatExp(
     zet_intel_metric_calculate_operation_exp_handle_t phCalculateOperation, ///< [in] Calculate operation handle
     uint32_t *pCount,                                                       ///< [in,out] pointer to the number of metrics in the output report from
                                                                             ///< calculate operations. If set to zero, then the driver shall update
@@ -310,7 +307,17 @@ ze_result_t ZE_APICALL zetIntelMetricCalculateGetReportFormatExp(
     zet_metric_handle_t *phMetrics);                                        ///< [out][optional] [range(0, pMetricsCount)] array of metrics handles
                                                                             ///< with the order in which results will be found in output report of
                                                                             ///< calculate operations
-
+ze_result_t ZE_APICALL zetIntelMetricCalculateOperationGetExcludedMetricsExp(
+    zet_intel_metric_calculate_operation_exp_handle_t phCalculateOperation, ///< [in] Calculate operation handle
+    uint32_t *pCount,                                                       ///< [in,out] pointer to the number of metrics excluded from the output report.
+                                                                            ///< If set to zero, then the driver shall update the value with the total number
+                                                                            ///< of metrics excluded. If count is greater than the total number
+                                                                            ///< of metrics excluded, then the driver shall update the value with the
+                                                                            ///< actual number. If count is smaller than the total number of metrics
+                                                                            ///< excluded then ZE_RESULT_ERROR_INVALID_ARGUMENT will be returned
+                                                                            ///< since this parameter is not intended for filtering metrics.
+    zet_metric_handle_t *phMetrics);                                        ///< [out][optional] [range(0, pMetricsCount)] array of metrics handles
+                                                                            ///< excluded from the output report of calculate operations
 ze_result_t ZE_APICALL
 zetIntelMetricDecodeCalculateMultipleValuesExp(
     zet_metric_decoder_exp_handle_t hMetricDecoder,                        ///< [in] handle of the metric decoder object

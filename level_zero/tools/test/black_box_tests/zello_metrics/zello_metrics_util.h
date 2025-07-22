@@ -26,6 +26,7 @@ struct TestMachineConfiguration {
     } devices[MAX_DEVICES_IN_MACHINE];
     uint32_t deviceCount = 0;
     uint32_t deviceId;
+    std::vector<ze_driver_extension_properties_t> driverExtensionsProperties{};
 };
 
 template <class T>

@@ -80,20 +80,26 @@ ze_result_t ZE_APICALL zetIntelMetricTracerDecodeExp(zet_intel_metric_decoder_ex
 
 ze_result_t ZE_APICALL zetIntelMetricCalculateOperationCreateExp(zet_context_handle_t hContext, zet_device_handle_t hDevice,
                                                                  zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-                                                                 uint32_t *pExcludedMetricCount, zet_metric_handle_t *phExcludedMetrics,
                                                                  zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
-    return L0::metricCalculateOperationCreate(hContext, hDevice, pCalculateDesc, pExcludedMetricCount, phExcludedMetrics, phCalculateOperation);
+    return L0::metricCalculateOperationCreate(hContext, hDevice, pCalculateDesc, phCalculateOperation);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricCalculateOperationDestroyExp(zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation) {
     return L0::metricCalculateOperationDestroy(hCalculateOperation);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricCalculateGetReportFormatExp(
+ze_result_t ZE_APICALL zetIntelMetricCalculateOperationGetReportFormatExp(
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
     uint32_t *pCount,
     zet_metric_handle_t *phMetrics) {
     return L0::metricCalculateGetReportFormat(hCalculateOperation, pCount, phMetrics);
+}
+
+ze_result_t ZE_APICALL zetIntelMetricCalculateOperationGetExcludedMetricsExp(
+    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+    uint32_t *pCount,
+    zet_metric_handle_t *phMetrics) {
+    return L0::metricCalculateGetExcludedMetrics(hCalculateOperation, pCount, phMetrics);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,
@@ -217,10 +223,8 @@ ze_result_t ZE_APICALL zetIntelMetricCalculateOperationCreateExp(
     zet_context_handle_t hContext,
     zet_device_handle_t hDevice,
     zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-    uint32_t *pExcludedMetricCount,
-    zet_metric_handle_t *phExcludedMetrics,
     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
-    return L0::zetIntelMetricCalculateOperationCreateExp(hContext, hDevice, pCalculateDesc, pExcludedMetricCount, phExcludedMetrics, phCalculateOperation);
+    return L0::zetIntelMetricCalculateOperationCreateExp(hContext, hDevice, pCalculateDesc, phCalculateOperation);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricCalculateOperationDestroyExp(
@@ -228,11 +232,18 @@ ze_result_t ZE_APICALL zetIntelMetricCalculateOperationDestroyExp(
     return L0::zetIntelMetricCalculateOperationDestroyExp(hCalculateOperation);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricCalculateGetReportFormatExp(
+ze_result_t ZE_APICALL zetIntelMetricCalculateOperationGetReportFormatExp(
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
     uint32_t *pCount,
     zet_metric_handle_t *phMetrics) {
-    return L0::zetIntelMetricCalculateGetReportFormatExp(hCalculateOperation, pCount, phMetrics);
+    return L0::zetIntelMetricCalculateOperationGetReportFormatExp(hCalculateOperation, pCount, phMetrics);
+}
+
+ze_result_t ZE_APICALL zetIntelMetricCalculateOperationGetExcludedMetricsExp(
+    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+    uint32_t *pCount,
+    zet_metric_handle_t *phMetrics) {
+    return L0::zetIntelMetricCalculateOperationGetExcludedMetricsExp(hCalculateOperation, pCount, phMetrics);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData, zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,

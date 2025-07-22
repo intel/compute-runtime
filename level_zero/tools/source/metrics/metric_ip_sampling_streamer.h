@@ -48,12 +48,11 @@ struct MultiDeviceIpSamplingMetricStreamerImp : public IpSamplingMetricStreamerB
 };
 
 struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
-    IpSamplingMetricCalcOpImp(uint32_t inputCachedMetricsCount, std::vector<MetricImp *> &inputMetricsInReport,
+    IpSamplingMetricCalcOpImp(uint32_t inCachedMetricsCount,
+                              std::vector<MetricImp *> &metricsInReport,
                               std::vector<uint32_t> &inputIncludedMetricIndexes, bool multidevice)
-        : MetricCalcOpImp(multidevice),
-          cachedMetricsCount(inputCachedMetricsCount),
-          metricsInReportCount(static_cast<uint32_t>(inputMetricsInReport.size())),
-          metricsInReport(inputMetricsInReport),
+        : MetricCalcOpImp(multidevice, metricsInReport),
+          cachedMetricsCount(inCachedMetricsCount),
           includedMetricIndexes(inputIncludedMetricIndexes) {}
 
     ~IpSamplingMetricCalcOpImp() override{};
@@ -62,7 +61,6 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
                               bool isMultiDevice,
                               zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation);
     ze_result_t destroy() override;
-    ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
     ze_result_t metricCalculateMultipleValues(const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
                                               uint32_t *pSetCount, uint32_t *pMetricsReportCountPerSet,
                                               uint32_t *pTotalMetricReportCount,
@@ -98,8 +96,6 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
                                            std::map<uint64_t, void *> &stallReportDataMap);
 
     uint32_t cachedMetricsCount = 0;
-    uint32_t metricsInReportCount = 0;
-    std::vector<MetricImp *> metricsInReport{};
     std::vector<uint32_t> includedMetricIndexes{};
 };
 

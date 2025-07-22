@@ -577,11 +577,8 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCrea
         };
 
         zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-        uint32_t excludedMetricsCount = 0;
-        zet_metric_handle_t phExcludedMetrics;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                                device->toHandle(), &calculateDesc,
-                                                                               &excludedMetricsCount, &phExcludedMetrics,
                                                                                &hCalculateOperation));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationDestroyExp(hCalculateOperation));
 
@@ -597,7 +594,6 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCrea
         calculateDesc.phMetrics = &phMetric;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                                device->toHandle(), &calculateDesc,
-                                                                               &excludedMetricsCount, &phExcludedMetrics,
                                                                                &hCalculateOperation));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationDestroyExp(hCalculateOperation));
     }
@@ -628,19 +624,17 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportF
         };
 
         zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-        uint32_t excludedMetricsCount = 0;
-        zet_metric_handle_t phExcludedMetrics;
+
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                                device->toHandle(), &calculateDesc,
-                                                                               &excludedMetricsCount, &phExcludedMetrics,
                                                                                &hCalculateOperation));
 
         uint32_t metricsInReportCount = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateGetReportFormatExp(hCalculateOperation, &metricsInReportCount, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(hCalculateOperation, &metricsInReportCount, nullptr));
         EXPECT_EQ(metricsInReportCount, 10u);
 
         std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateGetReportFormatExp(hCalculateOperation, &metricsInReportCount, metricsInReport.data()));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(hCalculateOperation, &metricsInReportCount, metricsInReport.data()));
         EXPECT_EQ(metricsInReportCount, 10u);
 
         zet_metric_properties_t ipSamplingMetricProperties = {};
@@ -652,7 +646,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportF
 
         // Can't filter metrics in report
         metricsInReportCount = 1;
-        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateGetReportFormatExp(hCalculateOperation, &metricsInReportCount, metricsInReport.data()));
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationGetReportFormatExp(hCalculateOperation, &metricsInReportCount, metricsInReport.data()));
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationDestroyExp(hCalculateOperation));
     }
@@ -701,19 +695,16 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportForm
         };
 
         zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-        uint32_t excludedMetricsCount = 0;
-        zet_metric_handle_t phExcludedMetrics;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                                device->toHandle(), &calculateDesc,
-                                                                               &excludedMetricsCount, &phExcludedMetrics,
                                                                                &hCalculateOperation));
 
         uint32_t metricsInReportCount = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateGetReportFormatExp(hCalculateOperation, &metricsInReportCount, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(hCalculateOperation, &metricsInReportCount, nullptr));
         EXPECT_EQ(metricsInReportCount, 5u);
 
         std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateGetReportFormatExp(hCalculateOperation, &metricsInReportCount, metricsInReport.data()));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(hCalculateOperation, &metricsInReportCount, metricsInReport.data()));
         EXPECT_EQ(metricsInReportCount, 5u);
 
         // Metrics must be in the report but can be in different order
@@ -721,6 +712,44 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportForm
             auto it = std::find(metricsInReport.begin(), metricsInReport.end(), metric);
             EXPECT_NE(it, metricsInReport.end());
         }
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationDestroyExp(hCalculateOperation));
+    }
+}
+
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetExcludedMetricsAreZero, EustallSupportedPlatforms) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+
+        uint32_t metricGroupCount = 1;
+        zet_metric_group_handle_t metricGroupHandle = nullptr;
+        EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(metricGroupCount, 1u);
+        EXPECT_NE(metricGroupHandle, nullptr);
+
+        zet_intel_metric_calculate_exp_desc_t calculateDesc{
+            ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP,
+            nullptr,            // pNext
+            1,                  // metricGroupCount
+            &metricGroupHandle, // phMetricGroups
+            0,                  // metricCount
+            nullptr,            // phMetrics
+            0,                  // timeWindowsCount
+            nullptr,            // pCalculateTimeWindows
+            1000,               // timeAggregationWindow
+        };
+
+        zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
+                                                                               device->toHandle(), &calculateDesc,
+                                                                               &hCalculateOperation));
+
+        uint32_t excludedMetricsCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetExcludedMetricsExp(hCalculateOperation, &excludedMetricsCount, nullptr));
+        EXPECT_EQ(excludedMetricsCount, 0u);
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationDestroyExp(hCalculateOperation));
     }
@@ -782,17 +811,14 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     };
 
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    uint32_t excludedMetricsCount = 0;
-    zet_metric_handle_t phExcludedMetrics;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                            device->toHandle(), &calculateDesc,
-                                                                           &excludedMetricsCount, &phExcludedMetrics,
                                                                            &hCalculateOperation));
     uint32_t metricsInReportCount = 10;
     std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateGetReportFormatExp(hCalculateOperation,
-                                                                           &metricsInReportCount,
-                                                                           metricsInReport.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(hCalculateOperation,
+                                                                                    &metricsInReportCount,
+                                                                                    metricsInReport.data()));
     EXPECT_EQ(metricsInReportCount, 10u);
     std::vector<zet_metric_properties_t> metricProperties(metricsInReportCount);
 
@@ -849,17 +875,14 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     };
 
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    uint32_t excludedMetricsCount = 0;
-    zet_metric_handle_t phExcludedMetrics;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                            device->toHandle(), &calculateDesc,
-                                                                           &excludedMetricsCount, &phExcludedMetrics,
                                                                            &hCalculateOperation));
     uint32_t metricsInReportCount = 10;
     std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateGetReportFormatExp(hCalculateOperation,
-                                                                           &metricsInReportCount,
-                                                                           metricsInReport.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(hCalculateOperation,
+                                                                                    &metricsInReportCount,
+                                                                                    metricsInReport.data()));
     EXPECT_EQ(metricsInReportCount, 10u);
     std::vector<zet_metric_properties_t> metricProperties(metricsInReportCount);
 
@@ -963,11 +986,8 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCoverBoundaryConditio
     };
 
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    uint32_t excludedMetricsCount = 0;
-    zet_metric_handle_t phExcludedMetrics;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                            device->toHandle(), &calculateDesc,
-                                                                           &excludedMetricsCount, &phExcludedMetrics,
                                                                            &hCalculateOperation));
     uint32_t totalMetricReportCount = 0;
     size_t offset = 0;
@@ -1034,12 +1054,11 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     };
 
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    uint32_t excludedMetricsCount = 0;
-    zet_metric_handle_t phExcludedMetrics;
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                            device->toHandle(), &calculateDesc,
-                                                                           &excludedMetricsCount, &phExcludedMetrics,
                                                                            &hCalculateOperation));
+
     std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader));
     addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
 
@@ -1081,11 +1100,8 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     };
 
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    uint32_t excludedMetricsCount = 0;
-    zet_metric_handle_t phExcludedMetrics;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                            device->toHandle(), &calculateDesc,
-                                                                           &excludedMetricsCount, &phExcludedMetrics,
                                                                            &hCalculateOperation));
     uint32_t totalMetricReportCount = 2;
     size_t offset = 0;
@@ -1142,14 +1158,12 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     };
 
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    uint32_t excludedMetricsCount = 0;
-    zet_metric_handle_t phExcludedMetrics;
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                            device->toHandle(), &calculateDesc,
-                                                                           &excludedMetricsCount, &phExcludedMetrics,
                                                                            &hCalculateOperation));
     uint32_t metricsInReportCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateGetReportFormatExp(hCalculateOperation, &metricsInReportCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(hCalculateOperation, &metricsInReportCount, nullptr));
     EXPECT_EQ(metricsInReportCount, 5u);
 
     // calculate only one report and expect results follow the order of rawDataVector
@@ -1198,11 +1212,9 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingCalcOpCallingMetric
     };
 
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    uint32_t excludedMetricsCount = 0;
-    zet_metric_handle_t phExcludedMetrics;
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                            device->toHandle(), &calculateDesc,
-                                                                           &excludedMetricsCount, &phExcludedMetrics,
                                                                            &hCalculateOperation));
 
     std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader));

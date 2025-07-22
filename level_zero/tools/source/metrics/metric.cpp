@@ -590,8 +590,6 @@ bool MetricDeviceContext::areMetricsFromSameSource(uint32_t count, zet_metric_ha
 
 ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hContext,
                                                      zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-                                                     uint32_t *pExcludedMetricCount,
-                                                     zet_metric_handle_t *phExcludedMetrics,
                                                      zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
 
     if (pCalculateDesc->timeAggregationWindow == 0) {
@@ -642,7 +640,7 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     }
 
     MetricSource &metricSource = (metricGroupImp) ? metricGroupImp->getMetricSource() : metricImp->getMetricSource(); // NOLINT(clang-analyzer-core.CallAndMessage)
-    return metricSource.calcOperationCreate(*this, pCalculateDesc, pExcludedMetricCount, phExcludedMetrics, phCalculateOperation);
+    return metricSource.calcOperationCreate(*this, pCalculateDesc, phCalculateOperation);
 }
 
 std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_properties_exp_t &scopeProperties) {
@@ -966,6 +964,32 @@ MetricImp *HomogeneousMultiDeviceMetricCreated::create(MetricSource &metricSourc
     return new (std::nothrow) HomogeneousMultiDeviceMetricCreated(metricSource, subDeviceMetrics);
 }
 
+ze_result_t MetricCalcOpImp::getMetricsFromCalcOp(uint32_t *pCount, zet_metric_handle_t *phMetrics, bool isExcludedMetrics) {
+    if (*pCount == 0) {
+        *pCount = isExcludedMetrics ? excludedMetricCount : metricInReportCount;
+        return ZE_RESULT_SUCCESS;
+    } else if (*pCount < (isExcludedMetrics ? excludedMetricCount : metricInReportCount)) {
+        METRICS_LOG_ERR("%s", "Metric can't be smaller than report size");
+        *pCount = 0;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    *pCount = isExcludedMetrics ? excludedMetricCount : metricInReportCount;
+    for (uint32_t index = 0; index < *pCount; index++) {
+        phMetrics[index] = isExcludedMetrics ? excludedMetrics[index]->toHandle() : metricsInReport[index]->toHandle();
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t MetricCalcOpImp::getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
+    return getMetricsFromCalcOp(pCount, phMetrics, false);
+}
+
+ze_result_t MetricCalcOpImp::getExcludedMetrics(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
+    return getMetricsFromCalcOp(pCount, phMetrics, true);
+}
+
 ze_result_t metricProgrammableGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) {
     auto device = Device::fromHandle(hDevice);
     return static_cast<MetricDeviceContext &>(device->getMetricDeviceContext()).metricProgrammableGet(pCount, phMetricProgrammables);
@@ -1007,12 +1031,10 @@ ze_result_t metricCalculateOperationCreate(
     zet_context_handle_t hContext,
     zet_device_handle_t hDevice,
     zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-    uint32_t *pExcludedMetricCount,
-    zet_metric_handle_t *phExcludedMetrics,
     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
 
     DeviceImp *deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
-    return deviceImp->getMetricDeviceContext().calcOperationCreate(hContext, pCalculateDesc, pExcludedMetricCount, phExcludedMetrics, phCalculateOperation);
+    return deviceImp->getMetricDeviceContext().calcOperationCreate(hContext, pCalculateDesc, phCalculateOperation);
 }
 
 ze_result_t metricCalculateOperationDestroy(
@@ -1025,6 +1047,13 @@ ze_result_t metricCalculateGetReportFormat(
     uint32_t *pCount,
     zet_metric_handle_t *phMetrics) {
     return MetricCalcOp::fromHandle(hCalculateOperation)->getReportFormat(pCount, phMetrics);
+}
+
+ze_result_t metricCalculateGetExcludedMetrics(
+    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+    uint32_t *pCount,
+    zet_metric_handle_t *phMetrics) {
+    return MetricCalcOp::fromHandle(hCalculateOperation)->getExcludedMetrics(pCount, phMetrics);
 }
 
 ze_result_t metricCalculateValues(

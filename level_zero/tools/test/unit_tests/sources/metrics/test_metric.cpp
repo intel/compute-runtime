@@ -51,8 +51,6 @@ class CalcOperationFixture : public DeviceFixture,
     MockMetricSource mockMetricSource{};
     MockMetricGroup *mockMetricGroup;
     zet_metric_group_handle_t phMetricGroup = nullptr;
-    uint32_t excludedMetricsCount = 0;
-    zet_metric_handle_t *phExcludedMetrics = nullptr;
 
     DebugManagerStateRestore restorer;
 };
@@ -86,7 +84,6 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpAndInvalidParamsPassedThenErrorIs
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                                           device->toHandle(), &calculateDesc,
-                                                                                          &excludedMetricsCount, phExcludedMetrics,
                                                                                           &hCalculateOperation));
 
     // No metric groups or metrics
@@ -94,7 +91,6 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpAndInvalidParamsPassedThenErrorIs
     calculateDesc.metricGroupCount = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
                                                                                           device->toHandle(), &calculateDesc,
-                                                                                          &excludedMetricsCount, phExcludedMetrics,
                                                                                           &hCalculateOperation));
 }
 
@@ -121,7 +117,6 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedSourcesThenErrorIsReturn
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context,
                                                                                           device->toHandle(), &calculateDesc,
-                                                                                          &excludedMetricsCount, phExcludedMetrics,
                                                                                           &hCalculateOperation));
 
     // metrics from different source
@@ -135,7 +130,6 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedSourcesThenErrorIsReturn
     calculateDesc.phMetrics = metrics.data();
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context,
                                                                                           device->toHandle(), &calculateDesc,
-                                                                                          &excludedMetricsCount, phExcludedMetrics,
                                                                                           &hCalculateOperation));
 
     // metrics and metric group from different source
@@ -143,7 +137,6 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedSourcesThenErrorIsReturn
     calculateDesc.phMetrics = &metrics[1];
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context,
                                                                                           device->toHandle(), &calculateDesc,
-                                                                                          &excludedMetricsCount, phExcludedMetrics,
                                                                                           &hCalculateOperation));
 }
 
@@ -168,7 +161,6 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedHierarchiesThenErrorIsRe
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context,
                                                                                           device->toHandle(), &calculateDesc,
-                                                                                          &excludedMetricsCount, phExcludedMetrics,
                                                                                           &hCalculateOperation));
 
     MockMetric mockMetric(mockMetricSource), mockMetric2(mockMetricSource);
@@ -182,7 +174,6 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedHierarchiesThenErrorIsRe
     calculateDesc.phMetrics = metrics.data();
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context,
                                                                                           device->toHandle(), &calculateDesc,
-                                                                                          &excludedMetricsCount, phExcludedMetrics,
                                                                                           &hCalculateOperation));
 }
 
@@ -206,7 +197,6 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpUseTheSourceFromMetricGroupOrMetr
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationCreateExp(context,
                                                                                              device->toHandle(), &calculateDesc,
-                                                                                             &excludedMetricsCount, phExcludedMetrics,
                                                                                              &hCalculateOperation));
 
     MockMetric mockMetric(mockMetricSource), mockMetric2(mockMetricSource);
@@ -218,18 +208,52 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpUseTheSourceFromMetricGroupOrMetr
     calculateDesc.phMetrics = metrics.data();
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationCreateExp(context,
                                                                                              device->toHandle(), &calculateDesc,
-                                                                                             &excludedMetricsCount, phExcludedMetrics,
                                                                                              &hCalculateOperation));
 }
 
 TEST_F(CalcOperationFixture, WhenCreatingCalcOpObjectToAndFromHandleBaseClassWorkAsExpected) {
-    MockMetricCalcOp mockMetricCalcOp{};
+    std::vector<MetricImp *> mockMetricsInReport{};
+    uint32_t mockExcludedMetricCount = 0;
+    std::vector<MetricImp *> mockExcludedMetrics{};
+
+    MockMetricCalcOp mockMetricCalcOp(false, mockMetricsInReport, mockExcludedMetricCount, mockExcludedMetrics);
     auto hMockCalcOp = mockMetricCalcOp.toHandle();
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationDestroyExp(hMockCalcOp));
     EXPECT_EQ(false, mockMetricCalcOp.isRootDevice());
     auto mockCalcOp = MetricCalcOp::fromHandle(hMockCalcOp);
     EXPECT_NE(nullptr, mockCalcOp);
+}
+
+TEST_F(CalcOperationFixture, WhenGettingMetricsInReportAndExcludedMetricsThenTheyAreReturnedCorrectly) {
+    std::vector<MetricImp *> mockMetricsInReport{};
+    MockMetric mockMetricInReport(mockMetricSource);
+    mockMetricsInReport.push_back(&mockMetricInReport);
+
+    std::vector<MetricImp *> mockExcludedMetrics{};
+    uint32_t mockExcludedMetricCount = 1;
+    MockMetric mockExcludedMetric(mockMetricSource);
+    mockExcludedMetrics.push_back(&mockExcludedMetric);
+
+    MockMetricCalcOp mockMetricCalcOp(false, mockMetricsInReport, mockExcludedMetricCount, mockExcludedMetrics);
+    uint32_t metricCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, nullptr));
+    EXPECT_EQ(metricCount, 1U);
+    zet_metric_handle_t metricHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, &metricHandle));
+    EXPECT_EQ(metricCount, 1U);
+    EXPECT_EQ(metricHandle, mockMetricInReport.toHandle());
+    EXPECT_EQ(metricCount, mockMetricCalcOp.getMetricsInReportCount());
+
+    metricCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetExcludedMetricsExp(mockMetricCalcOp.toHandle(), &metricCount, nullptr));
+    EXPECT_EQ(metricCount, 1U);
+
+    zet_metric_handle_t excludedMetricHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetExcludedMetricsExp(mockMetricCalcOp.toHandle(), &metricCount, &excludedMetricHandle));
+    EXPECT_EQ(metricCount, 1U);
+    EXPECT_EQ(excludedMetricHandle, mockExcludedMetric.toHandle());
+    EXPECT_NE(excludedMetricHandle, metricHandle);
 }
 
 using MetricRuntimeFixture = Test<DeviceFixture>;

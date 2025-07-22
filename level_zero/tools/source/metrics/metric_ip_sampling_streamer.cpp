@@ -118,49 +118,31 @@ ze_result_t IpSamplingMetricCalcOpImp::create(IpSamplingMetricSourceImp &metricS
     MetricGroup::fromHandle(hMetricGroup)->metricGet(&metricCount, nullptr);
     std::vector<zet_metric_handle_t> hMetrics(metricCount);
     MetricGroup::fromHandle(hMetricGroup)->metricGet(&metricCount, hMetrics.data());
-    std::vector<MetricImp *> inputMetricsInReport = {};
+    std::vector<MetricImp *> metricsInReport = {};
     std::vector<uint32_t> includedMetricIndexes = {};
 
     for (uint32_t i = 0; i < metricCount; i++) {
         auto metric = static_cast<MetricImp *>(Metric::fromHandle(hMetrics[i]));
         if (pCalculateDesc->metricGroupCount > 0) {
-            inputMetricsInReport.push_back(metric);
+            metricsInReport.push_back(metric);
             includedMetricIndexes.push_back(i);
         } else {
             if (uniqueMetricHandles.find(hMetrics[i]) != uniqueMetricHandles.end()) {
-                inputMetricsInReport.push_back(metric);
+                metricsInReport.push_back(metric);
                 includedMetricIndexes.push_back(i);
             }
         }
     }
 
     auto calcOp = new IpSamplingMetricCalcOpImp(static_cast<uint32_t>(hMetrics.size()),
-                                                inputMetricsInReport, includedMetricIndexes, isMultiDevice);
+                                                metricsInReport, includedMetricIndexes,
+                                                isMultiDevice);
     *phCalculateOperation = calcOp->toHandle();
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t IpSamplingMetricCalcOpImp::destroy() {
     delete this;
-    return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t IpSamplingMetricCalcOpImp::getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
-
-    if (*pCount == 0) {
-        *pCount = metricsInReportCount;
-        return ZE_RESULT_SUCCESS;
-    } else if (*pCount < metricsInReportCount) {
-        METRICS_LOG_ERR("%s", "Metric can't be smaller than report size");
-        *pCount = 0;
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    *pCount = metricsInReportCount;
-    for (uint32_t index = 0; index < metricsInReportCount; index++) {
-        phMetrics[index] = metricsInReport[index]->toHandle();
-    }
-
     return ZE_RESULT_SUCCESS;
 }
 

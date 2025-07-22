@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,17 +16,18 @@
 #include <map>
 #include <vector>
 
-#define VALIDATECALL(myZeCall)                           \
-    do {                                                 \
-        if ((myZeCall) != ZE_RESULT_SUCCESS) {           \
-            std::cout << "Validate Error: "              \
-                      << static_cast<uint32_t>(myZeCall) \
-                      << " at "                          \
-                      << #myZeCall << ": "               \
-                      << __FILE__ << ": "                \
-                      << __LINE__ << std::endl;          \
-            std::terminate();                            \
-        }                                                \
+#define VALIDATECALL(myZeCall)                                   \
+    do {                                                         \
+        if (((myZeCall) != ZE_RESULT_SUCCESS) &&                 \
+            ((myZeCall) != ZE_RESULT_WARNING_ACTION_REQUIRED)) { \
+            std::cout << "Validate Error: "                      \
+                      << static_cast<uint32_t>(myZeCall)         \
+                      << " at "                                  \
+                      << #myZeCall << ": "                       \
+                      << __FILE__ << ": "                        \
+                      << __LINE__ << std::endl;                  \
+            std::terminate();                                    \
+        }                                                        \
     } while (0);
 
 #define EXPECT(cond)                                                           \
