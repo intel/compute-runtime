@@ -264,6 +264,16 @@ TEST_F(WddmMemoryManagerTests, givenAllocateGraphicsMemory64kbWhen32bitThenAddre
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerTests, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryWith128kbAlignmentThenGmmObjectHasCorrectAlignment) {
+    MockWddmMemoryManager memoryManager(false, false, *executionEnvironment);
+    AllocationData allocationData;
+    allocationData.size = 4096u;
+    allocationData.alignment = 2 * MemoryConstants::pageSize64k;
+    auto allocation = memoryManager.allocateGraphicsMemory64kb(allocationData);
+
+    EXPECT_EQ(allocation->getDefaultGmm()->resourceParams.BaseAlignment, allocationData.alignment);
+    memoryManager.freeGraphicsMemory(allocation);
+}
 class MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm : public MemoryManagerCreate<WddmMemoryManager> {
   public:
     using WddmMemoryManager::adjustGpuPtrToHostAddressSpace;

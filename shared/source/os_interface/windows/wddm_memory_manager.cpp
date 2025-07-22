@@ -206,7 +206,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     AllocationData allocationData64KbAlignment = allocationData;
-    allocationData64KbAlignment.alignment = MemoryConstants::pageSize64k;
+    allocationData64KbAlignment.alignment = MemoryConstants::pageSize64k > allocationData64KbAlignment.alignment ? MemoryConstants::pageSize64k : allocationData64KbAlignment.alignment;
     return allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocationData64KbAlignment, true);
 }
 
@@ -252,7 +252,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     }
 
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
-                       sizeAligned, 0u,
+                       sizeAligned, allocationData.alignment,
                        CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper, hwInfo),
                        storageInfo,
                        gmmRequirements);
