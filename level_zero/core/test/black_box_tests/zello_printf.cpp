@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
     auto fileNameStr = filenameWithPid.str();
     auto *fileName = fileNameStr.c_str();
 
-    bool validatePrintfOutput = false;
+    bool validatePrintfOutput = true;
     bool printfValidated = false;
     int stdoutFd = -1;
 
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
         "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n",
         "string with tab(\\t) new line(\\n):\nusing tab \tand new line \nin this string",
         "string with tab(\\t) new line(\\n):\nusing tab \tand new line \nin this string",
-        "test_function\n"};
+        "test function\n"};
 
     PrintfExecutionMode executionModes[] = {PrintfExecutionMode::commandQueue, PrintfExecutionMode::immSyncCmdList};
     std::string executionModeNames[] = {"Asynchronous Command Queue", "Synchronous Immediate Command List"};
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
 
             if (validatePrintfOutput) {
                 printfValidated = false;
-                auto sizeOfBuffer = expectedStrings[0].size() + 1024;
+                auto sizeOfBuffer = expectedStrings[i].size() + 1024;
                 auto kernelOutput = std::make_unique<char[]>(sizeOfBuffer);
                 memset(kernelOutput.get(), 0, sizeOfBuffer);
                 auto kernelOutputFile = fopen(fileName, "r");
