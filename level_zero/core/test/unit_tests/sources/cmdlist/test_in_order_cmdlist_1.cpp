@@ -2007,7 +2007,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCmdsChainingFromAppendCop
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableL3FlushAfterPostSync.set(1);
-    NEO::debugManager.flags.EnableCopyWithStagingBuffers.set(0);
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     bool heaplessEnabled = immCmdList->isHeaplessModeEnabled();
