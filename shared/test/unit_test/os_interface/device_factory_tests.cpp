@@ -11,7 +11,9 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/device_caps_reader_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -287,4 +289,25 @@ TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironments
     EXPECT_TRUE(DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment));
 
     EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.regionCount);
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenFailedProductHelperSetupHardwareInfoWhenPreparingDeviceEnvironmentsForProductFamilyOverrideThenFalseIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int>(CommandStreamReceiverType::tbx));
+
+    struct MyMockProductHelper : MockProductHelper {
+        std::unique_ptr<DeviceCapsReader> getDeviceCapsReader(aub_stream::AubManager &aubManager) const override {
+            std::vector<uint32_t> caps;
+            return std::make_unique<DeviceCapsReaderMock>(caps);
+        }
+    };
+
+    auto productHelper = new MyMockProductHelper();
+    productHelper->setupHardwareInfoResult = false;
+
+    executionEnvironment.rootDeviceEnvironments[0]->productHelper.reset(productHelper);
+
+    auto rc = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    EXPECT_EQ(false, rc);
+    EXPECT_EQ(1u, productHelper->setupHardwareInfoCalled);
 }

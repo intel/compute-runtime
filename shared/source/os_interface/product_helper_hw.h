@@ -19,6 +19,9 @@ class ProductHelperHw : public ProductHelper {
         return productHelper;
     }
 
+    std::unique_ptr<DeviceCapsReader> getDeviceCapsReader(const DriverModel &driverModel) const override;
+    std::unique_ptr<DeviceCapsReader> getDeviceCapsReader(aub_stream::AubManager &aubManager) const override;
+    bool setupHardwareInfo(HardwareInfo &hwInfo, const DeviceCapsReader &capsReader) const override;
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const override;
     void adjustPlatformForProductFamily(HardwareInfo *hwInfo) override;
     void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const override;

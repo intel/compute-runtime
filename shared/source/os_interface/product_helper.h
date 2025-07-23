@@ -20,7 +20,8 @@
 
 namespace aub_stream {
 enum class ProductFamily : uint32_t;
-}
+class AubManager;
+} // namespace aub_stream
 
 namespace NEO {
 struct KmdNotifyProperties;
@@ -45,6 +46,7 @@ class MemoryManager;
 struct RootDeviceEnvironment;
 class OSInterface;
 class DriverModel;
+class DeviceCapsReader;
 enum class DriverModelType;
 enum class EngineGroupType : uint32_t;
 enum class GfxMemoryAllocationMethod : uint32_t;
@@ -79,6 +81,9 @@ class ProductHelper {
     static constexpr uint32_t luidSize = 8u;
     MOCKABLE_VIRTUAL int configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment);
     int configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment);
+    virtual std::unique_ptr<DeviceCapsReader> getDeviceCapsReader(const DriverModel &driverModel) const = 0;
+    virtual std::unique_ptr<DeviceCapsReader> getDeviceCapsReader(aub_stream::AubManager &aubManager) const = 0;
+    virtual bool setupHardwareInfo(HardwareInfo &hwInfo, const DeviceCapsReader &capsReader) const = 0;
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const = 0;
     virtual void adjustPlatformForProductFamily(HardwareInfo *hwInfo) = 0;
     virtual void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const = 0;

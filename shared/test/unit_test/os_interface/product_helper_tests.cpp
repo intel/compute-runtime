@@ -13,6 +13,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
+#include "shared/source/helpers/device_caps_reader.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -20,10 +21,13 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/device_caps_reader_test_helper.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -61,6 +65,28 @@ void ProductHelperTest::refreshReleaseHelper(HardwareInfo *hwInfo) {
 
 TEST(ProductHelperTestCreate, WhenProductHelperCreateIsCalledWithUnknownProductThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, ProductHelper::create(IGFX_UNKNOWN));
+}
+
+HWTEST_F(ProductHelperTest, givenDriverModelWhenGetDeviceCapsReaderIsCalledThenNullptrIsReturned) {
+    auto driverModel = std::make_unique<MockDriverModel>();
+
+    auto capsReader = productHelper->getDeviceCapsReader(*driverModel);
+    EXPECT_EQ(nullptr, capsReader);
+}
+
+HWTEST_F(ProductHelperTest, givenAubManagerWhenGetDeviceCapsReaderIsCalledThenNullptrIsReturned) {
+    auto aubManager = std::make_unique<MockAubManager>();
+
+    auto capsReader = productHelper->getDeviceCapsReader(*aubManager);
+    EXPECT_EQ(nullptr, capsReader);
+}
+
+HWTEST_F(ProductHelperTest, whenSetupHardwareInfoIsCalledThenTrueIsReturned) {
+    std::vector<uint32_t> caps;
+    DeviceCapsReaderMock capsReader(caps);
+
+    auto ret = productHelper->setupHardwareInfo(pInHwInfo, capsReader);
+    EXPECT_EQ(true, ret);
 }
 
 HWTEST_F(ProductHelperTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenReturnCorrectValue) {

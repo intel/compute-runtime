@@ -14,6 +14,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/device_caps_reader.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
@@ -108,6 +109,30 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig, rootDeviceEnvironment.getReleaseHelper());
 
+        if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+            hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
+        }
+
+        auto &productHelper = rootDeviceEnvironment.getProductHelper();
+
+        if (debugManager.flags.SetCommandStreamReceiver.get() > 0) {
+            auto csrType = static_cast<CommandStreamReceiverType>(debugManager.flags.SetCommandStreamReceiver.get());
+            auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+            auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(*hardwareInfo);
+            rootDeviceEnvironment.initGmm();
+            rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", csrType);
+            auto aubCenter = rootDeviceEnvironment.aubCenter.get();
+            rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
+
+            if (csrType == CommandStreamReceiverType::tbx || csrType == CommandStreamReceiverType::tbxWithAub) {
+                auto capsReader = productHelper.getDeviceCapsReader(*aubCenter->getAubManager());
+                if (capsReader) {
+                    if (!productHelper.setupHardwareInfo(*hardwareInfo, *capsReader))
+                        return false;
+                }
+            }
+        }
+
         if (debugManager.flags.MaxSubSlicesSupportedOverride.get() > 0) {
             hardwareInfo->gtSystemInfo.MaxSubSlicesSupported = debugManager.flags.MaxSubSlicesSupportedOverride.get();
             hardwareInfo->gtSystemInfo.MaxDualSubSlicesSupported = debugManager.flags.MaxSubSlicesSupportedOverride.get();
@@ -117,14 +142,10 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             hardwareInfo->featureTable.ftrBcsInfo = debugManager.flags.BlitterEnableMaskOverride.get();
         }
 
-        auto &productHelper = rootDeviceEnvironment.getProductHelper();
         productHelper.configureHardwareCustom(hardwareInfo, nullptr);
 
         rootDeviceEnvironment.setRcsExposure();
 
-        if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
-            hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
-        }
         if (debugManager.flags.OverrideSlmSize.get() != -1) {
             hardwareInfo->capabilityTable.maxProgrammableSlmSize = debugManager.flags.OverrideSlmSize.get();
             hardwareInfo->gtSystemInfo.SLMSizeInKb = debugManager.flags.OverrideSlmSize.get();
@@ -135,16 +156,6 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         [[maybe_unused]] bool result = rootDeviceEnvironment.initAilConfiguration();
         DEBUG_BREAK_IF(!result);
-
-        auto csrType = debugManager.flags.SetCommandStreamReceiver.get();
-        if (csrType > 0) {
-            auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-            auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(*hardwareInfo);
-            rootDeviceEnvironment.initGmm();
-            rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", static_cast<CommandStreamReceiverType>(csrType));
-            auto aubCenter = rootDeviceEnvironment.aubCenter.get();
-            rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
-        }
     }
 
     executionEnvironment.setDeviceHierarchyMode(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());

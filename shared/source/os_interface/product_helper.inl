@@ -15,6 +15,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
+#include "shared/source/helpers/device_caps_reader.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/kernel_helpers.h"
@@ -37,6 +38,15 @@
 #include <bitset>
 
 namespace NEO {
+
+template <PRODUCT_FAMILY gfxProduct>
+std::unique_ptr<DeviceCapsReader> ProductHelperHw<gfxProduct>::getDeviceCapsReader(const DriverModel &driverModel) const { return nullptr; }
+
+template <PRODUCT_FAMILY gfxProduct>
+std::unique_ptr<DeviceCapsReader> ProductHelperHw<gfxProduct>::getDeviceCapsReader(aub_stream::AubManager &aubManager) const { return nullptr; }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::setupHardwareInfo(HardwareInfo &hwInfo, const DeviceCapsReader &capsReader) const { return true; }
 
 template <PRODUCT_FAMILY gfxProduct>
 int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {

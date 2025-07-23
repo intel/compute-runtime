@@ -58,6 +58,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_bitfield.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_reader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_hierarchy_mode.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_model_type.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.cpp
@@ -179,6 +180,7 @@ if(WIN32)
 else()
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/path.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/device_caps_reader.h
   )
 endif()
 

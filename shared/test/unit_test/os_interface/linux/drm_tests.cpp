@@ -20,6 +20,7 @@
 #include "shared/source/utilities/directory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/device_caps_reader_test_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -29,6 +30,7 @@
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -144,6 +146,30 @@ TEST(DrmTest, GivenValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThe
     uint32_t clkRate = 0;
     EXPECT_TRUE(drm.getDeviceMemoryMaxClockRateInMhz(0, clkRate));
     EXPECT_EQ(clkRate, 800u);
+}
+
+TEST(DrmTest, givenFailedProductHelperSetupHardwareInfoWhenDrmSetupHardwareInfoCalledThenFailureIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    struct MyMockProductHelper : MockProductHelper {
+        std::unique_ptr<DeviceCapsReader> getDeviceCapsReader(const DriverModel &driverModel) const override {
+            std::vector<uint32_t> caps;
+            return std::make_unique<DeviceCapsReaderMock>(caps);
+        }
+    };
+
+    auto productHelper = new MyMockProductHelper();
+    productHelper->setupHardwareInfoResult = false;
+
+    executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(productHelper);
+
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, defaultHwInfo.get(), setupHardwareInfo};
+
+    auto rc = drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(-1, rc);
+    EXPECT_EQ(1u, productHelper->setupHardwareInfoCalled);
 }
 
 struct MockIoctlHelperForSmallBar : public IoctlHelperUpstream {

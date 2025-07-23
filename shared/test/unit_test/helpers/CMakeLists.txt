@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -21,6 +21,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_reader_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp

@@ -19,6 +19,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/device_caps_reader.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/gpu_page_fault_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -510,6 +511,14 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
             hwInfo->featureTable.regionCount = numRegions;
         }
     }
+
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    auto capsReader = productHelper.getDeviceCapsReader(*this);
+    if (capsReader) {
+        if (!productHelper.setupHardwareInfo(*hwInfo, *capsReader))
+            return -1;
+    }
+
     if (!queryMemoryInfo()) {
         setPerContextVMRequired(true);
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");

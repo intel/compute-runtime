@@ -8,6 +8,7 @@ target_sources(neo_libult_common PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator.h
                ${CMAKE_CURRENT_SOURCE_DIR}/batch_buffer_helper.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_reader_test_helper.h
                ${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h
                ${CMAKE_CURRENT_SOURCE_DIR}/implicit_args_test_helper.h
                ${CMAKE_CURRENT_SOURCE_DIR}/raii_gfx_core_helper.h
