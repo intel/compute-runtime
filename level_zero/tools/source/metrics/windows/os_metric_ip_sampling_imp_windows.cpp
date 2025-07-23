@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -51,8 +52,10 @@ ze_result_t MetricIpSamplingWindowsImp::startMeasurement(uint32_t &notifyEveryNR
     }
 
     notifyEveryNReports = std::max(notifyEveryNReports, 1u);
+    // Set the maximum DSS buffer size supported which is 512KB.
+    uint32_t minBufferSize = 512 * MemoryConstants::kiloByte;
 
-    if (!wddm->perfOpenEuStallStream(samplingUnit, notifyEveryNReports)) {
+    if (!wddm->perfOpenEuStallStream(samplingUnit, minBufferSize)) {
         METRICS_LOG_ERR("wddm perfOpenEuStallStream() call falied.");
         return ZE_RESULT_ERROR_UNKNOWN;
     }
