@@ -243,6 +243,57 @@ void KernelImmutableData::setIsaPerKernelAllocation(NEO::GraphicsAllocation *all
     this->isaGraphicsAllocation.reset(allocation);
 }
 
+KernelMutableState::KernelMutableState() : pImplicitArgs{nullptr}, pExtension{nullptr} {};
+
+KernelMutableState &KernelMutableState::operator=(const KernelMutableState &rhs) {
+    if (this == &rhs) {
+        return *this;
+    }
+    this->Params::operator=(rhs);
+
+    pImplicitArgs = (rhs.pImplicitArgs) ? std::make_unique<NEO::ImplicitArgs>(*rhs.pImplicitArgs) : nullptr;
+    pExtension = nullptr;
+
+    crossThreadDataSize = rhs.crossThreadDataSize;
+    if (crossThreadDataSize) {
+        crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
+        std::memcpy(crossThreadData.get(), rhs.crossThreadData.get(), crossThreadDataSize);
+    }
+
+    surfaceStateHeapDataSize = rhs.surfaceStateHeapDataSize;
+    if (surfaceStateHeapDataSize) {
+        surfaceStateHeapData = std::make_unique<uint8_t[]>(surfaceStateHeapDataSize);
+        std::memcpy(surfaceStateHeapData.get(), rhs.surfaceStateHeapData.get(), surfaceStateHeapDataSize);
+    }
+
+    dynamicStateHeapDataSize = rhs.dynamicStateHeapDataSize;
+    if (dynamicStateHeapDataSize) {
+        dynamicStateHeapData = std::make_unique<uint8_t[]>(dynamicStateHeapDataSize);
+        std::memcpy(dynamicStateHeapData.get(), rhs.dynamicStateHeapData.get(), dynamicStateHeapDataSize);
+    }
+
+    reservePerThreadDataForWholeThreadGroup(rhs.perThreadDataSizeForWholeThreadGroup);
+    DEBUG_BREAK_IF(perThreadDataSizeForWholeThreadGroupAllocated < perThreadDataSizeForWholeThreadGroup);
+    std::memcpy(perThreadDataForWholeThreadGroup, rhs.perThreadDataForWholeThreadGroup, perThreadDataSizeForWholeThreadGroup);
+    const size_t tailSize = perThreadDataSizeForWholeThreadGroupAllocated - perThreadDataSizeForWholeThreadGroup;
+    std::memset(perThreadDataForWholeThreadGroup + perThreadDataSizeForWholeThreadGroup, 0x0, tailSize);
+
+    return *this;
+}
+
+KernelMutableState::KernelMutableState(KernelMutableState &&orig) = default;
+
+KernelMutableState &KernelMutableState::operator=(KernelMutableState &&rhs) = default;
+
+void KernelMutableState::reservePerThreadDataForWholeThreadGroup(uint32_t sizeNeeded) {
+    if (sizeNeeded > perThreadDataSizeForWholeThreadGroupAllocated) {
+        alignedFree(perThreadDataForWholeThreadGroup);
+        perThreadDataForWholeThreadGroup = static_cast<uint8_t *>(alignedMalloc(sizeNeeded, 32));
+        perThreadDataSizeForWholeThreadGroupAllocated = sizeNeeded;
+    }
+    perThreadDataSizeForWholeThreadGroup = sizeNeeded;
+}
+
 KernelMutableState::~KernelMutableState() {
     if (perThreadDataForWholeThreadGroup != nullptr) {
         alignedFree(perThreadDataForWholeThreadGroup);
@@ -400,13 +451,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         uint32_t perThreadDataSizeForWholeThreadGroupNeeded =
             static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
                 simdSize, grfSize, grfCount, numChannels, itemsInGroup, rootDeviceEnvironment));
-        if (perThreadDataSizeForWholeThreadGroupNeeded >
-            state.perThreadDataSizeForWholeThreadGroupAllocated) {
-            alignedFree(state.perThreadDataForWholeThreadGroup);
-            state.perThreadDataForWholeThreadGroup = static_cast<uint8_t *>(alignedMalloc(perThreadDataSizeForWholeThreadGroupNeeded, 32));
-            state.perThreadDataSizeForWholeThreadGroupAllocated = perThreadDataSizeForWholeThreadGroupNeeded;
-        }
-        state.perThreadDataSizeForWholeThreadGroup = perThreadDataSizeForWholeThreadGroupNeeded;
+        state.reservePerThreadDataForWholeThreadGroup(perThreadDataSizeForWholeThreadGroupNeeded);
 
         if (numChannels > 0) {
             UNRECOVERABLE_IF(3 != numChannels);
@@ -1275,11 +1320,11 @@ bool KernelImp::usesRegionGroupBarrier() const {
 }
 
 void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
-    if (syncBufferIndex == std::numeric_limits<size_t>::max()) {
-        syncBufferIndex = this->state.internalResidencyContainer.size();
+    if (state.syncBufferIndex == std::numeric_limits<size_t>::max()) {
+        state.syncBufferIndex = this->state.internalResidencyContainer.size();
         this->state.internalResidencyContainer.push_back(gfxAllocation);
     } else {
-        this->state.internalResidencyContainer[syncBufferIndex] = gfxAllocation;
+        this->state.internalResidencyContainer[state.syncBufferIndex] = gfxAllocation;
     }
     NEO::patchPointer(getCrossThreadDataSpan(),
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.syncBufferAddress,
@@ -1287,11 +1332,11 @@ void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t b
 }
 
 void KernelImp::patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
-    if (regionGroupBarrierIndex == std::numeric_limits<size_t>::max()) {
-        regionGroupBarrierIndex = this->state.internalResidencyContainer.size();
+    if (state.regionGroupBarrierIndex == std::numeric_limits<size_t>::max()) {
+        state.regionGroupBarrierIndex = this->state.internalResidencyContainer.size();
         this->state.internalResidencyContainer.push_back(gfxAllocation);
     } else {
-        this->state.internalResidencyContainer[regionGroupBarrierIndex] = gfxAllocation;
+        this->state.internalResidencyContainer[state.regionGroupBarrierIndex] = gfxAllocation;
     }
 
     NEO::patchPointer(getCrossThreadDataSpan(),

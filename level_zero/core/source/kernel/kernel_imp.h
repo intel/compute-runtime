@@ -8,12 +8,12 @@
 #pragma once
 
 #include "shared/source/command_stream/thread_arbitration_policy.h"
-#include "shared/source/helpers/vec.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/kernel/kernel.h"
+#include "level_zero/core/source/kernel/kernel_mutable_state.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
 
@@ -30,71 +30,6 @@ namespace L0 {
 struct KernelExt {
     virtual ~KernelExt() = default;
 };
-
-struct KernelArgInfo {
-    const void *value;
-    uint32_t allocId;
-    uint32_t allocIdMemoryManagerCounter;
-    bool isSetToNullptr = false;
-};
-
-struct KernelImp;
-
-struct KernelMutableState {
-    using KernelArgHandler = ze_result_t (KernelImp::*)(uint32_t argIndex, size_t argSize, const void *argVal);
-    ~KernelMutableState();
-
-    struct SuggestGroupSizeCacheEntry {
-        Vec3<size_t> groupSize;
-        uint32_t slmArgsTotalSize = 0u;
-
-        Vec3<size_t> suggestedGroupSize;
-        SuggestGroupSizeCacheEntry(size_t groupSize[3], uint32_t slmArgsTotalSize, size_t suggestedGroupSize[3]) : groupSize(groupSize), slmArgsTotalSize(slmArgsTotalSize), suggestedGroupSize(suggestedGroupSize){};
-    };
-
-    UnifiedMemoryControls unifiedMemoryControls;
-
-    std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
-    std::unique_ptr<KernelExt> pExtension = nullptr;
-    std::unique_ptr<uint8_t[]> crossThreadData = nullptr;
-    std::unique_ptr<uint8_t[]> surfaceStateHeapData = nullptr;
-    std::unique_ptr<uint8_t[]> dynamicStateHeapData = nullptr;
-
-    uint8_t *perThreadDataForWholeThreadGroup = nullptr;
-
-    std::vector<SuggestGroupSizeCacheEntry> suggestGroupSizeCache;
-    std::vector<KernelArgInfo> kernelArgInfos;
-    std::vector<KernelArgHandler> kernelArgHandlers;
-    std::vector<NEO::GraphicsAllocation *> argumentsResidencyContainer;
-    std::vector<size_t> implicitArgsResidencyContainerIndices;
-    std::vector<NEO::GraphicsAllocation *> internalResidencyContainer;
-    std::vector<bool> isArgUncached;
-    std::vector<bool> isBindlessOffsetSet;
-    std::vector<bool> usingSurfaceStateHeap;
-    std::vector<uint32_t> slmArgSizes;
-    std::vector<uint32_t> slmArgOffsetValues;
-
-    uint32_t globalOffsets[3] = {};
-    uint32_t groupSize[3] = {0u, 0u, 0u};
-
-    uint32_t crossThreadDataSize = 0U;
-    uint32_t surfaceStateHeapDataSize = 0U;
-    uint32_t dynamicStateHeapDataSize = 0U;
-    uint32_t perThreadDataSize = 0U;
-    uint32_t slmArgsTotalSize = 0U;
-    uint32_t perThreadDataSizeForWholeThreadGroup = 0U;
-    uint32_t perThreadDataSizeForWholeThreadGroupAllocated = 0U;
-    uint32_t kernelRequiresQueueUncachedMocsCount = 0U;
-    uint32_t kernelRequiresUncachedMocsCount = 0U;
-    uint32_t requiredWorkgroupOrder = 0U;
-    uint32_t threadExecutionMask = 0U;
-    uint32_t numThreadsPerThreadGroup = 1U;
-    ze_cache_config_flags_t cacheConfigFlags = 0U;
-
-    bool kernelHasIndirectAccess = false;
-    bool kernelRequiresGenerationOfLocalIdsByRuntime = true;
-};
-static_assert(std::is_aggregate_v<KernelMutableState>);
 
 struct KernelImp : Kernel {
     KernelImp(Module *module);
@@ -268,25 +203,25 @@ struct KernelImp : Kernel {
     bool checkKernelContainsStatefulAccess();
 
     size_t getSyncBufferIndex() const {
-        return syncBufferIndex;
+        return state.syncBufferIndex;
     }
 
     NEO::GraphicsAllocation *getSyncBufferAllocation() const {
-        if (std::numeric_limits<size_t>::max() == syncBufferIndex) {
+        if (std::numeric_limits<size_t>::max() == state.syncBufferIndex) {
             return nullptr;
         }
-        return state.internalResidencyContainer[syncBufferIndex];
+        return state.internalResidencyContainer[state.syncBufferIndex];
     }
 
     size_t getRegionGroupBarrierIndex() const {
-        return regionGroupBarrierIndex;
+        return state.regionGroupBarrierIndex;
     }
 
     NEO::GraphicsAllocation *getRegionGroupBarrierAllocation() const {
-        if (std::numeric_limits<size_t>::max() == regionGroupBarrierIndex) {
+        if (std::numeric_limits<size_t>::max() == state.regionGroupBarrierIndex) {
             return nullptr;
         }
-        return state.internalResidencyContainer[regionGroupBarrierIndex];
+        return state.internalResidencyContainer[state.regionGroupBarrierIndex];
     }
 
     const std::vector<uint32_t> &getSlmArgSizes() {
@@ -302,6 +237,7 @@ struct KernelImp : Kernel {
     }
 
     uint32_t getIndirectSize() const override;
+    KernelMutableState &getMutableState() { return state; }
 
   protected:
     KernelImp() = default;
@@ -320,8 +256,6 @@ struct KernelImp : Kernel {
     std::mutex *devicePrintfKernelMutex = nullptr;
 
     NEO::GraphicsAllocation *privateMemoryGraphicsAllocation = nullptr;
-    size_t syncBufferIndex = std::numeric_limits<size_t>::max();
-    size_t regionGroupBarrierIndex = std::numeric_limits<size_t>::max();
     NEO::GraphicsAllocation *printfBuffer = nullptr;
     uintptr_t surfaceStateAlignmentMask = 0;
     uintptr_t surfaceStateAlignment = 0;

@@ -55,12 +55,10 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::patchSamplerBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::printfBuffer;
     using ::L0::KernelImp::rcsAvailable;
-    using ::L0::KernelImp::regionGroupBarrierIndex;
     using ::L0::KernelImp::setAssertBuffer;
     using ::L0::KernelImp::state;
     using ::L0::KernelImp::surfaceStateAlignment;
     using ::L0::KernelImp::surfaceStateAlignmentMask;
-    using ::L0::KernelImp::syncBufferIndex;
     using ::L0::KernelImp::walkerInlineDataSize;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address,
