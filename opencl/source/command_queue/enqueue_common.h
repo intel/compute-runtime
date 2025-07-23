@@ -833,7 +833,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     auto systolicPipelineSelectMode = false;
     Kernel *kernel = nullptr;
     bool auxTranslationRequired = false;
-    bool containsImageFromBuffer = false;
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
             kernel = dispatchInfo.getKernel();
@@ -850,7 +849,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
             anyUncacheableArgs = true;
         }
         this->isCacheFlushOnNextBcsWriteRequired |= kernel->usesImages();
-        containsImageFromBuffer |= kernel->hasImageFromBufferArgs();
     }
     UNRECOVERABLE_IF(kernel == nullptr);
 
@@ -877,16 +875,16 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dsh = &getIndirectHeap(IndirectHeap::Type::dynamicState, 0u);
     ioh = &getIndirectHeap(IndirectHeap::Type::indirectObject, 0u);
 
-    auto dcFlush = shouldFlushDC(commandType, printfHandler);
+    auto allocNeedsFlushDC = false;
     if (!device->isFullRangeSvm()) {
         if (std::any_of(csr.getResidencyAllocations().begin(), csr.getResidencyAllocations().end(), [](const auto allocation) { return allocation->isFlushL3Required(); })) {
-            dcFlush |= true;
+            allocNeedsFlushDC = true;
         }
     }
 
     auto memoryCompressionState = csr.getMemoryCompressionState(auxTranslationRequired);
     bool hasStallingCmds = enqueueProperties.hasStallingCmds || (!relaxedOrderingEnabled && (eventsRequest.numEventsInWaitList > 0 || timestampPacketDependencies.previousEnqueueNodes.peekNodes().size() > 0));
-    auto textureCacheFlush = isTextureCacheFlushNeeded(commandType) || containsImageFromBuffer;
+
     DispatchFlags dispatchFlags(
         &timestampPacketDependencies.barrierNodes,                                  // barrierTimestampPacketNodes
         {},                                                                         // pipelineSelectArgs
@@ -901,7 +899,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         memoryCompressionState,                                                     // memoryCompressionState
         getSliceCount(),                                                            // sliceCount
         blocking,                                                                   // blocking
-        dcFlush,                                                                    // dcFlush
+        shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC,             // dcFlush
         multiDispatchInfo.usesSlm(),                                                // useSLM
         !csr.isUpdateTagFromWaitEnabled() || commandType == CL_COMMAND_FILL_BUFFER, // guardCommandBufferWithPipeControl
         commandType == CL_COMMAND_NDRANGE_KERNEL,                                   // GSBA32BitRequired
@@ -912,7 +910,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         false,                                                                      // usePerDssBackedBuffer
         kernel->areMultipleSubDevicesInContext(),                                   // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                          // memoryMigrationRequired
-        textureCacheFlush,                                                          // textureCacheFlush
+        isTextureCacheFlushNeeded(commandType),                                     // textureCacheFlush
         hasStallingCmds,                                                            // hasStallingCmds
         relaxedOrderingEnabled,                                                     // hasRelaxedOrderingDependencies
         false,                                                                      // stateCacheInvalidation

@@ -447,12 +447,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     const auto &hwInfo = peekHwInfo();
 
     bool hasStallingCmdsOnTaskStream = false;
-    bool barrierWithPostSyncNeeded = dispatchFlags.blocking ||
-                                     dispatchFlags.dcFlush ||
-                                     dispatchFlags.guardCommandBufferWithPipeControl ||
-                                     dispatchFlags.textureCacheFlush ||
-                                     this->heapStorageRequiresRecyclingTag;
-    if (barrierWithPostSyncNeeded) {
+
+    if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageRequiresRecyclingTag) {
         LinearStream &epilogueCommandStream = dispatchFlags.optionalEpilogueCmdStream != nullptr ? *dispatchFlags.optionalEpilogueCmdStream : commandStreamTask;
         processBarrierWithPostSync(epilogueCommandStream, dispatchFlags, levelClosed, currentPipeControlForNooping,
                                    epiloguePipeControlLocation, hasStallingCmdsOnTaskStream, args);

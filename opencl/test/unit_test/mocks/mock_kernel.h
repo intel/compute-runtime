@@ -108,7 +108,6 @@ class MockKernel : public Kernel {
     using Kernel::hasDirectStatelessAccessToHostMemory;
     using Kernel::hasDirectStatelessAccessToSharedBuffer;
     using Kernel::hasIndirectStatelessAccessToHostMemory;
-    using Kernel::imageFromBufferArgsCount;
     using Kernel::implicitArgsVersion;
     using Kernel::isBuiltIn;
     using Kernel::isUnifiedMemorySyncRequired;

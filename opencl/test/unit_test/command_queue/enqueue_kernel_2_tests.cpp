@@ -1365,18 +1365,3 @@ TEST(EnqueuePropertiesTest, givenGpuKernelEnqueuePropertiesThenStartTimestampOnC
     EnqueueProperties properties(false, true, false, false, false, false, nullptr);
     EXPECT_FALSE(properties.isStartTimestampOnCpuRequired());
 }
-
-HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithImageFromBufferThenInvalidateTextureCache) {
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    size_t off[3] = {0, 0, 0};
-    size_t gws[3] = {1, 1, 1};
-    MockKernelWithInternals mockKernel(*pClDevice);
-    auto res = pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, res);
-    EXPECT_FALSE(csr.recordedDispatchFlags.textureCacheFlush);
-
-    mockKernel.mockKernel->imageFromBufferArgsCount = 1;
-    res = pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, res);
-    EXPECT_TRUE(csr.recordedDispatchFlags.textureCacheFlush);
-}
