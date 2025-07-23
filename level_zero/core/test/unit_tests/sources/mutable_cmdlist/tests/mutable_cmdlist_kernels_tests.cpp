@@ -1557,7 +1557,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
             givenTwoMutationKernelsOneRegionBarrierWhenAppendingRegionBarrierFirstAndMutatingGroupCountThenCorrectVariableIsSet) {
-    static_cast<L0::ult::MockCommandList *>(this->mutableCommandList.get()->base)->localDispatchSupport = true;
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
     enableRegionBarrierBuffer(kernel1Bit);
@@ -1636,7 +1635,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
             givenTwoMutationKernelsOneRegionBarrierWhenAppendingRegionBarrierFirstAndMutatingSecondaryKernelThenCorrectVariableIsSet) {
-    static_cast<L0::ult::MockCommandList *>(this->mutableCommandList.get()->base)->localDispatchSupport = true;
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
     enableRegionBarrierBuffer(kernel1Bit);
@@ -1785,7 +1783,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
             givenTwoMutationKernelsOneRegionBarrierWhenAppendingRegularFirstAndMutatingRegionBarrierKernelThenCorrectVariableIsSet) {
-    static_cast<L0::ult::MockCommandList *>(this->mutableCommandList.get()->base)->localDispatchSupport = true;
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
     enableRegionBarrierBuffer(kernel1Bit);
@@ -1889,7 +1886,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
             givenTwoMutationRegionBarrierKernelsWhenAppendingRegionBarrierFirstAndMutatingRegionBarrierKernelWithBiggerGroupCountThenCorrectVariableIsSet) {
-    static_cast<L0::ult::MockCommandList *>(this->mutableCommandList.get()->base)->localDispatchSupport = true;
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
     enableRegionBarrierBuffer(kernelAllMask);
@@ -2038,7 +2034,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
             givenKernelWithSlmAndRegionBarrierKernelWhenAppendingRegularAndMutatingRegionBarrierSlmThenCorrectVariableIsSet) {
-    static_cast<L0::ult::MockCommandList *>(this->mutableCommandList.get()->base)->localDispatchSupport = true;
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
     resizeKernelArg(1);

@@ -3452,7 +3452,6 @@ HWTEST_F(CommandListCreateTests, givenNullEventWhenAppendEventAfterWalkerThenNot
 
 TEST_F(CommandListCreateTests, givenCreatedCommandListWhenGettingTrackingFlagsThenDefaultValuseIsHwSupported) {
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
-    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
     auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
@@ -3486,7 +3485,6 @@ TEST_F(CommandListCreateTests, givenCreatedCommandListWhenGettingTrackingFlagsTh
 
     EXPECT_EQ(commandList->heaplessModeEnabled, commandList->scratchAddressPatchingEnabled);
     EXPECT_EQ(commandList->statelessBuiltinsEnabled, compilerProductHelper.isForceToStatelessRequired());
-    EXPECT_EQ((productHelper.getSupportedLocalDispatchSizes(hwInfo).size() > 0), commandList->getLocalDispatchSupport());
 }
 
 TEST(BuiltinTypeHelperTest, givenNonStatelessAndNonHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {

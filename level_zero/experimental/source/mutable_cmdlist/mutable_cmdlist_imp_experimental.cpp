@@ -203,7 +203,6 @@ ze_result_t MutableCommandListImp::loadFromBinary(const uint8_t *pBinary, const 
     args.cmdListEngine = base->getEngineGroupType();
     args.partitionCount = base->getPartitionCount();
     args.heapless = this->getBase()->isHeaplessModeEnabled();
-    args.localDispatch = this->getBase()->getLocalDispatchSupport();
     args.mutableWalkerCmds = &mutableWalkerCmds;
     Program::Decoder::MclDecoder::decode(args);
     if (base->getCmdListStateBaseAddressTracking()) {

@@ -133,7 +133,7 @@ void MclDecoder::decode(const MclDecoderArgs &args) {
 
         dispatch.varDispatch = std::make_unique<VariableDispatch>(&dispatch, std::move(mutableIndirectData), mutableCommandWalker,
                                                                   groupSize, groupCount, nullptr, nullptr, args.device->getHwInfo().capabilityTable.grfSize,
-                                                                  dispatchParams, args.partitionCount, args.cmdListEngine, (args.heapless && args.localDispatch));
+                                                                  dispatchParams, args.partitionCount, args.cmdListEngine, false);
     }
 }
 

@@ -432,10 +432,6 @@ struct CommandList : _ze_command_list_handle_t {
         return engineGroupType;
     }
 
-    bool getLocalDispatchSupport() const {
-        return localDispatchSupport;
-    }
-
     bool isClosed() const {
         return closedCmdList;
     }
@@ -562,7 +558,6 @@ struct CommandList : _ze_command_list_handle_t {
     bool scratchAddressPatchingEnabled = false;
     bool taskCountUpdateFenceRequired = false;
     bool statelessBuiltinsEnabled = false;
-    bool localDispatchSupport = false;
     bool l3FlushAfterPostSyncRequired = false;
     bool textureCacheFlushPending = false;
     bool closedCmdList = false;

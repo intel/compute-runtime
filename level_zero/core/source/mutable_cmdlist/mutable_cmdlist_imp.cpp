@@ -188,7 +188,7 @@ ze_result_t MutableCommandListImp::addVariableDispatch(const NEO::KernelDescript
         perThreadData = {reinterpret_cast<uint8_t *>(ptrOffset(iohCpuBase, kernelDispatch.offsets.perThreadOffset)), perThreadDataSize};
     }
 
-    bool calcRegion = base->isHeaplessModeEnabled() && base->getLocalDispatchSupport();
+    bool calcRegion = false;
     auto mutableIndirectData = std::make_unique<MutableIndirectData>(std::move(offsets), crossThreadData, perThreadData, inlineData);
     kernelDispatch.varDispatch = std::make_unique<VariableDispatch>(&kernelDispatch, std::move(mutableIndirectData), mutableComputeWalker,
                                                                     groupSize, groupCount, globalOffset, lastSlmArgumentVariable,

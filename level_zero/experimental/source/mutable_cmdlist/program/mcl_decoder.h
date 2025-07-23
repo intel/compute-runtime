@@ -52,7 +52,6 @@ struct MclDecoderArgs {
     NEO::EngineGroupType cmdListEngine;
     uint32_t partitionCount = 0;
     bool heapless = false;
-    bool localDispatch = false;
 };
 
 struct VarInfo {

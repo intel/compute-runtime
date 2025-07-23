@@ -1073,7 +1073,6 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     const auto &gfxHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
 
     this->heaplessEnabled = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().isHeaplessModeEnabled(hwInfo);
-    this->localDispatchSupport = productHelper.getSupportedLocalDispatchSizes(hwInfo).size() > 0;
 
     bool platformImplicitScaling = gfxHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
     this->implicitScalingEnabled = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling);
