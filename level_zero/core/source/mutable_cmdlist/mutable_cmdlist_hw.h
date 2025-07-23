@@ -37,6 +37,7 @@ struct MutableAppendLaunchKernelEvents {
     CommandToPatch signalCmd;
 
     bool waitEvents = false;
+    bool signalEvent = false;
     bool l3FlushEventSyncCmd = false;
     bool l3FlushEventTimestampSyncCmds = false;
     bool counterBasedEvent = false;
@@ -111,13 +112,10 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     void storeKernelArgumentAndDispatchVariables(MutableAppendLaunchKernelWithParams &mutableParams,
                                                  CmdListKernelLaunchParams &launchParams,
                                                  Kernel *kernel,
-                                                 KernelVariableDescriptor *kernelVariables,
-                                                 ze_mutable_command_exp_flags_t mutableFlags);
+                                                 KernelVariableDescriptor *kernelVariables);
     void storeSignalEventVariable(MutableAppendLaunchKernelEvents &mutableEventParams,
                                   CmdListKernelLaunchParams &launchParams,
-                                  Event *event,
-                                  MutationVariables *variableDescriptors,
-                                  ze_mutable_command_exp_flags_t mutableFlags);
+                                  Event *event);
 
     void captureCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                               std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,

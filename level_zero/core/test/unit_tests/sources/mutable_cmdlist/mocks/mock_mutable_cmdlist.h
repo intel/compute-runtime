@@ -37,6 +37,7 @@ struct WhiteBox<::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::containsCooperativeKernelsFlag;
     using BaseClass::dispatchs;
     using BaseClass::engineGroupType;
+    using BaseClass::eventMutations;
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getInOrderIncrementValue;
     using BaseClass::getKernelData;
@@ -50,6 +51,7 @@ struct WhiteBox<::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isQwordInOrderCounter;
     using BaseClass::isSyncModeQueue;
     using BaseClass::kernelData;
+    using BaseClass::kernelMutations;
     using BaseClass::maxPerThreadDataSize;
     using BaseClass::mutableAllocations;
     using BaseClass::mutableKernelGroups;
@@ -59,9 +61,9 @@ struct WhiteBox<::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::mutableStoreDataImmCmds;
     using BaseClass::mutableStoreRegMemCmds;
     using BaseClass::mutableWalkerCmds;
-    using BaseClass::mutations;
     using BaseClass::nextAppendKernelMutable;
     using BaseClass::nextCommandId;
+    using BaseClass::nextMutationFlags;
     using BaseClass::parseDispatchedKernel;
     using BaseClass::partitionCount;
     using BaseClass::stageCommitVariables;
@@ -84,12 +86,14 @@ struct WhiteBox<::L0::MCL::MutableCommandListImp> : public ::L0::MCL::MutableCom
     using BaseClass::base;
     using BaseClass::baseCmdListClosed;
     using BaseClass::dispatchs;
+    using BaseClass::eventMutations;
     using BaseClass::getKernelData;
     using BaseClass::getVariableDescriptorContainer;
     using BaseClass::hasStageCommitVariables;
     using BaseClass::inlineDataSize;
     using BaseClass::iohAlignment;
     using BaseClass::kernelData;
+    using BaseClass::kernelMutations;
     using BaseClass::maxPerThreadDataSize;
     using BaseClass::mutableAllocations;
     using BaseClass::mutableKernelGroups;
@@ -99,9 +103,9 @@ struct WhiteBox<::L0::MCL::MutableCommandListImp> : public ::L0::MCL::MutableCom
     using BaseClass::mutableStoreDataImmCmds;
     using BaseClass::mutableStoreRegMemCmds;
     using BaseClass::mutableWalkerCmds;
-    using BaseClass::mutations;
     using BaseClass::nextAppendKernelMutable;
     using BaseClass::nextCommandId;
+    using BaseClass::nextMutationFlags;
     using BaseClass::parseDispatchedKernel;
     using BaseClass::stageCommitVariables;
     using BaseClass::updatedCommandList;

@@ -74,13 +74,8 @@ struct MclAllocations {
     std::unique_ptr<char[]> stringsAlloc;
 };
 
-struct AppendMutation {
-    MutationVariables variables;
-    MutableKernelGroup *kernelGroup = nullptr;
-    ze_mutable_command_exp_flags_t mutationFlags = 0;
-};
-
-using MutationsContainer = std::vector<AppendMutation>;
+using KernelMutationsContainer = std::vector<AppendKernelMutation>;
+using EventMutationsContainer = std::vector<AppendEventMutation>;
 
 using CooperativeKernelDispatchContainer = std::unordered_set<VariableDispatch *>;
 
@@ -163,11 +158,11 @@ struct MutableCommandListImp : public MutableCommandList {
     void createNativeBinary(ArrayRef<const uint8_t> module);
     KernelData *getKernelData(L0::Kernel *kernel);
 
-    KernelVariableDescriptor *getVariableDescriptorContainer(AppendMutation &selectedAppend) {
+    KernelVariableDescriptor *getVariableDescriptorContainer(AppendKernelMutation &selectedAppend) {
         if (selectedAppend.kernelGroup != nullptr) {
             return &selectedAppend.kernelGroup->getCurrentMutableKernel()->getKernelVariables();
         } else {
-            return &selectedAppend.variables.kernelVariables;
+            return &selectedAppend.variables;
         }
     }
 
@@ -201,15 +196,18 @@ struct MutableCommandListImp : public MutableCommandList {
     std::vector<Variable *> stageCommitVariables;
 
     CommandToPatchContainer appendCmdsToPatch;
-    MutationsContainer mutations;
+    KernelMutationsContainer kernelMutations;
+    EventMutationsContainer eventMutations;
     CooperativeKernelDispatchContainer cooperativeKernelVariableDispatches;
 
     MutableComputeWalker *appendKernelMutableComputeWalker = nullptr;
 
     uint64_t nextCommandId = 0;
     size_t iohAlignment = 0;
+
     uint32_t maxPerThreadDataSize = 0;
     uint32_t inlineDataSize = 0;
+    ze_mutable_command_exp_flags_t nextMutationFlags = 0;
 
     bool nextAppendKernelMutable = false;
     bool baseCmdListClosed = false;

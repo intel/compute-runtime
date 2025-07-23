@@ -16,6 +16,7 @@ struct Event;
 } // namespace L0
 
 namespace L0::MCL {
+class MutableKernelGroup;
 struct Variable;
 
 struct KernelArgumentVariableDescriptor {
@@ -42,10 +43,14 @@ struct KernelVariableDescriptor {
     Variable *globalOffset = nullptr;
 };
 
-struct MutationVariables {
-    KernelVariableDescriptor kernelVariables;
-    SignalEventVariableDescriptor signalEvent;
+struct AppendKernelMutation {
+    KernelVariableDescriptor variables;
+    MutableKernelGroup *kernelGroup = nullptr;
+};
+
+struct AppendEventMutation {
     std::vector<WaitEventVariableDescriptor> waitEvents;
+    SignalEventVariableDescriptor signalEvent;
 };
 
 } // namespace L0::MCL

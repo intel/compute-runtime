@@ -15,6 +15,7 @@
 #include <vector>
 
 namespace L0::MCL {
+struct Variable;
 
 class MutableKernelGroup {
   public:
@@ -48,12 +49,20 @@ class MutableKernelGroup {
 
     size_t getScratchAddressPatchIndex() const { return scratchAddressPatchIndex; };
 
+    Variable *getSharedSignalVariable() const {
+        return sharedSignalVariable;
+    }
+    void setSharedSignalVariable(Variable *variable) {
+        sharedSignalVariable = variable;
+    }
+
   protected:
     std::vector<std::unique_ptr<MutableKernel>> kernelsInAppend;
     CommandToPatch prefetchCmd = {};
 
     MutableKernel *currentMutableKernel = nullptr;
     NEO::GraphicsAllocation *iohForPrefetch = nullptr;
+    Variable *sharedSignalVariable = nullptr;
 
     size_t scratchAddressPatchIndex = undefined<size_t>;
 

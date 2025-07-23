@@ -41,8 +41,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
@@ -105,8 +105,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, event->toHandle(), 0, nullptr, this->testLaunchParams);
@@ -166,8 +166,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, event->toHandle(), 0, nullptr, this->testLaunchParams);
@@ -384,7 +384,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
     for (auto &mutableKernel : mutation.kernelGroup->getKernelsInGroup()) {
         ASSERT_EQ(2u, mutableKernel->getKernelVariables().kernelArguments.size());
@@ -435,8 +435,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
     EXPECT_EQ(kernel2CrossThreadInitSize, mutation.kernelGroup->getMaxAppendIndirectHeapSize());
 
@@ -501,7 +501,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     auto maxIsaSize = std::max(kernel->getImmutableData()->getIsaSize(), kernel2->getImmutableData()->getIsaSize());
@@ -550,7 +550,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
@@ -609,7 +609,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     auto requiredSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize(), device->getNEODevice()->getRootDeviceEnvironment()) +
@@ -645,7 +645,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
@@ -710,7 +710,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernels, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams));
@@ -730,8 +730,8 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
     EXPECT_TRUE(mutation.kernelGroup->isScratchNeeded());
 
@@ -753,8 +753,8 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
     EXPECT_TRUE(mutation.kernelGroup->isScratchNeeded());
 
@@ -871,8 +871,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, specialKernelGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutationPrivateFirst = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutationPrivateFirst = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutationPrivateFirst.kernelGroup);
 
     this->testLaunchParams.isCooperative = true;
@@ -968,8 +968,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, specialKernelGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutationSlmFirst = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutationSlmFirst = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutationSlmFirst.kernelGroup);
 
     result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
@@ -1056,8 +1056,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_TRUE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesSyncBuffer);
@@ -1175,8 +1175,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_TRUE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesSyncBuffer);
@@ -1324,8 +1324,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_FALSE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesSyncBuffer);
@@ -1428,8 +1428,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_TRUE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesSyncBuffer);
@@ -1575,8 +1575,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_TRUE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesRegionGroupBarrier);
@@ -1656,8 +1656,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_TRUE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesRegionGroupBarrier);
@@ -1803,8 +1803,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_FALSE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesRegionGroupBarrier);
@@ -1905,8 +1905,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutation = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
     EXPECT_TRUE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesRegionGroupBarrier);
@@ -2049,8 +2049,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutationRegularFirst = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutationRegularFirst = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutationRegularFirst.kernelGroup);
 
     this->testLaunchParams.localRegionSize = 16;
@@ -2138,8 +2138,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ASSERT_NE(0u, mutableCommandList->mutations.size());
-    auto &mutationRegionBarrierFirst = mutableCommandList->mutations[commandId - 1];
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutationRegionBarrierFirst = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutationRegionBarrierFirst.kernelGroup);
 
     result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);

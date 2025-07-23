@@ -353,23 +353,24 @@ ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, Mut
 
 ze_result_t MutableCommandListImp::getNextCommandId(const ze_mutable_command_id_exp_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) {
     PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL getNextCommandId cmdlist: %p, flags: %u, numKernels: %u\n", this, desc->flags, numKernels);
-    AppendMutation nextAppend;
+    AppendKernelMutation nextAppendKernel;
+    AppendEventMutation nextAppendEvents;
     if (desc->flags == 0) {
-        nextAppend.mutationFlags = ZE_MUTABLE_COMMAND_EXP_FLAG_FORCE_UINT32 & (~ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION);
+        this->nextMutationFlags = ZE_MUTABLE_COMMAND_EXP_FLAG_FORCE_UINT32 & (~ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION);
     } else {
-        nextAppend.mutationFlags = desc->flags;
+        this->nextMutationFlags = desc->flags;
     }
-    if (kernelInstructionMutationEnabled(nextAppend.mutationFlags)) {
+    if (kernelInstructionMutationEnabled(this->nextMutationFlags)) {
         if (numKernels == 0) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         auto mutableKernelGroup = std::make_unique<MutableKernelGroup>(numKernels, phKernels, this->inlineDataSize, this->maxPerThreadDataSize);
         this->mutableKernelGroups.emplace_back(std::move(mutableKernelGroup));
-        nextAppend.kernelGroup = (*this->mutableKernelGroups.rbegin()).get();
+        nextAppendKernel.kernelGroup = (*this->mutableKernelGroups.rbegin()).get();
 
         // prepare kernel data for the whole kernel group - next append call will have them all ready
         bool allocateSyncBufferHandler = false;
-        auto &mutableKernels = nextAppend.kernelGroup->getKernelsInGroup();
+        auto &mutableKernels = nextAppendKernel.kernelGroup->getKernelsInGroup();
         for (uint32_t i = 0; i < numKernels; i++) {
             auto kernelData = getKernelData(Kernel::fromHandle(phKernels[i]));
             allocateSyncBufferHandler |= (kernelData->usesSyncBuffer || kernelData->usesRegionGroupBarrier);
@@ -383,7 +384,8 @@ ze_result_t MutableCommandListImp::getNextCommandId(const ze_mutable_command_id_
         }
     }
 
-    mutations.push_back(nextAppend);
+    kernelMutations.push_back(nextAppendKernel);
+    eventMutations.push_back(nextAppendEvents);
 
     *pCommandId = ++nextCommandId;
     nextAppendKernelMutable = true;
@@ -400,10 +402,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandsExp(const ze_mutable_com
         const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(next);
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC) {
             const ze_mutable_kernel_argument_exp_desc_t *apiKernelArgumentDesc = reinterpret_cast<const ze_mutable_kernel_argument_exp_desc_t *>(next);
-            AppendMutation &selectedAppend = this->mutations[(apiKernelArgumentDesc->commandId - 1)];
-            if ((selectedAppend.mutationFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS) == 0) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
+            AppendKernelMutation &selectedAppend = this->kernelMutations[(apiKernelArgumentDesc->commandId - 1)];
             currentVariables = getVariableDescriptorContainer(selectedAppend);
             if (apiKernelArgumentDesc->argIndex + 1 > currentVariables->kernelArguments.size()) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -436,10 +435,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandsExp(const ze_mutable_com
         }
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC) {
             const ze_mutable_group_count_exp_desc_t *groupCountDesc = reinterpret_cast<const ze_mutable_group_count_exp_desc_t *>(next);
-            AppendMutation &selectedAppend = this->mutations[(groupCountDesc->commandId - 1)];
-            if ((selectedAppend.mutationFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT) == 0) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
+            AppendKernelMutation &selectedAppend = this->kernelMutations[(groupCountDesc->commandId - 1)];
             currentVariables = getVariableDescriptorContainer(selectedAppend);
             if (currentVariables->groupCount == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -458,10 +454,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandsExp(const ze_mutable_com
         }
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC) {
             const ze_mutable_group_size_exp_desc_t *groupSizeDesc = reinterpret_cast<const ze_mutable_group_size_exp_desc_t *>(next);
-            AppendMutation &selectedAppend = this->mutations[(groupSizeDesc->commandId - 1)];
-            if ((selectedAppend.mutationFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE) == 0) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
+            AppendKernelMutation &selectedAppend = this->kernelMutations[(groupSizeDesc->commandId - 1)];
             currentVariables = getVariableDescriptorContainer(selectedAppend);
             if (currentVariables->groupSize == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -481,10 +474,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandsExp(const ze_mutable_com
         }
         if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXP_DESC) {
             const ze_mutable_global_offset_exp_desc_t *globalOffsetDesc = reinterpret_cast<const ze_mutable_global_offset_exp_desc_t *>(next);
-            AppendMutation &selectedAppend = this->mutations[(globalOffsetDesc->commandId - 1)];
-            if ((selectedAppend.mutationFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET) == 0) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
+            AppendKernelMutation &selectedAppend = this->kernelMutations[(globalOffsetDesc->commandId - 1)];
             currentVariables = getVariableDescriptorContainer(selectedAppend);
             if (currentVariables->globalOffset == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -514,21 +504,18 @@ ze_result_t MutableCommandListImp::updateMutableCommandsExp(const ze_mutable_com
 
 ze_result_t MutableCommandListImp::updateMutableCommandSignalEventExp(uint64_t commandId, ze_event_handle_t signalEvent) {
     PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandSignalEventExp cmdlist: %p commandId: %" PRIu64 " new signal event handle: %p\n", this, commandId, signalEvent);
-    AppendMutation &selectedAppend = this->mutations[(commandId - 1)];
-    if ((selectedAppend.mutationFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT) == 0) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-    if (selectedAppend.variables.signalEvent.eventVariable == nullptr) {
+    AppendEventMutation &selectedAppend = this->eventMutations[(commandId - 1)];
+    if (selectedAppend.signalEvent.eventVariable == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     auto inputEvent = Event::fromHandle(signalEvent);
-    if (selectedAppend.variables.signalEvent.event == inputEvent) {
+    if (selectedAppend.signalEvent.event == inputEvent) {
         return ZE_RESULT_SUCCESS;
     }
 
-    auto ret = selectedAppend.variables.signalEvent.eventVariable->setValue(0, 0, inputEvent);
+    auto ret = selectedAppend.signalEvent.eventVariable->setValue(0, 0, inputEvent);
     if (ret == ZE_RESULT_SUCCESS) {
-        selectedAppend.variables.signalEvent.event = inputEvent;
+        selectedAppend.signalEvent.event = inputEvent;
         this->updatedCommandList = true;
     }
     return ret;
@@ -536,15 +523,12 @@ ze_result_t MutableCommandListImp::updateMutableCommandSignalEventExp(uint64_t c
 
 ze_result_t MutableCommandListImp::updateMutableCommandWaitEventsExp(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandWaitEventsExp cmdlist: %p commandId: %" PRIu64 " numWaitEvents: %u\n", this, commandId, numWaitEvents);
-    AppendMutation &selectedAppend = this->mutations[(commandId - 1)];
-    if ((selectedAppend.mutationFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS) == 0) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-    if (numWaitEvents > selectedAppend.variables.waitEvents.size()) {
+    AppendEventMutation &selectedAppend = this->eventMutations[(commandId - 1)];
+    if (numWaitEvents > selectedAppend.waitEvents.size()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     for (uint32_t eventNum = 0; eventNum < numWaitEvents; eventNum++) {
-        WaitEventVariableDescriptor &mutableWaitEventDesc = selectedAppend.variables.waitEvents[eventNum];
+        WaitEventVariableDescriptor &mutableWaitEventDesc = selectedAppend.waitEvents[eventNum];
         UNRECOVERABLE_IF(mutableWaitEventDesc.waitEventIndex != eventNum);
         auto waitEventHandle = toInternalType(phWaitEvents[eventNum]);
         auto inputEvent = Event::fromHandle(waitEventHandle);
@@ -571,14 +555,11 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
         auto commandId = pCommandId[id];
         auto kernelHandle = toInternalType(phKernels[id]);
         auto kernel = Kernel::fromHandle(kernelHandle);
-        AppendMutation &selectedAppend = this->mutations[(commandId - 1)];
-        if (!kernelInstructionMutationEnabled(selectedAppend.mutationFlags)) {
+        auto kernelGroup = this->kernelMutations[(commandId - 1)].kernelGroup;
+        if (kernelGroup == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        auto kernelGroup = selectedAppend.kernelGroup;
-
-        UNRECOVERABLE_IF(kernelGroup == nullptr);
         auto oldMutableKernel = kernelGroup->getCurrentMutableKernel();
         // when old mutable kernel handle is the same as new, then skip mutation
         if (oldMutableKernel->getKernel() == kernel) {
@@ -662,8 +643,8 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
         newKernelComputeWalker->saveCpuBufferIntoGpuBuffer(false, true);
 
         // update reminder variables (signal event variable) with new compute walker to have correct reference for new post sync addresses
-        if (selectedAppend.variables.signalEvent.eventVariable != nullptr) {
-            selectedAppend.variables.signalEvent.eventVariable->updateMutableComputeWalker(newKernelComputeWalker);
+        if (kernelGroup->getSharedSignalVariable() != nullptr) {
+            kernelGroup->getSharedSignalVariable()->updateMutableComputeWalker(newKernelComputeWalker);
         }
 
         // add new kernel to mutable residency

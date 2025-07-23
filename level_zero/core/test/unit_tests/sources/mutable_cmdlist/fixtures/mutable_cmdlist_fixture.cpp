@@ -326,7 +326,7 @@ void MutableCommandListFixtureInit::prepareKernelArg(uint16_t argIndex, L0::MCL:
 }
 
 std::vector<L0::MCL::Variable *> MutableCommandListFixtureInit::getVariableList(uint64_t commandId, L0::MCL::VariableType varType, L0::Kernel *kernelOption) {
-    auto &selectedAppend = mutableCommandList->mutations[(commandId - 1)];
+    auto &selectedKernelAppend = mutableCommandList->kernelMutations[(commandId - 1)];
     std::vector<L0::MCL::Variable *> selectedVariables;
     L0::MCL::KernelVariableDescriptor *kernelVariableDescriptors = nullptr;
     if (varType == L0::MCL::VariableType::buffer ||
@@ -336,13 +336,13 @@ std::vector<L0::MCL::Variable *> MutableCommandListFixtureInit::getVariableList(
         varType == L0::MCL::VariableType::groupCount ||
         varType == L0::MCL::VariableType::groupSize) {
         if (kernelOption != nullptr) {
-            for (auto &mutableKernel : selectedAppend.kernelGroup->getKernelsInGroup()) {
+            for (auto &mutableKernel : selectedKernelAppend.kernelGroup->getKernelsInGroup()) {
                 if (mutableKernel->getKernel() == kernelOption) {
                     kernelVariableDescriptors = &mutableKernel->getKernelVariables();
                 }
             }
         } else {
-            kernelVariableDescriptors = &selectedAppend.variables.kernelVariables;
+            kernelVariableDescriptors = &selectedKernelAppend.variables;
         }
         if (kernelVariableDescriptors != nullptr) {
             if (varType == L0::MCL::VariableType::buffer ||
@@ -366,11 +366,12 @@ std::vector<L0::MCL::Variable *> MutableCommandListFixtureInit::getVariableList(
             }
         }
     }
-    if (varType == L0::MCL::VariableType::signalEvent && selectedAppend.variables.signalEvent.eventVariable != nullptr) {
-        selectedVariables.push_back(selectedAppend.variables.signalEvent.eventVariable);
+    auto &selectedEventAppend = mutableCommandList->eventMutations[(commandId - 1)];
+    if (varType == L0::MCL::VariableType::signalEvent && selectedEventAppend.signalEvent.eventVariable != nullptr) {
+        selectedVariables.push_back(selectedEventAppend.signalEvent.eventVariable);
     }
     if (varType == L0::MCL::VariableType::waitEvent) {
-        for (auto &varDesc : selectedAppend.variables.waitEvents) {
+        for (auto &varDesc : selectedEventAppend.waitEvents) {
             if (varDesc.eventVariable != nullptr) {
                 selectedVariables.push_back(varDesc.eventVariable);
             }
