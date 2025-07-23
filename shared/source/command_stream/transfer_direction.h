@@ -9,7 +9,7 @@
 
 namespace NEO {
 enum class TransferDirection {
-    hostToHost,
+    hostToHost = 0,
     hostToLocal,
     localToHost,
     localToLocal,

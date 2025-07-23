@@ -994,6 +994,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         debugManager.flags.SplitBcsRequiredTileCount.set(expectedTileCount);
         debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
         debugManager.flags.SplitBcsMask.set(0b11110);
+        debugManager.flags.SplitBcsTransferDirectionMask.set(transferDirectionMask);
 
         createDevice();
         context = Context::fromHandle(driverHandle->getDefaultContext());
@@ -1082,10 +1083,23 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
     BcsSplit *bcsSplit = nullptr;
     Context *context = nullptr;
     const size_t copySize = 4 * MemoryConstants::megaByte;
+    const int32_t transferDirectionMask = ~(1 << static_cast<int32_t>(TransferDirection::localToLocal));
+
     uint32_t expectedTileCount = 1;
     uint32_t expectedEnginesCount = 4;
     uint32_t expectedNumRootDevices = 1;
 };
+
+HWTEST_F(AggregatedBcsSplitTests, givenTransferDirectionWhenAskingIfSplitIsNeededThenReturnCorrectValue) {
+    debugManager.flags.SplitBcsTransferDirectionMask.set(-1);
+
+    auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
+
+    for (auto transferDirection : {TransferDirection::localToLocal, TransferDirection::localToHost, TransferDirection::hostToLocal, TransferDirection::hostToHost, TransferDirection::remote}) {
+        bool required = cmdListHw->transferDirectionRequiresBcsSplit(transferDirection);
+        EXPECT_EQ(transferDirection != TransferDirection::localToLocal, required);
+    }
+}
 
 HWTEST2_F(AggregatedBcsSplitTests, givenPlatformSupporingAggregatedSplitModeWhenInitializingThenEnableInBcsSplitObject, IsAtLeastXeHpcCore) {
     debugManager.flags.SplitBcsAggregatedEventsMode.set(-1);

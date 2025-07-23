@@ -251,6 +251,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::syncDispatchQueueId;
     using BaseClass::synchronizedDispatchMode;
     using BaseClass::synchronizeInOrderExecution;
+    using BaseClass::transferDirectionRequiresBcsSplit;
     using BaseClass::updateInOrderExecInfo;
     using BaseClass::useAdditionalBlitProperties;
 

@@ -4000,10 +4000,18 @@ bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, con
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut, bool remoteCopy) {
     directionOut = NEO::createTransferDirection(!NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool), !NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool), remoteCopy);
+    bool directionSupported = transferDirectionRequiresBcsSplit(directionOut);
 
-    return this->isBcsSplitNeeded &&
-           size >= minimalSizeForBcsSplit &&
-           directionOut != NEO::TransferDirection::localToLocal;
+    if (NEO::debugManager.flags.SplitBcsTransferDirectionMask.get() != -1) {
+        directionSupported = (1 << static_cast<int32_t>(directionOut)) & NEO::debugManager.flags.SplitBcsTransferDirectionMask.get();
+    }
+
+    return (this->isBcsSplitNeeded && (size >= minimalSizeForBcsSplit) && directionSupported);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::transferDirectionRequiresBcsSplit(NEO::TransferDirection direction) const {
+    return (direction != NEO::TransferDirection::localToLocal);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
