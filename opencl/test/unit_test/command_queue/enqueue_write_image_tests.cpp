@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -105,6 +106,20 @@ HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenTaskLevelIsIncremented) {
 
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage, EnqueueWriteImageTraits::blocking);
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
+}
+
+HWTEST_F(EnqueueWriteImageTest, WhenWritingImageWithDirectSubmissionThenInvalidateTextureCache) {
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*pDevice->getDefaultEngine().commandStreamReceiver);
+    auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.directSubmissionAvailable = true;
+    ultCsr.directSubmission.reset(directSubmission);
+    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage, EnqueueWriteImageTraits::blocking);
+    EXPECT_TRUE(ultCsr.recordedDispatchFlags.textureCacheFlush);
+
+    ultCsr.directSubmissionAvailable = false;
+    ultCsr.directSubmission.reset(nullptr);
+    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage, EnqueueWriteImageTraits::blocking);
+    EXPECT_FALSE(ultCsr.recordedDispatchFlags.textureCacheFlush);
 }
 
 HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenCommandsAreAdded) {

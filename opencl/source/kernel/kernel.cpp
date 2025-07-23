@@ -1567,8 +1567,10 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         }
 
         DBG_LOG_INPUTS("setArgImage cl_mem", clMemObj);
-
+        auto wasImageFromBuffer = kernelArguments[argIndex].isImageFromBuffer;
         storeKernelArg(argIndex, IMAGE_OBJ, clMemObj, argVal, argSize);
+        kernelArguments[argIndex].isImageFromBuffer = pImage->isImageFromBuffer();
+        imageFromBufferArgsCount += (pImage->isImageFromBuffer() ? 1 : 0) - (wasImageFromBuffer ? 1 : 0);
 
         void *surfaceState = nullptr;
         if (isValidOffset(argAsImg.bindless)) {

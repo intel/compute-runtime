@@ -75,6 +75,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         bool isPatched = false;
         bool isStatelessUncacheable = false;
         bool isSetToNullptr = false;
+        bool isImageFromBuffer = false;
     };
 
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
@@ -275,6 +276,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     void resetSharedObjectsPatchAddresses();
     bool isUsingSharedObjArgs() const { return usingSharedObjArgs; }
     bool hasUncacheableStatelessArgs() const { return statelessUncacheableArgsCount > 0; }
+    bool hasImageFromBufferArgs() const { return imageFromBufferArgsCount > 0; }
 
     bool hasPrintfOutput() const;
 
@@ -459,6 +461,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
     uint32_t statelessUncacheableArgsCount = 0;
+    uint32_t imageFromBufferArgsCount = 0;
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::disableOverdispatch;
     uint32_t maxKernelWorkGroupSize = 0;
     uint32_t slmTotalSize = 0u;

@@ -87,6 +87,36 @@ TEST_F(KernelImageArgTest, givenKernelWithValidOffsetNumMipLevelsWhenImageArgIsS
     EXPECT_EQ(7U, *patchedNumMipLevels);
 }
 
+TEST_F(KernelImageArgTest, givenKernelWithImageFromBufferThenIncrementCounter) {
+    uint32_t data = 0;
+    auto buffer = clCreateBuffer(context.get(), CL_MEM_USE_HOST_PTR, sizeof(data), &data, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    MockImageBase image;
+    cl_mem imageObj = &image;
+    pKernel->setArg(0, sizeof(cl_mem), &imageObj);
+    EXPECT_FALSE(pKernel->hasImageFromBufferArgs());
+
+    cl_image_format imgFormat = {CL_RGBA, CL_UNORM_INT8};
+    cl_image_desc imgDesc = image.getImageDesc();
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imgDesc.mem_object = buffer;
+    auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, pDevice);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto imgFromBuffer = Image::create(context.get(), memoryProperties, 0, 0, surfaceFormat, &imgDesc, nullptr, retVal);
+
+    imageObj = imgFromBuffer;
+    pKernel->setArg(0, sizeof(cl_mem), &imageObj);
+    EXPECT_TRUE(pKernel->hasImageFromBufferArgs());
+
+    imageObj = &image;
+    pKernel->setArg(0, sizeof(cl_mem), &imageObj);
+    EXPECT_FALSE(pKernel->hasImageFromBufferArgs());
+
+    clReleaseMemObject(imgFromBuffer);
+    clReleaseMemObject(buffer);
+}
+
 TEST_F(KernelImageArgTest, givenImageWithNumSamplesWhenSetArgIsCalledThenPatchNumSamplesInfo) {
     cl_image_format imgFormat = {CL_RGBA, CL_UNORM_INT8};
     cl_image_desc imgDesc = {};
