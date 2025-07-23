@@ -117,6 +117,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual CopyOffloadMode getDefaultCopyOffloadMode(bool additionalBlitPropertiesSupported) const = 0;
     virtual bool isDefaultCmdListWithCopyOffloadSupported(bool additionalBlitPropertiesSupported) const = 0;
     virtual bool bcsSplitAggregatedModeEnabled() const = 0;
+    virtual bool supportMetricsAggregation() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -176,6 +177,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     CopyOffloadMode getDefaultCopyOffloadMode(bool additionalBlitPropertiesSupported) const override;
     bool isDefaultCmdListWithCopyOffloadSupported(bool additionalBlitPropertiesSupported) const override;
     bool bcsSplitAggregatedModeEnabled() const override;
+    bool supportMetricsAggregation() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

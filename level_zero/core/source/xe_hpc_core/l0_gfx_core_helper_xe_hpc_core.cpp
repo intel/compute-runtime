@@ -215,6 +215,11 @@ uint64_t L0GfxCoreHelperHw<Family>::getIpSamplingIpMask() const {
     return ipSamplingIpMaskXe;
 }
 
+template <>
+bool L0GfxCoreHelperHw<Family>::supportMetricsAggregation() const {
+    return false;
+}
+
 template class L0GfxCoreHelperHw<Family>;
 
 } // namespace L0

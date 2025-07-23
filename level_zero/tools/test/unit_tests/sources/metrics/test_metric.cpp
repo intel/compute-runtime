@@ -283,5 +283,100 @@ TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneAndNoSourcesAreAvailableThen
     deviceImp->metricContext.reset();
 }
 
+using MetricScopesFixture = Test<DeviceFixture>;
+
+TEST_F(MetricScopesFixture, WhenGettingMetricScopeForSingleDeviceTheyAreCorrectlyEnumerated) {
+
+    auto mockDeviceContext = new MockMetricDeviceContext(*device);
+    mockDeviceContext->clearAllSources();
+    auto metricSource = new MockMetricSource();
+    metricSource->isAvailableReturn = true;
+    mockDeviceContext->setMockMetricSource(metricSource);
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    deviceImp->metricContext.reset(mockDeviceContext);
+
+    uint32_t metricScopesCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
+                                                            device->toHandle(),
+                                                            &metricScopesCount,
+                                                            nullptr));
+
+    EXPECT_EQ(metricScopesCount, 1u);
+    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopes(metricScopesCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
+                                                            device->toHandle(),
+                                                            &metricScopesCount,
+                                                            metricScopes.data()));
+    EXPECT_EQ(metricScopesCount, 1u);
+    EXPECT_EQ(metricScopes.size(), 1u);
+}
+
+TEST_F(MetricScopesFixture, WhenMultipleSourcesAreAvailableComputeMetricScopesAreEnumeratedOnlyOnce) {
+
+    auto mockDeviceContext = new MockMetricDeviceContext(*device);
+    mockDeviceContext->clearAllSources();
+    auto metricSource = new MockMetricSource();
+    metricSource->isAvailableReturn = true;
+    mockDeviceContext->setMockMetricSource(metricSource);
+
+    auto metricSource2 = new MockMetricSource();
+    metricSource2->isAvailableReturn = true;
+    mockDeviceContext->setMockMetricSourceAtIndex(100, metricSource2);
+
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    deviceImp->metricContext.reset(mockDeviceContext);
+
+    uint32_t metricScopesCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
+                                                            device->toHandle(),
+                                                            &metricScopesCount,
+                                                            nullptr));
+    EXPECT_EQ(metricScopesCount, 1u);
+}
+
+TEST_F(MetricScopesFixture, GettingMetricsScopesPropertiesReturnsExpectedValues) {
+
+    auto mockDeviceContext = new MockMetricDeviceContext(*device);
+    mockDeviceContext->clearAllSources();
+    auto metricSource = new MockMetricSource();
+    metricSource->isAvailableReturn = true;
+    mockDeviceContext->setMockMetricSource(metricSource);
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    deviceImp->metricContext.reset(mockDeviceContext);
+
+    uint32_t metricScopesCount = 1;
+    zet_intel_metric_scope_exp_handle_t metricScope;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopesGetExp(context->toHandle(),
+                                                            device->toHandle(),
+                                                            &metricScopesCount,
+                                                            &metricScope));
+    EXPECT_EQ(metricScopesCount, 1u);
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricScopeGetPropertiesExp(metricScope,
+                                                                     &scopeProperties));
+
+    EXPECT_EQ(scopeProperties.iD, 0u);
+    EXPECT_STREQ(scopeProperties.name, "COMPUTE_TILE_0");
+    EXPECT_STREQ(scopeProperties.description, "Metrics results for tile 0");
+}
+
+TEST_F(MetricScopesFixture, MetricScopeObjectToAndFromHandleBaseClassWorkAsExpected) {
+
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+
+    MockMetricScope mockMetricScope(scopeProperties);
+    auto hMockScope = mockMetricScope.toHandle();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricScopeGetPropertiesExp(hMockScope,
+                                                                                       &scopeProperties));
+    auto mockScope = MetricScope::fromHandle(hMockScope);
+    EXPECT_NE(nullptr, mockScope);
+}
+
 } // namespace ult
 } // namespace L0
