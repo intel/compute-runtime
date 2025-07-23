@@ -175,12 +175,16 @@ typedef enum _zex_intel_queue_copy_operations_offload_hint_exp_version_t {
     ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zex_intel_queue_copy_operations_offload_hint_exp_version_t;
 
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
+
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Command queue flag for enabling copy operations offload
 ///
 /// If set, try to offload copy operations to different engines. Applicable only for compute queues.
 /// This is only a hint. Driver may ignore it per append call, based on platform capabilities or internal heuristics.
 #define ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT ZE_BIT(2)
+
+#endif // ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
 
 #ifndef ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME
 /// @brief Extension name for query to read the Intel Level Zero Driver Version String
@@ -473,6 +477,38 @@ zeIntelMemGetFormatModifiersSupportedExp(
     uint64_t *pDrmFormatModifiers                  ///< [in,out][optional][range(0, *pCount)] array of supported DRM format modifiers
 );
 
+/// @brief Get priority levels
+///
+/// @details
+///    - The application may call this function from simultaneous threads.
+///    - The implementation of this function should be lock-free.
+///    - Returns priority levels supported by the device
+///    - lowestPriority reports the numerical value that corresponds to lowest queue priority
+///    - highesPriority reports the numerical value that corresponds to highest queue priority
+///    - Lower numbers indicate greater priorities
+///    - The range of meaningful queue properties is represented by [*highestPriority, *lowestPriority]
+///    - Priority passed upon queue creation would automatically clamp down or up to the nearest supported value
+///    - 0 means default priority
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+ze_result_t ZE_APICALL zeDeviceGetPriorityLevels(
+    ze_device_handle_t hDevice,
+    int *lowestPriority,
+    int *highestPriority);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Descriptor used for setting priority on command queues and immediate command lists.
+/// This structure may be passed as pNext member of ::ze_command_queue_desc_t.
+typedef struct _ze_queue_priority_desc_t {
+    ze_structure_type_t stype; ///< [in] type of this structure
+    const void *pNext;         ///< [in][optional] must be null or a pointer to an extension-specific structure
+    int priority;              ///< [in] priority of the queue
+} ze_queue_priority_desc_t;
+
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
+
 /// @brief Get default context associated with driver
 ///
 /// @details
@@ -529,36 +565,6 @@ ze_device_handle_t ZE_APICALL zerIdentifierTranslateToDeviceHandle(uint32_t iden
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_DEVICE_LOST
 ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice); ///> [in] handle of the device
-
-/// @brief Get priority levels
-///
-/// @details
-///    - The application may call this function from simultaneous threads.
-///    - The implementation of this function should be lock-free.
-///    - Returns priority levels supported by the device
-///    - lowestPriority reports the numerical value that corresponds to lowest queue priority
-///    - highesPriority reports the numerical value that corresponds to highest queue priority
-///    - Lower numbers indicate greater priorities
-///    - The range of meaningful queue properties is represented by [*highestPriority, *lowestPriority]
-///    - Priority passed upon queue creation would automatically clamp down or up to the nearest supported value
-///    - 0 means default priority
-///
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
-ze_result_t ZE_APICALL zeDeviceGetPriorityLevels(
-    ze_device_handle_t hDevice,
-    int *lowestPriority,
-    int *highestPriority);
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Descriptor used for setting priority on command queues and immediate command lists.
-/// This structure may be passed as pNext member of ::ze_command_queue_desc_t.
-typedef struct _ze_queue_priority_desc_t {
-    ze_structure_type_t stype; ///< [in] type of this structure
-    const void *pNext;         ///< [in][optional] must be null or a pointer to an extension-specific structure
-    int priority;              ///< [in] priority of the queue
-} ze_queue_priority_desc_t;
 
 /// @brief Append with arguments
 ///
@@ -629,9 +635,13 @@ zerDriverGetLastErrorDescription(
                           ///< cause of error.
 );
 
+#endif // ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
+
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
 
 const ze_device_mem_alloc_desc_t defaultDeviceMemDesc = {
     ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,                                        // stype
@@ -655,5 +665,7 @@ const ze_command_queue_desc_t defaultCommandQueueDesc = {
     ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,                                                                              // mode
     ZE_COMMAND_QUEUE_PRIORITY_NORMAL                                                                                 // priority
 };
+
+#endif // ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
 
 #endif
