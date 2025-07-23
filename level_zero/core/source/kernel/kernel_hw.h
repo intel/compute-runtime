@@ -29,6 +29,90 @@ namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct KernelHw : public KernelImp {
     using KernelImp::KernelImp;
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
+        uint64_t baseAddress = alloc->getGpuAddressToPatch();
+
+        // Remove misaligned bytes, accounted for in bufferOffset patch token
+        baseAddress &= this->surfaceStateAlignmentMask;
+        auto misalignedSize = ptrDiff(alloc->getGpuAddressToPatch(), baseAddress);
+        auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
+        size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
+        // If the allocation is part of a mapped virtual range, then set size to maximum to allow for access across multiple virtual ranges.
+        Device *device = module->getDevice();
+        auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
+
+        auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+        bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(),
+                                                                         argInfo.bufferOffset, static_cast<uint32_t>(offset));
+        bool offsetedAddress = false;
+        if (false == offsetWasPatched) {
+            // fallback to handling offset in surface state
+            offsetedAddress = baseAddress != reinterpret_cast<uintptr_t>(address);
+            baseAddress = reinterpret_cast<uintptr_t>(address);
+            bufferSizeForSsh -= offset;
+            DEBUG_BREAK_IF(baseAddress != (baseAddress & this->surfaceStateAlignmentMask));
+
+            offset = 0;
+        }
+        void *surfaceStateAddress = nullptr;
+        auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+
+        if (NEO::isValidOffset(argInfo.bindful)) {
+            surfaceStateAddress = ptrOffset(state.surfaceStateHeapData.get(), argInfo.bindful);
+            surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
+
+        } else if (NEO::isValidOffset(argInfo.bindless)) {
+            state.isBindlessOffsetSet[argIndex] = false;
+            state.usingSurfaceStateHeap[argIndex] = false;
+            if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper() && !offsetedAddress) {
+                surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
+                state.isBindlessOffsetSet[argIndex] = true;
+            } else {
+                state.usingSurfaceStateHeap[argIndex] = true;
+                surfaceStateAddress = ptrOffset(state.surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE));
+            }
+        }
+
+        uint64_t bufferAddressForSsh = baseAddress;
+        bufferSizeForSsh += misalignedSize;
+        bufferSizeForSsh = alignUp(bufferSizeForSsh, this->surfaceStateAlignment);
+
+        bool l3Enabled = true;
+        // Allocation MUST be cacheline (64 byte) aligned in order to enable L3 caching otherwise Heap corruption will occur coming from the KMD.
+        // Most commonly this issue will occur with Host Point Allocations from customers.
+        l3Enabled = isL3Capable(*alloc);
+
+        NEO::Device *neoDevice = device->getNEODevice();
+
+        if (allocData && allocData->allocationFlagsProperty.flags.locallyUncachedResource) {
+            l3Enabled = false;
+        }
+
+        if (l3Enabled == false) {
+            this->state.kernelRequiresQueueUncachedMocsCount++;
+        }
+        auto isDebuggerActive = neoDevice->getDebugger() != nullptr;
+        NEO::EncodeSurfaceStateArgs args;
+        args.outMemory = &surfaceState;
+        args.graphicsAddress = bufferAddressForSsh;
+        if (allocData && allocData->virtualReservationData) {
+            bufferSizeForSsh = MemoryConstants::fullStatefulRegion;
+        }
+        args.size = bufferSizeForSsh;
+        args.mocs = device->getMOCS(l3Enabled, false);
+        args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
+        args.allocation = alloc;
+        args.gmmHelper = neoDevice->getGmmHelper();
+        args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
+        args.implicitScaling = device->isImplicitScalingCapable();
+        args.isDebuggerActive = isDebuggerActive;
+
+        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+        UNRECOVERABLE_IF(surfaceStateAddress == nullptr);
+        *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;
+    }
 };
 
 } // namespace L0

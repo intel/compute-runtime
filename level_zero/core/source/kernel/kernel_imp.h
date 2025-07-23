@@ -169,7 +169,7 @@ struct KernelImp : Kernel {
 
     ze_result_t setArgSampler(uint32_t argIndex, size_t argSize, const void *argVal);
 
-    MOCKABLE_VIRTUAL void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc);
+    virtual void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) = 0;
 
     void setInlineSamplers();
 
@@ -325,7 +325,6 @@ struct KernelImp : Kernel {
     NEO::GraphicsAllocation *printfBuffer = nullptr;
     uintptr_t surfaceStateAlignmentMask = 0;
     uintptr_t surfaceStateAlignment = 0;
-    size_t renderSurfaceStateSize = 0;
 
     uint32_t implicitArgsVersion = 0;
     uint32_t walkerInlineDataSize = 0;
