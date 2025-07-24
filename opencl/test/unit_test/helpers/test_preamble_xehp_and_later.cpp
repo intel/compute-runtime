@@ -454,9 +454,6 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsXe
     PreambleHelper<FamilyType>::programPipelineSelect(&pipelineSelectStream, pipelineArgs, rootDeviceEnvironment);
 
     auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits;
-    if constexpr (FamilyType::isUsingMediaSamplerDopClockGate) {
-        expectedMask |= pipelineSelectMediaSamplerDopClockGateMaskBits;
-    }
 
     if (pipelineArgs.systolicPipelineSelectSupport) {
         expectedMask |= pipelineSelectSystolicModeEnableMaskBits;

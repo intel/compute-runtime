@@ -31,7 +31,6 @@ struct XeHpcCore {
     static constexpr uint32_t timestampPacketCount = 16u;
 
     static constexpr bool isUsingL3Control = false;
-    static constexpr bool isUsingMediaSamplerDopClockGate = false;
     static constexpr bool supportsSampler = false;
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr bool isUsingMiMemFence = true;

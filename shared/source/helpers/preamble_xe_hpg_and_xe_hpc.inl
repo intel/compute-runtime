@@ -46,10 +46,6 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
     auto mask = pipelineSelectEnablePipelineSelectMaskBits;
 
     cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-    if constexpr (Family::isUsingMediaSamplerDopClockGate) {
-        mask |= pipelineSelectMediaSamplerDopClockGateMaskBits;
-        cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
-    }
 
     bool systolicSupport = pipelineSelectArgs.systolicPipelineSelectSupport;
     bool systolicValue = pipelineSelectArgs.systolicPipelineSelectMode;

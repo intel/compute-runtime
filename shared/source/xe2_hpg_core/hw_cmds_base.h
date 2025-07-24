@@ -27,7 +27,6 @@ struct Xe2HpgCore {
     static constexpr uint32_t stateComputeModeMemoryAllocationForScratchAndMidthreadPreemptionBuffersMask = (1u << 11);
 
     static constexpr bool isUsingL3Control = false;
-    static constexpr bool isUsingMediaSamplerDopClockGate = false;
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = false;
     static constexpr bool isUsingMiMemFence = true;

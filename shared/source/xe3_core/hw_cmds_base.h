@@ -30,7 +30,6 @@ struct Xe3Core {
     static constexpr uint32_t timestampPacketCount = 16u;
 
     static constexpr bool isUsingL3Control = false;
-    static constexpr bool isUsingMediaSamplerDopClockGate = false;
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = false;
     static constexpr bool isUsingMiMemFence = true;
