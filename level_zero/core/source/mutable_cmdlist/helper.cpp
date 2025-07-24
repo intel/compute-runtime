@@ -12,36 +12,38 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 namespace L0::MCL {
-ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsAllocation *&outGraphicsAllocation, GpuAddress &outGPUAddress) {
+ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsAllocation *&outGraphicsAllocation, GpuAddress &outGpuAddress) {
+    NEO::GraphicsAllocation *bufferAlloc = nullptr;
     GpuAddress gpuAddress = 0u;
-    auto bufferAlloc = device->getDriverHandle()->getDriverSystemMemoryAllocation(buffer,
-                                                                                  1u,
-                                                                                  device->getRootDeviceIndex(),
-                                                                                  &gpuAddress);
-
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(buffer);
-    if (driverHandle->isRemoteResourceNeeded(buffer, bufferAlloc, allocData, device)) {
-        if (allocData == nullptr) {
-            if (NEO::debugManager.flags.DisableSystemPointerKernelArgument.get() != 1) {
-                outGPUAddress = reinterpret_cast<GpuAddress>(buffer);
-                return ZE_RESULT_SUCCESS;
-            } else {
+    if (allocData != nullptr) {
+        bufferAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+        // buffer can be offseted SVM value
+        gpuAddress = reinterpret_cast<GpuAddress>(buffer);
+        if (driverHandle->isRemoteResourceNeeded(buffer, bufferAlloc, allocData, device)) {
+            // get GPU base value
+            gpuAddress = bufferAlloc->getGpuAddress();
+            // calculate possible offset
+            size_t offset = reinterpret_cast<GpuAddress>(buffer) - gpuAddress;
+            // gpuAddress will get new value from peer allocation
+            bufferAlloc = driverHandle->getPeerAllocation(device, allocData, buffer, &gpuAddress, nullptr);
+            if (bufferAlloc == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
+            // add offset to the new peer allocation GPU VA
+            gpuAddress += offset;
         }
-
-        GpuAddress pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
-        size_t offset = reinterpret_cast<size_t>(buffer) - pbase;
-
-        bufferAlloc = driverHandle->getPeerAllocation(device, allocData, buffer, &gpuAddress, nullptr);
-        if (bufferAlloc == nullptr) {
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else {
+        if (NEO::debugManager.flags.DisableSystemPointerKernelArgument.get() != 1) {
+            outGpuAddress = reinterpret_cast<GpuAddress>(buffer);
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        gpuAddress += offset;
     }
     outGraphicsAllocation = bufferAlloc;
-    outGPUAddress = gpuAddress;
+    outGpuAddress = gpuAddress;
 
     return ZE_RESULT_SUCCESS;
 }

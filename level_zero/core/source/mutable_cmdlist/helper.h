@@ -11,5 +11,5 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/mutable_cmdlist/mcl_types.h"
 namespace L0::MCL {
-ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsAllocation *&outGraphicsAllocation, GpuAddress &outGPUAddress);
+ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsAllocation *&outGraphicsAllocation, GpuAddress &outGpuAddress);
 } // namespace L0::MCL

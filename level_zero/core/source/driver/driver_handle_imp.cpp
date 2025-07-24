@@ -488,7 +488,7 @@ bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
     // Make sure the host buffer does not overlap any existing allocation
     const char *baseAddress = reinterpret_cast<const char *>(buffer);
     NEO::SvmAllocationData *beginAllocData = svmAllocsManager->getSVMAlloc(buffer);
-    NEO::SvmAllocationData *endAllocData = svmAllocsManager->getSVMAlloc(static_cast<const void *>(baseAddress + offset));
+    NEO::SvmAllocationData *endAllocData = offset == 0 ? beginAllocData : svmAllocsManager->getSVMAlloc(static_cast<const void *>(baseAddress + offset));
 
     if (beginAllocData) {
         allocData = beginAllocData;
