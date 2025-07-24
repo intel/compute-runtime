@@ -147,10 +147,16 @@ std::vector<uint8_t> compileToNative(const std::string &src, const std::string &
     return ret;
 }
 const char *slmArgKernelSrc = R"===(
+typedef struct {
+  unsigned int initLocalIdSum;
+  unsigned int initGlobalIdSum;
+} InitValues;
+
 __kernel void test_arg_slm(
     __global unsigned int *outputSums,           // Output array for sums (global memory)
     __local unsigned int *localIdArray,          // Local array for local IDs (shared memory)
-    __local unsigned int *globalIdArray          // Local array for global IDs (shared memory)
+    __local unsigned int *globalIdArray,         // Local array for global IDs (shared memory)
+    InitValues initValues                        // Initial values for output sums
 ) {
     // Each work-item stores its local and global ID in local memory
     localIdArray[get_local_id(0)] = get_local_id(0);
@@ -168,8 +174,8 @@ __kernel void test_arg_slm(
             sumGlobalIds += globalIdArray[i];
         }
         // Store the results in the output array
-        outputSums[get_group_id(0)*2] = sumLocalIds;
-        outputSums[get_group_id(0)*2+1] = sumGlobalIds;
+        outputSums[get_group_id(0)*2] = sumLocalIds + initValues.initLocalIdSum;
+        outputSums[get_group_id(0)*2+1] = sumGlobalIds + initValues.initGlobalIdSum;
     }
 }
 )===";

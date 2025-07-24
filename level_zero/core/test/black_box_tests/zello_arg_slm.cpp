@@ -77,10 +77,17 @@ void executeKernelAndValidate(ze_context_handle_t context, uint32_t deviceIdentf
 
         size_t localWorkSizeForUint = groupSizes.groupSizeX * 4u;
 
+        struct InitValues {
+            uint32_t initLocalIdSum;
+            uint32_t initGlobalIdSum;
+        };
+        InitValues initValues = {2, 4};
+
         const void *kernelArgs[] = {
             &dstBuffer,            // output buffer
             &localWorkSizeForUint, // local buffer for local ids
-            &localWorkSizeForUint  // local buffer for global ids
+            &localWorkSizeForUint, // local buffer for global ids
+            &initValues            // initial values for output sums
         };
 
         SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::zeCommandListAppendLaunchKernelWithArgumentsFunc(cmdList, kernel, groupCounts, groupSizes, kernelArgs, nullptr, nullptr, 0, nullptr));
@@ -98,8 +105,8 @@ void executeKernelAndValidate(ze_context_handle_t context, uint32_t deviceIdentf
             auto minGlobalId = groupSize * i;                                                                              // min global id for this group
             auto sumOfGlobalIdWithinGroup = (maxGlobalId * (maxGlobalId + 1) / 2) - (minGlobalId * (minGlobalId - 1) / 2); // sum of global ids within this group
 
-            expectedOutput[i * 2] = sumOfLocalIds;
-            expectedOutput[i * 2 + 1] = sumOfGlobalIdWithinGroup;
+            expectedOutput[i * 2] = sumOfLocalIds + initValues.initLocalIdSum;
+            expectedOutput[i * 2 + 1] = sumOfGlobalIdWithinGroup + initValues.initGlobalIdSum;
         }
         for (auto i = 0; i < static_cast<int>(expectedOutput.size()); ++i) {
             auto expectedValue = expectedOutput[i];
