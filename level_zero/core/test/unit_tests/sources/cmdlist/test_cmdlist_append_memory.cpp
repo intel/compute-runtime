@@ -1391,6 +1391,9 @@ struct StagingBuffersFixture : public AppendMemoryCopyTests {
     void SetUp() override {
         debugManager.flags.EnableCopyWithStagingBuffers.set(1);
         AppendMemoryCopyTests::SetUp();
+        if (device->getProductHelper().useAdditionalBlitProperties()) {
+            GTEST_SKIP();
+        }
         ze_command_queue_desc_t queueDesc = {};
         this->queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
