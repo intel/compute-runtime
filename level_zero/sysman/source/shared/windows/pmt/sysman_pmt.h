@@ -26,19 +26,19 @@ class SysmanProductHelper;
 class PlatformMonitoringTech : NEO::NonCopyableAndNonMovableClass {
   public:
     PlatformMonitoringTech() = delete;
-    PlatformMonitoringTech(std::vector<wchar_t> deviceInterface, SysmanProductHelper *pSysmanProductHelper) : deviceInterface(std::move(deviceInterface)), pSysmanProductHelper(pSysmanProductHelper) {}
+    PlatformMonitoringTech(std::wstring deviceInterface, SysmanProductHelper *pSysmanProductHelper) : deviceInterface(std::move(deviceInterface)), pSysmanProductHelper(pSysmanProductHelper) {}
     virtual ~PlatformMonitoringTech();
 
     virtual ze_result_t readValue(const std::string &key, uint32_t &value);
     virtual ze_result_t readValue(const std::string &key, uint64_t &value);
     ze_result_t getKeyOffsetMap(std::map<std::string, std::pair<uint32_t, uint32_t>> &keyOffsetMap);
     static std::unique_ptr<PlatformMonitoringTech> create(SysmanProductHelper *pSysmanProductHelper);
-    static ze_result_t enumeratePMTInterface(const GUID *Guid, std::vector<wchar_t> &deviceInterface);
+    static ze_result_t enumeratePMTInterface(const GUID *Guid, std::wstring &deviceInterface);
 
   protected:
     std::map<std::string, std::pair<uint32_t, uint32_t>> keyOffsetMap;
     unsigned long guidToIndexList[PmtSysman::PmtMaxInterfaces] = {0};
-    ze_result_t ioctlReadWriteData(std::vector<wchar_t> &path, uint32_t ioctl, void *bufferIn, uint32_t inSize, void *bufferOut, uint32_t outSize, uint32_t *sizeReturned);
+    ze_result_t ioctlReadWriteData(std::wstring &path, uint32_t ioctl, void *bufferIn, uint32_t inSize, void *bufferOut, uint32_t outSize, uint32_t *sizeReturned);
     virtual ze_result_t init();
     ze_result_t getGuid();
     decltype(&NEO::SysCalls::deviceIoControl) pdeviceIoControl = NEO::SysCalls::deviceIoControl;
@@ -48,7 +48,7 @@ class PlatformMonitoringTech : NEO::NonCopyableAndNonMovableClass {
     decltype(&NEO::SysCalls::heapFree) heapFreeFunction = NEO::SysCalls::heapFree;
 
   private:
-    std::vector<wchar_t> deviceInterface;
+    std::wstring deviceInterface;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
     uint32_t baseOffset = 0;
 };

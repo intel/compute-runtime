@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,8 +16,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-const std::wstring interfaceName = L"TEST\0";
-std::vector<wchar_t> deviceInterface(interfaceName.begin(), interfaceName.end());
+const std::wstring deviceInterface = L"TEST_INTC_PMT\0";
 
 const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
     {"DUMMY_KEY", {0x0, 1}}};
@@ -37,7 +36,7 @@ class SysmanDevicePmtFixture : public SysmanDeviceFixture {
     std::unique_ptr<PublicPlatformMonitoringTech> pPmt;
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
-        std::vector<wchar_t> deviceInterface;
+        std::wstring deviceInterface;
         pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
     }
 
@@ -165,10 +164,11 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWithUnsupportedGuidWhenCall
         return true;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
-        *pulLen = 4;
+        *pulLen = 40;
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        wcscpy(buffer, L"TEST_INTC_PMT");
         return CR_SUCCESS;
     });
     struct MockSysmanProductHelperPmt : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
@@ -195,14 +195,40 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateThenCal
         return true;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
-        *pulLen = 4;
+        *pulLen = 40;
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        wcscpy(buffer, L"TEST_INTC_PMT");
         return CR_SUCCESS;
     });
     std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
     EXPECT_NE(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenInValidPmtInterfaceNameWhenCallingCreateThenCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+            *static_cast<unsigned long *>(lpOutBuffer) = 40;
+        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x5e2f8210, 10}}};
+            *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
+        }
+        return true;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 40;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        wcscpy(buffer, L"TEST_WRONG_INTERFACE");
+        return CR_SUCCESS;
+    });
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
 }
 
 HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateWithNoGuidsFoundThenCallFails, IsBMG) {
@@ -216,10 +242,11 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateWithNoG
         return true;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
-        *pulLen = 4;
+        *pulLen = 40;
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        wcscpy(buffer, L"TEST_INTC_PMT");
         return CR_SUCCESS;
     });
     std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
@@ -237,10 +264,11 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTele
         return true;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
-        *pulLen = 4;
+        *pulLen = 40;
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        wcscpy(buffer, L"TEST_INTC_PMT");
         return CR_SUCCESS;
     });
     std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
@@ -260,10 +288,11 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTele
         return true;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
-        *pulLen = 4;
+        *pulLen = 40;
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        wcscpy(buffer, L"TEST_INTC_PMT");
         return CR_SUCCESS;
     });
     std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
@@ -275,10 +304,11 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTele
         return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
-        *pulLen = 4;
+        *pulLen = 40;
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        wcscpy(buffer, L"TEST_INTC_PMT");
         return CR_SUCCESS;
     });
     std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
@@ -299,12 +329,13 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateThenCal
         return true;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
-        *pulLen = 4;
+        *pulLen = 40;
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
         static int sysCallsInterfaceListCounter = 0;
         if (sysCallsInterfaceListCounter) {
+            wcscpy(buffer, L"TEST_INTC_PMT");
             return CR_SUCCESS;
         }
         sysCallsInterfaceListCounter++;
@@ -351,10 +382,11 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndHeap
         return true;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> mockCmGetDeviceInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
-        *pulLen = 4;
+        *pulLen = 40;
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> mockCmGetDeviceInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        wcscpy(buffer, L"TEST_INTC_PMT");
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsHeapAlloc)> mockHeapAlloc(&NEO::SysCalls::sysCallsHeapAlloc, [](HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) -> LPVOID {
@@ -380,10 +412,11 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTele
         return true;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> mockCmGetDeviceInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
-        *pulLen = 4;
+        *pulLen = 40;
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> mockCmGetDeviceInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        wcscpy(buffer, L"TEST_INTC_PMT");
         return CR_SUCCESS;
     });
     std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
@@ -404,10 +437,11 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndHeap
         return true;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> mockCmGetDeviceInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
-        *pulLen = 4;
+        *pulLen = 40;
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> mockCmGetDeviceInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        wcscpy(buffer, L"TEST_INTC_PMT");
         return CR_SUCCESS;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsHeapFree)> mocksHeapFree(&NEO::SysCalls::sysCallsHeapFree, [](HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) -> BOOL {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-std::vector<wchar_t> pmtInterface(pmtInterfaceName.begin(), pmtInterfaceName.end());
+std::wstring pmtInterface = std::move(pmtInterfaceName);
 const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", {41, 1}},
      {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", {42, 1}}}};

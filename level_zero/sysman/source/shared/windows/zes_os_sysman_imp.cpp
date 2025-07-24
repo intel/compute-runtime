@@ -53,7 +53,6 @@ ze_result_t WddmSysmanImp::init() {
     }
 
     pPmt = PlatformMonitoringTech::create(pSysmanProductHelper.get());
-
     return ZE_RESULT_SUCCESS;
 }
 

@@ -31,8 +31,7 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", {92, 1}},
      {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", {93, 1}}}};
 
-const std::wstring pmtInterfaceName = L"TEST\0";
-std::vector<wchar_t> deviceInterfacePci(pmtInterfaceName.begin(), pmtInterfaceName.end());
+const std::wstring deviceInterfacePci = L"TEST\0";
 
 class SysmanDevicePciFixture : public SysmanDeviceFixture {
   protected:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -228,7 +228,7 @@ struct PowerKmdSysManager : public MockKmdSysManager {
 
 class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
   public:
-    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
+    PublicPlatformMonitoringTech(std::wstring deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
     using PlatformMonitoringTech::keyOffsetMap;
 };
 

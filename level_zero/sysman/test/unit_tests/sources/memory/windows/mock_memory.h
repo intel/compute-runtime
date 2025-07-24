@@ -207,7 +207,7 @@ class PublicWddmPowerImp : public L0::Sysman::WddmMemoryImp {
 
 class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
   public:
-    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
+    PublicPlatformMonitoringTech(std::wstring deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
     using PlatformMonitoringTech::keyOffsetMap;
 };
 

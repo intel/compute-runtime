@@ -63,8 +63,7 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
      {"GDDR0_CH1_GT_64B_WR_REQ_UPPER", {120, 1}},
      {"GDDR0_CH1_GT_64B_WR_REQ_LOWER", {121, 1}}}};
 
-const std::wstring pmtInterfaceName = L"TEST\0";
-std::vector<wchar_t> deviceInterfaceMemory(pmtInterfaceName.begin(), pmtInterfaceName.end());
+const std::wstring deviceInterfaceMemory = L"TEST\0";
 class SysmanDeviceMemoryHelperFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockMemoryKmdSysManager> pKmdSysManager;

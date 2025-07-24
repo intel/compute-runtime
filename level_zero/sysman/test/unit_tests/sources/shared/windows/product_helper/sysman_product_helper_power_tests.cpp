@@ -18,8 +18,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-const std::wstring pmtInterfaceName = L"TEST\0";
-std::vector<wchar_t> pmtInterfacePower(pmtInterfaceName.begin(), pmtInterfaceName.end());
+const std::wstring pmtInterfacePower = L"TEST\0";
 
 const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
     {{"XTAL_CLK_FREQUENCY", {1, 0}},

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -163,7 +163,7 @@ ze_result_t PlatformMonitoringTech::init() {
 }
 
 std::unique_ptr<PlatformMonitoringTech> PlatformMonitoringTech::create(SysmanProductHelper *pSysmanProductHelper) {
-    std::vector<wchar_t> deviceInterface;
+    std::wstring deviceInterface;
     if (enumeratePMTInterface(&PmtSysman::GuidIntefacePmtTelemetry, deviceInterface) == ZE_RESULT_SUCCESS) {
         std::unique_ptr<PlatformMonitoringTech> pPmt;
         pPmt = std::make_unique<PlatformMonitoringTech>(deviceInterface, pSysmanProductHelper);
@@ -179,10 +179,11 @@ std::unique_ptr<PlatformMonitoringTech> PlatformMonitoringTech::create(SysmanPro
 PlatformMonitoringTech::~PlatformMonitoringTech() {
 }
 
-ze_result_t PlatformMonitoringTech::enumeratePMTInterface(const GUID *guid, std::vector<wchar_t> &deviceInterface) {
+ze_result_t PlatformMonitoringTech::enumeratePMTInterface(const GUID *guid, std::wstring &deviceInterface) {
 
     unsigned long cmListCharCount = 0;
     CONFIGRET status = CR_SUCCESS;
+    std::vector<wchar_t> deviceInterfaceList;
 
     do {
         // Get the total size of list of all instances
@@ -193,21 +194,20 @@ ze_result_t PlatformMonitoringTech::enumeratePMTInterface(const GUID *guid, std:
             break;
         }
         // Free previous allocation if present.
-        if (!deviceInterface.empty()) {
-            deviceInterface.clear();
+        if (!deviceInterfaceList.empty()) {
+            deviceInterfaceList.clear();
         }
         // Allocate buffer
-        deviceInterface.resize(cmListCharCount);
+        deviceInterfaceList.resize(cmListCharCount);
 
-        if (deviceInterface.empty()) {
+        if (deviceInterfaceList.empty()) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                   "Could not allocate memory to store the PMT device interface path.\n");
             DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
         // N.B. cmListCharCount is length in characters
-        status = NEO::SysCalls::cmGetDeviceInterfaceList((LPGUID)guid, NULL, &deviceInterface[0], cmListCharCount, CM_GET_DEVICE_INTERFACE_LIST_PRESENT);
-
+        status = NEO::SysCalls::cmGetDeviceInterfaceList((LPGUID)guid, NULL, deviceInterfaceList.data(), cmListCharCount, CM_GET_DEVICE_INTERFACE_LIST_PRESENT);
     } while (status == CR_BUFFER_SMALL);
 
     if (status != CR_SUCCESS) {
@@ -217,10 +217,23 @@ ze_result_t PlatformMonitoringTech::enumeratePMTInterface(const GUID *guid, std:
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
+    wchar_t *pDeviceInterface = deviceInterfaceList.data();
+
+    while (*pDeviceInterface) {
+        std::wstring deviceInterfaceName(pDeviceInterface);
+        std::wstring::size_type found = deviceInterfaceName.find(L"INTC_PMT");
+        size_t interfaceCharCount = wcslen(pDeviceInterface);
+        if (found != std::wstring::npos) {
+            deviceInterface = std::move(deviceInterfaceName);
+            break;
+        }
+        pDeviceInterface += interfaceCharCount + 1;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t PlatformMonitoringTech::ioctlReadWriteData(std::vector<wchar_t> &path, uint32_t ioctl, void *bufferIn, uint32_t inSize, void *bufferOut, uint32_t outSize, uint32_t *sizeReturned) {
+ze_result_t PlatformMonitoringTech::ioctlReadWriteData(std::wstring &path, uint32_t ioctl, void *bufferIn, uint32_t inSize, void *bufferOut, uint32_t outSize, uint32_t *sizeReturned) {
     void *handle;
     BOOL status = FALSE;
 
