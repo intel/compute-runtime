@@ -384,8 +384,8 @@ ze_result_t MutableCommandListImp::getNextCommandId(const ze_mutable_command_id_
         }
     }
 
-    kernelMutations.push_back(nextAppendKernel);
-    eventMutations.push_back(nextAppendEvents);
+    kernelMutations.push_back(std::move(nextAppendKernel));
+    eventMutations.push_back(std::move(nextAppendEvents));
 
     *pCommandId = ++nextCommandId;
     nextAppendKernelMutable = true;
