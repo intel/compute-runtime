@@ -3415,6 +3415,30 @@ TEST_F(MemoryExportImportFailTest,
 }
 
 TEST_F(MemoryExportImportFailTest,
+       whenParsingMemoryTypeWithValidSpecifidTypeThenCorrectTypeIsReturned) {
+
+    InternalMemoryType memoryType = InternalMemoryType::sharedUnifiedMemory;
+    ze_memory_type_t usmType = L0::Context::parseUSMType(memoryType);
+    EXPECT_EQ(usmType, ZE_MEMORY_TYPE_SHARED);
+
+    memoryType = InternalMemoryType::deviceUnifiedMemory;
+    usmType = L0::Context::parseUSMType(memoryType);
+    EXPECT_EQ(usmType, ZE_MEMORY_TYPE_DEVICE);
+
+    memoryType = InternalMemoryType::reservedDeviceMemory;
+    usmType = L0::Context::parseUSMType(memoryType);
+    EXPECT_EQ(usmType, ZE_MEMORY_TYPE_DEVICE);
+
+    memoryType = InternalMemoryType::reservedHostMemory;
+    usmType = L0::Context::parseUSMType(memoryType);
+    EXPECT_EQ(usmType, ZE_MEMORY_TYPE_HOST);
+
+    memoryType = InternalMemoryType::hostUnifiedMemory;
+    usmType = L0::Context::parseUSMType(memoryType);
+    EXPECT_EQ(usmType, ZE_MEMORY_TYPE_HOST);
+}
+
+TEST_F(MemoryExportImportFailTest,
        whenParsingMemoryTypeWithNotSpecifidTypeThenUnknownTypeIsReturned) {
 
     InternalMemoryType memoryType = InternalMemoryType::notSpecified;
