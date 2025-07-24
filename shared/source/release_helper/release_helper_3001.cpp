@@ -38,7 +38,7 @@ bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
 }
 
 template <>
-uint32_t ReleaseHelperHw<release>::getAsyncStackSizePerRay() const {
+uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
     return 64u;
 }
 

@@ -35,8 +35,9 @@ TEST_F(ReleaseHelper1260Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
         EXPECT_TRUE(releaseHelper->isBindlessAddressingDisabled());
         EXPECT_EQ(8u, releaseHelper->getNumThreadsPerEu());
-        EXPECT_EQ(0u, releaseHelper->getAsyncStackSizePerRay());
+        EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
+        EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
         EXPECT_FALSE(releaseHelper->getFtrXe2Compression());
     }
 }

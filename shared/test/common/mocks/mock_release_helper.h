@@ -35,15 +35,17 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isRayTracingSupported, bool, true, ());
     ADDMETHOD_CONST_NOBASE(getAdditionalFp16Caps, uint32_t, {}, ());
     ADDMETHOD_CONST_NOBASE(getAdditionalExtraCaps, uint32_t, {}, ());
-    ADDMETHOD_CONST_NOBASE(getAsyncStackSizePerRay, uint32_t, {}, ());
+    ADDMETHOD_CONST_NOBASE(getStackSizePerRay, uint32_t, {}, ());
     ADDMETHOD_CONST_NOBASE(isLocalOnlyAllowed, bool, {}, ());
     ADDMETHOD_CONST_NOBASE(isDummyBlitWaRequired, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isNumRtStacksPerDssFixedValue, bool, true, ());
     ADDMETHOD_CONST_NOBASE(isBlitImageAllowedForDepthFormat, bool, true, ());
     ADDMETHOD_CONST_NOBASE(getFtrXe2Compression, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDirectSubmissionLightSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(computeSlmValues, uint32_t, {}, (uint32_t slmSize, bool isHeapless));
     ADDMETHOD_CONST_NOBASE(programmAdditionalStallPriorToBarrierWithTimestamp, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isPostImageWriteFlushRequired, bool, false, ());
+    ADDMETHOD_CONST_NOBASE_VOIDRETURN(adjustRTDispatchGlobals, (void *rtDispatchGlobals, uint32_t rtStacksPerDss, bool heaplessEnabled, uint32_t maxBvhLevels));
 
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};

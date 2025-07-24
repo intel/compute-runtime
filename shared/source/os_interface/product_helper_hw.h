@@ -208,9 +208,6 @@ class ProductHelperHw : public ProductHelper {
     bool isNonCoherentTimestampsModeEnabled() const override;
     bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const override;
     bool isPidFdOrSocketForIpcSupported() const override;
-    void adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, const HardwareInfo &hwInfo) const override;
-    uint32_t getSyncNumRTStacksPerDss(const HardwareInfo &hwInfo) const override;
-    uint32_t getNumRtStacksPerDSSForAllocation(const HardwareInfo &hwInfo) const override;
     bool checkBcsForDirectSubmissionStop() const override;
     bool shouldRegisterEnqueuedWalkerWithProfiling() const override;
 

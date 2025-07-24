@@ -259,7 +259,7 @@ TEST_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledThenStackSizePerRayIsSet
 
     auto releaseHelper = getReleaseHelper();
     if (releaseHelper) {
-        EXPECT_EQ(dispatchGlobals.stackSizePerRay, releaseHelper->getAsyncStackSizePerRay());
+        EXPECT_EQ(dispatchGlobals.stackSizePerRay, releaseHelper->getStackSizePerRay());
     } else {
         EXPECT_EQ(dispatchGlobals.stackSizePerRay, 0u);
     }

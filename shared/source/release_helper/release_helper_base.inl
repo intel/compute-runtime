@@ -7,7 +7,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/release_helper/release_helper.h"
 
@@ -138,8 +137,12 @@ uint32_t ReleaseHelperHw<releaseType>::getAdditionalExtraCaps() const {
 }
 
 template <ReleaseType releaseType>
-uint32_t ReleaseHelperHw<releaseType>::getAsyncStackSizePerRay() const {
+uint32_t ReleaseHelperHw<releaseType>::getStackSizePerRay() const {
     return 0u;
+}
+
+template <ReleaseType releaseType>
+void ReleaseHelperHw<releaseType>::adjustRTDispatchGlobals(void *rtDispatchGlobals, uint32_t rtStacksPerDss, bool heaplessEnabled, uint32_t maxBvhLevels) const {
 }
 
 template <ReleaseType releaseType>
@@ -156,6 +159,11 @@ template <ReleaseType releaseType>
 const SizeToPreferredSlmValueArray &ReleaseHelperHw<releaseType>::getSizeToPreferredSlmValue(bool isHeapless) const {
     static const SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};
     return sizeToPreferredSlmValue;
+}
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isNumRtStacksPerDssFixedValue() const {
+    return true;
 }
 
 template <ReleaseType releaseType>
