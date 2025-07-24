@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -370,7 +371,8 @@ void DriverHandleImp::initHostUsmAllocPool() {
     auto usmHostAllocPoolingEnabled = NEO::ApiSpecificConfig::isHostUsmPoolingEnabled();
     for (auto device : this->devices) {
         usmHostAllocPoolingEnabled &= device->getNEODevice()->getProductHelper().isHostUsmPoolAllocatorSupported() &&
-                                      nullptr == device->getL0Debugger();
+                                      nullptr == device->getL0Debugger() &&
+                                      NEO::DeviceFactory::isHwModeSelected();
     }
     auto poolSize = 2 * MemoryConstants::megaByte;
     if (NEO::debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
@@ -389,7 +391,8 @@ void DriverHandleImp::initDeviceUsmAllocPool(NEO::Device &device) {
     const uint64_t maxServicedSize = 1 * MemoryConstants::megaByte;
     bool enabled = NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
                    device.getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
-                   nullptr == device.getL0Debugger();
+                   nullptr == device.getL0Debugger() &&
+                   NEO::DeviceFactory::isHwModeSelected();
     uint64_t poolSize = 2 * MemoryConstants::megaByte;
 
     if (NEO::debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {

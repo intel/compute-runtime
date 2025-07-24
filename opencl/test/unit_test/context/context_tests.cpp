@@ -11,6 +11,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
@@ -33,7 +34,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
-
 using namespace NEO;
 
 class WhiteBoxContext : public Context {
@@ -921,5 +921,27 @@ TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingU
         const MockContext::UsmPoolParams expectedUsmDevicePoolParams = context->getUsmDevicePoolParams();
 
         EXPECT_TRUE(compareUsmPoolParams(expectedUsmDevicePoolParams, givenUsmDevicePoolParams));
+    }
+}
+
+TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingUsmPoolsThenPoolsAreInitializedOnlyWithHwCsr) {
+    mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
+    mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
+
+    cl_device_id devices[] = {device};
+    context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    for (int32_t csrType = 0; csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum); ++csrType) {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
+        EXPECT_FALSE(context->getHostMemAllocPool().isInitialized());
+        EXPECT_FALSE(context->getDeviceMemAllocPool().isInitialized());
+        context->initializeUsmAllocationPools();
+
+        EXPECT_EQ(DeviceFactory::isHwModeSelected(), context->getHostMemAllocPool().isInitialized());
+        EXPECT_EQ(DeviceFactory::isHwModeSelected(), context->getDeviceMemAllocPool().isInitialized());
+        context->cleanupUsmAllocationPools();
+        context->usmPoolInitialized = false;
     }
 }

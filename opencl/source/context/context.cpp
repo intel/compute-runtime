@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
@@ -544,7 +545,9 @@ void Context::initializeUsmAllocationPools() {
     }
 
     auto &productHelper = getDevices()[0]->getProductHelper();
-    bool enabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() && productHelper.isDeviceUsmPoolAllocatorSupported();
+    bool enabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
+                   productHelper.isDeviceUsmPoolAllocatorSupported() &&
+                   DeviceFactory::isHwModeSelected();
 
     auto usmDevicePoolParams = getUsmDevicePoolParams();
     if (debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
@@ -561,7 +564,9 @@ void Context::initializeUsmAllocationPools() {
         usmDeviceMemAllocPool.initialize(svmMemoryManager, memoryProperties, usmDevicePoolParams.poolSize, usmDevicePoolParams.minServicedSize, usmDevicePoolParams.maxServicedSize);
     }
 
-    enabled = ApiSpecificConfig::isHostUsmPoolingEnabled() && productHelper.isHostUsmPoolAllocatorSupported();
+    enabled = ApiSpecificConfig::isHostUsmPoolingEnabled() &&
+              productHelper.isHostUsmPoolAllocatorSupported() &&
+              DeviceFactory::isHwModeSelected();
     auto usmHostPoolParams = getUsmHostPoolParams();
     if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;

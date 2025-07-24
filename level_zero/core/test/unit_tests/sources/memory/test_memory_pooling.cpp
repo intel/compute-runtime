@@ -106,6 +106,16 @@ TEST_F(AllocUsmHostDefaultMemoryTest, givenDriverHandleWhenCallinginitHostUsmAll
     driverHandle->initHostUsmAllocPool();
     EXPECT_TRUE(driverHandle->usmHostMemAllocPool.isInitialized());
 
+    for (int32_t csrType = 0; csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum); ++csrType) {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
+        driverHandle->usmHostMemAllocPool.cleanup();
+        mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
+        mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = true;
+        driverHandle->initHostUsmAllocPool();
+        EXPECT_EQ(NEO::DeviceFactory::isHwModeSelected(), driverHandle->usmHostMemAllocPool.isInitialized());
+    }
+
     driverHandle->usmHostMemAllocPool.cleanup();
     auto debuggerL0 = DebuggerL0::create(l0Devices[1]->getNEODevice());
     executionEnvironment->rootDeviceEnvironments[1]->debugger.reset(debuggerL0.release());
@@ -279,6 +289,16 @@ TEST_F(AllocUsmDeviceDefaultMemoryTest, givenDeviceWhenCallingInitDeviceUsmAlloc
         mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
         driverHandle->initDeviceUsmAllocPool(*neoDevice);
         EXPECT_NE(nullptr, neoDevice->getUsmMemAllocPool());
+    }
+    for (int32_t csrType = 0; csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum); ++csrType) {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
+        neoDevice->cleanupUsmAllocationPool();
+        neoDevice->resetUsmAllocationPool(nullptr);
+        executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(nullptr);
+        mockProductHelpers[0]->isDeviceUsmPoolAllocatorSupportedResult = true;
+        driverHandle->initDeviceUsmAllocPool(*neoDevice);
+        EXPECT_EQ(NEO::DeviceFactory::isHwModeSelected(), nullptr != neoDevice->getUsmMemAllocPool());
     }
     {
         neoDevice->cleanupUsmAllocationPool();
