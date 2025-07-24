@@ -3294,7 +3294,7 @@ TEST_F(ProgramBinTest, GivenSourceKernelWhenLinkingProgramThenGtpinInitInfoIsPas
     mockCompilerInterface.release();
 }
 
-TEST(ProgramReplaceDeviceBinary, GivenBinaryZebinThenUseAsBothPackedAndUnpackedBinaryContainer) {
+TEST(ProgramReplaceDeviceBinary, GivenBinaryZebinThenUseAsPackedBinaryContainer) {
     ZebinTestData::ValidEmptyProgram zebin;
     std::unique_ptr<char[]> src = makeCopy(zebin.storage.data(), zebin.storage.size());
     MockContext context;
@@ -3303,11 +3303,10 @@ TEST(ProgramReplaceDeviceBinary, GivenBinaryZebinThenUseAsBothPackedAndUnpackedB
     MockProgram program{&context, false, toClDeviceVector(*device)};
     program.replaceDeviceBinary(std::move(src), zebin.storage.size(), rootDeviceIndex);
     ASSERT_EQ(zebin.storage.size(), program.buildInfos[rootDeviceIndex].packedDeviceBinarySize);
-    ASSERT_EQ(zebin.storage.size(), program.buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
+    ASSERT_EQ(0u, program.buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
     ASSERT_NE(nullptr, program.buildInfos[rootDeviceIndex].packedDeviceBinary);
-    ASSERT_NE(nullptr, program.buildInfos[rootDeviceIndex].unpackedDeviceBinary);
+    ASSERT_EQ(nullptr, program.buildInfos[rootDeviceIndex].unpackedDeviceBinary);
     EXPECT_EQ(0, memcmp(program.buildInfos[rootDeviceIndex].packedDeviceBinary.get(), zebin.storage.data(), program.buildInfos[rootDeviceIndex].packedDeviceBinarySize));
-    EXPECT_EQ(0, memcmp(program.buildInfos[rootDeviceIndex].unpackedDeviceBinary.get(), zebin.storage.data(), program.buildInfos[rootDeviceIndex].unpackedDeviceBinarySize));
 }
 
 TEST(ProgramCallbackTest, whenFunctionIsNullptrThenUserDataNeedsToBeNullptr) {

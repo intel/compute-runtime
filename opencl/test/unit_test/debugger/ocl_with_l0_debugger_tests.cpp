@@ -238,8 +238,14 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenBuildingThenNotifyModuleCreat
     auto mockCompilerInterface = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
 
-    auto zebin = ZebinTestData::ValidEmptyProgram<>();
+    auto zebin = ZebinTestData::ValidEmptyProgram < is32bit ? NEO::Elf::EI_CLASS_32 : NEO::Elf::EI_CLASS_64 > ();
     auto program = new MockProgram(toClDeviceVector(*clDevice));
+
+    auto copyHwInfo = device->getHardwareInfo();
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
+
+    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
 
     mockCompilerInterface->output.intermediateRepresentation.size = zebin.storage.size();
     mockCompilerInterface->output.intermediateRepresentation.mem.reset(new char[zebin.storage.size()]);
@@ -264,8 +270,14 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenLinkingThenNotifyModuleCreate
     auto mockCompilerInterface = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     device->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
 
-    auto zebin = ZebinTestData::ValidEmptyProgram<>();
+    auto zebin = ZebinTestData::ValidEmptyProgram < is32bit ? NEO::Elf::EI_CLASS_32 : NEO::Elf::EI_CLASS_64 > ();
     auto program = new MockProgram(toClDeviceVector(*clDevice));
+
+    auto copyHwInfo = device->getHardwareInfo();
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
+
+    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
 
     mockCompilerInterface->output.intermediateRepresentation.size = zebin.storage.size();
     mockCompilerInterface->output.intermediateRepresentation.mem.reset(new char[zebin.storage.size()]);
