@@ -156,7 +156,7 @@ cl_version getOclCExtensionVersion(std::string name, cl_version defaultVer) {
     if (name.compare("cl_khr_integer_dot_product") == 0) {
         return CL_MAKE_VERSION(2u, 0, 0);
     } else if (name.compare("cl_intel_unified_shared_memory") == 0) {
-        return CL_MAKE_VERSION(1u, 1u, 0);
+        return CL_MAKE_VERSION(1u, 2u, 0);
     } else if (name.compare("cl_khr_external_memory") == 0) {
         return CL_MAKE_VERSION(0, 9u, 1u);
     } else {

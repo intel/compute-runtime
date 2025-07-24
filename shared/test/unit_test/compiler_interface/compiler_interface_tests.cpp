@@ -1588,7 +1588,7 @@ TEST(getOclCExtensionVersion, whenQueryingVersionOfIntegerDotProductExtensionThe
 TEST(getOclCExtensionVersion, whenQueryingVersionOfUnifiedSharedMemoryExtensionThenReturns110) {
     cl_version defaultVer = CL_MAKE_VERSION(7, 2, 5);
     cl_version ver = NEO::getOclCExtensionVersion("cl_intel_unified_shared_memory", defaultVer);
-    cl_version expectedVer = CL_MAKE_VERSION(1, 1, 0);
+    cl_version expectedVer = CL_MAKE_VERSION(1, 2, 0);
     EXPECT_EQ(expectedVer, ver);
 }
 
