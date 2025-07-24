@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,8 +33,10 @@ struct Context : _ze_context_handle_t {
         case InternalMemoryType::sharedUnifiedMemory:
             return ZE_MEMORY_TYPE_SHARED;
         case InternalMemoryType::deviceUnifiedMemory:
+        case InternalMemoryType::reservedDeviceMemory:
             return ZE_MEMORY_TYPE_DEVICE;
         case InternalMemoryType::hostUnifiedMemory:
+        case InternalMemoryType::reservedHostMemory:
             return ZE_MEMORY_TYPE_HOST;
         default:
             return ZE_MEMORY_TYPE_UNKNOWN;
