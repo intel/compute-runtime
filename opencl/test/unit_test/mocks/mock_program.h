@@ -50,13 +50,11 @@ class MockProgram : public Program {
     using Program::allowNonUniform;
     using Program::areSpecializationConstantsInitialized;
     using Program::buildInfos;
-    using Program::containsVmeUsage;
     using Program::context;
     using Program::createdFrom;
     using Program::createProgramFromBinary;
     using Program::debuggerInfos;
     using Program::deviceBuildInfos;
-    using Program::disableZebinIfVmeEnabled;
     using Program::extractInternalOptions;
     using Program::getKernelInfo;
     using Program::getModuleAllocations;

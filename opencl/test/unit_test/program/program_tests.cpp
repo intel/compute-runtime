@@ -2783,31 +2783,6 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebuildIsF
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST(CreateProgramFromBinaryTests, givenCreateProgramFromBinaryWhenIrBinaryIsNotPresentAndIsRebuiltToPatchtokensRequiredThenReturnClInvalidBinary) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.RebuildPrecompiledKernels.set(false);
-    cl_int retVal = CL_INVALID_BINARY;
-
-    ZebinTestData::ValidEmptyProgram zebin;
-
-    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), zebin.storage.data(), zebin.storage.size(), &retVal));
-    ASSERT_NE(nullptr, pProgram.get());
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    pProgram->irBinarySize = 0x10;
-    pProgram->isBuiltIn = false;
-    KernelInfo kernelInfo;
-    kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme = true;
-
-    pProgram->buildInfos[rootDeviceIndex].kernelInfoArray.push_back(&kernelInfo);
-    retVal = pProgram->createProgramFromBinary(zebin.storage.data(), zebin.storage.size(), *clDevice);
-    EXPECT_FALSE(pProgram->requiresRebuild);
-    EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    pProgram->buildInfos[rootDeviceIndex].kernelInfoArray.clear();
-}
-
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIsForcedAndIrBinaryIsPresentThenDeviceBinaryIsNotUsed) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.RebuildPrecompiledKernels.set(true);
@@ -3611,105 +3586,6 @@ TEST(ProgramPopulateZebinExtendedArgsMetadataTests, givenNonZebinaryFormatWhenCa
     program.callPopulateZebinExtendedArgsMetadataOnce(rootDeviceIndex);
     EXPECT_TRUE(kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.empty());
     buildInfo.kernelInfoArray.clear();
-}
-
-TEST(ProgramVmeUsage, givenVmeUsageWhenContainsVmeUsageIsCalledThenReturnTrue) {
-    MockClDevice device{new MockDevice()};
-    MockProgram program(toClDeviceVector(device));
-
-    {
-        KernelInfo kernelInfo;
-        kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme = false;
-        std::vector<KernelInfo *> kernelInfos{&kernelInfo};
-        EXPECT_FALSE(program.containsVmeUsage(kernelInfos));
-    }
-    {
-        KernelInfo kernelInfo;
-        kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme = true;
-        std::vector<KernelInfo *> kernelInfos{&kernelInfo};
-        EXPECT_TRUE(program.containsVmeUsage(kernelInfos));
-    }
-}
-
-TEST(ProgramVmeUsage, givenVmeOptionsWhenDisableZebinIfVmeEnabledIsCalledThenZebinIsDisabled) {
-    DebugManagerStateRestore debugManagerStateRestore{};
-    MockClDevice device{new MockDevice()};
-    MockProgram program(toClDeviceVector(device));
-
-    {
-        std::string options = "";
-        std::string internalOptions = "";
-        program.disableZebinIfVmeEnabled(options, internalOptions, "");
-        EXPECT_TRUE(options.empty());
-        EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
-    }
-    {
-        std::string options = "cl_intel_device_side_vme_enable";
-        std::string internalOptions = "";
-        debugManager.flags.DontDisableZebinIfVmeUsed = false;
-        program.disableZebinIfVmeEnabled(options, internalOptions, "");
-        EXPECT_STREQ(options.c_str(), "cl_intel_device_side_vme_enable");
-        EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
-    }
-    {
-        std::string options = "cl_intel_device_side_vme_enable";
-        std::string internalOptions = "";
-        debugManager.flags.DontDisableZebinIfVmeUsed = true;
-        program.disableZebinIfVmeEnabled(options, internalOptions, "");
-        EXPECT_STREQ(options.c_str(), "cl_intel_device_side_vme_enable");
-        EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
-    }
-}
-
-TEST(ProgramVmeUsage, givenVmeExtensionsEnabledInSourceCodeWhenDisableZebinIfVmeEnabledIsCalledThenZebinIsDisabled) {
-    DebugManagerStateRestore debugManagerStateRestore{};
-    MockClDevice device{new MockDevice()};
-    MockProgram program(toClDeviceVector(device));
-
-    {
-        std::string options = "";
-        std::string internalOptions = "";
-        std::string sourceCode = "cl_intel_motion_estimation";
-        program.disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
-        EXPECT_TRUE(options.empty());
-        EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
-    }
-
-    {
-        std::string options = "";
-        std::string internalOptions = "";
-        std::string sourceCode = "cl_intel_motion_estimation : disable";
-        program.disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
-        EXPECT_TRUE(options.empty());
-        EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
-    }
-
-    const char *vmeEnabledExtensions[] = {"cl_intel_motion_estimation : enable",
-                                          "cl_intel_device_side_avc_motion_estimation : enable",
-                                          "cl_intel_advanced_motion_estimation : enable"};
-
-    for (auto extension : vmeEnabledExtensions) {
-
-        std::string sourceCode = extension;
-
-        {
-            std::string options = "";
-            std::string internalOptions = "";
-            debugManager.flags.DontDisableZebinIfVmeUsed = false;
-            program.disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
-            EXPECT_TRUE(options.empty());
-            EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
-        }
-
-        {
-            std::string options = "";
-            std::string internalOptions = "";
-            debugManager.flags.DontDisableZebinIfVmeUsed = true;
-            program.disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
-            EXPECT_TRUE(options.empty());
-            EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
-        }
-    }
 }
 
 TEST(ProgramPopulateZebinExtendedArgsMetadataTests, givenZebinaryFormatAndDecodeErrorOnDecodingArgsMetadataWhenCallingPopulateZebinExtendedArgsMetadataThenMetadataIsNotPopulated) {

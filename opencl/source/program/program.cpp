@@ -217,10 +217,7 @@ cl_int Program::createProgramFromBinary(
             this->isGeneratedByIgc = singleDeviceBinary.generator == GeneratorType::igc;
             this->indirectDetectionVersion = singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection;
 
-            auto isVmeUsed = containsVmeUsage(this->buildInfos[rootDeviceIndex].kernelInfoArray);
-            bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn, isVmeUsed) ||
-                           AddressingModeHelper::containsBindlessKernel(decodedSingleDeviceBinary.programInfo.kernelInfos);
-
+            bool rebuild = AddressingModeHelper::containsBindlessKernel(decodedSingleDeviceBinary.programInfo.kernelInfos);
             rebuild |= !clDevice.getDevice().getExecutionEnvironment()->isOneApiPvcWaEnv();
 
             bool flagRebuild = debugManager.flags.RebuildPrecompiledKernels.get();
@@ -483,45 +480,6 @@ void Program::setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_progr
             }
             deviceBuildInfos[subDevice].programBinaryType = binaryType;
         }
-    }
-}
-
-bool Program::containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) const {
-    for (auto kernelInfo : kernelInfos) {
-        if (kernelInfo->isVmeUsed()) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void Program::disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions, const std::string &sourceCode) {
-
-    const char *vmeOptions[] = {"cl_intel_device_side_advanced_vme_enable",
-                                "cl_intel_device_side_avc_vme_enable",
-                                "cl_intel_device_side_vme_enable"};
-
-    const char *vmeEnabledExtensions[] = {"cl_intel_motion_estimation : enable",
-                                          "cl_intel_device_side_avc_motion_estimation : enable",
-                                          "cl_intel_advanced_motion_estimation : enable"};
-
-    auto containsVme = [](const auto &data, const auto &patterns) {
-        for (const auto &pattern : patterns) {
-            auto pos = data.find(pattern);
-            if (pos != std::string::npos) {
-                return true;
-            }
-        }
-        return false;
-    };
-
-    if (debugManager.flags.DontDisableZebinIfVmeUsed.get() == true) {
-        return;
-    }
-
-    if (containsVme(options, vmeOptions) || containsVme(sourceCode, vmeEnabledExtensions)) {
-        const auto &rootDevice = getDevices()[0]->getDevice().getRootDevice();
-        rootDevice->getCompilerInterface()->disableZebin(options, internalOptions);
     }
 }
 

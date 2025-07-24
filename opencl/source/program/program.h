@@ -300,9 +300,6 @@ class Program : public BaseObject<_cl_program> {
     void setBuildStatus(cl_build_status status);
     void setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_program_binary_type binaryType);
 
-    bool containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) const;
-    void disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions, const std::string &sourceCode);
-
     void notifyModuleCreate();
     void notifyModuleDestroy();
 

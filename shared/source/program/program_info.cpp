@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,17 +42,6 @@ bool requiresLocalMemoryWindowVA(const ProgramInfo &programInfo) {
         if (isValidOffset(kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres)) {
             return true;
         }
-    }
-    return false;
-}
-
-bool isRebuiltToPatchtokensRequired(Device *neoDevice, ArrayRef<const uint8_t> archive, std::string &optionsString, bool isBuiltin, bool isVmeUsed) {
-    if (isBuiltin) {
-        return false;
-    }
-    auto isZebinFormat = NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(archive);
-    if (isVmeUsed && isZebinFormat) {
-        return neoDevice->getCompilerInterface()->disableZebin(optionsString, optionsString);
     }
     return false;
 }

@@ -76,7 +76,6 @@ DECLARE_DEBUG_VARIABLE(bool, UseNewQueryTopoIoctl, true, "Use DRM_I915_QUERY_COM
 DECLARE_DEBUG_VARIABLE(bool, DisableGpuHangDetection, false, "Disable GPU hang detection")
 DECLARE_DEBUG_VARIABLE(bool, DisableForceToStateless, false, "Do not force stateless for buffers")
 DECLARE_DEBUG_VARIABLE(bool, ForceTheoreticalMaxWorkGroupCount, false, "Do not apply any limitation to max cooperative/concurrent work-group count queries")
-DECLARE_DEBUG_VARIABLE(bool, DontDisableZebinIfVmeUsed, false, "When enabled, driver will not add -cl-intel-disable-zebin internal option when vme is used")
 DECLARE_DEBUG_VARIABLE(bool, AppendMemoryPrefetchForKmdMigratedSharedAllocations, true, "Allow prefetching shared memory to the device associated with the specified command list")
 DECLARE_DEBUG_VARIABLE(bool, ForceMemoryPrefetchForKmdMigratedSharedAllocations, false, "Force prefetch of shared memory in command queue execute command lists")
 DECLARE_DEBUG_VARIABLE(bool, ClKhrExternalMemoryExtension, true, "Enable cl_khr_external_memory extension")

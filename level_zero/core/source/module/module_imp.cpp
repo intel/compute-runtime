@@ -326,7 +326,6 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         this->isGeneratedByIgc = singleDeviceBinary.generator == NEO::GeneratorType::igc;
 
         bool rebuild = NEO::debugManager.flags.RebuildPrecompiledKernels.get() && irBinarySize != 0;
-        rebuild |= NEO::isRebuiltToPatchtokensRequired(device->getNEODevice(), archive, this->options, this->isBuiltIn, false);
         rebuild |= !device->getNEODevice()->getExecutionEnvironment()->isOneApiPvcWaEnv();
 
         if (rebuild && irBinarySize == 0) {
