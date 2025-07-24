@@ -828,7 +828,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         }
     }
 
-    auto mediaSamplerRequired = false;
     uint32_t numGrfRequired = GrfConfig::defaultGrfNumber;
     auto systolicPipelineSelectMode = false;
     Kernel *kernel = nullptr;
@@ -841,7 +840,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
             continue;
         }
         kernel->makeResident(csr);
-        mediaSamplerRequired |= kernel->isVmeKernel();
         auto numGrfRequiredByKernel = static_cast<uint32_t>(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.numGrfRequired);
         numGrfRequired = std::max(numGrfRequired, numGrfRequiredByKernel);
         systolicPipelineSelectMode |= kernel->requiresSystolicPipelineSelectMode();
@@ -853,10 +851,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         containsImageFromBuffer |= kernel->hasImageFromBufferArgs();
     }
     UNRECOVERABLE_IF(kernel == nullptr);
-
-    if (mediaSamplerRequired) {
-        DEBUG_BREAK_IF(device->getDeviceInfo().preemptionSupported != false);
-    }
 
     if (isProfilingEnabled() && eventBuilder.getEvent()) {
         eventBuilder.getEvent()->setSubmitTimeStamp();
@@ -921,7 +915,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     );
 
     dispatchFlags.isWalkerWithProfilingEnqueued = getAndClearIsWalkerWithProfilingEnqueued();
-    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = systolicPipelineSelectMode;
     uint32_t lws[3] = {static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().x), static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().y), static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().z)};
     uint32_t groupCount[3] = {static_cast<uint32_t>(multiDispatchInfo.begin()->getNumberOfWorkgroups().x), static_cast<uint32_t>(multiDispatchInfo.begin()->getNumberOfWorkgroups().y), static_cast<uint32_t>(multiDispatchInfo.begin()->getNumberOfWorkgroups().z)};

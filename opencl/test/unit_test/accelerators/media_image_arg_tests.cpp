@@ -40,7 +40,6 @@ class MediaImageSetArgTest : public ClDeviceFixture,
 
         pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->kernelDescriptor.kernelAttributes.flags.usesVme = true;
 
         pKernelInfo->addArgImage(0, 0x00, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA);
         pKernelInfo->addArgImage(0, 0x40, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA);
@@ -50,8 +49,6 @@ class MediaImageSetArgTest : public ClDeviceFixture,
         pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
-
-        ASSERT_EQ(true, pKernel->isVmeKernel());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
         pKernel->setKernelArgHandler(1, &Kernel::setArgImage);

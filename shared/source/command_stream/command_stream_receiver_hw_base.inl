@@ -532,7 +532,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     programComputeMode(commandStreamCSR, dispatchFlags, hwInfo);
     programL3(commandStreamCSR, newL3Config, EngineHelpers::isBcs(this->osContext->getEngineType()));
     programPreamble(commandStreamCSR, device, newL3Config);
-    programMediaSampler(commandStreamCSR, dispatchFlags);
     addPipeControlBefore3dState(commandStreamCSR, dispatchFlags);
     programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
     if (isRayTracingStateProgramingNeeded(device)) {
@@ -811,7 +810,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (this->streamProperties.stateComputeMode.isDirty()) {
         size += getCmdSizeForComputeMode();
     }
-    size += getCmdSizeForMediaSampler(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
     if ((dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) || isRayTracingStateProgramingNeeded(device)) {
@@ -944,15 +942,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         setMediaVFEStateDirty(false);
         this->streamProperties.frontEndState.clearIsDirty();
     }
-}
-
-template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programMediaSampler(LinearStream &commandStream, DispatchFlags &dispatchFlags) {
-}
-
-template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForMediaSampler(bool mediaSamplerRequired) const {
-    return 0;
 }
 
 template <typename GfxFamily>

@@ -191,7 +191,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
 
     DispatchFlags dispatchFlags(
         nullptr,                                                                     // barrierTimestampPacketNodes
-        {false, kernel->isVmeKernel()},                                              // pipelineSelectArgs
+        {false},                                                                     // pipelineSelectArgs
         commandQueue.flushStamp->getStampReference(),                                // flushStampReference
         commandQueue.getThrottle(),                                                  // throttle
         preemptionMode,                                                              // preemptionMode
