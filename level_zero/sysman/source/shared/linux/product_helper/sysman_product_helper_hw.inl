@@ -402,11 +402,6 @@ bool SysmanProductHelperHw<gfxProduct>::isAggregationOfSingleEnginesSupported() 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getGroupEngineBusynessFromSingleEngines(LinuxSysmanImp *pLinuxSysmanImp, zes_engine_stats_t *pStats, zes_engine_group_t &engineGroup) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isVfMemoryUtilizationSupported() {
     return false;
 }
