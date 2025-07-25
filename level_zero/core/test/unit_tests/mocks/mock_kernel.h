@@ -43,6 +43,7 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::cooperativeSupport;
     using ::L0::KernelImp::createPrintfBuffer;
     using ::L0::KernelImp::heaplessEnabled;
+    using ::L0::KernelImp::implicitArgsVersion;
     using ::L0::KernelImp::implicitScalingEnabled;
     using ::L0::KernelImp::kernelImmData;
     using ::L0::KernelImp::localDispatchSupport;

@@ -117,6 +117,7 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
     dst.grfSize = src.targetDevice.grfSize;
     dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
     dst.indirectDetectionVersion = src.generatorFeatureVersions.indirectMemoryAccessDetection;
+    dst.indirectAccessBufferMajorVersion = src.generatorFeatureVersions.indirectAccessBuffer;
     dst.samplerStateSize = src.targetDevice.samplerStateSize;
     dst.samplerBorderColorStateSize = src.targetDevice.samplerBorderColorStateSize;
 

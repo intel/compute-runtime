@@ -312,6 +312,10 @@ ze_result_t KernelImp::getBaseAddress(uint64_t *baseAddress) {
 KernelImp::KernelImp(Module *module) : module(module) {
     if (module) {
         this->implicitArgsVersion = module->getDevice()->getGfxCoreHelper().getImplicitArgsVersion();
+        ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);
+        if (moduleImp->getTranslationUnit()->programInfo.indirectAccessBufferMajorVersion > 0) {
+            this->implicitArgsVersion = moduleImp->getTranslationUnit()->programInfo.indirectAccessBufferMajorVersion;
+        }
     }
 }
 

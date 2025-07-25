@@ -88,6 +88,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     class MockKernel : public WhiteBox<L0::KernelImp> {
       public:
+        using KernelImp::implicitArgsVersion;
         using KernelImp::kernelImmData;
         using KernelImp::patchBindlessOffsetsInCrossThreadData;
         using KernelImp::printfBuffer;

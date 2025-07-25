@@ -614,7 +614,7 @@ void EncodeIndirectParams<Family>::encode(CommandContainer &container, uint64_t 
     UNRECOVERABLE_IF(NEO::isValidOffset(kernelDescriptor.payloadMappings.dispatchTraits.workDim) && (kernelDescriptor.payloadMappings.dispatchTraits.workDim & 0b11) != 0u);
     setWorkDimIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.workDim, crossThreadDataGpuVa, dispatchInterface->getGroupSize(), outArgs);
     if (implicitArgsGpuPtr) {
-        const auto version = container.getDevice()->getGfxCoreHelper().getImplicitArgsVersion();
+        const auto version = dispatchInterface->getImplicitArgs()->v0.header.structVersion;
         if (version == 0) {
             constexpr CrossThreadDataOffset groupCountOffset[] = {offsetof(ImplicitArgsV0, groupCountX), offsetof(ImplicitArgsV0, groupCountY), offsetof(ImplicitArgsV0, groupCountZ)};
             constexpr CrossThreadDataOffset globalSizeOffset[] = {offsetof(ImplicitArgsV0, globalSizeX), offsetof(ImplicitArgsV0, globalSizeY), offsetof(ImplicitArgsV0, globalSizeZ)};

@@ -85,6 +85,9 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
     }
     slmTotalSize = kernelInfoArg.kernelDescriptor.kernelAttributes.slmInlineSize;
     this->implicitArgsVersion = getDevice().getGfxCoreHelper().getImplicitArgsVersion();
+    if (program->getIndirectAccessBufferVersion() > 0) {
+        this->implicitArgsVersion = program->getIndirectAccessBufferVersion();
+    }
 }
 
 Kernel::~Kernel() {

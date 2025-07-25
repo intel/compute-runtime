@@ -158,6 +158,12 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection = static_cast<uint32_t>(*indirectDetectionVersion);
             break;
         }
+        case Elf::IntelGTSectionType::indirectAccessBufferMajorVersion: {
+            DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
+            auto indirectDetectionVersion = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
+            singleDeviceBinary.generatorFeatureVersions.indirectAccessBuffer = static_cast<uint32_t>(*indirectDetectionVersion);
+            break;
+        }
         default:
             outWarning.append("DeviceBinaryFormat::zebin : Unrecognized IntelGTNote type: " + std::to_string(intelGTNote.type) + "\n");
             break;

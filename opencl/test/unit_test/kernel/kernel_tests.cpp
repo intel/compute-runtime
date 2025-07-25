@@ -3834,6 +3834,21 @@ TEST_F(KernelImplicitArgsTest, WhenKernelRequiresImplicitArgsThenImplicitArgsStr
     }
 }
 
+TEST_F(KernelImplicitArgsTest, GivenProgramWithImplicitAccessBufferVersionWhenKernelCreatedThenCorrectVersionIsSet) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+
+    MockContext context(pClDevice);
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    program.indirectAccessBufferMajorVersion = 5;
+    {
+        MockKernel kernel(&program, *pKernelInfo, *pClDevice);
+        ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+        EXPECT_EQ(5u, kernel.implicitArgsVersion);
+    }
+}
+
 TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenSettingKernelParamsThenImplicitArgsAreProperlySet) {
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;

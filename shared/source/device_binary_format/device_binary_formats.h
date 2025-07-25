@@ -87,6 +87,7 @@ struct SingleDeviceBinary {
     struct GeneratorFeatureVersions {
         using VersionT = uint32_t;
         VersionT indirectMemoryAccessDetection = 0u;
+        VersionT indirectAccessBuffer = 0u;
     } generatorFeatureVersions;
 };
 

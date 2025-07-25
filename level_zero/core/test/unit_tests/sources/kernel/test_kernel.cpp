@@ -4160,6 +4160,33 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, ImplicitArgsV0::getSize()));
 }
 
+TEST_F(KernelImplicitArgTests, givenModuleWithImplicitArgsVersionWhenCreatingKernelThenImplicitArgsVersionFromModuleIsUsed) {
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+    ModuleBuildLog *moduleBuildLog = nullptr;
+    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+
+    uint32_t perHwThreadPrivateMemorySizeRequested = 0;
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+    std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
+                                                                      moduleBuildLog,
+                                                                      ModuleType::user,
+                                                                      perHwThreadPrivateMemorySizeRequested,
+                                                                      mockKernelImmData.get());
+    result = module->initialize(&moduleDesc, device->getNEODevice());
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    module->getTranslationUnit()->programInfo.indirectAccessBufferMajorVersion = 5u;
+
+    auto kernel = std::make_unique<WhiteBox<L0::KernelImp>>(module.get());
+    EXPECT_EQ(5u, kernel->implicitArgsVersion);
+}
+
 using BindlessKernelTest = Test<DeviceFixture>;
 
 TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCorrectBindlessOffsetsAreWritten) {

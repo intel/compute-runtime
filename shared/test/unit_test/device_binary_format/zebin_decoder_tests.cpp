@@ -6509,6 +6509,39 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenIndirectDetectionVers
     EXPECT_EQ(indirectDetectionVersion, programInfo.indirectDetectionVersion);
 }
 
+TEST_F(IntelGTNotesFixture, GivenIndirectAccessBufferVersionInIntelGTNotesWhenValidatingTargetDeviceThenVersionIsPopulatedCorrectly) {
+    const uint32_t indirectAccessBufferMajorVersion = 4u;
+
+    Zebin::Elf::ElfNoteSection elfNoteSection = {};
+    elfNoteSection.type = Zebin::Elf::IntelGTSectionType::indirectAccessBufferMajorVersion;
+    elfNoteSection.descSize = sizeof(uint32_t);
+    elfNoteSection.nameSize = 8u;
+
+    auto sectionDataSize = sizeof(Zebin::Elf::ElfNoteSection) + elfNoteSection.nameSize + alignUp(elfNoteSection.descSize, 4);
+    auto noteIntelGTSectionData = std::make_unique<uint8_t[]>(sectionDataSize);
+    appendSingleIntelGTSectionData(elfNoteSection, noteIntelGTSectionData.get(), reinterpret_cast<const uint8_t *>(&indirectAccessBufferMajorVersion),
+                                   Zebin::Elf::intelGTNoteOwnerName.str().c_str(), sectionDataSize);
+    zebin.appendSection(Zebin::Elf::SHT_NOTE, Zebin::Elf::SectionNames::noteIntelGT, ArrayRef<uint8_t>::fromAny(noteIntelGTSectionData.get(), sectionDataSize));
+
+    std::string outErrReason, outWarning;
+    auto elf = Zebin::Elf::decodeElf<Zebin::Elf::EI_CLASS_64>(zebin.storage, outErrReason, outWarning);
+    SingleDeviceBinary singleDeviceBinary{};
+    TargetDevice targetDevice;
+    validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
+    EXPECT_EQ(indirectAccessBufferMajorVersion, singleDeviceBinary.generatorFeatureVersions.indirectAccessBuffer);
+
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram<NEO::Elf::EI_CLASS_32> zebin;
+    singleDeviceBinary.deviceBinary = {zebin.storage.data(), zebin.storage.size()};
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleDeviceBinary, errors, warnings, gfxCoreHelper);
+    EXPECT_EQ(NEO::DecodeError::success, error);
+    EXPECT_EQ(indirectAccessBufferMajorVersion, programInfo.indirectAccessBufferMajorVersion);
+}
+
 TEST_F(IntelGTNotesFixture, GivenNotNullTerminatedVersioningStringWhenGettingIntelGTNotesThenEmitWarningAndDontUseIt) {
     Zebin::Elf::ElfNoteSection elfNoteSection = {};
     elfNoteSection.type = 4;

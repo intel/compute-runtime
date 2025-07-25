@@ -58,6 +58,7 @@ class MockProgram : public Program {
     using Program::extractInternalOptions;
     using Program::getKernelInfo;
     using Program::getModuleAllocations;
+    using Program::indirectAccessBufferMajorVersion;
     using Program::internalOptionsToExtract;
     using Program::irBinary;
     using Program::irBinarySize;

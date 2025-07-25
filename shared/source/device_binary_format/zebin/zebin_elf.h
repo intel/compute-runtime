@@ -68,7 +68,8 @@ enum IntelGTSectionType : uint32_t {
     vISAAbiVersion = 5, // for debugger only
     productConfig = 6,
     indirectAccessDetectionVersion = 7,
-    lastSupported = indirectAccessDetectionVersion
+    indirectAccessBufferMajorVersion = 8,
+    lastSupported = indirectAccessBufferMajorVersion
 };
 struct IntelGTNote {
     IntelGTSectionType type;

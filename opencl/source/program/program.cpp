@@ -216,6 +216,7 @@ cl_int Program::createProgramFromBinary(
 
             this->isGeneratedByIgc = singleDeviceBinary.generator == GeneratorType::igc;
             this->indirectDetectionVersion = singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection;
+            this->indirectAccessBufferMajorVersion = singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection;
 
             bool rebuild = AddressingModeHelper::containsBindlessKernel(decodedSingleDeviceBinary.programInfo.kernelInfos);
             rebuild |= !clDevice.getDevice().getExecutionEnvironment()->isOneApiPvcWaEnv();
