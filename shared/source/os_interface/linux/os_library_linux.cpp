@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,12 +42,7 @@ OsLibrary::OsLibrary(const OsLibraryCreateProperties &properties) {
     if (properties.libraryName.empty() || properties.performSelfLoad) {
         this->handle = SysCalls::dlopen(0, RTLD_LAZY);
     } else {
-#ifdef SANITIZER_BUILD
         auto dlopenFlag = RTLD_LAZY;
-#else
-        auto dlopenFlag = RTLD_LAZY | RTLD_DEEPBIND;
-        /* Background: https://github.com/intel/compute-runtime/issues/122 */
-#endif
         dlopenFlag = properties.customLoadFlags ? *properties.customLoadFlags : dlopenFlag;
         adjustLibraryFlags(dlopenFlag);
         this->handle = SysCalls::dlopen(properties.libraryName.c_str(), dlopenFlag);

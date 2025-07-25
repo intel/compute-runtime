@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -728,7 +728,7 @@ else()
   option(USE_ASAN "Link with address sanitization support" OFF)
   if(USE_ASAN)
     if(CMAKE_COMPILER_IS_GNUCC)
-      set(ASAN_FLAGS " -fsanitize=address -fno-omit-frame-pointer -DSANITIZER_BUILD")
+      set(ASAN_FLAGS " -fsanitize=address -fno-omit-frame-pointer")
       set(ASAN_LIBS "asan")
       set(GTEST_ENV ${GTEST_ENV} LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/opencl/test/unit_test/lsan_suppressions.txt)
     else()
@@ -739,7 +739,7 @@ else()
     if(CMAKE_COMPILER_IS_GNUCC AND USE_ASAN)
       message(STATUS "Cannot use thread sanitization with address sanitization in gcc")
     else()
-      set(TSAN_FLAGS " -fsanitize=thread -DSANITIZER_BUILD")
+      set(TSAN_FLAGS " -fsanitize=thread")
       set(TSAN_LIBS "tsan")
     endif()
   endif()
@@ -862,9 +862,6 @@ if(NOT MSVC)
   if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
     # clang only
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshorten-64-to-32 -Wno-extern-c-compat -Wno-instantiation-after-specialization")
-    if(NOT (CMAKE_C_COMPILER_VERSION VERSION_LESS 3.6))
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSANITIZER_BUILD")
-    endif()
   else()
     # gcc only
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
@@ -878,7 +875,7 @@ if(NOT MSVC)
     check_cxx_compiler_flag(-fsanitize=undefined COMPILER_SUPPORTS_UNDEFINED_BEHAVIOR_SANITIZER)
     if(COMPILER_SUPPORTS_UNDEFINED_BEHAVIOR_SANITIZER)
       message(STATUS "Enabling undefined behavior sanitizer")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fsanitize-recover=vptr -fno-rtti -DSANITIZER_BUILD")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fsanitize-recover=vptr -fno-rtti")
       if(NOT SANITIZE_UB_ALLOW_CONTINUE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize-recover=undefined")
       endif()
