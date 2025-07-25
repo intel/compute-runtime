@@ -106,23 +106,6 @@ HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenComponentCountZeroWhenCal
     EXPECT_EQ(count, mockEngineHandleCount);
 }
 
-HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleWhenFetchingConfigPairThenProperValuesAreReturned, IsBMG) {
-    auto handles = getEngineHandles(mockEngineHandleCount);
-    EXPECT_EQ(mockEngineHandleCount, handles.size());
-
-    for (auto handle : handles) {
-
-        zes_engine_properties_t properties = {};
-        EXPECT_EQ(zesEngineGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
-
-        if (!isGroupEngineHandle(properties.type)) {
-            L0::Sysman::Engine *pEngine = L0::Sysman::Engine::fromHandle(handle);
-            EXPECT_EQ(pEngine->configPair.first, pPmuInterface->mockActiveTicksConfig);
-            EXPECT_EQ(pEngine->configPair.second, pPmuInterface->mockTotalTicksConfig);
-        }
-    }
-}
-
 HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityThenCallSuccedsAndValidValuesAreReturned, IsBMG) {
 
     zes_engine_stats_t stats = {};
@@ -167,54 +150,9 @@ HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenValidEngineHandleAndPmuRe
     }
 }
 
-HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenEngineHandleWithGroupAllEngineTypeAndPmuInterfaceOpenFailsWhenCallingZesEngineGetActivityThenErrorIsReturned, IsBMG) {
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint32_t mockReadVal = 23;
-        std::ostringstream oStream;
-        oStream << mockReadVal;
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
-
-    pPmuInterface->mockPerfEventOpenReadFail = true;
-    pPmuInterface->mockPerfEventOpenFailAtCount = 12;
-
-    uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
-
-    std::vector<zes_engine_handle_t> handles(count, nullptr);
-    EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-
-    for (auto handle : handles) {
-        zes_engine_properties_t properties = {};
-        EXPECT_EQ(zesEngineGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
-
-        if (isGroupEngineHandle(properties.type)) {
-            zes_engine_stats_t stats = {};
-            EXPECT_EQ(zesEngineGetActivity(handle, &stats), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        }
-    }
-}
-
 HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenSysmanProductHelperHandleWhenCheckingIsAggregationOfSingleEnginesSupportedThenSuccessIsReturned, IsBMG) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(pSysmanProductHelper->isAggregationOfSingleEnginesSupported());
-}
-
-HWTEST2_F(SysmanProductHelperEngineXeTestFixture, GivenSysmanProductHelperHandleAndFdListNotAvailableWhenCallingGetGroupEngineBusynessFromSingleEnginesThenErrorIsReturned, IsBMG) {
-
-    zes_engine_group_t engineType = ZES_ENGINE_GROUP_COMPUTE_ALL;
-    std::unique_ptr<L0::Sysman::Engine> pEngine = std::make_unique<L0::Sysman::EngineImp>(pOsSysman, engineType, 0, 0, 0);
-
-    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
-    pSysmanDeviceImp->pEngineHandleContext->handleList.push_back(std::move(pEngine));
-
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-
-    zes_engine_stats_t stats = {};
-    EXPECT_EQ(pSysmanProductHelper->getGroupEngineBusynessFromSingleEngines(pLinuxSysmanImp, &stats, engineType), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 } // namespace ult

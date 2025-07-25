@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/sysman/source/api/engine/sysman_engine.h"
 #include <level_zero/zes_api.h>
 
 #include "neo_igfxfmid.h"
@@ -14,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -30,6 +32,8 @@ class SysFsAccessInterface;
 class PmuInterface;
 class LinuxSysmanImp;
 class SysmanProductHelper;
+
+struct EngineGroupInfo;
 
 constexpr std::string_view deviceDir("device");
 constexpr std::string_view sysDevicesDir("/sys/devices/");
@@ -128,13 +132,18 @@ class SysmanKmdInterface {
                                                   zes_freq_domain_t frequencyDomainNumber) = 0;
     virtual std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) = 0;
     virtual std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) = 0;
-    virtual ze_result_t getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
-                                                             uint32_t engineInstance,
-                                                             uint32_t gtId,
-                                                             PmuInterface *const &pPmuInterface,
-                                                             std::vector<std::pair<int64_t, int64_t>> &fdList,
-                                                             std::pair<uint64_t, uint64_t> &configPair) = 0;
-    virtual ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) = 0;
+    virtual ze_result_t getPmuConfigsForSingleEngines(const std::string &sysmanDeviceDir,
+                                                      const EngineGroupInfo &engineInfo,
+                                                      PmuInterface *const &pPmuInterface,
+                                                      const NEO::Drm *pDrm,
+                                                      std::vector<uint64_t> &pmuConfigs) = 0;
+    virtual ze_result_t getPmuConfigsForGroupEngines(const MapOfEngineInfo &mapEngineInfo,
+                                                     const std::string &sysmanDeviceDir,
+                                                     const EngineGroupInfo &engineInfo,
+                                                     PmuInterface *const &pPmuInterface,
+                                                     const NEO::Drm *pDrm,
+                                                     std::vector<uint64_t> &pmuConfigs) = 0;
+    virtual ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) = 0;
     virtual std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const = 0;
     virtual bool isStandbyModeControlAvailable() const = 0;
     virtual bool clientInfoAvailableInFdInfo() const = 0;
@@ -221,13 +230,18 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
                                           zes_freq_domain_t frequencyDomainNumber) override;
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
     std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) override;
-    ze_result_t getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
-                                                     uint32_t engineInstance,
-                                                     uint32_t gtId,
-                                                     PmuInterface *const &pPmuInterface,
-                                                     std::vector<std::pair<int64_t, int64_t>> &fdList,
-                                                     std::pair<uint64_t, uint64_t> &configPair) override;
-    ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) override;
+    ze_result_t getPmuConfigsForSingleEngines(const std::string &sysmanDeviceDir,
+                                              const EngineGroupInfo &engineInfo,
+                                              PmuInterface *const &pPmuInterface,
+                                              const NEO::Drm *pDrm,
+                                              std::vector<uint64_t> &pmuConfigs) override;
+    ze_result_t getPmuConfigsForGroupEngines(const MapOfEngineInfo &mapEngineInfo,
+                                             const std::string &sysmanDeviceDir,
+                                             const EngineGroupInfo &engineInfo,
+                                             PmuInterface *const &pPmuInterface,
+                                             const NEO::Drm *pDrm,
+                                             std::vector<uint64_t> &pmuConfigs) override;
+    ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return true; }
     bool clientInfoAvailableInFdInfo() const override { return false; }
@@ -286,13 +300,18 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
                                           zes_freq_domain_t frequencyDomainNumber) override;
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
     std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) override;
-    ze_result_t getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
-                                                     uint32_t engineInstance,
-                                                     uint32_t gtId,
-                                                     PmuInterface *const &pPmuInterface,
-                                                     std::vector<std::pair<int64_t, int64_t>> &fdList,
-                                                     std::pair<uint64_t, uint64_t> &configPair) override;
-    ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) override;
+    ze_result_t getPmuConfigsForSingleEngines(const std::string &sysmanDeviceDir,
+                                              const EngineGroupInfo &engineInfo,
+                                              PmuInterface *const &pPmuInterface,
+                                              const NEO::Drm *pDrm,
+                                              std::vector<uint64_t> &pmuConfigs) override;
+    ze_result_t getPmuConfigsForGroupEngines(const MapOfEngineInfo &mapEngineInfo,
+                                             const std::string &sysmanDeviceDir,
+                                             const EngineGroupInfo &engineInfo,
+                                             PmuInterface *const &pPmuInterface,
+                                             const NEO::Drm *pDrm,
+                                             std::vector<uint64_t> &pmuConfigs) override;
+    ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return true; }
     bool clientInfoAvailableInFdInfo() const override { return false; }
@@ -352,13 +371,18 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
     std::string getEngineBasePath(uint32_t subDeviceId) const override;
     std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) override;
-    ze_result_t getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
-                                                     uint32_t engineInstance,
-                                                     uint32_t gtId,
-                                                     PmuInterface *const &pPmuInterface,
-                                                     std::vector<std::pair<int64_t, int64_t>> &fdList,
-                                                     std::pair<uint64_t, uint64_t> &configPair) override;
-    ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) override;
+    ze_result_t getPmuConfigsForSingleEngines(const std::string &sysmanDeviceDir,
+                                              const EngineGroupInfo &engineInfo,
+                                              PmuInterface *const &pPmuInterface,
+                                              const NEO::Drm *pDrm,
+                                              std::vector<uint64_t> &pmuConfigs) override;
+    ze_result_t getPmuConfigsForGroupEngines(const MapOfEngineInfo &mapEngineInfo,
+                                             const std::string &sysmanDeviceDir,
+                                             const EngineGroupInfo &engineInfo,
+                                             PmuInterface *const &pPmuInterface,
+                                             const NEO::Drm *pDrm,
+                                             std::vector<uint64_t> &pmuConfigs) override;
+    ze_result_t readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return false; }
     bool clientInfoAvailableInFdInfo() const override { return true; }
