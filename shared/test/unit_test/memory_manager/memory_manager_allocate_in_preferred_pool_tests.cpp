@@ -1172,7 +1172,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationIsCommandBufferAndMultiC
     memoryManager.mockGa = &mockGa;
     memoryManager.returnMockGAFromDevicePool = true;
 
-    AllocationProperties properties(mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::commandBuffer, mockDeviceBitfield);
     properties.flags.cantBeReadOnly = false;
     properties.flags.multiOsContextCapable = true;
 
