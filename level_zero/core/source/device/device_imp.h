@@ -96,7 +96,9 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     ze_result_t activateMetricGroupsDeferred(uint32_t count,
                                              zet_metric_group_handle_t *phMetricGroups) override;
 
-    DriverHandle *getDriverHandle() override;
+    DriverHandle *getDriverHandle() final {
+        return this->driverHandle;
+    }
     void setDriverHandle(DriverHandle *driverHandle) override;
     NEO::PreemptionMode getDevicePreemptionMode() const override;
     const NEO::DeviceInfo &getDeviceInfo() const override;

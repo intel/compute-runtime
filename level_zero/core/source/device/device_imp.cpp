@@ -80,10 +80,6 @@ void DeviceImp::bcsSplitReleaseResources() {
     bcsSplit->releaseResources();
 }
 
-DriverHandle *DeviceImp::getDriverHandle() {
-    return this->driverHandle;
-}
-
 void DeviceImp::setDriverHandle(DriverHandle *driverHandle) {
     this->driverHandle = driverHandle;
 }
