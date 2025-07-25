@@ -380,6 +380,7 @@ TEST_F(DebugApiLinuxTestXe, GivenPollReturnsNonZeroWhenReadingInternalEventsAsyn
     constexpr int dummyReadEventCount = 1;
 
     EXPECT_EQ(dummyReadEventCount, handler->ioctlCalled);
+    EXPECT_EQ(0u, handler->debugEventInput.reserved);
     EXPECT_EQ(DebugSessionLinuxXe::maxEventSize, handler->debugEventInput.len);
     EXPECT_EQ(static_cast<decltype(NEO::EuDebugEvent::type)>(static_cast<uint16_t>(NEO::EuDebugParam::eventTypeRead)), handler->debugEventInput.type);
 }
