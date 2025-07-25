@@ -693,7 +693,7 @@ uint64_t Device::getProfilingTimerClock() {
 
 bool Device::isBcsSplitSupported() {
     auto &productHelper = getProductHelper();
-    auto bcsSplit = productHelper.getBcsSplitSettings().enabled && Device::isBlitSplitEnabled();
+    auto bcsSplit = productHelper.getBcsSplitSettings(getHardwareInfo()).enabled && Device::isBlitSplitEnabled();
 
     if (debugManager.flags.SplitBcsCopy.get() != -1) {
         bcsSplit = debugManager.flags.SplitBcsCopy.get();

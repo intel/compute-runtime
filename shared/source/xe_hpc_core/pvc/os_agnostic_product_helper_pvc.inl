@@ -175,7 +175,7 @@ bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
 }
 
 template <>
-BcsSplitSettings ProductHelperHw<gfxProduct>::getBcsSplitSettings() const {
+BcsSplitSettings ProductHelperHw<gfxProduct>::getBcsSplitSettings(const HardwareInfo &hwInfo) const {
     constexpr BcsInfoMask oddLinkedCopyEnginesMask = NEO::EngineHelpers::oddLinkedCopyEnginesMask;
 
     return {

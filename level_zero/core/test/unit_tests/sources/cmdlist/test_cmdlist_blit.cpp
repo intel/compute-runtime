@@ -1090,6 +1090,19 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
     uint32_t expectedNumRootDevices = 1;
 };
 
+HWTEST2_F(AggregatedBcsSplitTests, givenLimitedEnginesCountWhenCreatingBcsSplitThenCreateCorrectQueues, IsAtLeastXeHpcCore) {
+    expectedEnginesCount = 2;
+    debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
+
+    BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
+
+    bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, nullptr, cmdList->getCsr(false));
+
+    EXPECT_EQ(expectedEnginesCount, bcsSplit.cmdQs.size());
+
+    bcsSplit.releaseResources();
+}
+
 HWTEST_F(AggregatedBcsSplitTests, givenTransferDirectionWhenAskingIfSplitIsNeededThenReturnCorrectValue) {
     debugManager.flags.SplitBcsTransferDirectionMask.set(-1);
 

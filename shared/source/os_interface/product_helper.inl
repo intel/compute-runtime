@@ -561,7 +561,7 @@ bool ProductHelperHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwIn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-BcsSplitSettings ProductHelperHw<gfxProduct>::getBcsSplitSettings() const {
+BcsSplitSettings ProductHelperHw<gfxProduct>::getBcsSplitSettings(const HardwareInfo &hwInfo) const {
     return {};
 }
 

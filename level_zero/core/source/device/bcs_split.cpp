@@ -20,7 +20,7 @@ namespace L0 {
 
 bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_command_queue_desc_t *desc, NEO::CommandStreamReceiver *csr) {
     auto &productHelper = this->device.getProductHelper();
-    auto bcsSplitSettings = productHelper.getBcsSplitSettings();
+    auto bcsSplitSettings = productHelper.getBcsSplitSettings(this->device.getHwInfo());
 
     if (NEO::debugManager.flags.SplitBcsRequiredTileCount.get() != -1) {
         bcsSplitSettings.requiredTileCount = static_cast<uint32_t>(NEO::debugManager.flags.SplitBcsRequiredTileCount.get());
@@ -69,6 +69,10 @@ bool BcsSplit::setupQueues(const NEO::BcsSplitSettings &settings, uint32_t produ
                 if (auto engine = subDevice->tryGetEngine(NEO::EngineHelpers::getBcsEngineAtIdx(engineId), NEO::EngineUsage::regular)) {
                     csrs.push_back(engine->commandStreamReceiver);
                 }
+            }
+
+            if (csrs.size() >= settings.minRequiredTotalCsrCount) {
+                break;
             }
         }
     }

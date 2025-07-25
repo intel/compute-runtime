@@ -96,7 +96,7 @@ class ProductHelperHw : public ProductHelper {
     bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override;
     bool isTimestampWaitSupportedForEvents() const override;
     bool isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const override;
-    BcsSplitSettings getBcsSplitSettings() const override;
+    BcsSplitSettings getBcsSplitSettings(const HardwareInfo &hwInfo) const override;
     bool isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const override;
     bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const override;
     bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const override;

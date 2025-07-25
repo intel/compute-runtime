@@ -96,7 +96,7 @@ PVCTEST_F(PvcProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryPhysic
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsBlitSplitEnqueueWARequiredThenReturnTrue) {
-    auto bcsSplitSettings = productHelper->getBcsSplitSettings();
+    auto bcsSplitSettings = productHelper->getBcsSplitSettings(pInHwInfo);
 
     EXPECT_TRUE(bcsSplitSettings.enabled);
     EXPECT_EQ(NEO::EngineHelpers::oddLinkedCopyEnginesMask, bcsSplitSettings.allEngines.to_ulong());
