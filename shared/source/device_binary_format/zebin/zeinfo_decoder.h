@@ -22,7 +22,6 @@ namespace Zebin::ZeInfo {
 inline constexpr NEO::Zebin::ZeInfo::Types::Version zeInfoDecoderVersion{1, 54};
 
 using KernelExecutionEnvBaseT = Types::Kernel::ExecutionEnv::ExecutionEnvBaseT;
-using KernelPayloadArgBaseT = Types::Kernel::PayloadArgument::PayloadArgumentBaseT;
 
 template <typename T>
 bool readZeInfoValueChecked(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node, T &outValue, ConstStringRef context, std::string &outErrReason);

@@ -16,6 +16,9 @@ template <typename T>
 void cloneExt(ExtUniquePtrT<T> &dst, const T &src);
 
 template <typename T>
+void allocateExt(ExtUniquePtrT<T> &dst);
+
+template <typename T>
 void destroyExt(T *dst);
 
 namespace Impl {
@@ -51,10 +54,14 @@ struct UniquePtrWrapperOps {
 
 } // namespace Impl
 
-template <typename T>
+template <typename T, bool allocateAtInit = false>
 struct Ext : Impl::UniquePtrWrapperOps<Ext<T>> {
     Ext(T *ptr) : ptr(ptr, destroyExt) {}
-    Ext() = default;
+    Ext() {
+        if constexpr (allocateAtInit) {
+            allocateExt(ptr);
+        }
+    }
     Ext(const Ext &rhs) {
         if (rhs.ptr.get()) {
             cloneExt(this->ptr, *rhs.ptr.get());

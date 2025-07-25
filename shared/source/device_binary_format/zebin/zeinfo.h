@@ -407,17 +407,9 @@ inline constexpr ConstStringRef required[] = {
     Tags::Kernel::ExecutionEnv::simdSize};
 
 struct ExecutionEnvExt;
-ExecutionEnvExt *allocateExecEnvExt();
-void freeExecEnvExt(ExecutionEnvExt *);
 
 struct ExecutionEnvBaseT final : NEO::NonCopyableAndNonMovableClass {
-    ExecutionEnvBaseT() {
-        execEnvExt = allocateExecEnvExt();
-    }
-    ~ExecutionEnvBaseT() {
-        freeExecEnvExt(execEnvExt);
-    }
-    ExecutionEnvExt *execEnvExt = nullptr;
+    Ext<ExecutionEnvExt, true> execEnvExt;
 
     BarrierCountT barrierCount = Defaults::barrierCount;
     DisableMidThreadPreemptionT disableMidThreadPreemption = Defaults::disableMidThreadPreemption;

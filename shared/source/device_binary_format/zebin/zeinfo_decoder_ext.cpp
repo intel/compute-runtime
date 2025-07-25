@@ -21,14 +21,6 @@ bool readZeInfoArgTypeNameCheckedExt(const NEO::Yaml::YamlParser &parser, const 
     return false;
 }
 
-namespace Types::Kernel::ExecutionEnv {
-ExecutionEnvExt *allocateExecEnvExt() {
-    return nullptr;
-}
-void freeExecEnvExt(ExecutionEnvExt *envExt) {
-}
-} // namespace Types::Kernel::ExecutionEnv
-
 void populateKernelExecutionEnvironmentExt(KernelDescriptor &dst, const KernelExecutionEnvBaseT &execEnv, const Types::Version &srcZeInfoVersion) {
 }
 
@@ -44,4 +36,16 @@ void cloneExt(ExtUniquePtrT<NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::
 
 template <>
 void destroyExt(NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::PayloadArgumentExtT *dst) {
+}
+
+template <>
+void cloneExt(ExtUniquePtrT<NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvExt> &dst, const NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvExt &src) {
+}
+
+template <>
+void destroyExt(NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvExt *dst) {
+}
+
+template <>
+void allocateExt(ExtUniquePtrT<NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvExt> &dst) {
 }
