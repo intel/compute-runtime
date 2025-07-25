@@ -18,7 +18,6 @@
 
 #include "environment.h"
 #include "gtest/gtest.h"
-#include "mock/mock_argument_helper.h"
 
 #include <cstdint>
 #include <memory>

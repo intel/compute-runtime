@@ -41,7 +41,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     memset(dstBuffer, 0, allocSize);
 
     std::string buildLog;
-    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, "-g", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 

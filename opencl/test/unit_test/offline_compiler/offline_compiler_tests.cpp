@@ -20,6 +20,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -5832,6 +5833,63 @@ TEST_F(OfflineCompilerTests, givenOneApiPvcSendWarWaEnvSetToFalseWhenInitializin
 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_TRUE(hasSubstr(internalOptions, "-ze-opt-disable-sendwarwa"));
+}
+
+TEST_F(OfflineCompilerTests, GivenDebugFlagWhenBuildingFromSourceThenTemporarySourceFileIsCreated) {
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.uniqueHelper->interceptOutput = true;
+    mockOfflineCompiler.uniqueHelper->callBaseFileExists = false;
+    mockOfflineCompiler.uniqueHelper->callBaseLoadDataFromFile = false;
+
+    if (mockOfflineCompiler.cache == nullptr) {
+        mockOfflineCompiler.cache = std::make_unique<CompilerCacheMock>();
+    }
+
+    const char kernelSource[] = R"===(
+    __kernel void simpleKernel() {
+        int gid = get_global_id(0);
+    }
+    )===";
+
+    std::string inputFile = "kernel.cl";
+    mockOfflineCompiler.uniqueHelper->filesMap[inputFile] = kernelSource;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        inputFile,
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-options",
+        "-g"};
+
+    mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
+
+    int retVal = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    mockOfflineCompiler.inputCodeType = IGC::CodeType::oclC;
+    mockOfflineCompiler.sourceCode = kernelSource;
+    mockOfflineCompiler.inputFile = inputFile;
+
+    uint64_t sourceHash = NEO::Hash::hash(kernelSource, strlen(kernelSource));
+    std::string tempFileName = "main_" + std::to_string(sourceHash) + ".cl";
+    std::filesystem::path expectedTempFilePath = std::filesystem::absolute(tempFileName);
+
+    StreamCapture capture;
+    capture.captureStdout();
+
+    mockOfflineCompiler.createTempSourceFileForDebug();
+
+    std::string capturedOutput = capture.getCapturedStdout();
+    EXPECT_NE(capturedOutput.find("Temporary source file for debug info created: " + expectedTempFilePath.string()), std::string::npos);
+
+    auto it = NEO::virtualFileList.find(expectedTempFilePath.string());
+    ASSERT_NE(NEO::virtualFileList.end(), it);
+    EXPECT_EQ(it->second.str(), kernelSource);
+
+    std::string expectedSOption = "-s \"" + expectedTempFilePath.string() + "\"";
+    EXPECT_TRUE(CompilerOptions::contains(mockOfflineCompiler.options, expectedSOption));
 }
 
 } // namespace NEO
