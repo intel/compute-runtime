@@ -1616,6 +1616,48 @@ bool SysmanProductHelperHw<gfxProduct>::isAggregationOfSingleEnginesSupported() 
 }
 
 template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGroupEngineBusynessFromSingleEngines(LinuxSysmanImp *pLinuxSysmanImp, zes_engine_stats_t *pStats, zes_engine_group_t &engineGroup) {
+
+    auto pSysmanDeviceImp = pLinuxSysmanImp->getSysmanDeviceImp();
+    auto pPmuInterface = pLinuxSysmanImp->getPmuInterface();
+    std::vector<int64_t> fdList{};
+    for (auto &engine : pSysmanDeviceImp->pEngineHandleContext->handleList) {
+        zes_engine_properties_t engineProperties = {};
+        engine->engineGetProperties(&engineProperties);
+
+        if (engineGroup == engineProperties.type) {
+            fdList = engine->fdList;
+            break;
+        }
+    }
+
+    if (fdList.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    uint64_t dataCount = fdList.size();
+    std::vector<uint64_t> readData(dataCount + 2, 0);
+
+    auto ret = pPmuInterface->pmuRead(static_cast<int>(fdList[0]), readData.data(), sizeof(uint64_t) * (dataCount + 2));
+    if (ret < 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    uint64_t activeTime = 0u;
+    uint64_t timeStamp = 0u;
+
+    for (uint32_t i = 0u; i < dataCount; i++) {
+        i % 2 ? timeStamp += (readData[2 + i] ? readData[2 + i] : SysmanDevice::getSysmanTimestamp()) : activeTime += readData[2 + i];
+    }
+
+    uint64_t engineCount = fdList.size() / 2;
+    pStats->activeTime = activeTime / engineCount;
+    pStats->timestamp = timeStamp / engineCount;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subdeviceId) {
 
     const std::unordered_map<zes_power_domain_t, std::vector<std::string>> powerDomainToKeyMap = {

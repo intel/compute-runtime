@@ -12,16 +12,11 @@
 
 #include <map>
 #include <mutex>
-#include <set>
 #include <vector>
 
 namespace L0 {
 namespace Sysman {
-
-typedef std::pair<uint32_t, uint32_t> EngineInstanceAndTileId;
-typedef std::set<EngineInstanceAndTileId> SetOfEngineInstanceAndTileId;
-typedef std::map<zes_engine_group_t, SetOfEngineInstanceAndTileId> MapOfEngineInfo;
-
+using EngineInstanceSubDeviceId = std::pair<uint32_t, uint32_t>;
 struct OsSysman;
 
 class Engine : _zes_engine_handle_t {
@@ -36,6 +31,8 @@ class Engine : _zes_engine_handle_t {
     }
     inline zes_engine_handle_t toHandle() { return this; }
     bool initSuccess = false;
+    std::pair<uint64_t, uint64_t> configPair{};
+    std::vector<int64_t> fdList{};
 };
 
 struct EngineHandleContext {
@@ -53,7 +50,7 @@ struct EngineHandleContext {
     }
 
   private:
-    void createHandle(MapOfEngineInfo &mapEngineInfo, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubdevice);
+    void createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubdevice);
     std::once_flag initEngineOnce;
     bool engineInitDone = false;
     ze_result_t deviceEngineInitStatus = ZE_RESULT_SUCCESS;

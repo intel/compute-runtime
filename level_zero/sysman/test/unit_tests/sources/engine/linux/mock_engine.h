@@ -67,7 +67,7 @@ struct MockEngineNeoDrm : public Drm {
 
         StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{i915engineInfo};
 
-        this->engineInfo.reset(new NEO::EngineInfo(this, engineInfosPerTile));
+        this->engineInfo.reset(new EngineInfo(this, engineInfosPerTile));
         return true;
     }
 };

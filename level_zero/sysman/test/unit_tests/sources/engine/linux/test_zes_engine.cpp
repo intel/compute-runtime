@@ -134,13 +134,13 @@ TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleWhenCallingZesEngineGetActivi
 }
 
 TEST_F(ZesEngineFixtureI915, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
-    MapOfEngineInfo mapEngineInfo = {};
+    std::set<std::pair<zes_engine_group_t, L0::Sysman::EngineInstanceSubDeviceId>> engineGroupInstance;
 
     auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
     auto *pDrm = osInterface->getDriverModel()->as<MockEngineNeoDrm>();
     pDrm->mockSysmanQueryEngineInfoReturnFalse = false;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(mapEngineInfo, pOsSysman));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman));
 }
 
 TEST_F(ZesEngineFixtureI915, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {

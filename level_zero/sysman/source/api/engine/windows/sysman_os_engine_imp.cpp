@@ -94,15 +94,16 @@ WddmEngineImp::WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType,
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
-std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, MapOfEngineInfo &mapEngineInfo, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubDevice) {
+std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubDevice) {
     std::unique_ptr<WddmEngineImp> pWddmEngineImp = std::make_unique<WddmEngineImp>(pOsSysman, engineType, engineInstance, tileId);
     return pWddmEngineImp;
 }
 
-ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInfo, OsSysman *pOsSysman) {
-
+ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> &engineGroupInstance, OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
+
+    engineGroupInstance.clear();
 
     // create multiple requests for all the possible engine groups
     std::vector<KmdSysman::RequestProperty> vRequests{};
@@ -130,19 +131,25 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInf
 
     uint32_t index = 0;
     for (auto &engineGroup : engineGroupToDomainTypeMap) {
-        SetOfEngineInstanceAndTileId engineInstancesAndTileIds = {};
         if (vResponses[index].dataSize > 0) {
             uint32_t instanceCount = 0;
             memcpy_s(&instanceCount, sizeof(uint32_t), vResponses[index].dataBuffer, sizeof(uint32_t));
             for (uint32_t instance = 0; instance < instanceCount; instance++) {
-                engineInstancesAndTileIds.insert({instance, 0});
+                engineGroupInstance.insert({engineGroup.first, {instance, 0}});
             }
         }
-        mapEngineInfo[engineGroup.first] = engineInstancesAndTileIds;
         index++;
     }
 
     return status;
+}
+
+void OsEngine::initGroupEngineHandleGroupFd(OsSysman *pOsSysman) {
+    return;
+}
+
+void OsEngine::closeFdsForGroupEngineHandles(OsSysman *pOsSysman) {
+    return;
 }
 
 } // namespace Sysman

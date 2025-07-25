@@ -258,9 +258,11 @@ TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleWhenCallingZesEngineGetActi
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
-    MapOfEngineInfo mapEngineInfo = {};
+    std::set<std::pair<zes_engine_group_t, std::pair<uint32_t, uint32_t>>> engineGroupInstance;
+
     pDrm->mockReadSysmanQueryEngineInfo = true;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(mapEngineInfo, pOsSysman));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman));
 }
 
 TEST_F(ZesEngineFixturePrelim, GivenHandleQueryItemCalledWithInvalidEngineTypeThenzesDeviceEnumEngineGroupsSucceeds) {

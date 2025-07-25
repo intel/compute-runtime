@@ -6,7 +6,6 @@
 
 set(L0_TESTS_SYSMAN_ENGINE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_engine_xe.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_engine_xe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_engine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_engine.h

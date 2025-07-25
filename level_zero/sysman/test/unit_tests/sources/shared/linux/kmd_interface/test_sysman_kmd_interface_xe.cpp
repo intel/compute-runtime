@@ -10,7 +10,6 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
-#include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_pmu_interface.h"
@@ -24,19 +23,6 @@ namespace Sysman {
 namespace ult {
 
 using namespace NEO;
-
-static const MapOfEngineInfo mockMapEngineInfo = {
-    {ZES_ENGINE_GROUP_ALL, {{0, 0}}},
-    {ZES_ENGINE_GROUP_COMPUTE_ALL, {{0, 0}}},
-    {ZES_ENGINE_GROUP_MEDIA_ALL, {{0, 0}}},
-    {ZES_ENGINE_GROUP_COPY_ALL, {{0, 0}}},
-    {ZES_ENGINE_GROUP_RENDER_ALL, {{0, 0}}},
-    {ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, {{1, 0}}},
-    {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, {{1, 0}}},
-    {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, {{0, 0}}},
-    {ZES_ENGINE_GROUP_RENDER_SINGLE, {{1, 0}}},
-    {ZES_ENGINE_GROUP_COPY_SINGLE, {{0, 0}}},
-    {ZES_ENGINE_GROUP_COMPUTE_SINGLE, {{1, 0}}}};
 
 static const uint32_t mockReadVal = 23;
 
@@ -253,136 +239,80 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGetEnergyCounterNodeFil
     EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFile(ZES_POWER_DOMAIN_UNKNOWN));
 }
 
-TEST_F(SysmanFixtureDeviceXe, GivenInvalidConfigFromEventFileForEngineActiveTicksWhenCallingGetPmuConfigsForSingleEnginesThenErrorIsReturned) {
+TEST_F(SysmanFixtureDeviceXe, Given3DSingleEngineTypeAndSysmanKmdInterfaceWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
-    pPmuInterface->mockEventConfigReturnValue.push_back(-1);
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForSingleEngines(sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_3D_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanFixtureDeviceXe, GivenInvalidConfigFromEventFileForEngineActiveTicksWhenCallingGetPmuConfigsForGroupEnginesThenErrorIsReturned) {
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndGettingConfigFromEventFileFailsForEngineActiveTicksWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
+
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockEventConfigReturnValue.push_back(-1);
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0};
-    const MapOfEngineInfo mapEngineInfo = {
-        {ZES_ENGINE_GROUP_ALL, {{0, 0}}},
-        {ZES_ENGINE_GROUP_MEDIA_ALL, {{0, 0}}},
-        {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, {{0, 0}}}};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanFixtureDeviceXe, GivenInvalidConfigFromEventFileForEngineTotalTicksWhenCallingGetPmuConfigsForGroupEnginesThenErrorIsReturned) {
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndGettingConfigFromEventFileFailsForEngineTotalTicksWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
+
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockEventConfigReturnValue.push_back(0);
     pPmuInterface->mockEventConfigReturnValue.push_back(-1);
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mockMapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanFixtureDeviceXe, GivenInvalidConfigAfterFormatForEngineActiveTicksWhenCallingGetPmuConfigsForGroupEnginesThenErrorIsReturned) {
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndGettingConfigAfterFormatFailsForEngineActiveTicksWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
+
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockFormatConfigReturnValue.push_back(-1);
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0};
-    const MapOfEngineInfo mapEngineInfo = {
-        {ZES_ENGINE_GROUP_ALL, {{0, 0}}},
-        {ZES_ENGINE_GROUP_MEDIA_ALL, {{0, 0}}},
-        {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, {{0, 0}}}};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanFixtureDeviceXe, GivenMediaGroupEngineAndNoMediaSingleEnginesAvailableWhenCallingGetPmuConfigsForGroupEnginesThenNoPmuConfigsAreReturned) {
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndGettingConfigAfterFormatFailsForEngineTotalTicksWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0};
-    const MapOfEngineInfo mapEngineInfo = {{ZES_ENGINE_GROUP_MEDIA_ALL, {{0, 0}}}};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_SUCCESS);
-    EXPECT_TRUE(pmuConfigs.empty());
-}
 
-TEST_F(SysmanFixtureDeviceXe, GivenComputeGroupEngineAndInvalidConfigAfterFormatForEngineActiveTicksWhenCallingGetPmuConfigsForGroupEnginesThenErrorIsReturned) {
-    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
-    pPmuInterface->mockFormatConfigReturnValue.push_back(-1);
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_COMPUTE_ALL, 0, 0};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mockMapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
-TEST_F(SysmanFixtureDeviceXe, GivenCopyGroupEngineAndInvalidConfigAfterFormatForEngineActiveTicksWhenCallingGetPmuConfigsForGroupEnginesThenErrorIsReturned) {
-    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
-    pPmuInterface->mockFormatConfigReturnValue.push_back(-1);
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_COPY_ALL, 0, 0};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mockMapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
-TEST_F(SysmanFixtureDeviceXe, GivenRenderGroupEngineAndInvalidConfigAfterFormatForEngineActiveTicksWhenCallingGetPmuConfigsForGroupEnginesThenErrorIsReturned) {
-    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
-    pPmuInterface->mockFormatConfigReturnValue.push_back(-1);
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_RENDER_ALL, 0, 0};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mockMapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
-TEST_F(SysmanFixtureDeviceXe, GivenGroupAllEngineAndInvalidConfigAfterFormatForEngineActiveTicksWhenCallingGetPmuConfigsForGroupEnginesThenErrorIsReturned) {
-    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
-    pPmuInterface->mockFormatConfigReturnValue.push_back(-1);
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_ALL, 0, 0};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mockMapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
-TEST_F(SysmanFixtureDeviceXe, GivenInvalidConfigAfterFormatForEngineTotalTicksWhenCallingGetPmuConfigsForSingleEnginesThenErrorIsReturned) {
-    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
     pPmuInterface->mockFormatConfigReturnValue.push_back(0);
     pPmuInterface->mockFormatConfigReturnValue.push_back(-1);
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForSingleEngines(sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanFixtureDeviceXe, GivenMediaGroupEngineWhenCallingGetPmuConfigsForGroupEnginesThenSuccessIsReturned) {
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndPmuInterfaceOpenFailsForBusyTicksHandleWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> mockPmuConfigs = {1, 2, 1, 2, 1, 2};
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
-    EngineGroupInfo engineGroupInfo = {ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mockMapEngineInfo, sysmanDeviceDir, engineGroupInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_SUCCESS);
-    for (uint32_t i = 0; i < pmuConfigs.size(); i++) {
-        EXPECT_EQ(pmuConfigs[i], mockPmuConfigs[i]);
-    }
+
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
+
+    pPmuInterface->mockPerfEventOpenReadFail = true;
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndPmuReadFailsWhenCallingReadBusynessFromGroupFdThenErrorIsReturned) {
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndPmuInterfaceOpenFailsForTotalTicksHandleWhenCallingGetEngineActivityFdListThenErrorIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        oStream << 23;
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    std::vector<int64_t> fdList = {1, 2};
-    zes_engine_stats_t pStats = {};
-    pPmuInterface->mockPmuReadFailureReturnValue = -1;
-    EXPECT_EQ(pSysmanKmdInterface->readBusynessFromGroupFd(pPmuInterface.get(), fdList, &pStats), ZE_RESULT_ERROR_UNKNOWN);
+
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
+
+    pPmuInterface->mockPerfEventOpenReadFail = true;
+    pPmuInterface->mockPerfEventOpenFailAtCount = 3;
+    pPmuInterface->mockPmuFd = 10;
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndGetPmuConfigsFailsWhenCallingGetBusyAndTotalTicksConfigsForVfThenErrorIsReturned) {

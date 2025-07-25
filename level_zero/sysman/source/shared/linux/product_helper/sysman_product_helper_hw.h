@@ -80,6 +80,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Engine
     bool isAggregationOfSingleEnginesSupported() override;
+    ze_result_t getGroupEngineBusynessFromSingleEngines(LinuxSysmanImp *pLinuxSysmanImp, zes_engine_stats_t *pStats, zes_engine_group_t &engineGroup) override;
 
     // Vf Management
     bool isVfMemoryUtilizationSupported() override;

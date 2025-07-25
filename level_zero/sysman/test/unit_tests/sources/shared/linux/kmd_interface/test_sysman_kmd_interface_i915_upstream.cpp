@@ -10,7 +10,6 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
-#include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_pmu_interface.h"
@@ -221,35 +220,57 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCalli
     EXPECT_EQ(validPowerDomainList, outputPowerDomainList);
 }
 
-TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCallingGetPmuConfigsForGroupEnginesThenErrorIsReturned) {
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenGroupEngineTypeAndSysmanKmdInterfaceInstanceWhenGetEngineActivityFdListIsCalledThenErrorIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
 
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
-    EngineGroupInfo engineInfo = {ZES_ENGINE_GROUP_ALL, 0, 0};
-    MapOfEngineInfo mapEngineInfo = {};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForGroupEngines(mapEngineInfo, sysmanDeviceDir, engineInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COPY_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_RENDER_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCallingGetPmuConfigsForSingleEnginesThenSuccessIsReturned) {
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSingleEngineTypeAndSysmanKmdInterfaceInstanceWhenGetEngineActivityFdListIsCalledThenValidFdAndSuccessIsReturned) {
 
-    uint64_t mockPmuConfig = 16384;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    pPmuInterface->mockPmuFd = 10;
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    std::vector<uint64_t> pmuConfigs = {};
-    const std::string sysmanDeviceDir = "/sys/devices/0000:aa:bb:cc";
-    EngineGroupInfo engineInfo = {ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0};
-    EXPECT_EQ(pSysmanKmdInterface->getPmuConfigsForSingleEngines(sysmanDeviceDir, engineInfo, pPmuInterface.get(), pDrm, pmuConfigs), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(pmuConfigs[0], mockPmuConfig);
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(fdList[0].first, pPmuInterface->mockPmuFd);
+    EXPECT_EQ(fdList[0].second, -1);
 }
 
-TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceAndPmuReadFailsWhenCallingReadBusynessFromGroupFdThenErrorIsReturned) {
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceAndPmuFailsDueToTooManyFilesOpenWhenGetEngineActivityFdListIsCalledThenErrorIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    std::vector<int64_t> fdList = {1, 2};
-    zes_engine_stats_t pStats = {};
-    pPmuInterface->mockPmuReadFailureReturnValue = -1;
-    EXPECT_EQ(pSysmanKmdInterface->readBusynessFromGroupFd(pPmuInterface.get(), fdList, &pStats), ZE_RESULT_ERROR_UNKNOWN);
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
+    pPmuInterface->mockErrorNumber = EMFILE;
+    pPmuInterface->mockPerfEventOpenReadFail = true;
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+}
+
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceAndPmuOpenFailsDueToFileTableOverFlowWhenGetEngineActivityFdListIsCalledThenErrorIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    std::pair<uint64_t, uint64_t> configPair = {};
+    pPmuInterface->mockErrorNumber = ENFILE;
+    pPmuInterface->mockPerfEventOpenReadFail = true;
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdListAndConfigPair(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList, configPair), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceAndIsIntegratedDeviceWhenGetEventsIsCalledThenValidEventTypeIsReturned) {

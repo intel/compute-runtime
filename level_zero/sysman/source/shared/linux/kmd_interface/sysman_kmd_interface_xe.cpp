@@ -9,7 +9,6 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/xe/xedrm.h"
 
-#include "level_zero/sysman/source/api/engine/linux/sysman_os_engine_imp.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
@@ -168,143 +167,69 @@ std::string SysmanKmdInterfaceXe::getBurstPowerLimitFile(SysfsName sysfsName, ui
     return getSysfsFilePath(sysfsName, subDeviceId, false);
 }
 
-static ze_result_t getConfigs(PmuInterface *const &pPmuInterface,
-                              const std::string &sysmanDeviceDir,
-                              const SetOfEngineInstanceAndTileId &setEngineInstanceAndTileId,
-                              zes_engine_group_t engineGroup,
-                              const NEO::Drm *pDrm,
-                              std::vector<uint64_t> &configs) {
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto engineClass = engineGroupToEngineClass.find(engineGroup);
-
-    for (auto &engineInstanceAndTileId : setEngineInstanceAndTileId) {
-        auto gtId = pDrm->getIoctlHelper()->getGtIdFromTileId(engineInstanceAndTileId.second, engineClass->second);
-        uint64_t activeTicksConfig = UINT64_MAX;
-        uint64_t totalTicksConfig = UINT64_MAX;
-
-        auto ret = pPmuInterface->getPmuConfigs(sysmanDeviceDir, engineClass->second, engineInstanceAndTileId.first, gtId, activeTicksConfig, totalTicksConfig);
-        if (ret < 0) {
-            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs and returning error:0x%x\n", __FUNCTION__, result);
-            return result;
-        }
-
-        configs.push_back(activeTicksConfig);
-        configs.push_back(totalTicksConfig);
-    }
-
-    return result;
-}
-
-ze_result_t SysmanKmdInterfaceXe::getPmuConfigsForGroupEngines(const MapOfEngineInfo &mapEngineInfo,
-                                                               const std::string &sysmanDeviceDir,
-                                                               const EngineGroupInfo &engineInfo,
-                                                               PmuInterface *const &pPmuInterface,
-                                                               const NEO::Drm *pDrm,
-                                                               std::vector<uint64_t> &pmuConfigs) {
-
-    const std::vector<zes_engine_group_t> singleMediaEngines = {
-        ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE,
-        ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE,
-        ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE};
+ze_result_t SysmanKmdInterfaceXe::getEngineActivityFdListAndConfigPair(zes_engine_group_t engineGroup,
+                                                                       uint32_t engineInstance,
+                                                                       uint32_t gtId,
+                                                                       PmuInterface *const &pPmuInterface,
+                                                                       std::vector<std::pair<int64_t, int64_t>> &fdList,
+                                                                       std::pair<uint64_t, uint64_t> &configPair) {
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    auto getConfigForEngine{
-        [&](zes_engine_group_t engineGroup) {
-            auto itrEngineInfo = mapEngineInfo.find(engineGroup);
-            if (itrEngineInfo != mapEngineInfo.end()) {
-                result = getConfigs(pPmuInterface, sysmanDeviceDir, itrEngineInfo->second, engineGroup, pDrm, pmuConfigs);
-            }
-            return result;
-        }};
-
-    switch (engineInfo.engineGroup) {
-    case ZES_ENGINE_GROUP_MEDIA_ALL:
-        for (auto &mediaEngineGroup : singleMediaEngines) {
-            result = getConfigForEngine(mediaEngineGroup);
-            if (result != ZE_RESULT_SUCCESS) {
-                return result;
-            }
-        }
-        break;
-
-    case ZES_ENGINE_GROUP_COMPUTE_ALL:
-        result = getConfigForEngine(ZES_ENGINE_GROUP_COMPUTE_SINGLE);
-        if (result != ZE_RESULT_SUCCESS) {
-            return result;
-        }
-        break;
-
-    case ZES_ENGINE_GROUP_COPY_ALL:
-        result = getConfigForEngine(ZES_ENGINE_GROUP_COPY_SINGLE);
-        if (result != ZE_RESULT_SUCCESS) {
-            return result;
-        }
-        break;
-
-    case ZES_ENGINE_GROUP_RENDER_ALL:
-        result = getConfigForEngine(ZES_ENGINE_GROUP_RENDER_SINGLE);
-        if (result != ZE_RESULT_SUCCESS) {
-            return result;
-        }
-        break;
-
-    default:
-        for (auto &itrMapEngineInfo : mapEngineInfo) {
-            if (!isGroupEngineHandle(itrMapEngineInfo.first)) {
-                result = getConfigForEngine(itrMapEngineInfo.first);
-                if (result != ZE_RESULT_SUCCESS) {
-                    return result;
-                }
-            }
-        }
-    }
-    return result;
-}
-
-ze_result_t SysmanKmdInterfaceXe::getPmuConfigsForSingleEngines(const std::string &sysmanDeviceDir,
-                                                                const EngineGroupInfo &engineInfo,
-                                                                PmuInterface *const &pPmuInterface,
-                                                                const NEO::Drm *pDrm,
-                                                                std::vector<uint64_t> &pmuConfigs) {
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    SetOfEngineInstanceAndTileId setEngineInstanceAndTileId = {{engineInfo.engineInstance, engineInfo.tileId}};
-
-    result = getConfigs(pPmuInterface, sysmanDeviceDir, setEngineInstanceAndTileId, engineInfo.engineGroup, pDrm, pmuConfigs);
-    if (result != ZE_RESULT_SUCCESS) {
+    if (isGroupEngineHandle(engineGroup)) {
         return result;
     }
 
+    auto engineClass = engineGroupToEngineClass.find(engineGroup);
+    if (engineClass == engineGroupToEngineClass.end()) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Engine Group not supported and returning error:0x%x\n", __FUNCTION__, result);
+        return result;
+    }
+
+    const std::string sysmanDeviceDir = std::string(sysDevicesDir) + getSysmanDeviceDirName();
+    uint64_t activeTicksConfig = UINT64_MAX;
+    uint64_t totalTicksConfig = UINT64_MAX;
+
+    auto ret = pPmuInterface->getPmuConfigs(sysmanDeviceDir, engineClass->second, engineInstance, gtId, activeTicksConfig, totalTicksConfig);
+    if (ret < 0) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get configs and returning error:0x%x\n", __FUNCTION__, result);
+        return result;
+    }
+
+    configPair = std::make_pair(activeTicksConfig, totalTicksConfig);
+
+    int64_t fd[2];
+    fd[0] = pPmuInterface->pmuInterfaceOpen(configPair.first, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    if (fd[0] < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
+        return checkErrorNumberAndReturnStatus();
+    }
+
+    fd[1] = pPmuInterface->pmuInterfaceOpen(configPair.second, static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    if (fd[1] < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
+        NEO::SysCalls::close(static_cast<int>(fd[0]));
+        return checkErrorNumberAndReturnStatus();
+    }
+
+    fdList.push_back(std::make_pair(fd[0], fd[1]));
+
     return result;
 }
 
-ze_result_t SysmanKmdInterfaceXe::readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::vector<int64_t> &fdList, zes_engine_stats_t *pStats) {
+ze_result_t SysmanKmdInterfaceXe::readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) {
+    uint64_t data[4] = {};
 
-    uint64_t dataCount = fdList.size();
-    uint32_t dataOffset = 2;
-    uint32_t configTypes = 2;
-    std::vector<uint64_t> readData(dataCount + dataOffset, 0);
-
-    auto ret = pPmuInterface->pmuRead(static_cast<int>(fdList[0]), readData.data(), sizeof(uint64_t) * (dataCount + dataOffset));
+    auto ret = pPmuInterface->pmuRead(static_cast<int>(fdPair.first), data, sizeof(data));
     if (ret < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNKNOWN);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    uint64_t activeTime = 0u;
-    uint64_t timeStamp = 0u;
-
-    for (uint32_t i = 0u; i < dataCount; i++) {
-        i % configTypes ? timeStamp += (readData[dataOffset + i] ? readData[dataOffset + i] : SysmanDevice::getSysmanTimestamp()) : activeTime += readData[dataOffset + i];
-    }
-
-    uint64_t engineCount = fdList.size() / configTypes;
-    pStats->activeTime = activeTime / engineCount;
-    pStats->timestamp = timeStamp / engineCount;
-
+    pStats->activeTime = data[2];
+    pStats->timestamp = data[3] ? data[3] : SysmanDevice::getSysmanTimestamp();
     return ZE_RESULT_SUCCESS;
 }
 

@@ -136,9 +136,24 @@ HWTEST2_F(SysmanProductHelperEngineTestsFixture, GivenHandleQueryItemCalledAndPm
     EXPECT_EQ(count, mockHandleCount);
 }
 
+HWTEST2_F(SysmanProductHelperEngineTestsFixture, GivenValidEngineHandleWith3DSingleGroupEngineWhenCallingEngineGetActivityThenErrorIsReturned, IsPVC) {
+    zes_engine_group_t engineType = ZES_ENGINE_GROUP_3D_SINGLE;
+    zes_engine_stats_t stats = {};
+
+    auto pLinuxEngineImp = std::make_unique<L0::Sysman::LinuxEngineImp>(pOsSysman, engineType, 0, 0, 0);
+    EXPECT_EQ(pLinuxEngineImp->getActivity(&stats), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
 HWTEST2_F(SysmanProductHelperEngineTestsFixture, GivenSysmanProductHelperHandleWhenCheckingIsAggregationOfSingleEnginesSupportedThenFailureIsReturned, IsPVC) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     EXPECT_FALSE(pSysmanProductHelper->isAggregationOfSingleEnginesSupported());
+}
+
+HWTEST2_F(SysmanProductHelperEngineTestsFixture, GivenSysmanProductHelperHandleWhenCallingGetGroupEngineBusynessFromSingleEnginesThenErrorIsReturned, IsPVC) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_engine_group_t engineType = ZES_ENGINE_GROUP_3D_SINGLE;
+    zes_engine_stats_t stats = {};
+    EXPECT_EQ(pSysmanProductHelper->getGroupEngineBusynessFromSingleEngines(pLinuxSysmanImp, &stats, engineType), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 } // namespace ult

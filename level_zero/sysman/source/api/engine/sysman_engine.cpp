@@ -24,33 +24,31 @@ EngineHandleContext::~EngineHandleContext() {
     releaseEngines();
 }
 
-void EngineHandleContext::createHandle(MapOfEngineInfo &mapEngineInfo, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubdevice) {
-    std::unique_ptr<Engine> pEngine = std::make_unique<EngineImp>(pOsSysman, mapEngineInfo, engineType, engineInstance, tileId, onSubdevice);
+void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubdevice) {
+    std::unique_ptr<Engine> pEngine = std::make_unique<EngineImp>(pOsSysman, engineType, engineInstance, tileId, onSubdevice);
     if (pEngine->initSuccess == true) {
         handleList.push_back(std::move(pEngine));
     }
 }
 
 void EngineHandleContext::init(uint32_t subDeviceCount) {
-
-    MapOfEngineInfo mapEngineInfo = {};
-    deviceEngineInitStatus = OsEngine::getNumEngineTypeAndInstances(mapEngineInfo, pOsSysman);
+    std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> engineGroupInstance = {}; // set contains pair of engine group and struct containing engine instance and gtId
+    deviceEngineInitStatus = OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman);
 
     if (deviceEngineInitStatus != ZE_RESULT_SUCCESS) {
         return;
     }
 
-    for (auto &engineInfo : mapEngineInfo) {
+    for (auto itr = engineGroupInstance.begin(); itr != engineGroupInstance.end(); ++itr) {
         const auto isSubDevice = subDeviceCount > 0;
-        auto engineGroup = engineInfo.first;
-        auto setEngineInstanceAndTileId = engineInfo.second;
-        for (auto &engineInstanceAndTileId : setEngineInstanceAndTileId) {
-            createHandle(mapEngineInfo, engineGroup, engineInstanceAndTileId.first, engineInstanceAndTileId.second, isSubDevice);
-        }
+        createHandle(itr->first, itr->second.first, itr->second.second, isSubDevice);
     }
+
+    OsEngine::initGroupEngineHandleGroupFd(pOsSysman);
 }
 
 void EngineHandleContext::releaseEngines() {
+    OsEngine::closeFdsForGroupEngineHandles(pOsSysman);
     handleList.clear();
 }
 

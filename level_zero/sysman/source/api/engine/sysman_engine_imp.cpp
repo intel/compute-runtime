@@ -26,12 +26,13 @@ ze_result_t EngineImp::engineGetProperties(zes_engine_properties_t *pProperties)
 void EngineImp::init() {
     if (pOsEngine->isEngineModuleSupported()) {
         pOsEngine->getProperties(engineProperties);
+        pOsEngine->getConfigPair(this->configPair);
         this->initSuccess = true;
     }
 }
 
-EngineImp::EngineImp(OsSysman *pOsSysman, MapOfEngineInfo &mapEngineInfo, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubdevice) {
-    pOsEngine = OsEngine::create(pOsSysman, mapEngineInfo, engineType, engineInstance, tileId, onSubdevice);
+EngineImp::EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t tileId, ze_bool_t onSubdevice) {
+    pOsEngine = OsEngine::create(pOsSysman, engineType, engineInstance, tileId, onSubdevice);
     init();
 }
 
