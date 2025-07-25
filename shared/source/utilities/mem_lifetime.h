@@ -80,6 +80,10 @@ struct Ext : Impl::UniquePtrWrapperOps<Ext<T>> {
         return *this;
     }
 
+    ~Ext() = default;
+    Ext(Ext &&rhs) noexcept = default;
+    Ext &operator=(Ext &&rhs) noexcept = default;
+
     ExtUniquePtrT<T> ptr{nullptr, destroyExt};
 };
 
@@ -105,6 +109,10 @@ struct Clonable : Impl::UniquePtrWrapperOps<Clonable<Ext<T>>> {
         this->ptr = std::make_unique<T>(*rhs.ptr);
         return *this;
     }
+
+    ~Clonable() = default;
+    Clonable(Clonable &&rhs) noexcept = default;
+    Clonable &operator=(Clonable &&rhs) noexcept = default;
 
     std::unique_ptr<T> ptr;
 };
