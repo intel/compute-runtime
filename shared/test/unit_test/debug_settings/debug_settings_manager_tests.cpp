@@ -61,9 +61,8 @@ TEST(DebugSettingsManager, WhenDebugManagerIsDisabledThenDebugFunctionalityIsNot
     }
 #define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) \
     DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
-#include "shared/source/debug_settings/release_variables.inl"
-
 #include "debug_variables.inl"
+#include "release_variables.inl"
 #undef DECLARE_DEBUG_SCOPED_V
 #undef DECLARE_DEBUG_VARIABLE
 }
