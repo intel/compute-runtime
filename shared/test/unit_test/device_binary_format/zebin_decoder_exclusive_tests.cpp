@@ -17,5 +17,4 @@ TEST(ExtBaseKernelDescriptorAndPayloadArgumentPointers, givenKernelDescriptorAnd
 
     EXPECT_EQ(nullptr, kd.kernelDescriptorExt);
     EXPECT_EQ(nullptr, arg.pPayArgExt);
-    EXPECT_EQ(nullptr, NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::allocatePayloadArgumentExt());
 }

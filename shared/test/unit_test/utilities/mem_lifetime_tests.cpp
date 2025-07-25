@@ -22,7 +22,7 @@ struct TestStruct {
 };
 
 template <>
-void cloneExt(ExtUniquePtrT<TestStruct> &dst, const TestStruct *src) {
+void cloneExt(ExtUniquePtrT<TestStruct> &dst, const TestStruct &src) {
     dst.reset(new TestStruct{true});
 }
 
@@ -89,4 +89,92 @@ TEST(Clonable, GivenTypeThenProvidesClonableUniquePtr) {
     auto &re = e;
     e = re;
     EXPECT_EQ(nullptr, e.ptr.get());
+}
+
+struct PtrOpsMock {
+    auto operator*() const noexcept {
+        opCalled |= deref;
+        return *this;
+    }
+
+    auto operator->() const noexcept {
+        opCalled |= arrow;
+        return this;
+    }
+
+    explicit operator bool() const noexcept {
+        opCalled |= boolCast;
+        return true;
+    }
+
+    enum OpCalled : uint32_t {
+        deref = 1 << 0,
+        arrow = 1 << 1,
+        boolCast = 1 << 2,
+        compareAsLhs = 1 << 3,
+        compareAsRhs = 1 << 4,
+        compare = 1 << 5,
+    };
+
+    mutable uint32_t opCalled = 0;
+};
+
+static bool operator==(const PtrOpsMock &lhs, const void *) {
+    lhs.opCalled |= PtrOpsMock::compareAsLhs;
+    return true;
+}
+
+static bool operator==(const void *, const PtrOpsMock &rhs) {
+    rhs.opCalled |= PtrOpsMock::compareAsRhs;
+    return true;
+}
+
+static bool operator==(const PtrOpsMock &lhs, const PtrOpsMock &rhs) {
+    lhs.opCalled |= PtrOpsMock::compare;
+    rhs.opCalled |= PtrOpsMock::compare;
+    return true;
+}
+
+TEST(Clonable, WhenUsingUniquePtrWrapperOpsThenForwardsToParentsPtr) {
+    struct Parent : Impl::UniquePtrWrapperOps<Parent> {
+        PtrOpsMock ptr;
+    };
+
+    {
+        Parent parent;
+        [[maybe_unused]] auto res = *parent;
+        EXPECT_EQ(PtrOpsMock::deref, parent.ptr.opCalled);
+    }
+
+    {
+        Parent parent;
+        [[maybe_unused]] auto res = parent->opCalled;
+        EXPECT_EQ(PtrOpsMock::arrow, parent.ptr.opCalled);
+    }
+
+    {
+        Parent parent;
+        [[maybe_unused]] auto res = static_cast<bool>(parent);
+        EXPECT_EQ(PtrOpsMock::boolCast, parent.ptr.opCalled);
+    }
+
+    {
+        Parent parent;
+        [[maybe_unused]] auto res = parent == nullptr;
+        EXPECT_EQ(PtrOpsMock::compareAsLhs, parent.ptr.opCalled);
+    }
+
+    {
+        Parent parent;
+        [[maybe_unused]] auto res = nullptr == parent;
+        EXPECT_EQ(PtrOpsMock::compareAsRhs, parent.ptr.opCalled);
+    }
+
+    {
+        Parent parentA;
+        Parent parentB;
+        [[maybe_unused]] auto res = parentA == parentB;
+        EXPECT_EQ(PtrOpsMock::compare, parentA.ptr.opCalled);
+        EXPECT_EQ(PtrOpsMock::compare, parentB.ptr.opCalled);
+    }
 }

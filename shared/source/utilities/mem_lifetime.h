@@ -13,24 +13,63 @@ template <typename T>
 using ExtUniquePtrT = std::unique_ptr<T, void (*)(T *)>;
 
 template <typename T>
-void cloneExt(ExtUniquePtrT<T> &dst, const T *src);
+void cloneExt(ExtUniquePtrT<T> &dst, const T &src);
 
 template <typename T>
 void destroyExt(T *dst);
 
+namespace Impl {
+
+template <typename ParentT>
+struct UniquePtrWrapperOps {
+    auto operator*() const noexcept(noexcept(std::declval<decltype(ParentT::ptr)>().operator*())) {
+        return *static_cast<const ParentT *>(this)->ptr;
+    }
+
+    auto operator->() const noexcept {
+        return static_cast<const ParentT *>(this)->ptr.operator->();
+    }
+
+    explicit operator bool() const noexcept {
+        return static_cast<bool>(static_cast<const ParentT *>(this)->ptr);
+    }
+
+    template <typename Rhs>
+    friend bool operator==(const ParentT &lhs, const Rhs &rhs) {
+        return lhs.ptr == rhs;
+    }
+
+    template <typename Lhs>
+    friend bool operator==(const Lhs &lhs, const ParentT &rhs) {
+        return lhs == rhs.ptr;
+    }
+
+    friend bool operator==(const ParentT &lhs, const ParentT &rhs) {
+        return lhs.ptr == rhs.ptr;
+    }
+};
+
+} // namespace Impl
+
 template <typename T>
-struct Ext {
+struct Ext : Impl::UniquePtrWrapperOps<Ext<T>> {
     Ext(T *ptr) : ptr(ptr, destroyExt) {}
     Ext() = default;
     Ext(const Ext &rhs) {
-        cloneExt(this->ptr, rhs.ptr.get());
+        if (rhs.ptr.get()) {
+            cloneExt(this->ptr, *rhs.ptr.get());
+        }
     }
 
     Ext &operator=(const Ext &rhs) {
         if (this == &rhs) {
             return *this;
         }
-        cloneExt(this->ptr, rhs.ptr.get());
+        if (rhs.ptr.get()) {
+            cloneExt(this->ptr, *rhs.ptr.get());
+        } else {
+            ptr.reset();
+        }
         return *this;
     }
 
@@ -38,7 +77,7 @@ struct Ext {
 };
 
 template <typename T>
-struct Clonable {
+struct Clonable : Impl::UniquePtrWrapperOps<Clonable<Ext<T>>> {
     Clonable(T *ptr) : ptr(ptr) {}
     Clonable() = default;
     Clonable(const Clonable &rhs) {

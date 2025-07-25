@@ -10,6 +10,7 @@
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/const_stringref.h"
+#include "shared/source/utilities/mem_lifetime.h"
 
 #include <array>
 #include <cstring>
@@ -664,43 +665,9 @@ inline constexpr OffsetT offset = -1;
 inline constexpr BtiValueT btiValue = -1;
 } // namespace Defaults
 
-struct PayloadArgElasticPtrBaseT;
-struct PayloadArgumentBaseT;
 struct PayloadArgumentExtT;
-PayloadArgumentExtT *allocatePayloadArgumentExt();
-void freePayloadArgumentExt(PayloadArgumentExtT *);
-void copyPayloadArgumentExt(PayloadArgumentExtT *&, const PayloadArgElasticPtrBaseT &);
 
-struct PayloadArgElasticPtrBaseT {
-    PayloadArgElasticPtrBaseT() {
-        pPayArgExt = allocatePayloadArgumentExt();
-    }
-    ~PayloadArgElasticPtrBaseT() {
-        freePayloadArgumentExt(pPayArgExt);
-    }
-    PayloadArgElasticPtrBaseT(const PayloadArgElasticPtrBaseT &src) {
-        copyPayloadArgumentExt(pPayArgExt, src);
-    }
-    PayloadArgElasticPtrBaseT &operator=(const PayloadArgElasticPtrBaseT &rhs) {
-        if (this != &rhs) {
-            copyPayloadArgumentExt(pPayArgExt, rhs);
-        }
-        return *this;
-    }
-    PayloadArgElasticPtrBaseT(PayloadArgElasticPtrBaseT &&src) noexcept : pPayArgExt(src.pPayArgExt) {
-        src.pPayArgExt = nullptr;
-    }
-    PayloadArgElasticPtrBaseT &operator=(PayloadArgElasticPtrBaseT &&rhs) noexcept {
-        if (this != &rhs) {
-            this->pPayArgExt = rhs.pPayArgExt;
-            rhs.pPayArgExt = nullptr;
-        }
-        return *this;
-    }
-    PayloadArgumentExtT *pPayArgExt = nullptr;
-};
-
-struct PayloadArgumentBaseT : PayloadArgElasticPtrBaseT {
+struct PayloadArgumentBaseT {
     ArgTypeT argType = argTypeUnknown;
     OffsetT offset = Defaults::offset;
     SourceOffseT sourceOffset = Defaults::sourceOffset;
@@ -717,6 +684,7 @@ struct PayloadArgumentBaseT : PayloadArgElasticPtrBaseT {
     bool imageTransformable = false;
     bool isPipe = false;
     bool isPtr = false;
+    Ext<PayloadArgumentExtT> pPayArgExt;
 };
 
 } // namespace PayloadArgument

@@ -2394,11 +2394,7 @@ TEST(BaseKernelDescriptorAndPayloadArgumentPoinetrsExt, givenKernelDescriptorAnd
     NEO::KernelDescriptor kd;
     NEO::Zebin::ZeInfo::KernelPayloadArgBaseT arg;
 
-    if (nullptr != kd.kernelDescriptorExt) {
-        EXPECT_NE(nullptr, arg.pPayArgExt);
-    } else {
-        EXPECT_EQ(nullptr, arg.pPayArgExt);
-    }
+    EXPECT_EQ(nullptr, arg.pPayArgExt);
 }
 
 TEST(PopulateKernelSourceAttributes, GivenInvalidKernelAttributeWhenPopulatingKernelSourceAttributesThenKernelIsInvalidFlagIsSet) {

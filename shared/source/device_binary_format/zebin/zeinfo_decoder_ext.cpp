@@ -32,18 +32,16 @@ void freeExecEnvExt(ExecutionEnvExt *envExt) {
 void populateKernelExecutionEnvironmentExt(KernelDescriptor &dst, const KernelExecutionEnvBaseT &execEnv, const Types::Version &srcZeInfoVersion) {
 }
 
-namespace Types::Kernel::PayloadArgument {
-PayloadArgumentExtT *allocatePayloadArgumentExt() {
-    return nullptr;
-}
-void freePayloadArgumentExt(PayloadArgumentExtT *pPayArgExt) {
-}
-void copyPayloadArgumentExt(PayloadArgumentExtT *&pPayArgExtOut, const PayloadArgElasticPtrBaseT &src) {
-}
-} // namespace Types::Kernel::PayloadArgument
-
 DecodeError populateKernelPayloadArgumentExt(NEO::KernelDescriptor &dst, const KernelPayloadArgBaseT &src, std::string &outErrReason) {
     return DecodeError::unhandledBinary;
 }
 
 } // namespace NEO::Zebin::ZeInfo
+
+template <>
+void cloneExt(ExtUniquePtrT<NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::PayloadArgumentExtT> &dst, const NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::PayloadArgumentExtT &src) {
+}
+
+template <>
+void destroyExt(NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::PayloadArgumentExtT *dst) {
+}
