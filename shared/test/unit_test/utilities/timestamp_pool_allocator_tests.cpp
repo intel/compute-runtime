@@ -106,33 +106,58 @@ TEST_F(TimestampPoolAllocatorTest, givenTimestampPoolAllocatorWhenRequestExceeds
 }
 
 TEST_F(TimestampPoolAllocatorTest, whenCheckingIsEnabledWithDifferentSettingsThenReturnsExpectedValue) {
+    DebugManagerStateRestore restorer;
+
     auto mockProductHelper = new MockProductHelper;
     pDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
     auto &timestampAllocator = pDevice->getDeviceTimestampPoolAllocator();
 
+    constexpr int32_t csrHwMode = static_cast<int32_t>(CommandStreamReceiverType::hardware);
+    constexpr int32_t csrNonHwMode = static_cast<int32_t>(CommandStreamReceiverType::tbx);
+    auto setHwMode = [&](bool hwMode) {
+        debugManager.flags.SetCommandStreamReceiver.set(hwMode ? csrHwMode : csrNonHwMode);
+    };
+
     {
         debugManager.flags.EnableTimestampPoolAllocator.set(0);
         mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-
-        EXPECT_FALSE(timestampAllocator.isEnabled());
-    }
-    {
-        debugManager.flags.EnableTimestampPoolAllocator.set(-1);
-        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+        setHwMode(true);
 
         EXPECT_FALSE(timestampAllocator.isEnabled());
     }
     {
         debugManager.flags.EnableTimestampPoolAllocator.set(1);
         mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+        setHwMode(false);
 
         EXPECT_TRUE(timestampAllocator.isEnabled());
     }
+
+    debugManager.flags.EnableTimestampPoolAllocator.set(-1);
+
     {
-        debugManager.flags.EnableTimestampPoolAllocator.set(-1);
-        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+        setHwMode(false);
 
         EXPECT_FALSE(timestampAllocator.isEnabled());
+    }
+    {
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+        setHwMode(true);
+
+        EXPECT_FALSE(timestampAllocator.isEnabled());
+    }
+    {
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+        setHwMode(false);
+
+        EXPECT_FALSE(timestampAllocator.isEnabled());
+    }
+    {
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+        setHwMode(true);
+
+        EXPECT_TRUE(timestampAllocator.isEnabled());
     }
 }
 

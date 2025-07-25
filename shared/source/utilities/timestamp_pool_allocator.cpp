@@ -11,6 +11,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 
 namespace NEO {
@@ -62,7 +63,7 @@ bool TimestampPoolAllocator::isEnabled() const {
         return NEO::debugManager.flags.EnableTimestampPoolAllocator.get();
     }
 
-    return false;
+    return NEO::DeviceFactory::isHwModeSelected() && device->getProductHelper().is2MBLocalMemAlignmentEnabled();
 }
 
 SharedTimestampAllocation *TimestampPoolAllocator::requestGraphicsAllocationForTimestamp(size_t size) {
