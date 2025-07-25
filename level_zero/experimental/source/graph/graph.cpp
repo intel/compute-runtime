@@ -10,6 +10,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/kernel/kernel_imp.h"
 
 namespace L0 {
 
@@ -217,6 +218,26 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt>::inst
                                                      apiArgs.srcRowPitch,
                                                      apiArgs.srcSlicePitch,
                                                      apiArgs.hSignalEvent, apiArgs.numWaitEvents, const_cast<ze_event_handle_t *>(getOptionalData(indirectArgs.waitEvents)));
+}
+
+Closure<CaptureApi::zeCommandListAppendLaunchKernel>::Closure(const ApiArgs &apiArgs) : apiArgs{apiArgs} {
+    this->apiArgs.launchKernelArgs = nullptr;
+    this->apiArgs.phWaitEvents = nullptr;
+    this->indirectArgs.launchKernelArgs = *apiArgs.launchKernelArgs;
+
+    auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
+    this->indirectArgs.kernelState = kernel->getMutableState();
+
+    this->indirectArgs.waitEvents.reserve(apiArgs.numWaitEvents);
+    for (uint32_t i = 0; i < apiArgs.numWaitEvents; ++i) {
+        this->indirectArgs.waitEvents.push_back(apiArgs.phWaitEvents[i]);
+    }
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernel>::instantiateTo(L0::CommandList &executionTarget) const {
+    auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
+    kernel->getMutableState() = this->indirectArgs.kernelState;
+    return zeCommandListAppendLaunchKernel(&executionTarget, apiArgs.kernelHandle, &indirectArgs.launchKernelArgs, apiArgs.hSignalEvent, apiArgs.numWaitEvents, const_cast<ze_event_handle_t *>(getOptionalData(indirectArgs.waitEvents)));
 }
 
 ExecutableGraph::~ExecutableGraph() = default;

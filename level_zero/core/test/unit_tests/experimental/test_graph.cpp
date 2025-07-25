@@ -468,10 +468,11 @@ TEST(GraphTestApiCapture, GivenCommandListInRecordStateThenCaptureCommandsInstea
     Mock<Context> otherCtx;
     Mock<CommandList> cmdlist;
     Mock<Event> event;
+    Mock<KernelImp> kernel;
     ze_image_handle_t imgA = nullptr;
     ze_image_handle_t imgB = nullptr;
     zes_device_handle_t device = nullptr;
-    zet_kernel_handle_t kernel = nullptr;
+    zet_kernel_handle_t kernelHandle = &kernel;
     ze_external_semaphore_ext_handle_t sem = nullptr;
     ze_event_handle_t eventHandle = &event;
     ze_external_semaphore_signal_params_ext_t semSignalParams = {};
@@ -517,17 +518,17 @@ TEST(GraphTestApiCapture, GivenCommandListInRecordStateThenCaptureCommandsInstea
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWaitExternalSemaphoreExt(&cmdlist, 1, &sem, &semWaitParams, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemoryExt(&cmdlist, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemoryExt(&cmdlist, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
 
     // temporarily unsupported
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchKernel(&cmdlist, kernel, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchCooperativeKernel(&cmdlist, kernel, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchKernelIndirect(&cmdlist, kernel, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchMultipleKernelsIndirect(&cmdlist, 1, &kernel, &kernelCount, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchCooperativeKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchKernelIndirect(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchMultipleKernelsIndirect(&cmdlist, 1, &kernelHandle, &kernelCount, &groupCount, nullptr, 0, nullptr));
 
     ze_graph_handle_t hgraph = &graph;
     EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(&cmdlist, &hgraph, nullptr));
 
-    ASSERT_EQ(21U, graph.getCapturedCommands().size());
+    ASSERT_EQ(22U, graph.getCapturedCommands().size());
     uint32_t i = 0;
     EXPECT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
     EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryCopy, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
@@ -550,6 +551,7 @@ TEST(GraphTestApiCapture, GivenCommandListInRecordStateThenCaptureCommandsInstea
     EXPECT_EQ(CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
     EXPECT_EQ(CaptureApi::zeCommandListAppendImageCopyToMemoryExt, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
     EXPECT_EQ(CaptureApi::zeCommandListAppendImageCopyFromMemoryExt, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendLaunchKernel, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
 }
 
 TEST(GraphForks, GivenUnknownChildCommandlistThenJoinDoesNothing) {
@@ -788,11 +790,13 @@ TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandli
     MockGraphContextReturningSpecificCmdList otherCtx;
     Mock<CommandList> cmdlist;
     Mock<Event> event;
+    Mock<KernelImp> kernel;
     ze_image_handle_t imgA = nullptr;
     ze_image_handle_t imgB = nullptr;
     zes_device_handle_t device = nullptr;
     ze_external_semaphore_ext_handle_t sem = nullptr;
     ze_event_handle_t eventHandle = &event;
+    zet_kernel_handle_t kernelHandle = &kernel;
     ze_external_semaphore_signal_params_ext_t semSignalParams = {};
     ze_external_semaphore_wait_params_ext_t semWaitParams = {};
 
@@ -808,6 +812,7 @@ TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandli
     imgRegion.width = 1;
     imgRegion.height = 1;
     imgRegion.depth = 1;
+    ze_group_count_t groupCount = {1, 1, 1};
 
     L0::Graph srcGraph(&ctx, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &srcGraph, nullptr));
@@ -833,6 +838,7 @@ TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandli
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWaitExternalSemaphoreExt(&cmdlist, 1, &sem, &semWaitParams, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemoryExt(&cmdlist, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemoryExt(&cmdlist, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
 
     ze_graph_handle_t hgraph = &srcGraph;
     EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(&cmdlist, &hgraph, nullptr));
@@ -862,6 +868,7 @@ TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandli
     EXPECT_EQ(0U, graphHwCommands->appendWaitExternalSemaphoresCalled);
     EXPECT_EQ(0U, graphHwCommands->appendImageCopyToMemoryExtCalled);
     EXPECT_EQ(0U, graphHwCommands->appendImageCopyFromMemoryExtCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendLaunchKernelCalled);
     execGraph.instantiateFrom(srcGraph);
     EXPECT_EQ(1U, graphHwCommands->appendBarrierCalled);
     EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyCalled);
@@ -884,6 +891,7 @@ TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandli
     EXPECT_EQ(1U, graphHwCommands->appendWaitExternalSemaphoresCalled);
     EXPECT_EQ(1U, graphHwCommands->appendImageCopyToMemoryExtCalled);
     EXPECT_EQ(1U, graphHwCommands->appendImageCopyFromMemoryExtCalled);
+    EXPECT_EQ(1U, graphHwCommands->appendLaunchKernelCalled);
 }
 
 TEST(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenTakeCareOnlyOfEvents) {

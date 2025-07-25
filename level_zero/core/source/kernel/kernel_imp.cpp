@@ -272,11 +272,14 @@ KernelMutableState &KernelMutableState::operator=(const KernelMutableState &rhs)
         std::memcpy(dynamicStateHeapData.get(), rhs.dynamicStateHeapData.get(), dynamicStateHeapDataSize);
     }
 
-    reservePerThreadDataForWholeThreadGroup(rhs.perThreadDataSizeForWholeThreadGroup);
-    DEBUG_BREAK_IF(perThreadDataSizeForWholeThreadGroupAllocated < perThreadDataSizeForWholeThreadGroup);
-    std::memcpy(perThreadDataForWholeThreadGroup, rhs.perThreadDataForWholeThreadGroup, perThreadDataSizeForWholeThreadGroup);
-    const size_t tailSize = perThreadDataSizeForWholeThreadGroupAllocated - perThreadDataSizeForWholeThreadGroup;
-    std::memset(perThreadDataForWholeThreadGroup + perThreadDataSizeForWholeThreadGroup, 0x0, tailSize);
+    if (rhs.perThreadDataSizeForWholeThreadGroup) {
+        reservePerThreadDataForWholeThreadGroup(rhs.perThreadDataSizeForWholeThreadGroup);
+        DEBUG_BREAK_IF(perThreadDataSizeForWholeThreadGroupAllocated < perThreadDataSizeForWholeThreadGroup);
+        DEBUG_BREAK_IF(nullptr == rhs.perThreadDataForWholeThreadGroup);
+        std::memcpy(perThreadDataForWholeThreadGroup, rhs.perThreadDataForWholeThreadGroup, perThreadDataSizeForWholeThreadGroup);
+        const size_t tailSize = perThreadDataSizeForWholeThreadGroupAllocated - perThreadDataSizeForWholeThreadGroup;
+        std::memset(perThreadDataForWholeThreadGroup + perThreadDataSizeForWholeThreadGroup, 0x0, tailSize);
+    }
 
     return *this;
 }

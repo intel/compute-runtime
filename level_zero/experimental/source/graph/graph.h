@@ -10,6 +10,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/core/source/kernel/kernel_mutable_state.h"
 #include "level_zero/ze_api.h"
 
 #include <atomic>
@@ -693,6 +694,35 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt> {
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs) : apiArgs(apiArgs), indirectArgs(apiArgs) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendLaunchKernel> {
+    inline static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        ze_kernel_handle_t kernelHandle;
+        const ze_group_count_t *launchKernelArgs;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs {
+        ze_group_count_t launchKernelArgs;
+        KernelMutableState kernelState;
+        StackVec<ze_event_handle_t, 8> waitEvents;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs);
+    Closure(const Closure &) = delete;
+    Closure(Closure &&rhs) = default;
+    Closure &operator=(const Closure &) = delete;
+    Closure &operator=(Closure &&) = delete;
+    ~Closure() = default;
 
     ze_result_t instantiateTo(CommandList &executionTarget) const;
 };
