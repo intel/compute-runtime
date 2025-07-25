@@ -10,6 +10,8 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 
+#include "level_zero/core/source/event/event.h"
+
 namespace L0 {
 namespace ult {
 

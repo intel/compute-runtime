@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
@@ -4004,10 +4005,10 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
     }
 
     bool verifySplit(uint64_t expectedTaskCount) {
-        auto &bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit;
+        auto bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
 
         for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
-            if (static_cast<CommandQueueImp *>(bcsSplit.cmdQs[0])->getTaskCount() != expectedTaskCount) {
+            if (static_cast<CommandQueueImp *>(bcsSplit->cmdQs[0])->getTaskCount() != expectedTaskCount) {
                 return false;
             }
         }
@@ -4019,12 +4020,9 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
     DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createBcsSplitImmCmdList() {
         auto cmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
 
-        auto &bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit;
+        auto bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
 
-        ze_command_queue_desc_t desc = {};
-        desc.ordinal = static_cast<uint32_t>(device->getNEODevice()->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
-
-        cmdList->isBcsSplitNeeded = bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, &desc, cmdList->getCsr(false));
+        cmdList->isBcsSplitNeeded = bcsSplit->setupDevice(cmdList->getCsr(false));
 
         return cmdList;
     }
@@ -4046,7 +4044,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
-    auto &bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit;
+    auto bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
 
     auto inOrderExecInfo = immCmdList.inOrderExecInfo;
 
@@ -4057,7 +4055,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
 
     auto itor = cmdList.begin();
 
-    bool aggregatedEventSplit = bcsSplit.events.aggregatedEventsMode;
+    bool aggregatedEventSplit = bcsSplit->events.aggregatedEventsMode;
 
     for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
         auto beginItor = itor;
@@ -4067,9 +4065,9 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         uint64_t signalSubCopyEventGpuVa = 0;
 
         if (aggregatedEventSplit) {
-            signalSubCopyEventGpuVa = bcsSplit.events.subcopy[engineOffset]->getInOrderExecInfo()->getBaseDeviceAddress();
+            signalSubCopyEventGpuVa = bcsSplit->events.subcopy[engineOffset]->getInOrderExecInfo()->getBaseDeviceAddress();
         } else {
-            signalSubCopyEventGpuVa = bcsSplit.events.subcopy[i + engineOffset]->getCompletionFieldGpuAddress(device);
+            signalSubCopyEventGpuVa = bcsSplit->events.subcopy[i + engineOffset]->getCompletionFieldGpuAddress(device);
         }
 
         size_t numExpectedSemaphores = 0;
@@ -4159,7 +4157,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
         ASSERT_NE(nullptr, subCopyEventSemaphore);
 
-        while (bcsSplit.events.subcopy[submissionId]->getInOrderExecInfo()->getBaseDeviceAddress() != subCopyEventSemaphore->getSemaphoreGraphicsAddress()) {
+        while (bcsSplit->events.subcopy[submissionId]->getInOrderExecInfo()->getBaseDeviceAddress() != subCopyEventSemaphore->getSemaphoreGraphicsAddress()) {
             semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
             ASSERT_NE(cmdList.end(), semaphoreItor);
 
@@ -4176,7 +4174,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
             auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
             ASSERT_NE(nullptr, subCopyEventSemaphore);
 
-            EXPECT_EQ(bcsSplit.events.subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device), subCopyEventSemaphore->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(bcsSplit->events.subcopy[i + (submissionId * numLinkCopyEngines)]->getCompletionFieldGpuAddress(device), subCopyEventSemaphore->getSemaphoreGraphicsAddress());
 
             itor = ++semaphoreItor;
         }
@@ -4259,16 +4257,16 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 
-    auto &bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit;
+    auto bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
 
-    for (auto &event : bcsSplit.events.barrier) {
+    for (auto &event : bcsSplit->events.barrier) {
         EXPECT_FALSE(event->isCounterBased());
     }
-    for (auto &event : bcsSplit.events.subcopy) {
-        EXPECT_EQ(bcsSplit.events.aggregatedEventsMode, event->isCounterBased());
+    for (auto &event : bcsSplit->events.subcopy) {
+        EXPECT_EQ(bcsSplit->events.aggregatedEventsMode, event->isCounterBased());
     }
-    for (auto &event : bcsSplit.events.marker) {
-        EXPECT_EQ(bcsSplit.events.aggregatedEventsMode, event->isCounterBased());
+    for (auto &event : bcsSplit->events.marker) {
+        EXPECT_EQ(bcsSplit->events.aggregatedEventsMode, event->isCounterBased());
     }
 }
 

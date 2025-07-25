@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker_hw.h"

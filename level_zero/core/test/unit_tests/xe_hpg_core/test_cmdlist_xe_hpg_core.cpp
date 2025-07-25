@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/l3_range.h"

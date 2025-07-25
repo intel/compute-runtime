@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/transfer_direction.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/os_context.h"
@@ -15,6 +16,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
@@ -1020,7 +1022,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
 
         this->device = driverHandle->devices[0];
 
-        bcsSplit = &static_cast<DeviceImp *>(device)->bcsSplit;
+        bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
     }
 
     uint32_t queryCopyOrdinal() {
@@ -1096,7 +1098,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenLimitedEnginesCountWhenCreatingBcsSplitT
 
     BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
 
-    bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, nullptr, cmdList->getCsr(false));
+    bcsSplit.setupDevice(cmdList->getCsr(false));
 
     EXPECT_EQ(expectedEnginesCount, bcsSplit.cmdQs.size());
 
@@ -1119,7 +1121,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenPlatformSupporingAggregatedSplitModeWhen
 
     BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
 
-    bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, nullptr, cmdList->getCsr(false));
+    bcsSplit.setupDevice(cmdList->getCsr(false));
 
     EXPECT_EQ(device->getL0GfxCoreHelper().bcsSplitAggregatedModeEnabled(), bcsSplit.events.aggregatedEventsMode);
 

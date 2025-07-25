@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/test_macros/hw_test.h"
 

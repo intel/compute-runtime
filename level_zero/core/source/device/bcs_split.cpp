@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "level_zero/core/source/device/device_imp.h"
@@ -18,7 +19,7 @@
 
 namespace L0 {
 
-bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_command_queue_desc_t *desc, NEO::CommandStreamReceiver *csr) {
+bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr) {
     auto &productHelper = this->device.getProductHelper();
     auto bcsSplitSettings = productHelper.getBcsSplitSettings(this->device.getHwInfo());
 
@@ -31,7 +32,7 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
 
     auto initializeBcsSplit = this->device.getNEODevice()->isBcsSplitSupported() &&
                               (csr->getOsContext().getEngineType() == productHelper.getDefaultCopyEngine()) &&
-                              !internalUsage && tileCountMatch;
+                              tileCountMatch;
 
     if (!initializeBcsSplit) {
         return false;
@@ -53,10 +54,10 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
 
     setupEnginesMask(bcsSplitSettings);
 
-    return setupQueues(bcsSplitSettings, productFamily);
+    return setupQueues(bcsSplitSettings);
 }
 
-bool BcsSplit::setupQueues(const NEO::BcsSplitSettings &settings, uint32_t productFamily) {
+bool BcsSplit::setupQueues(const NEO::BcsSplitSettings &settings) {
     CsrContainer csrs;
 
     for (uint32_t tileId = 0; tileId < settings.requiredTileCount; tileId++) {
@@ -82,6 +83,7 @@ bool BcsSplit::setupQueues(const NEO::BcsSplitSettings &settings, uint32_t produ
     }
 
     const ze_command_queue_desc_t splitDesc = {.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS};
+    auto productFamily = this->device.getHwInfo().platform.eProductFamily;
 
     for (const auto &csr : csrs) {
         ze_result_t result;

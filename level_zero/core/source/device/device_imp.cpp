@@ -46,6 +46,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/fabric/fabric.h"
@@ -71,10 +72,12 @@
 
 namespace L0 {
 
-DeviceImp::DeviceImp() : bcsSplit(*this){};
+DeviceImp::DeviceImp() {
+    bcsSplit = std::make_unique<BcsSplit>(*this);
+};
 
 void DeviceImp::bcsSplitReleaseResources() {
-    bcsSplit.releaseResources();
+    bcsSplit->releaseResources();
 }
 
 DriverHandle *DeviceImp::getDriverHandle() {
@@ -1730,7 +1733,7 @@ void DeviceImp::releaseResources() {
 
     getNEODevice()->cleanupUsmAllocationPool();
 
-    this->bcsSplit.releaseResources();
+    this->bcsSplit->releaseResources();
 
     if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get()) {
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(nullptr);

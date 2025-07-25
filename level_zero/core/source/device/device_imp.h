@@ -14,7 +14,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
-#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
 
 #include <map>
@@ -26,6 +25,8 @@ class DriverInfo;
 } // namespace NEO
 
 namespace L0 {
+struct BcsSplit;
+struct Image;
 struct SysmanDevice;
 struct FabricVertex;
 class CacheReservation;
@@ -131,6 +132,8 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<BuiltinFunctionsLib> builtins;
     std::unique_ptr<MetricDeviceContext> metricContext;
     std::unique_ptr<CacheReservation> cacheReservation;
+    std::unique_ptr<BcsSplit> bcsSplit;
+
     uint32_t maxNumHwThreads = 0;
     uint32_t numSubDevices = 0;
     std::vector<Device *> subDevices;
@@ -142,8 +145,6 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     Device *rootDevice = nullptr;
 
     std::mutex printfKernelMutex;
-
-    BcsSplit bcsSplit;
 
     ze_command_list_handle_t globalTimestampCommandList = nullptr;
     void *globalTimestampAllocation = nullptr;

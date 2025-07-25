@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_store_data_imm_hw.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_hw_command_fixture.h"
 
