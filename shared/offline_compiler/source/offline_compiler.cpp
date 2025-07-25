@@ -47,14 +47,6 @@
 #include <map>
 #include <set>
 
-#ifdef _WIN32
-#include <direct.h>
-#define GetCurrentWorkingDirectory _getcwd
-#else
-#include <sys/stat.h>
-#define GetCurrentWorkingDirectory getcwd
-#endif
-
 namespace NEO {
 
 std::string convertToPascalCase(const std::string &inString) {
