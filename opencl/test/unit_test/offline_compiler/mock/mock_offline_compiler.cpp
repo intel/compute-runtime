@@ -88,8 +88,5 @@ int MockOfflineCompiler::createDir(const std::string &path) {
         return OfflineCompiler::createDir(path);
     }
 }
-void MockOfflineCompiler::createTempSourceFileForDebug() {
-    OfflineCompiler::createTempSourceFileForDebug();
-    createTempSourceFileForDebugCalled++;
-}
+
 } // namespace NEO

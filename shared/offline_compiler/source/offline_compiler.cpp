@@ -15,7 +15,6 @@
 #include "shared/offline_compiler/source/ocloc_supported_devices_helper.h"
 #include "shared/offline_compiler/source/queries.h"
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
@@ -29,8 +28,6 @@
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
 #include "shared/source/os_interface/debug_env_reader.h"
@@ -40,7 +37,6 @@
 #include "neo_aot_platforms.h"
 #include "offline_compiler_ext.h"
 
-#include <filesystem>
 #include <iomanip>
 #include <iterator>
 #include <list>
@@ -612,7 +608,6 @@ int OfflineCompiler::buildSourceCode() {
     }
     auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm(), inputFileSpirV());
     this->argHelper->printf(inputTypeWarnings.c_str());
-
     if (isIntermediateRepresentation(this->inputCodeType)) {
         storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
         pBuildInfo->intermediateRepresentation = this->inputCodeType;
@@ -732,10 +727,6 @@ int OfflineCompiler::build() {
     if (igcInitializationResult != OCLOC_SUCCESS) {
         argHelper->printf("Error! IGC initialization failure. Error code = %d\n", igcInitializationResult);
         return igcInitializationResult;
-    }
-
-    if (!inputFileSpirV()) {
-        createTempSourceFileForDebug();
     }
 
     int retVal = OCLOC_SUCCESS;
@@ -1553,32 +1544,6 @@ bool OfflineCompiler::generateElfBinary() {
         cache->cacheBinary(elfHash, reinterpret_cast<char *>(elfBinary.data()), static_cast<uint32_t>(this->elfBinary.size()));
     }
     return true;
-}
-
-void OfflineCompiler::createTempSourceFileForDebug() {
-    if (!CompilerOptions::contains(options, CompilerOptions::generateDebugInfo)) {
-        return;
-    }
-
-    std::string sourcePathOption = CompilerOptions::generateSourcePath.str();
-    size_t sourcePosInOpts = options.find(sourcePathOption);
-
-    if (sourcePosInOpts != std::string::npos) {
-        return;
-    }
-
-    uint64_t sourceHash = NEO::Hash::hash(sourceCode.c_str(), sourceCode.size());
-    std::string tempFilePath = "main_" + std::to_string(sourceHash) + ".cl";
-    std::filesystem::path absTempFilePath = std::filesystem::absolute(tempFilePath);
-
-    writeDataToFile(absTempFilePath.string().c_str(), std::string_view(sourceCode.c_str(), sourceCode.size()));
-
-    if (argHelper && !isQuiet()) {
-        argHelper->printf("Temporary source file for debug info created: %s\n", absTempFilePath.string().c_str());
-    }
-
-    std::string sourcePathWithFile = sourcePathOption + " " + CompilerOptions::wrapInQuotes(absTempFilePath.string());
-    options = CompilerOptions::concatenate(options, sourcePathWithFile);
 }
 
 void OfflineCompiler::writeOutAllFiles() {
