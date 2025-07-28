@@ -1242,16 +1242,12 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
             }
 
             auto &extendedInfo = dst.payloadMappings.explicitArgs[src.argIndex].getExtendedTypeInfo();
-            extendedInfo.isMediaImage = (src.imageType == Types::Kernel::PayloadArgument::ImageType::imageType2DMedia);
             extendedInfo.isMediaBlockImage = (src.imageType == Types::Kernel::PayloadArgument::ImageType::imageType2DMediaBlock);
             extendedInfo.isTransformable = src.imageTransformable;
             dst.kernelAttributes.flags.usesImages = true;
         } break;
         case Types::Kernel::PayloadArgument::addressSpaceSampler: {
-            using SamplerType = Types::Kernel::PayloadArgument::SamplerType;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(true);
-            const bool usesVme = src.samplerType == SamplerType::samplerTypeVME;
-            dst.kernelAttributes.flags.usesVme = usesVme;
             dst.kernelAttributes.flags.usesSamplers = true;
         } break;
         }

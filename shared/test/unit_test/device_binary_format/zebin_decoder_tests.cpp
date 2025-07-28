@@ -5772,7 +5772,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidImageArgumentWithImageMetadataThen
     auto &args = kernelDescriptor->payloadMappings.explicitArgs;
 
     EXPECT_EQ(64U, args[0].as<ArgDescImage>().bindful);
-    EXPECT_TRUE(args[0].getExtendedTypeInfo().isMediaImage);
     EXPECT_TRUE(args[0].getExtendedTypeInfo().isTransformable);
     EXPECT_EQ(NEOImageType::imageType2DMedia, args[0].as<ArgDescImage>().imageType);
 
@@ -5868,7 +5867,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
     EXPECT_EQ(undefined<uint8_t>, sampler2.size);
 
     EXPECT_TRUE(kd.kernelAttributes.flags.usesSamplers);
-    EXPECT_FALSE(kd.kernelAttributes.flags.usesVme);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessSamplerArgumentWithMetadataThenKernelDescriptorIsPopulated) {

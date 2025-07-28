@@ -122,10 +122,9 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool usesFencesForReadWriteImages : 1;
                 bool usesFlattenedLocalIds : 1;
                 bool usesPrivateMemory : 1;
-                bool usesVme : 1;
                 bool usesImages : 1;
-                // 1
                 bool usesSamplers : 1;
+                // 1
                 bool usesSyncBuffer : 1;
                 bool deprecatedDoNotUse : 1;
                 bool usesStatelessWrites : 1;
@@ -133,8 +132,8 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool perThreadDataHeaderIsPresent : 1;
                 bool perThreadDataUnusedGrfIsPresent : 1;
                 bool requiresDisabledEUFusion : 1;
-                // 2
                 bool requiresDisabledMidThreadPreemption : 1;
+                // 2
                 bool requiresSubgroupIndependentForwardProgress : 1;
                 bool requiresWorkgroupWalkOrder : 1;
                 bool requiresImplicitArgs : 1;
@@ -142,10 +141,10 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool hasRTCalls : 1;
                 bool isInvalid : 1;
                 bool hasSample : 1;
-                // 3
                 bool usesAssert : 1;
+                // 3
                 bool usesRegionGroupBarrier : 1;
-                bool reserved : 6;
+                bool reserved : 7;
             };
             std::array<bool, 4> packed;
         } flags = {};

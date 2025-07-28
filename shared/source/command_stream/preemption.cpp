@@ -28,16 +28,12 @@ bool PreemptionHelper::allowThreadGroupPreemption(const PreemptionFlags &flags) 
         flags.flags.disableLSQCROPERFforOCL) {
         return false;
     }
-    if (flags.flags.vmeKernel) {
-        return false;
-    }
 
     return true;
 }
 
 bool PreemptionHelper::allowMidThreadPreemption(const PreemptionFlags &flags) {
-    return (flags.flags.disabledMidThreadPreemptionKernel == 0) &&
-           !(flags.flags.vmeKernel);
+    return flags.flags.disabledMidThreadPreemptionKernel == 0;
 }
 
 PreemptionMode PreemptionHelper::taskPreemptionMode(PreemptionMode devicePreemptionMode, const PreemptionFlags &flags) {
@@ -86,7 +82,6 @@ PreemptionFlags PreemptionHelper::createPreemptionLevelFlags(Device &device, con
     PreemptionFlags flags = {};
     if (kernelDescriptor) {
         flags.flags.disabledMidThreadPreemptionKernel = kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption;
-        flags.flags.vmeKernel = kernelDescriptor->kernelAttributes.flags.usesVme;
         flags.flags.usesFencesForReadWriteImages = kernelDescriptor->kernelAttributes.flags.usesFencesForReadWriteImages;
     }
     flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.flags.waDisablePerCtxtPreemptionGranularityControl;

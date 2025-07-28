@@ -558,7 +558,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithImageMemoryObjectKernelArgu
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].is<NEO::ArgDescriptor::argTImage>());
         EXPECT_EQ(imageArg.Offset, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescImage>().bindful);
         EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescImage>().bindless));
-        EXPECT_FALSE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isMediaImage);
         EXPECT_FALSE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isMediaBlockImage);
         EXPECT_FALSE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isTransformable);
         ;
@@ -566,19 +565,9 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithImageMemoryObjectKernelArgu
     }
 
     {
-        imageArg.Type = iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA;
-        NEO::KernelDescriptor dst = {};
-        NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
-        EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isMediaImage);
-        EXPECT_FALSE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isMediaBlockImage);
-        EXPECT_FALSE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isTransformable);
-    }
-
-    {
         imageArg.Type = iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK;
         NEO::KernelDescriptor dst = {};
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
-        EXPECT_FALSE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isMediaImage);
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isMediaBlockImage);
         EXPECT_FALSE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isTransformable);
     }
@@ -587,7 +576,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithImageMemoryObjectKernelArgu
         imageArg.Transformable = 1;
         NEO::KernelDescriptor dst = {};
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
-        EXPECT_FALSE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isMediaImage);
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isMediaBlockImage);
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().isTransformable);
     }
@@ -630,7 +618,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSamplerKernelArgumentThenKe
     EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().bindless));
     EXPECT_EQ(samplerArg.Type, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().samplerType);
     EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].getExtendedTypeInfo().needsPatch);
-    EXPECT_FALSE(dst.kernelAttributes.flags.usesVme);
 }
 
 TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSamplerKernelArgumentWhenSamplerIsVmeThenKernelDescriptorIsProperlyPopulated) {
@@ -650,7 +637,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSamplerKernelArgumentWhenSa
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].is<NEO::ArgDescriptor::argTSampler>());
         EXPECT_EQ(samplerArg.Type, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().samplerType);
-        EXPECT_TRUE(dst.kernelAttributes.flags.usesVme);
     }
 
     {
@@ -659,7 +645,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSamplerKernelArgumentWhenSa
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].is<NEO::ArgDescriptor::argTSampler>());
         EXPECT_EQ(samplerArg.Type, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().samplerType);
-        EXPECT_FALSE(dst.kernelAttributes.flags.usesVme);
     }
 
     {
@@ -668,7 +653,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSamplerKernelArgumentWhenSa
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[1].is<NEO::ArgDescriptor::argTSampler>());
         EXPECT_EQ(samplerArg.Type, dst.payloadMappings.explicitArgs[1].as<NEO::ArgDescSampler>().samplerType);
-        EXPECT_FALSE(dst.kernelAttributes.flags.usesVme);
     }
 }
 
@@ -1011,19 +995,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSlmArgumentAndMetadataThenK
         EXPECT_EQ(slmDesc.SourceOffset, dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().requiredSlmAlignment);
         EXPECT_EQ(slmDesc.Offset, dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().slmOffset);
     }
-}
-
-TEST(KernelDescriptorFromPatchtokens, GivenKernelWithInlineVmeThenKernelDescriptorIsProperlyPopulated) {
-    std::vector<uint8_t> storage;
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
-    NEO::KernelDescriptor dst;
-    NEO::populateKernelDescriptor(dst, kernelTokens, 4);
-    EXPECT_FALSE(dst.kernelAttributes.flags.usesVme);
-
-    iOpenCL::SPatchItemHeader inlineVme = {};
-    kernelTokens.tokens.inlineVmeSamplerInfo = &inlineVme;
-    NEO::populateKernelDescriptor(dst, kernelTokens, 4);
-    EXPECT_TRUE(dst.kernelAttributes.flags.usesVme);
 }
 
 TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSipDataThenKernelDescriptorIsProperlyPopulated) {

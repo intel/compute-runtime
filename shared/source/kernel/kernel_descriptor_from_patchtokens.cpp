@@ -243,10 +243,6 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
         dst.kernelAttributes.numArgsStateful++;
     }
 
-    if (token.Type == iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA) {
-        dst.payloadMappings.explicitArgs[argNum].getExtendedTypeInfo().isMediaImage = true;
-    }
-
     if (token.Type == iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK) {
         dst.payloadMappings.explicitArgs[argNum].getExtendedTypeInfo().isMediaBlockImage = true;
     }
@@ -266,13 +262,6 @@ void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPa
 
     argSampler.bindful = token.Offset;
     argSampler.samplerType = token.Type;
-
-    if (token.Type != iOpenCL::SAMPLER_OBJECT_TEXTURE) {
-        DEBUG_BREAK_IF(token.Type != iOpenCL::SAMPLER_OBJECT_VME &&
-                       token.Type != iOpenCL::SAMPLER_OBJECT_VE &&
-                       token.Type != iOpenCL::SAMPLER_OBJECT_VD);
-        dst.kernelAttributes.flags.usesVme |= (token.Type == iOpenCL::SAMPLER_OBJECT_VME);
-    }
 }
 
 void populateKernelArgDescriptor(KernelDescriptor &dst, size_t argNum, const SPatchGlobalMemoryObjectKernelArgument &token) {
@@ -464,7 +453,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
         populateKernelDescriptorIfNotNull(dst, str);
     }
 
-    dst.kernelAttributes.flags.usesVme |= (src.tokens.inlineVmeSamplerInfo != nullptr);
     dst.entryPoints.systemKernel = src.tokens.stateSip ? src.tokens.stateSip->SystemKernelOffset : 0U;
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateSystemThreadSurface);
 

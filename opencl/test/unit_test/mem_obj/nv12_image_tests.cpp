@@ -437,24 +437,6 @@ HWTEST_F(Nv12ImageTest, WhenSettingImageArgUvPlaneImageThenOffsetSurfaceBaseAddr
     EXPECT_EQ(tileMode, surfaceState.getTileMode());
 }
 
-HWTEST_F(Nv12ImageTest, WhenSettingMediaImageArgThenSurfaceStateIsCorrect) {
-    using MEDIA_SURFACE_STATE = typename FamilyType::MEDIA_SURFACE_STATE;
-    MEDIA_SURFACE_STATE surfaceState;
-
-    std::unique_ptr<Image> image{createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)};
-    ASSERT_NE(nullptr, image);
-
-    SurfaceOffsets surfaceOffsets;
-    image->getSurfaceOffsets(surfaceOffsets);
-    image->setMediaImageArg(&surfaceState, context.getDevice(0)->getRootDeviceIndex());
-
-    EXPECT_EQ(surfaceOffsets.xOffset, surfaceState.getXOffsetForUCb());
-    EXPECT_EQ(surfaceOffsets.yOffset, surfaceState.getXOffsetForUCb());
-    EXPECT_EQ(surfaceOffsets.yOffsetForUVplane, surfaceState.getYOffsetForUCb());
-    EXPECT_EQ(image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getGpuAddress() + surfaceOffsets.offset,
-              surfaceState.getSurfaceBaseAddress());
-}
-
 TEST_F(Nv12ImageTest, WhenRedescribingThenNV12ImageAndUVPlaneImageHaveCorrectOffsets) {
     std::unique_ptr<Image> image{createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)};
     ASSERT_NE(nullptr, image);

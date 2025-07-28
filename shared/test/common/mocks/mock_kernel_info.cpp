@@ -32,9 +32,7 @@ void MockKernelInfo::addArgImage(uint32_t index, SurfaceStateHeapOffset offset, 
         arg.bindless = offset;
     }
 
-    if (type == iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA) {
-        argAt(index).getExtendedTypeInfo().isMediaImage = true;
-    } else if (type == iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK) {
+    if (type == iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA_BLOCK) {
         argAt(index).getExtendedTypeInfo().isMediaBlockImage = true;
     }
 

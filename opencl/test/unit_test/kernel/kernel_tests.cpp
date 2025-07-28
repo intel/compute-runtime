@@ -2441,7 +2441,6 @@ TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasIma
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
     pKernelInfo->addArgImage(0);
-    pKernelInfo->argAt(0).getExtendedTypeInfo().isMediaImage = true;
     pKernelInfo->addArgImage(1);
     pKernelInfo->addArgImage(2);
 
@@ -2461,7 +2460,6 @@ TEST(KernelImageDetectionTests, givenKernelWithImagesAndBuffersWhenItIsAskedIfIt
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
     pKernelInfo->addArgImage(0);
-    pKernelInfo->argAt(0).getExtendedTypeInfo().isMediaImage = true;
     pKernelInfo->addArgBuffer(1);
     pKernelInfo->addArgImage(2);
 

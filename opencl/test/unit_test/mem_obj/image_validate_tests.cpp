@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -773,9 +773,6 @@ struct NullImage : public Image {
         delete this->multiGraphicsAllocation.getGraphicsAllocation(0);
     }
     void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) override {}
-    void setMediaImageArg(void *memory, uint32_t rootDeviceIndex) override {}
-    void setMediaSurfaceRotation(void *memory) override {}
-    void setSurfaceMemoryObjectControlState(void *memory, uint32_t value) override {}
     void transformImage2dArrayTo3d(void *memory) override {}
     void transformImage3dTo2dArray(void *memory) override {}
 };

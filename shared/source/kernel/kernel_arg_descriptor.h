@@ -146,7 +146,6 @@ struct ArgDescriptor final {
         }
         union {
             struct {
-                bool isMediaImage : 1;
                 bool isMediaBlockImage : 1;
                 bool isTransformable : 1;
                 bool needsPatch : 1;

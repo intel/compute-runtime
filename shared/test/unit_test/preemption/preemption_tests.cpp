@@ -72,13 +72,6 @@ TEST_F(ThreadGroupPreemptionTests, GivenDisallowByReadWriteFencesWaThenThreadGro
     EXPECT_EQ(PreemptionMode::MidBatch, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));
 }
 
-TEST_F(ThreadGroupPreemptionTests, GivenDisallowByVmeKernelThenThreadGroupPreemptionIsDisabled) {
-    kernelDescriptor.kernelAttributes.flags.usesVme = true;
-    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
-    EXPECT_FALSE(PreemptionHelper::allowThreadGroupPreemption(flags));
-    EXPECT_EQ(PreemptionMode::MidBatch, PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags));
-}
-
 TEST_F(ThreadGroupPreemptionTests, GivenDefaultThenThreadGroupPreemptionIsEnabled) {
     PreemptionFlags flags = {};
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));
@@ -146,13 +139,6 @@ TEST_F(MidThreadPreemptionTests, GivenDisallowMidThreadPreemptionByKernelThenMid
     EXPECT_FALSE(PreemptionHelper::allowMidThreadPreemption(flags));
 }
 
-TEST_F(MidThreadPreemptionTests, GivenDisallowMidThreadPreemptionByVmeKernelThenMidThreadPreemptionIsEnabled) {
-    device->setPreemptionMode(PreemptionMode::MidThread);
-    kernelDescriptor.kernelAttributes.flags.usesVme = true;
-    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
-    EXPECT_FALSE(PreemptionHelper::allowMidThreadPreemption(flags));
-}
-
 TEST_F(MidThreadPreemptionTests, GivenTaskPreemptionDisallowMidThreadByDeviceThenThreadGroupPreemptionIsEnabled) {
     kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
@@ -167,15 +153,6 @@ TEST_F(MidThreadPreemptionTests, GivenTaskPreemptionDisallowMidThreadByKernelThe
     PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
     PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);
     EXPECT_EQ(PreemptionMode::ThreadGroup, outMode);
-}
-
-TEST_F(MidThreadPreemptionTests, GivenTaskPreemptionDisallowMidThreadByVmeKernelThenThreadGroupPreemptionIsEnabled) {
-    kernelDescriptor.kernelAttributes.flags.usesVme = true;
-    device->setPreemptionMode(PreemptionMode::MidThread);
-    PreemptionFlags flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
-    PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);
-    // VME disables mid thread and thread group when device does not support it
-    EXPECT_EQ(PreemptionMode::MidBatch, outMode);
 }
 
 TEST_F(MidThreadPreemptionTests, GivenDeviceSupportsMidThreadPreemptionThenMidThreadPreemptionIsEnabled) {

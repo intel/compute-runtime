@@ -1590,12 +1590,7 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
 
         // Sets SS structure
         UNRECOVERABLE_IF(surfaceState == nullptr);
-        if (arg.getExtendedTypeInfo().isMediaImage) {
-            DEBUG_BREAK_IF(!kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme);
-            pImage->setMediaImageArg(surfaceState, rootDeviceIndex);
-        } else {
-            pImage->setImageArg(surfaceState, arg.getExtendedTypeInfo().isMediaBlockImage, mipLevel, rootDeviceIndex);
-        }
+        pImage->setImageArg(surfaceState, arg.getExtendedTypeInfo().isMediaBlockImage, mipLevel, rootDeviceIndex);
 
         auto &imageDesc = pImage->getImageDesc();
         auto &imageFormat = pImage->getImageFormat();
