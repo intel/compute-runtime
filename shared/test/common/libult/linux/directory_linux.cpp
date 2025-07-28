@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,11 +19,13 @@ extern bool returnEmptyFilesVector;
 std::string byPathPattern(std::string(NEO_SHARED_TEST_FILES_DIR) + "/linux/by-path");
 std::string deviceDrmPath(std::string(NEO_SHARED_TEST_FILES_DIR) + "/linux/devices/device/drm");
 std::map<std::string, std::vector<std::string>> directoryFilesMap = {};
+int setErrno = 0;
 
 std::vector<std::string> Directory::getFiles(const std::string &path) {
     std::vector<std::string> files;
 
     if (returnEmptyFilesVector) {
+        errno = setErrno;
         return files;
     }
 

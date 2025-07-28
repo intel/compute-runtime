@@ -446,6 +446,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironm
         return {};
     }
 
+    executionEnvironment.setDevicePermissionError(false);
     auto adapterFactory = AdapterFactory::create(Wddm::dXCoreCreateAdapterFactory, Wddm::createDxgiFactory);
 
     if (false == adapterFactory->isSupported()) {

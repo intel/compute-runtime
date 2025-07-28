@@ -759,6 +759,18 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenGetErrorDescriptionIsCal
     EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
 }
 
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSetDevicePermissionErrorIsCalledThenCorrectValueIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+
+    EXPECT_FALSE(executionEnvironment.isDevicePermissionError());
+
+    executionEnvironment.setDevicePermissionError(true);
+    EXPECT_TRUE(executionEnvironment.isDevicePermissionError());
+
+    executionEnvironment.setDevicePermissionError(false);
+    EXPECT_FALSE(executionEnvironment.isDevicePermissionError());
+}
+
 void ExecutionEnvironmentSortTests::SetUp() {
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {

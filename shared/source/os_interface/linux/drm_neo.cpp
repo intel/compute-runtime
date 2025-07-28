@@ -669,9 +669,15 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
         numRootDevices = debugManager.flags.CreateMultipleRootDevices.get();
     }
 
+    errno = 0;
     std::vector<std::string> files = Directory::getFiles(Os::pciDevicesDirectory);
+    int returnedErrno = errno;
 
     if (files.size() == 0) {
+        if (returnedErrno == EACCES || returnedErrno == EPERM) {
+            executionEnvironment.setDevicePermissionError(true);
+        }
+
         const char *pathPrefix = "/dev/dri/renderD";
         const unsigned int maxDrmDevices = 64;
         unsigned int startNum = 128;
@@ -681,6 +687,10 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
             int fileDescriptor = SysCalls::open(path.c_str(), O_RDWR | O_CLOEXEC);
 
             if (fileDescriptor < 0) {
+                returnedErrno = errno;
+                if (returnedErrno == EACCES || returnedErrno == EPERM) {
+                    executionEnvironment.setDevicePermissionError(true);
+                }
                 continue;
             }
             auto pciPath = NEO::getPciPath(fileDescriptor);
@@ -690,6 +700,11 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
                 break;
             }
         }
+
+        if (!hwDeviceIds.empty()) {
+            executionEnvironment.setDevicePermissionError(false);
+        }
+
         return hwDeviceIds;
     }
 
@@ -714,7 +729,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
 
             if (!osPciPath.empty()) {
                 if (osPciPath.compare(pciPath) != 0) {
-                    // if osPciPath is non-empty, then interest is only in discovering device having same bdf as ocPciPath. Skip all other devices.
+                    // if osPciPath is non-empty, then interest is only in discovering device having same bdf as osPciPath. Skip all other devices.
                     continue;
                 }
             }
@@ -725,6 +740,15 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
                 }
             }
             int fileDescriptor = SysCalls::open(file->c_str(), O_RDWR | O_CLOEXEC);
+
+            if (fileDescriptor < 0) {
+                returnedErrno = errno;
+                if (returnedErrno == EACCES || returnedErrno == EPERM) {
+                    executionEnvironment.setDevicePermissionError(true);
+                }
+                continue;
+            }
+
             appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.c_str(), file->c_str());
             if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {
                 break;
@@ -734,6 +758,11 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
             return hwDeviceIds;
         }
     } while (hwDeviceIds.size() < numRootDevices);
+
+    if (!hwDeviceIds.empty()) {
+        executionEnvironment.setDevicePermissionError(false);
+    }
+
     return hwDeviceIds;
 }
 

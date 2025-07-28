@@ -64,6 +64,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
         fp64EmulationEnabled = true;
     }
     bool isFP64EmulationEnabled() const { return fp64EmulationEnabled; }
+    void setDevicePermissionError(bool value) {
+        devicePermissionError = value;
+    }
+    bool isDevicePermissionError() const { return devicePermissionError; }
 
     void setOneApiPvcWaEnv(bool val) {
         oneApiPvcWaEnv = val;
@@ -79,7 +83,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::unique_ptr<OsEnvironment> osEnvironment;
     std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
     void releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment);
-    // Map of Sub Device Indicies set during Affinity Mask in the form of:
+    // Map of Sub Device Indices set during Affinity Mask in the form of:
     // <RootDeviceIndex, SubDeviceIndex, SubDeviceCount>
     // Primarily used by the Metrics Library to communicate the actual Sub Device Index being used in queries.
     std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>> mapOfSubDeviceIndices;
@@ -95,6 +99,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     bool metricsEnabled = false;
     bool fp64EmulationEnabled = false;
     bool oneApiPvcWaEnv = true;
+    bool devicePermissionError = false;
 
     DeviceHierarchyMode deviceHierarchyMode = DeviceHierarchyMode::composite;
     DebuggingMode debuggingEnabledMode = DebuggingMode::disabled;

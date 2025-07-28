@@ -75,31 +75,37 @@ void DriverImp::initialize(ze_result_t *result) {
 
     executionEnvironment->incRefInternal();
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
+    bool isDevicePermissionError = executionEnvironment->isDevicePermissionError();
     executionEnvironment->decRefInternal();
-    if (!neoDevices.empty()) {
-        auto deviceGroups = NEO::Device::groupDevices(std::move(neoDevices));
-        for (auto &devices : deviceGroups) {
-            auto driverHandle = DriverHandle::create(std::move(devices), envVariables, result);
-            if (driverHandle) {
-                globalDriverHandles->push_back(driverHandle);
-            }
+    if (neoDevices.empty()) {
+        if (isDevicePermissionError) {
+            *result = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
         }
+        return;
+    }
 
-        if (globalDriverHandles->size() > 0) {
-            *result = ZE_RESULT_SUCCESS;
+    auto deviceGroups = NEO::Device::groupDevices(std::move(neoDevices));
+    for (auto &devices : deviceGroups) {
+        auto driverHandle = DriverHandle::create(std::move(devices), envVariables, result);
+        if (driverHandle) {
+            globalDriverHandles->push_back(driverHandle);
+        }
+    }
 
-            if (envVariables.metrics) {
-                *result = MetricDeviceContext::enableMetricApi();
+    if (globalDriverHandles->size() > 0) {
+        *result = ZE_RESULT_SUCCESS;
+
+        if (envVariables.metrics) {
+            *result = MetricDeviceContext::enableMetricApi();
+        }
+        if (*result != ZE_RESULT_SUCCESS) {
+            for (auto &driverHandle : *globalDriverHandles) {
+                delete static_cast<BaseDriver *>(driverHandle);
             }
-            if (*result != ZE_RESULT_SUCCESS) {
-                for (auto &driverHandle : *globalDriverHandles) {
-                    delete static_cast<BaseDriver *>(driverHandle);
-                }
-                globalDriverHandles->clear();
-            } else if (envVariables.pin) {
-                std::unique_lock<std::mutex> mtx{this->gtpinInitMtx};
-                this->gtPinInitializationNeeded = true;
-            }
+            globalDriverHandles->clear();
+        } else if (envVariables.pin) {
+            std::unique_lock<std::mutex> mtx{this->gtpinInitMtx};
+            this->gtPinInitializationNeeded = true;
         }
     }
 }
