@@ -62,7 +62,6 @@ struct CommandListImp : public CommandList {
     static constexpr bool cmdListDefaultCoherency = false;
     static constexpr bool cmdListDefaultDisableOverdispatch = true;
     static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
-    static constexpr bool cmdListDefaultGlobalAtomics = false;
     std::vector<Event *> mappedTsEventList;
     std::vector<Event *> interruptEvents;
 };
