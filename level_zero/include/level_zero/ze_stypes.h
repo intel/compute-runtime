@@ -45,6 +45,7 @@ using zes_structure_type_ext_t = uint32_t;
 #define ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP static_cast<zet_structure_type_ext_t>(0x00010009)
 #define ZET_INTEL_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP static_cast<zet_structure_type_ext_t>(0x0001000a)
 #define ZET_INTEL_STRUCTURE_TYPE_METRIC_DECODED_BUFFER_PROPERTIES_EXP static_cast<zet_structure_type_ext_t>(0x0001000b)
+#define ZET_INTEL_STRUCTURE_TYPE_METRIC_HW_BUFFER_SIZE_EXP_DESC static_cast<zet_structure_type_ext_t>(0x00010007)
 
 // Sysman structure types
 #define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE static_cast<zes_structure_type_ext_t>(0x00040001)

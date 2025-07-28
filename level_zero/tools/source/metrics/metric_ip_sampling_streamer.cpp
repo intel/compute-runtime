@@ -56,6 +56,12 @@ ze_result_t IpSamplingMetricGroupImp::streamerOpen(
     }
 
     *phMetricStreamer = pStreamerImp->toHandle();
+
+    auto hwBufferSizeDesc = MetricSource::getHwBufferSizeDesc(static_cast<zet_base_desc_t *>(const_cast<void *>(desc->pNext)));
+    if (hwBufferSizeDesc.has_value()) {
+        // EUSS uses fixed max hw buffer size
+        hwBufferSizeDesc.value()->sizeInBytes = source.getMetricOsInterface()->getRequiredBufferSize(UINT32_MAX);
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -290,7 +296,8 @@ ze_result_t MultiDeviceIpSamplingMetricGroupImp::streamerOpen(
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     std::vector<IpSamplingMetricStreamerImp *> subDeviceStreamers = {};
-    subDeviceStreamers.reserve(subDeviceMetricGroup.size());
+    const auto numSubDevices = subDeviceMetricGroup.size();
+    subDeviceStreamers.reserve(numSubDevices);
 
     // Open SubDevice Streamers
     for (auto &metricGroup : subDeviceMetricGroup) {
@@ -309,6 +316,14 @@ ze_result_t MultiDeviceIpSamplingMetricGroupImp::streamerOpen(
 
     pStreamerImp->attachEvent(hNotificationEvent);
     *phMetricStreamer = pStreamerImp->toHandle();
+
+    auto hwBufferSizeDesc = MetricSource::getHwBufferSizeDesc(static_cast<zet_base_desc_t *>(const_cast<void *>(desc->pNext)));
+    if (hwBufferSizeDesc.has_value()) {
+        auto device = Device::fromHandle(hDevice);
+        IpSamplingMetricSourceImp &source = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+        // EUSS uses fixed max hw buffer size
+        hwBufferSizeDesc.value()->sizeInBytes = source.getMetricOsInterface()->getRequiredBufferSize(UINT32_MAX) * numSubDevices;
+    }
     return result;
 }
 

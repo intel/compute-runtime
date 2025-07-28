@@ -59,6 +59,39 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenStreamerOpenAnd
     }
 }
 
+TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenStreamerOpenWithHwBufferSizeQueryIsCalledExpectedSizeIsReturned) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    for (auto device : testDevices) {
+
+        zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+        ze_event_handle_t eventHandle = {};
+        zet_metric_streamer_handle_t streamerHandle = {};
+        zet_metric_streamer_desc_t streamerDesc = {};
+        streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+        streamerDesc.notifyEveryNReports = 32768;
+        streamerDesc.samplingPeriod = 1000;
+
+        zet_intel_metric_hw_buffer_size_exp_desc_t hwBufferSizeDesc{};
+        hwBufferSizeDesc.sizeInBytes = 128u;
+        hwBufferSizeDesc.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_HW_BUFFER_SIZE_EXP_DESC;
+        hwBufferSizeDesc.pNext = nullptr;
+
+        streamerDesc.pNext = &hwBufferSizeDesc;
+        EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+        EXPECT_NE(streamerHandle, nullptr);
+
+        const uint32_t reportSize = 64;
+        DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+        size_t expectedSize = reportSize * UINT32_MAX;
+        expectedSize *= (!deviceImp->isSubdevice && deviceImp->isImplicitScalingCapable()) ? deviceImp->numSubDevices : 1u;
+        EXPECT_EQ(hwBufferSizeDesc.sizeInBytes, expectedSize);
+        EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
+    }
+}
+
 TEST_F(MetricIpSamplingStreamerTest, GivenEventHandleIsNullWhenStreamerOpenAndCloseAreCalledThenSuccessIsReturned) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());

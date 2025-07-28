@@ -250,6 +250,7 @@ struct OaMetricGroupImp : public MetricGroupImp {
 
   private:
     ze_result_t openForDevice(Device *pDevice, zet_metric_streamer_desc_t &desc,
+                              const bool isNotificationEnabled,
                               zet_metric_streamer_handle_t *phMetricStreamer);
 };
 

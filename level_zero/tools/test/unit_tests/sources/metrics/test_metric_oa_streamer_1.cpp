@@ -10,6 +10,7 @@
 
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
@@ -1501,6 +1502,218 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
 
     // Metric streamer close.
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricStreamerTest, WhenStreamerOpenIsCalledWithNotificationEventThenNotifyReportsParameterIsUsedForHwBufferSize) {
+
+    zet_device_handle_t metricDeviceHandle = device->toHandle();
+
+    zet_metric_streamer_handle_t streamerHandle = {};
+
+    auto &metricOaSource = (static_cast<DeviceImp *>(device))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    Mock<MetricGroup> metricGroup(metricOaSource);
+    zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
+
+    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
+    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
+    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
+    ioEquationElement.ImmediateUInt64 = 0;
+
+    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
+
+    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
+    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
+    oaInformation.SymbolName = "BufferOverflow";
+    oaInformation.IoReadEquation = &ioReadEquation;
+
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.RawReportSize = 256;
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
+    ioMeasurement.GetParamsResult = &oaInformation;
+
+    metricsSet.GetParamsResult = &metricsSetParams;
+
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_TRUE(metricSource.loadDependencies());
+    EXPECT_TRUE(metricSource.isInitialized());
+
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    zet_intel_metric_hw_buffer_size_exp_desc_t hwBufferSizeDesc{};
+    const uint32_t rawReportSize = 256;
+    hwBufferSizeDesc.sizeInBytes = 100 * rawReportSize;
+    hwBufferSizeDesc.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_HW_BUFFER_SIZE_EXP_DESC;
+    hwBufferSizeDesc.pNext = nullptr;
+
+    zet_metric_streamer_desc_t streamerDesc = {};
+
+    streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+    streamerDesc.notifyEveryNReports = 32768;
+    streamerDesc.samplingPeriod = 1000;
+    streamerDesc.pNext = &hwBufferSizeDesc;
+
+    const uint32_t expectedOaHWBufferSize = streamerDesc.notifyEveryNReports * 2;
+
+    MockEvent event{};
+
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, event.toHandle(), &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(streamerHandle, nullptr);
+    EXPECT_EQ(hwBufferSizeDesc.sizeInBytes, static_cast<size_t>(expectedOaHWBufferSize * rawReportSize));
+
+    EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(streamerHandle, nullptr);
+}
+
+TEST_F(MetricStreamerTest, WhenStreamerOpenIsCalledWithoutNotificationEventThenMaximumhwBufferSizeDescriptorIsUsedForHwBufferSize) {
+
+    zet_device_handle_t metricDeviceHandle = device->toHandle();
+
+    zet_metric_streamer_handle_t streamerHandle = {};
+
+    auto &metricOaSource = (static_cast<DeviceImp *>(device))->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    Mock<MetricGroup> metricGroup(metricOaSource);
+    zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
+
+    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
+    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
+    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
+    ioEquationElement.ImmediateUInt64 = 0;
+
+    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
+
+    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
+    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
+    oaInformation.SymbolName = "BufferOverflow";
+    oaInformation.IoReadEquation = &ioReadEquation;
+
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.RawReportSize = 256;
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
+    ioMeasurement.GetParamsResult = &oaInformation;
+
+    metricsSet.GetParamsResult = &metricsSetParams;
+
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_TRUE(metricSource.loadDependencies());
+    EXPECT_TRUE(metricSource.isInitialized());
+
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    EXPECT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    const uint32_t expectedMaxReportCount = 100;
+    const uint32_t rawReportSize = 256;
+
+    // Create a chain of descriptors using pNext
+    // streamerDesc -> dummyhwBufferSizeDesc -> hwBufferSizeDesc -> nullptr
+
+    zet_intel_metric_hw_buffer_size_exp_desc_t hwBufferSizeDesc{};
+    hwBufferSizeDesc.sizeInBytes = expectedMaxReportCount * rawReportSize + (rawReportSize - 1);
+    hwBufferSizeDesc.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_HW_BUFFER_SIZE_EXP_DESC;
+    hwBufferSizeDesc.pNext = nullptr;
+
+    zet_intel_metric_hw_buffer_size_exp_desc_t dummyhwBufferSizeDesc{};
+    dummyhwBufferSizeDesc.sizeInBytes = 0;
+    auto dummyStructureType = ZET_INTEL_STRUCTURE_TYPE_METRIC_HW_BUFFER_SIZE_EXP_DESC + 1;
+    dummyhwBufferSizeDesc.stype = static_cast<zet_structure_type_ext_t>(dummyStructureType);
+    dummyhwBufferSizeDesc.pNext = &hwBufferSizeDesc;
+
+    zet_metric_streamer_desc_t streamerDesc = {};
+
+    streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+    streamerDesc.notifyEveryNReports = 32768;
+    streamerDesc.samplingPeriod = 1000;
+    streamerDesc.pNext = &dummyhwBufferSizeDesc;
+
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, nullptr, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(streamerHandle, nullptr);
+    EXPECT_EQ(hwBufferSizeDesc.sizeInBytes, expectedMaxReportCount * rawReportSize);
+
+    EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(streamerHandle, nullptr);
+}
+
+using DriverVersionTest = Test<DeviceFixture>;
+
+TEST_F(DriverVersionTest, givenSupportedExtensionsWhenCheckIfSizeInBytesIsSupportedThenCorrectResultsAreReturned) {
+    uint32_t count = 0;
+    ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
+    EXPECT_NE(0u, count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    std::vector<ze_driver_extension_properties_t> extensionProperties;
+    extensionProperties.resize(count);
+
+    res = driverHandle->getExtensionProperties(&count, extensionProperties.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) { return (strcmp(extension.name, ZET_INTEL_METRIC_HW_BUFFER_SIZE_EXP_NAME) == 0); });
+    EXPECT_NE(it, extensionProperties.end());
+    EXPECT_EQ((*it).version, ZET_INTEL_METRIC_HW_BUFFER_SIZE_EXP_VERSION_CURRENT);
 }
 
 } // namespace ult

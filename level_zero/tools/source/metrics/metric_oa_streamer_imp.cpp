@@ -152,23 +152,45 @@ ze_result_t OaMetricStreamerImp::initialize(ze_device_handle_t hDevice,
     return ZE_RESULT_SUCCESS;
 }
 
-uint32_t OaMetricStreamerImp::getOaBufferSize(const uint32_t notifyEveryNReports) const {
+uint32_t OaMetricStreamerImp::getOaBufferSizeForNotification(const uint32_t notifyEveryNReports) const {
 
     // Notification is on half full buffer, hence multiplication by 2.
     return notifyEveryNReports * rawReportSize * 2;
 }
 
-ze_result_t OaMetricStreamerImp::startMeasurements(uint32_t &notifyEveryNReports,
-                                                   uint32_t &samplingPeriodNs) {
-    auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
-    uint32_t requestedOaBufferSize = getOaBufferSize(notifyEveryNReports);
+uint32_t OaMetricStreamerImp::getOaBufferSizeForReports(const uint32_t maxReportCount) const {
 
-    const ze_result_t result = metricGroup->openIoStream(samplingPeriodNs, requestedOaBufferSize);
+    return maxReportCount * rawReportSize;
+}
+
+ze_result_t OaMetricStreamerImp::updateStreamerDescriptionAndStartMeasurements(zet_metric_streamer_desc_t &streamerDesc, const bool isNotificationEnabled) {
+    auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
+    uint32_t requestedOaBufferSize = 0;
+    bool useNotifyNReports = true;
+    auto hwBufferSizeDesc = MetricSource::getHwBufferSizeDesc(static_cast<zet_base_desc_t *>(const_cast<void *>(streamerDesc.pNext)));
+
+    if (hwBufferSizeDesc.has_value() && !isNotificationEnabled) {
+        // Use value inside hwBufferSizeDesc only if notification was not enabled
+        auto expectReportCount = static_cast<uint32_t>(hwBufferSizeDesc.value()->sizeInBytes / rawReportSize);
+        requestedOaBufferSize = getOaBufferSizeForReports(expectReportCount);
+        useNotifyNReports = false;
+    }
+
+    if (useNotifyNReports) {
+        requestedOaBufferSize = getOaBufferSizeForNotification(streamerDesc.notifyEveryNReports);
+    }
+
+    const ze_result_t result = metricGroup->openIoStream(streamerDesc.samplingPeriod, requestedOaBufferSize);
 
     // Return oa buffer size and notification event aligned to gpu capabilities.
     if (result == ZE_RESULT_SUCCESS) {
         oaBufferSize = requestedOaBufferSize;
-        notifyEveryNReports = getNotifyEveryNReports(requestedOaBufferSize);
+        if (useNotifyNReports) {
+            streamerDesc.notifyEveryNReports = getNotifyEveryNReports(requestedOaBufferSize);
+        }
+        if (hwBufferSizeDesc != std::nullopt) {
+            hwBufferSizeDesc.value()->sizeInBytes = requestedOaBufferSize;
+        }
     }
 
     return result;
@@ -226,6 +248,7 @@ uint32_t OaMetricStreamerImp::getRequiredBufferSize(const uint32_t maxReportCoun
 }
 
 ze_result_t OaMetricGroupImp::openForDevice(Device *pDevice, zet_metric_streamer_desc_t &desc,
+                                            const bool isNotificationEnabled,
                                             zet_metric_streamer_handle_t *phMetricStreamer) {
 
     auto &metricSource = pDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
@@ -266,8 +289,7 @@ ze_result_t OaMetricGroupImp::openForDevice(Device *pDevice, zet_metric_streamer
     UNRECOVERABLE_IF(pMetricStreamer == nullptr);
     pMetricStreamer->initialize(pDevice->toHandle(), toHandle());
 
-    const ze_result_t result = pMetricStreamer->startMeasurements(
-        desc.notifyEveryNReports, desc.samplingPeriod);
+    const ze_result_t result = pMetricStreamer->updateStreamerDescriptionAndStartMeasurements(desc, isNotificationEnabled);
     if (result == ZE_RESULT_SUCCESS) {
         metricSource.setMetricStreamer(pMetricStreamer);
     } else {
@@ -290,6 +312,7 @@ ze_result_t OaMetricGroupImp::streamerOpen(
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto pDevice = Device::fromHandle(hDevice);
     const auto pDeviceImp = static_cast<const DeviceImp *>(pDevice);
+    const auto isNotificationEnabled = hNotificationEvent != nullptr;
 
     if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
         const uint32_t subDeviceCount = pDeviceImp->numSubDevices;
@@ -299,10 +322,19 @@ ze_result_t OaMetricGroupImp::streamerOpen(
         auto &metricStreamers = pMetricStreamer->getMetricStreamers();
         metricStreamers.resize(subDeviceCount);
 
+        // for a root-device handle, split the sizeInBytes request considering the sub-device count
+        auto isHwBufferSizeRequested = false;
+        auto hwBufferSizeDesc = MetricSource::getHwBufferSizeDesc(static_cast<zet_base_desc_t *>(const_cast<void *>(desc->pNext)));
+
+        if (hwBufferSizeDesc != std::nullopt) {
+            hwBufferSizeDesc.value()->sizeInBytes /= subDeviceCount;
+            isHwBufferSizeRequested = true;
+        }
+
         for (uint32_t i = 0; i < subDeviceCount; i++) {
 
             auto metricGroupsSubDevice = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(getMetricGroups()[i]));
-            result = metricGroupsSubDevice->openForDevice(pDeviceImp->subDevices[i], *desc, &metricStreamers[i]);
+            result = metricGroupsSubDevice->openForDevice(pDeviceImp->subDevices[i], *desc, isNotificationEnabled, &metricStreamers[i]);
             if (result != ZE_RESULT_SUCCESS) {
                 for (uint32_t j = 0; j < i; j++) {
                     auto metricStreamerSubDevice = MetricStreamer::fromHandle(metricStreamers[j]);
@@ -313,10 +345,15 @@ ze_result_t OaMetricGroupImp::streamerOpen(
             }
         }
 
+        // for a root-device handle, update the sizeInBytes considering the sub-device count
+        if (isHwBufferSizeRequested) {
+            hwBufferSizeDesc.value()->sizeInBytes *= subDeviceCount;
+        }
+
         *phMetricStreamer = pMetricStreamer->toHandle();
 
     } else {
-        result = openForDevice(pDevice, *desc, phMetricStreamer);
+        result = openForDevice(pDevice, *desc, isNotificationEnabled, phMetricStreamer);
     }
 
     if (result == ZE_RESULT_SUCCESS) {

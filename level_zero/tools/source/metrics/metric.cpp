@@ -74,6 +74,18 @@ void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceCont
     metricDeviceContext.setComputeMetricScopeInitialized();
 }
 
+std::optional<zet_intel_metric_hw_buffer_size_exp_desc_t *> MetricSource::getHwBufferSizeDesc(zet_base_desc_t *baseDesc) {
+
+    while (baseDesc != nullptr) {
+        if (baseDesc->stype == ZET_INTEL_STRUCTURE_TYPE_METRIC_HW_BUFFER_SIZE_EXP_DESC) {
+            return reinterpret_cast<zet_intel_metric_hw_buffer_size_exp_desc_t *>(baseDesc);
+        }
+        baseDesc = static_cast<zet_base_desc_t *>(const_cast<void *>(baseDesc->pNext));
+    }
+
+    return std::nullopt;
+}
+
 MetricDeviceContext::MetricDeviceContext(Device &inputDevice) : device(inputDevice) {
     auto deviceNeo = device.getNEODevice();
     std::tuple<uint32_t, uint32_t, uint32_t> subDeviceMap;

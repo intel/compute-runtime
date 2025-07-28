@@ -109,6 +109,7 @@ class MetricSource {
                                             zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) = 0;
     virtual bool canDisable() = 0;
     virtual void initMetricScopes(MetricDeviceContext &metricDeviceContext) = 0;
+    static std::optional<zet_intel_metric_hw_buffer_size_exp_desc_t *> getHwBufferSizeDesc(zet_base_desc_t *baseDesc);
 
   protected:
     uint32_t type = MetricSource::metricSourceTypeUndefined;

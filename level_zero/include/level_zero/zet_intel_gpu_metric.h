@@ -495,6 +495,35 @@ ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(
     zet_intel_metric_scope_exp_handle_t hMetricScope,                 ///< [in] handle of the metric scope
     zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties); ///< [out] pointer to the metric scope properties structure
 
+#ifndef ZET_INTEL_METRIC_HW_BUFFER_SIZE_EXP_NAME
+/// @brief Extension name for query to read the Intel Level Zero Driver Version String
+#define ZET_INTEL_METRIC_HW_BUFFER_SIZE_EXP_NAME "ZET_intel_get_hw_buffer_size"
+#endif // ZET_INTEL_METRIC_HW_BUFFER_SIZE_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Maximum Hw Buffer Size extension Version(s)
+typedef enum _zet_intel_metric_hw_buffer_size_exp_version_t {
+    ZET_INTEL_METRIC_HW_BUFFER_SIZE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                               ///< version 1.0
+    ZET_INTEL_METRIC_HW_BUFFER_SIZE_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_HW_BUFFER_SIZE_EXP_VERSION_1_0, ///< latest known version
+    ZET_INTEL_METRIC_HW_BUFFER_SIZE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zet_intel_metric_hw_buffer_size_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Metric hardware buffer size descriptor
+/// This descriptor can be used as a "pNext" value to the zet_metric_streamer_desc_t and zet_metric_tracer_exp_desc_t.
+/// This descriptor allow to request and query the allocated HW buffer size in bytes.
+/// The sizeInBytes should not be used to estimate buffer overflow scenario (Use notifyNReports to detect it).
+typedef struct _zet_intel_metric_hw_buffer_size_exp_desc_t {
+    zet_structure_type_ext_t stype; ///< [in] type of this structure
+    const void *pNext;              ///< [in][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    size_t sizeInBytes;             ///< [in,out] size of the hardware buffer size in bytes.
+                                    ///< If the requested value cannot be supported,
+                                    ///< then the driver may use a value that can be supported and shall update this member.
+                                    ///< When hNotificationEvent is set as input has precedence over hw_buffer_size_exp_desc_t when setting HW buffer size.
+                                    ///< The actual size used by the HW will be updated in "sizeInBytes" member by the implementation.
+} zet_intel_metric_hw_buffer_size_exp_desc_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
