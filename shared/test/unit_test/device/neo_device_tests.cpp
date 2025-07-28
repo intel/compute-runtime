@@ -2468,6 +2468,66 @@ HWTEST_F(DeviceTests, givenHpCopyEngineAndDebugFlagSetWhenCreatingSecondaryEngin
     EXPECT_EQ(device->secondaryEngines.end(), device->secondaryEngines.find(hpEngine));
 }
 
+HWTEST_F(DeviceTests, givenHpCopyEngineAndAggregatedProcessCountWhenCreatingSecondaryEnginesThenContextCountIsDividedByProcessCount) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(64);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 0b111;
+
+    // Determine hpEngine type first
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(NEO::MockDevice::prepareExecutionEnvironment(&hwInfo, 0u));
+    const auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto hpEngine = gfxCoreHelper.getDefaultHpCopyEngine(hwInfo);
+    if (hpEngine == aub_stream::EngineType::NUM_ENGINES) {
+        GTEST_SKIP();
+    }
+
+    // Test single process scenario first
+    {
+        auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+        auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+
+        EXPECT_NE(nullptr, device->getHpCopyEngine());
+
+        if (device->secondaryEngines.find(hpEngine) != device->secondaryEngines.end()) {
+            auto &secondaryEngines = device->secondaryEngines[hpEngine];
+            auto expectedContextCount = gfxCoreHelper.getContextGroupContextsCount();
+            // Without process division, should have full context group count (64 contexts total)
+            EXPECT_EQ(expectedContextCount, secondaryEngines.engines.size());
+        }
+    }
+
+    // Test multi-process scenario with process count division
+    {
+        auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+        auto osInterface = new MockOsInterface();
+        auto driverModelMock = std::make_unique<MockDriverModel>();
+        osInterface->setDriverModel(std::move(driverModelMock));
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+
+        const auto numProcesses = 4u;
+        osInterface->numberOfProcesses = numProcesses;
+
+        auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+
+        EXPECT_NE(nullptr, device->getHpCopyEngine());
+
+        if (device->secondaryEngines.find(hpEngine) != device->secondaryEngines.end()) {
+            auto &secondaryEngines = device->secondaryEngines[hpEngine];
+
+            // With process division: max(64/4, 2) = max(16, 2) = 16 contexts total
+            const uint32_t expectedContextCount = std::max(gfxCoreHelper.getContextGroupContextsCount() / numProcesses, 2u);
+            EXPECT_EQ(expectedContextCount, secondaryEngines.engines.size());
+        }
+    }
+}
+
 TEST_F(DeviceTests, GivenDebuggingEnabledWhenDeviceIsInitializedThenL0DebuggerIsCreated) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);

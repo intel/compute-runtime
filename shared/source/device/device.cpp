@@ -421,6 +421,12 @@ bool Device::createEngines() {
 
                 auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
 
+                if (getRootDeviceEnvironment().osInterface && getRootDeviceEnvironment().osInterface->getAggregatedProcessCount() > 1) {
+                    const auto numProcesses = getRootDeviceEnvironment().osInterface->getAggregatedProcessCount();
+
+                    contextCount = std::max(contextCount / numProcesses, 2u);
+                }
+
                 createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, 0, contextCount);
             }
         }
