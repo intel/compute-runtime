@@ -53,7 +53,6 @@ struct Gen12Lp {
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool mediaSamplerDopClockGate = true;
         static constexpr bool systolicMode = false;
     };
 

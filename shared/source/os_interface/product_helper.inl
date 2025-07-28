@@ -780,12 +780,6 @@ void ProductHelperHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::PipelineSelectStateSupport::mediaSamplerDopClockGate;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getPipelineSelectPropertySystolicModeSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::PipelineSelectStateSupport::systolicMode;
@@ -793,7 +787,6 @@ bool ProductHelperHw<gfxProduct>::getPipelineSelectPropertySystolicModeSupport()
 
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const {
-    propertiesSupport.mediaSamplerDopClockGate = getPipelineSelectPropertyMediaSamplerDopClockGateSupport();
     propertiesSupport.systolicMode = isSystolicModeConfigurable(hwInfo);
 }
 

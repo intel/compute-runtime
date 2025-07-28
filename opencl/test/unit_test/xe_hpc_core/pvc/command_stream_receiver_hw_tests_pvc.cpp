@@ -71,7 +71,6 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLast
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
-    flushTaskFlags.pipelineSelectArgs.mediaSamplerRequired = false;
 
     struct {
         unsigned short revId;
@@ -89,7 +88,6 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLast
         hwInfo->platform.usRevId = testInput.revId;
         productHelper.fillPipelineSelectPropertiesSupportStructure(commandStreamReceiver.pipelineSupportFlags, *hwInfo);
         commandStreamReceiver.isPreambleSent = true;
-        commandStreamReceiver.lastMediaSamplerConfig = false;
         commandStreamReceiver.lastSystolicPipelineSelectMode = false;
         commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = -1;
 

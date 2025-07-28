@@ -42,7 +42,6 @@ struct XeHpcCore {
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool mediaSamplerDopClockGate = false;
         static constexpr bool systolicMode = true;
     };
 

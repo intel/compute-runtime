@@ -102,34 +102,6 @@ struct FrontEndProperties {
     bool propertiesSupportLoaded = false;
 };
 
-struct PipelineSelectPropertiesSupport {
-    bool mediaSamplerDopClockGate = false;
-    bool systolicMode = false;
-};
-
-struct PipelineSelectProperties {
-    StreamProperty modeSelected{};
-    StreamProperty mediaSamplerDopClockGate{};
-    StreamProperty systolicMode{};
-
-    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
-    void resetState();
-
-    void setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode);
-    void setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, bool clearDirtyState);
-    void setPropertySystolicMode(bool systolicMode);
-
-    void copyPropertiesAll(const PipelineSelectProperties &properties);
-    void copyPropertiesSystolicMode(const PipelineSelectProperties &properties);
-
-    bool isDirty() const;
-    void clearIsDirty();
-
-  protected:
-    PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
-    bool propertiesSupportLoaded = false;
-};
-
 struct StateBaseAddressPropertiesSupport {
     bool bindingTablePoolBaseAddress = false;
 };

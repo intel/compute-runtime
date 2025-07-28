@@ -718,28 +718,17 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenFlushTaskWhenInitProgrammingF
     EXPECT_FALSE(commandStreamReceiver.bindingTableBaseAddressRequired);
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleNotSentAndMediaSamplerRequirementChangedWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeCore) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleNotSentWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeCore) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = false;
-    commandStreamReceiver.lastMediaSamplerConfig = -1;
     flushTask(commandStreamReceiver);
     parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
     EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleNotSentAndMediaSamplerRequirementNotChangedWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeCore) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.isPreambleSent = false;
-    commandStreamReceiver.lastMediaSamplerConfig = 0;
-    flushTask(commandStreamReceiver);
-    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
-}
-
-HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerRequirementNotChangedWhenFlushingTaskThenPipelineSelectIsNotSent) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentWhenFlushingTaskThenPipelineSelectIsNotSent) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.lastMediaSamplerConfig = 0;
     flushTask(commandStreamReceiver);
     parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
     auto &productHelper = pDevice->getProductHelper();
@@ -748,15 +737,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerRe
     } else {
         EXPECT_EQ(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
     }
-}
-HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenPreambleSentAndMediaSamplerRequirementChangedWhenFlushingTaskThenPipelineSelectIsSent, IsAtMostXeCore) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
-    commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.lastMediaSamplerConfig = 1;
-    flushTask(commandStreamReceiver);
-    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
 }
 
 HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenStateBaseAddressNotSentWhenFlushingTaskThenStateBaseAddressIsSent, IsHeapfulSupported) {

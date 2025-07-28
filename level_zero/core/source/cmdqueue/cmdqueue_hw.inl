@@ -656,7 +656,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programPipelineSelectIfGpgpuDisabled(NEO::LinearStream &cmdStream) {
     bool gpgpuEnabled = this->csr->getPreambleSetFlag();
     if (!gpgpuEnabled) {
-        NEO::PipelineSelectArgs args = {false, false, false, false};
+        NEO::PipelineSelectArgs args = {false, false, false};
         NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&cmdStream, args, device->getNEODevice()->getRootDeviceEnvironment());
         this->csr->setPreambleSetFlag(true);
     }
@@ -1566,7 +1566,6 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListPipelineSelect(NEO::LinearS
         NEO::PipelineSelectArgs args = {
             systolic,
             false,
-            false,
             cmdListRequired.commandList->getSystolicModeSupport()};
 
         NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, args, device->getNEODevice()->getRootDeviceEnvironment());
@@ -1623,7 +1622,6 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
     if (cmdListRequired.flags.propertyScmDirty) {
         NEO::PipelineSelectArgs pipelineSelectArgs = {
             cmdListRequired.requiredState.pipelineSelect.systolicMode.value == 1,
-            false,
             false,
             cmdListRequired.commandList->getSystolicModeSupport()};
 

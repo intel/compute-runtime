@@ -165,8 +165,7 @@ struct UltCommandStreamReceiverTest
         configureCSRHeapStatesToNonDirty<GfxFamily>();
         commandStreamReceiver.taskLevel = taskLevel;
 
-        commandStreamReceiver.lastMediaSamplerConfig = 0;
-        commandStreamReceiver.streamProperties.pipelineSelect.setPropertiesAll(true, false, false);
+        commandStreamReceiver.streamProperties.pipelineSelect.setPropertiesAll(true, false);
         commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(0, GrfConfig::defaultGrfNumber,
                                                                                  gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode());
         commandStreamReceiver.streamProperties.frontEndState.setPropertiesAll(false, false, false);

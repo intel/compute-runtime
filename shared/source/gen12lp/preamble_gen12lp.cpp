@@ -105,7 +105,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
     auto pipeline = pipelineSelectArgs.is3DPipelineRequired ? PIPELINE_SELECT::PIPELINE_SELECTION_3D : PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
 
     pipelineSelectCmd.setPipelineSelection(pipeline);
-    pipelineSelectCmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
+    pipelineSelectCmd.setMediaSamplerDopClockGateEnable(true);
 
     if (pipelineSelectArgs.systolicPipelineSelectSupport) {
         mask |= pipelineSelectSystolicModeEnableMaskBits;

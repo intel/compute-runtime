@@ -274,7 +274,6 @@ HWTEST_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListIs
     EXPECT_EQ(-1, currentCsrStreamProperties.frontEndState.singleSliceDispatchCcsMode.value);
 
     EXPECT_EQ(-1, currentCsrStreamProperties.pipelineSelect.modeSelected.value);
-    EXPECT_EQ(-1, currentCsrStreamProperties.pipelineSelect.mediaSamplerDopClockGate.value);
 }
 
 struct CommandListTest : Test<DeviceFixture> {

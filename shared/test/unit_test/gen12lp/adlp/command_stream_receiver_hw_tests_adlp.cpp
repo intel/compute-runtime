@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,10 +24,8 @@ ADLPTEST_F(Gen12LpCommandStreamReceiverHwTests, givenSystolicModeChangedWhenFlus
     StreamProperties &streamProperties = commandStreamReceiver.getStreamProperties();
 
     commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.lastMediaSamplerConfig = false;
 
     flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
-    flushTaskFlags.pipelineSelectArgs.mediaSamplerRequired = false;
 
     commandStreamReceiver.flushTask(commandStream,
                                     0,

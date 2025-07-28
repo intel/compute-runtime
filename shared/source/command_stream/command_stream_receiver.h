@@ -674,8 +674,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;
 
-    int8_t lastMediaSamplerConfig = -1;
-
     bool isPreambleSent = false;
     bool isStateSipSent = false;
     bool isEnginePrologueSent = false;

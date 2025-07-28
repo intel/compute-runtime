@@ -611,7 +611,6 @@ HWTEST_F(ProductHelperTest, WhenFillingPipelineSelectPropertiesSupportThenExpect
     PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
 
     productHelper->fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, pInHwInfo);
-    EXPECT_EQ(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport(), pipelineSelectPropertiesSupport.mediaSamplerDopClockGate);
     EXPECT_EQ(productHelper->isSystolicModeConfigurable(pInHwInfo), pipelineSelectPropertiesSupport.systolicMode);
 }
 

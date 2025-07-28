@@ -140,7 +140,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::isStateSipSent;
     using BaseClass::CommandStreamReceiver::lastAdditionalKernelExecInfo;
     using BaseClass::CommandStreamReceiver::lastKernelExecutionType;
-    using BaseClass::CommandStreamReceiver::lastMediaSamplerConfig;
     using BaseClass::CommandStreamReceiver::lastMemoryCompressionState;
     using BaseClass::CommandStreamReceiver::lastPreemptionMode;
     using BaseClass::CommandStreamReceiver::lastSentL3Config;

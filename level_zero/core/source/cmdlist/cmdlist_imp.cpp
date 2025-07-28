@@ -307,7 +307,7 @@ void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &s
     }
 
     streamProperties.frontEndState.setPropertiesDisableOverdispatch(cmdListDefaultDisableOverdispatch, true);
-    streamProperties.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, true);
+    streamProperties.pipelineSelect.setPropertiesModeSelected(cmdListDefaultPipelineSelectModeSelected, true);
 }
 
 void CommandListImp::enableInOrderExecution() {

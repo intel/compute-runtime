@@ -554,8 +554,6 @@ XE2_HPG_CORETEST_F(Xe2CommandStreamReceiverFlushTaskTests, givenNotExistPolicyWh
 XE2_HPG_CORETEST_F(Xe2CommandStreamReceiverFlushTaskTests, givenLastSystolicPipelineSelectModeWhenFlushTaskIsCalledThenDontReprogramPipelineSelect) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.lastMediaSamplerConfig = false;
-    flushTaskFlags.pipelineSelectArgs.mediaSamplerRequired = false;
     flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
 
     flushTask(commandStreamReceiver);

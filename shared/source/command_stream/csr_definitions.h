@@ -133,7 +133,6 @@ struct DispatchFlags {
 struct CsrSizeRequestFlags {
     bool l3ConfigChanged = false;
     bool preemptionRequestChanged = false;
-    bool mediaSamplerConfigChanged = false;
     bool hasSharedHandles = false;
     bool systolicPipelineSelectMode = false;
     bool activePartitionsChanged = false;

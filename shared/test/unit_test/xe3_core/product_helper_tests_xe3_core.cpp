@@ -56,7 +56,6 @@ XE3_CORETEST_F(Xe3CoreProductHelper, givenProductHelperWhenGetCommandsStreamProp
     EXPECT_TRUE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_TRUE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_FALSE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 

@@ -154,7 +154,6 @@ class ProductHelperHw : public ProductHelper {
     bool getPreemptionDbgPropertyStateSipSupport() const override;
     bool getPreemptionDbgPropertyCsrSurfaceSupport() const override;
 
-    bool getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const override;
     bool getPipelineSelectPropertySystolicModeSupport() const override;
 
     void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) const override;

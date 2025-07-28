@@ -310,42 +310,31 @@ void PipelineSelectProperties::resetState() {
     clearIsDirty();
 
     this->modeSelected.value = StreamProperty::initValue;
-    this->mediaSamplerDopClockGate.value = StreamProperty::initValue;
     this->systolicMode.value = StreamProperty::initValue;
 }
 
-void PipelineSelectProperties::setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode) {
+void PipelineSelectProperties::setPropertiesAll(bool modeSelected, bool systolicMode) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
     this->modeSelected.set(modeSelected);
-
-    if (this->pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
-        this->mediaSamplerDopClockGate.set(mediaSamplerDopClockGate);
-    }
 
     if (this->pipelineSelectPropertiesSupport.systolicMode) {
         this->systolicMode.set(systolicMode);
     }
 }
 
-void PipelineSelectProperties::setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, bool clearDirtyState) {
+void PipelineSelectProperties::setPropertiesModeSelected(bool modeSelected, bool clearDirtyState) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     if (!clearDirtyState) {
         this->modeSelected.isDirty = false;
-        this->mediaSamplerDopClockGate.isDirty = false;
     }
 
     this->modeSelected.set(modeSelected);
 
-    if (this->pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
-        this->mediaSamplerDopClockGate.set(mediaSamplerDopClockGate);
-    }
-
     if (clearDirtyState) {
         this->modeSelected.isDirty = false;
-        this->mediaSamplerDopClockGate.isDirty = false;
     }
 }
 
@@ -363,7 +352,6 @@ void PipelineSelectProperties::copyPropertiesAll(const PipelineSelectProperties 
     clearIsDirty();
 
     modeSelected.set(properties.modeSelected.value);
-    mediaSamplerDopClockGate.set(properties.mediaSamplerDopClockGate.value);
     systolicMode.set(properties.systolicMode.value);
 }
 
@@ -373,12 +361,11 @@ void PipelineSelectProperties::copyPropertiesSystolicMode(const PipelineSelectPr
 }
 
 bool PipelineSelectProperties::isDirty() const {
-    return modeSelected.isDirty || mediaSamplerDopClockGate.isDirty || systolicMode.isDirty;
+    return modeSelected.isDirty || systolicMode.isDirty;
 }
 
 void PipelineSelectProperties::clearIsDirty() {
     modeSelected.isDirty = false;
-    mediaSamplerDopClockGate.isDirty = false;
     systolicMode.isDirty = false;
 }
 

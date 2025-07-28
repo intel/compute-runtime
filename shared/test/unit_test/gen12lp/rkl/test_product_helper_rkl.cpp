@@ -105,7 +105,6 @@ RKLTEST_F(RklProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_FALSE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_FALSE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 

@@ -39,13 +39,12 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, PipelineSelectArgs &pipelineSelectArgs) {
-    if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
+    if (csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
         if (!isPipelineSelectAlreadyProgrammed()) {
             PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekRootDeviceEnvironment());
         }
-        this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
         this->lastSystolicPipelineSelectMode = pipelineSelectArgs.systolicPipelineSelectMode;
-        this->streamProperties.pipelineSelect.setPropertiesAll(true, this->lastMediaSamplerConfig, this->lastSystolicPipelineSelectMode);
+        this->streamProperties.pipelineSelect.setPropertiesAll(true, this->lastSystolicPipelineSelectMode);
         this->streamProperties.pipelineSelect.clearIsDirty();
     }
 }

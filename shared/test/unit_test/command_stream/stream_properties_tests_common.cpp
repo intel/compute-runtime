@@ -759,21 +759,14 @@ TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueI
     productHelper.fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, *defaultHwInfo);
 
     for (auto modeSelected : ::testing::Bool()) {
-        for (auto mediaSamplerDopClockGate : ::testing::Bool()) {
-            for (auto systolicMode : ::testing::Bool()) {
-                properties.pipelineSelect.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode);
+        for (auto systolicMode : ::testing::Bool()) {
+            properties.pipelineSelect.setPropertiesAll(modeSelected, systolicMode);
 
-                EXPECT_EQ(modeSelected, properties.pipelineSelect.modeSelected.value);
-                if (pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
-                    EXPECT_EQ(mediaSamplerDopClockGate, properties.pipelineSelect.mediaSamplerDopClockGate.value);
-                } else {
-                    EXPECT_EQ(-1, properties.pipelineSelect.mediaSamplerDopClockGate.value);
-                }
-                if (pipelineSelectPropertiesSupport.systolicMode) {
-                    EXPECT_EQ(systolicMode, properties.pipelineSelect.systolicMode.value);
-                } else {
-                    EXPECT_EQ(-1, properties.pipelineSelect.systolicMode.value);
-                }
+            EXPECT_EQ(modeSelected, properties.pipelineSelect.modeSelected.value);
+            if (pipelineSelectPropertiesSupport.systolicMode) {
+                EXPECT_EQ(systolicMode, properties.pipelineSelect.systolicMode.value);
+            } else {
+                EXPECT_EQ(-1, properties.pipelineSelect.systolicMode.value);
             }
         }
     }
@@ -782,17 +775,16 @@ TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueI
 TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyWhenSettingChangedPropertyAndCheckIfDirtyThenExpectDirtyState) {
     MockPipelineSelectProperties pipeProperties{};
     pipeProperties.propertiesSupportLoaded = true;
-    pipeProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
     pipeProperties.pipelineSelectPropertiesSupport.systolicMode = true;
 
     constexpr bool constState = false;
     bool changingState = false;
-    pipeProperties.setPropertiesAll(changingState, constState, constState);
+    pipeProperties.setPropertiesAll(changingState, constState);
 
     EXPECT_TRUE(pipeProperties.isDirty());
 
     changingState = !changingState;
-    pipeProperties.setPropertiesAll(changingState, constState, constState);
+    pipeProperties.setPropertiesAll(changingState, constState);
 
     EXPECT_TRUE(pipeProperties.isDirty());
 }
@@ -800,26 +792,21 @@ TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyWhenSettingChan
 TEST(StreamPropertiesTests, givenSetAllPipelineSelectPropertiesWhenResettingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
     MockPipelineSelectProperties psProperties{};
     psProperties.propertiesSupportLoaded = true;
-    psProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
     psProperties.pipelineSelectPropertiesSupport.systolicMode = true;
 
     bool modeSelected = false;
-    bool mediaSamplerDopClockGate = false;
     bool systolicMode = true;
-    psProperties.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode);
+    psProperties.setPropertiesAll(modeSelected, systolicMode);
     EXPECT_TRUE(psProperties.isDirty());
     EXPECT_EQ(0, psProperties.modeSelected.value);
-    EXPECT_EQ(0, psProperties.mediaSamplerDopClockGate.value);
     EXPECT_EQ(1, psProperties.systolicMode.value);
 
     psProperties.resetState();
     EXPECT_FALSE(psProperties.isDirty());
     EXPECT_EQ(-1, psProperties.modeSelected.value);
-    EXPECT_EQ(-1, psProperties.mediaSamplerDopClockGate.value);
     EXPECT_EQ(-1, psProperties.systolicMode.value);
 
     EXPECT_TRUE(psProperties.propertiesSupportLoaded);
-    EXPECT_TRUE(psProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate);
     EXPECT_TRUE(psProperties.pipelineSelectPropertiesSupport.systolicMode);
 }
 
@@ -887,53 +874,29 @@ TEST(StreamPropertiesTests, givenModeSelectedMediaSamplerClockGatePipelineSelect
     bool clearDirtyState = false;
     MockPipelineSelectProperties pipeProperties{};
     pipeProperties.propertiesSupportLoaded = true;
-    pipeProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = false;
 
     bool modeSelected = false;
-    bool mediaSamplerDopClockGate = false;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
+    pipeProperties.setPropertiesModeSelected(modeSelected, clearDirtyState);
     EXPECT_TRUE(pipeProperties.isDirty());
     EXPECT_EQ(0, pipeProperties.modeSelected.value);
-    EXPECT_EQ(-1, pipeProperties.mediaSamplerDopClockGate.value);
 
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
+    pipeProperties.setPropertiesModeSelected(modeSelected, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
-
-    pipeProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
-    EXPECT_TRUE(pipeProperties.isDirty());
-    EXPECT_EQ(0, pipeProperties.modeSelected.value);
-    EXPECT_EQ(0, pipeProperties.mediaSamplerDopClockGate.value);
-
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
-    EXPECT_FALSE(pipeProperties.isDirty());
-    EXPECT_EQ(0, pipeProperties.modeSelected.value);
-    EXPECT_EQ(0, pipeProperties.mediaSamplerDopClockGate.value);
 
     modeSelected = true;
-    mediaSamplerDopClockGate = true;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
+    pipeProperties.setPropertiesModeSelected(modeSelected, clearDirtyState);
     EXPECT_TRUE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.modeSelected.value);
-    EXPECT_EQ(1, pipeProperties.mediaSamplerDopClockGate.value);
 
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
+    pipeProperties.setPropertiesModeSelected(modeSelected, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.modeSelected.value);
-    EXPECT_EQ(1, pipeProperties.mediaSamplerDopClockGate.value);
-
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
-    EXPECT_FALSE(pipeProperties.isDirty());
-    EXPECT_EQ(1, pipeProperties.modeSelected.value);
-    EXPECT_EQ(1, pipeProperties.mediaSamplerDopClockGate.value);
 
     clearDirtyState = true;
     modeSelected = false;
-    mediaSamplerDopClockGate = false;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
+    pipeProperties.setPropertiesModeSelected(modeSelected, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(0, pipeProperties.modeSelected.value);
-    EXPECT_EQ(0, pipeProperties.mediaSamplerDopClockGate.value);
 }
 
 TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingPropertyAndCheckIfDirtyThenExpectCleanStateForNotSupportedAndDirtyForSupported) {
@@ -1491,9 +1454,8 @@ TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesRe
     globalStreamProperties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch);
 
     bool modeSelected = false;
-    bool mediaSamplerDopClockGate = false;
     bool systolicMode = true;
-    globalStreamProperties.pipelineSelect.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode);
+    globalStreamProperties.pipelineSelect.setPropertiesAll(modeSelected, systolicMode);
 
     int32_t statelessMocs = 1;
     int64_t bindingTablePoolBaseAddress = 2;
@@ -1523,7 +1485,6 @@ TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesRe
     EXPECT_EQ(-1, globalStreamProperties.frontEndState.singleSliceDispatchCcsMode.value);
 
     EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.modeSelected.value);
-    EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.mediaSamplerDopClockGate.value);
     EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.systolicMode.value);
 
     EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.statelessMocs.value);

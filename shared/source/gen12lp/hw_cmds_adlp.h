@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,6 @@ struct ADLP : public Gen12LpFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper);
 
     struct PipelineSelectStateSupport {
-        static constexpr bool mediaSamplerDopClockGate = true;
         static constexpr bool systolicMode = true;
     };
 };

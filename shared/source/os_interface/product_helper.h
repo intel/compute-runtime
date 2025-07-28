@@ -213,7 +213,6 @@ class ProductHelper {
     virtual bool getPreemptionDbgPropertyStateSipSupport() const = 0;
     virtual bool getPreemptionDbgPropertyCsrSurfaceSupport() const = 0;
 
-    virtual bool getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const = 0;
     virtual bool getPipelineSelectPropertySystolicModeSupport() const = 0;
 
     virtual void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) const = 0;

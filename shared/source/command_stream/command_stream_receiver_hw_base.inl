@@ -849,8 +849,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() const {
     size_t size = 0;
-    if ((csrSizeRequestFlags.mediaSamplerConfigChanged ||
-         csrSizeRequestFlags.systolicPipelineSelectMode ||
+    if ((csrSizeRequestFlags.systolicPipelineSelectMode ||
          !isPreambleSent) &&
         !isPipelineSelectAlreadyProgrammed()) {
         size += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekRootDeviceEnvironment());
@@ -1571,15 +1570,10 @@ void CommandStreamReceiverHw<GfxFamily>::handleFrontEndStateTransition(const Dis
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::handlePipelineSelectStateTransition(const DispatchFlags &dispatchFlags) {
-    if (streamProperties.pipelineSelect.mediaSamplerDopClockGate.value != -1) {
-        this->lastMediaSamplerConfig = static_cast<int8_t>(streamProperties.pipelineSelect.mediaSamplerDopClockGate.value);
-    }
     if (streamProperties.pipelineSelect.systolicMode.value != -1) {
         this->lastSystolicPipelineSelectMode = !!streamProperties.pipelineSelect.systolicMode.value;
     }
 
-    csrSizeRequestFlags.mediaSamplerConfigChanged = this->pipelineSupportFlags.mediaSamplerDopClockGate &&
-                                                    (this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired));
     csrSizeRequestFlags.systolicPipelineSelectMode = this->pipelineSupportFlags.systolicMode &&
                                                      (this->lastSystolicPipelineSelectMode != dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode);
 }
@@ -2004,7 +1998,6 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushPipelineSelectState
 
     flushData.pipelineSelectArgs = {
         this->streamProperties.pipelineSelect.systolicMode.value == 1,
-        false,
         false,
         this->pipelineSupportFlags.systolicMode};
 }

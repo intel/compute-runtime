@@ -325,8 +325,6 @@ XE3_CORETEST_F(Xe3CommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFl
 XE3_CORETEST_F(Xe3CommandStreamReceiverFlushTaskTests, givenLastSystolicPipelineSelectModeWhenFlushTaskIsCalledThenDontReprogramPipelineSelect) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.lastMediaSamplerConfig = false;
-    flushTaskFlags.pipelineSelectArgs.mediaSamplerRequired = false;
     flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
 
     flushTask(commandStreamReceiver);

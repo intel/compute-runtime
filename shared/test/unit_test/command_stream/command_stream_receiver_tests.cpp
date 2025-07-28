@@ -350,7 +350,6 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     EXPECT_TRUE(csr.stateComputeModeDirty);
     EXPECT_FALSE(csr.lastVmeSubslicesConfig);
     EXPECT_EQ(0u, csr.lastSentL3Config);
-    EXPECT_EQ(-1, csr.lastMediaSamplerConfig);
     EXPECT_EQ(PreemptionMode::Initial, csr.lastPreemptionMode);
     EXPECT_EQ(static_cast<uint32_t>(-1), csr.latestSentStatelessMocsConfig);
 }
@@ -2808,28 +2807,6 @@ HWTEST_F(CommandStreamReceiverTest, givenPipelineSelectStateNotInitedWhenTransit
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
-    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
-
-    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
-    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
-    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
-
-    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
-    commandStreamReceiver.lastMediaSamplerConfig = -1;
-    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
-    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
-
-    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
-    commandStreamReceiver.lastMediaSamplerConfig = 0;
-    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
-    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
-
-    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = true;
-    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
-    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
-
-    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
     commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
 
     commandStreamReceiver.lastSystolicPipelineSelectMode = false;
@@ -2856,27 +2833,6 @@ HWTEST_F(CommandStreamReceiverTest,
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
-    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
-
-    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 1;
-    commandStreamReceiver.lastMediaSamplerConfig = -1;
-    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
-    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
-    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
-
-    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 0;
-    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = true;
-    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
-    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
-
-    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 0;
-    commandStreamReceiver.lastMediaSamplerConfig = 1;
-    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
-    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
-    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
-
-    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
     commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
 
     commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = 1;
@@ -5616,35 +5572,6 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenSpecialPipelineSelectModeChangedWhen
         expectedSize += sizeof(PIPE_CONTROL);
     }
     EXPECT_EQ(expectedSize, size);
-}
-
-HWTEST2_F(CommandStreamReceiverHwTest, givenCsrWhenPreambleSentThenRequiredCsrSizeDependsOnmediaSamplerConfigChanged, IsAtMostXeCore) {
-    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    CsrSizeRequestFlags csrSizeRequest = {};
-    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
-
-    commandStreamReceiver.isPreambleSent = true;
-
-    csrSizeRequest.mediaSamplerConfigChanged = false;
-    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto mediaSamplerConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags, *pDevice);
-
-    csrSizeRequest.mediaSamplerConfigChanged = true;
-    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto mediaSamplerConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags, *pDevice);
-
-    EXPECT_NE(mediaSamplerConfigChangedSize, mediaSamplerConfigNotChangedSize);
-    auto difference = mediaSamplerConfigChangedSize - mediaSamplerConfigNotChangedSize;
-
-    size_t expectedDifference = sizeof(PIPELINE_SELECT);
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
-        expectedDifference += sizeof(PIPE_CONTROL);
-    }
-
-    EXPECT_EQ(expectedDifference, difference);
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenPreambleSentWhenEstimatingFlushTaskSizeThenResultDependsOnAdditionalCmdsSize) {

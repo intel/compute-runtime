@@ -232,7 +232,6 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGetCommandsStreamProper
     EXPECT_TRUE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_TRUE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_FALSE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_TRUE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 

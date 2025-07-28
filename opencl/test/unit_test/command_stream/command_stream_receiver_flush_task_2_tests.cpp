@@ -1064,7 +1064,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, GivenPreambl
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
-    commandStreamReceiver.lastMediaSamplerConfig = 0;
     commandStreamReceiver.streamProperties.stateComputeMode.isCoherencyRequired.value = 0;
     csrSizeRequest.l3ConfigChanged = true;
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
@@ -1115,24 +1114,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleNotSentThenReq
     auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
 
     EXPECT_EQ(l3ConfigNotChangedSize, l3ConfigChangedSize);
-}
-
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleNotSentThenRequiredCsrSizeDoesntDependOnmediaSamplerConfigChanged) {
-    UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getGpgpuCommandStreamReceiver();
-    CsrSizeRequestFlags csrSizeRequest = {};
-    DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
-
-    commandStreamReceiver.isPreambleSent = false;
-
-    csrSizeRequest.mediaSamplerConfigChanged = false;
-    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto mediaSamplerConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags, *pDevice);
-
-    csrSizeRequest.mediaSamplerConfigChanged = true;
-    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto mediaSamplerConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags, *pDevice);
-
-    EXPECT_EQ(mediaSamplerConfigChangedSize, mediaSamplerConfigNotChangedSize);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenSamplerCacheFlushSentThenRequiredCsrSizeContainsPipecontrolSize) {

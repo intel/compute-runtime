@@ -599,7 +599,6 @@ void CommandStreamReceiver::initProgrammingFlags() {
     stateComputeModeDirty = true;
 
     lastSentL3Config = 0;
-    lastMediaSamplerConfig = -1;
     lastPreemptionMode = PreemptionMode::Initial;
 
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;

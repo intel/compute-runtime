@@ -1728,17 +1728,6 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenContextWithSeveralDevic
     context->deviceBitfields[rootDeviceIndex].set(3, false);
 }
 
-HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsDoesntHaveMediaSamplerRequired) {
-    auto *mockCsr = static_cast<MockCsrHw2<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
-    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-
-    MockKernelWithInternals mockKernel(*pClDevice, context);
-    size_t gws[3] = {1, 0, 0};
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesVme = false;
-    clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_FALSE(mockCsr->passedDispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
-}
-
 HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithEngineHintsThenEpilogRequiredIsSet) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t off[3] = {0, 0, 0};

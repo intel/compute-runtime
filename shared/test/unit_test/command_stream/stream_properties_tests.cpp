@@ -36,7 +36,6 @@ std::vector<StreamProperty *> getAllFrontEndProperties(FrontEndProperties &prope
 std::vector<StreamProperty *> getAllPipelineSelectProperties(PipelineSelectProperties &properties) {
     std::vector<StreamProperty *> allProperties;
     allProperties.push_back(&properties.modeSelected);
-    allProperties.push_back(&properties.mediaSamplerDopClockGate);
     allProperties.push_back(&properties.systolicMode);
     return allProperties;
 }

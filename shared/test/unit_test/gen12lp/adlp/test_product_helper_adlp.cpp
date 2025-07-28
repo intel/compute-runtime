@@ -108,7 +108,6 @@ ADLPTEST_F(AdlpProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesS
     EXPECT_FALSE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_FALSE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_TRUE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
