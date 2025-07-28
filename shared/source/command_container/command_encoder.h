@@ -746,6 +746,19 @@ struct EncodeStoreMemory {
 };
 
 template <typename GfxFamily>
+struct EncodeDataMemory {
+    static void programDataMemory(LinearStream &commandStream,
+                                  uint64_t dstGpuAddress,
+                                  void *srcData,
+                                  size_t size);
+    static void programDataMemory(void *commandBuffer,
+                                  uint64_t dstGpuAddress,
+                                  void *srcData,
+                                  size_t size);
+    static size_t getCommandSizeForEncode(size_t size);
+};
+
+template <typename GfxFamily>
 struct EncodeMemoryFence {
     static size_t getSystemMemoryFenceSize();
 

@@ -10,6 +10,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -246,4 +247,175 @@ HWTEST_F(CommandEncoderTest, givenEncodePostSyncArgsWhenCallingIsRegularEventThe
             EXPECT_EQ(expectedRegularEvent, args.isRegularEvent());
         }
     }
+}
+
+HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenInvalidSizeThenExpectUnrecoverable) {
+    size_t size = 3;
+
+    constexpr size_t bufferSize = 64;
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+
+    uint32_t data[2] = {0x0, 0x0};
+
+    EXPECT_ANY_THROW(EncodeDataMemory<FamilyType>::programDataMemory(cmdStream, 0x1000, data, size));
+    EXPECT_ANY_THROW(EncodeDataMemory<FamilyType>::getCommandSizeForEncode(size));
+}
+
+HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenCorrectSizesProvidedThenProgrammedMemoryIsEncodedInCommands) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    constexpr size_t bufferSize = 256;
+    uint8_t buffer[bufferSize] = {};
+    LinearStream cmdStream(buffer, bufferSize);
+
+    uint32_t data[5] = {0x1, 0x2, 0x3, 0x4, 0x5};
+
+    uint64_t gpuAddress = 0x1000;
+
+    uint32_t dwordCount = 1;
+    size_t size = dwordCount * sizeof(uint32_t);
+    size_t commandSize = 0;
+
+    EncodeDataMemory<FamilyType>::programDataMemory(cmdStream, gpuAddress, data, size);
+    commandSize = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(size);
+
+    EXPECT_EQ(sizeof(MI_STORE_DATA_IMM), commandSize);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    auto storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_EQ(1u, storeDataImmItList.size());
+
+    auto storeDataImmIt = storeDataImmItList[0];
+    MI_STORE_DATA_IMM *storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+    EXPECT_EQ(gpuAddress, storeDataImm->getAddress());
+    EXPECT_FALSE(storeDataImm->getStoreQword());
+    EXPECT_EQ(data[0], storeDataImm->getDataDword0());
+    EXPECT_EQ(0u, storeDataImm->getDataDword1());
+
+    dwordCount = 2;
+    size = dwordCount * sizeof(uint32_t);
+    memset(buffer, 0x0, bufferSize);
+    cmdStream.replaceBuffer(buffer, bufferSize);
+
+    EncodeDataMemory<FamilyType>::programDataMemory(cmdStream, gpuAddress, data, size);
+    commandSize = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(size);
+
+    EXPECT_EQ(sizeof(MI_STORE_DATA_IMM), commandSize);
+    hwParser.tearDown();
+
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_EQ(1u, storeDataImmItList.size());
+
+    storeDataImmIt = storeDataImmItList[0];
+    storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+    EXPECT_EQ(gpuAddress, storeDataImm->getAddress());
+    EXPECT_TRUE(storeDataImm->getStoreQword());
+    EXPECT_EQ(data[0], storeDataImm->getDataDword0());
+    EXPECT_EQ(data[1], storeDataImm->getDataDword1());
+
+    dwordCount = 3;
+    size = dwordCount * sizeof(uint32_t);
+    memset(buffer, 0x0, bufferSize);
+    cmdStream.replaceBuffer(buffer, bufferSize);
+
+    EncodeDataMemory<FamilyType>::programDataMemory(cmdStream, gpuAddress, data, size);
+    commandSize = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(size);
+
+    EXPECT_EQ(2 * sizeof(MI_STORE_DATA_IMM), commandSize);
+    hwParser.tearDown();
+
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_EQ(2u, storeDataImmItList.size());
+
+    storeDataImmIt = storeDataImmItList[0];
+    storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+    EXPECT_EQ(gpuAddress, storeDataImm->getAddress());
+    EXPECT_TRUE(storeDataImm->getStoreQword());
+    EXPECT_EQ(data[0], storeDataImm->getDataDword0());
+    EXPECT_EQ(data[1], storeDataImm->getDataDword1());
+
+    storeDataImmIt = storeDataImmItList[1];
+    storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+    EXPECT_EQ(gpuAddress + sizeof(uint64_t), storeDataImm->getAddress());
+    EXPECT_FALSE(storeDataImm->getStoreQword());
+    EXPECT_EQ(data[2], storeDataImm->getDataDword0());
+    EXPECT_EQ(0u, storeDataImm->getDataDword1());
+
+    dwordCount = 4;
+    size = dwordCount * sizeof(uint32_t);
+    memset(buffer, 0x0, bufferSize);
+    cmdStream.replaceBuffer(buffer, bufferSize);
+
+    EncodeDataMemory<FamilyType>::programDataMemory(cmdStream, gpuAddress, data, size);
+    commandSize = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(size);
+
+    EXPECT_EQ(2 * sizeof(MI_STORE_DATA_IMM), commandSize);
+    hwParser.tearDown();
+
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_EQ(2u, storeDataImmItList.size());
+
+    storeDataImmIt = storeDataImmItList[0];
+    storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+    EXPECT_EQ(gpuAddress, storeDataImm->getAddress());
+    EXPECT_TRUE(storeDataImm->getStoreQword());
+    EXPECT_EQ(data[0], storeDataImm->getDataDword0());
+    EXPECT_EQ(data[1], storeDataImm->getDataDword1());
+
+    storeDataImmIt = storeDataImmItList[1];
+    storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+    EXPECT_EQ(gpuAddress + sizeof(uint64_t), storeDataImm->getAddress());
+    EXPECT_TRUE(storeDataImm->getStoreQword());
+    EXPECT_EQ(data[2], storeDataImm->getDataDword0());
+    EXPECT_EQ(data[3], storeDataImm->getDataDword1());
+
+    dwordCount = 5;
+    size = dwordCount * sizeof(uint32_t);
+    memset(buffer, 0x0, bufferSize);
+    cmdStream.replaceBuffer(buffer, bufferSize);
+
+    EncodeDataMemory<FamilyType>::programDataMemory(cmdStream, gpuAddress, data, size);
+    commandSize = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(size);
+
+    EXPECT_EQ(3 * sizeof(MI_STORE_DATA_IMM), commandSize);
+    hwParser.tearDown();
+
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_EQ(3u, storeDataImmItList.size());
+
+    storeDataImmIt = storeDataImmItList[0];
+    storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+    EXPECT_EQ(gpuAddress, storeDataImm->getAddress());
+    EXPECT_TRUE(storeDataImm->getStoreQword());
+    EXPECT_EQ(data[0], storeDataImm->getDataDword0());
+    EXPECT_EQ(data[1], storeDataImm->getDataDword1());
+
+    storeDataImmIt = storeDataImmItList[1];
+    storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+    EXPECT_EQ(gpuAddress + sizeof(uint64_t), storeDataImm->getAddress());
+    EXPECT_TRUE(storeDataImm->getStoreQword());
+    EXPECT_EQ(data[2], storeDataImm->getDataDword0());
+    EXPECT_EQ(data[3], storeDataImm->getDataDword1());
+
+    storeDataImmIt = storeDataImmItList[2];
+    storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+    EXPECT_EQ(gpuAddress + 2 * sizeof(uint64_t), storeDataImm->getAddress());
+    EXPECT_FALSE(storeDataImm->getStoreQword());
+    EXPECT_EQ(data[4], storeDataImm->getDataDword0());
+    EXPECT_EQ(0u, storeDataImm->getDataDword1());
 }

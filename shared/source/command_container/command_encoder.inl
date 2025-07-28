@@ -1149,6 +1149,69 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(LinearStream &command
 }
 
 template <typename Family>
+inline void EncodeDataMemory<Family>::programDataMemory(LinearStream &commandStream,
+                                                        uint64_t dstGpuAddress,
+                                                        void *srcData,
+                                                        size_t size) {
+    size_t bufferSize = getCommandSizeForEncode(size);
+    void *commandBuffer = commandStream.getSpace(bufferSize);
+    EncodeDataMemory<Family>::programDataMemory(commandBuffer, dstGpuAddress, srcData, size);
+}
+
+template <typename Family>
+inline void EncodeDataMemory<Family>::programDataMemory(void *commandBuffer,
+                                                        uint64_t dstGpuAddress,
+                                                        void *srcData,
+                                                        size_t size) {
+    using MI_STORE_DATA_IMM = typename Family::MI_STORE_DATA_IMM;
+    auto alignedUpSize = alignUp(size, sizeof(uint32_t));
+    UNRECOVERABLE_IF(alignedUpSize != size);
+
+    MI_STORE_DATA_IMM *cmdSdi = reinterpret_cast<MI_STORE_DATA_IMM *>(commandBuffer);
+
+    uint32_t dataDword0 = 0;
+    uint32_t dataDword1 = 0;
+    bool storeQword = false;
+    size_t step = sizeof(uint32_t);
+    while (size > 0) {
+        dataDword0 = *reinterpret_cast<uint32_t *>(srcData);
+        storeQword = false;
+        dataDword1 = 0;
+        step = sizeof(uint32_t);
+        if (size >= sizeof(uint64_t)) {
+            storeQword = true;
+            dataDword1 = *(reinterpret_cast<uint32_t *>(srcData) + 1);
+            step = sizeof(uint64_t);
+        }
+        EncodeStoreMemory<Family>::programStoreDataImm(cmdSdi, dstGpuAddress, dataDword0, dataDword1, storeQword, false);
+        size -= step;
+        dstGpuAddress += step;
+        srcData = ptrOffset(srcData, step);
+        cmdSdi++;
+    }
+}
+
+template <typename Family>
+inline size_t EncodeDataMemory<Family>::getCommandSizeForEncode(size_t size) {
+    auto alignedUpSize = alignUp(size, sizeof(uint32_t));
+    UNRECOVERABLE_IF(alignedUpSize != size);
+
+    size_t commandSize = 0;
+
+    size_t step = 0;
+    while (size > 0) {
+        step = sizeof(uint32_t);
+        if (size >= sizeof(uint64_t)) {
+            step = sizeof(uint64_t);
+        }
+        commandSize += EncodeStoreMemory<Family>::getStoreDataImmSize();
+        size -= step;
+    }
+
+    return commandSize;
+}
+
+template <typename Family>
 void EncodeMiPredicate<Family>::encode(LinearStream &cmdStream, [[maybe_unused]] MiPredicateType predicateType) {
     if constexpr (Family::isUsingMiSetPredicate) {
         using MI_SET_PREDICATE = typename Family::MI_SET_PREDICATE;
