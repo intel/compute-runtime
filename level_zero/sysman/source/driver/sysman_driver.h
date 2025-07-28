@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ struct SysmanDriver {
 
 ze_result_t init(zes_init_flags_t);
 ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDrivers);
+void globalSysmanDriverCleanup();
 
 extern uint32_t driverCount;
 extern _ze_driver_handle_t *globalSysmanDriverHandle;

@@ -12,15 +12,15 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-class SysmanDeviceFixtureWithCore : public SysmanDeviceFixture, public L0::ult::DeviceFixture {
+class SysmanDeviceFixtureWithCore : public L0::ult::DeviceFixture, public SysmanDeviceFixture {
   protected:
     void SetUp() override {
-        SysmanDeviceFixture::SetUp();
         L0::ult::DeviceFixture::setUp();
+        SysmanDeviceFixture::SetUp();
     }
     void TearDown() override {
-        L0::ult::DeviceFixture::tearDown();
         SysmanDeviceFixture::TearDown();
+        L0::ult::DeviceFixture::tearDown();
     }
 };
 

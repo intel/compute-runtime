@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ namespace L0 {
 namespace ult {
 
 void SysmanDeviceFixture::SetUp() {
+    debugManager.flags.EnableSysmanLegacyModeUsingZesInit.set(false);
     if (!sysmanUltsEnable) {
         GTEST_SKIP();
     }

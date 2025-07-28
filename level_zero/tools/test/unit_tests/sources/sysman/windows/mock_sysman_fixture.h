@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,7 @@ class SysmanDeviceFixture : public DeviceFixture, public SysmanEnabledFixture {
     SysmanDeviceImp *pSysmanDeviceImp = nullptr;
     OsSysman *pOsSysman = nullptr;
     PublicWddmSysmanImp *pWddmSysmanImp = nullptr;
+    DebugManagerStateRestore restorer;
 };
 
 } // namespace ult

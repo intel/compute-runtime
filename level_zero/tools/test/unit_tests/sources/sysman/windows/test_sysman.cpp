@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,6 +93,13 @@ TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceImpWhenOsSysmanInitFailsThenUn
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanDeviceImp->init());
     pSysmanDeviceImp->pOsSysman = osSysmanOriginal;
     delete testOsSysman;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidWddmSysmanImpWhenExternBooleanUseZesInitOnWddmIsTrueThenFalseIsReturned) {
+    EXPECT_EQ(true, pWddmSysmanImp->isDriverModelSupported());
+    debugManager.flags.EnableSysmanLegacyModeUsingZesInit.set(true);
+    EXPECT_EQ(false, pWddmSysmanImp->isDriverModelSupported());
+    debugManager.flags.EnableSysmanLegacyModeUsingZesInit.set(false);
 }
 
 } // namespace ult
