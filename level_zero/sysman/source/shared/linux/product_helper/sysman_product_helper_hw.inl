@@ -354,11 +354,6 @@ void SysmanProductHelperHw<gfxProduct>::getDeviceSupportedFwTypes(FirmwareUtil *
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool SysmanProductHelperHw<gfxProduct>::isLateBindingSupported() {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isEccConfigurationSupported() {
     return false;
 }

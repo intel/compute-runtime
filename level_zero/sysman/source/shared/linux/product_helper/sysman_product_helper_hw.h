@@ -63,7 +63,6 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Firmware
     void getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) override;
-    bool isLateBindingSupported() override;
 
     // Ecc
     bool isEccConfigurationSupported() override;

@@ -54,6 +54,10 @@ ze_result_t LinuxFirmwareImp::getFirmwareVersion(std::string fwType, zes_firmwar
         return result;
     }
     if (std::find(lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end(), fwType) != lateBindingFirmwareTypes.end()) {
+        if (pLinuxSysmanImp->getSysmanKmdInterface()->isLateBindingVersionAvailable(fwType, fwVersion)) {
+            strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, fwVersion.c_str(), ZES_STRING_PROPERTY_SIZE - 1);
+            return ZE_RESULT_SUCCESS;
+        }
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     ze_result_t result = pFwInterface->getFwVersion(fwType, fwVersion);

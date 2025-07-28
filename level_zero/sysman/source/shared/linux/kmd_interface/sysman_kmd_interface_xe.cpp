@@ -25,6 +25,10 @@ static const std::map<__u16, std::string> xeEngineClassToSysfsEngineMap = {
     {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, "vcs"},
     {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, "vecs"}};
 
+static const std::map<std::string, std::string> lateBindingSysfsFileToNameMap = {
+    {"VRConfig", "device/lb_voltage_regulator_version"},
+    {"FanTable", "device/lb_fan_control_version"}};
+
 SysmanKmdInterfaceXe::SysmanKmdInterfaceXe(SysmanProductHelper *pSysmanProductHelper) {
     initSysfsNameToFileMap(pSysmanProductHelper);
     initSysfsNameToNativeUnitMap(pSysmanProductHelper);
@@ -404,6 +408,23 @@ ze_result_t SysmanKmdInterfaceXe::readPcieDowngradeAttribute(std::string sysfsNa
     }
     ze_result_t result = pSysfsAccess->read(key->second.data(), val);
     return result;
+}
+
+void SysmanKmdInterfaceXe::getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) {
+    for (auto it = lateBindingSysfsFileToNameMap.begin(); it != lateBindingSysfsFileToNameMap.end(); ++it) {
+        if (pSysfsAccess->canRead(it->second) == ZE_RESULT_SUCCESS) {
+            fwTypes.push_back(it->first);
+        }
+    }
+}
+
+bool SysmanKmdInterfaceXe::isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) {
+    auto key = lateBindingSysfsFileToNameMap.find(fwType);
+    if (key == lateBindingSysfsFileToNameMap.end()) {
+        return false;
+    }
+    ze_result_t result = pSysfsAccess->read(key->second.data(), fwVersion);
+    return result == ZE_RESULT_SUCCESS ? true : false;
 }
 
 } // namespace Sysman

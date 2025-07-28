@@ -325,6 +325,13 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenGetEnergyCoun
     EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFile(ZES_POWER_DOMAIN_CARD));
 }
 
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenCallingIsLateBindingVersionAvailableThenFalseIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::string val;
+    EXPECT_FALSE(pSysmanKmdInterface->isLateBindingVersionAvailable("FanTable", val));
+    EXPECT_FALSE(pSysmanKmdInterface->isLateBindingVersionAvailable("VRConfig", val));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

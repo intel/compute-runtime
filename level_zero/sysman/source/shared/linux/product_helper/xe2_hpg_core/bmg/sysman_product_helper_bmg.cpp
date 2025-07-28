@@ -1710,11 +1710,6 @@ bool SysmanProductHelperHw<gfxProduct>::isEccConfigurationSupported() {
 }
 
 template <>
-bool SysmanProductHelperHw<gfxProduct>::isLateBindingSupported() {
-    return true;
-}
-
-template <>
 bool SysmanProductHelperHw<gfxProduct>::isPcieDowngradeSupported() {
     return true;
 }

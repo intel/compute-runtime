@@ -322,6 +322,13 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceAndPmuReadFailsWhen
     EXPECT_EQ(pSysmanKmdInterface->readBusynessFromGroupFd(pPmuInterface.get(), fdList, &pStats), ZE_RESULT_ERROR_UNKNOWN);
 }
 
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenCallingIsLateBindingVersionAvailableThenFalseIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::string val;
+    EXPECT_FALSE(pSysmanKmdInterface->isLateBindingVersionAvailable("FanTable", val));
+    EXPECT_FALSE(pSysmanKmdInterface->isLateBindingVersionAvailable("VRConfig", val));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

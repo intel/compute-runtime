@@ -10,6 +10,7 @@
 
 #include "level_zero/sysman/source/api/firmware/sysman_firmware_imp.h"
 #include "level_zero/sysman/source/api/firmware/sysman_os_firmware.h"
+#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
@@ -17,6 +18,7 @@ namespace Sysman {
 
 class FirmwareUtil;
 class SysFsAccessInterface;
+class LinuxSysmanImp;
 
 class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -32,6 +34,7 @@ class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableAndNonMovableClass {
     ~LinuxFirmwareImp() override = default;
 
   protected:
+    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     FirmwareUtil *pFwInterface = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
     std::string osFwType;

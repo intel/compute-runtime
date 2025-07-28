@@ -195,6 +195,8 @@ class SysmanKmdInterface {
     const std::string getSysmanDeviceDirName() const;
     ze_result_t checkErrorNumberAndReturnStatus();
     virtual ze_result_t readPcieDowngradeAttribute(std::string sysfsName, uint32_t &val) { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    virtual void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) {}
+    virtual bool isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) { return false; }
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -420,6 +422,8 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::string getBurstPowerLimitFile(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
     std::string getFreqMediaDomainBasePath() override;
     ze_result_t readPcieDowngradeAttribute(std::string sysfsName, uint32_t &val) override;
+    void getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) override;
+    bool isLateBindingVersionAvailable(std::string fwType, std::string &fwVersion) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

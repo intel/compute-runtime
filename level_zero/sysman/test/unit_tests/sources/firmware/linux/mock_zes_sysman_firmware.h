@@ -18,10 +18,11 @@ constexpr uint32_t mockFwHandlesCount = 3;
 const std::string mockFwVersion("DG01->0->2026");
 const std::string mockOpromVersion("OPROM CODE VERSION:123_OPROM DATA VERSION:456");
 const std::string mockPscVersion("version 1 : 2021/09/15 00:43:12");
+const std::string mocklateBindingVersion("1.2.3.4");
 const std::string mockUnknownVersion("unknown");
-std::vector<std::string> mockSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
-std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};
-std::string mockEmpty = {};
+const std::vector<std::string> mockSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
+const std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};
+const std::string mockEmpty = {};
 class FirmwareInterface : public L0::Sysman::FirmwareUtil {};
 class FirmwareFsAccess : public L0::Sysman::FsAccessInterface {};
 class FirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {};
@@ -31,6 +32,7 @@ struct MockFirmwareFsAccess : public FirmwareFsAccess {};
 struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     ze_result_t readResult = ZE_RESULT_SUCCESS;
+    ze_result_t canReadResult = ZE_RESULT_SUCCESS;
     ze_result_t scanDirEntriesResult = ZE_RESULT_SUCCESS;
     ze_bool_t isNullDirEntries = false;
 
@@ -42,6 +44,9 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
         if (!file.compare("device/iaf.31/pscbin_version") || !file.compare("device/iaf.0/pscbin_version")) {
             val = mockPscVersion;
+        }
+        if (!file.compare("device/lb_voltage_regulator_version") || !file.compare("device/lb_fan_control_version")) {
+            val = mocklateBindingVersion;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -59,6 +64,12 @@ struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
             if (!dir.compare("device/")) {
                 list.clear();
             }
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t canRead(const std::string file) override {
+        if (canReadResult != ZE_RESULT_SUCCESS) {
+            return canReadResult;
         }
         return ZE_RESULT_SUCCESS;
     }

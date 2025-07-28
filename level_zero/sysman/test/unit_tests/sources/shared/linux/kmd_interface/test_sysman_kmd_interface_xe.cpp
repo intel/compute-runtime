@@ -414,6 +414,12 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenCallingReadPcieDowngrad
     EXPECT_EQ(pSysmanKmdInterface->readPcieDowngradeAttribute("unknown", val), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenCallingIsLateBindingVersionAvailableWithInvalidSysfsNodeThenUnsupportedIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::string val;
+    EXPECT_FALSE(pSysmanKmdInterface->isLateBindingVersionAvailable("unknown", val));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0
