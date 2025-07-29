@@ -269,6 +269,7 @@ All supported acronyms: %s.
     IGC::CodeType::CodeType_t intermediateRepresentation = IGC::CodeType::undefined;
 
     OclocArgHelper *argHelper = nullptr;
+    MOCKABLE_VIRTUAL void createTempSourceFileForDebug();
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<OfflineCompiler>);

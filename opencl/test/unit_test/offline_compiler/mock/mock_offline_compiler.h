@@ -101,6 +101,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     void clearLog();
 
     int createDir(const std::string &path) override;
+    void createTempSourceFileForDebug() override;
 
     std::map<std::string, std::string> filesMap{};
     int buildToIrBinaryStatus = 0;
@@ -116,6 +117,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     std::optional<int> buildReturnValue{};
     bool interceptCreatedDirs{false};
     std::vector<std::string> createdDirs{};
+    int createTempSourceFileForDebugCalled{0};
 };
 
 } // namespace NEO
