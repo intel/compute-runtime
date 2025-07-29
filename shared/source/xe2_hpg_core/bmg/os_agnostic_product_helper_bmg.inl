@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/allocation_type.h"
 
 #include "aubstream/product_family.h"
@@ -49,6 +50,16 @@ bool ProductHelperHw<gfxProduct>::adjustDispatchAllRequired(const HardwareInfo &
 template <>
 void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize) const {
     requiredScratchSize *= 2;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
+    return ApiSpecificConfig::OCL == ApiSpecificConfig::getApiType();
 }
 
 } // namespace NEO
