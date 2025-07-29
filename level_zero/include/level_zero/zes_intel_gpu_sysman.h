@@ -33,7 +33,7 @@ typedef enum _zes_intel_pci_link_speed_downgrade_exp_state_version_t {
 /// @brief Query pcie downgrade status.
 /// This structure can be passed in the 'pNext' of zes_pci_state_t
 typedef struct _zes_intel_pci_link_speed_downgrade_exp_state_t {
-    zet_structure_type_ext_t stype;        ///< [in] type of this structure
+    zes_structure_type_ext_t stype;        ///< [in] type of this structure
     void *pNext;                           ///< [in][optional] must be null or a pointer to an extension-specific
                                            ///< structure (i.e. contains stype and pNext).
     ze_bool_t pciLinkSpeedDowngradeStatus; ///< [out] Returns the current PCIe downgrade status .
@@ -51,7 +51,7 @@ typedef enum _zes_intel_pci_link_speed_downgrade_exp_properties_version_t {
 /// @brief Query pcie downgrade capability.
 /// This structure can be passed in the 'pNext' of zes_pci_properties_t
 typedef struct _zes_intel_pci_link_speed_downgrade_exp_properties_t {
-    zet_structure_type_ext_t stype;      ///< [in] type of this structure
+    zes_structure_type_ext_t stype;      ///< [in] type of this structure
     void *pNext;                         ///< [in][optional] must be null or a pointer to an extension-specific
                                          ///< structure (i.e. contains stype and pNext).
     ze_bool_t pciLinkSpeedUpdateCapable; ///< [out] Returns if PCIe downgrade capability is available.

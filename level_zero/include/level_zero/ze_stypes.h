@@ -9,11 +9,13 @@
 #define _ZE_STYPES_H
 
 #include <level_zero/ze_api.h>
+#include <level_zero/zes_api.h>
 #include <level_zero/zet_api.h>
 
 #include <cstdint>
 using ze_structure_type_ext_t = uint32_t;
 using zet_structure_type_ext_t = uint32_t;
+using zes_structure_type_ext_t = uint32_t;
 
 #define ZE_STRUCTURE_TYPE_SYNCHRONIZED_DISPATCH_EXP_DESC static_cast<ze_structure_type_ext_t>(0x00020020)
 #define ZE_STRUCTURE_TYPE_INTEL_MEDIA_COMMUNICATION_DESC static_cast<ze_structure_type_ext_t>(0x00020021)
@@ -45,7 +47,7 @@ using zet_structure_type_ext_t = uint32_t;
 #define ZET_INTEL_STRUCTURE_TYPE_METRIC_DECODED_BUFFER_PROPERTIES_EXP static_cast<zet_structure_type_ext_t>(0x0001000b)
 
 // Sysman structure types
-#define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE static_cast<zet_structure_type_ext_t>(0x00040001)
-#define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES static_cast<zet_structure_type_ext_t>(0x00040002)
+#define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE static_cast<zes_structure_type_ext_t>(0x00040001)
+#define ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040002)
 
 #endif

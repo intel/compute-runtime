@@ -33,7 +33,7 @@ ze_result_t LinuxPciImp::getProperties(zes_pci_properties_t *pProperties) {
 
     void *pNext = pProperties->pNext;
     while (pNext) {
-        auto pExtProps = reinterpret_cast<zet_base_properties_t *>(pNext);
+        auto pExtProps = reinterpret_cast<zes_base_properties_t *>(pNext);
         if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_PROPERTIES) {
             auto pDowngradeExtProps = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_properties_t *>(pExtProps);
             auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
@@ -323,7 +323,7 @@ ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
     const void *pNext = state->pNext;
     while (pNext) {
         result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        auto pExtProps = reinterpret_cast<zet_base_properties_t *>(const_cast<void *>(pNext));
+        auto pExtProps = reinterpret_cast<zes_base_properties_t *>(const_cast<void *>(pNext));
         if (pExtProps->stype == ZES_INTEL_PCI_LINK_SPEED_DOWNGRADE_EXP_STATE) {
             auto pDowngradeExpState = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_state_t *>(pExtProps);
             auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
