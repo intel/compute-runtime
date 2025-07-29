@@ -266,7 +266,7 @@ HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenCorrectSizesProvidedThen
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     constexpr size_t bufferSize = 256;
-    uint8_t buffer[bufferSize] = {};
+    alignas(8) uint8_t buffer[bufferSize] = {};
     LinearStream cmdStream(buffer, bufferSize);
 
     uint32_t data[5] = {0x1, 0x2, 0x3, 0x4, 0x5};
@@ -418,4 +418,145 @@ HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenCorrectSizesProvidedThen
     EXPECT_FALSE(storeDataImm->getStoreQword());
     EXPECT_EQ(data[4], storeDataImm->getDataDword0());
     EXPECT_EQ(0u, storeDataImm->getDataDword1());
+}
+
+HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingNoopThenExpectNoopDataInDispatchedCommand) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    uint32_t expectedNoop[8] = {0};
+    uint32_t dispatchedData[8];
+    memset(dispatchedData, 0xFF, sizeof(dispatchedData));
+
+    constexpr size_t bufferSize = 256;
+    alignas(8) uint8_t buffer[bufferSize] = {};
+    LinearStream cmdStream(buffer, bufferSize);
+
+    uint64_t dstGpuAddress = 0x1000;
+
+    // noop 1 dword - 1 dword SDI
+    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, sizeof(uint32_t));
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    auto storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_EQ(1u, storeDataImmItList.size());
+
+    auto storeDataImmIt = storeDataImmItList[0];
+    MI_STORE_DATA_IMM *storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+    EXPECT_EQ(dstGpuAddress, storeDataImm->getAddress());
+    EXPECT_FALSE(storeDataImm->getStoreQword());
+    EXPECT_EQ(0u, storeDataImm->getDataDword0());
+
+    memset(buffer, 0x0, bufferSize);
+    cmdStream.replaceBuffer(buffer, bufferSize);
+    hwParser.tearDown();
+
+    // noop 2 dword - 1 qword SDI
+    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, 2 * sizeof(uint32_t));
+
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_EQ(1u, storeDataImmItList.size());
+
+    storeDataImmIt = storeDataImmItList[0];
+    storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+    EXPECT_EQ(dstGpuAddress, storeDataImm->getAddress());
+    EXPECT_TRUE(storeDataImm->getStoreQword());
+    EXPECT_EQ(0u, storeDataImm->getDataDword0());
+    EXPECT_EQ(0u, storeDataImm->getDataDword1());
+
+    memset(buffer, 0x0, bufferSize);
+    cmdStream.replaceBuffer(buffer, bufferSize);
+    hwParser.tearDown();
+
+    // noop 7 dwords - 3x qword SDI + 1 dword SDI
+    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, sizeof(expectedNoop) - sizeof(uint32_t));
+
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_EQ(4u, storeDataImmItList.size());
+
+    // verify qwords
+    size_t i = 0;
+    for (; i < 3; i++) {
+        storeDataImmIt = storeDataImmItList[i];
+        storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+        EXPECT_EQ(dstGpuAddress + i * sizeof(uint64_t), storeDataImm->getAddress());
+        EXPECT_TRUE(storeDataImm->getStoreQword());
+        dispatchedData[i * 2] = storeDataImm->getDataDword0();
+        dispatchedData[i * 2 + 1] = storeDataImm->getDataDword1();
+    }
+    storeDataImmIt = storeDataImmItList[i];
+    storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+    EXPECT_EQ(dstGpuAddress + i * sizeof(uint64_t), storeDataImm->getAddress());
+    EXPECT_FALSE(storeDataImm->getStoreQword());
+    dispatchedData[i * 2] = storeDataImm->getDataDword0();
+
+    EXPECT_EQ(0, memcmp(expectedNoop, dispatchedData, sizeof(expectedNoop) - sizeof(uint32_t)));
+
+    memset(dispatchedData, 0xFF, sizeof(dispatchedData));
+    memset(buffer, 0x0, bufferSize);
+    cmdStream.replaceBuffer(buffer, bufferSize);
+    i = 0;
+    hwParser.tearDown();
+
+    // noop 8 dwords - 4x qword SDI
+    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, sizeof(expectedNoop));
+
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_EQ(4u, storeDataImmItList.size());
+    for (; i < 4; i++) {
+        storeDataImmIt = storeDataImmItList[i];
+        storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+
+        EXPECT_EQ(dstGpuAddress + i * sizeof(uint64_t), storeDataImm->getAddress());
+        EXPECT_TRUE(storeDataImm->getStoreQword());
+        dispatchedData[i * 2] = storeDataImm->getDataDword0();
+        dispatchedData[i * 2 + 1] = storeDataImm->getDataDword1();
+    }
+    EXPECT_EQ(0, memcmp(expectedNoop, dispatchedData, sizeof(expectedNoop)));
+}
+
+HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingBbStartThenExpectBbStartCmdDataInDispatchedCommand) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    constexpr size_t bbStartSizeDwordUnits = sizeof(MI_BATCH_BUFFER_START) / sizeof(uint32_t);
+    uint32_t bbStartCmdBuffer[bbStartSizeDwordUnits];
+    memset(bbStartCmdBuffer, 0x0, sizeof(MI_BATCH_BUFFER_START));
+
+    constexpr size_t bufferSize = 256;
+    alignas(8) uint8_t buffer[bufferSize] = {};
+    LinearStream cmdStream(buffer, bufferSize);
+
+    uint64_t dstGpuAddress = 0x1000;
+
+    uint64_t bbStartAddress = 0x2000;
+
+    EncodeDataMemory<FamilyType>::programBbStart(cmdStream, dstGpuAddress, bbStartAddress, false, false, false);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    auto storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+
+    size_t i = 0;
+    for (auto storeDataImmIt : storeDataImmItList) {
+        auto storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+        EXPECT_EQ(dstGpuAddress + i * sizeof(uint64_t), storeDataImm->getAddress());
+
+        bbStartCmdBuffer[2 * i] = storeDataImm->getDataDword0();
+        if (storeDataImm->getStoreQword()) {
+            ASSERT_TRUE(bbStartSizeDwordUnits > (2 * i + 1));
+            bbStartCmdBuffer[2 * i + 1] = storeDataImm->getDataDword1();
+        }
+        i++;
+    }
+
+    auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(bbStartCmdBuffer);
+    ASSERT_NE(nullptr, bbStartCmd);
+
+    EXPECT_EQ(bbStartAddress, bbStartCmd->getBatchBufferStartAddress());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStartCmd->getSecondLevelBatchBuffer());
 }

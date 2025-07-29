@@ -46,6 +46,7 @@ struct PipelineSelectArgs;
 struct RootDeviceEnvironment;
 struct StateBaseAddressProperties;
 struct StateComputeModeProperties;
+struct StreamProperties;
 struct ImplicitArgs;
 struct EncodeKernelArgsExt;
 
@@ -756,6 +757,30 @@ struct EncodeDataMemory {
                                   void *srcData,
                                   size_t size);
     static size_t getCommandSizeForEncode(size_t size);
+
+    static void programNoop(LinearStream &commandStream,
+                            uint64_t dstGpuAddress, size_t size);
+    static void programNoop(void *commandBuffer,
+                            uint64_t dstGpuAddress, size_t size);
+    static void programBbStart(LinearStream &commandStream,
+                               uint64_t dstGpuAddress, uint64_t address, bool secondLevel, bool indirect, bool predicate);
+    static void programBbStart(void *commandBuffer,
+                               uint64_t dstGpuAddress, uint64_t address, bool secondLevel, bool indirect, bool predicate);
+
+    static void programFrontEndState(LinearStream &commandStream,
+                                     uint64_t dstGpuAddress,
+                                     const RootDeviceEnvironment &rootDeviceEnvironment,
+                                     uint32_t scratchSize,
+                                     uint64_t scratchAddress,
+                                     uint32_t maxFrontEndThreads,
+                                     const StreamProperties &streamProperties);
+    static void programFrontEndState(void *commandBuffer,
+                                     uint64_t dstGpuAddress,
+                                     const RootDeviceEnvironment &rootDeviceEnvironment,
+                                     uint32_t scratchSize,
+                                     uint64_t scratchAddress,
+                                     uint32_t maxFrontEndThreads,
+                                     const StreamProperties &streamProperties);
 };
 
 template <typename GfxFamily>

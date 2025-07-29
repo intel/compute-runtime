@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -234,4 +235,66 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpAndLaterSbaTest, givenNonZeroInternalHeapBaseAd
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
     EXPECT_EQ(0ull, sbaCmd.getGeneralStateBaseAddress());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingFeCmdThenExpectFeCmdDataInDispatchedCommand) {
+    if constexpr (FamilyType::isHeaplessRequired()) {
+        constexpr size_t bufferSize = 256;
+        alignas(8) uint8_t buffer[bufferSize] = {0x0};
+        alignas(8) uint8_t zeroBuffer[bufferSize] = {0x0};
+        LinearStream cmdStream(buffer, bufferSize);
+
+        MockExecutionEnvironment executionEnvironment{};
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+        StreamProperties properties;
+
+        uint64_t dstGpuAddress = 0x1000;
+
+        EncodeDataMemory<FamilyType>::programFrontEndState(buffer, dstGpuAddress, rootDeviceEnvironment, 0x0, 0x0, 0x40, properties);
+        EXPECT_EQ(0, memcmp(buffer, zeroBuffer, bufferSize));
+
+        EncodeDataMemory<FamilyType>::programFrontEndState(cmdStream, dstGpuAddress, rootDeviceEnvironment, 0x0, 0x0, 0x40, properties);
+        EXPECT_EQ(0u, cmdStream.getUsed());
+    } else {
+        using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+        using CFE_STATE = typename FamilyType::CFE_STATE;
+
+        constexpr size_t cfeStateSizeDwordUnits = sizeof(CFE_STATE) / sizeof(uint32_t);
+        uint32_t cfeStateCmdBuffer[cfeStateSizeDwordUnits];
+        memset(cfeStateCmdBuffer, 0x0, sizeof(CFE_STATE));
+
+        constexpr size_t bufferSize = 256;
+        alignas(8) uint8_t buffer[bufferSize] = {0x0};
+        LinearStream cmdStream(buffer, bufferSize);
+
+        auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+        StreamProperties properties;
+
+        uint64_t dstGpuAddress = 0x1000;
+        uint32_t scratchAddress = 0x100;
+        uint32_t maxFrontEndThreads = 0x40;
+        EncodeDataMemory<FamilyType>::programFrontEndState(cmdStream, dstGpuAddress, rootDeviceEnvironment, 0x0, scratchAddress, maxFrontEndThreads, properties);
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(cmdStream);
+        auto storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+
+        size_t i = 0;
+        for (auto storeDataImmIt : storeDataImmItList) {
+            auto storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+            EXPECT_EQ(dstGpuAddress + i * sizeof(uint64_t), storeDataImm->getAddress());
+
+            cfeStateCmdBuffer[2 * i] = storeDataImm->getDataDword0();
+            if (storeDataImm->getStoreQword()) {
+                ASSERT_TRUE(cfeStateSizeDwordUnits > (2 * i + 1));
+                cfeStateCmdBuffer[2 * i + 1] = storeDataImm->getDataDword1();
+            }
+            i++;
+        }
+
+        auto cfeStateCmd = genCmdCast<CFE_STATE *>(cfeStateCmdBuffer);
+        ASSERT_NE(nullptr, cfeStateCmd);
+
+        EXPECT_EQ(scratchAddress, cfeStateCmd->getScratchSpaceBuffer());
+        EXPECT_EQ(maxFrontEndThreads, cfeStateCmd->getMaximumNumberOfThreads());
+    }
 }

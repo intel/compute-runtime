@@ -1196,19 +1196,68 @@ inline size_t EncodeDataMemory<Family>::getCommandSizeForEncode(size_t size) {
     auto alignedUpSize = alignUp(size, sizeof(uint32_t));
     UNRECOVERABLE_IF(alignedUpSize != size);
 
-    size_t commandSize = 0;
-
-    size_t step = 0;
-    while (size > 0) {
-        step = sizeof(uint32_t);
-        if (size >= sizeof(uint64_t)) {
-            step = sizeof(uint64_t);
-        }
-        commandSize += EncodeStoreMemory<Family>::getStoreDataImmSize();
-        size -= step;
-    }
+    size_t steps = (size / sizeof(uint64_t));
+    size_t tailSteps = (steps * sizeof(uint64_t) == size) ? 0U : 1U;
+    size_t commandSize = (steps + tailSteps) * EncodeStoreMemory<Family>::getStoreDataImmSize();
 
     return commandSize;
+}
+
+template <typename Family>
+inline void EncodeDataMemory<Family>::programNoop(LinearStream &commandStream,
+                                                  uint64_t dstGpuAddress, size_t size) {
+    size_t bufferSize = getCommandSizeForEncode(size);
+    void *commandBuffer = commandStream.getSpace(bufferSize);
+    programNoop(commandBuffer, dstGpuAddress, size);
+}
+
+template <typename Family>
+inline void EncodeDataMemory<Family>::programNoop(void *commandBuffer,
+                                                  uint64_t dstGpuAddress, size_t size) {
+    using MI_STORE_DATA_IMM = typename Family::MI_STORE_DATA_IMM;
+
+    uint32_t noopValue0 = 0;
+    uint32_t noopValue1 = 0;
+    uint32_t i = 0;
+
+    MI_STORE_DATA_IMM *cmdSdi = reinterpret_cast<MI_STORE_DATA_IMM *>(commandBuffer);
+
+    const size_t alignDownSize = alignDown(size, sizeof(uint64_t));
+    size_t unitSize = sizeof(uint64_t);
+    uint32_t maxIterations = 0;
+    if (size >= sizeof(uint64_t)) {
+        maxIterations = static_cast<uint32_t>(alignDownSize / sizeof(uint64_t));
+    }
+    for (; i < maxIterations; i++) {
+        constexpr bool storeQword = true;
+        EncodeStoreMemory<Family>::programStoreDataImm(cmdSdi, (dstGpuAddress + i * unitSize), noopValue0, noopValue1, storeQword, false);
+        cmdSdi++;
+    }
+    if (size > alignDownSize) {
+        constexpr bool storeQword = false;
+        EncodeStoreMemory<Family>::programStoreDataImm(cmdSdi, (dstGpuAddress + i * unitSize), noopValue0, noopValue1, storeQword, false);
+    }
+}
+
+template <typename Family>
+inline void EncodeDataMemory<Family>::programBbStart(LinearStream &commandStream,
+                                                     uint64_t dstGpuAddress, uint64_t address, bool secondLevel, bool indirect, bool predicate) {
+    using MI_BATCH_BUFFER_START = typename Family::MI_BATCH_BUFFER_START;
+
+    size_t bufferSize = getCommandSizeForEncode(sizeof(MI_BATCH_BUFFER_START));
+    void *commandBuffer = commandStream.getSpace(bufferSize);
+    EncodeDataMemory<Family>::programBbStart(commandBuffer, dstGpuAddress, address, secondLevel, indirect, predicate);
+}
+
+template <typename Family>
+inline void EncodeDataMemory<Family>::programBbStart(void *commandBuffer,
+                                                     uint64_t dstGpuAddress, uint64_t address, bool secondLevel, bool indirect, bool predicate) {
+    using MI_BATCH_BUFFER_START = typename Family::MI_BATCH_BUFFER_START;
+
+    alignas(8) uint8_t bbStartCmdBuffer[sizeof(MI_BATCH_BUFFER_START)];
+    EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(reinterpret_cast<MI_BATCH_BUFFER_START *>(bbStartCmdBuffer), address, secondLevel, indirect, predicate);
+
+    programDataMemory(commandBuffer, dstGpuAddress, bbStartCmdBuffer, sizeof(MI_BATCH_BUFFER_START));
 }
 
 template <typename Family>

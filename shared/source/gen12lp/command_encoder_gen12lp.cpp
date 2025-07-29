@@ -802,6 +802,28 @@ bool EncodeEnableRayTracing<Family>::is48bResourceNeededForRayTracing() {
     return true;
 }
 
+template <>
+void EncodeDataMemory<Family>::programFrontEndState(
+    LinearStream &commandStream,
+    uint64_t dstGpuAddress,
+    const RootDeviceEnvironment &rootDeviceEnvironment,
+    uint32_t scratchSize,
+    uint64_t scratchAddress,
+    uint32_t maxFrontEndThreads,
+    const StreamProperties &streamProperties) {
+}
+
+template <>
+void EncodeDataMemory<Family>::programFrontEndState(
+    void *commandBuffer,
+    uint64_t dstGpuAddress,
+    const RootDeviceEnvironment &rootDeviceEnvironment,
+    uint32_t scratchSize,
+    uint64_t scratchAddress,
+    uint32_t maxFrontEndThreads,
+    const StreamProperties &streamProperties) {
+}
+
 } // namespace NEO
 
 #include "shared/source/command_container/command_encoder_enablers.inl"

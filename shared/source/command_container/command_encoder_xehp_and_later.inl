@@ -1221,4 +1221,52 @@ inline void EncodeWA<Family>::setAdditionalPipeControlFlagsForNonPipelineStateCo
     args.unTypedDataPortCacheFlush = true;
 }
 
+template <typename Family>
+void EncodeDataMemory<Family>::programFrontEndState(
+    LinearStream &commandStream,
+    uint64_t dstGpuAddress,
+    const RootDeviceEnvironment &rootDeviceEnvironment,
+    uint32_t scratchSize,
+    uint64_t scratchAddress,
+    uint32_t maxFrontEndThreads,
+    const StreamProperties &streamProperties) {
+    if constexpr (Family::isHeaplessRequired() == false) {
+        using CFE_STATE = typename Family::CFE_STATE;
+
+        size_t bufferSize = getCommandSizeForEncode(sizeof(CFE_STATE));
+        void *commandBuffer = commandStream.getSpace(bufferSize);
+        EncodeDataMemory<Family>::programFrontEndState(commandBuffer,
+                                                       dstGpuAddress,
+                                                       rootDeviceEnvironment,
+                                                       scratchSize,
+                                                       scratchAddress,
+                                                       maxFrontEndThreads,
+                                                       streamProperties);
+    }
+}
+
+template <typename Family>
+void EncodeDataMemory<Family>::programFrontEndState(
+    void *commandBuffer,
+    uint64_t dstGpuAddress,
+    const RootDeviceEnvironment &rootDeviceEnvironment,
+    uint32_t scratchSize,
+    uint64_t scratchAddress,
+    uint32_t maxFrontEndThreads,
+    const StreamProperties &streamProperties) {
+    if constexpr (Family::isHeaplessRequired() == false) {
+        using CFE_STATE = typename Family::CFE_STATE;
+
+        alignas(8) uint8_t feInputCmdBuffer[sizeof(CFE_STATE)];
+        PreambleHelper<Family>::programVfeState(feInputCmdBuffer,
+                                                rootDeviceEnvironment,
+                                                scratchSize,
+                                                scratchAddress,
+                                                maxFrontEndThreads,
+                                                streamProperties);
+
+        programDataMemory(commandBuffer, dstGpuAddress, feInputCmdBuffer, sizeof(CFE_STATE));
+    }
+}
+
 } // namespace NEO
