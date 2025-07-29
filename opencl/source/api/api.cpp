@@ -4127,20 +4127,28 @@ CL_API_ENTRY cl_int CL_API_CALL clMemFreeCommon(cl_context context,
         return retVal;
     }
 
+    bool successfulFree = false;
+
     if (ptr && neoContext->getDeviceMemAllocPool().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
-        return CL_SUCCESS;
+        successfulFree = true;
     }
 
-    if (ptr && neoContext->getHostMemAllocPool().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
-        return CL_SUCCESS;
+    if (!successfulFree && ptr && neoContext->getHostMemAllocPool().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
+        successfulFree = true;
     }
 
-    if (ptr && !neoContext->getSVMAllocsManager()->freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
-        return CL_INVALID_VALUE;
+    if (!successfulFree) {
+        if (ptr && !neoContext->getSVMAllocsManager()->freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
+            return CL_INVALID_VALUE;
+        }
+
+        if (neoContext->getSVMAllocsManager()->getSvmMapOperation(ptr)) {
+            neoContext->getSVMAllocsManager()->removeSvmMapOperation(ptr);
+        }
     }
 
-    if (neoContext->getSVMAllocsManager()->getSvmMapOperation(ptr)) {
-        neoContext->getSVMAllocsManager()->removeSvmMapOperation(ptr);
+    if (blocking) {
+        neoContext->getMemoryManager()->cleanTemporaryAllocationListOnAllEngines(false);
     }
 
     return CL_SUCCESS;
