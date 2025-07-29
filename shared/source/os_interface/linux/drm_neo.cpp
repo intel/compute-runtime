@@ -1675,6 +1675,20 @@ int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObj
     return changeBufferObjectBinding(this, osContext, vmHandleId, bo, false, false);
 }
 
+uint64_t Drm::getSharedSystemAllocAddressRange() {
+    /*Setting GPU address larger than actual may lead to crash */
+    if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+        this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
+    }
+    /* Use full address range */
+    uint64_t gpuAddressLength = (this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.gpuAddressSpace + 1);
+    uint64_t cpuAddressLength = (0x1ull << (NEO::CpuInfo::getInstance().getVirtualAddressSize()));
+    if (cpuAddressLength < gpuAddressLength) {
+        gpuAddressLength = cpuAddressLength;
+    }
+    return gpuAddressLength;
+}
+
 int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     GemVmControl ctl{};
 
@@ -1709,7 +1723,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
             VmBindParams vmBind{};
             vmBind.vmId = static_cast<uint32_t>(ctl.vmId);
             vmBind.flags = DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
-            vmBind.length = (0x1ull << ((NEO::CpuInfo::getInstance().getVirtualAddressSize()) - 1));
+            vmBind.length = this->getSharedSystemAllocAddressRange();
             vmBind.sharedSystemUsmEnabled = true;
             vmBind.sharedSystemUsmBind = true;
             VmBindExtUserFenceT vmBindExtUserFence{};

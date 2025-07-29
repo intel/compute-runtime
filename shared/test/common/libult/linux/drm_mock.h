@@ -41,6 +41,7 @@ class DrmMock : public Drm {
     using Drm::generateElfUUID;
     using Drm::generateUUID;
     using Drm::getQueueSliceCount;
+    using Drm::getSharedSystemAllocAddressRange;
     using Drm::ioctlHelper;
     using Drm::isSharedSystemAllocEnabled;
     using Drm::memoryInfo;

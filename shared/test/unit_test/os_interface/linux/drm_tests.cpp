@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -2527,6 +2528,35 @@ TEST(DrmTest, GivenSysFsPciPathWhenCallinggetSysFsPciPathBaseNameThenResultIsCor
     EXPECT_STREQ("card7", drm.getSysFsPciPathBaseName().c_str());
     drm.mockSysFsPciPath = "card8";
     EXPECT_STREQ("card8", drm.getSysFsPciPathBaseName().c_str());
+}
+
+TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeReturnCorrectRange) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    uint64_t gpuAddrRange = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace + 1;
+    uint64_t cpuAddrRange = (0x1ull << (NEO::CpuInfo::getInstance().getVirtualAddressSize()));
+    uint64_t sharedSystemRange = drm.getSharedSystemAllocAddressRange();
+    EXPECT_LE(sharedSystemRange, gpuAddrRange);
+    EXPECT_LE(sharedSystemRange, cpuAddrRange);
+}
+
+TEST(DrmTest, GivenReducedGpuAddressRangeAndCpuAddressRangeReturnReducedRange) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideGpuAddressSpace.set(10);
+    uint64_t sharedSystemRange = drm.getSharedSystemAllocAddressRange();
+    EXPECT_EQ(sharedSystemRange, maxNBitValue(10) + 1);
+}
+
+TEST(DrmTest, GivenIncreasedGpuAddressRangeAndCpuAddressRangeReturnCpuRange) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideGpuAddressSpace.set(60);
+    uint64_t cpuAddrRange = (0x1ull << (NEO::CpuInfo::getInstance().getVirtualAddressSize()));
+    uint64_t sharedSystemRange = drm.getSharedSystemAllocAddressRange();
+    EXPECT_EQ(sharedSystemRange, cpuAddrRange);
 }
 
 using DrmHwTest = ::testing::Test;

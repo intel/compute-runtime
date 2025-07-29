@@ -269,6 +269,7 @@ class Drm : public DriverModel {
     static std::string getDrmVersion(int fileDescriptor);
     MOCKABLE_VIRTUAL uint32_t getAggregatedProcessCount() const;
     uint32_t getVmIdForContext(OsContext &osContext, uint32_t vmHandleId) const;
+    uint64_t getSharedSystemAllocAddressRange();
 
   protected:
     Drm() = delete;
