@@ -169,7 +169,7 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
-    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr, allocationData.size, 0u,
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr, allocationData.size, allocationData.alignment,
                                      CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper, hwInfo), systemMemoryStorageInfo, gmmRequirements);
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms

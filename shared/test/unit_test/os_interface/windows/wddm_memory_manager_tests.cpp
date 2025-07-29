@@ -1183,6 +1183,18 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndHugeSizeWhenAskedToC
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, GivenMemoryManagerWhenAllocateByKmdThenAlignmentIsCorrect) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    AllocationData allocationData;
+    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
+    allocationData.flags.shareable = true;
+    allocationData.alignment = 8388608;
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(static_cast<WddmMock *>(&memoryManager->getWddm(0u))->mapGpuVirtualAddressResult.alignment, allocationData.alignment);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndSmallSizeWhenAskedToCreatePhysicalGraphicsAllocationThenValidAllocationIsReturned) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;

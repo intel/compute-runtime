@@ -9,6 +9,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
@@ -103,6 +104,7 @@ bool WddmMock::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTU
     mapGpuVirtualAddressResult.called++;
     mapGpuVirtualAddressResult.cpuPtrPassed = reinterpret_cast<void *>(preferredAddress);
     mapGpuVirtualAddressResult.uint64ParamPassed = preferredAddress;
+    mapGpuVirtualAddressResult.alignment = gmm->resourceParams.BaseAlignment;
     if (callBaseMapGpuVa) {
         return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddress(gmm, handle, minimumAddress, maximumAddress, preferredAddress, gpuPtr, type);
     } else {

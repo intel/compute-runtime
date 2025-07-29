@@ -18,6 +18,7 @@ namespace WddmMockHelpers {
 struct CallResult {
     uint32_t called = 0;
     uint64_t uint64ParamPassed = -1;
+    size_t alignment = 0;
     bool success = false;
     void *cpuPtrPassed = nullptr;
 };
