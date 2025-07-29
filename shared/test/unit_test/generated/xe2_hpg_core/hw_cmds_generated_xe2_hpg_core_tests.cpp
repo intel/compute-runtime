@@ -3596,8 +3596,7 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenMemSetWhenSetterUsedThenGetterRe
     cmd.setMode(MEM_SET::MODE_FILL_MODE);
     EXPECT_EQ(MEM_SET::MODE_FILL_MODE, cmd.getMode());
 
-    cmd.setMode(MEM_SET::MODE_EVICT_MODE);
-    EXPECT_EQ(MEM_SET::MODE_EVICT_MODE, cmd.getMode());
+    EXPECT_THROW(cmd.setMode(MEM_SET::MODE_EVICT_MODE), std::exception);
 
     cmd.setInstructionTargetOpcode(MEM_SET::INSTRUCTION_TARGETOPCODE_MEM_SET);
     EXPECT_EQ(MEM_SET::INSTRUCTION_TARGETOPCODE_MEM_SET, cmd.getInstructionTargetOpcode());

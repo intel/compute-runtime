@@ -7512,6 +7512,7 @@ typedef struct tagMEM_SET {
         return static_cast<FILL_TYPE>(TheStructure.Common.FillType);
     }
     inline void setMode(const MODE value) {
+        UNRECOVERABLE_IF(value == MODE_EVICT_MODE);
         TheStructure.Common.Mode = value;
     }
     inline MODE getMode() const {
