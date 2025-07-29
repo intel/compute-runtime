@@ -509,7 +509,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
     size_t cmdListCurrentStartOffset = 0;
-    size_t maxFillPaternSizeForCopyEngine = 0;
+    size_t maxFillPatternSizeForCopyEngine = 0;
 
     uint32_t commandListPerThreadScratchSize[2]{};
 

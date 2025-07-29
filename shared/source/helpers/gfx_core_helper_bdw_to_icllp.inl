@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ bool GfxCoreHelperHw<GfxFamily>::packedFormatsSupported() const {
 }
 
 template <typename GfxFamily>
-size_t GfxCoreHelperHw<GfxFamily>::getMaxFillPaternSizeForCopyEngine() const {
+size_t GfxCoreHelperHw<GfxFamily>::getMaxFillPatternSizeForCopyEngine() const {
     return sizeof(uint32_t);
 }
 

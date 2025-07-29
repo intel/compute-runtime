@@ -786,7 +786,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
     ASSERT_NE(nullptr, dstBuffer);
     CmdListMemoryCopyParams copyParams = {};
 
-    commandList->maxFillPaternSizeForCopyEngine = 4;
+    commandList->maxFillPatternSizeForCopyEngine = 4;
 
     commandList->useAdditionalBlitProperties = false;
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
@@ -919,7 +919,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
     ASSERT_NE(nullptr, dstBuffer);
     CmdListMemoryCopyParams copyParams = {};
 
-    commandList->maxFillPaternSizeForCopyEngine = 4;
+    commandList->maxFillPatternSizeForCopyEngine = 4;
 
     commandList->useAdditionalBlitProperties = true;
     EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
@@ -960,7 +960,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPr
     ASSERT_NE(nullptr, dstBuffer);
     CmdListMemoryCopyParams copyParams = {};
 
-    commandList->maxFillPaternSizeForCopyEngine = 4;
+    commandList->maxFillPatternSizeForCopyEngine = 4;
 
     commandList->useAdditionalBlitProperties = true;
     EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);

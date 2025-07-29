@@ -529,7 +529,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         EXPECT_EQ(initialCopyTaskCount + 2, copyQueueCsr->taskCount);
     }
 
-    auto data = allocHostMem(1);
+    auto data = allocHostMem(immCmdList->maxFillPatternSizeForCopyEngine * 2);
     {
         auto offset = cmdStream->getUsed();
 
@@ -545,6 +545,26 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
 
         if (!device->getProductHelper().useAdditionalBlitProperties()) {
             EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+        }
+        EXPECT_EQ(initialCopyTaskCount + 3, copyQueueCsr->taskCount);
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        auto patternSize = immCmdList->maxFillPatternSizeForCopyEngine + 1;
+        immCmdList->appendMemoryFill(data, data, patternSize, 1, nullptr, 0, nullptr, copyParams);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto fillItor = findBltFillCmd<FamilyType>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), fillItor);
+
+        if (!device->getProductHelper().useAdditionalBlitProperties()) {
+            EXPECT_EQ(initialMainTaskCount + 1, mainQueueCsr->taskCount);
         }
         EXPECT_EQ(initialCopyTaskCount + 3, copyQueueCsr->taskCount);
     }
@@ -574,7 +594,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         EXPECT_NE(cmdList.end(), itor);
 
         if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+            EXPECT_EQ(initialMainTaskCount + 1, mainQueueCsr->taskCount);
         }
         EXPECT_EQ(initialCopyTaskCount + 4, copyQueueCsr->taskCount);
     }
@@ -593,7 +613,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         EXPECT_NE(cmdList.end(), itor);
 
         if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+            EXPECT_EQ(initialMainTaskCount + 1, mainQueueCsr->taskCount);
         }
         EXPECT_EQ(initialCopyTaskCount + 5, copyQueueCsr->taskCount);
     }
@@ -612,7 +632,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         EXPECT_NE(cmdList.end(), itor);
 
         if (!device->getProductHelper().useAdditionalBlitProperties()) {
-            EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+            EXPECT_EQ(initialMainTaskCount + 1, mainQueueCsr->taskCount);
         }
         EXPECT_EQ(initialCopyTaskCount + 6, copyQueueCsr->taskCount);
     }

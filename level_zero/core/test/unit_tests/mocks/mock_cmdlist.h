@@ -109,7 +109,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::isTimestampEventForMultiTile;
     using BaseClass::l3FlushAfterPostSyncRequired;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
-    using BaseClass::maxFillPaternSizeForCopyEngine;
+    using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::obtainKernelPreemptionMode;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
@@ -238,6 +238,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::latestFlushIsHostVisible;
     using BaseClass::latestOperationHasOptimizedCbEvent;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
+    using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::partitionCount;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
