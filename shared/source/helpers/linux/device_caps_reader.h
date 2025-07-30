@@ -7,9 +7,8 @@
 
 #pragma once
 #include "shared/source/helpers/device_caps_reader.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
-
-#include "drm_neo.h"
 
 #include <cstddef>
 #include <cstdint>
