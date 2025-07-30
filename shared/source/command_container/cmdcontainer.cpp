@@ -228,6 +228,7 @@ void CommandContainer::reset() {
     nextIddInBlock = this->getNumIddPerBlock();
     lastPipelineSelectModeRequired = false;
     endCmdPtr = nullptr;
+    endCmdGpuAddress = 0;
     alignedPrimarySize = 0;
 }
 
@@ -380,6 +381,7 @@ void CommandContainer::alignPrimaryEnding(void *endPtr, size_t exactUsedSize) {
 
 void CommandContainer::endAlignedPrimaryBuffer() {
     this->endCmdPtr = commandStream->getSpace(0u);
+    this->endCmdGpuAddress = commandStream->getCurrentGpuAddressPosition();
     alignPrimaryEnding(this->endCmdPtr, commandStream->getUsed());
 }
 

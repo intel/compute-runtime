@@ -200,6 +200,9 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     void *getEndCmdPtr() const {
         return endCmdPtr;
     }
+    uint64_t getEndCmdGpuAddress() const {
+        return endCmdGpuAddress;
+    }
     size_t getAlignedPrimarySize() const {
         return this->alignedPrimarySize;
     }
@@ -238,6 +241,7 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     uint64_t instructionHeapBaseAddress = 0u;
     uint64_t indirectObjectHeapBaseAddress = 0u;
     uint64_t currentLinearStreamStartOffset = 0u;
+    uint64_t endCmdGpuAddress = 0u;
 
     void *iddBlock = nullptr;
     Device *device = nullptr;

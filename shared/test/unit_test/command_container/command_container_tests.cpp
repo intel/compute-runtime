@@ -1781,9 +1781,11 @@ HWTEST_F(CommandContainerTest,
     cmdContainer.endAlignedPrimaryBuffer();
 
     void *endPtr = cmdContainer.getEndCmdPtr();
+    uint64_t endGpuVa = cmdContainer.getEndCmdGpuAddress();
     size_t alignedSize = cmdContainer.getAlignedPrimarySize();
 
     EXPECT_EQ(chainedCmdBufferAllocation->getUnderlyingBuffer(), endPtr);
+    EXPECT_EQ(chainedCmdBufferAllocation->getGpuAddress(), endGpuVa);
     EXPECT_EQ(expectedEndSize, alignedSize);
 }
 
@@ -1834,9 +1836,11 @@ HWTEST_F(CommandContainerTest,
     cmdContainer.endAlignedPrimaryBuffer();
 
     void *endPtr = cmdContainer.getEndCmdPtr();
+    uint64_t endGpuVa = cmdContainer.getEndCmdGpuAddress();
     size_t alignedSize = cmdContainer.getAlignedPrimarySize();
 
     EXPECT_EQ(ptrOffset(closingCmdBufferAllocation->getUnderlyingBuffer(), consumedSize), endPtr);
+    EXPECT_EQ(closingCmdBufferAllocation->getGpuAddress() + consumedSize, endGpuVa);
     EXPECT_EQ(expectedEndSize, alignedSize);
 }
 
@@ -1857,17 +1861,21 @@ HWTEST_F(CommandContainerTest,
 
     size_t expectedEndSize = alignUp(sizeof(MI_BATCH_BUFFER_START) + consumedSize, CommandContainer::minCmdBufferPtrAlign);
     void *expectedEndPtr = ptrOffset(firstCmdBufferAllocation->getUnderlyingBuffer(), consumedSize);
+    uint64_t expectedEndGpuVa = firstCmdBufferAllocation->getGpuAddress() + consumedSize;
 
     cmdContainer.endAlignedPrimaryBuffer();
 
     void *endPtr = cmdContainer.getEndCmdPtr();
+    uint64_t endGpuVa = cmdContainer.getEndCmdGpuAddress();
     size_t alignedSize = cmdContainer.getAlignedPrimarySize();
 
     EXPECT_EQ(expectedEndPtr, endPtr);
+    EXPECT_EQ(expectedEndGpuVa, endGpuVa);
     EXPECT_EQ(expectedEndSize, alignedSize);
 
     cmdContainer.reset();
     EXPECT_EQ(nullptr, cmdContainer.getEndCmdPtr());
+    EXPECT_EQ(0u, cmdContainer.getEndCmdGpuAddress());
     EXPECT_EQ(0u, cmdContainer.getAlignedPrimarySize());
 }
 
@@ -1899,16 +1907,20 @@ HWTEST_F(CommandContainerTest,
     cmdContainer.getCommandStream()->getSpace(consumedSize);
 
     void *expectedEndPtr = ptrOffset(secondCmdBufferAllocation->getUnderlyingBuffer(), consumedSize);
+    uint64_t expectedEndGpuVa = secondCmdBufferAllocation->getGpuAddress() + consumedSize;
     cmdContainer.endAlignedPrimaryBuffer();
 
     void *endPtr = cmdContainer.getEndCmdPtr();
+    uint64_t endGpuVa = cmdContainer.getEndCmdGpuAddress();
     size_t alignedSize = cmdContainer.getAlignedPrimarySize();
 
     EXPECT_EQ(expectedEndPtr, endPtr);
+    EXPECT_EQ(expectedEndGpuVa, endGpuVa);
     EXPECT_EQ(expectedEndSize, alignedSize);
 
     cmdContainer.reset();
     EXPECT_EQ(nullptr, cmdContainer.getEndCmdPtr());
+    EXPECT_EQ(0u, cmdContainer.getEndCmdGpuAddress());
     EXPECT_EQ(0u, cmdContainer.getAlignedPrimarySize());
 }
 
