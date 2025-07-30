@@ -390,11 +390,15 @@ void testAppendLaunchKernel(ze_driver_handle_t driver, ze_context_handle_t &cont
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, interimBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
 
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+
+    SUCCESS_OR_TERMINATE(zeEventDestroy(eventCopied));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
 
     SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
     SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));

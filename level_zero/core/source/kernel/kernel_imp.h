@@ -45,6 +45,8 @@ struct KernelImp : Kernel {
         }
     }
 
+    std::unique_ptr<KernelImp> cloneWithStateOverride(const KernelMutableState *stateOverride);
+
     ze_result_t getBaseAddress(uint64_t *baseAddress) override;
     ze_result_t getKernelProgramBinary(size_t *kernelSize, char *pKernelBinary) override;
     ze_result_t setIndirectAccess(ze_kernel_indirect_access_flags_t flags) override;
@@ -254,6 +256,7 @@ struct KernelImp : Kernel {
     const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;
     std::mutex *devicePrintfKernelMutex = nullptr;
+    KernelImp *cloneOrigin = nullptr;
 
     NEO::GraphicsAllocation *privateMemoryGraphicsAllocation = nullptr;
     NEO::GraphicsAllocation *printfBuffer = nullptr;

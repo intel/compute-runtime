@@ -79,10 +79,13 @@ struct KernelMutableState : public KernelMutableStateDefaultCopyableParams {
     using Params = KernelMutableStateDefaultCopyableParams;
 
     KernelMutableState();
-    KernelMutableState(KernelMutableState &&orig);
+    KernelMutableState(const KernelMutableState &rhs);
+    KernelMutableState(KernelMutableState &&orig) noexcept;
     KernelMutableState &operator=(const KernelMutableState &rhs);
-    KernelMutableState &operator=(KernelMutableState &&rhs);
+    KernelMutableState &operator=(KernelMutableState &&rhs) noexcept;
     ~KernelMutableState();
+    void swap(KernelMutableState &rhs);
+    void moveMembersFrom(KernelMutableState &&orig);
 
     void reservePerThreadDataForWholeThreadGroup(uint32_t sizeNeeded);
 

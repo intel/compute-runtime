@@ -66,70 +66,78 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssigningToItselfThenTheCurrent
     state1 = notReallyDifferentState;
     auto addressAfterAssignment{state1.crossThreadData.get()};
 
+    auto &&notReallyDifferentState2{std::move(state1)};
+    state1 = std::move(notReallyDifferentState2);
+    auto addressAfterAssignment2{state1.crossThreadData.get()};
+
     EXPECT_EQ(addressBeforeAssignment, addressAfterAssignment);
+    EXPECT_EQ(addressBeforeAssignment, addressAfterAssignment2);
 }
 
-TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenProperDeepCopyMade) {
-    KernelMutableState state1{};
-    state1.unifiedMemoryControls = {true, true, true};
-    state1.pImplicitArgs.reset(new ImplicitArgs{});
-    state1.pImplicitArgs->v0 = ImplicitArgsV0{
+void fillKernelMutableStateWithMockData(KernelMutableState &state) {
+    state.unifiedMemoryControls = {true, true, true};
+    state.pImplicitArgs.reset(new ImplicitArgs{});
+    state.pImplicitArgs->v0 = ImplicitArgsV0{
         .numWorkDim = 2,
         .simdWidth = 4,
         .globalSizeX = 8,
         .rtGlobalBufferPtr = 0x987654321,
     };
-    state1.pExtension = std::make_unique<KernelExt>();
+    state.pExtension = std::make_unique<KernelExt>();
 
     constexpr size_t mockSize{8U};
-    state1.crossThreadData.reset(new uint8_t[mockSize]);
-    std::memcpy(state1.crossThreadData.get(), std::to_array<uint8_t>({11, 12, 13, 14, 15, 16, 17, 18}).data(), mockSize);
-    state1.crossThreadDataSize = mockSize;
+    state.crossThreadData.reset(new uint8_t[mockSize]);
+    std::memcpy(state.crossThreadData.get(), std::to_array<uint8_t>({11, 12, 13, 14, 15, 16, 17, 18}).data(), mockSize);
+    state.crossThreadDataSize = mockSize;
 
-    state1.surfaceStateHeapData.reset(new uint8_t[mockSize]);
-    std::memcpy(state1.surfaceStateHeapData.get(), std::to_array<uint8_t>({21, 22, 23, 24, 25, 26, 27, 28}).data(), mockSize);
-    state1.surfaceStateHeapDataSize = mockSize;
+    state.surfaceStateHeapData.reset(new uint8_t[mockSize]);
+    std::memcpy(state.surfaceStateHeapData.get(), std::to_array<uint8_t>({21, 22, 23, 24, 25, 26, 27, 28}).data(), mockSize);
+    state.surfaceStateHeapDataSize = mockSize;
 
-    state1.dynamicStateHeapData.reset(new uint8_t[mockSize]);
-    std::memcpy(state1.dynamicStateHeapData.get(), std::to_array<uint8_t>({31, 32, 33, 34, 35, 36, 37, 38}).data(), mockSize);
-    state1.dynamicStateHeapDataSize = mockSize;
+    state.dynamicStateHeapData.reset(new uint8_t[mockSize]);
+    std::memcpy(state.dynamicStateHeapData.get(), std::to_array<uint8_t>({31, 32, 33, 34, 35, 36, 37, 38}).data(), mockSize);
+    state.dynamicStateHeapDataSize = mockSize;
 
-    state1.reservePerThreadDataForWholeThreadGroup(mockSize);
-    std::memcpy(state1.perThreadDataForWholeThreadGroup, std::to_array<uint8_t>({41, 42, 43, 44, 45, 46, 47, 48}).data(), mockSize);
+    state.reservePerThreadDataForWholeThreadGroup(mockSize);
+    std::memcpy(state.perThreadDataForWholeThreadGroup, std::to_array<uint8_t>({41, 42, 43, 44, 45, 46, 47, 48}).data(), mockSize);
 
     KernelMutableState::SuggestGroupSizeCacheEntry mockGroupSizeCacheEntry(Vec3<size_t>{52U, 54U, 58U}.values,
                                                                            std::numeric_limits<uint32_t>::max(),
                                                                            Vec3<size_t>{62U, 64U, 68U}.values);
-    state1.suggestGroupSizeCache.push_back(mockGroupSizeCacheEntry);
+    state.suggestGroupSizeCache.push_back(mockGroupSizeCacheEntry);
 
-    state1.kernelArgInfos.push_back({.value = reinterpret_cast<void *>(0x87654321ULL)});
-    state1.kernelArgHandlers.push_back(&KernelImp::setArgBuffer);
-    state1.argumentsResidencyContainer.push_back(reinterpret_cast<NEO::GraphicsAllocation *>(0x76543210ULL));
-    state1.implicitArgsResidencyContainerIndices.push_back(10);
-    state1.internalResidencyContainer.push_back(reinterpret_cast<NEO::GraphicsAllocation *>(0x65432109ULL));
-    state1.isArgUncached.push_back(true);
-    state1.isBindlessOffsetSet.push_back(true);
-    state1.usingSurfaceStateHeap.push_back(true);
-    state1.slmArgSizes.push_back(252U);
-    state1.slmArgOffsetValues.push_back(151U);
-    state1.syncBufferIndex = std::numeric_limits<size_t>::max() - 10;
-    state1.regionGroupBarrierIndex = std::numeric_limits<size_t>::max() - 11;
-    state1.globalOffsets[0] = 71;
-    state1.globalOffsets[1] = 72;
-    state1.globalOffsets[2] = 73;
-    state1.groupSize[0] = 74;
-    state1.groupSize[1] = 75;
-    state1.groupSize[2] = 76;
-    state1.perThreadDataSize = 81U;
-    state1.slmArgsTotalSize = 82U;
-    state1.kernelRequiresQueueUncachedMocsCount = 83U;
-    state1.kernelRequiresUncachedMocsCount = 84U;
-    state1.requiredWorkgroupOrder = 85U;
-    state1.threadExecutionMask = 86U;
-    state1.numThreadsPerThreadGroup = 87U;
-    state1.cacheConfigFlags = 88U;
-    state1.kernelHasIndirectAccess = true;
-    state1.kernelRequiresGenerationOfLocalIdsByRuntime = false;
+    state.kernelArgInfos.push_back({.value = reinterpret_cast<void *>(0x87654321ULL)});
+    state.kernelArgHandlers.push_back(&KernelImp::setArgBuffer);
+    state.argumentsResidencyContainer.push_back(reinterpret_cast<NEO::GraphicsAllocation *>(0x76543210ULL));
+    state.implicitArgsResidencyContainerIndices.push_back(10);
+    state.internalResidencyContainer.push_back(reinterpret_cast<NEO::GraphicsAllocation *>(0x65432109ULL));
+    state.isArgUncached.push_back(true);
+    state.isBindlessOffsetSet.push_back(true);
+    state.usingSurfaceStateHeap.push_back(true);
+    state.slmArgSizes.push_back(252U);
+    state.slmArgOffsetValues.push_back(151U);
+    state.syncBufferIndex = std::numeric_limits<size_t>::max() - 10;
+    state.regionGroupBarrierIndex = std::numeric_limits<size_t>::max() - 11;
+    state.globalOffsets[0] = 71;
+    state.globalOffsets[1] = 72;
+    state.globalOffsets[2] = 73;
+    state.groupSize[0] = 74;
+    state.groupSize[1] = 75;
+    state.groupSize[2] = 76;
+    state.perThreadDataSize = 81U;
+    state.slmArgsTotalSize = 82U;
+    state.kernelRequiresQueueUncachedMocsCount = 83U;
+    state.kernelRequiresUncachedMocsCount = 84U;
+    state.requiredWorkgroupOrder = 85U;
+    state.threadExecutionMask = 86U;
+    state.numThreadsPerThreadGroup = 87U;
+    state.cacheConfigFlags = 88U;
+    state.kernelHasIndirectAccess = true;
+    state.kernelRequiresGenerationOfLocalIdsByRuntime = false;
+}
+TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenProperDeepCopyOrMoveMade) {
+    KernelMutableState state1{};
+    fillKernelMutableStateWithMockData(state1);
 
     KernelMutableState state2{};
     state2 = state1; // assignment operator is being tested
@@ -170,6 +178,109 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     EXPECT_EQ(state1.numThreadsPerThreadGroup, state2.numThreadsPerThreadGroup);
     EXPECT_EQ(state1.cacheConfigFlags, state2.cacheConfigFlags);
     EXPECT_EQ(state1.kernelHasIndirectAccess, state2.kernelHasIndirectAccess);
+
+    KernelMutableState state3{};
+    state3 = std::move(state1);
+
+    EXPECT_EQ(nullptr, state1.crossThreadData.get());
+    EXPECT_EQ(0U, state1.crossThreadDataSize);
+    EXPECT_EQ(nullptr, state1.surfaceStateHeapData.get());
+    EXPECT_EQ(0U, state1.surfaceStateHeapDataSize);
+    EXPECT_EQ(nullptr, state1.dynamicStateHeapData.get());
+    EXPECT_EQ(0U, state1.dynamicStateHeapDataSize);
+    EXPECT_EQ(nullptr, state1.pImplicitArgs);
+    EXPECT_EQ(nullptr, state1.pExtension);
+    EXPECT_EQ(nullptr, state1.perThreadDataForWholeThreadGroup);
+    EXPECT_EQ(0U, state1.perThreadDataSizeForWholeThreadGroup);
+    EXPECT_EQ(0U, state1.perThreadDataSizeForWholeThreadGroupAllocated);
+
+    EXPECT_EQ(0, std::memcmp(state3.crossThreadData.get(), state2.crossThreadData.get(), state3.crossThreadDataSize));
+    EXPECT_EQ(0, std::memcmp(state3.surfaceStateHeapData.get(), state2.surfaceStateHeapData.get(), state3.surfaceStateHeapDataSize));
+    EXPECT_EQ(0, std::memcmp(state3.dynamicStateHeapData.get(), state2.dynamicStateHeapData.get(), state3.dynamicStateHeapDataSize));
+
+    EXPECT_EQ(0, std::memcmp(state3.perThreadDataForWholeThreadGroup, state2.perThreadDataForWholeThreadGroup, state3.perThreadDataSizeForWholeThreadGroup));
+
+    EXPECT_TRUE(state3.suggestGroupSizeCache == state2.suggestGroupSizeCache);
+    EXPECT_TRUE(state3.kernelArgInfos == state2.kernelArgInfos);
+    EXPECT_TRUE(state3.kernelArgHandlers == state2.kernelArgHandlers);
+    EXPECT_TRUE(state3.argumentsResidencyContainer == state2.argumentsResidencyContainer);
+    EXPECT_TRUE(state3.implicitArgsResidencyContainerIndices == state2.implicitArgsResidencyContainerIndices);
+    EXPECT_TRUE(state3.internalResidencyContainer == state2.internalResidencyContainer);
+    EXPECT_TRUE(state3.isArgUncached == state2.isArgUncached);
+    EXPECT_TRUE(state3.isBindlessOffsetSet == state2.isBindlessOffsetSet);
+    EXPECT_TRUE(state3.usingSurfaceStateHeap == state2.usingSurfaceStateHeap);
+    EXPECT_TRUE(state3.slmArgSizes == state2.slmArgSizes);
+    EXPECT_TRUE(state3.slmArgOffsetValues == state2.slmArgOffsetValues);
+    EXPECT_TRUE(state3.syncBufferIndex == state2.syncBufferIndex);
+    EXPECT_TRUE(state3.regionGroupBarrierIndex == state2.regionGroupBarrierIndex);
+
+    EXPECT_EQ(0, std::memcmp(state3.globalOffsets, state2.globalOffsets, KernelMutableState::dimMax * sizeof(uint32_t)));
+    EXPECT_EQ(0, std::memcmp(state3.groupSize, state2.groupSize, KernelMutableState::dimMax * sizeof(uint32_t)));
+    EXPECT_EQ(state3.crossThreadDataSize, state2.crossThreadDataSize);
+    EXPECT_EQ(state3.surfaceStateHeapDataSize, state2.surfaceStateHeapDataSize);
+    EXPECT_EQ(state3.dynamicStateHeapDataSize, state2.dynamicStateHeapDataSize);
+    EXPECT_EQ(state3.perThreadDataSize, state2.perThreadDataSize);
+    EXPECT_EQ(state3.slmArgsTotalSize, state2.slmArgsTotalSize);
+    EXPECT_EQ(state3.perThreadDataSizeForWholeThreadGroup, state2.perThreadDataSizeForWholeThreadGroup);
+    EXPECT_EQ(state3.perThreadDataSizeForWholeThreadGroupAllocated, state2.perThreadDataSizeForWholeThreadGroupAllocated);
+    EXPECT_EQ(state3.kernelRequiresQueueUncachedMocsCount, state2.kernelRequiresQueueUncachedMocsCount);
+    EXPECT_EQ(state3.kernelRequiresUncachedMocsCount, state2.kernelRequiresUncachedMocsCount);
+    EXPECT_EQ(state3.requiredWorkgroupOrder, state2.requiredWorkgroupOrder);
+    EXPECT_EQ(state3.threadExecutionMask, state2.threadExecutionMask);
+    EXPECT_EQ(state3.numThreadsPerThreadGroup, state2.numThreadsPerThreadGroup);
+    EXPECT_EQ(state3.cacheConfigFlags, state2.cacheConfigFlags);
+    EXPECT_EQ(state3.kernelHasIndirectAccess, state2.kernelHasIndirectAccess);
+}
+
+TEST_F(KernelImpTest, GivenKernelMutableStateWhenKernelImpClonedThenStateAssignedAndCloneOriginMarked) {
+    NEO::KernelDescriptor descriptor;
+    WhiteBox<::L0::KernelImmutableData> kernelInfo{};
+    kernelInfo.kernelDescriptor = &descriptor;
+
+    Mock<Module> module(device, nullptr);
+    WhiteBox<KernelImp> kernel1;
+    kernel1.kernelImmData = &kernelInfo;
+    kernel1.module = &module;
+
+    constexpr size_t mockSize{8U};
+    kernel1.state.crossThreadData.reset(new uint8_t[mockSize]);
+    std::memcpy(kernel1.state.crossThreadData.get(), std::to_array<uint8_t>({91, 92, 93, 94, 95, 96, 97, 98}).data(), mockSize);
+    kernel1.state.crossThreadDataSize = mockSize;
+    kernel1.state.reservePerThreadDataForWholeThreadGroup(mockSize);
+    std::memcpy(kernel1.state.perThreadDataForWholeThreadGroup, std::to_array<uint8_t>({81, 82, 83, 84, 85, 86, 87, 88}).data(), mockSize);
+
+    // This state overrides the state of kernel1's clone
+    KernelMutableState state;
+    fillKernelMutableStateWithMockData(state);
+
+    // No need to check each and every member again
+    EXPECT_NE(0, std::memcmp(kernel1.state.crossThreadData.get(), state.crossThreadData.get(), mockSize));
+    EXPECT_NE(0, std::memcmp(kernel1.state.perThreadDataForWholeThreadGroup, state.perThreadDataForWholeThreadGroup, mockSize));
+
+    auto clonedKernel = kernel1.cloneWithStateOverride(&state);
+    auto kernel2 = static_cast<WhiteBox<KernelImp> *>(clonedKernel.get());
+
+    // KernelMutableState part taken from `state`
+    EXPECT_EQ(0, std::memcmp(kernel2->state.crossThreadData.get(), state.crossThreadData.get(), mockSize));
+    EXPECT_EQ(0, std::memcmp(kernel2->state.perThreadDataForWholeThreadGroup, state.perThreadDataForWholeThreadGroup, mockSize));
+
+    // KernelImp part taken from `kernel1`
+    EXPECT_EQ(kernel2->cloneOrigin, &kernel1);
+    EXPECT_EQ(kernel2->kernelImmData, &kernelInfo);
+    EXPECT_EQ(kernel2->devicePrintfKernelMutex, kernel1.devicePrintfKernelMutex);
+    EXPECT_EQ(kernel2->privateMemoryGraphicsAllocation, kernel1.privateMemoryGraphicsAllocation);
+    EXPECT_EQ(kernel2->printfBuffer, kernel1.printfBuffer);
+    EXPECT_EQ(kernel2->surfaceStateAlignmentMask, kernel1.surfaceStateAlignmentMask);
+    EXPECT_EQ(kernel2->surfaceStateAlignment, kernel1.surfaceStateAlignment);
+    EXPECT_EQ(kernel2->implicitArgsVersion, kernel1.implicitArgsVersion);
+    EXPECT_EQ(kernel2->walkerInlineDataSize, kernel1.walkerInlineDataSize);
+    EXPECT_EQ(kernel2->maxWgCountPerTileCcs, kernel1.maxWgCountPerTileCcs);
+    EXPECT_EQ(kernel2->maxWgCountPerTileRcs, kernel1.maxWgCountPerTileRcs);
+    EXPECT_EQ(kernel2->maxWgCountPerTileCooperative, kernel1.maxWgCountPerTileCooperative);
+    EXPECT_EQ(kernel2->heaplessEnabled, kernel1.heaplessEnabled);
+    EXPECT_EQ(kernel2->implicitScalingEnabled, kernel1.implicitScalingEnabled);
+    EXPECT_EQ(kernel2->rcsAvailable, kernel1.rcsAvailable);
+    EXPECT_EQ(kernel2->cooperativeSupport, kernel1.cooperativeSupport);
 }
 
 TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAndGroupCount) {

@@ -40,8 +40,10 @@ template <>
 struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using BaseClass = ::L0::KernelImp;
     using BaseClass::BaseClass;
+    using ::L0::KernelImp::cloneOrigin;
     using ::L0::KernelImp::cooperativeSupport;
     using ::L0::KernelImp::createPrintfBuffer;
+    using ::L0::KernelImp::devicePrintfKernelMutex;
     using ::L0::KernelImp::heaplessEnabled;
     using ::L0::KernelImp::implicitArgsVersion;
     using ::L0::KernelImp::implicitScalingEnabled;
@@ -55,6 +57,7 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::patchBindlessSurfaceState;
     using ::L0::KernelImp::patchSamplerBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::printfBuffer;
+    using ::L0::KernelImp::privateMemoryGraphicsAllocation;
     using ::L0::KernelImp::rcsAvailable;
     using ::L0::KernelImp::setAssertBuffer;
     using ::L0::KernelImp::state;

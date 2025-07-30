@@ -245,12 +245,7 @@ void KernelImmutableData::setIsaPerKernelAllocation(NEO::GraphicsAllocation *all
 
 KernelMutableState::KernelMutableState() : pImplicitArgs{nullptr}, pExtension{nullptr} {};
 
-KernelMutableState &KernelMutableState::operator=(const KernelMutableState &rhs) {
-    if (this == &rhs) {
-        return *this;
-    }
-    this->Params::operator=(rhs);
-
+KernelMutableState::KernelMutableState(const KernelMutableState &rhs) : Params{rhs} {
     pImplicitArgs = (rhs.pImplicitArgs) ? std::make_unique<NEO::ImplicitArgs>(*rhs.pImplicitArgs) : nullptr;
     pExtension = nullptr;
 
@@ -276,17 +271,64 @@ KernelMutableState &KernelMutableState::operator=(const KernelMutableState &rhs)
         reservePerThreadDataForWholeThreadGroup(rhs.perThreadDataSizeForWholeThreadGroup);
         DEBUG_BREAK_IF(perThreadDataSizeForWholeThreadGroupAllocated < perThreadDataSizeForWholeThreadGroup);
         DEBUG_BREAK_IF(nullptr == rhs.perThreadDataForWholeThreadGroup);
+        DEBUG_BREAK_IF(nullptr == perThreadDataForWholeThreadGroup);
         std::memcpy(perThreadDataForWholeThreadGroup, rhs.perThreadDataForWholeThreadGroup, perThreadDataSizeForWholeThreadGroup);
         const size_t tailSize = perThreadDataSizeForWholeThreadGroupAllocated - perThreadDataSizeForWholeThreadGroup;
         std::memset(perThreadDataForWholeThreadGroup + perThreadDataSizeForWholeThreadGroup, 0x0, tailSize);
     }
+};
 
+KernelMutableState &KernelMutableState::operator=(const KernelMutableState &rhs) {
+    if (&rhs != this) {
+        KernelMutableState tmp{rhs};
+        swap(tmp);
+    }
     return *this;
 }
 
-KernelMutableState::KernelMutableState(KernelMutableState &&orig) = default;
+void KernelMutableState::swap(KernelMutableState &rhs) {
+    using std::swap;
+    swap(*static_cast<Params *>(this), static_cast<Params &>(rhs));
+    swap(this->pImplicitArgs, rhs.pImplicitArgs);
+    swap(this->pExtension, rhs.pExtension);
+    swap(this->crossThreadData, rhs.crossThreadData);
+    swap(this->crossThreadDataSize, rhs.crossThreadDataSize);
+    swap(this->surfaceStateHeapData, rhs.surfaceStateHeapData);
+    swap(this->surfaceStateHeapDataSize, rhs.surfaceStateHeapDataSize);
+    swap(this->dynamicStateHeapData, rhs.dynamicStateHeapData);
+    swap(this->dynamicStateHeapDataSize, rhs.dynamicStateHeapDataSize);
+    swap(this->perThreadDataForWholeThreadGroup, rhs.perThreadDataForWholeThreadGroup);
+    swap(this->perThreadDataSizeForWholeThreadGroup, rhs.perThreadDataSizeForWholeThreadGroup);
+    swap(this->perThreadDataSizeForWholeThreadGroupAllocated, rhs.perThreadDataSizeForWholeThreadGroupAllocated);
+}
 
-KernelMutableState &KernelMutableState::operator=(KernelMutableState &&rhs) = default;
+KernelMutableState::KernelMutableState(KernelMutableState &&orig) noexcept : Params{std::move(orig)} {
+    this->moveMembersFrom(std::move(orig));
+}
+
+KernelMutableState &KernelMutableState::operator=(KernelMutableState &&rhs) noexcept {
+    if (&rhs != this) {
+        static_cast<Params &>(*this) = static_cast<Params &&>(std::move(rhs));
+        this->moveMembersFrom(std::move(rhs));
+    }
+    return *this;
+}
+
+void KernelMutableState::moveMembersFrom(KernelMutableState &&orig) {
+    pImplicitArgs = std::move(orig.pImplicitArgs);
+    pExtension = std::move(orig.pExtension);
+
+    crossThreadDataSize = std::exchange(orig.crossThreadDataSize, 0U);
+    crossThreadData = std::move(orig.crossThreadData);
+    surfaceStateHeapDataSize = std::exchange(orig.surfaceStateHeapDataSize, 0U);
+    surfaceStateHeapData = std::move(orig.surfaceStateHeapData);
+    dynamicStateHeapDataSize = std::exchange(orig.dynamicStateHeapDataSize, 0U);
+    dynamicStateHeapData = std::move(orig.dynamicStateHeapData);
+
+    perThreadDataForWholeThreadGroup = std::exchange(orig.perThreadDataForWholeThreadGroup, nullptr);
+    perThreadDataSizeForWholeThreadGroup = std::exchange(orig.perThreadDataSizeForWholeThreadGroup, 0U);
+    perThreadDataSizeForWholeThreadGroupAllocated = std::exchange(orig.perThreadDataSizeForWholeThreadGroupAllocated, 0U);
+}
 
 void KernelMutableState::reservePerThreadDataForWholeThreadGroup(uint32_t sizeNeeded) {
     if (sizeNeeded > perThreadDataSizeForWholeThreadGroupAllocated) {
@@ -323,6 +365,11 @@ KernelImp::KernelImp(Module *module) : module(module) {
 }
 
 KernelImp::~KernelImp() {
+    /* Only original instance should release resources shared with clones */
+    if (nullptr != cloneOrigin) {
+        return;
+    }
+
     if (nullptr != privateMemoryGraphicsAllocation) {
         module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(privateMemoryGraphicsAllocation);
     }
@@ -1296,6 +1343,43 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+std::unique_ptr<KernelImp> KernelImp::cloneWithStateOverride(const KernelMutableState *stateOverride) {
+    auto *device{static_cast<DeviceImp *>(this->module->getDevice())};
+    const auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+
+    KernelAllocatorFn allocator = kernelFactory[productFamily];
+    auto clone = static_cast<KernelImp *>(allocator(module));
+    DEBUG_BREAK_IF(nullptr == clone);
+
+    clone->cloneOrigin = this;
+
+    // Kernel-specific members dynamically set in `initailize()` but shareable with clones
+    clone->kernelImmData = this->kernelImmData;
+    clone->devicePrintfKernelMutex = this->devicePrintfKernelMutex;
+    clone->privateMemoryGraphicsAllocation = this->privateMemoryGraphicsAllocation;
+
+    clone->printfBuffer = this->printfBuffer;
+    clone->surfaceStateAlignmentMask = this->surfaceStateAlignmentMask;
+    clone->surfaceStateAlignment = this->surfaceStateAlignment;
+
+    clone->implicitArgsVersion = this->implicitArgsVersion;
+    clone->walkerInlineDataSize = this->walkerInlineDataSize;
+
+    clone->maxWgCountPerTileCcs = this->maxWgCountPerTileCcs;
+    clone->maxWgCountPerTileRcs = this->maxWgCountPerTileRcs;
+    clone->maxWgCountPerTileCooperative = this->maxWgCountPerTileCooperative;
+    clone->heaplessEnabled = this->heaplessEnabled;
+    clone->implicitScalingEnabled = this->implicitScalingEnabled;
+    clone->rcsAvailable = this->rcsAvailable;
+    clone->cooperativeSupport = this->cooperativeSupport;
+
+    if (stateOverride) {
+        clone->state = *stateOverride;
+    }
+
+    return std::unique_ptr<KernelImp>{clone};
 }
 
 void KernelImp::createPrintfBuffer() {
