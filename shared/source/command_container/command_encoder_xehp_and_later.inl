@@ -1247,7 +1247,7 @@ void EncodeDataMemory<Family>::programFrontEndState(
 
 template <typename Family>
 void EncodeDataMemory<Family>::programFrontEndState(
-    void *commandBuffer,
+    void *&commandBuffer,
     uint64_t dstGpuAddress,
     const RootDeviceEnvironment &rootDeviceEnvironment,
     uint32_t scratchSize,

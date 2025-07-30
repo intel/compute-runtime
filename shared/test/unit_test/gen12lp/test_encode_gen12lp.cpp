@@ -39,6 +39,7 @@ GEN12LPTEST_F(CommandEncodeGen12LpTest, whenProgrammingStateComputeModeThenPrope
 GEN12LPTEST_F(CommandEncodeGen12LpTest, givenEncodeDataInMemoryWhenProgrammingFeCmdThenTakeNoAction) {
     constexpr size_t bufferSize = 256;
     alignas(8) uint8_t buffer[bufferSize] = {0x0};
+    void *bufferPtr = buffer;
     alignas(8) uint8_t zeroBuffer[bufferSize] = {0x0};
     LinearStream cmdStream(buffer, bufferSize);
 
@@ -48,7 +49,7 @@ GEN12LPTEST_F(CommandEncodeGen12LpTest, givenEncodeDataInMemoryWhenProgrammingFe
 
     uint64_t dstGpuAddress = 0x1000;
 
-    EncodeDataMemory<FamilyType>::programFrontEndState(buffer, dstGpuAddress, rootDeviceEnvironment, 0x0, 0x0, 0x40, properties);
+    EncodeDataMemory<FamilyType>::programFrontEndState(bufferPtr, dstGpuAddress, rootDeviceEnvironment, 0x0, 0x0, 0x40, properties);
     EXPECT_EQ(0, memcmp(buffer, zeroBuffer, bufferSize));
 
     EncodeDataMemory<FamilyType>::programFrontEndState(cmdStream, dstGpuAddress, rootDeviceEnvironment, 0x0, 0x0, 0x40, properties);

@@ -428,13 +428,21 @@ HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingNoopThenExpec
     memset(dispatchedData, 0xFF, sizeof(dispatchedData));
 
     constexpr size_t bufferSize = 256;
-    alignas(8) uint8_t buffer[bufferSize] = {};
+    alignas(8) uint8_t buffer[bufferSize] = {0x0};
+    alignas(8) uint8_t memory[bufferSize] = {0x0};
+    void *memoryPtr = memory;
+    void *baseMemoryPtr = memoryPtr;
     LinearStream cmdStream(buffer, bufferSize);
 
     uint64_t dstGpuAddress = 0x1000;
 
     // noop 1 dword - 1 dword SDI
-    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, sizeof(uint32_t));
+    size_t requiredMemorySize = sizeof(uint32_t);
+    size_t offset = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(requiredMemorySize);
+    EncodeDataMemory<FamilyType>::programNoop(memoryPtr, dstGpuAddress, requiredMemorySize);
+    EXPECT_EQ(ptrOffset(baseMemoryPtr, offset), memoryPtr);
+
+    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, requiredMemorySize);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream);
@@ -450,9 +458,15 @@ HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingNoopThenExpec
     memset(buffer, 0x0, bufferSize);
     cmdStream.replaceBuffer(buffer, bufferSize);
     hwParser.tearDown();
+    memoryPtr = baseMemoryPtr;
 
     // noop 2 dword - 1 qword SDI
-    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, 2 * sizeof(uint32_t));
+    requiredMemorySize = 2 * sizeof(uint32_t);
+    offset = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(requiredMemorySize);
+    EncodeDataMemory<FamilyType>::programNoop(memoryPtr, dstGpuAddress, requiredMemorySize);
+    EXPECT_EQ(ptrOffset(baseMemoryPtr, offset), memoryPtr);
+
+    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, requiredMemorySize);
 
     hwParser.parseCommands<FamilyType>(cmdStream);
     storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
@@ -468,9 +482,15 @@ HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingNoopThenExpec
     memset(buffer, 0x0, bufferSize);
     cmdStream.replaceBuffer(buffer, bufferSize);
     hwParser.tearDown();
+    memoryPtr = baseMemoryPtr;
 
     // noop 7 dwords - 3x qword SDI + 1 dword SDI
-    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, sizeof(expectedNoop) - sizeof(uint32_t));
+    requiredMemorySize = sizeof(expectedNoop) - sizeof(uint32_t);
+    offset = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(requiredMemorySize);
+    EncodeDataMemory<FamilyType>::programNoop(memoryPtr, dstGpuAddress, requiredMemorySize);
+    EXPECT_EQ(ptrOffset(baseMemoryPtr, offset), memoryPtr);
+
+    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, requiredMemorySize);
 
     hwParser.parseCommands<FamilyType>(cmdStream);
     storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
@@ -493,16 +513,22 @@ HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingNoopThenExpec
     EXPECT_FALSE(storeDataImm->getStoreQword());
     dispatchedData[i * 2] = storeDataImm->getDataDword0();
 
-    EXPECT_EQ(0, memcmp(expectedNoop, dispatchedData, sizeof(expectedNoop) - sizeof(uint32_t)));
+    EXPECT_EQ(0, memcmp(expectedNoop, dispatchedData, requiredMemorySize));
 
     memset(dispatchedData, 0xFF, sizeof(dispatchedData));
     memset(buffer, 0x0, bufferSize);
     cmdStream.replaceBuffer(buffer, bufferSize);
     i = 0;
     hwParser.tearDown();
+    memoryPtr = baseMemoryPtr;
 
     // noop 8 dwords - 4x qword SDI
-    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, sizeof(expectedNoop));
+    requiredMemorySize = sizeof(expectedNoop);
+    offset = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(requiredMemorySize);
+    EncodeDataMemory<FamilyType>::programNoop(memoryPtr, dstGpuAddress, requiredMemorySize);
+    EXPECT_EQ(ptrOffset(baseMemoryPtr, offset), memoryPtr);
+
+    EncodeDataMemory<FamilyType>::programNoop(cmdStream, dstGpuAddress, requiredMemorySize);
 
     hwParser.parseCommands<FamilyType>(cmdStream);
     storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
@@ -516,7 +542,7 @@ HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingNoopThenExpec
         dispatchedData[i * 2] = storeDataImm->getDataDword0();
         dispatchedData[i * 2 + 1] = storeDataImm->getDataDword1();
     }
-    EXPECT_EQ(0, memcmp(expectedNoop, dispatchedData, sizeof(expectedNoop)));
+    EXPECT_EQ(0, memcmp(expectedNoop, dispatchedData, requiredMemorySize));
 }
 
 HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingBbStartThenExpectBbStartCmdDataInDispatchedCommand) {
@@ -529,6 +555,8 @@ HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingBbStartThenEx
 
     constexpr size_t bufferSize = 256;
     alignas(8) uint8_t buffer[bufferSize] = {};
+    alignas(8) uint8_t memory[bufferSize] = {};
+    void *memoryPtr = memory;
     LinearStream cmdStream(buffer, bufferSize);
 
     uint64_t dstGpuAddress = 0x1000;
@@ -559,4 +587,9 @@ HWTEST_F(CommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingBbStartThenEx
 
     EXPECT_EQ(bbStartAddress, bbStartCmd->getBatchBufferStartAddress());
     EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStartCmd->getSecondLevelBatchBuffer());
+
+    void *baseMemoryPtr = memoryPtr;
+    size_t offset = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(MI_BATCH_BUFFER_START));
+    EncodeDataMemory<FamilyType>::programBbStart(memoryPtr, dstGpuAddress, bbStartAddress, false, false, false);
+    EXPECT_EQ(ptrOffset(baseMemoryPtr, offset), memoryPtr);
 }

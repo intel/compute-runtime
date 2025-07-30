@@ -1159,7 +1159,7 @@ inline void EncodeDataMemory<Family>::programDataMemory(LinearStream &commandStr
 }
 
 template <typename Family>
-inline void EncodeDataMemory<Family>::programDataMemory(void *commandBuffer,
+inline void EncodeDataMemory<Family>::programDataMemory(void *&commandBuffer,
                                                         uint64_t dstGpuAddress,
                                                         void *srcData,
                                                         size_t size) {
@@ -1189,6 +1189,7 @@ inline void EncodeDataMemory<Family>::programDataMemory(void *commandBuffer,
         srcData = ptrOffset(srcData, step);
         cmdSdi++;
     }
+    commandBuffer = reinterpret_cast<void *>(cmdSdi);
 }
 
 template <typename Family>
@@ -1212,21 +1213,21 @@ inline void EncodeDataMemory<Family>::programNoop(LinearStream &commandStream,
 }
 
 template <typename Family>
-inline void EncodeDataMemory<Family>::programNoop(void *commandBuffer,
+inline void EncodeDataMemory<Family>::programNoop(void *&commandBuffer,
                                                   uint64_t dstGpuAddress, size_t size) {
     using MI_STORE_DATA_IMM = typename Family::MI_STORE_DATA_IMM;
 
-    uint32_t noopValue0 = 0;
-    uint32_t noopValue1 = 0;
-    uint32_t i = 0;
+    constexpr uint32_t noopValue0 = 0;
+    constexpr uint32_t noopValue1 = 0;
+    constexpr size_t unitSize = sizeof(uint64_t);
 
     MI_STORE_DATA_IMM *cmdSdi = reinterpret_cast<MI_STORE_DATA_IMM *>(commandBuffer);
 
-    const size_t alignDownSize = alignDown(size, sizeof(uint64_t));
-    size_t unitSize = sizeof(uint64_t);
+    const size_t alignDownSize = alignDown(size, unitSize);
+    uint32_t i = 0;
     uint32_t maxIterations = 0;
-    if (size >= sizeof(uint64_t)) {
-        maxIterations = static_cast<uint32_t>(alignDownSize / sizeof(uint64_t));
+    if (size >= unitSize) {
+        maxIterations = static_cast<uint32_t>(alignDownSize / unitSize);
     }
     for (; i < maxIterations; i++) {
         constexpr bool storeQword = true;
@@ -1236,7 +1237,9 @@ inline void EncodeDataMemory<Family>::programNoop(void *commandBuffer,
     if (size > alignDownSize) {
         constexpr bool storeQword = false;
         EncodeStoreMemory<Family>::programStoreDataImm(cmdSdi, (dstGpuAddress + i * unitSize), noopValue0, noopValue1, storeQword, false);
+        cmdSdi++;
     }
+    commandBuffer = reinterpret_cast<void *>(cmdSdi);
 }
 
 template <typename Family>
@@ -1250,7 +1253,7 @@ inline void EncodeDataMemory<Family>::programBbStart(LinearStream &commandStream
 }
 
 template <typename Family>
-inline void EncodeDataMemory<Family>::programBbStart(void *commandBuffer,
+inline void EncodeDataMemory<Family>::programBbStart(void *&commandBuffer,
                                                      uint64_t dstGpuAddress, uint64_t address, bool secondLevel, bool indirect, bool predicate) {
     using MI_BATCH_BUFFER_START = typename Family::MI_BATCH_BUFFER_START;
 

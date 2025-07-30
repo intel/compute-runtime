@@ -752,7 +752,7 @@ struct EncodeDataMemory {
                                   uint64_t dstGpuAddress,
                                   void *srcData,
                                   size_t size);
-    static void programDataMemory(void *commandBuffer,
+    static void programDataMemory(void *&commandBuffer,
                                   uint64_t dstGpuAddress,
                                   void *srcData,
                                   size_t size);
@@ -760,11 +760,11 @@ struct EncodeDataMemory {
 
     static void programNoop(LinearStream &commandStream,
                             uint64_t dstGpuAddress, size_t size);
-    static void programNoop(void *commandBuffer,
+    static void programNoop(void *&commandBuffer,
                             uint64_t dstGpuAddress, size_t size);
     static void programBbStart(LinearStream &commandStream,
                                uint64_t dstGpuAddress, uint64_t address, bool secondLevel, bool indirect, bool predicate);
-    static void programBbStart(void *commandBuffer,
+    static void programBbStart(void *&commandBuffer,
                                uint64_t dstGpuAddress, uint64_t address, bool secondLevel, bool indirect, bool predicate);
 
     static void programFrontEndState(LinearStream &commandStream,
@@ -774,7 +774,7 @@ struct EncodeDataMemory {
                                      uint64_t scratchAddress,
                                      uint32_t maxFrontEndThreads,
                                      const StreamProperties &streamProperties);
-    static void programFrontEndState(void *commandBuffer,
+    static void programFrontEndState(void *&commandBuffer,
                                      uint64_t dstGpuAddress,
                                      const RootDeviceEnvironment &rootDeviceEnvironment,
                                      uint32_t scratchSize,

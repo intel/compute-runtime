@@ -241,6 +241,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenEncodeDataInMe
     if constexpr (FamilyType::isHeaplessRequired()) {
         constexpr size_t bufferSize = 256;
         alignas(8) uint8_t buffer[bufferSize] = {0x0};
+        void *bufferPtr = buffer;
         alignas(8) uint8_t zeroBuffer[bufferSize] = {0x0};
         LinearStream cmdStream(buffer, bufferSize);
 
@@ -250,7 +251,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenEncodeDataInMe
 
         uint64_t dstGpuAddress = 0x1000;
 
-        EncodeDataMemory<FamilyType>::programFrontEndState(buffer, dstGpuAddress, rootDeviceEnvironment, 0x0, 0x0, 0x40, properties);
+        EncodeDataMemory<FamilyType>::programFrontEndState(bufferPtr, dstGpuAddress, rootDeviceEnvironment, 0x0, 0x0, 0x40, properties);
         EXPECT_EQ(0, memcmp(buffer, zeroBuffer, bufferSize));
 
         EncodeDataMemory<FamilyType>::programFrontEndState(cmdStream, dstGpuAddress, rootDeviceEnvironment, 0x0, 0x0, 0x40, properties);
@@ -265,6 +266,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenEncodeDataInMe
 
         constexpr size_t bufferSize = 256;
         alignas(8) uint8_t buffer[bufferSize] = {0x0};
+        alignas(8) uint8_t memory[bufferSize] = {};
+        void *memoryPtr = memory;
         LinearStream cmdStream(buffer, bufferSize);
 
         auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
@@ -296,5 +299,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenEncodeDataInMe
 
         EXPECT_EQ(scratchAddress, cfeStateCmd->getScratchSpaceBuffer());
         EXPECT_EQ(maxFrontEndThreads, cfeStateCmd->getMaximumNumberOfThreads());
+
+        void *baseMemoryPtr = memoryPtr;
+        size_t offset = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(CFE_STATE));
+        EncodeDataMemory<FamilyType>::programFrontEndState(memoryPtr, dstGpuAddress, rootDeviceEnvironment, 0x0, scratchAddress, maxFrontEndThreads, properties);
+        EXPECT_EQ(ptrOffset(baseMemoryPtr, offset), memoryPtr);
     }
 }
