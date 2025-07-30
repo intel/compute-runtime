@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
@@ -215,6 +216,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     NEO::SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        if (incrementFlushStampOnFlush) {
+            this->flushStamp->setStamp(this->obtainCurrentFlushStamp() + 1);
+        }
         if (flushReturnValue) {
             return *flushReturnValue;
         }
@@ -676,6 +680,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool isAnyDirectSubmissionEnabledCallBase = true;
     bool isAnyDirectSubmissionEnabledResult = true;
     std::atomic_bool captureWaitForTaskCountWithKmdNotifyInputParams = false;
+    bool incrementFlushStampOnFlush = false;
 };
 
 } // namespace NEO

@@ -2249,28 +2249,35 @@ uint32_t DeviceImp::getEventMaxKernelCount() const {
 }
 
 ze_result_t DeviceImp::synchronize() {
-    for (auto &engine : neoDevice->getAllEngines()) {
-        if (engine.commandStreamReceiver->isInitialized()) {
-            auto waitStatus = engine.commandStreamReceiver->waitForTaskCountWithKmdNotifyFallback(
-                engine.commandStreamReceiver->peekTaskCount(),
-                engine.commandStreamReceiver->obtainCurrentFlushStamp(),
+
+    auto waitForCsr = [](NEO::CommandStreamReceiver *csr) -> ze_result_t {
+        if (csr->isInitialized()) {
+            auto lock = csr->obtainUniqueOwnership();
+            auto taskCountToWait = csr->peekTaskCount();
+            auto flushStampToWait = csr->obtainCurrentFlushStamp();
+            lock.unlock();
+            auto waitStatus = csr->waitForTaskCountWithKmdNotifyFallback(
+                taskCountToWait,
+                flushStampToWait,
                 false,
                 NEO::QueueThrottle::MEDIUM);
             if (waitStatus == NEO::WaitStatus::gpuHang) {
                 return ZE_RESULT_ERROR_DEVICE_LOST;
             }
         }
+        return ZE_RESULT_SUCCESS;
+    };
+
+    for (auto &engine : neoDevice->getAllEngines()) {
+        auto ret = waitForCsr(engine.commandStreamReceiver);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
     }
     for (auto &secondaryCsr : neoDevice->getSecondaryCsrs()) {
-        if (secondaryCsr->isInitialized()) {
-            auto waitStatus = secondaryCsr->waitForTaskCountWithKmdNotifyFallback(
-                secondaryCsr->peekTaskCount(),
-                secondaryCsr->obtainCurrentFlushStamp(),
-                false,
-                NEO::QueueThrottle::MEDIUM);
-            if (waitStatus == NEO::WaitStatus::gpuHang) {
-                return ZE_RESULT_ERROR_DEVICE_LOST;
-            }
+        auto ret = waitForCsr(secondaryCsr.get());
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
         }
     }
 
