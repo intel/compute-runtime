@@ -272,9 +272,9 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     GraphSubmissionChain submissionChain;
 };
 
-constexpr size_t maxVariantSize = 3 * 64;
+constexpr size_t maxVariantSize = 2 * 64;
 #define RR_CAPTURED_API(X) \
-    static_assert(sizeof(Closure<CaptureApi::X>) < maxVariantSize, #X " is too big for common variant. Please export some of its state to ClosureExternalStorage");
+    static_assert(sizeof(Closure<CaptureApi::X>) <= maxVariantSize, #X " is too big for common variant. Please export some of its state to ClosureExternalStorage");
 RR_CAPTURED_APIS()
 #undef RR_CAPTURED_API
 } // namespace L0

@@ -57,19 +57,23 @@ enum class CaptureApi {
 struct CommandList;
 
 struct ClosureExternalStorage {
-    using EventsWaitListId = int64_t;
-    using KernelStateId = int64_t;
+    using EventsListId = uint32_t;
+    using KernelStateId = uint32_t;
+    using ImageRegionId = uint32_t;
+    using CopyRegionId = uint32_t;
 
-    static constexpr EventsWaitListId invalidEventsWaitListId = -1;
-    static constexpr KernelStateId invalidKernelStateId = -1;
+    static constexpr EventsListId invalidEventsListId = std::numeric_limits<EventsListId>::max();
+    static constexpr KernelStateId invalidKernelStateId = std::numeric_limits<KernelStateId>::max();
+    static constexpr ImageRegionId invalidImageRegionId = std::numeric_limits<ImageRegionId>::max();
+    static constexpr CopyRegionId invalidCopyRegionId = std::numeric_limits<CopyRegionId>::max();
 
-    EventsWaitListId registerEventsWaitList(ze_event_handle_t *begin, ze_event_handle_t *end) {
+    EventsListId registerEventsList(ze_event_handle_t *begin, ze_event_handle_t *end) {
         if (begin == end) {
-            return invalidEventsWaitListId;
+            return invalidEventsListId;
         }
         auto ret = waitEvents.size();
         waitEvents.insert(std::end(waitEvents), begin, end);
-        return static_cast<EventsWaitListId>(ret);
+        return static_cast<EventsListId>(ret);
     }
 
     KernelStateId registerKernelState(KernelMutableState &&state) {
@@ -78,23 +82,57 @@ struct ClosureExternalStorage {
         return static_cast<KernelStateId>(ret);
     }
 
-    ze_event_handle_t *getEventsWaitList(EventsWaitListId id) {
-        if (id < 0) {
+    ImageRegionId registerImageRegion(const ze_image_region_t *imageRegion) {
+        if (nullptr == imageRegion) {
+            return invalidImageRegionId;
+        }
+        auto ret = imageRegions.size();
+        imageRegions.push_back(*imageRegion);
+        return static_cast<ImageRegionId>(ret);
+    }
+
+    CopyRegionId registerCopyRegion(const ze_copy_region_t *copyRegion) {
+        if (nullptr == copyRegion) {
+            return invalidCopyRegionId;
+        }
+        auto ret = copyRegions.size();
+        copyRegions.push_back(*copyRegion);
+        return static_cast<CopyRegionId>(ret);
+    }
+
+    ze_event_handle_t *getEventsList(EventsListId id) {
+        if (invalidEventsListId == id) {
             return nullptr;
         }
         return waitEvents.data() + id;
     }
 
     KernelMutableState *getKernelMutableState(KernelStateId id) {
-        if (id < 0) {
+        if (invalidKernelStateId == id) {
             return nullptr;
         }
         return kernelStates.data() + id;
     }
 
+    ze_image_region_t *getImageRegion(ImageRegionId id) {
+        if (invalidImageRegionId == id) {
+            return nullptr;
+        }
+        return imageRegions.data() + id;
+    }
+
+    ze_copy_region_t *getCopyRegion(CopyRegionId id) {
+        if (invalidCopyRegionId == id) {
+            return nullptr;
+        }
+        return copyRegions.data() + id;
+    }
+
   protected:
     std::vector<ze_event_handle_t> waitEvents;
     std::vector<KernelMutableState> kernelStates;
+    std::vector<ze_image_region_t> imageRegions;
+    std::vector<ze_copy_region_t> copyRegions;
 };
 
 template <CaptureApi api>
@@ -178,16 +216,16 @@ struct IndirectArgsWithWaitEvents {
     template <typename ApiArgsT>
         requires HasPhWaitEvents<ApiArgsT>
     IndirectArgsWithWaitEvents(const ApiArgsT &apiArgs, ClosureExternalStorage &externalStorage) {
-        waitEvents = externalStorage.registerEventsWaitList(apiArgs.phWaitEvents, apiArgs.phWaitEvents + apiArgs.numWaitEvents);
+        waitEvents = externalStorage.registerEventsList(apiArgs.phWaitEvents, apiArgs.phWaitEvents + apiArgs.numWaitEvents);
     }
 
     template <typename ApiArgsT>
         requires(HasPhEvents<ApiArgsT> && (false == HasPhWaitEvents<ApiArgsT>))
     IndirectArgsWithWaitEvents(const ApiArgsT &apiArgs, ClosureExternalStorage &externalStorage) {
-        waitEvents = externalStorage.registerEventsWaitList(apiArgs.phEvents, apiArgs.phEvents + apiArgs.numEvents);
+        waitEvents = externalStorage.registerEventsList(apiArgs.phEvents, apiArgs.phEvents + apiArgs.numEvents);
     }
 
-    ClosureExternalStorage::EventsWaitListId waitEvents = ClosureExternalStorage::invalidEventsWaitListId;
+    ClosureExternalStorage::EventsListId waitEvents = ClosureExternalStorage::invalidEventsListId;
 };
 
 struct EmptyIndirectArgs {
@@ -353,11 +391,11 @@ struct Closure<CaptureApi::zeCommandListAppendMemoryCopyRegion> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
-            dstRegion = *apiArgs.dstRegion;
-            srcRegion = *apiArgs.srcRegion;
+            dstRegion = externalStorage.registerCopyRegion(apiArgs.dstRegion);
+            srcRegion = externalStorage.registerCopyRegion(apiArgs.srcRegion);
         }
-        ze_copy_region_t dstRegion;
-        ze_copy_region_t srcRegion;
+        ClosureExternalStorage::CopyRegionId dstRegion;
+        ClosureExternalStorage::CopyRegionId srcRegion;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -426,11 +464,11 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyRegion> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
-            dstRegion = *apiArgs.pDstRegion;
-            srcRegion = *apiArgs.pSrcRegion;
+            dstRegion = externalStorage.registerImageRegion(apiArgs.pDstRegion);
+            srcRegion = externalStorage.registerImageRegion(apiArgs.pSrcRegion);
         }
-        ze_image_region_t dstRegion;
-        ze_image_region_t srcRegion;
+        ClosureExternalStorage::ImageRegionId dstRegion;
+        ClosureExternalStorage::ImageRegionId srcRegion;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -454,9 +492,9 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyToMemory> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
-            srcRegion = *apiArgs.pSrcRegion;
+            srcRegion = externalStorage.registerImageRegion(apiArgs.pSrcRegion);
         }
-        ze_image_region_t srcRegion;
+        ClosureExternalStorage::ImageRegionId srcRegion;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -480,9 +518,9 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyFromMemory> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
-            dstRegion = *apiArgs.pDstRegion;
+            dstRegion = externalStorage.registerImageRegion(apiArgs.pDstRegion);
         }
-        ze_image_region_t dstRegion;
+        ClosureExternalStorage::ImageRegionId dstRegion;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -672,9 +710,9 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyToMemoryExt> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
-            srcRegion = *apiArgs.pSrcRegion;
+            srcRegion = externalStorage.registerImageRegion(apiArgs.pSrcRegion);
         }
-        ze_image_region_t srcRegion;
+        ClosureExternalStorage::ImageRegionId srcRegion;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -700,9 +738,9 @@ struct Closure<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
-            dstRegion = *apiArgs.pDstRegion;
+            dstRegion = externalStorage.registerImageRegion(apiArgs.pDstRegion);
         }
-        ze_image_region_t dstRegion;
+        ClosureExternalStorage::ImageRegionId dstRegion;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}

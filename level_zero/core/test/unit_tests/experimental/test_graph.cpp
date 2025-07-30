@@ -938,28 +938,28 @@ TEST(ClosureExternalStorage, GivenEventWaitListThenRecordsItProperly) {
     std::transform(events, events + 10, eventHandles, [](auto &ev) { return &ev; });
 
     L0::ClosureExternalStorage storage;
-    EXPECT_EQ(L0::ClosureExternalStorage::invalidEventsWaitListId, storage.registerEventsWaitList(eventHandles, eventHandles));
+    EXPECT_EQ(L0::ClosureExternalStorage::invalidEventsListId, storage.registerEventsList(eventHandles, eventHandles));
 
-    auto waitList0Id = storage.registerEventsWaitList(eventHandles, eventHandles + 1);
-    auto waitList1Id = storage.registerEventsWaitList(eventHandles + 3, eventHandles + 5);
-    auto waitList2Id = storage.registerEventsWaitList(eventHandles + 8, eventHandles + 10);
+    auto waitList0Id = storage.registerEventsList(eventHandles, eventHandles + 1);
+    auto waitList1Id = storage.registerEventsList(eventHandles + 3, eventHandles + 5);
+    auto waitList2Id = storage.registerEventsList(eventHandles + 8, eventHandles + 10);
 
-    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsWaitListId, waitList0Id);
-    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsWaitListId, waitList1Id);
-    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsWaitListId, waitList2Id);
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, waitList0Id);
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, waitList1Id);
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, waitList2Id);
 
-    EXPECT_EQ(nullptr, storage.getEventsWaitList(L0::ClosureExternalStorage::invalidEventsWaitListId));
+    EXPECT_EQ(nullptr, storage.getEventsList(L0::ClosureExternalStorage::invalidEventsListId));
 
-    ASSERT_NE(nullptr, storage.getEventsWaitList(waitList0Id));
-    EXPECT_EQ(eventHandles[0], storage.getEventsWaitList(waitList0Id)[0]);
+    ASSERT_NE(nullptr, storage.getEventsList(waitList0Id));
+    EXPECT_EQ(eventHandles[0], storage.getEventsList(waitList0Id)[0]);
 
-    ASSERT_NE(nullptr, storage.getEventsWaitList(waitList1Id));
-    EXPECT_EQ(eventHandles[3], storage.getEventsWaitList(waitList1Id)[0]);
-    EXPECT_EQ(eventHandles[4], storage.getEventsWaitList(waitList1Id)[1]);
+    ASSERT_NE(nullptr, storage.getEventsList(waitList1Id));
+    EXPECT_EQ(eventHandles[3], storage.getEventsList(waitList1Id)[0]);
+    EXPECT_EQ(eventHandles[4], storage.getEventsList(waitList1Id)[1]);
 
-    ASSERT_NE(nullptr, storage.getEventsWaitList(waitList2Id));
-    EXPECT_EQ(eventHandles[8], storage.getEventsWaitList(waitList2Id)[0]);
-    EXPECT_EQ(eventHandles[9], storage.getEventsWaitList(waitList2Id)[1]);
+    ASSERT_NE(nullptr, storage.getEventsList(waitList2Id));
+    EXPECT_EQ(eventHandles[8], storage.getEventsList(waitList2Id)[0]);
+    EXPECT_EQ(eventHandles[9], storage.getEventsList(waitList2Id)[1]);
 }
 
 TEST(ClosureExternalStorage, GivenKernelMutableStateThenRecordsItProperly) {
@@ -973,8 +973,8 @@ TEST(ClosureExternalStorage, GivenKernelMutableStateThenRecordsItProperly) {
     auto kernelState1Id = storage.registerKernelState(std::move(s1));
     auto kernelState2Id = storage.registerKernelState(std::move(s2));
 
-    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsWaitListId, kernelState1Id);
-    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsWaitListId, kernelState2Id);
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, kernelState1Id);
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, kernelState2Id);
 
     EXPECT_EQ(nullptr, storage.getKernelMutableState(L0::ClosureExternalStorage::invalidKernelStateId));
 
@@ -983,6 +983,54 @@ TEST(ClosureExternalStorage, GivenKernelMutableStateThenRecordsItProperly) {
 
     ASSERT_NE(nullptr, storage.getKernelMutableState(kernelState2Id));
     EXPECT_EQ(7U, storage.getKernelMutableState(kernelState2Id)->globalOffsets[0]);
+}
+
+TEST(ClosureExternalStorage, GivenImageRegionThenRecordsItProperly) {
+    ze_image_region_t r1 = {};
+    r1.width = 5;
+    ze_image_region_t r2 = {};
+    r2.width = 7;
+
+    L0::ClosureExternalStorage storage;
+
+    EXPECT_EQ(L0::ClosureExternalStorage::invalidImageRegionId, storage.registerImageRegion(nullptr));
+    auto iamgeRegion1Id = storage.registerImageRegion(&r1);
+    auto iamgeRegion2Id = storage.registerImageRegion(&r2);
+
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, iamgeRegion1Id);
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, iamgeRegion2Id);
+
+    EXPECT_EQ(nullptr, storage.getImageRegion(L0::ClosureExternalStorage::invalidImageRegionId));
+
+    ASSERT_NE(nullptr, storage.getImageRegion(iamgeRegion1Id));
+    EXPECT_EQ(5U, storage.getImageRegion(iamgeRegion1Id)->width);
+
+    ASSERT_NE(nullptr, storage.getImageRegion(iamgeRegion2Id));
+    EXPECT_EQ(7U, storage.getImageRegion(iamgeRegion2Id)->width);
+}
+
+TEST(ClosureExternalStorage, GivenCopyRegionThenRecordsItProperly) {
+    ze_copy_region_t r1 = {};
+    r1.width = 5;
+    ze_copy_region_t r2 = {};
+    r2.width = 7;
+
+    L0::ClosureExternalStorage storage;
+
+    EXPECT_EQ(L0::ClosureExternalStorage::invalidCopyRegionId, storage.registerCopyRegion(nullptr));
+    auto copyRegion1Id = storage.registerCopyRegion(&r1);
+    auto copyRegion2Id = storage.registerCopyRegion(&r2);
+
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, copyRegion1Id);
+    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, copyRegion2Id);
+
+    EXPECT_EQ(nullptr, storage.getCopyRegion(L0::ClosureExternalStorage::invalidCopyRegionId));
+
+    ASSERT_NE(nullptr, storage.getCopyRegion(copyRegion1Id));
+    EXPECT_EQ(5U, storage.getCopyRegion(copyRegion1Id)->width);
+
+    ASSERT_NE(nullptr, storage.getCopyRegion(copyRegion2Id));
+    EXPECT_EQ(7U, storage.getCopyRegion(copyRegion2Id)->width);
 }
 
 } // namespace ult
