@@ -122,12 +122,5 @@ ze_result_t init(zes_init_flags_t flags) {
     }
 }
 
-void globalSysmanDriverCleanup() {
-    if (Sysman::globalSysmanDriver != nullptr) {
-        delete Sysman::globalSysmanDriver;
-        Sysman::globalSysmanDriver = nullptr;
-    }
-}
-
 } // namespace Sysman
 } // namespace L0
