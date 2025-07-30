@@ -106,7 +106,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
         if constexpr (heaplessModeEnabled) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-            bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation;
+            bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation || kernel.hasPrintfOutput();
             bool flushL3AfterPostSyncForExternalAllocation = kernel.isUsingSharedObjArgs();
 
             if (debugManager.flags.RedirectFlushL3HostUsmToExternal.get() && flushL3AfterPostSyncForHostUsm) {
