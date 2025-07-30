@@ -74,6 +74,7 @@ struct EncodeSurfaceState {
     static uint32_t getPitchForScratchInBytes(R_SURFACE_STATE *surfaceState, const ProductHelper &productHelper);
     static bool shouldProgramAuxForMcs(bool isAuxCapable, bool hasMcsSurface);
     static void convertSurfaceStateToPacked(R_SURFACE_STATE *surfaceState, ImageInfo &imgInfo);
+    static void setAdditionalCacheSettings(R_SURFACE_STATE *surfaceState);
 };
 
 } // namespace NEO

@@ -824,6 +824,10 @@ void EncodeDataMemory<Family>::programFrontEndState(
     const StreamProperties &streamProperties) {
 }
 
+template <typename Family>
+void EncodeSurfaceState<Family>::setAdditionalCacheSettings(R_SURFACE_STATE *surfaceState) {
+}
+
 } // namespace NEO
 
 #include "shared/source/command_container/command_encoder_enablers.inl"

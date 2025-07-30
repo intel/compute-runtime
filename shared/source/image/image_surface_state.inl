@@ -93,6 +93,8 @@ void ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(RENDER_SURFACE_STA
     }
 
     surfaceState->setSurfaceFormat(static_cast<SURFACE_FORMAT>(imageInfo.surfaceFormat->genxSurfaceFormat));
+
+    EncodeSurfaceState<GfxFamily>::setAdditionalCacheSettings(surfaceState);
 }
 
 template <typename GfxFamily>
