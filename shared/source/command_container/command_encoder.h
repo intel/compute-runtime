@@ -685,6 +685,10 @@ template <typename GfxFamily>
 struct EncodeMiArbCheck {
     using MI_ARB_CHECK = typename GfxFamily::MI_ARB_CHECK;
 
+    static void program(MI_ARB_CHECK *arbCheckCmd, std::optional<bool> preParserDisable);
+    static inline void program(void *cmdBuffer, std::optional<bool> preParserDisable) {
+        program(reinterpret_cast<MI_ARB_CHECK *>(cmdBuffer), preParserDisable);
+    }
     static void program(LinearStream &commandStream, std::optional<bool> preParserDisable);
     static size_t getCommandSize();
 

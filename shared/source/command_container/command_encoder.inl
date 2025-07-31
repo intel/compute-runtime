@@ -1098,11 +1098,15 @@ size_t EncodeMiFlushDW<Family>::getCommandSizeWithWa(const EncodeDummyBlitWaArgs
 
 template <typename Family>
 void EncodeMiArbCheck<Family>::program(LinearStream &commandStream, std::optional<bool> preParserDisable) {
-    MI_ARB_CHECK cmd = Family::cmdInitArbCheck;
-
-    EncodeMiArbCheck<Family>::adjust(cmd, preParserDisable);
     auto miArbCheckStream = commandStream.getSpaceForCmd<MI_ARB_CHECK>();
-    *miArbCheckStream = cmd;
+    program(miArbCheckStream, preParserDisable);
+}
+
+template <typename Family>
+void EncodeMiArbCheck<Family>::program(MI_ARB_CHECK *arbCheckCmd, std::optional<bool> preParserDisable) {
+    MI_ARB_CHECK cmd = Family::cmdInitArbCheck;
+    EncodeMiArbCheck<Family>::adjust(cmd, preParserDisable);
+    *arbCheckCmd = cmd;
 }
 
 template <typename Family>

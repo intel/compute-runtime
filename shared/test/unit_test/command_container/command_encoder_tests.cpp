@@ -679,8 +679,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammi
 
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
 
+    alignas(4) uint8_t arbCheckBuffer[sizeof(MI_ARB_CHECK)];
+    void *arbCheckBufferPtr = arbCheckBuffer;
+
     for (int32_t value : {-1, 0, 1}) {
         debugManager.flags.ForcePreParserEnabledForMiArbCheck.set(value);
+
+        memset(arbCheckBuffer, 0, sizeof(arbCheckBuffer));
 
         MI_ARB_CHECK buffer[2] = {};
         LinearStream linearStream(buffer, sizeof(buffer));
@@ -689,12 +694,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammi
         rootDeviceEnvironment.initGmm();
 
         EncodeMiArbCheck<FamilyType>::program(linearStream, false);
+        EncodeMiArbCheck<FamilyType>::program(arbCheckBufferPtr, false);
 
         if (value == 0) {
             EXPECT_TRUE(buffer[0].getPreParserDisable());
         } else {
             EXPECT_FALSE(buffer[0].getPreParserDisable());
         }
+        EXPECT_EQ(0, memcmp(arbCheckBufferPtr, &buffer[0], sizeof(MI_ARB_CHECK)));
     }
 }
 
