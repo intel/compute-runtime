@@ -11,7 +11,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 
-#include <inttypes.h>
+#include <cinttypes>
 
 namespace L0::MCL {
 
