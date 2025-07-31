@@ -471,7 +471,7 @@ typedef struct tagPIPE_CONTROL {
             uint32_t FlushLlc : BITFIELD_RANGE(26, 26);
             uint32_t ProtectedMemoryDisable : BITFIELD_RANGE(27, 27);
             uint32_t TileCacheFlushEnable : BITFIELD_RANGE(28, 28);
-            uint32_t Reserved_61 : BITFIELD_RANGE(29, 29);
+            uint32_t CommandCacheInvalidateEnable : BITFIELD_RANGE(29, 29); // patched
             uint32_t L3FabricFlush : BITFIELD_RANGE(30, 30);
             uint32_t TbimrForceBatchClosure : BITFIELD_RANGE(31, 31);
             uint32_t Reserved_64 : BITFIELD_RANGE(0, 1);
@@ -738,6 +738,12 @@ typedef struct tagPIPE_CONTROL {
     }
     inline bool getTileCacheFlushEnable() const {
         return TheStructure.Common.TileCacheFlushEnable;
+    }
+    inline void setCommandCacheInvalidateEnable(const bool value) { // patched
+        TheStructure.Common.CommandCacheInvalidateEnable = value;
+    }
+    inline bool getCommandCacheInvalidateEnable() const { // patched
+        return TheStructure.Common.CommandCacheInvalidateEnable;
     }
     inline void setL3FabricFlush(const bool value) {
         TheStructure.Common.L3FabricFlush = value;

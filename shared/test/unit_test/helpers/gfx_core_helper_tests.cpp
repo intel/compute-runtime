@@ -1955,6 +1955,26 @@ HWTEST2_F(GfxCoreHelperTest, givenAtLeastXe2HpgWhenSetStallOnlyBarrierThenPipeCo
     EXPECT_TRUE(hwParser.isStallingBarrier<FamilyType>(itor));
 }
 
+HWTEST_F(GfxCoreHelperTest, givenCommandCacheInvalidateFlagSetWhenProgrammingBarrierThenExpectFieldSet) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    constexpr static size_t bufferSize = 64;
+    alignas(4) char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+    PipeControlArgs args;
+    args.commandCacheInvalidateEnable = true;
+
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList pipeControlList = hwParser.getCommandsList<PIPE_CONTROL>();
+    EXPECT_EQ(1u, pipeControlList.size());
+    GenCmdList::iterator itor = pipeControlList.begin();
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itor);
+    EXPECT_TRUE(pipeControl->getCommandCacheInvalidateEnable());
+}
+
 TEST_F(GfxCoreHelperTest, whenGetQueuePriorityLevelsQueriedThen2IsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(2u, gfxCoreHelper.getQueuePriorityLevels());

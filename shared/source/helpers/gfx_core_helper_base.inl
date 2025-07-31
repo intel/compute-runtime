@@ -283,6 +283,7 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
     pipeControl.setDepthCacheFlushEnable(args.depthCacheFlushEnable);
     pipeControl.setDepthStallEnable(args.depthStallEnable);
     pipeControl.setProtectedMemoryDisable(args.protectedMemoryDisable);
+    pipeControl.setCommandCacheInvalidateEnable(args.commandCacheInvalidateEnable);
 
     if constexpr (GfxFamily::isUsingGenericMediaStateClear) {
         pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);

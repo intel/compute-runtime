@@ -35,6 +35,7 @@ struct PipeControlArgs {
     bool depthStallEnable = false;
     bool protectedMemoryDisable = false;
     bool isWalkerWithProfilingEnqueued = false;
+    bool commandCacheInvalidateEnable = false;
 };
 
 } // namespace NEO
