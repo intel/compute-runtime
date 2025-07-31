@@ -1496,17 +1496,9 @@ ze_result_t DeviceImp::activateMetricGroupsDeferred(uint32_t count,
         METRICS_LOG_ERR("%s", "Mix of root device and sub-device metric group handle is not allowed");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+
     auto status = ZE_RESULT_SUCCESS;
-    if (!this->isSubdevice && this->isImplicitScalingCapable()) {
-        for (auto &subDevice : this->subDevices) {
-            status = subDevice->getMetricDeviceContext().activateMetricGroupsPreferDeferred(count, phMetricGroups);
-            if (status != ZE_RESULT_SUCCESS) {
-                return status;
-            }
-        }
-    } else {
-        status = metricContext->activateMetricGroupsPreferDeferred(count, phMetricGroups);
-    }
+    status = metricContext->activateMetricGroupsPreferDeferred(count, phMetricGroups);
     return status;
 }
 

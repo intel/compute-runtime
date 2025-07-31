@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,6 +8,8 @@ target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/metric.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/metric.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/metric.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_enumeration_imp.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_enumeration_imp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_oa_streamer_imp.cpp

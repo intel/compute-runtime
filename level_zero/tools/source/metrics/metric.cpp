@@ -537,7 +537,7 @@ ze_result_t MetricDeviceContext::createMetricGroupsFromMetrics(uint32_t metricCo
 bool MetricDeviceContext::areMetricGroupsFromSameDeviceHierarchy(uint32_t count, zet_metric_group_handle_t *phMetricGroups) {
     bool isRootDevice = isImplicitScalingCapable();
 
-    // Verify whether metricGroups belong to the device heirarchy
+    // Verify whether metricGroups belong to the device hierarchy
     for (uint32_t index = 0; index < count; index++) {
         auto metricGroupImp = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(phMetricGroups[index]));
         if (isRootDevice != metricGroupImp->isRootDevice()) {
@@ -550,7 +550,7 @@ bool MetricDeviceContext::areMetricGroupsFromSameDeviceHierarchy(uint32_t count,
 bool MetricDeviceContext::areMetricsFromSameDeviceHierarchy(uint32_t count, zet_metric_handle_t *phMetrics) {
     bool isRootDevice = isImplicitScalingCapable();
 
-    // Verify whether metricGroups belong to the device heirarchy
+    // Verify whether metricGroups belong to the device hierarchy
     for (uint32_t index = 0; index < count; index++) {
         auto metricImp = static_cast<MetricImp *>(Metric::fromHandle(phMetrics[index]));
         if (isRootDevice != metricImp->isRootDevice()) {

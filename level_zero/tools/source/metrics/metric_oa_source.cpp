@@ -14,6 +14,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
+#include "level_zero/tools/source/metrics/metric.inl"
 #include "level_zero/tools/source/metrics/metric_multidevice_programmable.h"
 #include "level_zero/tools/source/metrics/metric_multidevice_programmable.inl"
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
@@ -166,6 +167,11 @@ bool OaMetricSourceImp::isImplicitScalingCapable() const {
 
 ze_result_t OaMetricSourceImp::activateMetricGroupsPreferDeferred(uint32_t count,
                                                                   zet_metric_group_handle_t *phMetricGroups) {
+    DeviceImp &deviceImp = static_cast<DeviceImp &>(metricDeviceContext.getDevice());
+    if (metricDeviceContext.isImplicitScalingCapable()) {
+        return MetricSource::activatePreferDeferredHierarchical<OaMetricSourceImp>(&deviceImp, count, phMetricGroups);
+    }
+
     activationTracker->activateMetricGroupsDeferred(count, phMetricGroups);
     return ZE_RESULT_SUCCESS;
 }

@@ -16,6 +16,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
+#include "level_zero/tools/source/metrics/metric.inl"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_streamer.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include "level_zero/zet_intel_gpu_metric.h"
@@ -166,6 +167,12 @@ ze_result_t IpSamplingMetricSourceImp::appendMetricMemoryBarrier(CommandList &co
 
 ze_result_t IpSamplingMetricSourceImp::activateMetricGroupsPreferDeferred(uint32_t count,
                                                                           zet_metric_group_handle_t *phMetricGroups) {
+
+    DeviceImp &deviceImp = static_cast<DeviceImp &>(metricDeviceContext.getDevice());
+    if (metricDeviceContext.isImplicitScalingCapable()) {
+        return MetricSource::activatePreferDeferredHierarchical<IpSamplingMetricSourceImp>(&deviceImp, count, phMetricGroups);
+    }
+
     auto status = activationTracker->activateMetricGroupsDeferred(count, phMetricGroups);
     if (!status) {
         METRICS_LOG_ERR("%s", "Metric group activation failed");

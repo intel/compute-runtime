@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/constants.h"
 
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
@@ -110,6 +111,9 @@ class MetricSource {
     virtual bool canDisable() = 0;
     virtual void initMetricScopes(MetricDeviceContext &metricDeviceContext) = 0;
     static std::optional<zet_intel_metric_hw_buffer_size_exp_desc_t *> getHwBufferSizeDesc(zet_base_desc_t *baseDesc);
+
+    template <typename T>
+    ze_result_t activatePreferDeferredHierarchical(DeviceImp *deviceImp, const uint32_t count, zet_metric_group_handle_t *phMetricGroups);
 
   protected:
     uint32_t type = MetricSource::metricSourceTypeUndefined;
