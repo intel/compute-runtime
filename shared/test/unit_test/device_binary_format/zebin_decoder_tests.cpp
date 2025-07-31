@@ -1958,6 +1958,8 @@ kernels:
         thread_scheduling_mode: age_based
         indirect_stateless_count: 2
         has_lsc_stores_with_non_default_l1_cache_controls: true
+        has_printf_calls: true
+        has_indirect_calls: true
 ...
 )===";
 
@@ -2006,6 +2008,68 @@ kernels:
     EXPECT_EQ(ThreadSchedulingMode::ThreadSchedulingModeAgeBased, execEnv.threadSchedulingMode);
     EXPECT_EQ(2, execEnv.indirectStatelessCount);
     EXPECT_TRUE(execEnv.hasLscStoresWithNonDefaultL1CacheControls);
+    EXPECT_TRUE(execEnv.hasPrintfCalls);
+    EXPECT_TRUE(execEnv.hasIndirectCalls);
+}
+
+TEST(ReadZeInfoExecutionEnvironment, GivenMinimalExecutionEnvThenSetProperMembersToDefaults) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    execution_env:
+        simd_size: 32
+        grf_count: 128
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &execEnvNode = *parser.findNodeWithKeyDfs("execution_env");
+    std::string errors;
+    std::string warnings;
+    NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv{};
+    EXPECT_FALSE(execEnv.hasSample);
+
+    auto err = NEO::Zebin::ZeInfo::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    EXPECT_EQ(32, execEnv.simdSize);
+    EXPECT_EQ(128, execEnv.grfCount);
+
+    namespace Defaults = NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::Defaults;
+    EXPECT_EQ(Defaults::barrierCount, execEnv.barrierCount);
+    EXPECT_EQ(Defaults::disableMidThreadPreemption, execEnv.disableMidThreadPreemption);
+    EXPECT_EQ(Defaults::has4GBBuffers, execEnv.has4GBBuffers);
+    EXPECT_EQ(Defaults::hasDpas, execEnv.hasDpas);
+    EXPECT_EQ(Defaults::hasFenceForImageAccess, execEnv.hasFenceForImageAccess);
+    EXPECT_EQ(Defaults::hasGlobalAtomics, execEnv.hasGlobalAtomics);
+    EXPECT_EQ(Defaults::hasMultiScratchSpaces, execEnv.hasMultiScratchSpaces);
+    EXPECT_EQ(Defaults::hasNoStatelessWrite, execEnv.hasNoStatelessWrite);
+    EXPECT_EQ(Defaults::hasStackCalls, execEnv.hasStackCalls);
+    EXPECT_EQ(Defaults::hasRTCalls, execEnv.hasRTCalls);
+    EXPECT_EQ(Defaults::hasSample, execEnv.hasSample);
+    EXPECT_EQ(Defaults::hwPreemptionMode, execEnv.hwPreemptionMode);
+    EXPECT_EQ(Defaults::inlineDataPayloadSize, execEnv.inlineDataPayloadSize);
+    EXPECT_EQ(Defaults::offsetToSkipPerThreadDataLoad, execEnv.offsetToSkipPerThreadDataLoad);
+    EXPECT_EQ(Defaults::offsetToSkipSetFfidGp, execEnv.offsetToSkipSetFfidGp);
+    EXPECT_EQ(Defaults::requiredSubGroupSize, execEnv.requiredSubGroupSize);
+    EXPECT_EQ(Defaults::slmSize, execEnv.slmSize);
+    EXPECT_EQ(Defaults::subgroupIndependentForwardProgress, execEnv.subgroupIndependentForwardProgress);
+    EXPECT_EQ(Defaults::requiredWorkGroupSize[0], execEnv.requiredWorkGroupSize[0]);
+    EXPECT_EQ(Defaults::requiredWorkGroupSize[1], execEnv.requiredWorkGroupSize[1]);
+    EXPECT_EQ(Defaults::requiredWorkGroupSize[2], execEnv.requiredWorkGroupSize[2]);
+    EXPECT_EQ(Defaults::workgroupWalkOrderDimensions[0], execEnv.workgroupWalkOrderDimensions[0]);
+    EXPECT_EQ(Defaults::workgroupWalkOrderDimensions[1], execEnv.workgroupWalkOrderDimensions[1]);
+    EXPECT_EQ(Defaults::workgroupWalkOrderDimensions[2], execEnv.workgroupWalkOrderDimensions[2]);
+    EXPECT_EQ(Defaults::threadSchedulingMode, execEnv.threadSchedulingMode);
+    EXPECT_EQ(Defaults::indirectStatelessCount, execEnv.indirectStatelessCount);
+    EXPECT_EQ(Defaults::hasLscStoresWithNonDefaultL1CacheControls, execEnv.hasLscStoresWithNonDefaultL1CacheControls);
+    EXPECT_EQ(Defaults::hasPrintfCalls, execEnv.hasPrintfCalls);
+    EXPECT_EQ(Defaults::hasIndirectCalls, execEnv.hasIndirectCalls);
 }
 
 TEST(ReadZeInfoExecutionEnvironment, GivenUnknownEntryThenEmitsError) {
