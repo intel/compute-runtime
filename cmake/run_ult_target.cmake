@@ -160,7 +160,7 @@ if(NOT NEO_SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
       set_target_properties(run_l0_mt_tests PROPERTIES FOLDER ${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER})
       add_dependencies(run_mt_unit_tests run_l0_mt_tests)
 
-      add_custom_target(run_${product}_${revision_id}_l0_mt_tests DEPENDS unit_tests)
+      add_custom_target(run_${product}_${revision_id}_l0_mt_tests)
       set_target_properties(run_${product}_${revision_id}_l0_mt_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
 
       add_custom_command(
