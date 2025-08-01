@@ -159,7 +159,7 @@ ze_result_t zeDeviceGetVectorWidthPropertiesExt(
     return L0::Device::fromHandle(hDevice)->getVectorWidthPropertiesExt(pCount, pVectorWidthProperties);
 }
 
-uint32_t zerTranslateDeviceHandleToIdentifier(ze_device_handle_t device) {
+uint32_t zerDeviceTranslateToIdentifier(ze_device_handle_t device) {
     if (!device) {
         auto driverHandle = static_cast<L0::DriverHandleImp *>(L0::globalDriverHandles->front());
         driverHandle->setErrorDescription("Invalid device handle");
@@ -168,7 +168,7 @@ uint32_t zerTranslateDeviceHandleToIdentifier(ze_device_handle_t device) {
     return L0::Device::fromHandle(device)->getIdentifier();
 }
 
-ze_device_handle_t zerTranslateIdentifierToDeviceHandle(uint32_t identifier) {
+ze_device_handle_t zerIdentifierTranslateToDeviceHandle(uint32_t identifier) {
     auto driverHandle = static_cast<L0::DriverHandleImp *>(L0::globalDriverHandles->front());
     if (identifier >= driverHandle->devicesToExpose.size()) {
         driverHandle->setErrorDescription("Invalid device identifier");
@@ -364,12 +364,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetVectorWidthPropertiesExt(
     return L0::zeDeviceGetVectorWidthPropertiesExt(hDevice, pCount, pVectorWidthProperties);
 }
 
-uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t device) {
-    return L0::zerTranslateDeviceHandleToIdentifier(device);
+uint32_t ZE_APICALL zerDeviceTranslateToIdentifier(ze_device_handle_t device) {
+    return L0::zerDeviceTranslateToIdentifier(device);
 }
 
-ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(uint32_t identifier) {
-    return L0::zerTranslateIdentifierToDeviceHandle(identifier);
+ze_device_handle_t ZE_APICALL zerIdentifierTranslateToDeviceHandle(uint32_t identifier) {
+    return L0::zerIdentifierTranslateToDeviceHandle(identifier);
 }
 
 ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice) {

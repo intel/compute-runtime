@@ -969,16 +969,16 @@ TEST_F(DriverHandleTest,
 }
 
 TEST_F(DriverHandleTest,
-       givenInitializedDriverWhenZerGetDefaultContextIsCalledThenDefaultContextFromFirstDriverHandleIsReturned) {
+       givenInitializedDriverWhenZerDriverGetDefaultContextIsCalledThenDefaultContextFromFirstDriverHandleIsReturned) {
     globalDriverHandles->push_back(nullptr);
-    auto defaultContext = zerGetDefaultContext();
+    auto defaultContext = zerDriverGetDefaultContext();
 
     EXPECT_EQ(defaultContext, driverHandle->getDefaultContext());
 }
 
 TEST_F(DriverHandleTest,
        whenTranslatingNullptrDeviceHandleToIdentifierThenErrorIsPropagated) {
-    auto identifier = zerTranslateDeviceHandleToIdentifier(nullptr);
+    auto identifier = zerDeviceTranslateToIdentifier(nullptr);
 
     EXPECT_EQ(std::numeric_limits<uint32_t>::max(), identifier);
 
@@ -989,7 +989,7 @@ TEST_F(DriverHandleTest,
     EXPECT_EQ(0, strcmp(expectedError, errorDescription)) << errorDescription;
 
     errorDescription = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zerGetLastErrorDescription(&errorDescription));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zerDriverGetLastErrorDescription(&errorDescription));
     EXPECT_EQ(0, strcmp(expectedError, errorDescription)) << errorDescription;
 }
 
@@ -997,7 +997,7 @@ TEST_F(DriverHandleTest,
        whenTranslatingIncorrectIdentifierToDeviceHandleThenErrorIsPropagated) {
 
     uint32_t invalidIdentifier = std::numeric_limits<uint32_t>::max();
-    EXPECT_EQ(nullptr, zerTranslateIdentifierToDeviceHandle(invalidIdentifier));
+    EXPECT_EQ(nullptr, zerIdentifierTranslateToDeviceHandle(invalidIdentifier));
 
     const char *expectedError = "Invalid device identifier";
 
@@ -1006,7 +1006,7 @@ TEST_F(DriverHandleTest,
     EXPECT_EQ(0, strcmp(expectedError, errorDescription)) << errorDescription;
 
     errorDescription = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zerGetLastErrorDescription(&errorDescription));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zerDriverGetLastErrorDescription(&errorDescription));
     EXPECT_EQ(0, strcmp(expectedError, errorDescription)) << errorDescription;
 }
 
@@ -1269,11 +1269,11 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexDriverReleaseImportedPointer) expectedRelease = L0::zexDriverReleaseImportedPointer;
     decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = L0::zexDriverGetHostPointerBaseAddress;
     decltype(&zeDriverGetDefaultContext) expectedZeDriverGetDefaultContext = zeDriverGetDefaultContext;
-    decltype(&zerGetDefaultContext) expectedZerGetDefaultContext = zerGetDefaultContext;
-    decltype(&zerGetLastErrorDescription) expectedZerGetLastErrorDescription = zerGetLastErrorDescription;
+    decltype(&zerDriverGetDefaultContext) expectedZerDriverGetDefaultContext = zerDriverGetDefaultContext;
+    decltype(&zerDriverGetLastErrorDescription) expectedZerDriverGetLastErrorDescription = zerDriverGetLastErrorDescription;
 
-    decltype(&zerTranslateDeviceHandleToIdentifier) expectedZerTranslateDeviceHandleToIdentifier = zerTranslateDeviceHandleToIdentifier;
-    decltype(&zerTranslateIdentifierToDeviceHandle) expectedZerTranslateIdentifierToDeviceHandle = zerTranslateIdentifierToDeviceHandle;
+    decltype(&zerDeviceTranslateToIdentifier) expectedZerDeviceTranslateToIdentifier = zerDeviceTranslateToIdentifier;
+    decltype(&zerIdentifierTranslateToDeviceHandle) expectedZerIdentifierTranslateToDeviceHandle = zerIdentifierTranslateToDeviceHandle;
     decltype(&zeDeviceSynchronize) expectedZeDeviceSynchronize = zeDeviceSynchronize;
 
     decltype(&zeCommandListAppendLaunchKernelWithArguments) expectedZeCommandListAppendLaunchKernelWithArguments = zeCommandListAppendLaunchKernelWithArguments;
@@ -1304,17 +1304,17 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeDriverGetDefaultContext", &funPtr));
     EXPECT_EQ(expectedZeDriverGetDefaultContext, reinterpret_cast<decltype(&zeDriverGetDefaultContext)>(funPtr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerGetDefaultContext", &funPtr));
-    EXPECT_EQ(expectedZerGetDefaultContext, reinterpret_cast<decltype(&zerGetDefaultContext)>(funPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerDriverGetDefaultContext", &funPtr));
+    EXPECT_EQ(expectedZerDriverGetDefaultContext, reinterpret_cast<decltype(&zerDriverGetDefaultContext)>(funPtr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerGetLastErrorDescription", &funPtr));
-    EXPECT_EQ(expectedZerGetLastErrorDescription, reinterpret_cast<decltype(&zerGetLastErrorDescription)>(funPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerDriverGetLastErrorDescription", &funPtr));
+    EXPECT_EQ(expectedZerDriverGetLastErrorDescription, reinterpret_cast<decltype(&zerDriverGetLastErrorDescription)>(funPtr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerTranslateDeviceHandleToIdentifier", &funPtr));
-    EXPECT_EQ(expectedZerTranslateDeviceHandleToIdentifier, reinterpret_cast<decltype(&zerTranslateDeviceHandleToIdentifier)>(funPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerDeviceTranslateToIdentifier", &funPtr));
+    EXPECT_EQ(expectedZerDeviceTranslateToIdentifier, reinterpret_cast<decltype(&zerDeviceTranslateToIdentifier)>(funPtr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerTranslateIdentifierToDeviceHandle", &funPtr));
-    EXPECT_EQ(expectedZerTranslateIdentifierToDeviceHandle, reinterpret_cast<decltype(&zerTranslateIdentifierToDeviceHandle)>(funPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zerIdentifierTranslateToDeviceHandle", &funPtr));
+    EXPECT_EQ(expectedZerIdentifierTranslateToDeviceHandle, reinterpret_cast<decltype(&zerIdentifierTranslateToDeviceHandle)>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeDeviceSynchronize", &funPtr));
     EXPECT_EQ(expectedZeDeviceSynchronize, reinterpret_cast<decltype(&zeDeviceSynchronize)>(funPtr));

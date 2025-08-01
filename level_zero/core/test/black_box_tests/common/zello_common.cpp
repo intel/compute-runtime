@@ -19,12 +19,12 @@
 #endif
 
 namespace LevelZeroBlackBoxTests {
-decltype(&zerGetDefaultContext) zerGetDefaultContextFunc = nullptr;
+decltype(&zerDriverGetDefaultContext) zerDriverGetDefaultContextFunc = nullptr;
 decltype(&zeDeviceSynchronize) zeDeviceSynchronizeFunc = nullptr;
 decltype(&zeCommandListAppendLaunchKernelWithArguments) zeCommandListAppendLaunchKernelWithArgumentsFunc = nullptr;
-decltype(&zerTranslateIdentifierToDeviceHandle) zerTranslateIdentifierToDeviceHandleFunc = nullptr;
-decltype(&zerTranslateDeviceHandleToIdentifier) zerTranslateDeviceHandleToIdentifierFunc = nullptr;
-decltype(&zerGetLastErrorDescription) zerGetLastErrorDescriptionFunc = nullptr;
+decltype(&zerIdentifierTranslateToDeviceHandle) zerIdentifierTranslateToDeviceHandleFunc = nullptr;
+decltype(&zerDeviceTranslateToIdentifier) zerDeviceTranslateToIdentifierFunc = nullptr;
+decltype(&zerDriverGetLastErrorDescription) zerDriverGetLastErrorDescriptionFunc = nullptr;
 
 struct LoadedDriverExtensions {
     std::vector<ze_driver_extension_properties_t> extensions;
@@ -458,14 +458,14 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
 
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
 
-    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerGetDefaultContext", reinterpret_cast<void **>(&zerGetDefaultContextFunc)));
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerDriverGetDefaultContext", reinterpret_cast<void **>(&zerDriverGetDefaultContextFunc)));
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zeDeviceSynchronize", reinterpret_cast<void **>(&zeDeviceSynchronizeFunc)));
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zeCommandListAppendLaunchKernelWithArguments", reinterpret_cast<void **>(&zeCommandListAppendLaunchKernelWithArgumentsFunc)));
-    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerTranslateIdentifierToDeviceHandle", reinterpret_cast<void **>(&zerTranslateIdentifierToDeviceHandleFunc)));
-    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerTranslateDeviceHandleToIdentifier", reinterpret_cast<void **>(&zerTranslateDeviceHandleToIdentifierFunc)));
-    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerGetLastErrorDescription", reinterpret_cast<void **>(&zerGetLastErrorDescriptionFunc)));
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerIdentifierTranslateToDeviceHandle", reinterpret_cast<void **>(&zerIdentifierTranslateToDeviceHandleFunc)));
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerDeviceTranslateToIdentifier", reinterpret_cast<void **>(&zerDeviceTranslateToIdentifierFunc)));
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zerDriverGetLastErrorDescription", reinterpret_cast<void **>(&zerDriverGetLastErrorDescriptionFunc)));
 
-    context = zerGetDefaultContextFunc();
+    context = zerDriverGetDefaultContextFunc();
     if (!context) {
         const char *description = nullptr;
         SUCCESS_OR_TERMINATE(zeDriverGetLastErrorDescription(driverHandle, &description));

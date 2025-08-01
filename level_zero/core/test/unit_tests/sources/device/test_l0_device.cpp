@@ -5907,13 +5907,13 @@ struct MultiDeviceTest : public Test<MultiDeviceFixture> {
         for (auto &hDevice : hDevices) {
 
             EXPECT_EQ(expectedIdentifier, Device::fromHandle(hDevice)->getIdentifier());
-            EXPECT_EQ(expectedIdentifier, zerTranslateDeviceHandleToIdentifier(hDevice));
+            EXPECT_EQ(expectedIdentifier, zerDeviceTranslateToIdentifier(hDevice));
 
-            EXPECT_EQ(hDevice, zerTranslateIdentifierToDeviceHandle(expectedIdentifier));
+            EXPECT_EQ(hDevice, zerIdentifierTranslateToDeviceHandle(expectedIdentifier));
 
             expectedIdentifier++;
         }
-        EXPECT_EQ(nullptr, zerTranslateIdentifierToDeviceHandle(expectedIdentifier));
+        EXPECT_EQ(nullptr, zerIdentifierTranslateToDeviceHandle(expectedIdentifier));
     }
 
     DebugManagerStateRestore restorer;
