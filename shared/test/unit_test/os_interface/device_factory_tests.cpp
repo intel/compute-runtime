@@ -291,6 +291,13 @@ TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironments
     EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.regionCount);
 }
 
+TEST_F(DeviceFactoryOverrideTest, givenInvalidPlatformStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenFailureIsReturned) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ProductFamilyOverride.set("invalid");
+
+    EXPECT_FALSE(DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment));
+}
+
 TEST_F(DeviceFactoryOverrideTest, givenFailedProductHelperSetupHardwareInfoWhenPreparingDeviceEnvironmentsForProductFamilyOverrideThenFalseIsReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int>(CommandStreamReceiverType::tbx));

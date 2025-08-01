@@ -50,8 +50,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
     auto productConfigFound = productConfigHelper->getDeviceAotInfoForProductConfig(productConfig, aotInfo);
     if (productConfigFound) {
         hwInfoConst = aotInfo.hwInfo;
-    } else {
-        getHwInfoForPlatformString(productFamily, hwInfoConst);
+    } else if (!getHwInfoForPlatformString(productFamily, hwInfoConst)) {
+        return false;
     }
     std::string hwInfoConfigStr;
     uint64_t hwInfoConfig = 0x0;
