@@ -72,7 +72,7 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenNoBarriersOrSlmUsedWhenCalculatingMa
     auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
 
     uint32_t workGroupSize = static_cast<uint32_t>(lws[0] * lws[1] * lws[2]);
-    uint32_t expected = helper.calculateAvailableThreadCount(*rootDeviceEnvironment->getHardwareInfo(), grf) / static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simd));
+    uint32_t expected = helper.calculateAvailableThreadCount(*rootDeviceEnvironment->getHardwareInfo(), grf, *rootDeviceEnvironment) / static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simd));
 
     expected = helper.adjustMaxWorkGroupCount(expected, EngineGroupType::compute, *rootDeviceEnvironment);
     EXPECT_EQ(expected, getMaxWorkGroupCount());

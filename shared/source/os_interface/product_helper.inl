@@ -1095,4 +1095,9 @@ bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() co
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const {
+    return maxThreadsPerEuCount;
+}
+
 } // namespace NEO

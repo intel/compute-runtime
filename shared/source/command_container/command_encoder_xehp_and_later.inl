@@ -1138,7 +1138,7 @@ void EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(InterfaceDescriptor
                 constexpr uint32_t maxThreadsInTGForTGDispatchSize8 = 16u;
                 constexpr uint32_t maxThreadsInTGForTGDispatchSize4 = 32u;
                 auto &gfxCoreHelper = device.getGfxCoreHelper();
-                uint32_t availableThreadCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount);
+                uint32_t availableThreadCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount, device.getRootDeviceEnvironment());
                 availableThreadCount *= tileCount;
 
                 uint32_t dispatchedTotalThreadCount = threadsPerThreadGroup * threadGroupCount;

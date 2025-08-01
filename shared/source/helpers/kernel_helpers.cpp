@@ -44,7 +44,7 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
         dssCount = hwInfo.gtSystemInfo.SubSliceCount;
     }
 
-    auto availableThreadCount = helper.calculateAvailableThreadCount(hwInfo, numGrfRequired);
+    auto availableThreadCount = helper.calculateAvailableThreadCount(hwInfo, numGrfRequired, rootDeviceEnvironment);
     auto availableSlmSize = static_cast<uint32_t>(dssCount * MemoryConstants::kiloByte * hwInfo.capabilityTable.maxProgrammableSlmSize);
     auto maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
 

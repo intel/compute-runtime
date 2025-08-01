@@ -166,7 +166,7 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenMultipleTilesAndImplicitScali
     InterfaceDescriptorType iddArg = FamilyType::template getInitInterfaceDescriptor<InterfaceDescriptorType>();
     const uint32_t numGrf = GrfConfig::defaultGrfNumber;
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    const uint32_t threadGroupCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf) / 32u;
+    const uint32_t threadGroupCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf, pDevice->getRootDeviceEnvironment()) / 32u;
     uint32_t threadsPerThreadGroup = 64u;
     const uint32_t requiredThreadGroupDispatchSize = 0u;
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);

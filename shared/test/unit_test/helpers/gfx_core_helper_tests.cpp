@@ -1017,17 +1017,19 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenBarrierEncodingWhenCallin
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto result = gfxCoreHelper.calculateAvailableThreadCount(hardwareInfo, 0);
+    auto result = gfxCoreHelper.calculateAvailableThreadCount(hardwareInfo, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_EQ(hardwareInfo.gtSystemInfo.ThreadCount, result);
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenModifiedGtSystemInfoWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto hwInfo = hardwareInfo;
     for (auto threadCount : {1u, 5u, 9u}) {
         hwInfo.gtSystemInfo.ThreadCount = threadCount;
-        auto result = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, 0);
+        auto result = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(threadCount, result);
     }
 }
@@ -1855,12 +1857,13 @@ HWTEST_F(GfxCoreHelperTest, whenEncodeAdditionalTimestampOffsetsThenNothingEncod
 HWTEST2_F(GfxCoreHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThreadCountAndThreadCountAvailableIsBiggerThenCorrectValueIsReturned, IsAtMostXe2HpgCore) {
     std::array<std::pair<uint32_t, uint32_t>, 2> grfTestInputs = {{{128, 8},
                                                                    {256, 4}}};
+    MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
         auto expected = expectedThreadCountPerEu * hardwareInfo.gtSystemInfo.EUCount;
         // force allways bigger Thread Count available
         hardwareInfo.gtSystemInfo.ThreadCount = 2 * expected;
-        auto result = gfxCoreHelper.calculateAvailableThreadCount(hardwareInfo, grfCount);
+        auto result = gfxCoreHelper.calculateAvailableThreadCount(hardwareInfo, grfCount, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(expected, result);
     }
 }
@@ -1870,12 +1873,13 @@ HWTEST2_F(GfxCoreHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThre
         {128, 8},
         {256, 4},
     }};
+    MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
         auto calculatedThreadCount = expectedThreadCountPerEu * hardwareInfo.gtSystemInfo.EUCount;
         // force thread count smaller than calculation
         hardwareInfo.gtSystemInfo.ThreadCount = calculatedThreadCount / 2;
-        auto result = gfxCoreHelper.calculateAvailableThreadCount(hardwareInfo, grfCount);
+        auto result = gfxCoreHelper.calculateAvailableThreadCount(hardwareInfo, grfCount, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(hardwareInfo.gtSystemInfo.ThreadCount, result);
     }
 }
@@ -1883,13 +1887,14 @@ HWTEST2_F(GfxCoreHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThre
 HWTEST2_F(GfxCoreHelperTest, GivenModifiedGtSystemInfoWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, IsAtMostXe2HpgCore) {
     std::array<std::pair<uint32_t, uint32_t>, 2> testInputs = {{{64, 256},
                                                                 {128, 512}}};
+    MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto hwInfo = hardwareInfo;
     for (const auto &[euCount, expectedThreadCount] : testInputs) {
         // force thread count bigger than expected
         hwInfo.gtSystemInfo.ThreadCount = 1024;
         hwInfo.gtSystemInfo.EUCount = euCount;
-        auto result = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, 256);
+        auto result = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, 256, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(expectedThreadCount, result);
     }
 }

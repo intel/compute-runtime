@@ -883,7 +883,7 @@ bool GfxCoreHelperHw<GfxFamily>::usmCompressionSupported(const NEO::HardwareInfo
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
+uint32_t GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto maxThreadsPerEuCount = 8u;
     if (grfCount == GrfConfig::largeGrfNumber) {
         maxThreadsPerEuCount = 4;

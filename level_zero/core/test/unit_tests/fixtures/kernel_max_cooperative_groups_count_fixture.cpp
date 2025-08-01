@@ -19,7 +19,7 @@ void KernelImpSuggestMaxCooperativeGroupCountFixture::setUp() {
     kernelInfo.kernelDescriptor = &kernelDescriptor;
     auto &hardwareInfo = device->getHwInfo();
     auto &helper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, numGrf);
+    availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, numGrf, device->getNEODevice()->getRootDeviceEnvironment());
 
     dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
     if (dssCount == 0) {

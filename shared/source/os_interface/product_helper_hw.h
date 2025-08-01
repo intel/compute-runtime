@@ -212,6 +212,7 @@ class ProductHelperHw : public ProductHelper {
     bool isPidFdOrSocketForIpcSupported() const override;
     bool checkBcsForDirectSubmissionStop() const override;
     bool shouldRegisterEnqueuedWalkerWithProfiling() const override;
+    uint32_t adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const override;
 
     ~ProductHelperHw() override = default;
 

@@ -10,8 +10,11 @@
 
 namespace NEO {
 template <>
-uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
+uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto maxThreadsPerEuCount = 1u;
+
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
     if (grfCount <= 96u) {
         maxThreadsPerEuCount = 10;
     } else if (grfCount <= 128u) {
@@ -23,6 +26,9 @@ uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareIn
     } else if (grfCount <= 256u) {
         maxThreadsPerEuCount = 4;
     }
+
+    maxThreadsPerEuCount = productHelper.adjustMaxThreadsPerEuCount(maxThreadsPerEuCount, grfCount);
+
     return std::min(hwInfo.gtSystemInfo.ThreadCount, maxThreadsPerEuCount * hwInfo.gtSystemInfo.EUCount);
 }
 
