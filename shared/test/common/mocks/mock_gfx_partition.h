@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@ using namespace NEO;
 
 class MockGfxPartition : public GfxPartition {
   public:
+    using GfxPartition::isAddressInHeapRange;
     using GfxPartition::osMemory;
 
     MockGfxPartition() : GfxPartition(reservedCpuAddressRange) {}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,11 @@ class HeapAllocator {
         return allocateWithCustomAlignment(sizeToAllocate, 0u);
     }
 
+    uint64_t allocateWithStartAddressHint(const uint64_t requiredStartAddress, size_t &sizeToAllocate) {
+        return allocateWithCustomAlignmentWithStartAddressHint(requiredStartAddress, sizeToAllocate, 0u);
+    }
+
+    uint64_t allocateWithCustomAlignmentWithStartAddressHint(const uint64_t requiredStartAddress, size_t &sizeToAllocate, size_t alignment);
     uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment);
 
     MOCKABLE_VIRTUAL void free(uint64_t ptr, size_t size);
@@ -62,6 +67,10 @@ class HeapAllocator {
         return this->baseAddress;
     }
 
+    size_t getAllocationAlignment() const {
+        return this->allocationAlignment;
+    }
+
   protected:
     const uint64_t baseAddress;
     const uint64_t size;
@@ -76,6 +85,7 @@ class HeapAllocator {
     std::mutex mtx;
 
     uint64_t getFromFreedChunks(size_t size, std::vector<HeapChunk> &freedChunks, size_t &sizeOfFreedChunk, size_t requiredAlignment);
+    MOCKABLE_VIRTUAL uint64_t getFromFreedChunksWithStartAddressHint(const uint64_t requiredStartAddress, size_t size, std::vector<HeapChunk> &freedChunks);
 
     void storeInFreedChunks(uint64_t ptr, size_t size, std::vector<HeapChunk> &freedChunks) {
         for (auto &freedChunk : freedChunks) {

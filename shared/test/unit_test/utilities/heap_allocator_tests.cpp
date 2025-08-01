@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,18 +29,41 @@ class HeapAllocatorUnderTest : public HeapAllocator {
     uint64_t getRightBound() const { return this->pRightBound; }
     uint64_t getavailableSize() const { return this->availableSize; }
     size_t getThresholdSize() const { return this->sizeThreshold; }
+
+    using HeapAllocator::allocationAlignment;
+    using HeapAllocator::availableSize;
     using HeapAllocator::defragment;
+    using HeapAllocator::pLeftBound;
+    using HeapAllocator::pRightBound;
+
+    uint64_t getFromFreedChunksWithStartAddressHint(const uint64_t requiredStartAddress, size_t size, std::vector<HeapChunk> &freedChunks) {
+        if (failGetFromFreedChunksWithStartAddressHintCall) {
+            return 0ULL;
+        }
+
+        if (getFromFreedChunksWithStartAddressHintCall) {
+            return HeapAllocator::getFromFreedChunksWithStartAddressHint(requiredStartAddress, size, freedChunks);
+        }
+
+        return allocationAlignment;
+    }
 
     uint64_t getFromFreedChunks(size_t size, std::vector<HeapChunk> &vec, size_t requiredAlignment) {
         return HeapAllocator::getFromFreedChunks(size, vec, sizeOfFreedChunk, requiredAlignment);
     }
+
+    void free(uint64_t ptr, size_t size) {
+        HeapAllocator::free(ptr, size);
+    }
+
     void storeInFreedChunks(uint64_t ptr, size_t size, std::vector<HeapChunk> &vec) { return HeapAllocator::storeInFreedChunks(ptr, size, vec); }
 
     std::vector<HeapChunk> &getFreedChunksSmall() { return this->freedChunksSmall; };
     std::vector<HeapChunk> &getFreedChunksBig() { return this->freedChunksBig; };
 
-    using HeapAllocator::allocationAlignment;
     size_t sizeOfFreedChunk = 0;
+    bool getFromFreedChunksWithStartAddressHintCall = true;
+    bool failGetFromFreedChunksWithStartAddressHintCall = false;
 };
 
 TEST(HeapAllocatorTest, WhenHeapAllocatorIsCreatedWithAlignmentThenAlignmentIsSet) {
@@ -221,6 +244,169 @@ TEST(HeapAllocatorTest, GivenMoreThanTwiceBiggerSizeChunksButSmallerThanTwiceAli
     EXPECT_EQ(ptrExpected, ptrReturned);
     EXPECT_EQ(chunkSize, heapAllocator->sizeOfFreedChunk);
     EXPECT_EQ(0u, freedChunks.size());
+}
+
+TEST(HeapAllocatorTest, GivenExactMatchInFreedChunksWhenGettingWithStartAddressHintThenCorrectChunkIsReturned) {
+    std::vector<HeapChunk> freedChunks;
+    uint64_t requiredStartAddress = 0x101000llu;
+    size_t chunkSize = MemoryConstants::pageSize * 2;
+
+    freedChunks.emplace_back(requiredStartAddress, chunkSize);
+
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+    uint64_t returnedAddress = heapAllocator->getFromFreedChunksWithStartAddressHint(requiredStartAddress, chunkSize, freedChunks);
+
+    EXPECT_EQ(requiredStartAddress, returnedAddress);
+    EXPECT_TRUE(freedChunks.empty());
+}
+
+TEST(HeapAllocatorTest, GivenNoExactMatchInFreedChunksWhenGettingWithStartAddressHintThenZeroIsReturned) {
+    std::vector<HeapChunk> freedChunks;
+    uint64_t requiredStartAddress = 0x101000llu;
+    size_t chunkSize = MemoryConstants::pageSize * 2;
+
+    freedChunks.emplace_back(0x102000llu, chunkSize);
+
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+    uint64_t returnedAddress = heapAllocator->getFromFreedChunksWithStartAddressHint(requiredStartAddress, chunkSize, freedChunks);
+
+    EXPECT_EQ(0llu, returnedAddress);
+    EXPECT_EQ(1u, freedChunks.size());
+}
+
+TEST(HeapAllocatorTest, GivenLargerChunkInFreedChunksWhenGettingWithStartAddressHintThenChunkIsSplitAndCorrectAddressIsReturned) {
+    std::vector<HeapChunk> freedChunks;
+    uint64_t requiredStartAddress = 0x101000llu;
+    size_t chunkSize = MemoryConstants::pageSize * 2;
+
+    freedChunks.emplace_back(requiredStartAddress, chunkSize * 2);
+
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+    uint64_t returnedAddress = heapAllocator->getFromFreedChunksWithStartAddressHint(requiredStartAddress, chunkSize, freedChunks);
+
+    EXPECT_EQ(requiredStartAddress, returnedAddress);
+    EXPECT_EQ(1u, freedChunks.size());
+    EXPECT_EQ(requiredStartAddress + chunkSize, freedChunks[0].ptr);
+    EXPECT_EQ(chunkSize, freedChunks[0].size);
+}
+
+TEST(HeapAllocatorTest, GivenSmallerChunkInFreedChunksWhenGettingWithStartAddressHintThenZeroIsReturned) {
+    std::vector<HeapChunk> freedChunks;
+    uint64_t requiredStartAddress = 0x101000llu;
+    size_t chunkSize = MemoryConstants::pageSize * 2;
+
+    freedChunks.emplace_back(requiredStartAddress, MemoryConstants::pageSize);
+
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+    uint64_t returnedAddress = heapAllocator->getFromFreedChunksWithStartAddressHint(requiredStartAddress, chunkSize, freedChunks);
+
+    EXPECT_EQ(0llu, returnedAddress);
+    EXPECT_EQ(1u, freedChunks.size());
+}
+
+TEST(HeapAllocatorTest, GivenMultipleChunksInFreedChunksWhenGettingWithStartAddressHintThenCorrectChunkIsReturned) {
+    std::vector<HeapChunk> freedChunks;
+    uint64_t requiredStartAddress = 0x103000llu;
+    size_t chunkSize = MemoryConstants::pageSize * 2;
+
+    freedChunks.emplace_back(0x101000llu, MemoryConstants::pageSize);
+    freedChunks.emplace_back(requiredStartAddress, chunkSize);
+    freedChunks.emplace_back(0x105000llu, MemoryConstants::pageSize * 3);
+
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+    uint64_t returnedAddress = heapAllocator->getFromFreedChunksWithStartAddressHint(requiredStartAddress, chunkSize, freedChunks);
+
+    EXPECT_EQ(requiredStartAddress, returnedAddress);
+    EXPECT_EQ(2u, freedChunks.size());
+    EXPECT_EQ(0x101000llu, freedChunks[0].ptr);
+    EXPECT_EQ(0x105000llu, freedChunks[1].ptr);
+}
+
+TEST(HeapAllocatorTest, GivenChunkWithSmallTrailingSizeWhenGetFromFreedChunksWithStartAddressHintThenChunkIsSplitAndRemainingSpaceIsStored) {
+    std::vector<HeapChunk> freedChunks;
+    uint64_t chunkStartAddress = 0x101000llu;
+    size_t requestedSize = MemoryConstants::pageSize;
+    size_t chunkSize = requestedSize + 4; // Just slightly larger than the requested size
+
+    freedChunks.emplace_back(chunkStartAddress, chunkSize);
+
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+
+    uint64_t requiredStartAddress = chunkStartAddress + 1;
+    uint64_t returnedAddress = heapAllocator->getFromFreedChunksWithStartAddressHint(requiredStartAddress, requestedSize, freedChunks);
+
+    EXPECT_EQ(requiredStartAddress, returnedAddress);
+    EXPECT_EQ(2u, freedChunks.size());
+    EXPECT_EQ(requiredStartAddress - 1, freedChunks[0].ptr);
+    EXPECT_EQ(requiredStartAddress + requestedSize, freedChunks[1].ptr);
+    EXPECT_EQ(1u, freedChunks[0].size); // Leading size is just 1 byte
+    EXPECT_EQ(3u, freedChunks[1].size); // Trailing size is just 3 bytes
+}
+
+TEST(HeapAllocatorTest, GivenChunkWithLeadingSizeAndNoTrailingSizeWhenGetFromFreedChunksWithStartAddressHintThenChunkIsSplitAndNoRemainingSpaceIsStored) {
+    std::vector<HeapChunk> freedChunks;
+    uint64_t chunkStartAddress = 0x101000llu;
+    size_t requestedSize = MemoryConstants::pageSize;
+    size_t chunkSize = requestedSize + 1; // Just enough for requested size plus 1 byte leading offset
+
+    freedChunks.emplace_back(chunkStartAddress, chunkSize);
+
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+
+    uint64_t requiredStartAddress = chunkStartAddress + 1;
+    uint64_t returnedAddress = heapAllocator->getFromFreedChunksWithStartAddressHint(requiredStartAddress, requestedSize, freedChunks);
+
+    EXPECT_EQ(requiredStartAddress, returnedAddress);
+    EXPECT_EQ(1u, freedChunks.size());
+    EXPECT_EQ(requiredStartAddress - 1, freedChunks[0].ptr);
+    EXPECT_EQ(1u, freedChunks[0].size); // Leading size is just 1 byte
+}
+
+TEST(HeapAllocatorTest, GivenMultipleChunksAndTrailingSizeWhenGetFromFreedChunksWithStartAddressHintThenCorrectChunkIsSplitAndRemainingSpaceIsStored) {
+    std::vector<HeapChunk> freedChunks;
+    uint64_t requiredStartAddress = 0x103000llu;
+    size_t requestedSize = MemoryConstants::pageSize;
+    size_t chunkSize = 3 * MemoryConstants::pageSize;
+
+    freedChunks.emplace_back(0x101000llu, MemoryConstants::pageSize);
+    freedChunks.emplace_back(requiredStartAddress, chunkSize);
+    freedChunks.emplace_back(0x105000llu, 2 * MemoryConstants::pageSize);
+
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+    uint64_t returnedAddress = heapAllocator->getFromFreedChunksWithStartAddressHint(requiredStartAddress, requestedSize, freedChunks);
+
+    EXPECT_EQ(requiredStartAddress, returnedAddress);
+    EXPECT_EQ(3u, freedChunks.size());
+    EXPECT_EQ(0x101000llu, freedChunks[0].ptr);
+    EXPECT_EQ(MemoryConstants::pageSize, freedChunks[0].size);
+    EXPECT_EQ(requiredStartAddress + requestedSize, freedChunks[1].ptr);
+    EXPECT_EQ(chunkSize - requestedSize, freedChunks[1].size);
+    EXPECT_EQ(0x105000llu, freedChunks[2].ptr);
+    EXPECT_EQ(2 * MemoryConstants::pageSize, freedChunks[2].size);
 }
 
 TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToLeftBoundaryOfIncomingChunkWhenStoreIsCalledThenChunkIsMerged) {
@@ -1436,6 +1622,109 @@ TEST(HeapAllocatorTest, givenZeroAlignmentPassedWhenAllocatingMemoryWithCustomAl
     size_t ptrSize = 1;
     uint64_t ptr = heapAllocator.allocateWithCustomAlignment(ptrSize, 0u);
     EXPECT_EQ(alignUp(heapBase, allocationAlignment), ptr);
+}
+
+TEST(HeapAllocatorTest, givenAllocateWithCustomAlignmentWithStartAddressHintAndStartAddressNotAvailableThenAddressReservationIsSuccessful) {
+    const uint64_t heapBase = 0x111111llu;
+    const size_t heapSize = 1024u * MemoryConstants::megaByte;
+    const size_t sizeThreshold = 4 * MemoryConstants::megaByte;
+    HeapAllocatorUnderTest heapAllocator(heapBase, heapSize, allocationAlignment, sizeThreshold);
+    EXPECT_EQ(heapBase, heapAllocator.getLeftBound());
+
+    heapAllocator.pLeftBound += 10u * sizeThreshold;                                   // Move left bound to the right.
+    heapAllocator.pLeftBound = alignUp(heapAllocator.pLeftBound, allocationAlignment); // Align left bound.
+
+    heapAllocator.pRightBound -= 10u * allocationAlignment;                              // Move right bound to the right.
+    heapAllocator.pRightBound = alignUp(heapAllocator.pRightBound, allocationAlignment); // Align right bound.
+
+    uint64_t requiredStartAddress = alignUp(heapAllocator.getBaseAddress(), allocationAlignment);
+    size_t ptrSize = 32u;
+    uint64_t ptr = heapAllocator.allocateWithCustomAlignmentWithStartAddressHint(requiredStartAddress, ptrSize, 0u);
+    EXPECT_NE(ptr, 0u);
+
+    requiredStartAddress = alignUp(heapAllocator.pRightBound + allocationAlignment, allocationAlignment);
+    ptrSize = 32u;
+    heapAllocator.getFromFreedChunksWithStartAddressHintCall = false;
+    ptr = heapAllocator.allocateWithCustomAlignmentWithStartAddressHint(requiredStartAddress, ptrSize, 0u);
+    EXPECT_EQ(ptr, allocationAlignment);
+}
+
+TEST(HeapAllocatorTest, givenLargeAllocationWhenAllocateWithCustomAlignmentWithStartAddressHintThenMisalignmentStoredInFreeChunksAndAddressReservationIsSuccessful) {
+    const uint64_t heapBase = 0x111111llu;
+    const size_t heapSize = 1024u * MemoryConstants::megaByte;
+    const size_t sizeThreshold = 4 * MemoryConstants::megaByte;
+    HeapAllocatorUnderTest heapAllocator(heapBase, heapSize, allocationAlignment, sizeThreshold);
+    EXPECT_EQ(heapBase, heapAllocator.getLeftBound());
+
+    heapAllocator.pLeftBound += 10u * sizeThreshold;                                   // Move left bound to the right.
+    heapAllocator.pLeftBound = alignUp(heapAllocator.pLeftBound, allocationAlignment); // Align left bound.
+
+    heapAllocator.pRightBound -= 10u * allocationAlignment;                              // Move right bound to the right.
+    heapAllocator.pRightBound = alignUp(heapAllocator.pRightBound, allocationAlignment); // Align right bound.
+
+    uint64_t requiredStartAddress = heapAllocator.pLeftBound + allocationAlignment;
+    size_t ptrSize = (2 * sizeThreshold);
+    uint64_t ptr = heapAllocator.allocateWithCustomAlignmentWithStartAddressHint(requiredStartAddress, ptrSize, 0u);
+    EXPECT_EQ(ptr, requiredStartAddress);
+
+    std::vector<HeapChunk> &freedChunksBig = heapAllocator.getFreedChunksBig();
+    EXPECT_EQ(1u, freedChunksBig.size());
+    EXPECT_EQ(requiredStartAddress - allocationAlignment, freedChunksBig[0].ptr);
+}
+
+TEST(HeapAllocatorTest, givenLargeAllocationWhenAllocateWithCustomAlignmentWithStartAddressHintThenNoMisalignmentStoredInFreeChunksAndAddressReservationIsSuccessful) {
+    const uint64_t heapBase = 0x111111llu;
+    const size_t heapSize = 1024u * MemoryConstants::megaByte;
+    const size_t sizeThreshold = 4 * MemoryConstants::megaByte;
+    HeapAllocatorUnderTest heapAllocator(heapBase, heapSize, allocationAlignment, sizeThreshold);
+    EXPECT_EQ(heapBase, heapAllocator.getLeftBound());
+
+    heapAllocator.pLeftBound += 10u * sizeThreshold;                                   // Move left bound to the right.
+    heapAllocator.pLeftBound = alignUp(heapAllocator.pLeftBound, allocationAlignment); // Align left bound.
+
+    heapAllocator.pRightBound -= 10u * allocationAlignment;                              // Move right bound to the right.
+    heapAllocator.pRightBound = alignUp(heapAllocator.pRightBound, allocationAlignment); // Align right bound.
+
+    uint64_t requiredStartAddress = heapAllocator.pLeftBound;
+    size_t ptrSize = (2 * sizeThreshold);
+    uint64_t ptr = heapAllocator.allocateWithCustomAlignmentWithStartAddressHint(requiredStartAddress, ptrSize, 0u);
+    EXPECT_EQ(ptr, requiredStartAddress);
+
+    std::vector<HeapChunk> &freedChunksBig = heapAllocator.getFreedChunksBig();
+    EXPECT_EQ(0u, freedChunksBig.size());
+}
+
+TEST(HeapAllocatorTest, givenLargeAllocationAndNotEnoughSpaceAtRequiredStartAddressWhenAllocateWithCustomAlignmentWithStartAddressHintThenSomeOtherAddressReserved) {
+    const uint64_t heapBase = 0x111111llu;
+    const size_t heapSize = 1024u * MemoryConstants::megaByte;
+    const size_t sizeThreshold = 4 * MemoryConstants::megaByte;
+    HeapAllocatorUnderTest heapAllocator(heapBase, heapSize, allocationAlignment, sizeThreshold);
+    EXPECT_EQ(heapBase, heapAllocator.getLeftBound());
+
+    heapAllocator.pRightBound -= 10u * allocationAlignment;                              // Move right bound to the right.
+    heapAllocator.pRightBound = alignUp(heapAllocator.pRightBound, allocationAlignment); // Align right bound.
+
+    heapAllocator.pLeftBound = heapAllocator.pRightBound - sizeThreshold;              // Move left bound near the right bound.
+    heapAllocator.pLeftBound = alignUp(heapAllocator.pLeftBound, allocationAlignment); // Align left bound.
+
+    uint64_t requiredStartAddress = heapAllocator.pLeftBound + allocationAlignment;
+    size_t ptrSize = (2 * sizeThreshold);
+    uint64_t ptr = heapAllocator.allocateWithCustomAlignmentWithStartAddressHint(requiredStartAddress, ptrSize, 0u);
+    EXPECT_NE(ptr, requiredStartAddress);
+}
+
+TEST(HeapAllocatorTest, givenLargeAllocationAndNotEnoughSpaceWhenAllocateWithCustomAlignmentWithStartAddressHintThenErrorReturned) {
+    const uint64_t heapBase = 0x111111llu;
+    const size_t heapSize = 1024u * MemoryConstants::megaByte;
+    const size_t sizeThreshold = 4 * MemoryConstants::megaByte;
+    HeapAllocatorUnderTest heapAllocator(heapBase, heapSize, allocationAlignment, sizeThreshold);
+    EXPECT_EQ(heapBase, heapAllocator.getLeftBound());
+
+    uint64_t requiredStartAddress = heapAllocator.pLeftBound;
+    size_t ptrSize = (2 * sizeThreshold);
+    heapAllocator.availableSize = 0;
+    uint64_t ptr = heapAllocator.allocateWithCustomAlignmentWithStartAddressHint(requiredStartAddress, ptrSize, 0u);
+    EXPECT_EQ(ptr, 0u);
 }
 
 TEST(HeapAllocatorTest, whenGetBaseAddressIsCalledThenReturnInitialBaseAddress) {

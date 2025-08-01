@@ -2683,6 +2683,48 @@ class WddmMemoryManagerTest : public ::Test<GdiDllFixture> {
     const uint32_t rootDeviceIndex = 0u;
 };
 
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenSelectAlignmentWithInvalidStartAddressHintThenDefaultHeapAndAlignmentBasedOnSizeReturned) {
+    const auto &gfxPartition = memoryManager->getGfxPartition(rootDeviceIndex);
+    uint64_t maxHeapLimit = 0;
+    for (uint32_t heapIndex = static_cast<uint32_t>(HeapIndex::heapInternalDeviceMemory); heapIndex < static_cast<uint32_t>(HeapIndex::totalHeaps); ++heapIndex) {
+        maxHeapLimit = std::max(maxHeapLimit, gfxPartition->getHeapLimit(static_cast<HeapIndex>(heapIndex)));
+    }
+
+    uint64_t requiredStartAddress = maxHeapLimit + 64;
+
+    size_t size = 16 * MemoryConstants::megaByte;
+    HeapIndex heap = HeapIndex::heapStandard;
+    auto alignment = memoryManager->selectAlignmentAndHeap(requiredStartAddress, size, &heap);
+    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
+    EXPECT_EQ(MemoryConstants::pageSize2M, alignment);
+
+    size = MemoryConstants::pageSize64k;
+    heap = HeapIndex::heapStandard;
+    alignment = memoryManager->selectAlignmentAndHeap(requiredStartAddress, size, &heap);
+    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
+    EXPECT_EQ(MemoryConstants::pageSize64k, alignment);
+
+    size = MemoryConstants::pageSize;
+    heap = HeapIndex::heapStandard;
+    alignment = memoryManager->selectAlignmentAndHeap(requiredStartAddress, size, &heap);
+    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
+    EXPECT_EQ(MemoryConstants::pageSize64k, alignment);
+}
+
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenSelectAlignmentWithValidStartAddressHintThenCorrectHeapAndAlignmentSizeReturned) {
+    const auto &gfxPartition = memoryManager->getGfxPartition(rootDeviceIndex);
+    HeapIndex heap = HeapIndex::heapStandard64KB;
+    auto isInit = gfxPartition->isHeapInitialized(heap);
+    EXPECT_TRUE(isInit);
+
+    auto heapBase = gfxPartition->getHeapBase(heap);
+    const uint64_t requiredStartAddress = heapBase;
+
+    auto alignment = memoryManager->selectAlignmentAndHeap(requiredStartAddress, MemoryConstants::pageSize, &heap);
+    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
+    EXPECT_EQ(alignment, MemoryConstants::pageSize64k);
+}
+
 TEST_F(WddmMemoryManagerTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhencreateWddmAllocationFailsThenGraphicsAllocationIsNotCreated) {
     char hostPtr[64];
     memoryManager->setDeferredDeleter(nullptr);
