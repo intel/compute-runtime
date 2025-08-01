@@ -96,6 +96,9 @@ struct SvmMapOperation {
 class SVMAllocsManager {
   public:
     using SortedVectorBasedAllocationTracker = BaseSortedPointerWithValueVector<SvmAllocationData>;
+    using ContainerMutexType = std::shared_mutex;
+    using ContainerReadLockType = std::shared_lock<ContainerMutexType>;
+    using ContainerReadWriteLockType = std::unique_lock<ContainerMutexType>;
 
     class MapBasedAllocationTracker {
         friend class SVMAllocsManager;
@@ -247,7 +250,7 @@ class SVMAllocsManager {
     template <typename T,
               std::enable_if_t<std::is_same_v<T, void> || std::is_same_v<T, const void>, int> = 0>
     SvmAllocationData *getSVMAlloc(T *ptr) {
-        std::shared_lock<std::shared_mutex> lock(mtx);
+        ContainerReadLockType lock(mtx);
         return svmAllocs.get(ptr);
     }
 
@@ -315,7 +318,7 @@ class SVMAllocsManager {
     MapOperationsTracker svmMapOperations;
     MapBasedAllocationTracker svmDeferFreeAllocs;
     MemoryManager *memoryManager;
-    std::shared_mutex mtx;
+    ContainerMutexType mtx;
     std::mutex mtxForIndirectAccess;
     std::unique_ptr<SvmAllocationCache> usmDeviceAllocationsCache;
     std::unique_ptr<SvmAllocationCache> usmHostAllocationsCache;
