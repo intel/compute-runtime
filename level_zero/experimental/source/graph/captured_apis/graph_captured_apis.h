@@ -764,7 +764,7 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernel> {
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
         ze_group_count_t launchKernelArgs;
-        ClosureExternalStorage::KernelStateId kernelState = ClosureExternalStorage::invalidKernelStateId;
+        ClosureExternalStorage::KernelStateId kernelStateId = ClosureExternalStorage::invalidKernelStateId;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}

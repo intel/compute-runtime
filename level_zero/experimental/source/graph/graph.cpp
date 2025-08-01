@@ -224,15 +224,17 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernel>::IndirectArgs::IndirectArgs
     this->launchKernelArgs = *apiArgs.launchKernelArgs;
 
     auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
-    L0::KernelMutableState stateSnapshot;
-    stateSnapshot = kernel->getMutableState();
-    this->kernelState = externalStorage.registerKernelState(std::move(stateSnapshot));
+    L0::KernelMutableState stateSnapshot = kernel->getMutableState();
+    this->kernelStateId = externalStorage.registerKernelState(std::move(stateSnapshot));
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernel>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
-    kernel->getMutableState() = *externalStorage.getKernelMutableState(this->indirectArgs.kernelState);
-    return zeCommandListAppendLaunchKernel(&executionTarget, apiArgs.kernelHandle, &indirectArgs.launchKernelArgs, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    auto *kernelOrig = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
+    DEBUG_BREAK_IF(nullptr == kernelOrig);
+
+    auto kernelClone = kernelOrig->cloneWithStateOverride(externalStorage.getKernelMutableState(this->indirectArgs.kernelStateId));
+
+    return zeCommandListAppendLaunchKernel(&executionTarget, kernelClone.get(), &indirectArgs.launchKernelArgs, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
 }
 
 ExecutableGraph::~ExecutableGraph() = default;

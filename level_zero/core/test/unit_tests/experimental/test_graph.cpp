@@ -7,6 +7,9 @@
 
 #include "level_zero/core/test/unit_tests/experimental/test_graph.h"
 
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
 using namespace NEO;
 
 namespace L0 {
@@ -706,14 +709,18 @@ TEST(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThenW
     }
 }
 
-TEST(GraphTestInstantiation, WhenInstantiatingGraphThenBakeCommandsIntoCommandlists) {
+using GraphTestInstantiationFixture = Test<DeviceFixture>;
+
+TEST_F(GraphTestInstantiationFixture, WhenInstantiatingGraphThenBakeCommandsIntoCommandlists) {
     GraphsCleanupGuard graphCleanup;
 
     MockGraphContextReturningSpecificCmdList ctx;
     MockGraphContextReturningSpecificCmdList otherCtx;
     Mock<CommandList> cmdlist;
     Mock<Event> event;
+    Mock<Module> module(this->device, nullptr);
     Mock<KernelImp> kernel;
+    kernel.module = &module;
     ze_image_handle_t imgA = nullptr;
     ze_image_handle_t imgB = nullptr;
     zes_device_handle_t device = nullptr;
