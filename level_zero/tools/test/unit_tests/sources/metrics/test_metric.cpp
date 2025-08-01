@@ -69,29 +69,29 @@ void CalcOperationFixture::TearDown() {
 TEST_F(CalcOperationFixture, WhenCreatingCalcOpAndInvalidParamsPassedThenErrorIsHandled) {
 
     // Aggregation window is zero
-    zet_intel_metric_calculate_exp_desc_t calculateDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP,
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
         nullptr,        // pNext
         1,              // metricGroupCount
         &phMetricGroup, // phMetricGroups
         0,              // metricCount
         nullptr,        // phMetrics
         0,              // timeWindowsCount
-        nullptr,        // pCalculateTimeWindows
+        nullptr,        // pCalculationTimeWindows
         0,              // timeAggregationWindow, zero is not accepted
     };
 
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
-                                                                                          device->toHandle(), &calculateDesc,
-                                                                                          &hCalculateOperation));
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                                                            device->toHandle(), &calculationDesc,
+                                                                                            &hCalculationOperation));
 
     // No metric groups or metrics
-    calculateDesc.timeAggregationWindow = 100;
-    calculateDesc.metricGroupCount = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
-                                                                                          device->toHandle(), &calculateDesc,
-                                                                                          &hCalculateOperation));
+    calculationDesc.timeAggregationWindow = 100;
+    calculationDesc.metricGroupCount = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                                                            device->toHandle(), &calculationDesc,
+                                                                                            &hCalculationOperation));
 }
 
 TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedSourcesThenErrorIsReturned) {
@@ -102,42 +102,42 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedSourcesThenErrorIsReturn
 
     // metric groups from different source
     std::vector<zet_metric_group_handle_t> metricGroups{phMetricGroup, mockMetricGroup2.toHandle()};
-    zet_intel_metric_calculate_exp_desc_t calculateDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP,
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
         nullptr,             // pNext
         2,                   // metricGroupCount
         metricGroups.data(), // phMetricGroups
         0,                   // metricCount
         nullptr,             // phMetrics
         0,                   // timeWindowsCount
-        nullptr,             // pCalculateTimeWindows
+        nullptr,             // pCalculationTimeWindows
         1000,                // timeAggregationWindow
     };
 
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context,
-                                                                                          device->toHandle(), &calculateDesc,
-                                                                                          &hCalculateOperation));
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context,
+                                                                                            device->toHandle(), &calculationDesc,
+                                                                                            &hCalculationOperation));
 
     // metrics from different source
     MockMetric mockMetric(mockMetricSource);
     MockMetric mockMetric2(mockMetricSource2);
     std::vector<zet_metric_handle_t> metrics{mockMetric.toHandle(), mockMetric2.toHandle()};
 
-    calculateDesc.metricGroupCount = 1;
-    calculateDesc.phMetricGroups = &phMetricGroup;
-    calculateDesc.metricCount = 2;
-    calculateDesc.phMetrics = metrics.data();
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context,
-                                                                                          device->toHandle(), &calculateDesc,
-                                                                                          &hCalculateOperation));
+    calculationDesc.metricGroupCount = 1;
+    calculationDesc.phMetricGroups = &phMetricGroup;
+    calculationDesc.metricCount = 2;
+    calculationDesc.phMetrics = metrics.data();
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context,
+                                                                                            device->toHandle(), &calculationDesc,
+                                                                                            &hCalculationOperation));
 
     // metrics and metric group from different source
-    calculateDesc.metricCount = 1;
-    calculateDesc.phMetrics = &metrics[1];
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context,
-                                                                                          device->toHandle(), &calculateDesc,
-                                                                                          &hCalculateOperation));
+    calculationDesc.metricCount = 1;
+    calculationDesc.phMetrics = &metrics[1];
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context,
+                                                                                            device->toHandle(), &calculationDesc,
+                                                                                            &hCalculationOperation));
 }
 
 TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedHierarchiesThenErrorIsReturned) {
@@ -146,35 +146,35 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpWithMixedHierarchiesThenErrorIsRe
 
     // metric groups from different hierarchy
     std::vector<zet_metric_group_handle_t> metricGroups{phMetricGroup, mockMetricGroup2.toHandle()};
-    zet_intel_metric_calculate_exp_desc_t calculateDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP,
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
         nullptr,             // pNext
         2,                   // metricGroupCount
         metricGroups.data(), // phMetricGroups
         0,                   // metricCount
         nullptr,             // phMetrics
         0,                   // timeWindowsCount
-        nullptr,             // pCalculateTimeWindows
+        nullptr,             // pCalculationTimeWindows
         1000,                // timeAggregationWindow
     };
 
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context,
-                                                                                          device->toHandle(), &calculateDesc,
-                                                                                          &hCalculateOperation));
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context,
+                                                                                            device->toHandle(), &calculationDesc,
+                                                                                            &hCalculationOperation));
 
     MockMetric mockMetric(mockMetricSource), mockMetric2(mockMetricSource);
     mockMetric2.setMultiDevice(true);
 
     std::vector<zet_metric_handle_t> metrics{mockMetric.toHandle(), mockMetric2.toHandle()};
 
-    calculateDesc.metricGroupCount = 1;
-    calculateDesc.phMetricGroups = &phMetricGroup;
-    calculateDesc.metricCount = 2;
-    calculateDesc.phMetrics = metrics.data();
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateOperationCreateExp(context,
-                                                                                          device->toHandle(), &calculateDesc,
-                                                                                          &hCalculateOperation));
+    calculationDesc.metricGroupCount = 1;
+    calculationDesc.phMetricGroups = &phMetricGroup;
+    calculationDesc.metricCount = 2;
+    calculationDesc.phMetrics = metrics.data();
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context,
+                                                                                            device->toHandle(), &calculationDesc,
+                                                                                            &hCalculationOperation));
 }
 
 TEST_F(CalcOperationFixture, WhenCreatingCalcOpUseTheSourceFromMetricGroupOrMetricWhenAvailable) {
@@ -182,33 +182,33 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpUseTheSourceFromMetricGroupOrMetr
     MockMetricGroup mockMetricGroup2(mockMetricSource);
 
     std::vector<zet_metric_group_handle_t> metricGroups{phMetricGroup, mockMetricGroup2.toHandle()};
-    zet_intel_metric_calculate_exp_desc_t calculateDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP,
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
         nullptr,             // pNext
         2,                   // metricGroupCount
         metricGroups.data(), // phMetricGroups
         0,                   // metricCount
         nullptr,             // phMetrics
         0,                   // timeWindowsCount
-        nullptr,             // pCalculateTimeWindows
+        nullptr,             // pCalculationTimeWindows
         1000,                // timeAggregationWindow
     };
 
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationCreateExp(context,
-                                                                                             device->toHandle(), &calculateDesc,
-                                                                                             &hCalculateOperation));
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculationOperationCreateExp(context,
+                                                                                               device->toHandle(), &calculationDesc,
+                                                                                               &hCalculationOperation));
 
     MockMetric mockMetric(mockMetricSource), mockMetric2(mockMetricSource);
     std::vector<zet_metric_handle_t> metrics{mockMetric.toHandle(), mockMetric.toHandle()};
 
-    calculateDesc.metricGroupCount = 0;
-    calculateDesc.phMetricGroups = nullptr;
-    calculateDesc.metricCount = 2;
-    calculateDesc.phMetrics = metrics.data();
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationCreateExp(context,
-                                                                                             device->toHandle(), &calculateDesc,
-                                                                                             &hCalculateOperation));
+    calculationDesc.metricGroupCount = 0;
+    calculationDesc.phMetricGroups = nullptr;
+    calculationDesc.metricCount = 2;
+    calculationDesc.phMetrics = metrics.data();
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculationOperationCreateExp(context,
+                                                                                               device->toHandle(), &calculationDesc,
+                                                                                               &hCalculationOperation));
 }
 
 TEST_F(CalcOperationFixture, WhenCreatingCalcOpObjectToAndFromHandleBaseClassWorkAsExpected) {
@@ -219,7 +219,7 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpObjectToAndFromHandleBaseClassWor
     MockMetricCalcOp mockMetricCalcOp(false, mockMetricsInReport, mockExcludedMetricCount, mockExcludedMetrics);
     auto hMockCalcOp = mockMetricCalcOp.toHandle();
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationDestroyExp(hMockCalcOp));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculationOperationDestroyExp(hMockCalcOp));
     EXPECT_EQ(false, mockMetricCalcOp.isRootDevice());
     auto mockCalcOp = MetricCalcOp::fromHandle(hMockCalcOp);
     EXPECT_NE(nullptr, mockCalcOp);
@@ -237,20 +237,20 @@ TEST_F(CalcOperationFixture, WhenGettingMetricsInReportAndExcludedMetricsThenThe
 
     MockMetricCalcOp mockMetricCalcOp(false, mockMetricsInReport, mockExcludedMetricCount, mockExcludedMetrics);
     uint32_t metricCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, nullptr));
     EXPECT_EQ(metricCount, 1U);
     zet_metric_handle_t metricHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, &metricHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, &metricHandle));
     EXPECT_EQ(metricCount, 1U);
     EXPECT_EQ(metricHandle, mockMetricInReport.toHandle());
     EXPECT_EQ(metricCount, mockMetricCalcOp.getMetricsInReportCount());
 
     metricCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetExcludedMetricsExp(mockMetricCalcOp.toHandle(), &metricCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetExcludedMetricsExp(mockMetricCalcOp.toHandle(), &metricCount, nullptr));
     EXPECT_EQ(metricCount, 1U);
 
     zet_metric_handle_t excludedMetricHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateOperationGetExcludedMetricsExp(mockMetricCalcOp.toHandle(), &metricCount, &excludedMetricHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetExcludedMetricsExp(mockMetricCalcOp.toHandle(), &metricCount, &excludedMetricHandle));
     EXPECT_EQ(metricCount, 1U);
     EXPECT_EQ(excludedMetricHandle, mockExcludedMetric.toHandle());
     EXPECT_NE(excludedMetricHandle, metricHandle);

@@ -87,7 +87,7 @@ ze_result_t metricDecodeCalculateMultipleValues(
     const size_t rawDataSize,
     size_t *offset,
     const uint8_t *pRawData,
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
     uint32_t *pSetCount,
     uint32_t *pMetricReportCountPerSet,
     uint32_t *pTotalMetricReportCount,

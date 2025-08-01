@@ -163,7 +163,7 @@ zetDriverCalculateMetricExportDataExp(
     zet_metric_group_calculation_type_t type,
     size_t exportDataSize,
     const uint8_t *pExportData,
-    zet_metric_calculate_exp_desc_t *pCalculateDescriptor,
+    zet_metric_calculate_exp_desc_t *pCalculationDescriptor,
     uint32_t *pSetCount,
     uint32_t *pTotalMetricValueCount,
     uint32_t *pMetricCounts,
@@ -613,12 +613,12 @@ zetDriverCalculateMetricExportDataExp(
     zet_metric_group_calculation_type_t type,
     size_t exportDataSize,
     const uint8_t *pExportData,
-    zet_metric_calculate_exp_desc_t *pCalculateDescriptor,
+    zet_metric_calculate_exp_desc_t *pCalculationDescriptor,
     uint32_t *pSetCount,
     uint32_t *pTotalMetricValueCount,
     uint32_t *pMetricCounts,
     zet_typed_value_t *pMetricValues) {
-    return L0::zetDriverCalculateMetricExportDataExp(hDriver, type, exportDataSize, pExportData, pCalculateDescriptor,
+    return L0::zetDriverCalculateMetricExportDataExp(hDriver, type, exportDataSize, pExportData, pCalculationDescriptor,
                                                      pSetCount, pTotalMetricValueCount, pMetricCounts, pMetricValues);
 }
 

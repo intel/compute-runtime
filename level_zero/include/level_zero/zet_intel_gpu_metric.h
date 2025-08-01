@@ -189,88 +189,132 @@ ze_result_t ZE_APICALL zetIntelMetricTracerDecodeExp(
     zet_intel_metric_entry_exp_t *pMetricEntries           ///< [in,out][optional][range(0, *pMetricEntriesCount)] buffer containing
                                                            ///< decoded metric entries
 );
+#ifndef ZET_INTEL_METRIC_SCOPES_EXP_NAME
+/// @brief Extension name to query Intel Metric Scopes operations
+#define ZET_INTEL_METRIC_SCOPES_EXP_NAME "ZET_intel_metric_scopes"
+#endif // ZET_INTEL_METRIC_SCOPES_EXP_NAME
+typedef enum _zet_intel_metric_scopes_exp_version_t {
+    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                       ///< version 1.0
+    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_0, ///< latest known version
+    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zet_intel_metric_scopes_exp_version_t;
 
-#ifndef ZET_INTEL_METRIC_CALCULATE_EXP_NAME
-/// @brief Extension name to query Intel Metric Calculate operations
-#define ZET_INTEL_METRIC_CALCULATE_EXP_NAME "ZET_intel_metric_calculate"
-#endif // ZET_INTEL_METRIC_CALCULATE_EXP_NAME
+/// @brief Handle of metric scope
+struct _zet_intel_metric_scope_exp_handle_t {};
+typedef struct _zet_intel_metric_scope_exp_handle_t *zet_intel_metric_scope_exp_handle_t;
+
+#define ZET_INTEL_MAX_METRIC_SCOPE_NAME_EXP 64u
+#define ZET_INTEL_MAX_METRIC_SCOPE_DESCRIPTION_EXP 128u
+
+/// @brief Query an metric scope properties
+typedef struct _zet_intel_metric_scope_properties_exp_t {
+    zet_structure_type_ext_t stype;                               ///< [in] type of this structure
+    void *pNext;                                                  ///< [in][optional] must be null or a pointer to an extension-specific
+                                                                  ///< structure (i.e. contains stype and pNext).
+    uint16_t iD;                                                  ///< [out ]ID will be equal to the index of the metric scope in the
+                                                                  ///> array returned by zetIntelMetricScopesGetExp()
+    char name[ZET_INTEL_MAX_METRIC_SCOPE_NAME_EXP];               ///< [out] name of the metric scope.
+                                                                  ///< The name is expected to be a human readable string.
+                                                                  ///< The name can be used to identify the metric scope in the UI.
+    char description[ZET_INTEL_MAX_METRIC_SCOPE_DESCRIPTION_EXP]; ///< [out] description of the metric scope.
+                                                                  ///< The description is expected to be a human readable string.
+} zet_intel_metric_scope_properties_exp_t;
+
+ze_result_t ZE_APICALL zetIntelMetricScopesGetExp(
+    zet_context_handle_t hContext,                        ///< [in] handle of the context object
+    zet_device_handle_t hDevice,                          ///< [in] handle of the device
+    uint32_t *pMetricScopesCount,                         ///< [in,out] pointer to the number of metric scopes available for the device.
+                                                          ///< If set to zero, then the driver shall update the value with the total
+                                                          ///< number of metric scopes available for the device.
+    zet_intel_metric_scope_exp_handle_t *phMetricScopes); ///< [out][optional] [range(0, *pMetricScopesCount)] array of metric scopes handles
+                                                          ///< available for the device. If pMetricScopesCount is greater than zero but
+                                                          ///< less than the total number of metric scopes available for the device,
+                                                          ///< then driver shall only return that number of metric scopes.
+
+ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(
+    zet_intel_metric_scope_exp_handle_t hMetricScope,                 ///< [in] handle of the metric scope
+    zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties); ///< [out] pointer to the metric scope properties structure
+
+#ifndef ZET_INTEL_METRIC_CALCULATION_EXP_NAME
+/// @brief Extension name to query Intel Metric Calculation operations
+#define ZET_INTEL_METRIC_CALCULATION_EXP_NAME "ZET_intel_metric_calculation"
+#endif // ZET_INTEL_METRIC_CALCULATION_EXP_NAME
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric Calculate extension Version(s)
-typedef enum _zet_intel_metric_calculate_exp_version_t {
-    ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0), ///< version 1.0
-    ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_2_0 = ZE_MAKE_VERSION(2, 0),
-    ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_3_0 = ZE_MAKE_VERSION(3, 0),
-    ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_3_0, ///< latest known version
-    ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
-} zet_intel_metric_calculate_exp_version_t;
-
-#ifndef ZET_STRUCTURE_TYPE_INTEL_METRIC_CALCULATE_PROPERTIES_EXP
-#define ZET_STRUCTURE_TYPE_INTEL_METRIC_CALCULATE_PROPERTIES_EXP 0x7fffffff
-#endif // ZET_STRUCTURE_TYPE_INTEL_METRIC_CALCULATE_PROPERTIES_EXP
+/// @brief Metric Calculation extension Version(s)
+typedef enum _zet_intel_metric_calculation_exp_version_t {
+    ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                            ///< version 1.0
+    ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_1_0, ///< latest known version
+    ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zet_intel_metric_calculation_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Query an metric group calculate properties
+/// @brief Query an metric group calculation properties
 /// This structure can be passed in the 'pNext' of zet_metric_group_properties_t
-typedef struct _zet_intel_metric_group_calculate_properties_exp_t {
+typedef struct _zet_intel_metric_group_calculation_properties_exp_t {
     zet_structure_type_ext_t stype; ///< [in] type of this structure
     void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
                                     ///< structure (i.e. contains stype and pNext).
     bool isTimeFilterSupported;     ///< [out] Flag to indicate if the metric group supports time filtering for
                                     ///< metrics calculation.
-} zet_intel_metric_group_calculate_properties_exp_t;
+} zet_intel_metric_group_calculation_properties_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Handle of metric calculate operation
-struct _zet_intel_metric_calculate_operation_exp_handle_t {};
-typedef struct _zet_intel_metric_calculate_operation_exp_handle_t *zet_intel_metric_calculate_operation_exp_handle_t;
+/// @brief Handle of metric calculation operation
+struct _zet_intel_metric_calculation_operation_exp_handle_t {};
+typedef struct _zet_intel_metric_calculation_operation_exp_handle_t *zet_intel_metric_calculation_operation_exp_handle_t;
 
-typedef struct _zet_intel_metric_calculate_time_window_exp_t {
+typedef struct _zet_intel_metric_calculation_time_window_exp_t {
     uint64_t windowStart; ///< [in] starting time in nanoseconds of the raw data to where WindowSize
                           ///< is selected. If WindowStart + WindowSize is bigger than the total
                           ///< time of the raw data collected, only a fraction of the window will be used.
     uint64_t windowSize;  ///< [in] size in nanoseconds of the faction of the raw data used for calculation.
-} zet_intel_metric_calculate_time_window_exp_t;
+} zet_intel_metric_calculation_time_window_exp_t;
 
-typedef struct _zet_intel_metric_calculate_exp_desc_t {
-    zet_structure_type_ext_t stype;                                      ///< [in] type of this structure
-    const void *pNext;                                                   ///< [in][optional] must be null or a pointer to an extension-specific
-                                                                         ///< structure (i.e. contains stype and pNext).
-    uint32_t metricGroupCount;                                           ///< [in] [in] count for metric group handles in metric hMetricGroups array.
-                                                                         ///< If set to 0, then phMetricGroups must be null
-    zet_metric_group_handle_t *phMetricGroups;                           ///< [in] [optional][range(0, metricGroupCount)] array of metric group
-                                                                         ///< handles to filter metric groups to be calculated.
-    uint32_t metricCount;                                                ///< [in] number of metrics handles in the phMetrics array. If set to 0, then
-                                                                         ///< phMetrics must be null.
-    zet_metric_handle_t *phMetrics;                                      ///< [in][optional] [range(0, metricsCount)] array of metrics handles to filter
-                                                                         ///< metrics to be calculated. phMetrics are additionally calculated even if repeated
-                                                                         ///< in phMetricGroups.
-    uint32_t timeWindowsCount;                                           ///< [in] number of time windows in pCalculateTimeWindows. Must be 0 if disabled.
-                                                                         ///< If set to 0, then pCalculateTimeWindows must be null
-    zet_intel_metric_calculate_time_window_exp_t *pCalculateTimeWindows; ///< [in][optional][range(0,timeWindowsCount)] array containing the list of time windows
-                                                                         ///< to filter metrics data
-                                                                         ///< to be used for metrics calculation. Must be null if disabled.
-    uint64_t timeAggregationWindow;                                      ///< [in] size in nanoseconds used to divide the raw data and calculate a result for
-                                                                         ///< each metric. When enabled, the API will return one report per aggregation
-                                                                         ///< window. Must not be 0. When set to uint64_t_MAX will include all rawdata
-                                                                         ///< in a single window. If the timeAggregationWindow is bigger than the total
-                                                                         ///< time of the raw data collected, will be same as uint64_t_MAX. When
-                                                                         ///< timeAggregationWindow is not a perfect divisor of the total time,
-                                                                         ///< the last window is expected to be smaller. When CalculateTimeWindows
-                                                                         ///< are used, the API will limit the maximum timeAggregationWindow to
-                                                                         ///< the size of each CalculateTimeWindow individually. When timeAggregationWindow
-                                                                         ///< is smaller than a given CalculateTimeWindow, the CalculateTimeWindow will
-                                                                         ///< be divided into timeAggregationWindow sections for aggregation, with the
-                                                                         ///< last fraction being smaller when there is no perfect division.
-} zet_intel_metric_calculate_exp_desc_t;
-typedef enum _zet_intel_metric_calculate_result_status_exp_t {
-    ZET_INTEL_METRIC_CALCULATE_EXP_RESULT_VALID = 0,
-    ZET_INTEL_METRIC_CALCULATE_EXP_RESULT_INVALID,
-    ZET_INTEL_METRIC_CALCULATE_EXP_RESULT_FORCE_UINT32 = 0x7fffffff
-} zet_intel_metric_calculate_result_status_exp_t;
+typedef struct _zet_intel_metric_calculation_exp_desc_t {
+    zet_structure_type_ext_t stype;                                          ///< [in] type of this structure
+    const void *pNext;                                                       ///< [in][optional] must be null or a pointer to an extension-specific
+                                                                             ///< structure (i.e. contains stype and pNext).
+    uint32_t metricGroupCount;                                               ///< [in] [in] count for metric group handles in metric hMetricGroups array.
+                                                                             ///< If set to 0, then phMetricGroups must be null
+    zet_metric_group_handle_t *phMetricGroups;                               ///< [in] [optional][range(0, metricGroupCount)] array of metric group
+                                                                             ///< handles to filter metric groups to be calculated.
+    uint32_t metricCount;                                                    ///< [in] number of metrics handles in the phMetrics array. If set to 0, then
+                                                                             ///< phMetrics must be null.
+    zet_metric_handle_t *phMetrics;                                          ///< [in][optional] [range(0, metricsCount)] array of metrics handles to filter
+                                                                             ///< metrics to be calculated. phMetrics are additionally calculated even if repeated
+                                                                             ///< in phMetricGroups.
+    uint32_t timeWindowsCount;                                               ///< [in] number of time windows in pCalculationTimeWindows. Must be 0 if disabled.
+                                                                             ///< If set to 0, then pCalculationTimeWindows must be null
+    zet_intel_metric_calculation_time_window_exp_t *pCalculationTimeWindows; ///< [in][optional][range(0,timeWindowsCount)] array containing the list of time windows
+                                                                             ///< to filter metrics data
+                                                                             ///< to be used for metrics calculation. Must be null if disabled.
+    uint64_t timeAggregationWindow;                                          ///< [in] size in nanoseconds used to divide the raw data and calculate a result for
+                                                                             ///< each metric. When enabled, the API will return one report per aggregation
+                                                                             ///< window. Must not be 0. When set to uint64_t_MAX will include all rawdata
+                                                                             ///< in a single window. If the timeAggregationWindow is bigger than the total
+                                                                             ///< time of the raw data collected, will be same as uint64_t_MAX. When
+                                                                             ///< timeAggregationWindow is not a perfect divisor of the total time,
+                                                                             ///< the last window is expected to be smaller. When CalculationTimeWindows
+                                                                             ///< are used, the API will limit the maximum timeAggregationWindow to
+                                                                             ///< the size of each CalculationTimeWindow individually. When timeAggregationWindow
+                                                                             ///< is smaller than a given CalculationTimeWindow, the CalculationTimeWindow will
+                                                                             ///< be divided into timeAggregationWindow sections for aggregation, with the
+                                                                             ///< last fraction being smaller when there is no perfect division.
+    uint32_t metricScopesCount;                                              ///< [in] number of metric scopes in metric scopes handles. Must not be 0, otherwise error is returned.
+    zet_intel_metric_scope_exp_handle_t *phMetricScopes;                     ///< [in][optional] [range (0, metricScopesCount)] array of metric scopes handles to use for calculation.
+                                                                             ///< Duplicated entries will be removed. Metrics not supporting all metric scopes listed will be excluded
+                                                                             ///< from the calculation operation. If no metric supports all metric scopes included, the calculation
+                                                                             ///< operation creation will fail.
+} zet_intel_metric_calculation_exp_desc_t;
+typedef enum _zet_intel_metric_calculation_result_status_exp_t {
+    ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID = 0,
+    ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_INVALID,
+    ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_FORCE_UINT32 = 0x7fffffff
+} zet_intel_metric_calculation_result_status_exp_t;
 
 typedef struct _zet_intel_metric_result_exp_t {
-    zet_value_t value;                                           ///< [out] metric result calculated metric value
-    zet_intel_metric_calculate_result_status_exp_t resultStatus; ///< [out] type of the result for the filters applied to the calculation.
+    zet_value_t value;                                             ///< [out] metric result calculated metric value
+    zet_intel_metric_calculation_result_status_exp_t resultStatus; ///< [out] type of the result for the filters applied to the calculation.
 } zet_intel_metric_result_exp_t;
 typedef struct _zet_intel_metric_decoded_buffer_exp_properties_t {
     zet_structure_type_ext_t stype; ///< [in] type of this structure
@@ -281,139 +325,139 @@ typedef struct _zet_intel_metric_decoded_buffer_exp_properties_t {
 } zet_intel_metric_decoded_buffer_exp_properties_t;
 
 ze_result_t ZE_APICALL
-zetIntelMetricCalculateOperationCreateExp(
-    zet_context_handle_t hContext,                                            ///< [in] handle of the context object
-    zet_device_handle_t hDevice,                                              ///< [in] handle of the device
-    zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,                    ///< [in] pointer to structure with filters and operations to perform
-                                                                              ///< at calculation time.
-    zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation); ///< [out] Calculate operation handle
+zetIntelMetricCalculationOperationCreateExp(
+    zet_context_handle_t hContext,                                                ///< [in] handle of the context object
+    zet_device_handle_t hDevice,                                                  ///< [in] handle of the device
+    zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,                    ///< [in] pointer to structure with filters and operations to perform
+                                                                                  ///< at calculation time.
+    zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation); ///< [out] Calculation operation handle
 
 ze_result_t ZE_APICALL
-zetIntelMetricCalculateOperationDestroyExp(
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation); ///< [in] Calculate operation handle
+zetIntelMetricCalculationOperationDestroyExp(
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation); ///< [in] Calculation operation handle
 
-ze_result_t ZE_APICALL zetIntelMetricCalculateOperationGetReportFormatExp(
-    zet_intel_metric_calculate_operation_exp_handle_t phCalculateOperation, ///< [in] Calculate operation handle
-    uint32_t *pCount,                                                       ///< [in,out] pointer to the number of metrics in the output report from
-                                                                            ///< calculate operations. If set to zero, then the driver shall update
-                                                                            ///< the value with the total number of metrics to be included in the
-                                                                            ///< calculate results report. If count is greater than the total number
-                                                                            ///< of metrics to be included in the calculate results report, then the
-                                                                            ///< driver shall update the value with the actual number.  If count is
-                                                                            ///< smaller than the total number of metrics to be included in the
-                                                                            ///< calculate results report, then ZE_RESULT_ERROR_INVALID_ARGUMENT
-                                                                            ///< will be returned since this parameter is not intended for
-                                                                            ///< filtering metrics.
-    zet_metric_handle_t *phMetrics);                                        ///< [out][optional] [range(0, pMetricsCount)] array of metrics handles
-                                                                            ///< with the order in which results will be found in output report of
-                                                                            ///< calculate operations
-ze_result_t ZE_APICALL zetIntelMetricCalculateOperationGetExcludedMetricsExp(
-    zet_intel_metric_calculate_operation_exp_handle_t phCalculateOperation, ///< [in] Calculate operation handle
-    uint32_t *pCount,                                                       ///< [in,out] pointer to the number of metrics excluded from the output report.
-                                                                            ///< If set to zero, then the driver shall update the value with the total number
-                                                                            ///< of metrics excluded. If count is greater than the total number
-                                                                            ///< of metrics excluded, then the driver shall update the value with the
-                                                                            ///< actual number. If count is smaller than the total number of metrics
-                                                                            ///< excluded then ZE_RESULT_ERROR_INVALID_ARGUMENT will be returned
-                                                                            ///< since this parameter is not intended for filtering metrics.
-    zet_metric_handle_t *phMetrics);                                        ///< [out][optional] [range(0, pMetricsCount)] array of metrics handles
-                                                                            ///< excluded from the output report of calculate operations
+ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetReportFormatExp(
+    zet_intel_metric_calculation_operation_exp_handle_t phCalculationOperation, ///< [in] Calculation operation handle
+    uint32_t *pCount,                                                           ///< [in,out] pointer to the number of metrics in the output report from
+                                                                                ///< calculation operations. If set to zero, then the driver shall update
+                                                                                ///< the value with the total number of metrics to be included in the
+                                                                                ///< calculation results report. If count is greater than the total number
+                                                                                ///< of metrics to be included in the calculation results report, then the
+                                                                                ///< driver shall update the value with the actual number.  If count is
+                                                                                ///< smaller than the total number of metrics to be included in the
+                                                                                ///< calculation results report, then ZE_RESULT_ERROR_INVALID_ARGUMENT
+                                                                                ///< will be returned since this parameter is not intended for
+                                                                                ///< filtering metrics.
+    zet_metric_handle_t *phMetrics);                                            ///< [out][optional] [range(0, pMetricsCount)] array of metrics handles
+                                                                                ///< with the order in which results will be found in output report of
+                                                                                ///< calculation operations
+ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetExcludedMetricsExp(
+    zet_intel_metric_calculation_operation_exp_handle_t phCalculationOperation, ///< [in] Calculation operation handle
+    uint32_t *pCount,                                                           ///< [in,out] pointer to the number of metrics excluded from the output report.
+                                                                                ///< If set to zero, then the driver shall update the value with the total number
+                                                                                ///< of metrics excluded. If count is greater than the total number
+                                                                                ///< of metrics excluded, then the driver shall update the value with the
+                                                                                ///< actual number. If count is smaller than the total number of metrics
+                                                                                ///< excluded then ZE_RESULT_ERROR_INVALID_ARGUMENT will be returned
+                                                                                ///< since this parameter is not intended for filtering metrics.
+    zet_metric_handle_t *phMetrics);                                            ///< [out][optional] [range(0, pMetricsCount)] array of metrics handles
+                                                                                ///< excluded from the output report of calculation operations
 ze_result_t ZE_APICALL
 zetIntelMetricDecodeCalculateMultipleValuesExp(
-    zet_metric_decoder_exp_handle_t hMetricDecoder,                        ///< [in] handle of the metric decoder object
-    const size_t rawDataSize,                                              ///< [in] size in bytes of raw data buffer.
-    size_t *offset,                                                        ///< [in,out] On input, the offset from the beginning of pRawData to decode
-                                                                           ///< and calculate. On output, the number raw bytes processed
-    const uint8_t *pRawData,                                               ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
-                                                                           ///< data in raw format
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation, ///< [in] Calculate operation handle
-    uint32_t *pSetCount,                                                   ///< [in,out] pointer to number of metric sets. if count is zero, then the
-                                                                           ///< driver shall update the value with the total number of metric sets to
-                                                                           ///< be decoded and calculated. If count is greater than the number available
-                                                                           ///< in the raw data buffer, then the driver shall update the value with the
-                                                                           ///< actual number of metric sets to be decoded and calculated.  There is a
-                                                                           ///< 1:1 relationship between the number of sets and the number sub-devices
-                                                                           ///< metrics results that can be calculated from the provided data
-    uint32_t *pMetricReportCountPerSet,                                    ///< [in,out][optional][range(0, *pSetCount)] buffer of metric reports counts
-                                                                           ///< per metric set, one value per set
-    uint32_t *pTotalMetricReportCount,                                     ///< [in,out] [optional] pointer to the total number of metric reports decoded and
-                                                                           ///< calculated, for all metric sets. If count is zero, then the driver shall update
-                                                                           ///< the value with the total number of metric reports to be decoded and calculated.
-                                                                           ///< If count is greater than zero but less than the total number of reports available
-                                                                           ///< in the raw data, then only that number of reports will be decoded and calculated.
-                                                                           ///< If count is greater than the number of reports available in the raw data buffer,
-                                                                           ///< then the driver shall update the value with the actual number of metric reports
-                                                                           ///< decoded and calculated. If set to null, then driver will only update the value
-                                                                           ///< of pSetCount
-    zet_intel_metric_result_exp_t *pMetricResults);                        ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of decoded and
-                                                                           ///< calculated metrics results.
+    zet_metric_decoder_exp_handle_t hMetricDecoder,                            ///< [in] handle of the metric decoder object
+    const size_t rawDataSize,                                                  ///< [in] size in bytes of raw data buffer.
+    size_t *offset,                                                            ///< [in,out] On input, the offset from the beginning of pRawData to decode
+                                                                               ///< and calculate. On output, the number raw bytes processed
+    const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
+                                                                               ///< data in raw format
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation, ///< [in] Calculation operation handle
+    uint32_t *pSetCount,                                                       ///< [in,out] pointer to number of metric sets. if count is zero, then the
+                                                                               ///< driver shall update the value with the total number of metric sets to
+                                                                               ///< be decoded and calculated. If count is greater than the number available
+                                                                               ///< in the raw data buffer, then the driver shall update the value with the
+                                                                               ///< actual number of metric sets to be decoded and calculated.  There is a
+                                                                               ///< 1:1 relationship between the number of sets and the number sub-devices
+                                                                               ///< metrics results that can be calculated from the provided data
+    uint32_t *pMetricReportCountPerSet,                                        ///< [in,out][optional][range(0, *pSetCount)] buffer of metric reports counts
+                                                                               ///< per metric set, one value per set
+    uint32_t *pTotalMetricReportCount,                                         ///< [in,out] [optional] pointer to the total number of metric reports decoded and
+                                                                               ///< calculated, for all metric sets. If count is zero, then the driver shall update
+                                                                               ///< the value with the total number of metric reports to be decoded and calculated.
+                                                                               ///< If count is greater than zero but less than the total number of reports available
+                                                                               ///< in the raw data, then only that number of reports will be decoded and calculated.
+                                                                               ///< If count is greater than the number of reports available in the raw data buffer,
+                                                                               ///< then the driver shall update the value with the actual number of metric reports
+                                                                               ///< decoded and calculated. If set to null, then driver will only update the value
+                                                                               ///< of pSetCount
+    zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of decoded and
+                                                                               ///< calculated metrics results.
 
 ze_result_t ZE_APICALL
 zetIntelMetricDecodeToBinaryBufferExp(
-    zet_metric_decoder_exp_handle_t hMetricDecoder,                         ///< [in] handle of the metric decoder object
-    size_t *pRawDataSize,                                                   ///< [in,out] size in bytes of raw data buffer. If pDecodedBufferSize is greater
-                                                                            ///< than 0 but smaller than the total number of bytes required for decoding
-                                                                            ///< the entire input raw data, then driver shall update this value with
-                                                                            ///< actual number of raw data bytes processed
-    const uint8_t *pRawData,                                                ///< [in,out][range(0, *pRawDataSize)] buffer containing tracer
-                                                                            ///< data in raw format
-    zet_intel_metric_calculate_operation_exp_handle_t phCalculateOperation, ///< [in] Calculate operation handle, to filter metrics to decode
-    zet_intel_metric_decoded_buffer_exp_properties_t *pProperties,          ///< [in] Properties of the decoded buffer.
-    size_t *pDecodedBufferSize,                                             ///< [in] Pointer to the size of the decoded binary buffer. If set to 0,
-                                                                            ///< [in,out] Then driver shall update this value with total size in bytes required
-                                                                            ///< for the decoded binary buffer. If size is greater than 0 but smaller
-                                                                            ///< than the total number of bytes required for decoding entire input
-                                                                            ///< raw data, then driver shall only decode an approximate to that number
-                                                                            ///< of bytes. If size is greater than the total number of bytes required
-                                                                            ///< for decoding entire input raw data, then the driver shall update the
-                                                                            ///< value with the actual number of bytes decoded.
-    uint8_t *pDecodedBuffer);                                               ///< [in,out][optional] binary buffer containing decoded raw data.
+    zet_metric_decoder_exp_handle_t hMetricDecoder,                             ///< [in] handle of the metric decoder object
+    size_t *pRawDataSize,                                                       ///< [in,out] size in bytes of raw data buffer. If pDecodedBufferSize is greater
+                                                                                ///< than 0 but smaller than the total number of bytes required for decoding
+                                                                                ///< the entire input raw data, then driver shall update this value with
+                                                                                ///< actual number of raw data bytes processed
+    const uint8_t *pRawData,                                                    ///< [in,out][range(0, *pRawDataSize)] buffer containing tracer
+                                                                                ///< data in raw format
+    zet_intel_metric_calculation_operation_exp_handle_t phCalculationOperation, ///< [in] Calculation operation handle, to filter metrics to decode
+    zet_intel_metric_decoded_buffer_exp_properties_t *pProperties,              ///< [in] Properties of the decoded buffer.
+    size_t *pDecodedBufferSize,                                                 ///< [in] Pointer to the size of the decoded binary buffer. If set to 0,
+                                                                                ///< [in,out] Then driver shall update this value with total size in bytes required
+                                                                                ///< for the decoded binary buffer. If size is greater than 0 but smaller
+                                                                                ///< than the total number of bytes required for decoding entire input
+                                                                                ///< raw data, then driver shall only decode an approximate to that number
+                                                                                ///< of bytes. If size is greater than the total number of bytes required
+                                                                                ///< for decoding entire input raw data, then the driver shall update the
+                                                                                ///< value with the actual number of bytes decoded.
+    uint8_t *pDecodedBuffer);                                                   ///< [in,out][optional] binary buffer containing decoded raw data.
 
 ze_result_t ZE_APICALL
 zetIntelMetricCalculateMultipleValuesExp(
-    const size_t rawDataSize,                                              ///< [in] size in bytes of raw data buffer.
-    size_t *offset,                                                        ///< [in,out] On input, the offset from the beginning of pRawData calculate. On output,
-                                                                           ///< the number raw bytes processed
-    const uint8_t *pRawData,                                               ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
-                                                                           ///< data in raw format
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation, ///< [in] Calculate operation handle
-    uint32_t *pSetCount,                                                   ///< [in,out] pointer to number of metric sets. if count is zero, then the
-                                                                           ///< driver shall update the value with the total number of metric sets to
-                                                                           ///< be calculated. If count is greater than the number available in the raw
-                                                                           ///< data buffer, then the driver shall update the value with the actual number
-                                                                           ///< of metric sets to be calculated. There is a 1:1 relationship between the
-                                                                           ///< number of sets and the number sub-devices metrics results that can be
-                                                                           ///< calculated from the provided data.
-    uint32_t *pMetricReportCountPerSet,                                    ///< [in,out][optional][range(0, *pSetCount)] buffer of metric reports counts
-                                                                           ///< per metric set, one value per set
-    uint32_t *pTotalMetricReportCount,                                     ///< [in,out] [optional] pointer to the total number of metric reports calculated,
-                                                                           ///< for all metric sets. If count is zero, then the driver shall update the value
-                                                                           ///< with the total number of metric reports to be calculated. If count is greater
-                                                                           ///< than zero but less than the total number of reports available in the raw data,
-                                                                           ///< then only that number of reports will be calculated. If count is greater than
-                                                                           ///< the number of reports available in the raw data buffer, then the driver shall
-                                                                           ///< update the value with the actual number of metric reports calculated. If set
-                                                                           ///< to null, then driver will only update the value of pSetCount
-    zet_intel_metric_result_exp_t *pMetricResults);                        ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of calculated
-                                                                           ///< metrics results.
+    const size_t rawDataSize,                                                  ///< [in] size in bytes of raw data buffer.
+    size_t *offset,                                                            ///< [in,out] On input, the offset from the beginning of pRawData. On output,
+                                                                               ///< the number raw bytes processed
+    const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
+                                                                               ///< data in raw format
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation, ///< [in] Calculation operation handle
+    uint32_t *pSetCount,                                                       ///< [in,out] pointer to number of metric sets. if count is zero, then the
+                                                                               ///< driver shall update the value with the total number of metric sets to
+                                                                               ///< be calculated. If count is greater than the number available in the raw
+                                                                               ///< data buffer, then the driver shall update the value with the actual number
+                                                                               ///< of metric sets to be calculated. There is a 1:1 relationship between the
+                                                                               ///< number of sets and the number sub-devices metrics results that can be
+                                                                               ///< calculated from the provided data.
+    uint32_t *pMetricReportCountPerSet,                                        ///< [in,out][optional][range(0, *pSetCount)] buffer of metric reports counts
+                                                                               ///< per metric set, one value per set
+    uint32_t *pTotalMetricReportCount,                                         ///< [in,out] [optional] pointer to the total number of metric reports calculated,
+                                                                               ///< for all metric sets. If count is zero, then the driver shall update the value
+                                                                               ///< with the total number of metric reports to be calculated. If count is greater
+                                                                               ///< than zero but less than the total number of reports available in the raw data,
+                                                                               ///< then only that number of reports will be calculated. If count is greater than
+                                                                               ///< the number of reports available in the raw data buffer, then the driver shall
+                                                                               ///< update the value with the actual number of metric reports calculated. If set
+                                                                               ///< to null, then driver will only update the value of pSetCount
+    zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of calculated
+                                                                               ///< metrics results.
 
 ze_result_t ZE_APICALL
 zetIntelMetricCalculateValuesExp(
-    const size_t rawDataSize,                                              ///< [in] size in bytes of raw data buffer.
-    size_t *pOffset,                                                       ///< [in,out] On input, the offset from the beginning of the pRawData to calculate
-                                                                           ///< On output, the number raw bytes processed
-    const uint8_t *pRawData,                                               ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
-                                                                           ///< data in raw format
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation, ///< [in] Calculate operation handle
-    uint32_t *pTotalMetricReportCount,                                     ///< [in,out] [optional] pointer to the total number of metric reports calculated,
-                                                                           ///< If count is zero, then the driver shall update the value with the total number of
-                                                                           ///< metric reports to be calculated. If count is greater than zero but less than the
-                                                                           ///< total number of reports available in the raw data, then only that number of
-                                                                           ///< reports will be calculated. If count is greater than the number of reports
-                                                                           ///< available in the raw data buffer, then the driver shall update the value with
-                                                                           ///< the actual number of metric reports calculated.
-    zet_intel_metric_result_exp_t *pMetricResults);                        ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of calculated
-                                                                           ///< metrics results.
+    const size_t rawDataSize,                                                  ///< [in] size in bytes of raw data buffer.
+    size_t *pOffset,                                                           ///< [in,out] On input, the offset from the beginning of the pRawData.
+                                                                               ///< On output, the number raw bytes processed
+    const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
+                                                                               ///< data in raw format
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation, ///< [in] Calculation operation handle
+    uint32_t *pTotalMetricReportCount,                                         ///< [in,out] [optional] pointer to the total number of metric reports calculated,
+                                                                               ///< If count is zero, then the driver shall update the value with the total number of
+                                                                               ///< metric reports to be calculated. If count is greater than zero but less than the
+                                                                               ///< total number of reports available in the raw data, then only that number of
+                                                                               ///< reports will be calculated. If count is greater than the number of reports
+                                                                               ///< available in the raw data buffer, then the driver shall update the value with
+                                                                               ///< the actual number of metric reports calculated.
+    zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of calculated
+                                                                               ///< metrics results.
 
 #ifndef ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_NAME
 /// @brief Extension name for enabling and disabling Intel Metrics collection
@@ -442,58 +486,6 @@ ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevic
 /// If there are metric operations in progress, then ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE
 /// is returned.
 ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice);
-
-#ifndef ZET_INTEL_METRIC_SCOPES_EXP_NAME
-/// @brief Extension name to query Intel Metric Scopes operations
-#define ZET_INTEL_METRIC_SCOPES_EXP_NAME "ZET_intel_metric_scopes"
-#endif // ZET_INTEL_METRIC_SCOPES_EXP_NAME
-typedef enum _zet_intel_metric_scopes_exp_version_t {
-    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                       ///< version 1.0
-    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_0, ///< latest known version
-    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
-} zet_intel_metric_scopes_exp_version_t;
-
-/// @brief Handle of metric scope
-struct _zet_intel_metric_scope_exp_handle_t {};
-typedef struct _zet_intel_metric_scope_exp_handle_t *zet_intel_metric_scope_exp_handle_t;
-
-#define ZET_INTEL_MAX_METRIC_SCOPE_NAME_EXP 64u
-#define ZET_INTEL_MAX_METRIC_SCOPE_DESCRIPTION_EXP 128u
-
-#ifndef ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP
-#define ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP 0x7fffffff
-#endif // ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP
-
-/// @brief Query an metric scope properties
-typedef struct _zet_intel_metric_scope_properties_exp_t {
-    zet_structure_type_ext_t stype;                               ///< [in] type of this structure
-    void *pNext;                                                  ///< [in][optional] must be null or a pointer to an extension-specific
-                                                                  ///< structure (i.e. contains stype and pNext).
-    uint16_t iD;                                                  ///< [out ]ID will be equal to the index of the metric scope in the
-                                                                  ///> array returned by zetMetricScopesGet()
-    char name[ZET_INTEL_MAX_METRIC_SCOPE_NAME_EXP];               ///< [out] name of the metric scope, which is unique for the device.
-                                                                  ///< The name is expected to be a human readable string.
-                                                                  ///< The name can be used to identify the metric scope in the UI.
-    char description[ZET_INTEL_MAX_METRIC_SCOPE_DESCRIPTION_EXP]; ///< [out] description of the metric scope, which is unique for the device.
-                                                                  ///< The description is expected to be a human readable string.
-                                                                  ///< The description can be used to provide additional information about
-                                                                  ///< the metric scope in the UI.
-} zet_intel_metric_scope_properties_exp_t;
-
-ze_result_t ZE_APICALL zetIntelMetricScopesGetExp(
-    zet_context_handle_t hContext,                        ///< [in] handle of the context object
-    zet_device_handle_t hDevice,                          ///< [in] handle of the device
-    uint32_t *pMetricScopesCount,                         ///< [in,out] pointer to the number of metric scopes available for the device.
-                                                          ///< If set to zero, then the driver shall update the value with the total
-                                                          ///< number of metric scopes available for the device.
-    zet_intel_metric_scope_exp_handle_t *phMetricScopes); ///< [out][optional] [range(0, *pMetricScopesCount)] array of metric scopes handles
-                                                          ///< available for the device. If pMetricScopesCount is greater than zero but
-                                                          ///< less than the total number of metric scopes available for the device,
-                                                          ///< then driver shall only return that number of metric scopes.
-
-ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(
-    zet_intel_metric_scope_exp_handle_t hMetricScope,                 ///< [in] handle of the metric scope
-    zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties); ///< [out] pointer to the metric scope properties structure
 
 #ifndef ZET_INTEL_METRIC_HW_BUFFER_SIZE_EXP_NAME
 /// @brief Extension name for query to read the Intel Level Zero Driver Version String

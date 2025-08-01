@@ -57,9 +57,9 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
 
     ~IpSamplingMetricCalcOpImp() override{};
     static ze_result_t create(IpSamplingMetricSourceImp &metricSource,
-                              zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
+                              zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                               bool isMultiDevice,
-                              zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation);
+                              zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation);
     ze_result_t destroy() override;
     ze_result_t metricCalculateMultipleValues(const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
                                               uint32_t *pSetCount, uint32_t *pMetricsReportCountPerSet,

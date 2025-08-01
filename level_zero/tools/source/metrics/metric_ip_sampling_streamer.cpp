@@ -106,15 +106,15 @@ uint32_t IpSamplingMetricStreamerImp::getMaxSupportedReportCount() {
 }
 
 ze_result_t IpSamplingMetricCalcOpImp::create(IpSamplingMetricSourceImp &metricSource,
-                                              zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
+                                              zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                               bool isMultiDevice,
-                                              zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
+                                              zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
 
     // There is only one valid metric group in IP sampling and time filtering is not supported
     // So only metrics handles are used to filter the metrics
 
     // avoid duplicates
-    std::set<zet_metric_handle_t> uniqueMetricHandles(pCalculateDesc->phMetrics, pCalculateDesc->phMetrics + pCalculateDesc->metricCount);
+    std::set<zet_metric_handle_t> uniqueMetricHandles(pCalculationDesc->phMetrics, pCalculationDesc->phMetrics + pCalculationDesc->metricCount);
 
     // The order of metrics in the report should be the same as the one in the HW report to optimize calculation
     uint32_t metricGroupCount = 1;
@@ -129,7 +129,7 @@ ze_result_t IpSamplingMetricCalcOpImp::create(IpSamplingMetricSourceImp &metricS
 
     for (uint32_t i = 0; i < metricCount; i++) {
         auto metric = static_cast<MetricImp *>(Metric::fromHandle(hMetrics[i]));
-        if (pCalculateDesc->metricGroupCount > 0) {
+        if (pCalculationDesc->metricGroupCount > 0) {
             metricsInReport.push_back(metric);
             includedMetricIndexes.push_back(i);
         } else {
@@ -143,7 +143,7 @@ ze_result_t IpSamplingMetricCalcOpImp::create(IpSamplingMetricSourceImp &metricS
     auto calcOp = new IpSamplingMetricCalcOpImp(static_cast<uint32_t>(hMetrics.size()),
                                                 metricsInReport, includedMetricIndexes,
                                                 isMultiDevice);
-    *phCalculateOperation = calcOp->toHandle();
+    *phCalculationOperation = calcOp->toHandle();
     return ZE_RESULT_SUCCESS;
 }
 
@@ -248,7 +248,7 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
 
     if (!isMultiDevice) {
         if (isMultiDeviceData) {
-            METRICS_LOG_ERR("%s", "Cannot use root device raw data in a sub-device calculate operation handle");
+            METRICS_LOG_ERR("%s", "Cannot use root device raw data in a sub-device calculation operation handle");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
@@ -256,7 +256,7 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
                                              l0GfxCoreHelper, metricGroupBase, getSize, dataOverflow, stallReportDataMap);
     } else {
         if (!isMultiDeviceData) {
-            METRICS_LOG_ERR("%s", "Cannot use sub-device raw data in a root device calculate operation handle");
+            METRICS_LOG_ERR("%s", "Cannot use sub-device raw data in a root device calculation operation handle");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
@@ -275,7 +275,7 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
         l0GfxCoreHelper.stallSumIpDataToTypedValues(it->first, it->second, ipDataValues);
         for (uint32_t j = 0; j < includedMetricIndexes.size(); j++) {
             (pMetricResults + i)->value = ipDataValues[includedMetricIndexes[j]].value;
-            (pMetricResults + i)->resultStatus = ZET_INTEL_METRIC_CALCULATE_EXP_RESULT_VALID;
+            (pMetricResults + i)->resultStatus = ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID;
             i++;
         }
         ipDataValues.clear();

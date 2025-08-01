@@ -179,7 +179,7 @@ using DriverExtensionsTest = Test<ExtensionFixture>;
 
 TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnCorrectVersions) {
     verifyExtensionDefinition(ZET_INTEL_METRIC_SOURCE_ID_EXP_NAME, ZET_INTEL_METRIC_SOURCE_ID_EXP_VERSION_CURRENT);
-    verifyExtensionDefinition(ZET_INTEL_METRIC_CALCULATE_EXP_NAME, ZET_INTEL_METRIC_CALCULATE_EXP_VERSION_CURRENT);
+    verifyExtensionDefinition(ZET_INTEL_METRIC_CALCULATION_EXP_NAME, ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_CURRENT);
 }
 
 struct TestMetricProperties {

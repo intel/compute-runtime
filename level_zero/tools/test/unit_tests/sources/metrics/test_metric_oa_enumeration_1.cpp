@@ -613,8 +613,8 @@ TEST_F(MetricEnumerationTest, whenReadingMetricCroupCalculateParametersThenExpec
     EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroupsHandles.data()), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 2u);
 
-    zet_intel_metric_group_calculate_properties_exp_t metricGroupCalcProps{};
-    metricGroupCalcProps.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATE_EXP_PROPERTIES;
+    zet_intel_metric_group_calculation_properties_exp_t metricGroupCalcProps{};
+    metricGroupCalcProps.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATION_EXP_PROPERTIES;
     metricGroupCalcProps.pNext = nullptr;
     metricGroupCalcProps.isTimeFilterSupported = false;
 
@@ -3689,23 +3689,23 @@ TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIs
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // metric groups from different source
-    zet_intel_metric_calculate_exp_desc_t calculateDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP,
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
         nullptr,            // pNext
         1,                  // metricGroupCount
         &metricGroupHandle, // phMetricGroups
         0,                  // metricCount
         nullptr,            // phMetrics
         0,                  // timeWindowsCount
-        nullptr,            // pCalculateTimeWindows
+        nullptr,            // pCalculationTimeWindows
         1000,               // timeAggregationWindow
     };
 
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
-                                                                                             device->toHandle(), &calculateDesc,
-                                                                                             &hCalculateOperation));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                                                               device->toHandle(), &calculationDesc,
+                                                                                               &hCalculationOperation));
 }
 
 using AppendMarkerDriverVersionTest = Test<ExtensionFixture>;

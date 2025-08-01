@@ -260,8 +260,8 @@ ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(zet_m
             zet_metric_group_type_exp_t *groupType = reinterpret_cast<zet_metric_group_type_exp_t *>(extendedProperties);
             groupType->type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER;
             retVal = ZE_RESULT_SUCCESS;
-        } else if (static_cast<uint32_t>(extendedProperties->stype) == ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATE_EXP_PROPERTIES) {
-            auto calcProperties = reinterpret_cast<zet_intel_metric_group_calculate_properties_exp_t *>(extendedProperties);
+        } else if (static_cast<uint32_t>(extendedProperties->stype) == ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATION_EXP_PROPERTIES) {
+            auto calcProperties = reinterpret_cast<zet_intel_metric_group_calculation_properties_exp_t *>(extendedProperties);
             calcProperties->isTimeFilterSupported = false;
             retVal = ZE_RESULT_SUCCESS;
         }
@@ -273,12 +273,12 @@ ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(zet_m
 }
 
 ze_result_t IpSamplingMetricSourceImp::calcOperationCreate(MetricDeviceContext &metricDeviceContext,
-                                                           zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-                                                           zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
+                                                           zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
+                                                           zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
     ze_result_t status = ZE_RESULT_ERROR_UNKNOWN;
 
     bool isMultiDevice = (metricDeviceContext.isImplicitScalingCapable()) ? true : false;
-    status = IpSamplingMetricCalcOpImp::create(*this, pCalculateDesc, isMultiDevice, phCalculateOperation);
+    status = IpSamplingMetricCalcOpImp::create(*this, pCalculationDesc, isMultiDevice, phCalculationOperation);
     return status;
 }
 

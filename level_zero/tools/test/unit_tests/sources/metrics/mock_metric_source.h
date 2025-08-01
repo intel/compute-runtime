@@ -50,8 +50,8 @@ class MockMetricSource : public L0::MetricSource {
     }
 
     ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
-                                    zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-                                    zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) override {
+                                    zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
+                                    zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     bool canDisable() override { return false; }

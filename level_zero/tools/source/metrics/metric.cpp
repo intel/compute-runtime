@@ -601,58 +601,58 @@ bool MetricDeviceContext::areMetricsFromSameSource(uint32_t count, zet_metric_ha
 }
 
 ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hContext,
-                                                     zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-                                                     zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
+                                                     zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
+                                                     zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
 
-    if (pCalculateDesc->timeAggregationWindow == 0) {
+    if (pCalculationDesc->timeAggregationWindow == 0) {
         METRICS_LOG_ERR("%s", "Must define an aggregation window");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     uint32_t metricGroupsSourceType = MetricSource::metricSourceTypeUndefined;
     MetricGroupImp *metricGroupImp = nullptr;
-    if (pCalculateDesc->metricGroupCount > 0) {
-        if (!areMetricGroupsFromSameSource(pCalculateDesc->metricGroupCount, pCalculateDesc->phMetricGroups, &metricGroupsSourceType)) {
+    if (pCalculationDesc->metricGroupCount > 0) {
+        if (!areMetricGroupsFromSameSource(pCalculationDesc->metricGroupCount, pCalculationDesc->phMetricGroups, &metricGroupsSourceType)) {
             METRICS_LOG_ERR("%s", "Metric groups must be from the same domain");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        if (!areMetricGroupsFromSameDeviceHierarchy(pCalculateDesc->metricGroupCount, pCalculateDesc->phMetricGroups)) {
+        if (!areMetricGroupsFromSameDeviceHierarchy(pCalculationDesc->metricGroupCount, pCalculationDesc->phMetricGroups)) {
             METRICS_LOG_ERR("%s", "Mix of root device and sub-device metric group handle is not allowed");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        metricGroupImp = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(pCalculateDesc->phMetricGroups[0]));
+        metricGroupImp = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(pCalculationDesc->phMetricGroups[0]));
     }
 
     uint32_t metricsSourceType = MetricSource::metricSourceTypeUndefined;
     MetricImp *metricImp = nullptr;
-    if (pCalculateDesc->metricCount > 0) {
-        if (!areMetricsFromSameSource(pCalculateDesc->metricCount, pCalculateDesc->phMetrics, &metricsSourceType)) {
+    if (pCalculationDesc->metricCount > 0) {
+        if (!areMetricsFromSameSource(pCalculationDesc->metricCount, pCalculationDesc->phMetrics, &metricsSourceType)) {
             METRICS_LOG_ERR("%s", "Metrics must be from the same domain");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        metricImp = static_cast<MetricImp *>(Metric::fromHandle(pCalculateDesc->phMetrics[0]));
+        metricImp = static_cast<MetricImp *>(Metric::fromHandle(pCalculationDesc->phMetrics[0]));
         // IpSampling does not use multi-device metrics
         if ((metricImp->getMetricSource().getType() != MetricSource::metricSourceTypeIpSampling) &&
-            (!areMetricsFromSameDeviceHierarchy(pCalculateDesc->metricCount, pCalculateDesc->phMetrics))) {
+            (!areMetricsFromSameDeviceHierarchy(pCalculationDesc->metricCount, pCalculationDesc->phMetrics))) {
             METRICS_LOG_ERR("%s", "Mix of root device and sub-device metric handle is not allowed");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     }
 
-    if (pCalculateDesc->metricGroupCount > 0) {
-        if ((pCalculateDesc->metricCount > 0) && (metricGroupsSourceType != metricsSourceType)) {
+    if (pCalculationDesc->metricGroupCount > 0) {
+        if ((pCalculationDesc->metricCount > 0) && (metricGroupsSourceType != metricsSourceType)) {
             METRICS_LOG_ERR("%s", "Metric groups and metrics must be from the same domain");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-    } else if (pCalculateDesc->metricCount == 0) {
+    } else if (pCalculationDesc->metricCount == 0) {
         METRICS_LOG_ERR("%s", "Must define at least one metric group or metric");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     MetricSource &metricSource = (metricGroupImp) ? metricGroupImp->getMetricSource() : metricImp->getMetricSource(); // NOLINT(clang-analyzer-core.CallAndMessage)
-    return metricSource.calcOperationCreate(*this, pCalculateDesc, phCalculateOperation);
+    return metricSource.calcOperationCreate(*this, pCalculationDesc, phCalculationOperation);
 }
 
 std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_properties_exp_t &scopeProperties) {
@@ -1039,55 +1039,55 @@ ze_result_t metricCreateFromProgrammable(
     return L0::MetricProgrammable::fromHandle(hMetricProgrammable)->createMetric(pParameterValues, parameterCount, name, description, pMetricHandleCount, phMetricHandles);
 }
 
-ze_result_t metricCalculateOperationCreate(
+ze_result_t metricCalculationOperationCreate(
     zet_context_handle_t hContext,
     zet_device_handle_t hDevice,
-    zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
-    zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
+    zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
+    zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
 
     DeviceImp *deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
-    return deviceImp->getMetricDeviceContext().calcOperationCreate(hContext, pCalculateDesc, phCalculateOperation);
+    return deviceImp->getMetricDeviceContext().calcOperationCreate(hContext, pCalculationDesc, phCalculationOperation);
 }
 
-ze_result_t metricCalculateOperationDestroy(
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation) {
-    return MetricCalcOp::fromHandle(hCalculateOperation)->destroy();
+ze_result_t metricCalculationOperationDestroy(
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation) {
+    return MetricCalcOp::fromHandle(hCalculationOperation)->destroy();
 }
 
-ze_result_t metricCalculateGetReportFormat(
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+ze_result_t metricCalculationGetReportFormat(
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
     uint32_t *pCount,
     zet_metric_handle_t *phMetrics) {
-    return MetricCalcOp::fromHandle(hCalculateOperation)->getReportFormat(pCount, phMetrics);
+    return MetricCalcOp::fromHandle(hCalculationOperation)->getReportFormat(pCount, phMetrics);
 }
 
-ze_result_t metricCalculateGetExcludedMetrics(
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+ze_result_t metricCalculationGetExcludedMetrics(
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
     uint32_t *pCount,
     zet_metric_handle_t *phMetrics) {
-    return MetricCalcOp::fromHandle(hCalculateOperation)->getExcludedMetrics(pCount, phMetrics);
+    return MetricCalcOp::fromHandle(hCalculationOperation)->getExcludedMetrics(pCount, phMetrics);
 }
 
 ze_result_t metricCalculateValues(
     const size_t rawDataSize,
     size_t *pOffset,
     const uint8_t *pRawData,
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
     uint32_t *pTotalMetricReportsCount,
     zet_intel_metric_result_exp_t *pMetricResults) {
-    return MetricCalcOp::fromHandle(hCalculateOperation)->metricCalculateValues(rawDataSize, pOffset, pRawData, pTotalMetricReportsCount, pMetricResults);
+    return MetricCalcOp::fromHandle(hCalculationOperation)->metricCalculateValues(rawDataSize, pOffset, pRawData, pTotalMetricReportsCount, pMetricResults);
 }
 
 ze_result_t metricCalculateMultipleValues(
     const size_t rawDataSize,
     size_t *offset,
     const uint8_t *pRawData,
-    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation,
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
     uint32_t *pSetCount,
     uint32_t *pMetricsReportCountPerSet,
     uint32_t *pTotalMetricReportCount,
     zet_intel_metric_result_exp_t *pMetricResults) {
-    return MetricCalcOp::fromHandle(hCalculateOperation)->metricCalculateMultipleValues(rawDataSize, offset, pRawData, pSetCount, pMetricsReportCountPerSet, pTotalMetricReportCount, pMetricResults);
+    return MetricCalcOp::fromHandle(hCalculationOperation)->metricCalculateMultipleValues(rawDataSize, offset, pRawData, pSetCount, pMetricsReportCountPerSet, pTotalMetricReportCount, pMetricResults);
 }
 
 ze_result_t metricsEnable(zet_device_handle_t hDevice) {
