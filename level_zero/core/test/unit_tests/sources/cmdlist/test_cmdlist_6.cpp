@@ -893,7 +893,7 @@ HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDevic
         std::make_unique<NEO::MockMemoryOperations>();
 
     void *dstBuffer = nullptr;
-    size_t size = MemoryConstants::pageSize64k;
+    size_t size = MemoryConstants::pageSize2M;
     size_t reservationSize = size * 2;
 
     auto res = context->reserveVirtualMem(nullptr, reservationSize, &dstBuffer);
@@ -944,7 +944,7 @@ HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithOneReservedDe
         std::make_unique<NEO::MockMemoryOperations>();
 
     void *dstBuffer = nullptr;
-    size_t size = MemoryConstants::pageSize64k;
+    size_t size = MemoryConstants::pageSize2M;
     size_t reservationSize = size * 2;
 
     auto res = context->reserveVirtualMem(nullptr, reservationSize, &dstBuffer);

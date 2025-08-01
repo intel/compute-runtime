@@ -1261,22 +1261,91 @@ TEST_F(ContextTest, whenCallingQueryVirtualMemPageSizeCorrectAlignmentIsReturned
     size_t pagesize = 0u;
     res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(pagesize, MemoryConstants::pageSize64k);
+    EXPECT_EQ(pagesize, MemoryConstants::pageSize2M);
 
     size = MemoryConstants::pageSize2M - 1000;
     pagesize = 0u;
     res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(pagesize, MemoryConstants::pageSize64k);
+    EXPECT_EQ(pagesize, MemoryConstants::pageSize2M);
 
     size = MemoryConstants::pageSize2M + 1000;
     pagesize = 0u;
     res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(pagesize, MemoryConstants::pageSize64k);
+    EXPECT_EQ(pagesize, MemoryConstants::pageSize2M);
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingQueryVirtualMemPageSizeWithStartAddressThenCorrectAlignmentIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    struct MockContextImp : public ContextImp {
+        using ContextImp::getPageAlignedSizeRequired;
+    };
+
+    MockContextImp *contextImp = static_cast<MockContextImp *>(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t pagesize = 0u;
+
+    const auto &gfxPartition = driverHandle->getMemoryManager()->getGfxPartition(neoDevice->getRootDeviceIndex());
+    for (uint32_t heapIndex = static_cast<uint32_t>(HeapIndex::heapInternalDeviceMemory); heapIndex < static_cast<uint32_t>(HeapIndex::totalHeaps); ++heapIndex) {
+        if (gfxPartition->isHeapInitialized(static_cast<HeapIndex>(heapIndex)) == false) {
+            continue;
+        }
+        auto heapBase = gfxPartition->getHeapBase(static_cast<HeapIndex>(heapIndex));
+        auto heapAlignment = gfxPartition->getHeapAllocationAlignment(static_cast<HeapIndex>(heapIndex));
+
+        void *pStart = reinterpret_cast<void *>(heapBase);
+
+        auto alignedSize = contextImp->getPageAlignedSizeRequired(pStart, size, nullptr, &pagesize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(pagesize, heapAlignment);
+        EXPECT_EQ(alignedSize % heapAlignment, 0u);
+    }
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingQueryVirtualMemPageSizeWithInvalidStartAddressThenDefaultAlignmentIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    struct MockContextImp : public ContextImp {
+        using ContextImp::getPageAlignedSizeRequired;
+    };
+
+    MockContextImp *contextImp = static_cast<MockContextImp *>(L0::Context::fromHandle(hContext));
+
+    size_t size = 1024;
+    size_t defaultPageSize = 0u;
+
+    auto alignedSize = contextImp->getPageAlignedSizeRequired(nullptr, size, nullptr, &defaultPageSize);
+    EXPECT_EQ(defaultPageSize, MemoryConstants::pageSize2M);
+
+    const auto &gfxPartition = driverHandle->getMemoryManager()->getGfxPartition(neoDevice->getRootDeviceIndex());
+    uint64_t maxHeapLimit = 0;
+    for (uint32_t heapIndex = static_cast<uint32_t>(HeapIndex::heapInternalDeviceMemory); heapIndex < static_cast<uint32_t>(HeapIndex::totalHeaps); ++heapIndex) {
+        maxHeapLimit = std::max(maxHeapLimit, gfxPartition->getHeapLimit(static_cast<HeapIndex>(heapIndex)));
+    }
+    void *pStart = reinterpret_cast<void *>(maxHeapLimit + 64);
+
+    size_t pageSize = 0u;
+    contextImp->getPageAlignedSizeRequired(pStart, alignedSize, nullptr, &pageSize);
+    EXPECT_EQ(pageSize, defaultPageSize);
+
+    res = contextImp->destroy();
 }
 
 TEST_F(ContextTest, whenCallingPhysicalMemInterfacesThenSuccessIsReturned) {
@@ -1696,6 +1765,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryFreeWithInvalidValuesThenFailuresRet
 
     const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
     pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
+
     res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_GT(static_cast<int>(driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size()), 0);
@@ -1728,17 +1798,38 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
         if (failReserveGpuAddress) {
             return {};
         }
+        if (returnNonZeroReserveGpuAddressValue) {
+            return AddressRange{reserveGpuAddressValue, size};
+        }
         return AddressRange{requiredStartAddress, size};
     }
     AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override {
         if (failReserveGpuAddress) {
             return {};
         }
+        if (returnNonZeroReserveGpuAddressValue) {
+            return AddressRange{reserveGpuAddressValue, size};
+        }
         return AddressRange{requiredStartAddress, size};
     }
     size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override {
-        *heap = HeapIndex::heapStandard;
-        return MemoryConstants::pageSize64k;
+        return selectAlignmentAndHeap(0ULL, size, heap);
+    }
+    size_t selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, HeapIndex *heap) override {
+
+        // Always default to HEAP STANDARD 2MB.
+        *heap = HeapIndex::heapStandard2MB;
+        size_t pageSizeAlignment = MemoryConstants::pageSize2M;
+
+        // If the user provides a start address, we try to find the heap and page size alignment based on that address.
+        if (requiredStartAddress != 0ULL) {
+            auto rootDeviceIndex = 0u;
+            auto gfxPartition = getGfxPartition(rootDeviceIndex);
+            if (gfxPartition->getHeapIndexAndPageSizeBasedOnAddress(requiredStartAddress, *heap, pageSizeAlignment)) {
+                return pageSizeAlignment;
+            }
+        }
+        return pageSizeAlignment;
     }
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
     AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override {
@@ -1794,6 +1885,8 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
     }
 
     bool failReserveGpuAddress = true;
+    uint64_t reserveGpuAddressValue = 42;
+    bool returnNonZeroReserveGpuAddressValue = false;
     bool failReserveCpuAddress = true;
     bool failMapVirtualMemory = true;
     bool failAllocatePhysicalGraphicsMemory = true;
@@ -1842,23 +1935,20 @@ TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartAboveSvmRangeWithSucce
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    auto reserveMemoryManager = std::make_unique<ReserveMemoryManagerMock>(*neoDevice->executionEnvironment);
+    auto memoryManager = driverHandle->getMemoryManager();
+    reserveMemoryManager->failReserveGpuAddress = false;
+    driverHandle->setMemoryManager(reserveMemoryManager.get());
 
     const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
     void *pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
     size_t size = 4096u;
     void *ptr = nullptr;
-    size_t pagesize = 0u;
 
-    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto reserveMemoryManager = std::make_unique<ReserveMemoryManagerMock>(*neoDevice->executionEnvironment);
-    auto memoryManager = driverHandle->getMemoryManager();
-    reserveMemoryManager->failReserveGpuAddress = false;
-    driverHandle->setMemoryManager(reserveMemoryManager.get());
-    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_GT(reserveMemoryManager->getVirtualMemoryReservationMap().size(), 0u);
-    res = contextImp->freeVirtualMem(ptr, pagesize);
+    res = contextImp->freeVirtualMem(ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     driverHandle->setMemoryManager(memoryManager);
 
@@ -2019,22 +2109,25 @@ HWTEST2_F(ContextTest, whenCallingVirtualMemoryReservationWhenOutOfMemoryThenOut
     void *pStart = 0x0;
     size_t size = 0u;
     void *ptr = nullptr;
-    size_t pagesize = 0u;
+    size_t pageSize = 0u;
 
-    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    res = contextImp->queryVirtualMemPageSize(device, size, &pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     NEO::MemoryManager *failingReserveMemoryManager = new ReserveMemoryManagerMock(*neoDevice->executionEnvironment);
     auto memoryManager = driverHandle->getMemoryManager();
     driverHandle->setMemoryManager(failingReserveMemoryManager);
-    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    res = contextImp->reserveVirtualMem(pStart, pageSize, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
+
     pStart = reinterpret_cast<void *>(0x1234);
-    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    res = contextImp->reserveVirtualMem(pStart, pageSize, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
+
     const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
     pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
-    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    res = contextImp->reserveVirtualMem(pStart, pageSize, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+
     driverHandle->setMemoryManager(memoryManager);
     delete failingReserveMemoryManager;
 
@@ -2064,10 +2157,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithInvalidArgumentsThenU
     driverHandle->setMemoryManager(failingReserveMemoryManager);
     res = contextImp->reserveVirtualMem(pStart, size, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, res);
-    const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
-    pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
-    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, res);
+
     driverHandle->setMemoryManager(memoryManager);
     delete failingReserveMemoryManager;
 
@@ -2103,6 +2193,91 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithInvalidMultiPageSizeI
     size = pagesize * 2 + 1;
     res = contextImp->reserveVirtualMem(pStart, size, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, res);
+
+    driverHandle->setMemoryManager(memoryManager);
+    delete failingReserveMemoryManager;
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingVirtualMemoryReservationOnNonSvmHeapWithUnAlignedSizeInArgumentsThenUnsupportedSizeReturned) {
+
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EnableReservingInSvmRange.set(0);
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 64u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    NEO::MemoryManager *failingReserveMemoryManager = new ReserveMemoryManagerMock(*neoDevice->executionEnvironment);
+    auto memoryManager = driverHandle->getMemoryManager();
+    driverHandle->setMemoryManager(failingReserveMemoryManager);
+
+    size = pagesize * 3 + 10;
+    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, res);
+
+    size = pagesize + MemoryConstants::pageSize;
+    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, res);
+
+    driverHandle->setMemoryManager(memoryManager);
+    delete failingReserveMemoryManager;
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingVirtualMemoryReservationOnNonSvmHeapWithOutStartAddressHintThenThenSuccessReturned) {
+
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EnableReservingInSvmRange.set(0);
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 64u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto failingReserveMemoryManager = new ReserveMemoryManagerMock(*neoDevice->executionEnvironment);
+    auto memoryManager = driverHandle->getMemoryManager();
+    failingReserveMemoryManager->failReserveGpuAddress = false;
+    failingReserveMemoryManager->returnNonZeroReserveGpuAddressValue = true;
+    driverHandle->setMemoryManager(failingReserveMemoryManager);
+
+    size = pagesize;
+    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    // Delete the allocated reservation from the map
+    auto &virtualMemoryReservationMap = driverHandle->getMemoryManager()->getVirtualMemoryReservationMap();
+    if (auto it = virtualMemoryReservationMap.find(ptr); it != virtualMemoryReservationMap.end()) {
+        delete it->second;
+        virtualMemoryReservationMap.erase(it);
+    }
 
     driverHandle->setMemoryManager(memoryManager);
     delete failingReserveMemoryManager;
@@ -2289,6 +2464,7 @@ HWTEST2_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservat
 }
 
 HWTEST2_F(ContextTest, Given57BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected, IsNotMTL) {
+
     MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(57);
 
     ze_context_handle_t hContext;
@@ -2316,17 +2492,56 @@ HWTEST2_F(ContextTest, Given57BitCpuAddressWidthWhenCallingVirtualMemoryReservat
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     pStart = addrToPtr(maxNBitValue(56) + 0x1234);
-
     res = contextImp->reserveVirtualMem(pStart, size, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+
     reserveMemoryManager->failReserveGpuAddress = false;
     res = contextImp->reserveVirtualMem(pStart, size, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(ptr, nullptr);
+    EXPECT_NE(ptr, pStart);
+
     res = contextImp->freeVirtualMem(ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     driverHandle->setMemoryManager(memoryManager);
     delete reserveMemoryManager;
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithUnAlignedPstartThenNearbyAlignedPstartIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    auto failingReserveMemoryManager = new ReserveMemoryManagerMock(*neoDevice->executionEnvironment);
+    auto memoryManager = driverHandle->getMemoryManager();
+    driverHandle->setMemoryManager(failingReserveMemoryManager);
+    failingReserveMemoryManager->failReserveGpuAddress = false;
+
+    void *pStart = 0x0;
+    size_t size = MemoryConstants::pageSize;
+    void *ptr = nullptr;
+
+    const auto maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
+    pStart = reinterpret_cast<void *>(maxCpuVa + 0x1234);
+
+    // pStart is not aligned to any pagesize. The reserveVirtualMem will properly align it.
+    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(ptr, nullptr);
+    EXPECT_NE(ptr, pStart);
+    res = contextImp->freeVirtualMem(ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->setMemoryManager(memoryManager);
+    delete failingReserveMemoryManager;
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -2517,7 +2732,7 @@ TEST_F(ContextTest, whenCallingMapVirtualMemoryWithInvalidValuesThenFailureRetur
     res = contextImp->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    res = contextImp->mapVirtualMem(ptr, 0u, mem, offset, access);
+    res = contextImp->mapVirtualMem(ptr, 123u, mem, offset, access);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT, res);
 
     access = ZE_MEMORY_ACCESS_ATTRIBUTE_FORCE_UINT32;
@@ -2532,7 +2747,7 @@ TEST_F(ContextTest, whenCallingMapVirtualMemoryWithInvalidValuesThenFailureRetur
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
     // Test unsupported page size alignment: not covered in API validation layer.
-    res = contextImp->unMapVirtualMem(ptr, pagesize + pagesize / 2);
+    res = contextImp->unMapVirtualMem(ptr, pagesize + 123u);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT, res);
 
     res = contextImp->unMapVirtualMem(ptr, pagesize);
@@ -2606,7 +2821,6 @@ TEST_F(ContextTest, whenCallingUnmapVirtualMemoryWithFailedUnmapThenUnknownError
 
     // Reset the memory manager to the original one.
     driverHandle->setMemoryManager(memManager);
-
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }

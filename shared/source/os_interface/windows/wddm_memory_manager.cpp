@@ -987,13 +987,30 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *r
 }
 
 size_t WddmMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
-    AlignmentSelector::CandidateAlignment alignment = alignmentSelector.selectAlignment(size);
+    return selectAlignmentAndHeap(0ULL, size, heap);
+}
+
+size_t WddmMemoryManager::selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, HeapIndex *heap) {
+
+    // Always default to heapStandard64KB.
     *heap = HeapIndex::heapStandard64KB;
+
+    // If the user provides a start address, we try to find the heap and page size alignment based on that address.
+    if (requiredStartAddress != 0ULL) {
+        auto rootDeviceIndex = 0u;
+        auto gfxPartition = getGfxPartition(rootDeviceIndex);
+        size_t pageSizeAlignment = 0;
+        if (gfxPartition->getHeapIndexAndPageSizeBasedOnAddress(requiredStartAddress, *heap, pageSizeAlignment)) {
+            return pageSizeAlignment;
+        }
+    }
+
+    AlignmentSelector::CandidateAlignment alignment = alignmentSelector.selectAlignment(size);
     return alignment.alignment;
 }
 
 AddressRange WddmMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
-    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::heapStandard64KB, MemoryConstants::pageSize64k);
+    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::heapStandard64KB, MemoryConstants::pageSize2M);
 }
 
 AddressRange WddmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) {
