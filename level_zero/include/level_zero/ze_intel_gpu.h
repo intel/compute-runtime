@@ -527,7 +527,7 @@ ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(ze_driver_handle_t hDri
 ///     - Default context contains all devices within default driver instance
 /// @returns
 ///     - Context handle associated with default driver
-ze_context_handle_t ZE_APICALL zerDriverGetDefaultContext();
+ze_context_handle_t ZE_APICALL zerGetDefaultContext();
 
 /// @brief Get Device Identifier
 ///
@@ -535,10 +535,10 @@ ze_context_handle_t ZE_APICALL zerDriverGetDefaultContext();
 ///     - The application may call this function from simultaneous threads.
 ///     - The implementation of this function should be lock-free.
 ///     - Returned identifier is a 32-bit unsigned integer that is unique to the driver.
-///     - The identifier can be used then in zerIdentifierTranslateToDeviceHandle to get the device handle.
+///     - The identifier can be used then in zerTranslateIdentifierToDeviceHandle to get the device handle.
 /// @returns
 ///     - 32-bit unsigned integer identifier
-uint32_t ZE_APICALL zerDeviceTranslateToIdentifier(ze_device_handle_t hDevice); ///< [in] handle of the device
+uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t hDevice); ///< [in] handle of the device
 
 /// @brief Translate Device Identifier to Device Handle from default Driver
 ///
@@ -548,7 +548,7 @@ uint32_t ZE_APICALL zerDeviceTranslateToIdentifier(ze_device_handle_t hDevice); 
 ///    - Returned device is associated to default driver handle.
 /// @returns
 ///     - device handle associated with the identifier
-ze_device_handle_t ZE_APICALL zerIdentifierTranslateToDeviceHandle(uint32_t identifier); ///< [in] integer identifier of the device
+ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(uint32_t identifier); ///< [in] integer identifier of the device
 
 /// @brief Global device synchronization
 ///
@@ -630,7 +630,7 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
 ///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
 ///         + `nullptr == ppString`
 ze_result_t ZE_APICALL
-zerDriverGetLastErrorDescription(
+zerGetLastErrorDescription(
     const char **ppString ///< [in,out] pointer to a null-terminated array of characters describing
                           ///< cause of error.
 );

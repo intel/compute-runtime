@@ -22,12 +22,12 @@
 namespace LevelZeroBlackBoxTests {
 template <bool terminateOnFailure, typename ResulT>
 inline void validate(ResulT result, const char *message);
-extern decltype(&zerDriverGetDefaultContext) zerDriverGetDefaultContextFunc;
+extern decltype(&zerGetDefaultContext) zerGetDefaultContextFunc;
 extern decltype(&zeDeviceSynchronize) zeDeviceSynchronizeFunc;
 extern decltype(&zeCommandListAppendLaunchKernelWithArguments) zeCommandListAppendLaunchKernelWithArgumentsFunc;
-extern decltype(&zerIdentifierTranslateToDeviceHandle) zerIdentifierTranslateToDeviceHandleFunc;
-extern decltype(&zerDeviceTranslateToIdentifier) zerDeviceTranslateToIdentifierFunc;
-extern decltype(&zerDriverGetLastErrorDescription) zerDriverGetLastErrorDescriptionFunc;
+extern decltype(&zerTranslateIdentifierToDeviceHandle) zerTranslateIdentifierToDeviceHandleFunc;
+extern decltype(&zerTranslateDeviceHandleToIdentifier) zerTranslateDeviceHandleToIdentifierFunc;
+extern decltype(&zerGetLastErrorDescription) zerGetLastErrorDescriptionFunc;
 
 } // namespace LevelZeroBlackBoxTests
 
