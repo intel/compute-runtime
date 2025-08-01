@@ -1110,9 +1110,6 @@ void EncodeMiArbCheck<Family>::program(MI_ARB_CHECK *arbCheckCmd, std::optional<
 }
 
 template <typename Family>
-size_t EncodeMiArbCheck<Family>::getCommandSize() { return sizeof(MI_ARB_CHECK); }
-
-template <typename Family>
 inline void EncodeNoop<Family>::alignToCacheLine(LinearStream &commandStream) {
     auto used = commandStream.getUsed();
     auto alignment = MemoryConstants::cacheLineSize;
@@ -1158,8 +1155,14 @@ inline void EncodeDataMemory<Family>::programDataMemory(LinearStream &commandStr
                                                         void *srcData,
                                                         size_t size) {
     size_t bufferSize = getCommandSizeForEncode(size);
-    void *commandBuffer = commandStream.getSpace(bufferSize);
+    void *basePtr = commandStream.getSpace(bufferSize);
+    void *commandBuffer = basePtr;
     EncodeDataMemory<Family>::programDataMemory(commandBuffer, dstGpuAddress, srcData, size);
+    size_t sizeDiff = ptrDiff(commandBuffer, basePtr);
+    if (bufferSize > sizeDiff) {
+        auto paddingSize = bufferSize - sizeDiff;
+        memset(commandBuffer, 0, paddingSize);
+    }
 }
 
 template <typename Family>
@@ -1168,8 +1171,12 @@ inline void EncodeDataMemory<Family>::programDataMemory(void *&commandBuffer,
                                                         void *srcData,
                                                         size_t size) {
     using MI_STORE_DATA_IMM = typename Family::MI_STORE_DATA_IMM;
+
     auto alignedUpSize = alignUp(size, sizeof(uint32_t));
     UNRECOVERABLE_IF(alignedUpSize != size);
+
+    const auto alignedUpDstGpuAddress = alignUp(dstGpuAddress, sizeof(uint64_t));
+    bool useQword = alignedUpDstGpuAddress == dstGpuAddress;
 
     MI_STORE_DATA_IMM *cmdSdi = reinterpret_cast<MI_STORE_DATA_IMM *>(commandBuffer);
 
@@ -1177,20 +1184,39 @@ inline void EncodeDataMemory<Family>::programDataMemory(void *&commandBuffer,
     uint32_t dataDword1 = 0;
     bool storeQword = false;
     size_t step = sizeof(uint32_t);
-    while (size > 0) {
-        dataDword0 = *reinterpret_cast<uint32_t *>(srcData);
-        storeQword = false;
-        dataDword1 = 0;
-        step = sizeof(uint32_t);
-        if (size >= sizeof(uint64_t)) {
-            storeQword = true;
-            dataDword1 = *(reinterpret_cast<uint32_t *>(srcData) + 1);
-            step = sizeof(uint64_t);
+
+    if (useQword == false) {
+        if (srcData != nullptr) {
+            dataDword0 = *reinterpret_cast<uint32_t *>(srcData);
         }
         EncodeStoreMemory<Family>::programStoreDataImm(cmdSdi, dstGpuAddress, dataDword0, dataDword1, storeQword, false);
         size -= step;
         dstGpuAddress += step;
-        srcData = ptrOffset(srcData, step);
+        if (srcData != nullptr) {
+            srcData = ptrOffset(srcData, step);
+        }
+        cmdSdi++;
+    }
+    while (size > 0) {
+        if (srcData != nullptr) {
+            dataDword0 = *reinterpret_cast<uint32_t *>(srcData);
+        }
+        storeQword = false;
+        dataDword1 = 0;
+        step = sizeof(uint32_t);
+        if (size >= sizeof(uint64_t)) {
+            if (srcData != nullptr) {
+                dataDword1 = *(reinterpret_cast<uint32_t *>(srcData) + 1);
+            }
+            storeQword = true;
+            step = sizeof(uint64_t);
+        }
+        EncodeStoreMemory<Family>::programStoreDataImm(cmdSdi, dstGpuAddress, dataDword0, dataDword1, storeQword, false);
+        if (srcData != nullptr) {
+            srcData = ptrOffset(srcData, step);
+        }
+        size -= step;
+        dstGpuAddress += step;
         cmdSdi++;
     }
     commandBuffer = reinterpret_cast<void *>(cmdSdi);
@@ -1201,55 +1227,48 @@ inline size_t EncodeDataMemory<Family>::getCommandSizeForEncode(size_t size) {
     auto alignedUpSize = alignUp(size, sizeof(uint32_t));
     UNRECOVERABLE_IF(alignedUpSize != size);
 
-    size_t steps = (size / sizeof(uint64_t));
-    size_t tailSteps = (steps * sizeof(uint64_t) == size) ? 0U : 1U;
-    size_t commandSize = (steps + tailSteps) * EncodeStoreMemory<Family>::getStoreDataImmSize();
+    constexpr size_t storeDataImmSize = EncodeStoreMemory<Family>::getStoreDataImmSize();
 
-    return commandSize;
+    // for single dword or qword of data, must reserve one or two dword SDI commands for worst-case scenario
+    if (size <= sizeof(uint64_t)) {
+        size_t cmds = size / sizeof(uint32_t);
+        return storeDataImmSize * cmds;
+    }
+
+    // two dwords are reserved for begin and end SDI dword reminder for worst-case scenario
+    size_t cmds = 2;
+    // two dwords are reserved for begin and end SDI dword writes
+    size_t qwordCapableSize = size - (2 * sizeof(uint32_t));
+    size_t qwordCmds = (qwordCapableSize / sizeof(uint64_t));
+    return storeDataImmSize * (cmds + qwordCmds);
 }
 
 template <typename Family>
 inline void EncodeDataMemory<Family>::programNoop(LinearStream &commandStream,
                                                   uint64_t dstGpuAddress, size_t size) {
     size_t bufferSize = getCommandSizeForEncode(size);
-    void *commandBuffer = commandStream.getSpace(bufferSize);
+    void *basePtr = commandStream.getSpace(bufferSize);
+    void *commandBuffer = basePtr;
     programNoop(commandBuffer, dstGpuAddress, size);
+    size_t sizeDiff = ptrDiff(commandBuffer, basePtr);
+    if (bufferSize > sizeDiff) {
+        auto paddingSize = bufferSize - sizeDiff;
+        memset(commandBuffer, 0, paddingSize);
+    }
 }
 
 template <typename Family>
 inline void EncodeDataMemory<Family>::programNoop(void *&commandBuffer,
                                                   uint64_t dstGpuAddress, size_t size) {
-    using MI_STORE_DATA_IMM = typename Family::MI_STORE_DATA_IMM;
-
-    constexpr uint32_t noopValue0 = 0;
-    constexpr uint32_t noopValue1 = 0;
-    constexpr size_t unitSize = sizeof(uint64_t);
-
-    MI_STORE_DATA_IMM *cmdSdi = reinterpret_cast<MI_STORE_DATA_IMM *>(commandBuffer);
-
-    const size_t alignDownSize = alignDown(size, unitSize);
-    uint32_t i = 0;
-    uint32_t maxIterations = 0;
-    if (size >= unitSize) {
-        maxIterations = static_cast<uint32_t>(alignDownSize / unitSize);
-    }
-    for (; i < maxIterations; i++) {
-        constexpr bool storeQword = true;
-        EncodeStoreMemory<Family>::programStoreDataImm(cmdSdi, (dstGpuAddress + i * unitSize), noopValue0, noopValue1, storeQword, false);
-        cmdSdi++;
-    }
-    if (size > alignDownSize) {
-        constexpr bool storeQword = false;
-        EncodeStoreMemory<Family>::programStoreDataImm(cmdSdi, (dstGpuAddress + i * unitSize), noopValue0, noopValue1, storeQword, false);
-        cmdSdi++;
-    }
-    commandBuffer = reinterpret_cast<void *>(cmdSdi);
+    programDataMemory(commandBuffer, dstGpuAddress, nullptr, size);
 }
 
 template <typename Family>
 inline void EncodeDataMemory<Family>::programBbStart(LinearStream &commandStream,
                                                      uint64_t dstGpuAddress, uint64_t address, bool secondLevel, bool indirect, bool predicate) {
     using MI_BATCH_BUFFER_START = typename Family::MI_BATCH_BUFFER_START;
+    // size of dword+qword has the same consumption for best and worst-case scenario, so no need to clean-up possible reminder when gpu address is qword misaligned
+    static_assert(sizeof(MI_BATCH_BUFFER_START) == (sizeof(uint32_t) + sizeof(uint64_t)), "MI_BATCH_BUFFER_START requires to add cleanup after overestimation");
 
     size_t bufferSize = getCommandSizeForEncode(sizeof(MI_BATCH_BUFFER_START));
     void *commandBuffer = commandStream.getSpace(bufferSize);

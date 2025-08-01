@@ -1234,7 +1234,8 @@ void EncodeDataMemory<Family>::programFrontEndState(
         using CFE_STATE = typename Family::CFE_STATE;
 
         size_t bufferSize = getCommandSizeForEncode(sizeof(CFE_STATE));
-        void *commandBuffer = commandStream.getSpace(bufferSize);
+        void *basePtr = commandStream.getSpace(bufferSize);
+        void *commandBuffer = basePtr;
         EncodeDataMemory<Family>::programFrontEndState(commandBuffer,
                                                        dstGpuAddress,
                                                        rootDeviceEnvironment,
@@ -1242,6 +1243,11 @@ void EncodeDataMemory<Family>::programFrontEndState(
                                                        scratchAddress,
                                                        maxFrontEndThreads,
                                                        streamProperties);
+        size_t sizeDiff = ptrDiff(commandBuffer, basePtr);
+        if (bufferSize > sizeDiff) {
+            auto paddingSize = bufferSize - sizeDiff;
+            memset(commandBuffer, 0, paddingSize);
+        }
     }
 }
 

@@ -389,7 +389,7 @@ struct EncodeMathMMIO {
     using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
     using MI_MATH = typename GfxFamily::MI_MATH;
 
-    static const size_t size = sizeof(MI_STORE_REGISTER_MEM);
+    static constexpr size_t size = sizeof(MI_STORE_REGISTER_MEM);
 
     static void encodeMulRegVal(CommandContainer &container, uint32_t offset, uint32_t val, uint64_t dstAddress, bool isBcs, EncodeStoreMMIOParams *outStoreMMIOParams);
 
@@ -463,9 +463,9 @@ struct EncodeSetMMIO {
     using MI_LOAD_REGISTER_MEM = typename GfxFamily::MI_LOAD_REGISTER_MEM;
     using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
 
-    static const size_t sizeIMM = sizeof(MI_LOAD_REGISTER_IMM);
-    static const size_t sizeMEM = sizeof(MI_LOAD_REGISTER_MEM);
-    static const size_t sizeREG = sizeof(MI_LOAD_REGISTER_REG);
+    static constexpr size_t sizeIMM = sizeof(MI_LOAD_REGISTER_IMM);
+    static constexpr size_t sizeMEM = sizeof(MI_LOAD_REGISTER_MEM);
+    static constexpr size_t sizeREG = sizeof(MI_LOAD_REGISTER_REG);
 
     static void encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap, bool isBcs);
     static void encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address, bool isBcs);
@@ -690,7 +690,7 @@ struct EncodeMiArbCheck {
         program(reinterpret_cast<MI_ARB_CHECK *>(cmdBuffer), preParserDisable);
     }
     static void program(LinearStream &commandStream, std::optional<bool> preParserDisable);
-    static size_t getCommandSize();
+    static constexpr size_t getCommandSize() { return sizeof(MI_ARB_CHECK); }
 
   protected:
     static void adjust(MI_ARB_CHECK &miArbCheck, std::optional<bool> preParserDisable);
@@ -742,7 +742,7 @@ struct EncodeStoreMemory {
                                     bool storeQword,
                                     bool workloadPartitionOffset);
 
-    static size_t getStoreDataImmSize() {
+    static constexpr size_t getStoreDataImmSize() {
         return sizeof(MI_STORE_DATA_IMM);
     }
 

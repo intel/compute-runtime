@@ -260,6 +260,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenEncodeDataInMe
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
         using CFE_STATE = typename FamilyType::CFE_STATE;
 
+        constexpr size_t sdiSize = sizeof(MI_STORE_DATA_IMM);
+
         constexpr size_t cfeStateSizeDwordUnits = sizeof(CFE_STATE) / sizeof(uint32_t);
         uint32_t cfeStateCmdBuffer[cfeStateSizeDwordUnits];
         memset(cfeStateCmdBuffer, 0x0, sizeof(CFE_STATE));
@@ -300,8 +302,52 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenEncodeDataInMe
         EXPECT_EQ(scratchAddress, cfeStateCmd->getScratchSpaceBuffer());
         EXPECT_EQ(maxFrontEndThreads, cfeStateCmd->getMaximumNumberOfThreads());
 
+        // dst gpu va is optimal, so actual consumption could be less than estimate for worst-case scenario
+        auto qwordAlignedSize = alignUp(sizeof(CFE_STATE), sizeof(uint64_t));
+        size_t sdiCount = qwordAlignedSize / sizeof(uint64_t);
+        size_t offset = sdiCount * sdiSize;
         void *baseMemoryPtr = memoryPtr;
-        size_t offset = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(CFE_STATE));
+        EncodeDataMemory<FamilyType>::programFrontEndState(memoryPtr, dstGpuAddress, rootDeviceEnvironment, 0x0, scratchAddress, maxFrontEndThreads, properties);
+        EXPECT_EQ(ptrOffset(baseMemoryPtr, offset), memoryPtr);
+
+        // change to qword misaligned dst gpu address
+        dstGpuAddress += sizeof(uint32_t);
+
+        memset(buffer, 0x0, bufferSize);
+        memset(memory, 0x0, bufferSize);
+        memset(cfeStateCmdBuffer, 0x0, sizeof(CFE_STATE));
+        memoryPtr = baseMemoryPtr;
+        cmdStream.replaceBuffer(buffer, bufferSize);
+        hwParser.tearDown();
+        i = 0;
+
+        EncodeDataMemory<FamilyType>::programFrontEndState(cmdStream, dstGpuAddress, rootDeviceEnvironment, 0x0, scratchAddress, maxFrontEndThreads, properties);
+        hwParser.parseCommands<FamilyType>(cmdStream);
+        storeDataImmItList = findAll<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+
+        auto decodedDstGpuAddress = dstGpuAddress;
+        for (auto storeDataImmIt : storeDataImmItList) {
+            auto storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*storeDataImmIt);
+            EXPECT_EQ(decodedDstGpuAddress, storeDataImm->getAddress());
+
+            cfeStateCmdBuffer[i] = storeDataImm->getDataDword0();
+            if (storeDataImm->getStoreQword()) {
+                i++;
+                cfeStateCmdBuffer[i] = storeDataImm->getDataDword1();
+                decodedDstGpuAddress += sizeof(uint64_t);
+            } else {
+                decodedDstGpuAddress += sizeof(uint32_t);
+            }
+            i++;
+        }
+        cfeStateCmd = genCmdCast<CFE_STATE *>(cfeStateCmdBuffer);
+        ASSERT_NE(nullptr, cfeStateCmd);
+
+        EXPECT_EQ(scratchAddress, cfeStateCmd->getScratchSpaceBuffer());
+        EXPECT_EQ(maxFrontEndThreads, cfeStateCmd->getMaximumNumberOfThreads());
+
+        // dst gpu is misaligned, estimate should match consumption
+        offset = EncodeDataMemory<FamilyType>::getCommandSizeForEncode(sizeof(CFE_STATE));
         EncodeDataMemory<FamilyType>::programFrontEndState(memoryPtr, dstGpuAddress, rootDeviceEnvironment, 0x0, scratchAddress, maxFrontEndThreads, properties);
         EXPECT_EQ(ptrOffset(baseMemoryPtr, offset), memoryPtr);
     }
