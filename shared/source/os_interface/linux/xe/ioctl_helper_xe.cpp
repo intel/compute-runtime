@@ -163,7 +163,8 @@ bool IoctlHelperXe::queryDeviceIdAndRevision(Drm &drm) {
 
     if ((debugManager.flags.EnableRecoverablePageFaults.get() != 0) && (debugManager.flags.EnableSharedSystemUsmSupport.get() == 1) && (config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR)) {
         drm.setSharedSystemAllocEnable(true);
-        drm.setPageFaultSupported(true);
+    } else {
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Shared System USM NOT allowed: KMD does not support\n");
     }
     return true;
 }

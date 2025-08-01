@@ -1684,20 +1684,6 @@ int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObj
     return changeBufferObjectBinding(this, osContext, vmHandleId, bo, false, false);
 }
 
-uint64_t Drm::getSharedSystemAllocAddressRange() {
-    /*Setting GPU address larger than actual may lead to crash */
-    if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
-        this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
-    }
-    /* Use full address range */
-    uint64_t gpuAddressLength = (this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.gpuAddressSpace + 1);
-    uint64_t cpuAddressLength = (0x1ull << (NEO::CpuInfo::getInstance().getVirtualAddressSize()));
-    if (cpuAddressLength < gpuAddressLength) {
-        gpuAddressLength = cpuAddressLength;
-    }
-    return gpuAddressLength;
-}
-
 int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     GemVmControl ctl{};
 
@@ -1922,7 +1908,21 @@ bool Drm::queryDeviceIdAndRevision() {
 }
 
 void Drm::adjustSharedSystemMemCapabilities() {
-    if (!this->isSharedSystemAllocEnabled()) {
+    if (this->isSharedSystemAllocEnabled()) {
+        uint64_t gpuAddressLength = (this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.gpuAddressSpace + 1);
+        uint64_t cpuAddressLength = (0x1ull << (NEO::CpuInfo::getInstance().getVirtualAddressSize()));
+        if ((cpuAddressLength > (maxNBitValue(48) + 1)) && !(CpuInfo::getInstance().isCpuFlagPresent("la57"))) {
+            cpuAddressLength = (maxNBitValue(48) + 1);
+        }
+        if (gpuAddressLength < cpuAddressLength) {
+            this->setSharedSystemAllocEnable(false);
+            this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
+            printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "Shared System USM NOT allowed: CPU address range > GPU address range\n");
+        } else {
+            this->setSharedSystemAllocAddressRange(cpuAddressLength);
+            this->setPageFaultSupported(true);
+        }
+    } else {
         this->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
     }
 }

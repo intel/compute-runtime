@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -2556,33 +2557,45 @@ TEST(DrmTest, GivenSysFsPciPathWhenCallinggetSysFsPciPathBaseNameThenResultIsCor
     EXPECT_STREQ("card8", drm.getSysFsPciPathBaseName().c_str());
 }
 
-TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeReturnCorrectRange) {
+TEST(DrmTest, GivenSharedSystemAllocNotEnabledByKmdSharedSystemAllocAddressRangeReturnsZero) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    uint64_t gpuAddrRange = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace + 1;
-    uint64_t cpuAddrRange = (0x1ull << (NEO::CpuInfo::getInstance().getVirtualAddressSize()));
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    drm.setSharedSystemAllocEnable(false);
+    drm.adjustSharedSystemMemCapabilities();
+    EXPECT_FALSE(drm.isSharedSystemAllocEnabled());
     uint64_t sharedSystemRange = drm.getSharedSystemAllocAddressRange();
-    EXPECT_LE(sharedSystemRange, gpuAddrRange);
-    EXPECT_LE(sharedSystemRange, cpuAddrRange);
+    EXPECT_EQ(0lu, sharedSystemRange);
 }
 
-TEST(DrmTest, GivenReducedGpuAddressRangeAndCpuAddressRangeReturnReducedRange) {
+TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeSharedSystemAllocEnableIsTrue) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    DebugManagerStateRestore restore;
-    debugManager.flags.OverrideGpuAddressSpace.set(10);
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    drm.setSharedSystemAllocEnable(true);
+    uint64_t caps = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = caps;
+    drm.adjustSharedSystemMemCapabilities();
+    EXPECT_TRUE(drm.isSharedSystemAllocEnabled());
+    EXPECT_EQ(caps, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities);
+    EXPECT_TRUE(drm.hasPageFaultSupport());
     uint64_t sharedSystemRange = drm.getSharedSystemAllocAddressRange();
-    EXPECT_EQ(sharedSystemRange, maxNBitValue(10) + 1);
+    EXPECT_EQ((maxNBitValue(48) + 1), sharedSystemRange);
 }
 
-TEST(DrmTest, GivenIncreasedGpuAddressRangeAndCpuAddressRangeReturnCpuRange) {
+TEST(DrmTest, GivenGpuAddressRangeAndCpuAddressRangeSharedSystemAllocEnableIsFalse) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    DebugManagerStateRestore restore;
-    debugManager.flags.OverrideGpuAddressSpace.set(60);
-    uint64_t cpuAddrRange = (0x1ull << (NEO::CpuInfo::getInstance().getVirtualAddressSize()));
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(32);
+    drm.setSharedSystemAllocEnable(true);
+    uint64_t caps = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = caps;
+    drm.adjustSharedSystemMemCapabilities();
+    EXPECT_FALSE(drm.isSharedSystemAllocEnabled());
+    EXPECT_EQ(0lu, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities);
+    EXPECT_FALSE(drm.hasPageFaultSupport());
     uint64_t sharedSystemRange = drm.getSharedSystemAllocAddressRange();
-    EXPECT_EQ(sharedSystemRange, cpuAddrRange);
+    EXPECT_EQ(0lu, sharedSystemRange);
 }
 
 using DrmHwTest = ::testing::Test;

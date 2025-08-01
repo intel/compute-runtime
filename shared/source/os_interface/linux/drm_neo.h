@@ -269,7 +269,8 @@ class Drm : public DriverModel {
     static std::string getDrmVersion(int fileDescriptor);
     MOCKABLE_VIRTUAL uint32_t getAggregatedProcessCount() const;
     uint32_t getVmIdForContext(OsContext &osContext, uint32_t vmHandleId) const;
-    uint64_t getSharedSystemAllocAddressRange();
+    MOCKABLE_VIRTUAL void setSharedSystemAllocAddressRange(uint64_t value) { this->sharedSystemAllocAddressRange = value; }
+    MOCKABLE_VIRTUAL uint64_t getSharedSystemAllocAddressRange() const { return this->sharedSystemAllocAddressRange; }
 
   protected:
     Drm() = delete;
@@ -353,6 +354,7 @@ class Drm : public DriverModel {
     bool bindAvailable = false;
     bool directSubmissionActive = false;
     bool sharedSystemAllocEnable = false;
+    uint64_t sharedSystemAllocAddressRange = 0lu;
     bool setPairAvailable = false;
     bool chunkingAvailable = false;
     uint32_t chunkingMode = 0;
