@@ -77,11 +77,14 @@ struct CommandQueueHw : public CommandQueueImp {
         NEO::StreamProperties cmdListBeginState{};
         uint64_t scratchGsba = 0;
         uint64_t childGpuAddressPositionBeforeDynamicPreamble = 0;
+        uint64_t currentGpuAddressForChainedBbStart = 0;
 
         size_t spaceForResidency = 10;
+        size_t bufferSpaceForPatchPreamble = 0;
         CommandList *firstCommandList = nullptr;
         CommandList *lastCommandList = nullptr;
         void *currentPatchForChainedBbStart = nullptr;
+        void *currentPatchPreambleBuffer = nullptr;
         NEO::ScratchSpaceController *scratchSpaceController = nullptr;
         NEO::GraphicsAllocation *globalStatelessAllocation = nullptr;
         std::unique_lock<std::mutex> *outerLockForIndirect = nullptr;
@@ -150,6 +153,9 @@ struct CommandQueueHw : public CommandQueueImp {
                                                                    bool stateCacheFlushRequired);
     inline size_t estimateCommandListSecondaryStart(CommandList *commandList);
     inline size_t estimateCommandListPrimaryStart(bool required);
+    inline size_t estimateCommandListPatchPreamble(CommandListExecutionContext &ctx, uint32_t numCommandLists);
+    inline void retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream);
+    inline void dispatchPatchPreambleEnding(CommandListExecutionContext &ctx);
     inline size_t estimateCommandListResidencySize(CommandList *commandList);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
     inline void handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx);

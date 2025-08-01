@@ -89,6 +89,9 @@ struct CommandQueue : _ze_command_queue_handle_t {
         this->isWalkerWithProfilingEnqueued = false;
         return retVal;
     }
+    inline void setPatchingPreamble(bool patching) {
+        this->patchingPreamble = patching;
+    }
 
   protected:
     bool frontEndTrackingEnabled() const;
@@ -111,6 +114,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool heaplessModeEnabled = false;
     bool heaplessStateInitEnabled = false;
     bool isWalkerWithProfilingEnqueued = false;
+    bool patchingPreamble = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,
