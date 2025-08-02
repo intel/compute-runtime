@@ -3018,6 +3018,9 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         if (!reuseSharedAllocation) {
             registerSharedBoHandleAllocation(drmAllocation.get());
         }
+
+        this->registerSysMemAlloc(drmAllocation.get());
+
         return drmAllocation.release();
     }
 

@@ -222,6 +222,46 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
 
 using DrmMemoryManagerUsmSharedHandlePrelimTest = DrmMemoryManagerLocalMemoryPrelimTest;
 
+TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenMultiRootDeviceEnvironmentAndMemoryInfoWhenCreateUSMHostAllocationFromSharedHandleSucceedsThenAllocationIsReturnedAndRegisteredInSystemMemoryForProperAccounting) {
+    uint32_t rootDevicesNumber = 1u;
+    uint32_t rootDeviceIndex = 0u;
+    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
+
+    executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
+    auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
+    mock->queryEngineInfo();
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
+
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
+
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, {});
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(1, properties, nullptr, true);
+
+    EXPECT_NE(allocation, nullptr);
+
+    auto &sysMemAllocs = memoryManager->getSysMemAllocs();
+    auto it = std::find(sysMemAllocs.begin(), sysMemAllocs.end(), allocation);
+    EXPECT_NE(it, sysMemAllocs.end());
+    EXPECT_GE(memoryManager->getUsedSystemMemorySize(), allocation->getUnderlyingBufferSize());
+
+    memoryManager->freeGraphicsMemory(allocation);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+}
+
 TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenMultiRootDeviceEnvironmentAndMemoryInfoWhenCreateMultiGraphicsAllocationAndImportFailsThenNullptrIsReturned) {
     uint32_t rootDevicesNumber = 1u;
     uint32_t rootDeviceIndex = 0u;
