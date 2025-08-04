@@ -42,6 +42,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocateGraphicsMemoryForImage;
     using DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr;
     using DrmMemoryManager::allocateGraphicsMemoryWithAlignment;
+    using DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl;
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
     using DrmMemoryManager::allocateMemoryByKMD;
     using DrmMemoryManager::allocatePhysicalDeviceMemory;
@@ -50,7 +51,6 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocationTypeForCompletionFence;
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::checkUnexpectedGpuPageFault;
-    using DrmMemoryManager::createAllocWithAlignment;
     using DrmMemoryManager::createAllocWithAlignmentFromUserptr;
     using DrmMemoryManager::createBufferObjectInMemoryRegion;
     using DrmMemoryManager::createGraphicsAllocation;
@@ -224,6 +224,12 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     }
     bool createBufferObjectInMemoryRegionCallBase = true; // Default to calling the base class
     uint32_t createBufferObjectInMemoryRegionCallCount = 0u;
+
+    DrmAllocation *createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSize, uint64_t gpuAddress) override {
+        passedAlignment = alignment;
+        return DrmMemoryManager::createAllocWithAlignment(allocationData, size, alignment, alignedSize, gpuAddress);
+    }
+    size_t passedAlignment = 0;
 
   protected:
     std::mutex unreferenceMtx;

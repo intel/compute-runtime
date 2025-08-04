@@ -524,7 +524,8 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
 
         auto &productHelper = getGmmHelper(allocationData.rootDeviceIndex)->getRootDeviceEnvironment().getHelper<ProductHelper>();
         if (alignedStorageSize >= 2 * MemoryConstants::megaByte &&
-            productHelper.is2MBLocalMemAlignmentEnabled()) {
+            productHelper.is2MBLocalMemAlignmentEnabled() &&
+            cAlignment <= 2 * MemoryConstants::megaByte) {
             alignedStorageSize = alignUp(cSize, MemoryConstants::pageSize2M);
         } else {
             alignedStorageSize = alignUp(cSize, cAlignment);
@@ -547,7 +548,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     }
 
     auto mmapAlignment = cAlignment;
-    if (alignedStorageSize >= 2 * MemoryConstants::megaByte) {
+    if (alignedStorageSize >= 2 * MemoryConstants::megaByte && mmapAlignment <= 2 * MemoryConstants::megaByte) {
         mmapAlignment = MemoryConstants::pageSize2M;
     }
 
