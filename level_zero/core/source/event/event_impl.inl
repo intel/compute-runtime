@@ -875,7 +875,7 @@ void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
         calculateProfilingData();
 
         timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
-    } while (!isTimestampPopulated() && (timeDiff < completionTimeoutMs));
+    } while (!isTimestampPopulated() && (timeDiff < getCompletionTimeout()));
     DEBUG_BREAK_IF(!isTimestampPopulated());
 }
 

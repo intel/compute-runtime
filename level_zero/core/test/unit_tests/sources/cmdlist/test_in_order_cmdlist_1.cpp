@@ -475,6 +475,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedTimestampEven
 
             L0::EventImp<uint64_t>::assignKernelEventCompletionData(address);
         }
+        uint64_t getCompletionTimeout() const override { return std::numeric_limits<uint64_t>::max(); } // no timeout to avoid timing issues
     };
 
     auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
