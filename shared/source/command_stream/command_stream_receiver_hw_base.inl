@@ -929,7 +929,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
 
         auto &gfxCoreHelper = getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
-        auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
+        auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType, nullptr);
         PreambleHelper<GfxFamily>::programVfeState(
             pVfeState, peekRootDeviceEnvironment(), requiredScratchSlot0Size, getScratchPatchAddress(),
             maxFrontEndThreads, streamProperties);
@@ -2032,7 +2032,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushFrontEndCommand(I
         auto &gfxCoreHelper = getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), peekHwInfo());
 
-        auto feStateCmdSpace = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csrStream, peekHwInfo(), engineGroupType);
+        auto feStateCmdSpace = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csrStream, peekHwInfo(), engineGroupType, nullptr);
         PreambleHelper<GfxFamily>::programVfeState(feStateCmdSpace,
                                                    peekRootDeviceEnvironment(),
                                                    requiredScratchSlot0Size,

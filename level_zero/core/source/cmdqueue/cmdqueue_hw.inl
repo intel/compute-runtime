@@ -587,8 +587,8 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uin
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(csr->getOsContext().getEngineType(),
                                                             csr->getOsContext().getEngineUsage(), hwInfo);
-    auto pVfeState = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(&cmdStream, hwInfo, engineGroupType);
-    NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState,
+    auto feState = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(&cmdStream, hwInfo, engineGroupType, nullptr);
+    NEO::PreambleHelper<GfxFamily>::programVfeState(feState,
                                                     device->getNEODevice()->getRootDeviceEnvironment(),
                                                     perThreadScratchSpaceSlot0Size,
                                                     scratchAddress,

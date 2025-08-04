@@ -29,7 +29,7 @@ HWTEST2_F(PreambleCfeStateXe3AndLater, givenSetDebugFlagWhenPreambleCfeStateIsPr
     debugManager.flags.MaximumNumberOfThreads.set(expectedValue2);
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, expectedAddress, 16u, emptyProperties);
 

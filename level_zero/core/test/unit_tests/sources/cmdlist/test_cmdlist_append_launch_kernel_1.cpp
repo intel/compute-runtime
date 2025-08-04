@@ -1505,6 +1505,25 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenAppendVfeStateCmdPatchIsCalledAndHe
     commandList->appendVfeStateCmdToPatch();
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, GivenHeapfulSupportWhenAppendVfeStateCmdPatchIsCalledThenAddFeCmdToPatchList, IsAtLeastXeCore) {
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+        auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+        EXPECT_EQ(0u, commandList->getFrontEndPatchListCount());
+
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+        auto expectedGpuAddress = commandList->getCmdContainer().getCommandStream()->getCurrentGpuAddressPosition();
+        commandList->appendVfeStateCmdToPatch();
+        ASSERT_NE(0u, commandList->commandsToPatch.size());
+        EXPECT_EQ(CommandToPatch::FrontEndState, commandList->commandsToPatch[0].type);
+        EXPECT_EQ(expectedGpuAddress, commandList->commandsToPatch[0].gpuAddress);
+        EXPECT_EQ(1u, commandList->getFrontEndPatchListCount());
+
+        commandList->reset();
+        EXPECT_EQ(0u, commandList->getFrontEndPatchListCount());
+    }
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, IsHeapfulSupported) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);

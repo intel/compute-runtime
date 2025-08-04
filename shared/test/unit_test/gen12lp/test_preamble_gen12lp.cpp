@@ -54,7 +54,10 @@ HWTEST2_F(Gen12LpPreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgramm
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->flags.waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::renderCompute);
+    uint64_t expectedBufferGpuAddress = linearStream.getCurrentGpuAddressPosition() + sizeof(PIPE_CONTROL);
+    uint64_t cmdBufferGpuAddress = 0;
+    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::renderCompute, &cmdBufferGpuAddress);
+    EXPECT_EQ(expectedBufferGpuAddress, cmdBufferGpuAddress);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 672u, emptyProperties);
 
@@ -76,7 +79,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCcsEngineWhenWaIsSetThenAppropriatePipeC
     testWaTable->flags.waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::compute);
+    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::compute, nullptr);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 672u, emptyProperties);
 
@@ -97,7 +100,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenRcsEngineWhenWaIsSetThenAppropriatePipeC
     testWaTable->flags.waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::renderCompute);
+    auto vfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::renderCompute, nullptr);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(vfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 672u, emptyProperties);
 

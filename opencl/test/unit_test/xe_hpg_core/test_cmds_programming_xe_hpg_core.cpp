@@ -333,7 +333,7 @@ HWTEST2_F(PreambleCfeState, givenXehpAndDisabledFusedEuWhenCfeStateProgrammedThe
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     hwInfo.capabilityTable.fusedEuEnabled = false;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
     streamProperties.frontEndState.setPropertiesAll(false, false, false);
@@ -356,7 +356,7 @@ HWTEST2_F(PreambleCfeState, givenXehpEnabledFusedEuAndDisableFusedDispatchFromKe
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     hwInfo.capabilityTable.fusedEuEnabled = true;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
     streamProperties.frontEndState.setPropertiesAll(false, true, false);
@@ -376,7 +376,7 @@ HWTEST2_F(PreambleCfeState, givenXehpAndEnabledFusedEuWhenCfeStateProgrammedThen
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     hwInfo.capabilityTable.fusedEuEnabled = true;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
     streamProperties.frontEndState.setPropertiesAll(false, false, false);

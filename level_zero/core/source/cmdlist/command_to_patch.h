@@ -37,6 +37,7 @@ struct CommandToPatch {
     void *pDestination = nullptr;
     void *pCommand = nullptr;
     uint64_t baseAddress = 0;
+    uint64_t gpuAddress = 0;
     mutable uint64_t scratchAddressAfterPatch = 0;
     size_t offset = 0;
     size_t inOrderPatchListIndex = 0;

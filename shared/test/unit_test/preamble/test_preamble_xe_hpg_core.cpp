@@ -25,13 +25,19 @@ HWTEST2_F(PreambleTest, givenDisableEUFusionWhenProgramVFEStateThenFusedEUDispat
     auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
     LinearStream stream(buffer.get(), bufferSize);
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&stream, *defaultHwInfo.get(), EngineGroupType::renderCompute);
+    stream.setGpuBase(0x1000);
+    uint64_t expectedBufferGpuAddress = stream.getCurrentGpuAddressPosition();
+    uint64_t cmdBufferGpuAddress = 0;
+
+    auto feCmdPtr = PreambleHelper<FamilyType>::getSpaceForVfeState(&stream, *defaultHwInfo.get(), EngineGroupType::renderCompute, &cmdBufferGpuAddress);
+    EXPECT_EQ(expectedBufferGpuAddress, cmdBufferGpuAddress);
+
     StreamProperties props;
     props.frontEndState.disableEUFusion.set(true);
     MockExecutionEnvironment executionEnvironment{};
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 0, 0, 0, props);
+    PreambleHelper<FamilyType>::programVfeState(feCmdPtr, *executionEnvironment.rootDeviceEnvironments[0], 0, 0, 0, props);
 
-    auto cfeCmd = reinterpret_cast<CFE_STATE *>(pVfeCmd);
+    auto cfeCmd = reinterpret_cast<CFE_STATE *>(feCmdPtr);
     EXPECT_EQ(1u, cfeCmd->getFusedEuDispatch());
 }
 

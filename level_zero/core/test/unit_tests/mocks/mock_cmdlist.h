@@ -49,6 +49,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendMemoryCopyBlitRegion;
     using BaseClass::appendMultiTileBarrier;
     using BaseClass::appendSignalEventPostWalker;
+    using BaseClass::appendVfeStateCmdToPatch;
     using BaseClass::appendWriteKernelTimestamp;
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::clearCommandsToPatch;

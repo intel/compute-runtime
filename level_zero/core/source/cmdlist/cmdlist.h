@@ -463,6 +463,9 @@ struct CommandList : _ze_command_list_handle_t {
         this->isWalkerWithProfilingEnqueued = false;
         return retVal;
     }
+    uint32_t getFrontEndPatchListCount() const {
+        return frontEndPatchListCount;
+    }
 
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
@@ -525,6 +528,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t defaultMocsIndex = 0;
     int32_t defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent;
     uint32_t maxLocalSubRegionSize = 0;
+    uint32_t frontEndPatchListCount = 0;
 
     bool isSyncModeQueue = false;
     bool isTbxMode = false;

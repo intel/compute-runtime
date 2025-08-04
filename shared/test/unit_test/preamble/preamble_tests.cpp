@@ -159,6 +159,7 @@ HWTEST_F(PreambleTest, givenMinHwThreadsUnoccupiedDebugVariableWhenGetThreadsMax
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorrectVfeStateAddressIsReturned) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     char buffer[64];
     MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
@@ -166,7 +167,10 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorr
     uint64_t addressToPatch = 0xC0DEC0DE;
     uint64_t expectedAddress = 0xC0DEC000;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute);
+    uint64_t expectedGpuAddress = preambleStream.getCurrentGpuAddressPosition() + sizeof(PIPE_CONTROL);
+    uint64_t cmdBufferGpuAddress = 0;
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute, &cmdBufferGpuAddress);
+    EXPECT_EQ(expectedGpuAddress, cmdBufferGpuAddress);
     StreamProperties emptyProperties{};
     MockExecutionEnvironment executionEnvironment{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 1024u, addressToPatch, 10u, emptyProperties);
@@ -190,7 +194,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetFor
     FlatBatchBufferHelperHw<FamilyType> helper(*mockDevice->getExecutionEnvironment());
     uint64_t addressToPatch = 0xC0DEC0DE;
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, mockDevice->getHardwareInfo(), EngineGroupType::renderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, mockDevice->getHardwareInfo(), EngineGroupType::renderCompute, nullptr);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, mockDevice->getRootDeviceEnvironment(), 1024u, addressToPatch, 10u, emptyProperties);
 

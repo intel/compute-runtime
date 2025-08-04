@@ -29,13 +29,13 @@ HWTEST2_F(PreambleTest, givenAtLeastXe2HpgCoreAndNotSetDebugFlagWhenPreambleCfeS
     MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
     LinearStream preambleStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute);
+    auto feCmdPtr = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties streamProperties{};
 
     MockExecutionEnvironment executionEnvironment{};
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(feCmdPtr, *executionEnvironment.rootDeviceEnvironments[0], 0u, 0, 0, streamProperties);
 
-    auto &cfeState = *reinterpret_cast<CFE_STATE *>(pVfeCmd);
+    auto &cfeState = *reinterpret_cast<CFE_STATE *>(feCmdPtr);
     EXPECT_EQ(cfeState.getStackIdControl(), static_cast<STACK_ID_CONTROL>(0b00u));
 }
 
@@ -47,15 +47,19 @@ HWTEST2_F(PreambleTest, givenAtLeastXe2HpgCoreAndSetDebugFlagWhenPreambleCfeStat
     LinearStream preambleStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
     DebugManagerStateRestore debugRestore;
 
+    uint64_t expectedBufferGpuAddress = preambleStream.getCurrentGpuAddressPosition();
+    uint64_t cmdBufferGpuAddress = 0;
+
     debugManager.flags.CFEStackIDControl.set(0b10u);
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute);
+    auto feCmdPtr = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *defaultHwInfo, EngineGroupType::renderCompute, &cmdBufferGpuAddress);
     StreamProperties streamProperties{};
+    EXPECT_EQ(expectedBufferGpuAddress, cmdBufferGpuAddress);
 
     MockExecutionEnvironment executionEnvironment{};
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *executionEnvironment.rootDeviceEnvironments[0], 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(feCmdPtr, *executionEnvironment.rootDeviceEnvironments[0], 0u, 0, 0, streamProperties);
 
-    auto &cfeState = *reinterpret_cast<CFE_STATE *>(pVfeCmd);
+    auto &cfeState = *reinterpret_cast<CFE_STATE *>(feCmdPtr);
     EXPECT_EQ(cfeState.getStackIdControl(), static_cast<STACK_ID_CONTROL>(0b10u));
 }
 

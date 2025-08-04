@@ -32,10 +32,15 @@ uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
 template <typename GfxFamily>
 void *PreambleHelper<GfxFamily>::getSpaceForVfeState(LinearStream *pCommandStream,
                                                      const HardwareInfo &hwInfo,
-                                                     EngineGroupType engineGroupType) {
+                                                     EngineGroupType engineGroupType,
+                                                     uint64_t *cmdBufferGpuAddress) {
     if constexpr (GfxFamily::isHeaplessRequired() == false) {
         using CFE_STATE = typename GfxFamily::CFE_STATE;
-        return pCommandStream->getSpace(sizeof(CFE_STATE));
+        void *cmdPtr = pCommandStream->getSpace(sizeof(CFE_STATE));
+        if (cmdBufferGpuAddress) {
+            *cmdBufferGpuAddress = (pCommandStream->getCurrentGpuAddressPosition() - sizeof(CFE_STATE));
+        }
+        return cmdPtr;
     } else {
         return nullptr;
     }

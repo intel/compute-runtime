@@ -22,10 +22,15 @@ using Family = Gen12LpFamily;
 template <typename GfxFamily>
 void *PreambleHelper<GfxFamily>::getSpaceForVfeState(LinearStream *pCommandStream,
                                                      const HardwareInfo &hwInfo,
-                                                     EngineGroupType engineGroupType) {
+                                                     EngineGroupType engineGroupType,
+                                                     uint64_t *cmdBufferGpuAddress) {
     using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
     addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo, engineGroupType);
-    return pCommandStream->getSpaceForCmd<MEDIA_VFE_STATE>();
+    void *cmdPtr = pCommandStream->getSpaceForCmd<MEDIA_VFE_STATE>();
+    if (cmdBufferGpuAddress) {
+        *cmdBufferGpuAddress = (pCommandStream->getCurrentGpuAddressPosition() - sizeof(MEDIA_VFE_STATE));
+    }
+    return cmdPtr;
 }
 
 template <typename GfxFamily>

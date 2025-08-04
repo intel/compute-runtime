@@ -29,7 +29,7 @@ HWTEST2_F(PreambleCfeStateDg2AndLater, whenprogramVFEStateIsCalledWithProperAddi
         GTEST_SKIP();
     }
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties properties{};
     properties.frontEndState.disableOverdispatch.value = 1;
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, properties);
@@ -40,7 +40,7 @@ HWTEST2_F(PreambleCfeStateDg2AndLater, whenprogramVFEStateIsCalledWithProperAddi
     EXPECT_TRUE(cfeState->getComputeOverdispatchDisable());
 
     cmdList.clear();
-    pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute);
+    pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute, nullptr);
     properties.frontEndState.disableOverdispatch.value = 0;
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, properties);
     parseCommands<FamilyType>(linearStream);
@@ -61,7 +61,7 @@ HWTEST2_F(PreambleCfeStateDg2AndLater, givenSetDebugFlagWhenPreambleCfeStateIsPr
     debugManager.flags.ComputeOverdispatchDisable.set(expectedValue1);
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute, nullptr);
     StreamProperties emptyProperties{};
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, expectedAddress, 16u, emptyProperties);
 

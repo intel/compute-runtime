@@ -3741,12 +3741,15 @@ void CommandListCoreFamily<gfxCoreFamily>::appendVfeStateCmdToPatch() {
     if constexpr (GfxFamily::isHeaplessRequired() == false) {
         auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
         using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
-        auto frontEndStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), device->getHwInfo(), engineGroupType);
+        uint64_t gpuAddress = 0;
+        auto frontEndStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), device->getHwInfo(), engineGroupType, &gpuAddress);
         auto frontEndStateCmd = new FrontEndStateCommand;
         NEO::PreambleHelper<GfxFamily>::programVfeState(frontEndStateCmd, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState);
         commandsToPatch.push_back({.pDestination = frontEndStateAddress,
                                    .pCommand = frontEndStateCmd,
+                                   .gpuAddress = gpuAddress,
                                    .type = CommandToPatch::FrontEndState});
+        this->frontEndPatchListCount++;
     }
 }
 
@@ -3940,6 +3943,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
         }
         commandsToPatch.clear();
     }
+    this->frontEndPatchListCount = 0;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

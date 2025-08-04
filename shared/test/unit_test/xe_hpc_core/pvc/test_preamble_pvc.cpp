@@ -19,7 +19,7 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     const auto &productHelper = pDevice->getProductHelper();
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *hwInfo, EngineGroupType::renderCompute);
+    auto feCmdPtr = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *hwInfo, EngineGroupType::renderCompute, nullptr);
     std::array<std::pair<uint32_t, bool>, 4> revisions = {
         {{REVISION_A0, false},
          {REVISION_A0, true},
@@ -32,7 +32,7 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(revision, *hwInfo);
         streamProperties.frontEndState.setPropertiesAll(kernelExecutionType, false, false);
 
-        PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties);
+        PreambleHelper<FamilyType>::programVfeState(feCmdPtr, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties);
         parseCommands<FamilyType>(linearStream);
         auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), cfeStateIt);
