@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,8 +42,17 @@ void AlignmentSelector::addCandidateAlignment(size_t alignment, bool applyForSma
 }
 
 AlignmentSelector::CandidateAlignment AlignmentSelector::selectAlignment(size_t size) const {
+    constexpr size_t noAlignmentLimit = std::numeric_limits<size_t>::max();
+    return this->selectAlignment(size, noAlignmentLimit);
+}
+
+AlignmentSelector::CandidateAlignment AlignmentSelector::selectAlignment(size_t size, size_t maximumPossibleAlignment) const {
     for (const CandidateAlignment &candidateAlignment : this->candidateAlignments) {
         if (!candidateAlignment.applyForSmallerSize && size < candidateAlignment.alignment) {
+            continue;
+        }
+
+        if (candidateAlignment.alignment > maximumPossibleAlignment) {
             continue;
         }
 

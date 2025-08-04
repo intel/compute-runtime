@@ -2033,6 +2033,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
     properties.size = MemoryConstants::pageSize;
     properties.flags.allocateMemory = true;
     properties.flags.shareable = true;
+    properties.alignment = MemoryConstants::pageSize64k;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
     EXPECT_NE(nullptr, allocation);

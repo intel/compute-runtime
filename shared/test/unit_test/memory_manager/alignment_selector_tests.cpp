@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,6 +50,15 @@ TEST(AlignmentSelectorTests, givenApplyForSmallerSizeEnabledAndAllocationIsTooSm
 
     EXPECT_EQ(128u, selector.selectAlignment(1).alignment);
     EXPECT_EQ(128u, selector.selectAlignment(127).alignment);
+}
+
+TEST(AlignmentSelectorTests, givenMaximimumPossibleAlignmentWhenSelectAlignmentThenDoNotSelectGreaterThanLimit) {
+    AlignmentSelector selector{};
+    selector.addCandidateAlignment(1024, false, AlignmentSelector::anyWastage);
+    selector.addCandidateAlignment(2048, false, AlignmentSelector::anyWastage);
+
+    EXPECT_EQ(2048u, selector.selectAlignment(90000, std::numeric_limits<size_t>::max()).alignment);
+    EXPECT_EQ(1024u, selector.selectAlignment(90000, 1024u).alignment);
 }
 
 TEST(AlignmentSelectorTests, givenMultipleMatchingCandidateAlignmentsWhenSelectingAlignmentThenSelectTheBiggest) {

@@ -1433,7 +1433,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         alignment = MemoryConstants::pageSize64k;
         sizeAligned = allocationData.imgInfo->size;
     } else {
-        alignment = (allocationData.type == AllocationType::svmGpu && allocationData.allocationMethod == NEO::GfxMemoryAllocationMethod::allocateByKmd) ? allocationData.alignment : alignmentSelector.selectAlignment(allocationData.size).alignment;
+        alignment = alignmentSelector.selectAlignment(allocationData.size, allocationData.type == AllocationType::svmGpu ? allocationData.alignment : std::numeric_limits<size_t>::max()).alignment;
         sizeAligned = alignUp(allocationData.size, alignment);
 
         if (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get()) {
