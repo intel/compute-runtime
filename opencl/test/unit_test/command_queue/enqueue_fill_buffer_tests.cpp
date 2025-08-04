@@ -121,8 +121,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
     auto crossThreadDatSize = kernel->getCrossThreadDataSize();
     auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(isHeaplessEnabled);
     bool crossThreadDataFitsInInlineData = (crossThreadDatSize <= inlineDataSize);
+    bool isUsingImplicitArgs = kernel->getImplicitArgs() != nullptr;
 
-    if (crossThreadDataFitsInInlineData) {
+    if (crossThreadDataFitsInInlineData && !isUsingImplicitArgs) {
         EXPECT_EQ(iohBefore, pIOH->getUsed());
     } else {
         EXPECT_NE(iohBefore, pIOH->getUsed());

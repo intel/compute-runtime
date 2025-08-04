@@ -235,6 +235,13 @@ class MockKernel : public Kernel {
         return kernelInfoAllocated;
     }
 
+    void setLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ) override {
+        setLws[0] = localWorkSizeX;
+        setLws[1] = localWorkSizeY;
+        setLws[2] = localWorkSizeZ;
+        Kernel::setLocalWorkSizeValues(localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    }
+
     std::vector<char> mockCrossThreadData;
     std::vector<char> mockSshLocal;
 
@@ -251,6 +258,7 @@ class MockKernel : public Kernel {
     uint32_t getResidencyCalls = 0;
     uint32_t setArgSvmAllocCalls = 0;
     uint32_t moveArgsToGpuDomainCalls = 0;
+    uint32_t setLws[3] = {0, 0, 0};
 
     bool canKernelTransformImages = true;
     bool isPatchedOverride = true;
