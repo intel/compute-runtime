@@ -3847,6 +3847,40 @@ TEST_F(KernelImplicitArgsTest, GivenProgramWithImplicitAccessBufferVersionWhenKe
     }
 }
 
+TEST_F(KernelImplicitArgsTest, GivenKernelWithSyncBufferWhenInitializingKernelThenImplicitArgsSyncBufferPtrIsSet) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+
+    MockContext context(pClDevice);
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    program.indirectAccessBufferMajorVersion = 1;
+
+    pKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "test";
+    pKernelInfo->kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = true;
+    pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.stateless = 0;
+    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.pointerSize = sizeof(uintptr_t);
+
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
+    kernel.initialize();
+    kernel.setCrossThreadData(nullptr, 64);
+
+    NEO::MockGraphicsAllocation alloc;
+    alloc.setGpuPtr(0xffff800300060000);
+    alloc.allocationOffset = 0x0;
+
+    size_t bufferOffset = 0u;
+
+    kernel.patchSyncBuffer(&alloc, bufferOffset);
+
+    auto implicitArgs = kernel.getImplicitArgs();
+    ASSERT_NE(nullptr, implicitArgs);
+
+    auto syncBufferAddress = alloc.getGpuAddress();
+    EXPECT_EQ(syncBufferAddress, implicitArgs->v1.syncBufferPtr);
+}
+
 TEST_F(KernelImplicitArgsTest, givenKernelWithImplicitArgsWhenSettingKernelParamsThenImplicitArgsAreProperlySet) {
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;

@@ -1420,6 +1420,9 @@ void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t b
     NEO::patchPointer(getCrossThreadDataSpan(),
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.syncBufferAddress,
                       static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
+    if (state.pImplicitArgs) {
+        state.pImplicitArgs->setSyncBufferPtr(static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
+    }
 }
 
 void KernelImp::patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {

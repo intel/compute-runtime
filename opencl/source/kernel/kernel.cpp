@@ -1774,6 +1774,9 @@ void Kernel::patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOff
         Buffer::setSurfaceState(&clDevice.getDevice(), surfaceState, false, false, sizeToPatch, addressToPatch, 0, gfxAllocation, 0, 0,
                                 areMultipleSubDevicesInContext());
     }
+    if (pImplicitArgs) {
+        pImplicitArgs->setSyncBufferPtr(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset));
+    }
 }
 
 bool Kernel::isPatched() const {
