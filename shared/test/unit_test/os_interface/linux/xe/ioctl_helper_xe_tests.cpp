@@ -1486,6 +1486,52 @@ TEST_F(IoctlHelperXeTest, givenMissingEuPerDssInTopologyWhenGetTopologyDataAndMa
     EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
 }
 
+TEST_F(IoctlHelperXeTest, givenSliceWithIdxGreaterThanZeroWhenGetTopologyDataAndMapThenSubSliceIndicesAreRelativeToTheSlice) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    xeIoctlHelper->initialize();
+
+    const auto &tileIdToGtId = xeIoctlHelper->tileIdToGtId;
+    auto numTiles = tileIdToGtId.size();
+
+    for (auto &dssConfigType : {DRM_XE_TOPO_DSS_GEOMETRY, DRM_XE_TOPO_DSS_COMPUTE}) {
+        drm->queryTopology.clear();
+
+        DrmQueryTopologyData topologyData{};
+        TopologyMap topologyMap{};
+
+        for (auto tileId = 0u; tileId < numTiles; tileId++) {
+            drm->addMockedQueryTopologyData(tileIdToGtId[tileId], dssConfigType, 8, {0, 0b1100'0011, 0, 0, 0, 0, 0, 0});
+            drm->addMockedQueryTopologyData(tileIdToGtId[tileId], DRM_XE_TOPO_EU_PER_DSS, 4, {0b1111'1111, 0, 0, 0});
+        }
+        hwInfo.gtSystemInfo.MaxSlicesSupported = 2;
+        hwInfo.gtSystemInfo.MaxSubSlicesSupported = 16;
+        hwInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
+        auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+        EXPECT_TRUE(result);
+
+        EXPECT_EQ(1, topologyData.sliceCount);
+        EXPECT_EQ(2, topologyData.maxSlices);
+
+        EXPECT_EQ(4, topologyData.subSliceCount);
+        EXPECT_EQ(8, topologyData.maxSubSlicesPerSlice);
+
+        EXPECT_EQ(32, topologyData.euCount);
+        EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
+
+        for (auto tileId = 0u; tileId < numTiles; tileId++) {
+            std::vector<int> expectedSubSliceIndices{0, 1, 6, 7};
+
+            ASSERT_EQ(topologyMap[tileId].subsliceIndices.size(), expectedSubSliceIndices.size());
+            for (auto i = 0u; i < topologyMap[tileId].subsliceIndices.size(); ++i) {
+                EXPECT_EQ(topologyMap[tileId].subsliceIndices[i], expectedSubSliceIndices[i]);
+            }
+        }
+    }
+}
+
 TEST_F(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

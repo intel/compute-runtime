@@ -596,8 +596,9 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
                 auto byte = subSliceId / 8;
                 auto bit = subSliceId & 0b111;
                 int sliceId = static_cast<int>(subSliceId / topologyData.maxSubSlicesPerSlice);
+                int subSliceIdRelative = static_cast<int>(subSliceId % topologyData.maxSubSlicesPerSlice);
                 if (subSliceInfo[byte].test(bit)) {
-                    subSliceIndices.push_back(subSliceId);
+                    subSliceIndices.push_back(subSliceIdRelative);
                     subSliceCountPerTile++;
                     if (sliceId != previouslyEnabledSlice) {
                         previouslyEnabledSlice = sliceId;
