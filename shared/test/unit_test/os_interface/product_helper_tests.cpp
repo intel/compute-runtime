@@ -1092,22 +1092,25 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenItsXe2PlusThenCacheLineSizeIs
     EXPECT_EQ(productHelper->getCacheLineSize(), 256u);
 }
 
-TEST_F(ProductHelperTest, whenGettingMaxSubSliceSpaceThenValueIsNotSmallerThanMaxSubSliceCount) {
-    constexpr auto maxSupportedSubSlices = 128u;
+TEST_F(ProductHelperTest, whenGettingMaxSubSliceSpaceThenValueIsEqualToMaxEnabled) {
+    constexpr auto maxSupportedSubSlices = 64u;
     auto hwInfo = *defaultHwInfo;
     auto &gtSystemInfo = hwInfo.gtSystemInfo;
-    gtSystemInfo.SliceCount = 1;
+    gtSystemInfo.SliceCount = 8;
     gtSystemInfo.SubSliceCount = 2;
     gtSystemInfo.DualSubSliceCount = 2;
 
-    gtSystemInfo.MaxSlicesSupported = 2;
-    gtSystemInfo.MaxSlicesSupported = 2;
+    gtSystemInfo.MaxSlicesSupported = 8;
     gtSystemInfo.MaxSubSlicesSupported = maxSupportedSubSlices;
     gtSystemInfo.MaxDualSubSlicesSupported = maxSupportedSubSlices;
 
     gtSystemInfo.IsDynamicallyPopulated = true;
     for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
         gtSystemInfo.SliceInfo[slice].Enabled = slice < gtSystemInfo.SliceCount;
+        for (int32_t dssID = 0; dssID < GT_MAX_DUALSUBSLICE_PER_SLICE; dssID++) {
+            auto enabled = (slice * GT_MAX_DUALSUBSLICE_PER_SLICE) + dssID < maxSupportedSubSlices;
+            gtSystemInfo.SliceInfo[slice].DSSInfo[dssID].Enabled = enabled;
+        }
     }
     EXPECT_EQ(maxSupportedSubSlices, productHelper->computeMaxNeededSubSliceSpace(hwInfo));
 }

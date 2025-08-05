@@ -16,6 +16,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
 #include "shared/source/helpers/device_caps_reader.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/kernel_helpers.h"
@@ -458,7 +459,14 @@ bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
-    return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
+    const uint32_t highestEnabledSlice = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
+
+    UNRECOVERABLE_IF(highestEnabledSlice == 0);
+    UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MaxSlicesSupported == 0);
+    auto subSlicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    auto maxSubSlice = std::max(highestEnabledSlice * subSlicesPerSlice, hwInfo.gtSystemInfo.MaxSubSlicesSupported);
+
+    return maxSubSlice;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
