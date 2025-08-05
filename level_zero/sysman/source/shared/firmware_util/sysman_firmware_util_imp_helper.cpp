@@ -13,8 +13,6 @@
 
 static std::vector<std ::string> deviceSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
 static constexpr uint8_t eccStateNone = 0xFF;
-constexpr uint8_t maxGfspHeciOutBuffer = UINT8_MAX;
-constexpr uint8_t maxGfspHeciInBuffer = 4;
 static std::vector<std ::string> lateBindingFirmwareTypes = {"FanTable", "VRConfig"};
 
 namespace L0 {
@@ -146,152 +144,135 @@ void FirmwareUtilImp::fwGetMemoryHealthIndicator(zes_mem_health_t *health) {
 }
 
 ze_result_t FirmwareUtilImp::fwGetEccConfig(uint8_t *currentState, uint8_t *pendingState, uint8_t *defaultState) {
-    const std::lock_guard<std::mutex> lock(this->fwLock);
-    gfspHeciCmd = reinterpret_cast<pIgscGfspHeciCmd>(libraryHandle->getProcAddress(fwGfspHeciCmd));
-    if (gfspHeciCmd != nullptr) {
-        std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
-        size_t receivedSize = 0;
-        // Need to call gfspHeciCmd 0x10 cmd first and if not available, fallback and call 0x9.
-        int ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getConfigurationCmd16, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+    std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
+    // Need to call gfspHeciCmd 0x10 cmd first and if not available, fallback and call 0x9.
+    ze_result_t ret = fwGetGfspConfig(GfspHeciConstants::Cmd::getConfigurationCmd16, outBuf);
 
-        if (ret == IGSC_SUCCESS) {
-            *currentState = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccCurrentState] & 0x1;
-            *pendingState = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccPendingState] & 0x1;
-            *defaultState = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccDefaultState] & 0x1;
-            return ZE_RESULT_SUCCESS;
-        }
-        receivedSize = 0;
-        std::fill(outBuf.begin(), outBuf.end(), 0);
-        ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getConfigurationCmd9, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
-
-        if (ret == IGSC_SUCCESS) {
-            *currentState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::currentState];
-            *pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
-            *defaultState = 0xff;
-            return ZE_RESULT_SUCCESS;
-        }
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (ret == ZE_RESULT_SUCCESS) {
+        *currentState = outBuf[GfspHeciConstants::GetCmd16BytePostition::curentStateBytePosition] & 0x1;
+        *pendingState = outBuf[GfspHeciConstants::GetCmd16BytePostition::pendingStateBytePosition] & 0x1;
+        *defaultState = outBuf[GfspHeciConstants::GetCmd16BytePostition::defaultStateBytePosition] & 0x1;
+        return ret;
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::fill(outBuf.begin(), outBuf.end(), 0);
+    ret = fwGetGfspConfig(GfspHeciConstants::Cmd::getConfigurationCmd9, outBuf);
+
+    if (ret == ZE_RESULT_SUCCESS) {
+        *currentState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::currentState];
+        *pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
+        *defaultState = 0xff;
+    }
+    return ret;
 }
 
 ze_result_t FirmwareUtilImp::fwGetEccAvailable(ze_bool_t *pAvailable) {
     *pAvailable = false;
-    const std::lock_guard<std::mutex> lock(this->fwLock);
-    gfspHeciCmd = reinterpret_cast<pIgscGfspHeciCmd>(libraryHandle->getProcAddress(fwGfspHeciCmd));
-    if (gfspHeciCmd != nullptr) {
-        std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
-        size_t receivedSize = 0;
-        // Need to call gfspHeciCmd 0x10 cmd first and if not available, fallback and call 0x9.
-        int ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getConfigurationCmd16, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+    std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
+    // Need to call gfspHeciCmd 0x10 cmd first and if not available, fallback and call 0x9.
+    ze_result_t ret = fwGetGfspConfig(GfspHeciConstants::Cmd::getConfigurationCmd16, outBuf);
 
-        if (ret == IGSC_SUCCESS) {
-            *pAvailable = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccAvailable] & 0x1;
-            return ZE_RESULT_SUCCESS;
-        }
-        receivedSize = 0;
-        std::fill(outBuf.begin(), outBuf.end(), 0);
-        ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getConfigurationCmd9, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
-
-        if (ret == IGSC_SUCCESS) {
-            uint8_t currentState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::currentState];
-            uint8_t pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
-
-            if ((currentState != eccStateNone) && (pendingState != eccStateNone)) {
-                *pAvailable = true;
-            }
-            return ZE_RESULT_SUCCESS;
-        }
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (ret == ZE_RESULT_SUCCESS) {
+        *pAvailable = outBuf[GfspHeciConstants::GetCmd16BytePostition::availableBytePosition] & 0x1;
+        return ret;
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::fill(outBuf.begin(), outBuf.end(), 0);
+    ret = fwGetGfspConfig(GfspHeciConstants::Cmd::getConfigurationCmd9, outBuf);
+
+    if (ret == ZE_RESULT_SUCCESS) {
+        uint8_t currentState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::currentState];
+        uint8_t pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
+
+        if ((currentState != eccStateNone) && (pendingState != eccStateNone)) {
+            *pAvailable = true;
+        }
+    }
+    return ret;
 }
 
 ze_result_t FirmwareUtilImp::fwGetEccConfigurable(ze_bool_t *pConfigurable) {
     *pConfigurable = false;
-    const std::lock_guard<std::mutex> lock(this->fwLock);
-    gfspHeciCmd = reinterpret_cast<pIgscGfspHeciCmd>(libraryHandle->getProcAddress(fwGfspHeciCmd));
-    if (gfspHeciCmd != nullptr) {
-        std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
-        size_t receivedSize = 0;
-        // Need to call gfspHeciCmd 0x10 cmd first and if not available, fallback and call 0x9.
-        int ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getConfigurationCmd16, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+    std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
+    // Need to call gfspHeciCmd 0x10 cmd first and if not available, fallback and call 0x9.
+    ze_result_t ret = fwGetGfspConfig(GfspHeciConstants::Cmd::getConfigurationCmd16, outBuf);
 
-        if (ret == IGSC_SUCCESS) {
-            *pConfigurable = outBuf[GfspHeciConstants::GetEccCmd16BytePostition::eccConfigurable] & 0x1;
-            return ZE_RESULT_SUCCESS;
-        }
-        receivedSize = 0;
-        std::fill(outBuf.begin(), outBuf.end(), 0);
-        ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::getConfigurationCmd9, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
-
-        if (ret == IGSC_SUCCESS) {
-            uint8_t currentState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::currentState];
-            uint8_t pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
-
-            if ((currentState != eccStateNone) && (pendingState != eccStateNone)) {
-                *pConfigurable = true;
-            }
-            return ZE_RESULT_SUCCESS;
-        }
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (ret == ZE_RESULT_SUCCESS) {
+        *pConfigurable = outBuf[GfspHeciConstants::GetCmd16BytePostition::configurableBytePosition] & 0x1;
+        return ret;
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::fill(outBuf.begin(), outBuf.end(), 0);
+    ret = fwGetGfspConfig(GfspHeciConstants::Cmd::getConfigurationCmd9, outBuf);
+
+    if (ret == ZE_RESULT_SUCCESS) {
+        uint8_t currentState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::currentState];
+        uint8_t pendingState = outBuf[GfspHeciConstants::GetEccCmd9BytePostition::pendingState];
+
+        if ((currentState != eccStateNone) && (pendingState != eccStateNone)) {
+            *pConfigurable = true;
+        }
+    }
+    return ret;
 }
 
 ze_result_t FirmwareUtilImp::fwSetEccConfig(uint8_t newState, uint8_t *currentState, uint8_t *pendingState) {
-    std::unique_lock<std::mutex> lock(this->fwLock);
+    std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
+
+    ze_result_t ret = fwGetGfspConfig(GfspHeciConstants::Cmd::getConfigurationCmd16, outBuf);
+    if (ret == ZE_RESULT_SUCCESS) {
+        *currentState = outBuf[GfspHeciConstants::GetCmd16BytePostition::curentStateBytePosition] & 0x1;
+
+        // Need to perform a read/modify/write operation here, using the pending state information from fwGetGfspConfig()
+        std::vector<uint8_t> inBuf(outBuf.begin() + GfspHeciConstants::GetCmd16BytePostition::pendingStateBytePosition, outBuf.begin() + GfspHeciConstants::GetCmd16BytePostition::pendingStateBytePosition + 4);
+        inBuf[GfspHeciConstants::SetCmd15BytePostition::request] &= ~(1 << 0);
+        inBuf[GfspHeciConstants::SetCmd15BytePostition::request] |= (newState << 0);
+
+        // Need to call gfspHeciCmd 0x15 cmd first and if not available, fallback and call 0x8.
+        ret = fwSetGfspConfig(GfspHeciConstants::Cmd::setConfigurationCmd15, inBuf, outBuf);
+
+        if (ret == ZE_RESULT_SUCCESS) {
+            *pendingState = outBuf[GfspHeciConstants::SetCmd15BytePostition::response] & 0x1;
+        }
+        return ret;
+    }
+    std::vector<uint8_t> inBuf(maxGfspHeciOutBuffer, 0);
+    inBuf[GfspHeciConstants::SetEccCmd8BytePostition::setRequest] = newState;
+    std::fill(outBuf.begin(), outBuf.end(), 0);
+    ret = fwSetGfspConfig(GfspHeciConstants::Cmd::setConfigurationCmd8, inBuf, outBuf);
+
+    if (ret == ZE_RESULT_SUCCESS) {
+        *currentState = outBuf[GfspHeciConstants::SetEccCmd8BytePostition::responseCurrentState];
+        *pendingState = outBuf[GfspHeciConstants::SetEccCmd8BytePostition::responsePendingState];
+    }
+    return ret;
+}
+
+ze_result_t FirmwareUtilImp::fwSetGfspConfig(uint32_t gfspHeciCmdCode, std::vector<uint8_t> inBuf, std::vector<uint8_t> &outBuf) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
     gfspHeciCmd = reinterpret_cast<pIgscGfspHeciCmd>(libraryHandle->getProcAddress(fwGfspHeciCmd));
     if (gfspHeciCmd != nullptr) {
-        std::vector<uint8_t> inBuf(maxGfspHeciInBuffer, 0);
-        std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
         size_t receivedSize = 0;
-        inBuf[GfspHeciConstants::SetCmd15BytePostition::request] = newState;
-        // Need to call gfspHeciCmd 0x15 cmd first and if not available, fallback and call 0x8.
-        int ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::setConfigurationCmd15, inBuf.data(), maxGfspHeciInBuffer, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+        int ret = gfspHeciCmd(&fwDeviceHandle, gfspHeciCmdCode, inBuf.data(), maxGfspHeciInBuffer, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
 
         if (ret == IGSC_SUCCESS) {
-            lock.unlock();
-            uint8_t defaultState = 0;
-            ze_result_t status = fwGetEccConfig(currentState, pendingState, &defaultState);
-            lock.lock();
-            if (status != ZE_RESULT_SUCCESS) {
-                return status;
-            }
-            *pendingState = outBuf[GfspHeciConstants::SetCmd15BytePostition::response] & 0x1;
             return ZE_RESULT_SUCCESS;
         }
-        receivedSize = 0;
-        std::fill(inBuf.begin(), inBuf.end(), 0);
-        inBuf[GfspHeciConstants::SetEccCmd8BytePostition::setRequest] = newState;
-        std::fill(outBuf.begin(), outBuf.end(), 0);
-        ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::setConfigurationCmd8, inBuf.data(), maxGfspHeciInBuffer, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
-
-        if (ret == IGSC_SUCCESS) {
-            *currentState = outBuf[GfspHeciConstants::SetEccCmd8BytePostition::responseCurrentState];
-            *pendingState = outBuf[GfspHeciConstants::SetEccCmd8BytePostition::responsePendingState];
-            return ZE_RESULT_SUCCESS;
-        }
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "Error@ %s(): Could not successfully call gfspHeciCmd number %x from igsc (error:0x%x) \n", __FUNCTION__, gfspHeciCmdCode, ret);
     }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t FirmwareUtilImp::fwSetDowngradeConfig(uint8_t newState, uint8_t *pendingState) {
+ze_result_t FirmwareUtilImp::fwGetGfspConfig(uint32_t gfspHeciCmdCode, std::vector<uint8_t> &outBuf) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     gfspHeciCmd = reinterpret_cast<pIgscGfspHeciCmd>(libraryHandle->getProcAddress(fwGfspHeciCmd));
     if (gfspHeciCmd != nullptr) {
-        std::vector<uint8_t> inBuf(maxGfspHeciInBuffer, 0);
-        std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
         size_t receivedSize = 0;
-        inBuf[GfspHeciConstants::SetCmd15BytePostition::request] = newState << 1;
-        int ret = gfspHeciCmd(&fwDeviceHandle, GfspHeciConstants::Cmd::setConfigurationCmd15, inBuf.data(), maxGfspHeciInBuffer, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
+        int ret = gfspHeciCmd(&fwDeviceHandle, gfspHeciCmdCode, nullptr, 0, outBuf.data(), maxGfspHeciOutBuffer, &receivedSize);
 
         if (ret == IGSC_SUCCESS) {
-            *pendingState = (outBuf[GfspHeciConstants::SetCmd15BytePostition::response] >> 1) & 0x1;
             return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "Error@ %s(): Could not successfully call gfspHeciCmd number %x from igsc (error:0x%x) \n", __FUNCTION__, gfspHeciCmdCode, ret);
     }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

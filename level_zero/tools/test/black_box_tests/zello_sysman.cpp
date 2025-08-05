@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 #include <level_zero/zes_api.h>
 
 #include <algorithm>

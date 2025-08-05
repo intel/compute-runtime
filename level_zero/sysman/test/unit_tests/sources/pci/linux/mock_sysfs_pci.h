@@ -119,19 +119,26 @@ class PublicLinuxPciImp : public L0::Sysman::LinuxPciImp {
 };
 
 struct MockPcieDowngradeFwInterface : public L0::Sysman::FirmwareUtil {
-    ze_result_t mockFwSetDowngradeConfigResult = ZE_RESULT_SUCCESS;
-    bool mockSetConfig = true;
-    uint8_t mockPendingState = 0x0;
+    ze_result_t mockFwSetGfspConfigResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockFwGetGfspConfigResult = ZE_RESULT_SUCCESS;
+    std::vector<uint8_t> mockBuf = {0, 0, 0, 0};
 
-    ze_result_t fwSetDowngradeConfig(uint8_t newState, uint8_t *pendingState) override {
-        if (mockFwSetDowngradeConfigResult != ZE_RESULT_SUCCESS) {
-            return mockFwSetDowngradeConfigResult;
+    ze_result_t fwSetGfspConfig(uint32_t gfspHeciCmdCode, std::vector<uint8_t> inBuf, std::vector<uint8_t> &outBuf) override {
+        if (mockFwSetGfspConfigResult != ZE_RESULT_SUCCESS) {
+            return mockFwSetGfspConfigResult;
         }
 
-        if (mockSetConfig == true) {
-            mockPendingState = newState;
+        mockBuf = inBuf;
+        outBuf = mockBuf;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t fwGetGfspConfig(uint32_t gfspHeciCmdCode, std::vector<uint8_t> &outBuf) override {
+        if (mockFwGetGfspConfigResult != ZE_RESULT_SUCCESS) {
+            return mockFwGetGfspConfigResult;
         }
-        *pendingState = mockPendingState;
+
+        outBuf = mockBuf;
         return ZE_RESULT_SUCCESS;
     }
 

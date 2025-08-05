@@ -8,7 +8,7 @@
 #ifndef _ZES_INTEL_GPU_SYSMAN_H
 #define _ZES_INTEL_GPU_SYSMAN_H
 
-#include "level_zero/include/level_zero/ze_stypes.h"
+#include "level_zero/ze_stypes.h"
 #include <level_zero/zes_api.h>
 
 #if defined(__cplusplus)

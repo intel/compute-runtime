@@ -354,12 +354,21 @@ ze_result_t LinuxPciImp::pciLinkSpeedUpdateExp(ze_bool_t downgradeUpgrade, zes_d
     if (downgradeUpgrade) {
         requestedState = 0x1;
     }
-    uint8_t pendingState = requestedState;
-    ze_result_t result = pFwInterface->fwSetDowngradeConfig(requestedState, &pendingState);
+
+    std::vector<uint8_t> outBuf(maxGfspHeciOutBuffer, 0);
+    ze_result_t result = pFwInterface->fwGetGfspConfig(GfspHeciConstants::Cmd::getConfigurationCmd16, outBuf);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    std::vector<uint8_t> inBuf(outBuf.begin() + GfspHeciConstants::GetCmd16BytePostition::pendingStateBytePosition, outBuf.begin() + GfspHeciConstants::GetCmd16BytePostition::pendingStateBytePosition + 4);
+    inBuf[GfspHeciConstants::SetCmd15BytePostition::request] &= ~(1 << 1);
+    inBuf[GfspHeciConstants::SetCmd15BytePostition::request] |= (requestedState << 1);
+    result = pFwInterface->fwSetGfspConfig(GfspHeciConstants::Cmd::setConfigurationCmd15, inBuf, outBuf);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
 
+    uint8_t pendingState = (outBuf[GfspHeciConstants::SetCmd15BytePostition::response] >> 1) & 0x1;
     *pendingAction = ZES_DEVICE_ACTION_NONE;
     uint32_t currentState = 0x0;
 
