@@ -164,7 +164,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
 
         for (uint32_t i = 0; i < numEvents; i++) {
             eventDesc.index = i;
-            events.emplace_back(DestroyableZeUniquePtr<InOrderFixtureMockEvent>(static_cast<InOrderFixtureMockEvent *>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device))));
+            events.emplace_back(DestroyableZeUniquePtr<InOrderFixtureMockEvent>(static_cast<InOrderFixtureMockEvent *>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue))));
             EXPECT_EQ(Event::CounterBasedMode::explicitlyEnabled, events.back()->counterBasedMode);
             EXPECT_TRUE(events.back()->isCounterBased());
             EXPECT_EQ(counterBasedExtension.flags, events.back()->counterBasedFlags);

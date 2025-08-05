@@ -37,8 +37,8 @@
 #include <set>
 
 namespace L0 {
-template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *);
-template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, Device *);
+template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *, ze_result_t &);
+template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, Device *, ze_result_t &);
 template Event *Event::create<uint64_t>(const EventDescriptor &, Device *, ze_result_t &);
 template Event *Event::create<uint32_t>(const EventDescriptor &, Device *, ze_result_t &);
 
@@ -192,9 +192,10 @@ ze_result_t EventPool::createEvent(const ze_event_desc_t *desc, ze_event_handle_
 
     auto &l0GfxCoreHelper = getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    *eventHandle = l0GfxCoreHelper.createEvent(this, desc, getDevice());
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    *eventHandle = l0GfxCoreHelper.createEvent(this, desc, getDevice(), result);
 
-    return ZE_RESULT_SUCCESS;
+    return result;
 }
 
 ze_result_t EventPool::getContextHandle(ze_context_handle_t *phContext) {

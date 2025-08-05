@@ -300,7 +300,7 @@ HWTEST_F(CommandListTest, givenCopyCommandListWhenAppendCopyWithDependenciesThen
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x5678);
     auto zeEvent = event->toHandle();
@@ -331,7 +331,7 @@ HWTEST_F(CommandListTest, givenCopyCommandListWhenAppendCopyRegionWithDependenci
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x5678);
     auto zeEvent = event->toHandle();
@@ -363,7 +363,7 @@ HWTEST_F(CommandListTest, givenCopyCommandListWhenAppendFillWithDependenciesThen
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     uint32_t patter = 1;
     auto zeEvent = event->toHandle();
@@ -418,7 +418,7 @@ HWTEST_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverrid
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    auto event = std::unique_ptr<Event>(static_cast<Event *>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
+    auto event = std::unique_ptr<Event>(static_cast<Event *>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result)));
 
     event->csrs[0] = &mockCommandStreamReceiver;
     cmdList.flushImmediate(ZE_RESULT_SUCCESS, false, false, false, NEO::AppendOperations::nonKernel, false, event->toHandle(), false, nullptr, nullptr);

@@ -136,7 +136,7 @@ struct Event : _ze_event_handle_t {
     };
 
     template <typename TagSizeT>
-    static Event *create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device);
+    static Event *create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device, ze_result_t &result);
 
     template <typename TagSizeT>
     static Event *create(const EventDescriptor &eventDescriptor, Device *device, ze_result_t &result);

@@ -120,7 +120,7 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
 }
 
 template <typename TagSizeT>
-Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
+Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device, ze_result_t &result) {
     EventDescriptor eventDescriptor = {
         .eventPoolAllocation = &eventPool->getAllocation(),
         .extensions = desc->pNext,
@@ -145,11 +145,14 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         eventDescriptor.offsetInSharedAlloc = eventPool->getSharedTimestampAllocation()->getOffset();
     }
 
-    ze_result_t result = ZE_RESULT_SUCCESS;
+    result = ZE_RESULT_SUCCESS;
 
     Event *event = Event::create<TagSizeT>(eventDescriptor, device, result);
-    UNRECOVERABLE_IF(event == nullptr);
-    event->setEventPool(eventPool);
+
+    if (event) {
+        event->setEventPool(eventPool);
+    }
+
     return event;
 }
 

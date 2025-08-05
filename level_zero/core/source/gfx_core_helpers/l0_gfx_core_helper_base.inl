@@ -22,18 +22,18 @@
 namespace L0 {
 
 template <typename Family>
-L0::Event *L0GfxCoreHelperHw<Family>::createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const {
+L0::Event *L0GfxCoreHelperHw<Family>::createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device, ze_result_t &result) const {
     if (NEO::debugManager.flags.OverrideTimestampPacketSize.get() != -1) {
         if (NEO::debugManager.flags.OverrideTimestampPacketSize.get() == 4) {
-            return Event::create<uint32_t>(eventPool, desc, device);
+            return Event::create<uint32_t>(eventPool, desc, device, result);
         } else if (NEO::debugManager.flags.OverrideTimestampPacketSize.get() == 8) {
-            return Event::create<uint64_t>(eventPool, desc, device);
+            return Event::create<uint64_t>(eventPool, desc, device, result);
         } else {
             UNRECOVERABLE_IF(true);
         }
     }
 
-    return Event::create<typename Family::TimestampPacketType>(eventPool, desc, device);
+    return Event::create<typename Family::TimestampPacketType>(eventPool, desc, device, result);
 }
 
 template <typename Family>

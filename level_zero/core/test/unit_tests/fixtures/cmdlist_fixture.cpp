@@ -47,7 +47,7 @@ void CommandListFixture::setUp() {
     eventDesc.signal = 0;
 
     eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
-    event = std::unique_ptr<Event>(static_cast<Event *>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, returnValue)));
 }
 
 void CommandListFixture::tearDown() {
@@ -102,7 +102,7 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
     eventDesc.signal = 0;
 
     eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
-    event = std::unique_ptr<Event>(static_cast<Event *>(device->getL0GfxCoreHelper().createEvent(eventPool.get(), &eventDesc, device)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(device->getL0GfxCoreHelper().createEvent(eventPool.get(), &eventDesc, device, returnValue)));
 }
 
 void ModuleMutableCommandListFixture::setUpImpl() {
@@ -326,7 +326,7 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
 
     eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-    event = std::unique_ptr<Event>(static_cast<Event *>(l0GfxCoreHelper.createEvent(eventPool.get(), &eventDesc, device)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(l0GfxCoreHelper.createEvent(eventPool.get(), &eventDesc, device, returnValue)));
 }
 
 void ImmediateCmdListSharedHeapsFixture::tearDown() {

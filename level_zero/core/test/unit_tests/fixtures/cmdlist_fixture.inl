@@ -1509,7 +1509,7 @@ void TbxImmediateCommandListFixture::setUpT() {
 
     ze_result_t returnValue;
     eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
-    event = std::unique_ptr<Event>(static_cast<Event *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
+    event = std::unique_ptr<Event>(static_cast<Event *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue)));
 
     setEvent();
 }
