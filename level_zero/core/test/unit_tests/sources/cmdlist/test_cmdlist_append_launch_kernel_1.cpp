@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
@@ -1521,6 +1522,103 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenHeapfulSupportWhenAppendVfeStateCm
 
         commandList->reset();
         EXPECT_EQ(0u, commandList->getFrontEndPatchListCount());
+    }
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, GivenPatchPreambleActiveWhenExecutingCommandListWithFrontEndCmdInPatchListThenExpectPatchPreambleEncoding, IsAtLeastXeCore) {
+    if constexpr (FamilyType::isHeaplessRequired() == true) {
+        GTEST_SKIP();
+    } else {
+        using CFE_STATE = typename FamilyType::CFE_STATE;
+        using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+        ze_result_t returnValue;
+        ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+
+        auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                              device,
+                                                              neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                              &queueDesc,
+                                                              false,
+                                                              false,
+                                                              false,
+                                                              returnValue));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+        auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+        returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        auto commandListHandle = commandList->toHandle();
+        commandList->setCommandListPerThreadScratchSize(0, 0x1000);
+
+        auto expectedGpuAddress = commandList->getCmdContainer().getCommandStream()->getCurrentGpuAddressPosition();
+        commandList->appendVfeStateCmdToPatch();
+        ASSERT_NE(0u, commandList->commandsToPatch.size());
+        EXPECT_EQ(CommandToPatch::FrontEndState, commandList->commandsToPatch[0].type);
+        EXPECT_EQ(expectedGpuAddress, commandList->commandsToPatch[0].gpuAddress);
+        EXPECT_EQ(1u, commandList->getFrontEndPatchListCount());
+
+        auto expectedGpuAddress2 = commandList->getCmdContainer().getCommandStream()->getCurrentGpuAddressPosition();
+        commandList->appendVfeStateCmdToPatch();
+        EXPECT_EQ(CommandToPatch::FrontEndState, commandList->commandsToPatch[1].type);
+        EXPECT_EQ(expectedGpuAddress2, commandList->commandsToPatch[1].gpuAddress);
+        EXPECT_EQ(2u, commandList->getFrontEndPatchListCount());
+
+        commandList->close();
+
+        void *cfeInputPtr = commandList->commandsToPatch[0].pCommand;
+        void *cfeInputPtr2 = commandList->commandsToPatch[1].pCommand;
+
+        commandQueue->setPatchingPreamble(true);
+
+        void *queueCpuBase = commandQueue->commandStream.getCpuBase();
+        auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+        returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+        auto scratchAddress = static_cast<uint32_t>(commandQueue->getCsr()->getScratchSpaceController()->getScratchPatchAddress());
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList,
+            ptrOffset(queueCpuBase, usedSpaceBefore),
+            usedSpaceAfter - usedSpaceBefore));
+
+        uint32_t cfeStateDwordBuffer[sizeof(CFE_STATE) / sizeof(uint32_t)] = {0};
+        uint32_t cfeStateDwordBuffer2[sizeof(CFE_STATE) / sizeof(uint32_t)] = {0};
+
+        auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        ASSERT_LT(6u, sdiCmds.size());
+
+        // CFE_STATE size is qword aligned and are only commands dispatched into command lists, so optimal number of SDIs - 3xqword
+        for (uint32_t i = 0; i < 3; i++) {
+            auto storeDataImmForCfe = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[i]);
+            auto storeDataImmForCfe2 = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[i + 3]);
+
+            EXPECT_EQ(expectedGpuAddress + i * sizeof(uint64_t), storeDataImmForCfe->getAddress());
+            EXPECT_EQ(expectedGpuAddress2 + i * sizeof(uint64_t), storeDataImmForCfe2->getAddress());
+
+            EXPECT_TRUE(storeDataImmForCfe->getStoreQword());
+            EXPECT_TRUE(storeDataImmForCfe2->getStoreQword());
+
+            cfeStateDwordBuffer[2 * i] = storeDataImmForCfe->getDataDword0();
+            cfeStateDwordBuffer[2 * i + 1] = storeDataImmForCfe->getDataDword1();
+
+            cfeStateDwordBuffer2[2 * i] = storeDataImmForCfe2->getDataDword0();
+            cfeStateDwordBuffer2[2 * i + 1] = storeDataImmForCfe2->getDataDword1();
+        }
+
+        auto cfeEncodedCmd = genCmdCast<CFE_STATE *>(cfeStateDwordBuffer);
+        ASSERT_NE(nullptr, cfeEncodedCmd);
+        EXPECT_EQ(scratchAddress, cfeEncodedCmd->getScratchSpaceBuffer());
+        auto cfeEncodedCmd2 = genCmdCast<CFE_STATE *>(cfeStateDwordBuffer2);
+        ASSERT_NE(nullptr, cfeEncodedCmd2);
+        EXPECT_EQ(scratchAddress, cfeEncodedCmd2->getScratchSpaceBuffer());
+
+        EXPECT_EQ(0, memcmp(cfeInputPtr, cfeStateDwordBuffer, sizeof(CFE_STATE)));
+        EXPECT_EQ(0, memcmp(cfeInputPtr2, cfeStateDwordBuffer2, sizeof(CFE_STATE)));
+
+        commandQueue->destroy();
     }
 }
 

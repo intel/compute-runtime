@@ -496,7 +496,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
                                                      *csr);
         }
 
-        static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false);
+        static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false, nullptr);
     } else {
         lockForIndirect = std::move(*outerLockForIndirect);
         cmdQImp->makeResidentForResidencyContainer(this->commandContainer.getResidencyContainer());

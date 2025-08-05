@@ -262,6 +262,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
     linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(ctx.globalInit || this->forceBbStartJump);
     for (uint32_t i = 0; i < numCommandLists; i++) {
         auto cmdList = CommandList::fromHandle(commandListHandles[i]);
+        linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, cmdList);
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(cmdList);
     }
 
@@ -909,6 +910,19 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPrimaryStart(bool requi
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList) {
+    size_t encodeSize = 0;
+    if (this->patchingPreamble) {
+        const size_t feCmdSize = NEO::PreambleHelper<GfxFamily>::getVFECommandsSize();
+        size_t singleFeCmdEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(feCmdSize);
+
+        encodeSize = singleFeCmdEncodeSize * commandList->getFrontEndPatchListCount();
+        ctx.bufferSpaceForPatchPreamble += encodeSize;
+    }
+    return encodeSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreamble(CommandListExecutionContext &ctx, uint32_t numCommandLists) {
     size_t encodeSize = 0;
     if (this->patchingPreamble) {
@@ -920,7 +934,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreamble(CommandLi
         encodeSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
         encodeSize += 2 * NEO::EncodeMiArbCheck<GfxFamily>::getCommandSize();
 
-        ctx.bufferSpaceForPatchPreamble = encodeSize;
+        ctx.bufferSpaceForPatchPreamble += encodeSize;
 
         // patch preamble dispatched into queue's buffer forces not to use cmdlist as a starting buffer
         this->forceBbStartJump = true;
@@ -1021,6 +1035,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
         const NEO::StreamProperties &requiredStreamState = cmdList->getRequiredStreamState();
         const NEO::StreamProperties &finalStreamState = cmdList->getFinalStreamState();
 
+        linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, cmdList);
         linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, cmdList,
                                                                                    streamProperties, requiredStreamState, finalStreamState,
                                                                                    cmdListState.requiredState,
@@ -1902,7 +1917,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, Comm
         }
     }
 
-    patchCommands(commandList, scratchAddress, patchNewScratchController);
+    patchCommands(commandList, scratchAddress, patchNewScratchController, &ctx.currentPatchPreambleBuffer);
 
     if (patchNewScratchController) {
         commandList.setCommandListUsedScratchController(ctx.scratchSpaceController);

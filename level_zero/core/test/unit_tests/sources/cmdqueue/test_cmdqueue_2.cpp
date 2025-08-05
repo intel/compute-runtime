@@ -981,9 +981,9 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
     auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, csr, &desc);
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
 
-    EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0, false));
+    EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
     commandList->commandsToPatch.push_back({});
-    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
     commandList->commandsToPatch.clear();
 
     if constexpr (FamilyType::isHeaplessRequired()) {
@@ -992,7 +992,7 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
         commandToPatch.pCommand = nullptr;
         commandToPatch.type = CommandToPatch::FrontEndState;
         commandList->commandsToPatch.push_back(commandToPatch);
-        EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
+        EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
         commandList->commandsToPatch.clear();
     } else {
         using CFE_STATE = typename FamilyType::CFE_STATE;
@@ -1021,7 +1021,7 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
         }
 
         uint64_t patchedScratchAddress = 0xABCD00;
-        commandQueue->patchCommands(*commandList, patchedScratchAddress, false);
+        commandQueue->patchCommands(*commandList, patchedScratchAddress, false, nullptr);
         for (size_t i = 0; i < 4; i++) {
             EXPECT_EQ(patchedScratchAddress, destinationCfeStates[i].getScratchSpaceBuffer());
             auto &sourceCfeState = *reinterpret_cast<CFE_STATE *>(commandList->commandsToPatch[i].pCommand);
@@ -1041,21 +1041,21 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWh
     auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, csr, &desc);
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
 
-    EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0, false));
+    EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
     commandList->commandsToPatch.push_back({});
-    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
     commandList->commandsToPatch.clear();
 
     CommandToPatch commandToPatch;
 
     commandToPatch.type = CommandToPatch::FrontEndState;
     commandList->commandsToPatch.push_back(commandToPatch);
-    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
     commandList->commandsToPatch.clear();
 
     commandToPatch.type = CommandToPatch::Invalid;
     commandList->commandsToPatch.push_back(commandToPatch);
-    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false, nullptr));
     commandList->commandsToPatch.clear();
 }
 
@@ -1100,7 +1100,7 @@ HWTEST2_F(CommandQueueScratchTests, givenInlineDataScratchWhenPatchCommandsIsCal
         cmd.scratchAddressAfterPatch = testCase.scratchAlreadyPatched ? scratchAddress : 0;
 
         commandList->commandsToPatch.push_back(cmd);
-        commandQueue->patchCommands(*commandList, scratchAddress, testCase.scratchControllerChanged);
+        commandQueue->patchCommands(*commandList, scratchAddress, testCase.scratchControllerChanged, nullptr);
 
         EXPECT_EQ(testCase.expectedValue, scratchBuffer);
     }
@@ -1133,7 +1133,7 @@ HWTEST2_F(CommandQueueScratchTests, givenImplicitArgsScratchWhenPatchCommandsIsC
             cmd.scratchAddressAfterPatch = scratchAlreadyPatched ? scratchAddress : 0;
 
             commandList->commandsToPatch.push_back(cmd);
-            commandQueue->patchCommands(*commandList, scratchAddress, scratchControllerChanged);
+            commandQueue->patchCommands(*commandList, scratchAddress, scratchControllerChanged, nullptr);
 
             EXPECT_EQ(expectedValue, scratchBuffer);
         }
@@ -1162,12 +1162,12 @@ HWTEST_F(CommandQueueCreate, givenCommandsToPatchWithNoopSpacePatchWhenPatchComm
     commandToPatch.patchSize = dataSize;
 
     commandList->commandsToPatch.push_back(commandToPatch);
-    commandQueue->patchCommands(*commandList, 0, false);
+    commandQueue->patchCommands(*commandList, 0, false, nullptr);
     EXPECT_EQ(0, memcmp(patchBuffer.get(), zeroBuffer.get(), dataSize));
 
     memset(patchBuffer.get(), 0xFF, dataSize);
     commandList->commandsToPatch[0].pDestination = nullptr;
-    commandQueue->patchCommands(*commandList, 0, false);
+    commandQueue->patchCommands(*commandList, 0, false, nullptr);
     EXPECT_NE(0, memcmp(patchBuffer.get(), zeroBuffer.get(), dataSize));
 }
 

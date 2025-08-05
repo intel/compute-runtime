@@ -54,7 +54,8 @@ struct CommandQueueHw : public CommandQueueImp {
                                              uint32_t perThreadScratchSpaceSlot1Size);
 
     bool getPreemptionCmdProgramming() override;
-    void patchCommands(CommandList &commandList, uint64_t scratchAddress, bool patchNewScratchController);
+    void patchCommands(CommandList &commandList, uint64_t scratchAddress, bool patchNewScratchController,
+                       void **patchPreambleBuffer);
 
   protected:
     struct CommandListExecutionContext {
@@ -154,6 +155,7 @@ struct CommandQueueHw : public CommandQueueImp {
     inline size_t estimateCommandListSecondaryStart(CommandList *commandList);
     inline size_t estimateCommandListPrimaryStart(bool required);
     inline size_t estimateCommandListPatchPreamble(CommandListExecutionContext &ctx, uint32_t numCommandLists);
+    inline size_t estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList);
     inline void retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream);
     inline void dispatchPatchPreambleEnding(CommandListExecutionContext &ctx);
     inline size_t estimateCommandListResidencySize(CommandList *commandList);

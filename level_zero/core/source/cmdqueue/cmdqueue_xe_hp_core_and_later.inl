@@ -164,7 +164,8 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint64_t scratchAddress,
-                                                  bool patchNewScratchController) {
+                                                  bool patchNewScratchController,
+                                                  void **patchPreambleBuffer) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
@@ -181,7 +182,11 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 cfeStateCmd->setScratchSpaceBuffer(lowScratchAddress);
                 NEO::PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(cfeStateCmd, false);
 
-                *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
+                if (this->patchingPreamble) {
+                    NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, commandToPatch.gpuAddress, commandToPatch.pCommand, sizeof(CFE_STATE));
+                } else {
+                    *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
+                }
                 break;
             } else {
                 UNRECOVERABLE_IF(true);
