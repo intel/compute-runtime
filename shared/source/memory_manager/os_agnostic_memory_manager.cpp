@@ -647,29 +647,12 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
 }
 
 size_t OsAgnosticMemoryManager::selectAlignmentAndHeap(size_t size, HeapIndex *heap) {
-    return selectAlignmentAndHeap(0ULL, size, heap);
-}
-
-size_t OsAgnosticMemoryManager::selectAlignmentAndHeap(const uint64_t requiredStartAddress, size_t size, HeapIndex *heap) {
-
-    // Always default to HEAP STANDARD 2MB.
-    *heap = HeapIndex::heapStandard2MB;
-    size_t pageSizeAlignment = MemoryConstants::pageSize2M;
-
-    // If the user provides a start address, we try to find the heap and page size alignment based on that address.
-    if (requiredStartAddress != 0ULL) {
-        auto rootDeviceIndex = 0u;
-        auto gfxPartition = getGfxPartition(rootDeviceIndex);
-        if (gfxPartition->getHeapIndexAndPageSizeBasedOnAddress(requiredStartAddress, *heap, pageSizeAlignment)) {
-            return pageSizeAlignment;
-        }
-    }
-
-    return pageSizeAlignment;
+    *heap = HeapIndex::heapStandard;
+    return MemoryConstants::pageSize64k;
 }
 
 AddressRange OsAgnosticMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
-    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::heapStandard2MB, MemoryConstants::pageSize2M);
+    return reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, HeapIndex::heapStandard, MemoryConstants::pageSize64k);
 }
 
 AddressRange OsAgnosticMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) {
@@ -678,7 +661,7 @@ AddressRange OsAgnosticMemoryManager::reserveGpuAddressOnHeap(const uint64_t req
     for (auto rootDeviceIndex : rootDeviceIndices) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
         auto gmmHelper = getGmmHelper(rootDeviceIndex);
-        gpuVa = requiredStartAddress == 0 ? gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(heap, size, alignment)) : gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignmentWithStartAddressHint(gmmHelper->decanonize(requiredStartAddress), heap, size, alignment));
+        gpuVa = gmmHelper->canonize(gfxPartition->heapAllocate(heap, size));
         if (gpuVa != 0u) {
             *reservedOnRootDeviceIndex = rootDeviceIndex;
             break;

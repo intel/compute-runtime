@@ -2692,7 +2692,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         ze_kernel_handle_t kernelHandle;
         void *ptr = nullptr;
-        size_t size = MemoryConstants::pageSize2M;
+        size_t size = MemoryConstants::pageSize64k;
         size_t reservationSize = size * 2;
         ze_kernel_desc_t kernelDesc = {};
         kernelDesc.pKernelName = kernelName.c_str();
@@ -2777,7 +2777,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         ze_kernel_handle_t kernelHandle;
         void *ptr = nullptr;
-        size_t size = MemoryConstants::pageSize2M;
+        size_t size = MemoryConstants::pageSize64k;
         size_t reservationSize = size * 2;
         ze_kernel_desc_t kernelDesc = {};
         kernelDesc.pKernelName = kernelName.c_str();
@@ -2856,7 +2856,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         ze_kernel_handle_t kernelHandle;
         void *ptr = nullptr;
-        size_t size = MemoryConstants::pageSize2M;
+        size_t size = MemoryConstants::pageSize64k;
         size_t reservationSize = size * 2;
         ze_kernel_desc_t kernelDesc = {};
         kernelDesc.pKernelName = kernelName.c_str();
@@ -2911,7 +2911,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         ze_kernel_handle_t kernelHandle;
         void *ptr = nullptr;
-        size_t size = MemoryConstants::pageSize2M;
+        size_t size = MemoryConstants::pageSize64k;
         size_t reservationSize = size * 4;
         ze_kernel_desc_t kernelDesc = {};
         kernelDesc.pKernelName = kernelName.c_str();
@@ -2941,7 +2941,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
         auto virtualAlloc = svmAllocsManager->getSVMAlloc(ptr);
-        virtualAlloc->virtualReservationData->mappedAllocations.at(offsetAddress)->mappedAllocation.allocation->setSize((MemoryConstants::gigaByte * 4) - MemoryConstants::pageSize2M);
+        virtualAlloc->virtualReservationData->mappedAllocations.at(offsetAddress)->mappedAllocation.allocation->setSize((MemoryConstants::gigaByte * 4) - MemoryConstants::pageSize64k);
 
         L0::KernelImp *kernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
         kernel->setArgBuffer(0, sizeof(ptr), &ptr);

@@ -49,32 +49,24 @@ class GfxPartition {
         getHeap(heapIndex).init(base, size, allocationAlignment);
     }
 
-    void heapInitExternalWithFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size, size_t allocationAlignment) {
-        getHeap(heapIndex).initExternalWithFrontWindow(base, size, allocationAlignment);
+    void heapInitExternalWithFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size) {
+        getHeap(heapIndex).initExternalWithFrontWindow(base, size);
     }
 
-    void heapInitWithFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size, uint64_t frontWindowSize, size_t allocationAlignment) {
-        getHeap(heapIndex).initWithFrontWindow(base, size, frontWindowSize, allocationAlignment);
+    void heapInitWithFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size, uint64_t frontWindowSize) {
+        getHeap(heapIndex).initWithFrontWindow(base, size, frontWindowSize);
     }
 
-    void heapInitFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size, size_t allocationAlignment) {
-        getHeap(heapIndex).initFrontWindow(base, size, allocationAlignment);
+    void heapInitFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size) {
+        getHeap(heapIndex).initFrontWindow(base, size);
     }
 
     MOCKABLE_VIRTUAL uint64_t heapAllocate(HeapIndex heapIndex, size_t &size) {
         return getHeap(heapIndex).allocate(size);
     }
 
-    MOCKABLE_VIRTUAL uint64_t heapAllocateWithStartAddressHint(const uint64_t requiredStartAddress, HeapIndex heapIndex, size_t &size) {
-        return getHeap(heapIndex).allocateWithStartAddressHint(requiredStartAddress, size);
-    }
-
     MOCKABLE_VIRTUAL uint64_t heapAllocateWithCustomAlignment(HeapIndex heapIndex, size_t &size, size_t alignment) {
         return getHeap(heapIndex).allocateWithCustomAlignment(size, alignment);
-    }
-
-    MOCKABLE_VIRTUAL uint64_t heapAllocateWithCustomAlignmentWithStartAddressHint(const uint64_t requiredStartAddress, HeapIndex heapIndex, size_t &size, size_t alignment) {
-        return getHeap(heapIndex).allocateWithCustomAlignmentWithStartAddressHint(requiredStartAddress, size, alignment);
     }
 
     MOCKABLE_VIRTUAL void heapFree(HeapIndex heapIndex, uint64_t ptr, size_t size) {
@@ -91,30 +83,7 @@ class GfxPartition {
         return getHeap(heapIndex).getLimit();
     }
 
-    size_t getHeapAllocationAlignment(HeapIndex heapIndex) {
-        return getHeap(heapIndex).getAllocAlignment();
-    }
-
-    bool isHeapInitialized(HeapIndex heapIndex) {
-        return getHeap(heapIndex).isInitialized();
-    }
-
     uint64_t getHeapMinimalAddress(HeapIndex heapIndex);
-
-    MOCKABLE_VIRTUAL bool getHeapIndexAndPageSizeBasedOnAddress(uint64_t ptr, HeapIndex &heapIndex, size_t &pageSize) {
-        for (size_t index = 0; index < heaps.size(); ++index) {
-
-            if (!isHeapInitialized(static_cast<HeapIndex>(index))) {
-                continue;
-            }
-            if (isAddressInHeapRange(static_cast<HeapIndex>(index), ptr)) {
-                heapIndex = static_cast<HeapIndex>(index);
-                pageSize = getHeapAllocationAlignment(heapIndex);
-                return true;
-            }
-        }
-        return false;
-    }
 
     bool isLimitedRange() { return getHeap(HeapIndex::heapSvm).getSize() == 0ull; }
 
@@ -141,32 +110,23 @@ class GfxPartition {
       public:
         Heap() = default;
         void init(uint64_t base, uint64_t size, size_t allocationAlignment);
-        void initExternalWithFrontWindow(uint64_t base, uint64_t size, size_t allocationAlignment);
-        void initWithFrontWindow(uint64_t base, uint64_t size, uint64_t frontWindowSize, size_t allocationAlignment);
-        void initFrontWindow(uint64_t base, uint64_t size, size_t allocationAlignment);
+        void initExternalWithFrontWindow(uint64_t base, uint64_t size);
+        void initWithFrontWindow(uint64_t base, uint64_t size, uint64_t frontWindowSize);
+        void initFrontWindow(uint64_t base, uint64_t size);
         uint64_t getBase() const { return base; }
         uint64_t getSize() const { return size; }
         uint64_t getLimit() const { return size ? base + size - 1 : 0; }
-        size_t getAllocAlignment() const;
         uint64_t allocate(size_t &size);
-        uint64_t allocateWithStartAddressHint(const uint64_t requiredStartAddress, size_t &size);
         uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment);
-        uint64_t allocateWithCustomAlignmentWithStartAddressHint(const uint64_t requiredStartAddress, size_t &sizeToAllocate, size_t alignment);
         void free(uint64_t ptr, size_t size);
-        bool isInitialized() const { return initialized; }
 
       protected:
         uint64_t base = 0, size = 0;
         std::unique_ptr<HeapAllocator> alloc;
-        bool initialized = false;
     };
 
     Heap &getHeap(HeapIndex heapIndex) {
         return heaps[static_cast<uint32_t>(heapIndex)];
-    }
-
-    bool isAddressInHeapRange(HeapIndex heapIndex, uint64_t ptr) {
-        return (ptr >= getHeap(heapIndex).getBase()) && (ptr <= getHeap(heapIndex).getLimit());
     }
 
     std::array<Heap, static_cast<uint32_t>(HeapIndex::totalHeaps)> heaps;

@@ -1258,34 +1258,34 @@ bool Wddm::isGpuHangDetected(OsContext &osContext) {
 
 void Wddm::initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool) const {
     if (gfxPartition.SVM.Limit != 0) {
-        outGfxPartition.heapInitWithAllocationAlignment(HeapIndex::heapSvm, gfxPartition.SVM.Base, gfxPartition.SVM.Limit - gfxPartition.SVM.Base + 1, MemoryConstants::pageSize64k);
+        outGfxPartition.heapInit(HeapIndex::heapSvm, gfxPartition.SVM.Base, gfxPartition.SVM.Limit - gfxPartition.SVM.Base + 1);
     } else if (is32bit) {
-        outGfxPartition.heapInitWithAllocationAlignment(HeapIndex::heapSvm, 0x0ull, 4 * MemoryConstants::gigaByte, MemoryConstants::pageSize64k);
+        outGfxPartition.heapInit(HeapIndex::heapSvm, 0x0ull, 4 * MemoryConstants::gigaByte);
     }
 
-    outGfxPartition.heapInitWithAllocationAlignment(HeapIndex::heapStandard, gfxPartition.Standard.Base, gfxPartition.Standard.Limit - gfxPartition.Standard.Base + 1, MemoryConstants::pageSize64k);
+    outGfxPartition.heapInit(HeapIndex::heapStandard, gfxPartition.Standard.Base, gfxPartition.Standard.Limit - gfxPartition.Standard.Base + 1);
 
     // Split HEAP_STANDARD64K among root devices
     auto gfxStandard64KBSize = alignDown((gfxPartition.Standard64KB.Limit - gfxPartition.Standard64KB.Base + 1) / numRootDevices, GfxPartition::heapGranularity);
-    outGfxPartition.heapInitWithAllocationAlignment(HeapIndex::heapStandard64KB, gfxPartition.Standard64KB.Base + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize, MemoryConstants::pageSize64k);
+    outGfxPartition.heapInit(HeapIndex::heapStandard64KB, gfxPartition.Standard64KB.Base + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize);
 
     for (auto heap : GfxPartition::heap32Names) {
         if (useExternalFrontWindowPool && HeapAssigner::heapTypeExternalWithFrontWindowPool(heap)) {
             outGfxPartition.heapInitExternalWithFrontWindow(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base,
-                                                            gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1, MemoryConstants::pageSize64k);
+                                                            gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1);
             size_t externalFrontWindowSize = GfxPartition::externalFrontWindowPoolSize;
             outGfxPartition.heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), outGfxPartition.heapAllocate(heap, externalFrontWindowSize),
-                                                            externalFrontWindowSize, MemoryConstants::pageSize64k);
+                                                            externalFrontWindowSize);
         } else if (HeapAssigner::isInternalHeap(heap)) {
             auto baseAddress = gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base >= minAddress ? gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base : minAddress;
 
             outGfxPartition.heapInitWithFrontWindow(heap, baseAddress,
                                                     gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - baseAddress + 1,
-                                                    GfxPartition::internalFrontWindowPoolSize, MemoryConstants::pageSize64k);
-            outGfxPartition.heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), baseAddress, GfxPartition::internalFrontWindowPoolSize, MemoryConstants::pageSize64k);
+                                                    GfxPartition::internalFrontWindowPoolSize);
+            outGfxPartition.heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), baseAddress, GfxPartition::internalFrontWindowPoolSize);
         } else {
-            outGfxPartition.heapInitWithAllocationAlignment(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base,
-                                                            gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1, MemoryConstants::pageSize64k);
+            outGfxPartition.heapInit(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base,
+                                     gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1);
         }
     }
 }

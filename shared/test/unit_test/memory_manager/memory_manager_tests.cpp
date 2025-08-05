@@ -289,89 +289,14 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReserv
     auto gmmHelper = memoryManager.getGmmHelper(0);
     HeapIndex heap = HeapIndex::heapStandard64KB;
     auto alignment = memoryManager.selectAlignmentAndHeap(MemoryConstants::pageSize, &heap);
-    EXPECT_EQ(heap, HeapIndex::heapStandard2MB);
-    EXPECT_EQ(MemoryConstants::pageSize2M, alignment);
+    EXPECT_EQ(heap, HeapIndex::heapStandard);
+    EXPECT_EQ(MemoryConstants::pageSize64k, alignment);
     auto addressRange = memoryManager.reserveGpuAddressOnHeap(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved, heap, alignment);
     EXPECT_EQ(0u, rootDeviceIndexReserved);
-    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard2MB), gmmHelper->decanonize(addressRange.address));
-    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard2MB), gmmHelper->decanonize(addressRange.address));
+    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
 
     memoryManager.freeGpuAddress(addressRange, 0);
-}
-
-TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReservedWithStartAddressOnSpecifiedHeapAndFreedThenAddressFromGfxPartitionIsUsed) {
-    MockExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.pushUnique(0);
-    uint32_t rootDeviceIndexReserved = 10;
-    auto gmmHelper = memoryManager.getGmmHelper(0);
-
-    const auto &gfxPartition = memoryManager.getGfxPartition(rootDeviceIndices[0]);
-    HeapIndex heap = HeapIndex::heapStandard64KB;
-    auto heapBase = gfxPartition->getHeapBase(heap);
-    const uint64_t requiredStartAddress = heapBase;
-
-    auto alignment = memoryManager.selectAlignmentAndHeap(requiredStartAddress, MemoryConstants::pageSize, &heap);
-    EXPECT_EQ(heap, HeapIndex::heapStandard64KB);
-    EXPECT_EQ(alignment, MemoryConstants::pageSize64k);
-    auto addressRange = memoryManager.reserveGpuAddressOnHeap(requiredStartAddress, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved, heap, alignment);
-    EXPECT_EQ(0u, rootDeviceIndexReserved);
-    EXPECT_NE(requiredStartAddress, addressRange.address);
-    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard64KB), gmmHelper->decanonize(addressRange.address));
-    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB), gmmHelper->decanonize(addressRange.address));
-
-    memoryManager.freeGpuAddress(addressRange, 0);
-
-    addressRange = memoryManager.reserveGpuAddressOnHeap(requiredStartAddress, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved, heap, alignment);
-    EXPECT_EQ(0u, rootDeviceIndexReserved);
-    EXPECT_NE(requiredStartAddress, addressRange.address);
-    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard64KB), gmmHelper->decanonize(addressRange.address));
-    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB), gmmHelper->decanonize(addressRange.address));
-}
-
-TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReservedWithInvalidStartAddressOnSpecifiedHeapAndFreedThenSomeOtherAddressIsUsed) {
-
-    MockExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.pushUnique(0);
-    uint32_t rootDeviceIndexReserved = 10;
-    auto gmmHelper = memoryManager.getGmmHelper(0);
-
-    const auto &gfxPartition = memoryManager.getGfxPartition(rootDeviceIndices[0]);
-    HeapIndex heap = HeapIndex::heapStandard64KB;
-    auto heapLimit = gfxPartition->getHeapLimit(heap);
-    const uint64_t requiredStartAddress = heapLimit + 64;
-    size_t alignment = MemoryConstants::pageSize64k;
-
-    auto addressRange = memoryManager.reserveGpuAddressOnHeap(requiredStartAddress, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved, heap, alignment);
-    EXPECT_EQ(0u, rootDeviceIndexReserved);
-    EXPECT_NE(requiredStartAddress, addressRange.address);
-    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(heap), gmmHelper->decanonize(addressRange.address));
-    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(heap), gmmHelper->decanonize(addressRange.address));
-
-    memoryManager.freeGpuAddress(addressRange, 0);
-}
-
-TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenSelectAlignmentAndHeapWithInvalidStartAddressOnSpecifiedHeapIsCalledThenDefaultHeapAndAlignmentIsUsed) {
-    MockExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.pushUnique(0);
-
-    const auto &gfxPartition = memoryManager.getGfxPartition(rootDeviceIndices[0]);
-
-    uint64_t maxHeapLimit = 0;
-    for (uint32_t heapIndex = static_cast<uint32_t>(HeapIndex::heapInternalDeviceMemory); heapIndex < static_cast<uint32_t>(HeapIndex::totalHeaps); ++heapIndex) {
-        maxHeapLimit = std::max(maxHeapLimit, gfxPartition->getHeapLimit(static_cast<HeapIndex>(heapIndex)));
-    }
-    const uint64_t requiredStartAddress = maxHeapLimit + 64;
-
-    HeapIndex heap = HeapIndex::heapStandard64KB;
-    auto alignment = memoryManager.selectAlignmentAndHeap(requiredStartAddress, MemoryConstants::pageSize, &heap);
-    EXPECT_EQ(heap, HeapIndex::heapStandard2MB);
-    EXPECT_EQ(alignment, MemoryConstants::pageSize2M);
 }
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressFromGfxPartitionIsUsed) {
@@ -381,17 +306,17 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReserv
     rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 10;
     auto gmmHelper = memoryManager.getGmmHelper(0);
-    auto addressRange = memoryManager.reserveGpuAddressOnHeap(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved, NEO::HeapIndex::heapStandard2MB, MemoryConstants::pageSize64k);
+    auto addressRange = memoryManager.reserveGpuAddressOnHeap(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved, NEO::HeapIndex::heapStandard, MemoryConstants::pageSize64k);
     EXPECT_EQ(0u, rootDeviceIndexReserved);
-    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard2MB), gmmHelper->decanonize(addressRange.address));
-    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard2MB), gmmHelper->decanonize(addressRange.address));
+    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
 
     memoryManager.freeGpuAddress(addressRange, 0);
 
     addressRange = memoryManager.reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved);
     EXPECT_EQ(0u, rootDeviceIndexReserved);
-    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard2MB), gmmHelper->decanonize(addressRange.address));
-    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard2MB), gmmHelper->decanonize(addressRange.address));
+    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
 
     memoryManager.freeGpuAddress(addressRange, 0);
 }
@@ -403,17 +328,17 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReserv
     rootDeviceIndices.pushUnique(1);
     uint32_t rootDeviceIndexReserved = 10;
     auto gmmHelper = memoryManager.getGmmHelper(1);
-    auto addressRange = memoryManager.reserveGpuAddressOnHeap(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved, NEO::HeapIndex::heapStandard2MB, MemoryConstants::pageSize64k);
+    auto addressRange = memoryManager.reserveGpuAddressOnHeap(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved, NEO::HeapIndex::heapStandard, MemoryConstants::pageSize64k);
     EXPECT_EQ(1u, rootDeviceIndexReserved);
-    EXPECT_LE(memoryManager.getGfxPartition(1)->getHeapBase(HeapIndex::heapStandard2MB), gmmHelper->decanonize(addressRange.address));
-    EXPECT_GT(memoryManager.getGfxPartition(1)->getHeapLimit(HeapIndex::heapStandard2MB), gmmHelper->decanonize(addressRange.address));
+    EXPECT_LE(memoryManager.getGfxPartition(1)->getHeapBase(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memoryManager.getGfxPartition(1)->getHeapLimit(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
 
     memoryManager.freeGpuAddress(addressRange, 1);
 
     addressRange = memoryManager.reserveGpuAddress(0ull, MemoryConstants::pageSize, rootDeviceIndices, &rootDeviceIndexReserved);
     EXPECT_EQ(1u, rootDeviceIndexReserved);
-    EXPECT_LE(memoryManager.getGfxPartition(1)->getHeapBase(HeapIndex::heapStandard2MB), gmmHelper->decanonize(addressRange.address));
-    EXPECT_GT(memoryManager.getGfxPartition(1)->getHeapLimit(HeapIndex::heapStandard2MB), gmmHelper->decanonize(addressRange.address));
+    EXPECT_LE(memoryManager.getGfxPartition(1)->getHeapBase(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memoryManager.getGfxPartition(1)->getHeapLimit(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
 
     memoryManager.freeGpuAddress(addressRange, 1);
 }
@@ -425,10 +350,10 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressReservat
     rootDeviceIndices.pushUnique(0);
     uint32_t rootDeviceIndexReserved = 10;
     // emulate GPU address space exhaust
-    memoryManager.getGfxPartition(0)->heapInit(HeapIndex::heapStandard2MB, 0x0, 0x10000);
-    auto addressRange = memoryManager.reserveGpuAddressOnHeap(0ull, (size_t)(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard2MB) * 2), rootDeviceIndices, &rootDeviceIndexReserved, NEO::HeapIndex::heapStandard2MB, MemoryConstants::pageSize64k);
+    memoryManager.getGfxPartition(0)->heapInit(HeapIndex::heapStandard, 0x0, 0x10000);
+    auto addressRange = memoryManager.reserveGpuAddressOnHeap(0ull, (size_t)(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard) * 2), rootDeviceIndices, &rootDeviceIndexReserved, NEO::HeapIndex::heapStandard, MemoryConstants::pageSize64k);
     EXPECT_EQ(static_cast<int>(addressRange.address), 0);
-    addressRange = memoryManager.reserveGpuAddress(0ull, (size_t)(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard2MB) * 2), rootDeviceIndices, &rootDeviceIndexReserved);
+    addressRange = memoryManager.reserveGpuAddress(0ull, (size_t)(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard) * 2), rootDeviceIndices, &rootDeviceIndexReserved);
     EXPECT_EQ(static_cast<int>(addressRange.address), 0);
 }
 
