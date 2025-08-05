@@ -568,6 +568,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     auto noopParam = cmdsToPatch[cooperativeParams.syncBufferPatchIndex];
     EXPECT_EQ(CommandToPatch::NoopSpace, noopParam.type);
     EXPECT_NE(0u, noopParam.patchSize);
+    EXPECT_EQ(noopParam.patchSize, commandList->getTotalNoopSpace());
 
     commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, engineGroupType, 0u);
@@ -750,6 +751,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     auto noopParam = cmdsToPatch[launchParams.regionBarrierPatchIndex];
     EXPECT_EQ(CommandToPatch::NoopSpace, noopParam.type);
     EXPECT_NE(0u, noopParam.patchSize);
+    EXPECT_EQ(noopParam.patchSize, cmdListRegular->getTotalNoopSpace());
+
+    cmdListRegular->reset();
+    EXPECT_EQ(0u, cmdListRegular->getTotalNoopSpace());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenAppendLaunchKernelWithMakeViewIsCalledThenNoPatchBuffer, IsAtLeastXeCore) {

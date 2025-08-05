@@ -883,6 +883,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->appendLaunchKernel(kernelHandlePrivate, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), privateAllocation));
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelPrivateIsaAllocation));
 
@@ -921,6 +923,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    size_t noopSpace = NEO::KernelHelper::getSyncBufferSize(4);
+    EXPECT_EQ(noopSpace, mutableCommandList->base->getTotalNoopSpace());
+
     auto syncBufferAllocation = mutationPrivateFirst.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBuffer;
 
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
@@ -940,6 +945,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), privateAllocation));
@@ -957,6 +964,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    EXPECT_EQ(noopSpace, mutableCommandList->base->getTotalNoopSpace());
+
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), privateAllocation));
@@ -965,6 +974,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     // change order of appending and mutating kernels
     result = mutableCommandList->reset();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
 
     result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, specialKernelGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -975,6 +986,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(noopSpace, mutableCommandList->base->getTotalNoopSpace());
 
     syncBufferAllocation = mutationSlmFirst.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBuffer;
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
@@ -994,6 +1007,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), privateAllocation));
@@ -1011,6 +1026,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    EXPECT_EQ(noopSpace, mutableCommandList->base->getTotalNoopSpace());
+
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), privateAllocation));
@@ -1027,6 +1044,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
 
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), syncBufferAllocation));
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelSlmIsaAllocation));
@@ -1068,10 +1087,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     void *cpuPtr = nullptr;
     size_t patchSize = 0;
     size_t offset = 0;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    uint64_t gpuAddress = 0;
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     auto requiredSize = NEO::KernelHelper::getSyncBufferSize(4);
     EXPECT_EQ(requiredSize, patchSize);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     size_t oldOffset = offset;
     void *oldCpuPtr = cpuPtr;
@@ -1091,10 +1112,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_EQ(oldOffset, offset);
     EXPECT_EQ(oldCpuPtr, cpuPtr);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     mutatedGroupCount.groupCountX = 64;
     mutatedGroupCount.groupCountY = 1;
@@ -1107,11 +1129,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     oldOffset = patchSize;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     requiredSize = NEO::KernelHelper::getSyncBufferSize(64);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_EQ(oldOffset, offset);
     EXPECT_NE(oldCpuPtr, cpuPtr);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1187,11 +1210,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     void *cpuPtr = nullptr;
     size_t patchSize = 0;
     size_t offset = 0;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    uint64_t gpuAddress = 0;
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     auto requiredSize = NEO::KernelHelper::getSyncBufferSize(4);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_NE(nullptr, cpuPtr);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1227,7 +1252,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_EQ(nullptr, cpuPtr);
 
     // mutate back into kernel cooperative
@@ -1250,7 +1277,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
+
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_NE(nullptr, cpuPtr);
 
     // mutate back into kernel regular
@@ -1273,7 +1302,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_EQ(nullptr, cpuPtr);
 
     // mutate final into kernel cooperative
@@ -1296,7 +1325,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_NE(nullptr, cpuPtr);
 }
 
@@ -1324,6 +1353,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
 
     ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
@@ -1375,11 +1406,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     void *cpuPtr = nullptr;
     size_t patchSize = 0;
     size_t offset = 0;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    uint64_t gpuAddress = 0;
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     auto requiredSize = NEO::KernelHelper::getSyncBufferSize(4);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_NE(nullptr, cpuPtr);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     // mutate back into regular kernel
     result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
@@ -1401,8 +1434,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_EQ(nullptr, cpuPtr);
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1442,8 +1476,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     void *cpuPtr = nullptr;
     size_t patchSize = 0;
     size_t offset = 0;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    uint64_t gpuAddress = 0;
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_EQ(requiredSize, patchSize);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     size_t oldPatchSize = patchSize;
 
@@ -1476,11 +1512,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     noopIndex = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBufferNoopPatchIndex;
     EXPECT_NE(undefined<size_t>, noopIndex);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     requiredSize = NEO::KernelHelper::getSyncBufferSize(8 * 4);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_EQ(oldPatchSize, offset);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     size_t oldOffset = offset;
     oldPatchSize = patchSize;
@@ -1515,10 +1552,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     noopIndex = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBufferNoopPatchIndex;
     EXPECT_NE(undefined<size_t>, noopIndex);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     requiredSize = NEO::KernelHelper::getSyncBufferSize(8 * 8);
     EXPECT_EQ(requiredSize, patchSize);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     // new offset and new gpu sync address in cross-thread data
     memcpy(&syncBufferGpuPatchAddress, syncBufferAddress, sizeof(uint64_t));
@@ -1541,10 +1579,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     noopIndex = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->syncBufferNoopPatchIndex;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     EXPECT_EQ(oldPatchSize, patchSize);
     EXPECT_EQ(oldOffset, offset);
+    EXPECT_EQ(oldPatchSize, mutableCommandList->base->getTotalNoopSpace());
 
     // old offset and old gpu sync address in cross-thread data
     memcpy(&syncBufferGpuPatchAddress, syncBufferAddress, sizeof(uint64_t));
@@ -1587,10 +1626,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     void *cpuPtr = nullptr;
     size_t patchSize = 0;
     size_t offset = 0;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    uint64_t gpuAddress = 0;
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     auto requiredSize = NEO::KernelHelper::getRegionGroupBarrierSize(4, this->testLaunchParams.localRegionSize);
     EXPECT_EQ(requiredSize, patchSize);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     size_t oldOffset = offset;
     void *oldCpuPtr = cpuPtr;
@@ -1610,10 +1651,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_EQ(oldOffset, offset);
     EXPECT_EQ(oldCpuPtr, cpuPtr);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     mutatedGroupCount.groupCountX = 64;
     mutatedGroupCount.groupCountY = 1;
@@ -1626,11 +1668,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     oldOffset = patchSize;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     requiredSize = NEO::KernelHelper::getRegionGroupBarrierSize(64, this->testLaunchParams.localRegionSize);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_EQ(oldOffset, offset);
     EXPECT_NE(oldCpuPtr, cpuPtr);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1668,11 +1711,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     void *cpuPtr = nullptr;
     size_t patchSize = 0;
     size_t offset = 0;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    uint64_t gpuAddress = 0;
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     auto requiredSize = NEO::KernelHelper::getRegionGroupBarrierSize(4, this->testLaunchParams.localRegionSize);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_NE(nullptr, cpuPtr);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1708,8 +1753,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_EQ(nullptr, cpuPtr);
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
 
     // mutate back into kernel region barrier
     result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
@@ -1731,8 +1777,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_NE(nullptr, cpuPtr);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     // mutate back into kernel regular
     result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
@@ -1754,8 +1801,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_EQ(nullptr, cpuPtr);
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
 
     // mutate final into kernel region barrier
     result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
@@ -1777,8 +1825,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_NE(nullptr, cpuPtr);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1811,6 +1860,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_FALSE(mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->kernelData->usesRegionGroupBarrier);
     auto noopIndex = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->regionBarrierNoopPatchIndex;
     EXPECT_EQ(undefined<size_t>, noopIndex);
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
 
     // mutate into region barrier
     result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
@@ -1854,11 +1904,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     void *cpuPtr = nullptr;
     size_t patchSize = 0;
     size_t offset = 0;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    uint64_t gpuAddress = 0;
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     auto requiredSize = NEO::KernelHelper::getRegionGroupBarrierSize(4, this->testLaunchParams.localRegionSize);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_NE(nullptr, cpuPtr);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     // mutate back into regular kernel
     result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
@@ -1880,8 +1932,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_EQ(nullptr, cpuPtr);
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1919,8 +1972,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     void *cpuPtr = nullptr;
     size_t patchSize = 0;
     size_t offset = 0;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    uint64_t gpuAddress = 0;
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
     EXPECT_EQ(requiredSize, patchSize);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     size_t oldPatchSize = patchSize;
 
@@ -1953,11 +2008,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     noopIndex = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->regionBarrierNoopPatchIndex;
     EXPECT_NE(undefined<size_t>, noopIndex);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     requiredSize = NEO::KernelHelper::getRegionGroupBarrierSize(8 * 4, this->testLaunchParams.localRegionSize);
     EXPECT_EQ(requiredSize, patchSize);
     EXPECT_EQ(oldPatchSize, offset);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     size_t oldOffset = offset;
     oldPatchSize = patchSize;
@@ -1992,10 +2048,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     noopIndex = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->regionBarrierNoopPatchIndex;
     EXPECT_NE(undefined<size_t>, noopIndex);
 
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     requiredSize = NEO::KernelHelper::getRegionGroupBarrierSize(8 * 8, this->testLaunchParams.localRegionSize);
     EXPECT_EQ(requiredSize, patchSize);
+    EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     // new offset and new gpu sync address in cross-thread data
     memcpy(&regionBarrierBufferGpuPatchAddress, regionBarrierBufferAddress, sizeof(uint64_t));
@@ -2018,10 +2075,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     noopIndex = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->regionBarrierNoopPatchIndex;
-    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset);
+    mutableCommandList->fillCmdListNoopPatchData(noopIndex, cpuPtr, patchSize, offset, gpuAddress);
 
     EXPECT_EQ(oldPatchSize, patchSize);
     EXPECT_EQ(oldOffset, offset);
+    EXPECT_EQ(oldPatchSize, mutableCommandList->base->getTotalNoopSpace());
 
     // old offset and old gpu sync address in cross-thread data
     memcpy(&regionBarrierBufferGpuPatchAddress, regionBarrierBufferAddress, sizeof(uint64_t));

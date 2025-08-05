@@ -162,6 +162,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     isWalkerWithProfilingEnqueued = false;
 
     this->inOrderPatchCmds.clear();
+    this->totalNoopSpace = 0;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -3339,8 +3340,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
         syncBufferSpace.offset = patchData.second;
         syncBufferSpace.pDestination = ptrOffset(patchData.first->getUnderlyingBuffer(), patchData.second);
         syncBufferSpace.patchSize = NEO::KernelHelper::getSyncBufferSize(requestedNumberOfWorkgroups);
+        syncBufferSpace.gpuAddress = patchData.first->getGpuAddressToPatch() + patchData.second;
 
         commandsToPatch.push_back(syncBufferSpace);
+
+        this->totalNoopSpace += syncBufferSpace.patchSize;
     }
 
     return ZE_RESULT_SUCCESS;
@@ -3363,8 +3367,11 @@ void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &ker
         regionBarrierSpace.offset = patchData.second;
         regionBarrierSpace.pDestination = ptrOffset(patchData.first->getUnderlyingBuffer(), patchData.second);
         regionBarrierSpace.patchSize = NEO::KernelHelper::getRegionGroupBarrierSize(threadGroupCount, localRegionSize);
+        regionBarrierSpace.gpuAddress = patchData.first->getGpuAddressToPatch() + patchData.second;
 
         commandsToPatch.push_back(regionBarrierSpace);
+
+        this->totalNoopSpace += regionBarrierSpace.patchSize;
     }
 }
 

@@ -170,9 +170,9 @@ struct MutableCommandList {
     virtual void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) = 0;
     virtual void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) = 0;
     virtual uint64_t getCurrentScratchPatchAddress(size_t scratchAddressPatchIndex) const = 0;
-    virtual void updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset) = 0;
-    virtual size_t createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset) = 0;
-    virtual void fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset) = 0;
+    virtual void updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) = 0;
+    virtual size_t createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) = 0;
+    virtual void fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset, uint64_t &gpuAddress) = 0;
     virtual void disableAddressNoopPatch(size_t noopPatchIndex) = 0;
     virtual void addVariableToCommitList(Variable *variable) = 0;
 

@@ -471,6 +471,9 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t getFrontEndPatchListCount() const {
         return frontEndPatchListCount;
     }
+    size_t getTotalNoopSpace() const {
+        return totalNoopSpace;
+    }
 
     void forceDisableInOrderWaits() { inOrderWaitsDisabled = true; }
 
@@ -520,6 +523,7 @@ struct CommandList : _ze_command_list_handle_t {
     size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
     size_t cmdListCurrentStartOffset = 0;
     size_t maxFillPatternSizeForCopyEngine = 0;
+    size_t totalNoopSpace = 0;
 
     uint32_t commandListPerThreadScratchSize[2]{};
 

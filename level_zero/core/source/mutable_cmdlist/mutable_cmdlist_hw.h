@@ -136,9 +136,9 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     void updateScratchAddress(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) override;
     void updateCmdListScratchPatchCommand(size_t patchIndex, MutableComputeWalker &oldWalker, MutableComputeWalker &newWalker) override;
     uint64_t getCurrentScratchPatchAddress(size_t scratchAddressPatchIndex) const override;
-    void updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset) override;
-    size_t createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset) override;
-    void fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset) override;
+    void updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) override;
+    size_t createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) override;
+    void fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset, uint64_t &gpuAddress) override;
     void disableAddressNoopPatch(size_t noopPatchIndex) override;
     void addKernelIsaMemoryPrefetchPadding(NEO::LinearStream &cmdStream, const Kernel &kernel, uint64_t cmdId) override;
     void addKernelIndirectDataMemoryPrefetchPadding(NEO::LinearStream &cmdStream, const Kernel &kernel, uint64_t cmdId) override;

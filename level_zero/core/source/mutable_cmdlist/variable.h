@@ -177,9 +177,9 @@ struct Variable : public VariableHandle {
     void commitVariable();
     void updateAllocationResidency(NEO::GraphicsAllocation *oldAllocation, NEO::GraphicsAllocation *newAllocation);
 
-    void updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset);
-    size_t createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset);
-    void fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset);
+    void updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress);
+    size_t createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress);
+    void fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset, uint64_t &gpuAddress);
 
     bool isCooperativeVariable() const;
     inline VariableDispatch *getInitialVariableDispatch() const {

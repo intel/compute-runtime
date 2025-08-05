@@ -770,16 +770,16 @@ void Variable::updateAllocationResidency(NEO::GraphicsAllocation *oldAllocation,
     }
 }
 
-void Variable::updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset) {
-    cmdList->updateCmdListNoopPatchData(noopPatchIndex, newCpuPtr, newPatchSize, newOffset);
+void Variable::updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) {
+    cmdList->updateCmdListNoopPatchData(noopPatchIndex, newCpuPtr, newPatchSize, newOffset, newGpuAddress);
 }
 
-size_t Variable::createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset) {
-    return cmdList->createNewCmdListNoopPatchData(newCpuPtr, newPatchSize, newOffset);
+size_t Variable::createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) {
+    return cmdList->createNewCmdListNoopPatchData(newCpuPtr, newPatchSize, newOffset, newGpuAddress);
 }
 
-void Variable::fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset) {
-    cmdList->fillCmdListNoopPatchData(noopPatchIndex, cpuPtr, patchSize, offset);
+void Variable::fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset, uint64_t &gpuAddress) {
+    cmdList->fillCmdListNoopPatchData(noopPatchIndex, cpuPtr, patchSize, offset, gpuAddress);
 }
 
 bool Variable::isCooperativeVariable() const {

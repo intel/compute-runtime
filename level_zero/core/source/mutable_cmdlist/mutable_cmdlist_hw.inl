@@ -970,26 +970,43 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::captureKernelGroupVaria
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset) {
+void MutableCommandListCoreFamily<gfxCoreFamily>::updateCmdListNoopPatchData(size_t noopPatchIndex, void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) {
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
+    auto &totalNoopSpace = CommandListCoreFamily<gfxCoreFamily>::totalNoopSpace;
     UNRECOVERABLE_IF(noopPatchIndex >= commandsToPatch.size());
     auto &noopPatch = commandsToPatch[noopPatchIndex];
+
+    if (noopPatch.pDestination == nullptr) {
+        totalNoopSpace += newPatchSize;
+    } else {
+        if (newPatchSize > noopPatch.patchSize) {
+            totalNoopSpace += (newPatchSize - noopPatch.patchSize);
+        } else {
+            totalNoopSpace -= (noopPatch.patchSize - newPatchSize);
+        }
+    }
 
     noopPatch.pDestination = newCpuPtr;
     noopPatch.patchSize = newPatchSize;
     noopPatch.offset = newOffset;
+    noopPatch.gpuAddress = newGpuAddress;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t MutableCommandListCoreFamily<gfxCoreFamily>::createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset) {
+size_t MutableCommandListCoreFamily<gfxCoreFamily>::createNewCmdListNoopPatchData(void *newCpuPtr, size_t newPatchSize, size_t newOffset, uint64_t newGpuAddress) {
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
+    auto &totalNoopSpace = CommandListCoreFamily<gfxCoreFamily>::totalNoopSpace;
+
     size_t noopPatchIndex = commandsToPatch.size();
+
+    totalNoopSpace += newPatchSize;
 
     CommandToPatch noopPatch;
     noopPatch.type = CommandToPatch::NoopSpace;
     noopPatch.offset = newOffset;
     noopPatch.pDestination = newCpuPtr;
     noopPatch.patchSize = newPatchSize;
+    noopPatch.gpuAddress = newGpuAddress;
 
     commandsToPatch.push_back(noopPatch);
 
@@ -997,7 +1014,7 @@ size_t MutableCommandListCoreFamily<gfxCoreFamily>::createNewCmdListNoopPatchDat
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset) {
+void MutableCommandListCoreFamily<gfxCoreFamily>::fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset, uint64_t &gpuAddress) {
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
     UNRECOVERABLE_IF(noopPatchIndex >= commandsToPatch.size());
     auto &noopPatch = commandsToPatch[noopPatchIndex];
@@ -1005,15 +1022,21 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::fillCmdListNoopPatchData(size_
     cpuPtr = noopPatch.pDestination;
     patchSize = noopPatch.patchSize;
     offset = noopPatch.offset;
+    gpuAddress = noopPatch.gpuAddress;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::disableAddressNoopPatch(size_t noopPatchIndex) {
     auto &commandsToPatch = CommandListCoreFamily<gfxCoreFamily>::commandsToPatch;
+    auto &totalNoopSpace = CommandListCoreFamily<gfxCoreFamily>::totalNoopSpace;
+
     UNRECOVERABLE_IF(noopPatchIndex >= commandsToPatch.size());
     auto &noopPatch = commandsToPatch[noopPatchIndex];
 
     noopPatch.pDestination = nullptr;
+
+    UNRECOVERABLE_IF(totalNoopSpace < noopPatch.patchSize);
+    totalNoopSpace -= noopPatch.patchSize;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

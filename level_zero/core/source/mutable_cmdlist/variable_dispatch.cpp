@@ -60,13 +60,15 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
         if (kernelDispatch->syncBufferNoopPatchIndex != undefined<size_t>) {
             void *noopPtr = nullptr;
             size_t noopSize = 0;
-            groupCountVar->fillCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, noopPtr, noopSize, this->syncBufferOffset);
+            uint64_t gpuAddress = 0;
+            groupCountVar->fillCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, noopPtr, noopSize, this->syncBufferOffset, gpuAddress);
             UNRECOVERABLE_IF(noopSize != kernelDispatch->syncBufferSize);
         }
         if (kernelDispatch->regionBarrierNoopPatchIndex != undefined<size_t>) {
             void *noopPtr = nullptr;
             size_t noopSize = 0;
-            groupCountVar->fillCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, noopPtr, noopSize, this->regionBarrierOffset);
+            uint64_t gpuAddress = 0;
+            groupCountVar->fillCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, noopPtr, noopSize, this->regionBarrierOffset, gpuAddress);
             UNRECOVERABLE_IF(noopSize != kernelDispatch->regionBarrierSize);
         }
     }
@@ -251,10 +253,11 @@ void VariableDispatch::setGroupCount(const uint32_t groupCount[3], const NEO::De
             this->syncBufferOffset = syncBufferPair.second;
 
             void *newCpuPtr = ptrOffset(kernelDispatch->syncBuffer->getUnderlyingBuffer(), this->syncBufferOffset);
+            uint64_t newGpuAddress = kernelDispatch->syncBuffer->getGpuAddressToPatch() + this->syncBufferOffset;
             if (kernelDispatch->syncBufferNoopPatchIndex == undefined<size_t>) {
-                kernelDispatch->syncBufferNoopPatchIndex = groupCountVar->createNewCmdListNoopPatchData(newCpuPtr, newSize, this->syncBufferOffset);
+                kernelDispatch->syncBufferNoopPatchIndex = groupCountVar->createNewCmdListNoopPatchData(newCpuPtr, newSize, this->syncBufferOffset, newGpuAddress);
             } else {
-                groupCountVar->updateCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, newCpuPtr, newSize, this->syncBufferOffset);
+                groupCountVar->updateCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, newCpuPtr, newSize, this->syncBufferOffset, newGpuAddress);
             }
         } else {
             // mutation of kernels - check noop patch needs update and repatch the sync buffer address
@@ -265,17 +268,17 @@ void VariableDispatch::setGroupCount(const uint32_t groupCount[3], const NEO::De
             void *noopCpuPtr = nullptr;
             size_t noopSize = 0;
             size_t noopOffset = 0;
-            groupCountVar->fillCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, noopCpuPtr, noopSize, noopOffset);
+            uint64_t noopGpuAddress = 0;
+            groupCountVar->fillCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, noopCpuPtr, noopSize, noopOffset, noopGpuAddress);
 
             void *currentNoopPtr = ptrOffset(kernelDispatch->syncBuffer->getUnderlyingBuffer(), this->syncBufferOffset);
-
             if (noopSize != kernelDispatch->syncBufferSize || noopOffset != this->syncBufferOffset || noopCpuPtr != currentNoopPtr) {
-                uint64_t newAddress = kernelDispatch->syncBuffer->getGpuAddressToPatch() + this->syncBufferOffset;
+                uint64_t currentKernelPatchGpuAddress = kernelDispatch->syncBuffer->getGpuAddressToPatch() + this->syncBufferOffset;
                 indirectData->setAddress(kernelDispatch->kernelData->syncBufferAddressOffset,
-                                         newAddress,
+                                         currentKernelPatchGpuAddress,
                                          kernelDispatch->kernelData->syncBufferPointerSize);
 
-                groupCountVar->updateCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, currentNoopPtr, kernelDispatch->syncBufferSize, this->syncBufferOffset);
+                groupCountVar->updateCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, currentNoopPtr, kernelDispatch->syncBufferSize, this->syncBufferOffset, currentKernelPatchGpuAddress);
             }
         }
     }
@@ -296,10 +299,11 @@ void VariableDispatch::setGroupCount(const uint32_t groupCount[3], const NEO::De
             this->regionBarrierOffset = regionBarrierPair.second;
 
             void *newCpuPtr = ptrOffset(kernelDispatch->regionBarrier->getUnderlyingBuffer(), this->regionBarrierOffset);
+            uint64_t newGpuAddress = kernelDispatch->regionBarrier->getGpuAddressToPatch() + this->regionBarrierOffset;
             if (kernelDispatch->regionBarrierNoopPatchIndex == undefined<size_t>) {
-                kernelDispatch->regionBarrierNoopPatchIndex = groupCountVar->createNewCmdListNoopPatchData(newCpuPtr, newSize, this->regionBarrierOffset);
+                kernelDispatch->regionBarrierNoopPatchIndex = groupCountVar->createNewCmdListNoopPatchData(newCpuPtr, newSize, this->regionBarrierOffset, newGpuAddress);
             } else {
-                groupCountVar->updateCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, newCpuPtr, newSize, this->regionBarrierOffset);
+                groupCountVar->updateCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, newCpuPtr, newSize, this->regionBarrierOffset, newGpuAddress);
             }
         } else {
             // mutation of kernels - check noop patch needs update and repatch the region barrier address
@@ -310,17 +314,17 @@ void VariableDispatch::setGroupCount(const uint32_t groupCount[3], const NEO::De
             void *noopCpuPtr = nullptr;
             size_t noopSize = 0;
             size_t noopOffset = 0;
-            groupCountVar->fillCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, noopCpuPtr, noopSize, noopOffset);
+            uint64_t noopGpuAddress = 0;
+            groupCountVar->fillCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, noopCpuPtr, noopSize, noopOffset, noopGpuAddress);
 
             void *currentNoopPtr = ptrOffset(kernelDispatch->regionBarrier->getUnderlyingBuffer(), this->regionBarrierOffset);
-
             if (noopSize != kernelDispatch->regionBarrierSize || noopOffset != this->regionBarrierOffset || noopCpuPtr != currentNoopPtr) {
-                uint64_t newAddress = kernelDispatch->regionBarrier->getGpuAddressToPatch() + this->regionBarrierOffset;
+                uint64_t currentKernelPatchGpuAddress = kernelDispatch->regionBarrier->getGpuAddressToPatch() + this->regionBarrierOffset;
                 indirectData->setAddress(kernelDispatch->kernelData->regionGroupBarrierBufferOffset,
-                                         newAddress,
+                                         currentKernelPatchGpuAddress,
                                          kernelDispatch->kernelData->regionGroupBarrierBufferPointerSize);
 
-                groupCountVar->updateCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, currentNoopPtr, kernelDispatch->regionBarrierSize, this->regionBarrierOffset);
+                groupCountVar->updateCmdListNoopPatchData(kernelDispatch->regionBarrierNoopPatchIndex, currentNoopPtr, kernelDispatch->regionBarrierSize, this->regionBarrierOffset, currentKernelPatchGpuAddress);
             }
         }
     }
