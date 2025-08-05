@@ -3866,9 +3866,9 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     if (commandStreamReceiver.feSupportFlags.computeDispatchAllWalker || commandStreamReceiver.feSupportFlags.disableEuFusion) {
         ASSERT_NE(nullptr, frontEndCmd);
         if (commandStreamReceiver.feSupportFlags.computeDispatchAllWalker) {
-            EXPECT_TRUE(UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*frontEndCmd));
+            EXPECT_TRUE(UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*frontEndCmd));
         } else {
-            EXPECT_FALSE(UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*frontEndCmd));
+            EXPECT_FALSE(UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*frontEndCmd));
         }
         if (commandStreamReceiver.feSupportFlags.disableEuFusion) {
             EXPECT_TRUE(UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(*frontEndCmd));

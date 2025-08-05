@@ -226,13 +226,12 @@ using MipMapCopyImageTest = EnqueueCopyImageMipMapTest;
 
 HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet) {
     USE_REAL_FILE_SYSTEM();
-    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
 
     bool useHeapless = false;
     cl_mem_object_type srcImageType, dstImageType;
     std::tie(srcImageType, dstImageType, useHeapless) = GetParam();
 
-    if (useHeapless && !heaplessAllowed) {
+    if (!useHeapless && FamilyType::isHeaplessRequired()) {
         return;
     }
 

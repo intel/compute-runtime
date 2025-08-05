@@ -229,7 +229,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     if constexpr (heaplessModeEnabled == false) {
-        EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(idd, samplerCount, bindingTableStateCount);
+        EncodeDispatchKernelWithHeap<Family>::adjustBindingTablePrefetch(idd, samplerCount, bindingTableStateCount);
     }
 
     uint64_t offsetThreadData = 0u;

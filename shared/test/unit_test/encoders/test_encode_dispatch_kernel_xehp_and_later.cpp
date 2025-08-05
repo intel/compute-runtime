@@ -202,7 +202,7 @@ struct CommandEncodeStatesTestBindingTableStateMatcher {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
         if constexpr (HwMapper<productFamily>::GfxProduct::supportsCmdSet(IGFX_XE_HP_CORE)) {
-            return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::bindingTableStateSupported;
+            return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::bindingTableStateSupported && !TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessRequired;
         }
         return false;
     }

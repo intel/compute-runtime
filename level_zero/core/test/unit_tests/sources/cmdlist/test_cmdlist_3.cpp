@@ -1607,7 +1607,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
         auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
         ASSERT_NE(nullptr, cfeCmd);
-        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
+        EXPECT_TRUE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
         EXPECT_EQ(0u, cfeCmd->getScratchSpaceBuffer());
     } else {
         EXPECT_EQ(0u, commandsToPatch.size());
@@ -1638,7 +1638,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
         auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
         ASSERT_NE(nullptr, cfeCmd);
-        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
+        EXPECT_FALSE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
         EXPECT_EQ(0u, cfeCmd->getScratchSpaceBuffer());
     }
 
@@ -1658,7 +1658,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
         auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
         ASSERT_NE(nullptr, cfeCmd);
-        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
+        EXPECT_TRUE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
         EXPECT_EQ(0u, cfeCmd->getScratchSpaceBuffer());
     } else {
         EXPECT_EQ(0u, commandsToPatch.size());
@@ -1683,7 +1683,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
             ASSERT_NE(nullptr, cfeCmd);
 
             EXPECT_EQ(disableFusionStates[disableFusionStatesIdx++],
-                      NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
+                      NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
             EXPECT_NE(0u, cfeCmd->getScratchSpaceBuffer());
         }
 
@@ -1729,7 +1729,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
         auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
         ASSERT_NE(nullptr, cfeCmd);
-        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
+        EXPECT_TRUE(NEO::UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
         EXPECT_EQ(0u, cfeCmd->getScratchSpaceBuffer());
     } else {
         EXPECT_EQ(0u, commandsToPatch.size());
@@ -1754,7 +1754,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
         auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
         ASSERT_NE(nullptr, cfeCmd);
-        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
+        EXPECT_FALSE(NEO::UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
         EXPECT_EQ(0u, cfeCmd->getScratchSpaceBuffer());
     } else {
         EXPECT_EQ(0u, commandsToPatch.size());
@@ -1770,7 +1770,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
         auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
         ASSERT_NE(nullptr, cfeCmd);
-        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
+        EXPECT_TRUE(NEO::UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
         EXPECT_EQ(0u, cfeCmd->getScratchSpaceBuffer());
     } else {
         EXPECT_EQ(0u, commandsToPatch.size());
@@ -1795,7 +1795,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
             ASSERT_NE(nullptr, cfeCmd);
 
             EXPECT_EQ(computeDispatchAllWalkerStates[computeDispatchAllWalkerStatesIdx++],
-                      NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
+                      NEO::UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
             EXPECT_NE(0u, cfeCmd->getScratchSpaceBuffer());
         }
 

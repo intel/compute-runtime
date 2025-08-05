@@ -1124,7 +1124,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
             auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
-            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+            EXPECT_FALSE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
         }
@@ -1146,7 +1146,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
             auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
-            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+            EXPECT_TRUE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
         }
@@ -1184,7 +1184,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
             auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
-            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+            EXPECT_FALSE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
         }
@@ -1208,7 +1208,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
             auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
-            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+            EXPECT_TRUE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
         }
@@ -1249,7 +1249,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
             auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
-            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+            EXPECT_FALSE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
         }
@@ -1375,7 +1375,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
             auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
-            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
+            EXPECT_FALSE(NEO::UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
         }
@@ -1398,7 +1398,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
             auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
-            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
+            EXPECT_TRUE(NEO::UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
         }
@@ -1422,7 +1422,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
             auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
-            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
+            EXPECT_FALSE(NEO::UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
         }
@@ -1474,7 +1474,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
             auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
-            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
+            EXPECT_TRUE(NEO::UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
         }
@@ -1502,7 +1502,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
             auto feStateIt = find<FrontEndStateCommand *>(nextIt, cmdList.end());
             ASSERT_NE(cmdList.end(), feStateIt);
             auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateIt);
-            EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
+            EXPECT_FALSE(NEO::UnitTestHelperWithHeap<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(feState));
 
             nextIt = feStateIt;
         }
@@ -1615,9 +1615,9 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     ASSERT_EQ(1u, feStateCmds.size());
     auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateCmds[0]);
     if (fePropertiesSupport.disableEuFusion) {
-        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+        EXPECT_TRUE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
     } else {
-        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+        EXPECT_FALSE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
     }
 
     auto &immediateCmdListStream = *commandListImmediate->getCmdContainer().getCommandStream();
@@ -1734,9 +1734,9 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     ASSERT_EQ(1u, feStateCmds.size());
     auto &feState = *genCmdCast<FrontEndStateCommand *>(*feStateCmds[0]);
     if (fePropertiesSupport.disableEuFusion) {
-        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+        EXPECT_TRUE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
     } else {
-        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
+        EXPECT_FALSE(NEO::UnitTestHelperWithHeap<FamilyType>::getDisableFusionStateFromFrontEndCommand(feState));
     }
 
     auto &regularCmdListStream = *commandList->getCmdContainer().getCommandStream();

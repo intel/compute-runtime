@@ -172,7 +172,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
                 interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
             }
         }
-        EncodeDispatchKernel<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);
+        EncodeDispatchKernelWithHeap<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);
     }
 
     const auto &hardwareInfo = device.getHardwareInfo();
