@@ -136,3 +136,7 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAll
         EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
 }
+
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoherentThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isMisalignedUserPtr2WayCoherent());
+}
