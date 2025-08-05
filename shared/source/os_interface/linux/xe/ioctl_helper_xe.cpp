@@ -21,6 +21,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/topology.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
@@ -516,131 +517,65 @@ bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
 }
 
 bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
+    const auto queryGtTopology = queryData<uint8_t>(DRM_XE_DEVICE_QUERY_GT_TOPOLOGY);
 
-    auto queryGtTopology = queryData<uint8_t>(DRM_XE_DEVICE_QUERY_GT_TOPOLOGY);
-
-    auto fillMask = [](std::vector<std::bitset<8>> &vec, drm_xe_query_topology_mask *topo) {
-        for (uint32_t j = 0; j < topo->num_bytes; j++) {
-            vec.push_back(topo->mask[j]);
-        }
-    };
-
-    StackVec<std::vector<std::bitset<8>>, 2> geomDss;
-    StackVec<std::vector<std::bitset<8>>, 2> computeDss;
-    StackVec<std::vector<std::bitset<8>>, 2> euDss;
-    StackVec<std::vector<std::bitset<8>>, 2> l3Banks;
+    const auto numTiles = tileIdToGtId.size();
+    std::vector<TopologyBitmap> topologyBitmap(numTiles);
 
     auto topologySize = queryGtTopology.size();
     auto dataPtr = queryGtTopology.data();
 
-    auto numTiles = tileIdToGtId.size();
-    geomDss.resize(numTiles);
-    computeDss.resize(numTiles);
-    euDss.resize(numTiles);
-    l3Banks.resize(numTiles);
-    bool receivedDssInfo = false;
     while (topologySize >= sizeof(drm_xe_query_topology_mask)) {
-        drm_xe_query_topology_mask *topo = reinterpret_cast<drm_xe_query_topology_mask *>(dataPtr);
+        const drm_xe_query_topology_mask *topo = reinterpret_cast<const drm_xe_query_topology_mask *>(dataPtr);
         UNRECOVERABLE_IF(topo == nullptr);
 
-        uint32_t gtId = topo->gt_id;
-        auto tileId = gtIdToTileId[gtId];
+        const auto gtId = topo->gt_id;
+        const auto tileId = gtIdToTileId[gtId];
 
         if (tileId != invalidIndex) {
+            const auto bytes = std::span<const uint8_t>(topo->mask, topo->num_bytes);
+
             switch (topo->type) {
             case DRM_XE_TOPO_DSS_GEOMETRY:
-                fillMask(geomDss[tileId], topo);
-                receivedDssInfo = true;
+                topologyBitmap[tileId].dssGeometry = bytes;
                 break;
             case DRM_XE_TOPO_DSS_COMPUTE:
-                fillMask(computeDss[tileId], topo);
-                receivedDssInfo = true;
+                topologyBitmap[tileId].dssCompute = bytes;
                 break;
             case DRM_XE_TOPO_L3_BANK:
-                fillMask(l3Banks[tileId], topo);
+                topologyBitmap[tileId].l3Banks = bytes;
                 break;
             case DRM_XE_TOPO_EU_PER_DSS:
             case DRM_XE_TOPO_SIMD16_EU_PER_DSS:
-                fillMask(euDss[tileId], topo);
+                topologyBitmap[tileId].eu = bytes;
                 break;
             default:
                 xeLog("Unhandle GT Topo type: %d\n", topo->type);
             }
         }
 
-        uint32_t itemSize = sizeof(drm_xe_query_topology_mask) + topo->num_bytes;
+        const auto itemSize = sizeof(drm_xe_query_topology_mask) + topo->num_bytes;
         topologySize -= itemSize;
         dataPtr = ptrOffset(dataPtr, itemSize);
     }
 
-    int sliceCount = 0;
-    int subSliceCount = 0;
-    int euPerDss = 0;
-    int l3BankCount = 0;
-    uint32_t hwMaxSubSliceCount = hwInfo.gtSystemInfo.MaxSubSlicesSupported;
-    topologyData.maxSlices = hwInfo.gtSystemInfo.MaxSlicesSupported ? hwInfo.gtSystemInfo.MaxSlicesSupported : 1;
-    topologyData.maxSubSlicesPerSlice = hwMaxSubSliceCount / topologyData.maxSlices;
-    topologyData.maxEusPerSubSlice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+    const TopologyLimits topologyLimits{
+        .maxSlices = static_cast<int>(hwInfo.gtSystemInfo.MaxSlicesSupported),
+        .maxSubSlicesPerSlice = static_cast<int>(hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported),
+        .maxEusPerSubSlice = static_cast<int>(hwInfo.gtSystemInfo.MaxEuPerSubSlice),
+    };
 
-    for (auto tileId = 0u; tileId < numTiles; tileId++) {
+    const auto topologyInfo = getTopologyInfoMultiTile(topologyBitmap, topologyLimits, topologyMap);
 
-        int subSliceCountPerTile = 0;
+    topologyData.sliceCount = topologyInfo.sliceCount;
+    topologyData.subSliceCount = topologyInfo.subSliceCount;
+    topologyData.numL3Banks = topologyInfo.l3BankCount;
+    topologyData.euCount = topologyInfo.euCount;
+    topologyData.maxSlices = topologyLimits.maxSlices;
+    topologyData.maxSubSlicesPerSlice = topologyLimits.maxSubSlicesPerSlice;
+    topologyData.maxEusPerSubSlice = topologyLimits.maxEusPerSubSlice;
 
-        std::vector<int> sliceIndices;
-        std::vector<int> subSliceIndices;
-
-        int previouslyEnabledSlice = -1;
-
-        auto processSubSliceInfo = [&](const std::vector<std::bitset<8>> &subSliceInfo) -> void {
-            for (auto subSliceId = 0u; subSliceId < std::min(hwMaxSubSliceCount, static_cast<uint32_t>(subSliceInfo.size() * 8)); subSliceId++) {
-                auto byte = subSliceId / 8;
-                auto bit = subSliceId & 0b111;
-                int sliceId = static_cast<int>(subSliceId / topologyData.maxSubSlicesPerSlice);
-                int subSliceIdRelative = static_cast<int>(subSliceId % topologyData.maxSubSlicesPerSlice);
-                if (subSliceInfo[byte].test(bit)) {
-                    subSliceIndices.push_back(subSliceIdRelative);
-                    subSliceCountPerTile++;
-                    if (sliceId != previouslyEnabledSlice) {
-                        previouslyEnabledSlice = sliceId;
-                        sliceIndices.push_back(sliceId);
-                    }
-                }
-            }
-        };
-        processSubSliceInfo(computeDss[tileId]);
-
-        if (subSliceCountPerTile == 0) {
-            processSubSliceInfo(geomDss[tileId]);
-        }
-
-        topologyMap[tileId].sliceIndices = std::move(sliceIndices);
-        if (topologyMap[tileId].sliceIndices.size() < 2u) {
-            topologyMap[tileId].subsliceIndices = std::move(subSliceIndices);
-        }
-        int sliceCountPerTile = static_cast<int>(topologyMap[tileId].sliceIndices.size());
-
-        int euPerDssPerTile = 0;
-        for (auto byte = 0u; byte < euDss[tileId].size(); byte++) {
-            euPerDssPerTile += euDss[tileId][byte].count();
-        }
-
-        int l3BankCountPerTile = 0;
-        for (auto byte = 0u; byte < l3Banks[tileId].size(); byte++) {
-            l3BankCountPerTile += l3Banks[tileId][byte].count();
-        }
-
-        // pick smallest config
-        sliceCount = (sliceCount == 0) ? sliceCountPerTile : std::min(sliceCount, sliceCountPerTile);
-        subSliceCount = (subSliceCount == 0) ? subSliceCountPerTile : std::min(subSliceCount, subSliceCountPerTile);
-        euPerDss = (euPerDss == 0) ? euPerDssPerTile : std::min(euPerDss, euPerDssPerTile);
-        l3BankCount = (l3BankCount == 0) ? l3BankCountPerTile : std::min(l3BankCount, l3BankCountPerTile);
-    }
-
-    topologyData.sliceCount = sliceCount;
-    topologyData.subSliceCount = subSliceCount;
-    topologyData.euCount = subSliceCount * euPerDss;
-    topologyData.numL3Banks = l3BankCount;
-    return receivedDssInfo;
+    return topologyInfo.subSliceCount != 0;
 }
 
 void IoctlHelperXe::updateBindInfo(uint64_t userPtr) {

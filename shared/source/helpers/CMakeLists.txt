@@ -159,6 +159,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.h
     ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_constants.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/topology.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/topology.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/topology_map.h
     ${CMAKE_CURRENT_SOURCE_DIR}/uint16_avx2.h
     ${CMAKE_CURRENT_SOURCE_DIR}/uint16_sse4.h
