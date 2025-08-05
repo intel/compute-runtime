@@ -19,12 +19,33 @@ std::unique_ptr<DrmMockXe> DrmMockXe::create(RootDeviceEnvironment &rootDeviceEn
 void DrmMockXe::testMode(int f, int a) {
     forceIoctlAnswer = f;
     setIoctlAnswer = a;
+    setIoctlAnswers = {};
 }
+
+void DrmMockXe::testModeMulti(const std::initializer_list<int> &answers) {
+    setIoctlAnswers = std::queue<int>(answers);
+    if (!setIoctlAnswers.empty()) {
+        forceIoctlAnswer = 1;
+    }
+}
+
+int DrmMockXe::getIoctlAnswer() {
+    if (!setIoctlAnswers.empty()) {
+        setIoctlAnswer = setIoctlAnswers.front();
+        setIoctlAnswers.pop();
+
+        if (setIoctlAnswers.empty()) {
+            forceIoctlAnswer = 0;
+        }
+    }
+    return setIoctlAnswer;
+}
+
 int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
     int ret = -1;
     ioctlCalled = true;
     if (forceIoctlAnswer) {
-        return setIoctlAnswer;
+        return getIoctlAnswer();
     }
     switch (request) {
     case DrmIoctl::gemVmCreate: {

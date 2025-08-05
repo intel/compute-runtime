@@ -16,6 +16,8 @@ struct DrmMockXe : public DrmMockCustom {
     static std::unique_ptr<DrmMockXe> create(RootDeviceEnvironment &rootDeviceEnvironment);
 
     void testMode(int f, int a = 0);
+    void testModeMulti(const std::initializer_list<int> &answers);
+    int getIoctlAnswer();
     int ioctl(DrmIoctl request, void *arg) override;
     virtual void handleUserFenceWaitExtensions(drm_xe_wait_user_fence *userFenceWait) {}
     virtual void handleContextCreateExtensions(drm_xe_user_extension *extension) {}
@@ -24,6 +26,7 @@ struct DrmMockXe : public DrmMockCustom {
 
     int forceIoctlAnswer = 0;
     int setIoctlAnswer = 0;
+    std::queue<int> setIoctlAnswers;
     int gemVmBindReturn = 0;
     GemClose passedGemClose{};
     int gemCloseCalled = 0;

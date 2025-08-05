@@ -900,10 +900,10 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryDeviceParamsIsCalledThenFal
     EXPECT_FALSE(ioctlHelper.queryDeviceParams(&moduleId, &serverType));
 }
 
-TEST(IoctlHelperTestsUpstream, givenPrelimWhenQueryDeviceCapsIsCalledThenNullptrIsReturned) {
+TEST(IoctlHelperTestsUpstream, givenPrelimWhenQueryDeviceCapsIsCalledThenNulloptIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     IoctlHelperUpstream ioctlHelper{*drm};
 
-    EXPECT_EQ(ioctlHelper.queryDeviceCaps(), nullptr);
+    EXPECT_EQ(ioctlHelper.queryDeviceCaps(), std::nullopt);
 }

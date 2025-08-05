@@ -414,8 +414,8 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenQueryDeviceParamsIsCalledThenFalse
     EXPECT_FALSE(ioctlHelper.queryDeviceParams(&moduleId, &serverType));
 }
 
-TEST_F(IoctlPrelimHelperTests, givenPrelimWhenQueryDeviceCapsIsCalledThenNullptrIsReturned) {
-    EXPECT_EQ(ioctlHelper.queryDeviceCaps(), nullptr);
+TEST_F(IoctlPrelimHelperTests, givenPrelimWhenQueryDeviceCapsIsCalledThenNulloptIsReturned) {
+    EXPECT_EQ(ioctlHelper.queryDeviceCaps(), std::nullopt);
 }
 
 struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {

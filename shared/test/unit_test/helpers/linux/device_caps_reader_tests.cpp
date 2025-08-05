@@ -28,9 +28,9 @@ TEST_F(DeviceCapsReaderDrmTest, givenDrmReaderWhenCreateIsCalledThenAReaderIsRet
     struct MyMockIoctlHelper : MockIoctlHelper {
         using MockIoctlHelper::MockIoctlHelper;
 
-        std::unique_ptr<std::vector<uint32_t>> queryDeviceCaps() override {
-            return std::make_unique<std::vector<uint32_t>>();
-        };
+        std::optional<std::vector<uint32_t>> queryDeviceCaps() override {
+            return std::vector<uint32_t>();
+        }
     };
 
     drm->ioctlHelper = std::make_unique<MyMockIoctlHelper>(*drm);
@@ -43,9 +43,9 @@ TEST_F(DeviceCapsReaderDrmTest, givenDrmReaderAndFailedIoctlWhenCreateIsCalledTh
     struct MyMockIoctlHelper : MockIoctlHelper {
         using MockIoctlHelper::MockIoctlHelper;
 
-        std::unique_ptr<std::vector<uint32_t>> queryDeviceCaps() override {
-            return nullptr;
-        };
+        std::optional<std::vector<uint32_t>> queryDeviceCaps() override {
+            return std::nullopt;
+        }
     };
 
     drm->ioctlHelper = std::make_unique<MyMockIoctlHelper>(*drm);
@@ -58,9 +58,9 @@ TEST_F(DeviceCapsReaderDrmTest, givenDrmReaderWhenIndexOperatorIsUsedThenReadFro
     struct MyMockIoctlHelper : MockIoctlHelper {
         using MockIoctlHelper::MockIoctlHelper;
 
-        std::unique_ptr<std::vector<uint32_t>> queryDeviceCaps() override {
-            return std::make_unique<std::vector<uint32_t>>(1, 123);
-        };
+        std::optional<std::vector<uint32_t>> queryDeviceCaps() override {
+            return std::vector<uint32_t>(1, 123);
+        }
     };
 
     drm->ioctlHelper = std::make_unique<MyMockIoctlHelper>(*drm);
@@ -79,9 +79,9 @@ TEST_F(DeviceCapsReaderDrmTest, givenDrmReaderWhenGettingOffsetThenZeroIsReturne
     struct MyMockIoctlHelper : MockIoctlHelper {
         using MockIoctlHelper::MockIoctlHelper;
 
-        std::unique_ptr<std::vector<uint32_t>> queryDeviceCaps() override {
-            return std::make_unique<std::vector<uint32_t>>();
-        };
+        std::optional<std::vector<uint32_t>> queryDeviceCaps() override {
+            return std::vector<uint32_t>();
+        }
     };
 
     drm->ioctlHelper = std::make_unique<MyMockIoctlHelper>(*drm);

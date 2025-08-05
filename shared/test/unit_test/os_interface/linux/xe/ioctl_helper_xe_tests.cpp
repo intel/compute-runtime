@@ -2662,12 +2662,12 @@ TEST_F(IoctlHelperXeTest, givenIoctlWhenQueryDeviceParamsIsCalledThenFalseIsRetu
     EXPECT_FALSE(xeIoctlHelper->queryDeviceParams(&moduleId, &serverType));
 }
 
-TEST_F(IoctlHelperXeTest, givenPrelimWhenQueryDeviceCapsIsCalledThenNullptrIsReturned) {
+TEST_F(IoctlHelperXeTest, givenPrelimWhenQueryDeviceCapsIsCalledThenNulloptIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
 
-    EXPECT_EQ(xeIoctlHelper->queryDeviceCaps(), nullptr);
+    EXPECT_EQ(xeIoctlHelper->queryDeviceCaps(), std::nullopt);
 }
 
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmPrefetchThenVmBindIsCalled) {
