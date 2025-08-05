@@ -237,4 +237,15 @@ aub_stream::EngineType mapCcsIndexToEngineType(uint32_t index) {
     return static_cast<aub_stream::EngineType>(index + static_cast<uint32_t>(aub_stream::ENGINE_CCS));
 }
 
+EngineGroupType engineTypeToEngineGroupType(aub_stream::EngineType engineType) {
+    if (isCcs(engineType)) {
+        return EngineGroupType::compute;
+    } else if (isComputeEngine(engineType)) {
+        return EngineGroupType::renderCompute;
+    } else if (engineType == aub_stream::ENGINE_BCS) {
+        return EngineGroupType::copy;
+    }
+    return EngineGroupType::linkedCopy;
+}
+
 } // namespace NEO::EngineHelpers

@@ -12,6 +12,7 @@ struct CmdListMemoryCopyParams {
     bool relaxedOrderingDispatch = false;
     bool forceDisableCopyOnlyInOrderSignaling = false;
     bool copyOffloadAllowed = false;
+    bool taskCountUpdateRequired = false;
 };
 
 } // namespace L0

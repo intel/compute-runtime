@@ -220,6 +220,11 @@ struct CommandList : _ze_command_list_handle_t {
                                         bool internalUsage, NEO::EngineGroupType engineGroupType,
                                         ze_result_t &resultValue);
 
+    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+                                        const ze_command_queue_desc_t *desc,
+                                        bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
+                                        ze_result_t &resultValue);
+
     static CommandList *fromHandle(ze_command_list_handle_t handle) {
         return static_cast<CommandList *>(handle);
     }
@@ -467,6 +472,8 @@ struct CommandList : _ze_command_list_handle_t {
         return frontEndPatchListCount;
     }
 
+    void forceDisableInOrderWaits() { inOrderWaitsDisabled = true; }
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
@@ -567,6 +574,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool closedCmdList = false;
     bool isWalkerWithProfilingEnqueued = false;
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
+    bool inOrderWaitsDisabled = false;
 
     Graph *captureTarget = nullptr;
 };

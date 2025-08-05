@@ -51,6 +51,7 @@ struct CommandListImp : public CommandList {
     void enableCopyOperationOffload();
     void setInterruptEventsCsr(NEO::CommandStreamReceiver &csr);
     virtual bool kernelMemoryPrefetchEnabled() const = 0;
+    std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
 
   protected:
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
