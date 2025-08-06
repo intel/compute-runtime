@@ -588,7 +588,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithArgument
                                                                                   const ze_group_count_t groupCounts,
                                                                                   const ze_group_size_t groupSizes,
 
-                                                                                  const void **pArguments,
+                                                                                  void **pArguments,
                                                                                   const void *pNext,
                                                                                   ze_event_handle_t hSignalEvent,
                                                                                   uint32_t numWaitEvents,

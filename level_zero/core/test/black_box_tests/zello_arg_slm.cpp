@@ -83,7 +83,7 @@ void executeKernelAndValidate(ze_context_handle_t context, uint32_t deviceIdentf
         };
         InitValues initValues = {2, 4};
 
-        const void *kernelArgs[] = {
+        void *kernelArgs[] = {
             &dstBuffer,            // output buffer
             &localWorkSizeForUint, // local buffer for local ids
             &localWorkSizeForUint, // local buffer for global ids
