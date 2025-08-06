@@ -23,7 +23,7 @@ int DrmMockXePerf::ioctl(DrmIoctl request, void *arg) {
     ioctlCalled = true;
 
     if (forceIoctlAnswer) {
-        return setIoctlAnswer;
+        return getIoctlAnswer();
     }
 
     switch (request) {
