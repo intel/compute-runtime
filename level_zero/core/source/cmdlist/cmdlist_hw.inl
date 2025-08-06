@@ -442,9 +442,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     if (launchParams.isCooperative && this->implicitSynchronizedDispatchForCooperativeKernelsAllowed) {
         enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::full);
     }
-    if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
-        appendSynchronizedDispatchInitializationSection();
-    }
+
+    appendSynchronizedDispatchInitializationSection();
 
     Event *event = nullptr;
     if (hEvent) {
