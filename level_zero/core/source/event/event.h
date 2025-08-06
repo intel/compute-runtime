@@ -358,6 +358,10 @@ struct Event : _ze_event_handle_t {
         this->recordedSignalFrom = cmdlist;
     }
 
+    void setOptimizedCbEvent(bool value) {
+        this->optimizedCbEvent = value;
+    }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
@@ -437,6 +441,7 @@ struct Event : _ze_event_handle_t {
     bool mitigateHostVisibleSignal = false;
     bool reportEmptyCbEventAsReady = true;
     bool isEventOnBarrierOptimized = false;
+    bool optimizedCbEvent = false;
 
     static const uint64_t completionTimeoutMs;
 

@@ -303,9 +303,10 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
     if (!inOrderExecInfo->isCounterAlreadyDone(waitValue)) {
         bool signaled = true;
 
-        if (this->isCounterBased() && !this->inOrderTimestampNode.empty() && !this->device->getCompilerProductHelper().isHeaplessModeEnabled(this->device->getHwInfo())) {
+        if (this->optimizedCbEvent) {
             this->synchronizeTimestampCompletionWithTimeout();
             signaled = this->isTimestampPopulated();
+            this->optimizedCbEvent = !signaled;
         } else {
             const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset);
             for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
@@ -761,12 +762,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported();
 
     do {
-        if (this->isCounterBased() && !this->inOrderTimestampNode.empty() && !this->device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo)) {
+        if (this->optimizedCbEvent) {
             synchronizeTimestampCompletionWithTimeout();
             if (this->isTimestampPopulated()) {
                 inOrderExecInfo->setLastWaitedCounterValue(getInOrderExecSignalValueWithSubmissionCounter());
                 handleSuccessfulHostSynchronization();
                 ret = ZE_RESULT_SUCCESS;
+                this->optimizedCbEvent = false;
             }
         } else {
             if (fenceWait) {

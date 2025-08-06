@@ -4615,6 +4615,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         }
     }
 
+    signalEvent->setOptimizedCbEvent(false);
+
     if (signalEvent->isCounterBased()) {
         if (!isInOrderExecutionEnabled() || signalEvent->isIpcImported()) {
             return false;

@@ -34,6 +34,10 @@
 #include <type_traits>
 #include <variant>
 
+namespace CpuIntrinsicsTests {
+extern std::atomic<uint32_t> pauseCounter;
+}
+
 namespace L0 {
 namespace ult {
 
@@ -4912,6 +4916,32 @@ HWTEST_F(InOrderCmdListTests, givenEventCounterNotReusedFromPreviousAppendWhenHo
     events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
     EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
     EXPECT_EQ(2u, events[0]->inOrderExecSignalValue);
+}
+
+HWTEST_F(InOrderCmdListTests, givenTsCbEventWhenAppendNonKernelOperationOnNonHeaplessNonDcFlushPlatformThenWaitOnCounter) {
+    if (device->getProductHelper().isDcFlushAllowed()) {
+        GTEST_SKIP();
+    }
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    if (cmdList->isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
+    CpuIntrinsicsTests::pauseCounter = 0u;
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+    cmdList->appendBarrier(eventHandle, 0, nullptr, false);
+
+    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
+    events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
+
+    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
+    EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
+    EXPECT_EQ(1u, CpuIntrinsicsTests::pauseCounter);
+    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithDifferentEventsThenDontInherit) {

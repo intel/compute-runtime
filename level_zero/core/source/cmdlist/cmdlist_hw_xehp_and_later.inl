@@ -509,6 +509,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     }
                 } else {
                     this->latestOperationHasOptimizedCbEvent = true;
+                    eventForInOrderExec->setOptimizedCbEvent(true);
                 }
             }
         } else {
