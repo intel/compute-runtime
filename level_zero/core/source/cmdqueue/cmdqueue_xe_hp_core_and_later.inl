@@ -265,7 +265,11 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
         }
         case CommandToPatch::NoopSpace: {
             if (commandToPatch.pDestination != nullptr) {
-                memset(commandToPatch.pDestination, 0, commandToPatch.patchSize);
+                if (this->patchingPreamble) {
+                    NEO::EncodeDataMemory<GfxFamily>::programNoop(*patchPreambleBuffer, commandToPatch.gpuAddress, commandToPatch.patchSize);
+                } else {
+                    memset(commandToPatch.pDestination, 0, commandToPatch.patchSize);
+                }
             }
             break;
         }

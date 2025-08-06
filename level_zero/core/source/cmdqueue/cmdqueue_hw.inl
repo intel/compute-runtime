@@ -263,6 +263,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
     for (uint32_t i = 0; i < numCommandLists; i++) {
         auto cmdList = CommandList::fromHandle(commandListHandles[i]);
         linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, cmdList);
+        linearStreamSizeEstimate += estimateCommandListPatchPreambleNoopSpace(ctx, cmdList);
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(cmdList);
     }
 
@@ -923,6 +924,19 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleFrontEndCm
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleNoopSpace(CommandListExecutionContext &ctx, CommandList *commandList) {
+    size_t encodeSize = 0;
+    if (this->patchingPreamble) {
+        const size_t totalNoopSize = commandList->getTotalNoopSpace();
+        const size_t noopEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(totalNoopSize);
+
+        encodeSize = noopEncodeSize;
+        ctx.bufferSpaceForPatchPreamble += encodeSize;
+    }
+    return encodeSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreamble(CommandListExecutionContext &ctx, uint32_t numCommandLists) {
     size_t encodeSize = 0;
     if (this->patchingPreamble) {
@@ -1036,6 +1050,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
         const NEO::StreamProperties &finalStreamState = cmdList->getFinalStreamState();
 
         linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, cmdList);
+        linearStreamSizeEstimate += estimateCommandListPatchPreambleNoopSpace(ctx, cmdList);
         linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, cmdList,
                                                                                    streamProperties, requiredStreamState, finalStreamState,
                                                                                    cmdListState.requiredState,

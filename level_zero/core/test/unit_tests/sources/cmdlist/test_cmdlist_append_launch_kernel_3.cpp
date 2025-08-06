@@ -9,6 +9,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/implicit_args_helper.h"
@@ -671,6 +672,126 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSyncBufferKernelThenNoopSpaceIsEncodedInPatchPreamble, IsAtLeastXeCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideMaxWorkGroupCount.set(128);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &queueDesc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+
+    Mock<::L0::KernelImp> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    constexpr uint32_t crossThreadDataSize = 64;
+    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
+    kernel.state.crossThreadDataSize = crossThreadDataSize;
+    memset(kernel.state.crossThreadData.get(), 0, crossThreadDataSize);
+
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+
+    auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
+    kernelAttributes.flags.usesSyncBuffer = true;
+    kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
+
+    auto &syncBufferAddress = kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress;
+    syncBufferAddress.stateless = 0x8;
+    syncBufferAddress.pointerSize = 8;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto &productHelper = device->getProductHelper();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto engineGroupType = NEO::EngineGroupType::compute;
+    if (productHelper.isCooperativeEngineSupported(*defaultHwInfo)) {
+        engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative, *defaultHwInfo);
+    }
+    commandList->initialize(device, engineGroupType, 0u);
+
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    groupCount.groupCountX = 16;
+    groupCount.groupCountY = 4;
+
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->close();
+
+    auto &cmdsToPatch = commandList->getCommandsToPatch();
+    ASSERT_EQ(2u, cmdsToPatch.size());
+
+    auto requiredSize1 = NEO::KernelHelper::getSyncBufferSize(8);
+    auto noopParam1 = cmdsToPatch[0];
+    EXPECT_EQ(requiredSize1, noopParam1.patchSize);
+
+    auto requiredSize2 = NEO::KernelHelper::getSyncBufferSize(16 * 4);
+    auto noopParam2 = cmdsToPatch[1];
+    EXPECT_EQ(requiredSize2, noopParam2.patchSize);
+
+    EXPECT_EQ((requiredSize1 + requiredSize2), commandList->getTotalNoopSpace());
+
+    commandQueue->setPatchingPreamble(true);
+
+    void *queueCpuBase = commandQueue->commandStream.getCpuBase();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    auto commandListHandle = commandList->toHandle();
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(queueCpuBase, usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    size_t sdiCount1 = requiredSize1 / sizeof(uint64_t);
+    size_t sdiCount2 = requiredSize2 / sizeof(uint64_t);
+
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_LT((sdiCount1 + sdiCount2), sdiCmds.size());
+
+    size_t i = 0;
+    for (; i < sdiCount1; i++) {
+        auto storeDataImmNoop1 = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[i]);
+        EXPECT_EQ(noopParam1.gpuAddress + i * sizeof(uint64_t), storeDataImmNoop1->getAddress());
+
+        EXPECT_TRUE(storeDataImmNoop1->getStoreQword());
+
+        EXPECT_EQ(0u, storeDataImmNoop1->getDataDword0());
+        EXPECT_EQ(0u, storeDataImmNoop1->getDataDword1());
+    }
+
+    size_t maxSdiIndex = i + sdiCount2;
+    for (; i < maxSdiIndex; i++) {
+        size_t j = i - sdiCount1;
+        auto storeDataImmNoop2 = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[i]);
+        EXPECT_EQ(noopParam2.gpuAddress + j * sizeof(uint64_t), storeDataImmNoop2->getAddress());
+
+        EXPECT_TRUE(storeDataImmNoop2->getStoreQword());
+
+        EXPECT_EQ(0u, storeDataImmNoop2->getDataDword0());
+        EXPECT_EQ(0u, storeDataImmNoop2->getDataDword1());
+    }
+
+    commandQueue->destroy();
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenAppendLaunchKernelIsCalledThenPatchBuffer, IsAtLeastXeCore) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
@@ -800,6 +921,125 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
 
     EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getRegionGroupBarrierIndex());
     EXPECT_EQ(nullptr, kernel.getRegionGroupBarrierAllocation());
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedRegionBarrierKernelThenNoopSpaceIsEncodedInPatchPreamble, IsAtLeastXeCore) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideMaxWorkGroupCount.set(128);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &queueDesc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+
+    Mock<::L0::KernelImp> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    constexpr uint32_t crossThreadDataSize = 64;
+    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
+    kernel.state.crossThreadDataSize = crossThreadDataSize;
+    memset(kernel.state.crossThreadData.get(), 0, crossThreadDataSize);
+
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+
+    auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
+    kernelAttributes.flags.usesRegionGroupBarrier = true;
+
+    auto &regionGroupBarrier = kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer;
+    regionGroupBarrier.stateless = 0x8;
+    regionGroupBarrier.pointerSize = 8;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto &productHelper = device->getProductHelper();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto engineGroupType = NEO::EngineGroupType::compute;
+    if (productHelper.isCooperativeEngineSupported(*defaultHwInfo)) {
+        engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative, *defaultHwInfo);
+    }
+    commandList->initialize(device, engineGroupType, 0u);
+
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.localRegionSize = 16;
+
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    groupCount.groupCountX = 16;
+    groupCount.groupCountY = 4;
+
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->close();
+
+    auto &cmdsToPatch = commandList->getCommandsToPatch();
+    ASSERT_EQ(2u, cmdsToPatch.size());
+
+    auto requiredSize1 = NEO::KernelHelper::getRegionGroupBarrierSize(8, launchParams.localRegionSize);
+    auto noopParam1 = cmdsToPatch[0];
+    EXPECT_EQ(requiredSize1, noopParam1.patchSize);
+
+    auto requiredSize2 = NEO::KernelHelper::getRegionGroupBarrierSize(16 * 4, launchParams.localRegionSize);
+    auto noopParam2 = cmdsToPatch[1];
+    EXPECT_EQ(requiredSize2, noopParam2.patchSize);
+
+    EXPECT_EQ((requiredSize1 + requiredSize2), commandList->getTotalNoopSpace());
+
+    commandQueue->setPatchingPreamble(true);
+
+    void *queueCpuBase = commandQueue->commandStream.getCpuBase();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    auto commandListHandle = commandList->toHandle();
+    returnValue = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(queueCpuBase, usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    size_t sdiCount1 = requiredSize1 / sizeof(uint64_t);
+    size_t sdiCount2 = requiredSize2 / sizeof(uint64_t);
+
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_LT((sdiCount1 + sdiCount2), sdiCmds.size());
+
+    size_t i = 0;
+    for (; i < sdiCount1; i++) {
+        auto storeDataImmNoop1 = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[i]);
+        EXPECT_EQ(noopParam1.gpuAddress + i * sizeof(uint64_t), storeDataImmNoop1->getAddress());
+
+        EXPECT_TRUE(storeDataImmNoop1->getStoreQword());
+
+        EXPECT_EQ(0u, storeDataImmNoop1->getDataDword0());
+        EXPECT_EQ(0u, storeDataImmNoop1->getDataDword1());
+    }
+
+    size_t maxSdiIndex = i + sdiCount2;
+    for (; i < maxSdiIndex; i++) {
+        size_t j = i - sdiCount1;
+        auto storeDataImmNoop2 = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[i]);
+        EXPECT_EQ(noopParam2.gpuAddress + j * sizeof(uint64_t), storeDataImmNoop2->getAddress());
+
+        EXPECT_TRUE(storeDataImmNoop2->getStoreQword());
+
+        EXPECT_EQ(0u, storeDataImmNoop2->getDataDword0());
+        EXPECT_EQ(0u, storeDataImmNoop2->getDataDword1());
+    }
+
+    commandQueue->destroy();
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQueryKernelTimestampsToTheSameCmdlistThenFronEndStateIsNotChanged, HasDispatchAllSupport) {
