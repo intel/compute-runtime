@@ -67,8 +67,8 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCallIsCachingOnCpuAvailableThe
     EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
 }
 
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }
 
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCallIsStagingBuffersEnabledThenReturnTrue) {
