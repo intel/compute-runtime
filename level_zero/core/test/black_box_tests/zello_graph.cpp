@@ -238,37 +238,13 @@ void testMultiGraph(ze_driver_handle_t driver, ze_context_handle_t &context, ze_
     SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
 }
 
-void testAppendLaunchKernel(ze_driver_handle_t driver, ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
-    auto graphApi = loadGraphApi(driver);
-    if (false == graphApi.valid()) {
-        std::cerr << "Graph API not available" << std::endl;
-        validRet = false;
-        return;
-    }
-
-    // Buffers
-    constexpr size_t allocSize = 4096;
-    void *srcBuffer = nullptr;
-    void *interimBuffer = nullptr;
-    void *dstBuffer = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {
-        .stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,
-        .pNext = nullptr,
-        .flags = 0,
-        .ordinal = 0,
-    };
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &srcBuffer));
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &interimBuffer));
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &dstBuffer));
-
+inline void createModuleFromSpirV(ze_context_handle_t context, ze_device_handle_t device, const char *kernelSrc, ze_module_handle_t &module) {
     // SpirV for a kernel
     std::string buildLog;
-    auto moduleBinary = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, "", buildLog);
+    auto moduleBinary = LevelZeroBlackBoxTests::compileToSpirV(kernelSrc, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == moduleBinary.size()));
 
-    // Module
-    ze_module_handle_t module;
     ze_module_desc_t moduleDesc = {
         .stype = ZE_STRUCTURE_TYPE_MODULE_DESC,
         .pNext = nullptr,
@@ -277,17 +253,124 @@ void testAppendLaunchKernel(ze_driver_handle_t driver, ze_context_handle_t &cont
         .pInputModule = reinterpret_cast<const uint8_t *>(moduleBinary.data()),
     };
     SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
+}
 
-    // Kernel
-    ze_kernel_handle_t kernel;
+inline void createKernelWithName(ze_module_handle_t module, const char *kernelName, ze_kernel_handle_t &kernel) {
     ze_kernel_desc_t kernelDesc = {
         .stype = ZE_STRUCTURE_TYPE_KERNEL_DESC,
         .pNext = nullptr,
         .flags = 0,
-        .pKernelName = "memcpy_bytes",
+        .pKernelName = kernelName,
     };
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
+}
 
+inline void createEventPool(ze_context_handle_t context, ze_device_handle_t device, ze_event_pool_handle_t &eventPool) {
+    ze_event_pool_desc_t eventPoolDesc{
+        .stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        .pNext = nullptr,
+        .flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        .count = 1,
+    };
+    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
+}
+
+inline void createEventHostCoherent(ze_event_pool_handle_t eventPool, ze_event_handle_t &newEventHandle) {
+    ze_event_desc_t eventDesc{
+        .stype = ZE_STRUCTURE_TYPE_EVENT_DESC,
+        .pNext = nullptr,
+        .index = 0,
+        .signal = ZE_EVENT_SCOPE_FLAG_HOST,
+        .wait = ZE_EVENT_SCOPE_FLAG_HOST,
+
+    };
+    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &newEventHandle));
+}
+
+inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
+                                           ze_device_handle_t device,
+                                           ze_command_queue_mode_t mode,
+                                           ze_command_list_handle_t &cmdList) {
+    ze_command_queue_desc_t cmdQueueDesc{
+        .stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
+        .pNext = nullptr,
+        .ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false),
+        .index = 0,
+        .flags = 0,
+        .mode = mode,
+        .priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
+    };
+    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
+}
+
+inline auto allocateDispatchTraits(ze_context_handle_t context, bool indirect) {
+
+    auto dispatchTraitsDeleter = [context, indirect](ze_group_count_t *ptr) noexcept {
+        if (indirect) {
+            zeMemFree(context, ptr);
+        } else {
+            delete ptr;
+        }
+    };
+    using RetUniquePtr = std::unique_ptr<ze_group_count_t, decltype(dispatchTraitsDeleter)>;
+
+    ze_group_count_t *rawPtr = nullptr;
+    if (indirect) {
+        ze_host_mem_alloc_desc_t hostAllocDesc{
+            .stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,
+            .pNext = nullptr,
+            .flags = 0U,
+        };
+        SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostAllocDesc, sizeof(ze_group_count_t), 4096, reinterpret_cast<void **>(&rawPtr)));
+    } else {
+        rawPtr = new ze_group_count_t;
+    }
+    return RetUniquePtr(rawPtr, dispatchTraitsDeleter);
+}
+
+void testAppendLaunchKernel(ze_driver_handle_t driver,
+                            ze_context_handle_t &context,
+                            ze_device_handle_t &device,
+                            bool areDispatchTraitsIndirect,
+                            bool &validRet) {
+    auto graphApi = loadGraphApi(driver);
+    if (false == graphApi.valid()) {
+        std::cerr << "Graph API not available" << std::endl;
+        validRet = false;
+        return;
+    }
+
+    ze_module_handle_t module;
+    createModuleFromSpirV(context, device, LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, module);
+
+    ze_kernel_handle_t kernel;
+    createKernelWithName(module, "memcpy_bytes", kernel);
+
+    ze_event_pool_handle_t eventPool = nullptr;
+    createEventPool(context, device, eventPool);
+
+    ze_event_handle_t eventCopied = nullptr;
+    createEventHostCoherent(eventPool, eventCopied);
+
+    ze_command_list_handle_t cmdList;
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, cmdList);
+
+    // Buffers
+    constexpr size_t allocSize = 4096;
+    void *srcBuffer = nullptr;
+    void *interimBuffer = nullptr;
+    void *dstBuffer = nullptr;
+    ze_device_mem_alloc_desc_t devAllocDesc = {
+        .stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,
+        .pNext = nullptr,
+        .flags = 0,
+        .ordinal = 0,
+    };
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &devAllocDesc, allocSize, allocSize, device, &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &devAllocDesc, allocSize, allocSize, device, &interimBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &devAllocDesc, allocSize, allocSize, device, &dstBuffer));
+
+    // Kernel groups size
     constexpr size_t bytesPerThread = sizeof(std::byte);
     constexpr size_t numThreads = allocSize / bytesPerThread;
     uint32_t groupSizeX = 32u;
@@ -299,40 +382,6 @@ void testAppendLaunchKernel(ze_driver_handle_t driver, ze_context_handle_t &cont
         std::cout << "Group size : (" << groupSizeX << ", " << groupSizeY << ", " << groupSizeZ << ")" << std::endl;
     }
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
-
-    // Events
-    ze_event_pool_handle_t eventPool = nullptr;
-    ze_event_pool_desc_t eventPoolDesc{
-        .stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        .pNext = nullptr,
-        .flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-        .count = 1,
-    };
-    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
-
-    ze_event_handle_t eventCopied = nullptr;
-    ze_event_desc_t eventDesc{
-        .stype = ZE_STRUCTURE_TYPE_EVENT_DESC,
-        .pNext = nullptr,
-        .index = 0,
-        .signal = ZE_EVENT_SCOPE_FLAG_HOST,
-        .wait = ZE_EVENT_SCOPE_FLAG_HOST,
-
-    };
-    SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &eventCopied));
-
-    // Create cmdList
-    ze_command_list_handle_t cmdList;
-    ze_command_queue_desc_t cmdQueueDesc{
-        .stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
-        .pNext = nullptr,
-        .ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false),
-        .index = 0,
-        .flags = 0,
-        .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
-        .priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
-    };
-    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 
     // Start capturing commands
     ze_graph_handle_t virtualGraph = nullptr;
@@ -348,23 +397,30 @@ void testAppendLaunchKernel(ze_driver_handle_t driver, ze_context_handle_t &cont
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, dstInitData.get(), allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
-    ze_group_count_t dispatchTraits{
-        .groupCountX = static_cast<uint32_t>(numThreads) / groupSizeX,
-        .groupCountY = 1u,
-        .groupCountZ = 1u,
-    };
-    LevelZeroBlackBoxTests::printGroupCount(dispatchTraits);
-    SUCCESS_OR_TERMINATE_BOOL(dispatchTraits.groupCountX * groupSizeX == allocSize);
+    auto dispatchTraits = allocateDispatchTraits(context, areDispatchTraitsIndirect);
+    dispatchTraits->groupCountX = static_cast<uint32_t>(numThreads) / groupSizeX,
+    dispatchTraits->groupCountY = 1u,
+    dispatchTraits->groupCountZ = 1u,
+    LevelZeroBlackBoxTests::printGroupCount(*dispatchTraits);
+    SUCCESS_OR_TERMINATE_BOOL(dispatchTraits->groupCountX * groupSizeX == allocSize);
 
     // Launch first copy
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(interimBuffer), &interimBuffer));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, eventCopied, 0, nullptr));
+    if (areDispatchTraitsIndirect) {
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernelIndirect(cmdList, kernel, dispatchTraits.get(), eventCopied, 0, nullptr));
+    } else {
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, dispatchTraits.get(), eventCopied, 0, nullptr));
+    }
 
     // Launch second copy
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(interimBuffer), &interimBuffer));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 1, &eventCopied));
+    if (areDispatchTraitsIndirect) {
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernelIndirect(cmdList, kernel, dispatchTraits.get(), nullptr, 1, &eventCopied));
+    } else {
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, dispatchTraits.get(), nullptr, 1, &eventCopied));
+    }
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
     // Encode reading data back
@@ -376,7 +432,7 @@ void testAppendLaunchKernel(ze_driver_handle_t driver, ze_context_handle_t &cont
     ze_executable_graph_handle_t physicalGraph = nullptr;
     SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
 
-    // // Dispatch and wait
+    // Dispatch and wait
     SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, -1));
 
@@ -431,7 +487,11 @@ int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
 
     currentTest = "AppendLaunchKernel";
-    testAppendLaunchKernel(driverHandle, context, device0, outputValidationSuccessful);
+    testAppendLaunchKernel(driverHandle, context, device0, false, outputValidationSuccessful);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+
+    currentTest = "AppendLaunchKernelIndirect";
+    testAppendLaunchKernel(driverHandle, context, device0, true, outputValidationSuccessful);
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));

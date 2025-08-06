@@ -445,16 +445,16 @@ TEST(GraphTestApiCapture, GivenCommandListInRecordStateThenCaptureCommandsInstea
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemoryExt(&cmdlist, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemoryExt(&cmdlist, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchCooperativeKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernelIndirect(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
 
     // temporarily unsupported
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchCooperativeKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchKernelIndirect(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListAppendLaunchMultipleKernelsIndirect(&cmdlist, 1, &kernelHandle, &kernelCount, &groupCount, nullptr, 0, nullptr));
 
     ze_graph_handle_t hgraph = &graph;
     EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(&cmdlist, &hgraph, nullptr));
 
-    ASSERT_EQ(22U, graph.getCapturedCommands().size());
+    ASSERT_EQ(24U, graph.getCapturedCommands().size());
     uint32_t i = 0;
     EXPECT_EQ(CaptureApi::zeCommandListAppendBarrier, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
     EXPECT_EQ(CaptureApi::zeCommandListAppendMemoryCopy, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
@@ -478,6 +478,8 @@ TEST(GraphTestApiCapture, GivenCommandListInRecordStateThenCaptureCommandsInstea
     EXPECT_EQ(CaptureApi::zeCommandListAppendImageCopyToMemoryExt, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
     EXPECT_EQ(CaptureApi::zeCommandListAppendImageCopyFromMemoryExt, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
     EXPECT_EQ(CaptureApi::zeCommandListAppendLaunchKernel, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendLaunchCooperativeKernel, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendLaunchKernelIndirect, static_cast<CaptureApi>(graph.getCapturedCommands()[i++].index()));
 }
 
 TEST(GraphForks, GivenUnknownChildCommandlistThenJoinDoesNothing) {
@@ -769,6 +771,8 @@ TEST_F(GraphTestInstantiationFixture, WhenInstantiatingGraphThenBakeCommandsInto
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemoryExt(&cmdlist, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemoryExt(&cmdlist, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchCooperativeKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernelIndirect(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
 
     ze_graph_handle_t hgraph = &srcGraph;
     EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(&cmdlist, &hgraph, nullptr));
@@ -799,6 +803,7 @@ TEST_F(GraphTestInstantiationFixture, WhenInstantiatingGraphThenBakeCommandsInto
     EXPECT_EQ(0U, graphHwCommands->appendImageCopyToMemoryExtCalled);
     EXPECT_EQ(0U, graphHwCommands->appendImageCopyFromMemoryExtCalled);
     EXPECT_EQ(0U, graphHwCommands->appendLaunchKernelCalled);
+    EXPECT_EQ(0U, graphHwCommands->appendLaunchKernelIndirectCalled);
     execGraph.instantiateFrom(srcGraph);
     EXPECT_EQ(1U, graphHwCommands->appendBarrierCalled);
     EXPECT_EQ(1U, graphHwCommands->appendMemoryCopyCalled);
@@ -821,7 +826,8 @@ TEST_F(GraphTestInstantiationFixture, WhenInstantiatingGraphThenBakeCommandsInto
     EXPECT_EQ(1U, graphHwCommands->appendWaitExternalSemaphoresCalled);
     EXPECT_EQ(1U, graphHwCommands->appendImageCopyToMemoryExtCalled);
     EXPECT_EQ(1U, graphHwCommands->appendImageCopyFromMemoryExtCalled);
-    EXPECT_EQ(1U, graphHwCommands->appendLaunchKernelCalled);
+    EXPECT_EQ(2U, graphHwCommands->appendLaunchKernelCalled); // +1 for zeCommandListAppendLaunchCooperativeKernel
+    EXPECT_EQ(1U, graphHwCommands->appendLaunchKernelIndirectCalled);
 }
 
 TEST(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenTakeCareOnlyOfEvents) {
