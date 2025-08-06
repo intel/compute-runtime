@@ -25,6 +25,7 @@ extern const char *memcpyBytesTestKernelSrc;
 extern const char *memcpyBytesWithPrintfTestKernelSrc;
 
 extern const char *openCLKernelsSource;
+extern const char *memcpyBytesAndAddConstTestKernelSrc;
 
 extern const char *scratchKernelSrc;
 extern const char *scratchKernelBuildOptions;

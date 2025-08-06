@@ -269,6 +269,32 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect>::instan
     return zeCommandListAppendLaunchKernelIndirect(&executionTarget, kernelClone.get(), apiArgs.launchArgsBuffer, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
 }
 
+Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
+    for (uint32_t i{0U}; i < apiArgs.numKernels; ++i) {
+        auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.phKernels[i]));
+        L0::KernelMutableState stateSnapshot = kernel->getMutableState();
+        const auto id = externalStorage.registerKernelState(std::move(stateSnapshot));
+        if (i == 0U) {
+            this->firstKernelStateId = id;
+        }
+    }
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+    std::vector<decltype(std::declval<KernelImp *>()->cloneWithStateOverride(nullptr))> kernelClonesOwner(apiArgs.numKernels);
+    std::vector<ze_kernel_handle_t> phKernelClones(apiArgs.numKernels);
+
+    for (uint32_t i{0U}; i < apiArgs.numKernels; ++i) {
+        auto *kernelOrig = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.phKernels[i]));
+        DEBUG_BREAK_IF(nullptr == kernelOrig);
+        const auto kernelStateId = this->indirectArgs.firstKernelStateId + i;
+        kernelClonesOwner[i] = kernelOrig->cloneWithStateOverride(externalStorage.getKernelMutableState(kernelStateId));
+        phKernelClones[i] = kernelClonesOwner[i].get();
+    }
+
+    return zeCommandListAppendLaunchMultipleKernelsIndirect(&executionTarget, apiArgs.numKernels, phKernelClones.data(), apiArgs.pCountBuffer, apiArgs.launchArgsBuffer, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+}
+
 ExecutableGraph::~ExecutableGraph() = default;
 
 L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode() {

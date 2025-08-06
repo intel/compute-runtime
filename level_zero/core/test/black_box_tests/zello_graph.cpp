@@ -460,6 +460,175 @@ void testAppendLaunchKernel(ze_driver_handle_t driver,
     SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
 }
 
+void testAppendLaunchMultipleKernelsIndirect(ze_driver_handle_t driver,
+                                             ze_context_handle_t &context,
+                                             ze_device_handle_t &device,
+                                             bool &validRet) {
+    auto graphApi = loadGraphApi(driver);
+    if (false == graphApi.valid()) {
+        std::cerr << "Graph API not available" << std::endl;
+        validRet = false;
+        return;
+    }
+
+    ze_module_handle_t module;
+    createModuleFromSpirV(context, device, LevelZeroBlackBoxTests::memcpyBytesAndAddConstTestKernelSrc, module);
+
+    ze_kernel_handle_t kernelMemcpySrcToDst;
+    createKernelWithName(module, "memcpy_bytes", kernelMemcpySrcToDst);
+    ze_kernel_handle_t kernelAddConstant;
+    createKernelWithName(module, "add_constant", kernelAddConstant);
+
+    ze_event_pool_handle_t eventPool = nullptr;
+    createEventPool(context, device, eventPool);
+
+    ze_event_handle_t eventCopied = nullptr;
+    createEventHostCoherent(eventPool, eventCopied);
+
+    ze_command_list_handle_t cmdList;
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, cmdList);
+
+    // Buffers
+    constexpr size_t allocSize = 4096;
+    void *srcBuffer = nullptr;
+    void *incrementedBuffer = nullptr;
+    void *dstBuffer = nullptr;
+    ze_device_mem_alloc_desc_t devAllocDesc = {
+        .stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,
+        .pNext = nullptr,
+        .flags = 0,
+        .ordinal = 0,
+    };
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &devAllocDesc, allocSize, allocSize, device, &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &devAllocDesc, allocSize, allocSize, device, &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &devAllocDesc, allocSize, allocSize, device, &incrementedBuffer));
+
+    constexpr uint32_t kernelsNum = 2U;
+    uint32_t *kernelsNumBuff = nullptr;
+    ze_group_count_t *dispatchTraits = nullptr;
+    ze_host_mem_alloc_desc_t hostAllocDesc{
+        .stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,
+        .pNext = nullptr,
+        .flags = 0U,
+    };
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostAllocDesc, sizeof(uint32_t), 4096, reinterpret_cast<void **>(&kernelsNumBuff)));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostAllocDesc, sizeof(ze_group_count_t) * kernelsNum, 4096, reinterpret_cast<void **>(&dispatchTraits)));
+
+    // Kernel groups size
+    constexpr size_t bytesPerThread = sizeof(std::byte);
+    constexpr size_t numThreads = allocSize / bytesPerThread;
+    uint32_t groupSizeX = 32u;
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+    SUCCESS_OR_TERMINATE_BOOL(numThreads % groupSizeX == 0);
+    SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernelAddConstant, static_cast<uint32_t>(numThreads), 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
+    if (LevelZeroBlackBoxTests::verbose) {
+        std::cout << "Group size : (" << groupSizeX << ", " << groupSizeY << ", " << groupSizeZ << ")" << std::endl;
+    }
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelMemcpySrcToDst, groupSizeX, groupSizeY, groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelAddConstant, groupSizeX, groupSizeY, groupSizeZ));
+
+    // Start capturing commands
+    ze_graph_handle_t virtualGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
+
+    // Encode buffers initialization
+    constexpr std::byte srcInitialValue{0xA};
+    auto srcInitData = std::vector<std::byte>(allocSize, srcInitialValue);
+    constexpr std::byte dstInitialValue{0x5};
+    auto dstInitData = std::vector<std::byte>(allocSize, dstInitialValue);
+    constexpr int valueToIncrement{-3};
+    constexpr int deltaValue = 2;
+    auto incrementedData = std::vector<int>(allocSize / sizeof(int), valueToIncrement);
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, srcBuffer, srcInitData.data(), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, dstInitData.data(), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, incrementedBuffer, incrementedData.data(), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+
+    // Prepare contiguous dispatch traits
+    for (uint32_t i{0U}; i < kernelsNum; ++i) {
+        dispatchTraits[i] = {
+            .groupCountX = static_cast<uint32_t>(numThreads) / groupSizeX,
+            .groupCountY = 1u,
+            .groupCountZ = 1u,
+        };
+    }
+
+    LevelZeroBlackBoxTests::printGroupCount(dispatchTraits[0]);
+    SUCCESS_OR_TERMINATE_BOOL(dispatchTraits[0].groupCountX * groupSizeX == allocSize);
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMemcpySrcToDst, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelMemcpySrcToDst, 1, sizeof(srcBuffer), &srcBuffer));
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddConstant, 0, sizeof(incrementedBuffer), &incrementedBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddConstant, 1, sizeof(int), &deltaValue));
+
+    ze_kernel_handle_t pKernelHandles[] = {kernelMemcpySrcToDst, kernelAddConstant};
+    *kernelsNumBuff = kernelsNum;
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchMultipleKernelsIndirect(cmdList,
+                                                                          kernelsNum,
+                                                                          pKernelHandles,
+                                                                          kernelsNumBuff,
+                                                                          dispatchTraits,
+                                                                          eventCopied,
+                                                                          0U,
+                                                                          nullptr));
+
+    // Encode reading data back
+    auto dstOut = std::vector<std::byte>(allocSize);
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstOut.data(), dstBuffer, allocSize, nullptr, 1, &eventCopied));
+
+    auto incrementedOut = std::vector<std::byte>(allocSize);
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, incrementedOut.data(), incrementedBuffer, allocSize, nullptr, 1, &eventCopied));
+
+    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, nullptr, nullptr));
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+
+    // Dispatch and wait
+    SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, -1));
+
+    // Validate
+    auto expectedDst = std::vector<std::byte>(allocSize, srcInitialValue);
+    validRet = LevelZeroBlackBoxTests::validate(dstOut.data(), expectedDst.data(), allocSize);
+    if (!validRet) {
+        std::cerr << "Data mismatches found!\n";
+        std::cerr << "copiedOutData == " << static_cast<void *>(dstOut.data()) << "\n";
+        std::cerr << "expectedData == " << static_cast<void *>(expectedDst.data()) << std::endl;
+    }
+
+    constexpr std::byte incrementedValue{0xFF};
+    auto expectedIncremented = std::vector<std::byte>(allocSize, incrementedValue);
+    validRet = LevelZeroBlackBoxTests::validate(incrementedOut.data(), expectedIncremented.data(), allocSize);
+    if (!validRet) {
+        std::cerr << "Data mismatches found!\n";
+        std::cerr << "incrementedData == " << static_cast<void *>(incrementedOut.data()) << "\n";
+        std::cerr << "expectedData == " << static_cast<void *>(expectedIncremented.data()) << std::endl;
+    }
+
+    // Cleanup
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dispatchTraits));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, kernelsNumBuff));
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, incrementedBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
+
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+
+    SUCCESS_OR_TERMINATE(zeEventDestroy(eventCopied));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernelAddConstant));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernelMemcpySrcToDst));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+
+    SUCCESS_OR_TERMINATE(graphApi.graphDestroy(virtualGraph));
+    SUCCESS_OR_TERMINATE(graphApi.executableGraphDestroy(physicalGraph));
+}
+
 int main(int argc, char *argv[]) {
     const std::string blackBoxName("Zello Graph");
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
@@ -492,6 +661,10 @@ int main(int argc, char *argv[]) {
 
     currentTest = "AppendLaunchKernelIndirect";
     testAppendLaunchKernel(driverHandle, context, device0, true, outputValidationSuccessful);
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+
+    currentTest = "AppendLaunchMultipleKernelsIndirect";
+    testAppendLaunchMultipleKernelsIndirect(driverHandle, context, device0, outputValidationSuccessful);
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));

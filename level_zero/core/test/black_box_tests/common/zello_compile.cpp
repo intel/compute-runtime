@@ -209,6 +209,18 @@ __kernel void increment_by_one(__global uchar *dst, __global uchar *src) {
 }
 )OpenCLC";
 
+const char *memcpyBytesAndAddConstTestKernelSrc = R"===(
+kernel void memcpy_bytes(__global char *dst, const __global char *src) {
+    unsigned int gid = get_global_id(0);
+    dst[gid] = src[gid];
+}
+
+__kernel void add_constant(global int *values, int addval) {
+    const int gid = get_global_id(0);
+    values[gid] = values[gid] + addval;
+}
+)===";
+
 const char *scratchKernelSrc = R"===(
 typedef long16 TYPE;
 __attribute__((reqd_work_group_size(32, 1, 1))) // force LWS to 32

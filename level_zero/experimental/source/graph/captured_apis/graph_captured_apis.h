@@ -819,4 +819,29 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect> {
     ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage) const;
 };
 
+template <>
+struct Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect> {
+    inline static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        uint32_t numKernels;
+        ze_kernel_handle_t *phKernels;
+        const uint32_t *pCountBuffer;
+        const ze_group_count_t *launchArgsBuffer;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        ClosureExternalStorage::KernelStateId firstKernelStateId = ClosureExternalStorage::invalidKernelStateId;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage) const;
+};
+
 } // namespace L0
