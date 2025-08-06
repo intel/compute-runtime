@@ -188,6 +188,8 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeoutNa
     }
 
     postSyncOperations(false);
+    getCsr()->pollForAubCompletion();
+
     return ZE_RESULT_SUCCESS;
 }
 
