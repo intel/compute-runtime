@@ -38,7 +38,7 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScra
     const auto &hwInfo = pDevice->getHardwareInfo();
     auto &gfxCoreHelperl = getHelper<GfxCoreHelper>();
 
-    uint32_t expectedValue = NEO::GfxCoreHelper::getHighestEnabledDualSubSlice(hwInfo) * hwInfo.gtSystemInfo.MaxEuPerSubSlice * 8;
+    uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice * 8;
 
     EXPECT_EQ(expectedValue, gfxCoreHelperl.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);

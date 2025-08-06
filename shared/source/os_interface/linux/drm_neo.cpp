@@ -534,6 +534,10 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
     }
 
+    if (!hwInfo->gtSystemInfo.L3BankCount) {
+        hwInfo->gtSystemInfo.L3BankCount = hwInfo->gtSystemInfo.MaxDualSubSlicesSupported;
+    }
+
     DrmQueryTopologyData topologyData = {};
 
     if (!queryTopology(*hwInfo, topologyData)) {
@@ -623,14 +627,11 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
     hwInfo->gtSystemInfo.MaxSlicesSupported = hwInfo->gtSystemInfo.SliceCount;
 
-    if (topologyData.maxSubSlicesPerSlice != 0) {
-        hwInfo->gtSystemInfo.MaxSubSlicesSupported = hwInfo->gtSystemInfo.MaxSlicesSupported * topologyData.maxSubSlicesPerSlice;
-        hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = hwInfo->gtSystemInfo.MaxSlicesSupported * topologyData.maxSubSlicesPerSlice;
-    }
+    auto calculatedMaxSubSliceCount = topologyData.maxSlices * topologyData.maxSubSlicesPerSlice;
+    auto maxSubSliceCount = std::max(static_cast<uint32_t>(calculatedMaxSubSliceCount), hwInfo->gtSystemInfo.MaxSubSlicesSupported);
 
-    if (!hwInfo->gtSystemInfo.L3BankCount) {
-        hwInfo->gtSystemInfo.L3BankCount = hwInfo->gtSystemInfo.MaxDualSubSlicesSupported;
-    }
+    hwInfo->gtSystemInfo.MaxSubSlicesSupported = maxSubSliceCount;
+    hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = maxSubSliceCount;
 
     if (topologyData.numL3Banks > 0) {
         hwInfo->gtSystemInfo.L3BankCount = topologyData.numL3Banks;

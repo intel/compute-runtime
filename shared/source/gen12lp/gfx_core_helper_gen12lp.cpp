@@ -155,7 +155,7 @@ uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDevice
      ThreadCount/EUCount=7 is no longer valid, so we have to force 8 in below formula.
      This is required to allocate enough scratch space. */
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    return NEO::GfxCoreHelper::getHighestEnabledDualSubSlice(*hwInfo) * hwInfo->gtSystemInfo.MaxEuPerSubSlice * 8;
+    return hwInfo->gtSystemInfo.MaxSubSlicesSupported * hwInfo->gtSystemInfo.MaxEuPerSubSlice * 8;
 }
 
 template <>

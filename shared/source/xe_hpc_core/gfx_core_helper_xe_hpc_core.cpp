@@ -276,7 +276,8 @@ uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDevice
     auto &helper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     uint32_t threadEuRatio = helper.getThreadEuRatioForScratch(*hwInfo);
-    return NEO::GfxCoreHelper::getHighestEnabledDualSubSlice(*hwInfo) * hwInfo->gtSystemInfo.MaxEuPerSubSlice * threadEuRatio;
+
+    return hwInfo->gtSystemInfo.MaxSubSlicesSupported * hwInfo->gtSystemInfo.MaxEuPerSubSlice * threadEuRatio;
 }
 
 template <>
