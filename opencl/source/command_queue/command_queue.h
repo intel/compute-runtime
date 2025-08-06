@@ -433,6 +433,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return retVal;
     }
 
+    bool waitOnDestructionNeeded() const;
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);

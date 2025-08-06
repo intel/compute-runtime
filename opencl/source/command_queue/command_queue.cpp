@@ -449,6 +449,10 @@ void CommandQueue::releaseMainCopyEngine() {
     }
 }
 
+bool CommandQueue::waitOnDestructionNeeded() const {
+    return (device && (getRefApiCount() == 1) && (taskCount < CompletionStamp::notReady));
+}
+
 Device &CommandQueue::getDevice() const noexcept {
     return device->getDevice();
 }

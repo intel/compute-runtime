@@ -141,6 +141,36 @@ TEST(CommandQueue, WhenGettingErrorCodeFromTaskCountThenProperValueIsReturned) {
     EXPECT_EQ(CL_OUT_OF_RESOURCES, CommandQueue::getErrorCodeFromTaskCount(CompletionStamp::failed));
 }
 
+TEST(CommandQueue, givenCommandQueueWhenDestructedThenWaitForAllEngines) {
+    uint32_t waitCalled = 0;
+
+    class MyMockCommandQueue : public MockCommandQueue {
+      public:
+        MyMockCommandQueue(uint32_t &waitCalled, Context *context, ClDevice *device)
+            : MockCommandQueue(context, device, nullptr, false), waitCalled(waitCalled) {
+        }
+
+        MOCKABLE_VIRTUAL WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList, bool waitForTaskCountRequired) {
+            waitCalled++;
+            return WaitStatus::ready;
+        }
+
+        uint32_t &waitCalled;
+    };
+
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context(mockDevice.get());
+
+    auto cmdQ = new MyMockCommandQueue(waitCalled, &context, mockDevice.get());
+    EXPECT_EQ(0u, waitCalled);
+
+    cl_int retVal = CL_SUCCESS;
+    releaseQueue(cmdQ, retVal);
+
+    EXPECT_EQ(1u, waitCalled);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST(CommandQueue, GivenCommandQueueWhenIsBcsIsCalledThenIsCopyOnlyIsReturned) {
     MockCommandQueue cmdQ(nullptr, nullptr, 0, false);
     EXPECT_EQ(cmdQ.isBcs(), cmdQ.isCopyOnly);
