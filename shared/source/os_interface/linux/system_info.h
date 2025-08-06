@@ -61,7 +61,7 @@ struct SystemInfo {
     uint32_t getL3BankSizeInKb() const { return l3BankSizeInKb; }
     uint32_t getSlmSizePerDss() const { return slmSizePerDss; }
     uint32_t getNumHbmStacksPerTile() const { return numHbmStacksPerTile; }
-    uint32_t getNumChannlesPerHbmStack() const { return numChannelsPerHbmStack; }
+    uint32_t getNumChannelsPerHbmStack() const { return numChannelsPerHbmStack; }
     uint32_t getNumRegions() const { return numRegions; }
     uint32_t getNumL3BanksPerGroup() const { return numL3BanksPerGroup; }
     uint32_t getNumL3BankGroups() const { return numL3BankGroups; }

@@ -31,6 +31,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) override;
     ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) override;
     void getMemoryHealthIndicator(FirmwareUtil *pFwInterface, zes_mem_health_t *health) override;
+    ze_result_t getNumberOfMemoryChannels(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pNumChannels) override;
 
     // Performance
     void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) override;

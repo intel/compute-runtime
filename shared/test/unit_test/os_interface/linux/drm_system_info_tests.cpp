@@ -184,7 +184,7 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecific
     EXPECT_EQ(0x24u, systemInfo.getSlmSizePerDss());
     EXPECT_EQ(0x25u, systemInfo.getCsrSizeInMb());
     EXPECT_EQ(0x04u, systemInfo.getNumHbmStacksPerTile());
-    EXPECT_EQ(0x08u, systemInfo.getNumChannlesPerHbmStack());
+    EXPECT_EQ(0x08u, systemInfo.getNumChannelsPerHbmStack());
     EXPECT_EQ(0x02u, systemInfo.getNumRegions());
     EXPECT_EQ(0x02u, systemInfo.getNumL3BankGroups());
     EXPECT_EQ(0x03u, systemInfo.getNumL3BanksPerGroup());

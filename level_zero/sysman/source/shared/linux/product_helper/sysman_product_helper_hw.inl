@@ -36,9 +36,15 @@ void SysmanProductHelperHw<gfxProduct>::getFrequencyStepSize(double *pStepSize) 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getNumberOfMemoryChannels(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pNumChannels) {
+    return ZE_RESULT_ERROR_NOT_AVAILABLE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
     auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
     bool isIntegratedDevice = pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice;
+    bool isNumChannelsFromTelemetry = false;
 
     if (isIntegratedDevice) {
         pProperties->location = ZES_MEM_LOC_SYSTEM;
@@ -80,16 +86,25 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
             }
 
             if (pProperties->type == ZES_MEM_TYPE_HBM) {
-                pProperties->numChannels = memSystemInfo->getNumHbmStacksPerTile() * memSystemInfo->getNumChannlesPerHbmStack();
+                pProperties->numChannels = memSystemInfo->getNumHbmStacksPerTile() * memSystemInfo->getNumChannelsPerHbmStack();
+            } else if (pProperties->type == ZES_MEM_TYPE_GDDR6) {
+                uint32_t numChannels = 0;
+                ze_result_t result = this->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
+                isNumChannelsFromTelemetry = true;
+                if (result == ZE_RESULT_SUCCESS) {
+                    pProperties->numChannels = numChannels;
+                    pProperties->busWidth = pProperties->numChannels * 32;
+                }
             } else {
                 pProperties->numChannels = memSystemInfo->getMaxMemoryChannels();
             }
         }
     }
 
-    pProperties->busWidth = memoryBusWidth;
     pProperties->physicalSize = 0;
-
+    if (!isNumChannelsFromTelemetry) {
+        pProperties->busWidth = memoryBusWidth;
+    }
     if (isIntegratedDevice) {
         pProperties->busWidth = -1;
         pProperties->numChannels = -1;
