@@ -59,16 +59,13 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(uint32_t
     // If relaxed ordering is needed in given dispatch or if we need to force Local mem usage, and current command stream is in system memory, swap of command streams is required to ensure local memory.
     // If relaxed ordering is not needed and command buffer is in local mem, then also we need to swap.
     bool swapStreams = false;
+    bool systemMemoryPool = NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool());
     if (hasRelaxedOrderingDependencies) {
-        if (NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
+        if (systemMemoryPool) {
             swapStreams = true;
         }
     } else {
-        if (requestCommandBufferInLocalMem && NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
-            swapStreams = true;
-        } else if (!requestCommandBufferInLocalMem && !NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
-            swapStreams = true;
-        }
+        swapStreams = requestCommandBufferInLocalMem == systemMemoryPool;
     }
 
     if (swapStreams) {
