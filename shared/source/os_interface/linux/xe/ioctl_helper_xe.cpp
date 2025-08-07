@@ -580,6 +580,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     uint32_t hwMaxSubSliceCount = hwInfo.gtSystemInfo.MaxSubSlicesSupported;
     topologyData.maxSlices = hwInfo.gtSystemInfo.MaxSlicesSupported ? hwInfo.gtSystemInfo.MaxSlicesSupported : 1;
     topologyData.maxSubSlicesPerSlice = hwMaxSubSliceCount / topologyData.maxSlices;
+    topologyData.maxEusPerSubSlice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
 
     for (auto tileId = 0u; tileId < numTiles; tileId++) {
 
@@ -632,9 +633,6 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
         subSliceCount = (subSliceCount == 0) ? subSliceCountPerTile : std::min(subSliceCount, subSliceCountPerTile);
         euPerDss = (euPerDss == 0) ? euPerDssPerTile : std::min(euPerDss, euPerDssPerTile);
         l3BankCount = (l3BankCount == 0) ? l3BankCountPerTile : std::min(l3BankCount, l3BankCountPerTile);
-
-        // pick max config
-        topologyData.maxEusPerSubSlice = std::max(topologyData.maxEusPerSubSlice, euPerDssPerTile);
     }
 
     topologyData.sliceCount = sliceCount;

@@ -936,6 +936,7 @@ TEST_F(IoctlHelperXeTest, givenUnknownTopologyTypeWhenGetTopologyDataAndMapThenN
 
     hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = 6;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 16;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
 
@@ -991,6 +992,7 @@ TEST_F(IoctlHelperXeTest, givenVariousDssConfigInputsWhenGetTopologyDataAndMapTh
 
             hwInfo.gtSystemInfo.MaxSlicesSupported = 4u;
             hwInfo.gtSystemInfo.MaxSubSlicesSupported = 32u;
+            hwInfo.gtSystemInfo.MaxEuPerSubSlice = 8u;
             auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
             ASSERT_TRUE(result);
 
@@ -1058,7 +1060,7 @@ TEST_F(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubslic
     EXPECT_EQ(static_cast<int>(hwInfo.gtSystemInfo.MaxSubSlicesSupported / topologyData.maxSlices), topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(0, topologyData.euCount);
-    EXPECT_EQ(0, topologyData.maxEusPerSubSlice);
+    EXPECT_EQ(static_cast<int>(hwInfo.gtSystemInfo.MaxEuPerSubSlice), topologyData.maxEusPerSubSlice);
 
     // verify topology map
     ASSERT_EQ(0u, topologyMap[tileId].sliceIndices.size());
@@ -1124,6 +1126,7 @@ TEST_F(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenRes
 
     hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 64;
 
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
@@ -1246,6 +1249,7 @@ TEST_F(IoctlHelperXeTest, given2TileAndComputeDssWhenGetTopologyDataAndMapThenRe
 
     hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
 
@@ -1308,6 +1312,7 @@ TEST_F(IoctlHelperXeTest, given2TileWithDisabledDssOn1TileAndComputeDssWhenGetTo
 
     hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
 
@@ -1375,6 +1380,7 @@ TEST_F(IoctlHelperXeTest, given2TileWithDisabledEvenDssAndComputeDssWhenGetTopol
 
     hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
 
@@ -1466,6 +1472,7 @@ TEST_F(IoctlHelperXeTest, givenMissingEuPerDssInTopologyWhenGetTopologyDataAndMa
     }
     hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = 16;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     EXPECT_TRUE(result);
 
@@ -1476,7 +1483,7 @@ TEST_F(IoctlHelperXeTest, givenMissingEuPerDssInTopologyWhenGetTopologyDataAndMa
     EXPECT_EQ(16, topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(0, topologyData.euCount);
-    EXPECT_EQ(0, topologyData.maxEusPerSubSlice);
+    EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
 }
 
 TEST_F(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
