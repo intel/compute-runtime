@@ -146,28 +146,28 @@ TEST(CommandQueue, givenCommandQueueWhenDestructedThenWaitForAllEngines) {
 
     class MyMockCommandQueue : public MockCommandQueue {
       public:
-        MyMockCommandQueue(uint32_t &waitCalled, Context *context, ClDevice *device)
+        MyMockCommandQueue(uint32_t *waitCalled, Context *context, ClDevice *device)
             : MockCommandQueue(context, device, nullptr, false), waitCalled(waitCalled) {
         }
 
-        MOCKABLE_VIRTUAL WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList, bool waitForTaskCountRequired) {
-            waitCalled++;
+        WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList, bool waitForTaskCountRequired) override {
+            (*waitCalled)++;
             return WaitStatus::ready;
         }
 
-        uint32_t &waitCalled;
+        uint32_t *waitCalled = nullptr;
     };
 
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context(mockDevice.get());
 
-    auto cmdQ = new MyMockCommandQueue(waitCalled, &context, mockDevice.get());
+    auto cmdQ = new MyMockCommandQueue(&waitCalled, &context, mockDevice.get());
     EXPECT_EQ(0u, waitCalled);
 
     cl_int retVal = CL_SUCCESS;
     releaseQueue(cmdQ, retVal);
 
-    EXPECT_EQ(1u, waitCalled);
+    EXPECT_EQ(1u, waitCalled); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
