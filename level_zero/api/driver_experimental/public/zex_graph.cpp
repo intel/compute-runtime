@@ -196,21 +196,7 @@ ze_result_t ZE_APICALL zeGraphIsEmptyExp(ze_graph_handle_t hGraph) {
 }
 
 ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const char *filePath, void *pNext) {
-    if (nullptr != pNext) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    auto graph = L0::Graph::fromHandle(hGraph);
-    if (nullptr == graph) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    if (nullptr == filePath) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    L0::GraphDotExporter exporter{};
-    return exporter.exportToFile(*graph, filePath);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace L0
