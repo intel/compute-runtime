@@ -108,14 +108,6 @@ ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize
     return L0::metricCalculateValues(rawDataSize, pOffset, pRawData, hCalculationOperation, pTotalMetricReportsCount, pMetricResults);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricCalculateMultipleValuesExp(const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
-                                                                zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                                                uint32_t *pSetCount, uint32_t *pMetricsReportCountPerSet,
-                                                                uint32_t *pTotalMetricReportCount, zet_intel_metric_result_exp_t *pMetricResults) {
-    return metricCalculateMultipleValues(rawDataSize, offset, pRawData, hCalculationOperation,
-                                         pSetCount, pMetricsReportCountPerSet, pTotalMetricReportCount, pMetricResults);
-}
-
 ze_result_t ZE_APICALL zetIntelMetricDecodeCalculateMultipleValuesExp(zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
                                                                       const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
                                                                       zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
@@ -251,14 +243,6 @@ ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize
 
     return L0::zetIntelMetricCalculateValuesExp(rawDataSize, pOffset, pRawData, hCalculationOperation,
                                                 pTotalMetricReportsCount, pMetricResults);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricCalculateMultipleValuesExp(const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
-                                                                zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                                                uint32_t *pSetCount, uint32_t *pMetricsReportCountPerSet,
-                                                                uint32_t *pTotalMetricReportCount, zet_intel_metric_result_exp_t *pMetricResults) {
-    return L0::zetIntelMetricCalculateMultipleValuesExp(rawDataSize, offset, pRawData, hCalculationOperation, pSetCount,
-                                                        pMetricsReportCountPerSet, pTotalMetricReportCount, pMetricResults);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricDecodeCalculateMultipleValuesExp(zet_metric_decoder_exp_handle_t hMetricDecoder, const size_t rawDataSize,

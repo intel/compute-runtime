@@ -61,12 +61,7 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
                               bool isMultiDevice,
                               zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation);
     ze_result_t destroy() override;
-    ze_result_t metricCalculateMultipleValues(const size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
-                                              uint32_t *pSetCount, uint32_t *pMetricsReportCountPerSet,
-                                              uint32_t *pTotalMetricReportCount,
-                                              zet_intel_metric_result_exp_t *pMetricResults) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+
     ze_result_t metricCalculateValues(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,
                                       uint32_t *pTotalMetricReportCount,
                                       zet_intel_metric_result_exp_t *pMetricResults) override;

@@ -1078,18 +1078,6 @@ ze_result_t metricCalculateValues(
     return MetricCalcOp::fromHandle(hCalculationOperation)->metricCalculateValues(rawDataSize, pOffset, pRawData, pTotalMetricReportsCount, pMetricResults);
 }
 
-ze_result_t metricCalculateMultipleValues(
-    const size_t rawDataSize,
-    size_t *offset,
-    const uint8_t *pRawData,
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-    uint32_t *pSetCount,
-    uint32_t *pMetricsReportCountPerSet,
-    uint32_t *pTotalMetricReportCount,
-    zet_intel_metric_result_exp_t *pMetricResults) {
-    return MetricCalcOp::fromHandle(hCalculationOperation)->metricCalculateMultipleValues(rawDataSize, offset, pRawData, pSetCount, pMetricsReportCountPerSet, pTotalMetricReportCount, pMetricResults);
-}
-
 ze_result_t metricsEnable(zet_device_handle_t hDevice) {
     auto isFailed = false;
 

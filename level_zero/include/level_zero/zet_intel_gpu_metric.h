@@ -414,34 +414,6 @@ zetIntelMetricDecodeToBinaryBufferExp(
     uint8_t *pDecodedBuffer);                                                   ///< [in,out][optional] binary buffer containing decoded raw data.
 
 ze_result_t ZE_APICALL
-zetIntelMetricCalculateMultipleValuesExp(
-    const size_t rawDataSize,                                                  ///< [in] size in bytes of raw data buffer.
-    size_t *offset,                                                            ///< [in,out] On input, the offset from the beginning of pRawData. On output,
-                                                                               ///< the number raw bytes processed
-    const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
-                                                                               ///< data in raw format
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation, ///< [in] Calculation operation handle
-    uint32_t *pSetCount,                                                       ///< [in,out] pointer to number of metric sets. if count is zero, then the
-                                                                               ///< driver shall update the value with the total number of metric sets to
-                                                                               ///< be calculated. If count is greater than the number available in the raw
-                                                                               ///< data buffer, then the driver shall update the value with the actual number
-                                                                               ///< of metric sets to be calculated. There is a 1:1 relationship between the
-                                                                               ///< number of sets and the number sub-devices metrics results that can be
-                                                                               ///< calculated from the provided data.
-    uint32_t *pMetricReportCountPerSet,                                        ///< [in,out][optional][range(0, *pSetCount)] buffer of metric reports counts
-                                                                               ///< per metric set, one value per set
-    uint32_t *pTotalMetricReportCount,                                         ///< [in,out] [optional] pointer to the total number of metric reports calculated,
-                                                                               ///< for all metric sets. If count is zero, then the driver shall update the value
-                                                                               ///< with the total number of metric reports to be calculated. If count is greater
-                                                                               ///< than zero but less than the total number of reports available in the raw data,
-                                                                               ///< then only that number of reports will be calculated. If count is greater than
-                                                                               ///< the number of reports available in the raw data buffer, then the driver shall
-                                                                               ///< update the value with the actual number of metric reports calculated. If set
-                                                                               ///< to null, then driver will only update the value of pSetCount
-    zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of calculated
-                                                                               ///< metrics results.
-
-ze_result_t ZE_APICALL
 zetIntelMetricCalculateValuesExp(
     const size_t rawDataSize,                                                  ///< [in] size in bytes of raw data buffer.
     size_t *pOffset,                                                           ///< [in,out] On input, the offset from the beginning of the pRawData.

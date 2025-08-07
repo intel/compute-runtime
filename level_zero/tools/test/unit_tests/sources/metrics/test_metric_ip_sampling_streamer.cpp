@@ -1128,12 +1128,6 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingCalcOpCallingMetric
                                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
                                                                                  &totalMetricReportCount, nullptr));
 
-    uint32_t setCount = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateMultipleValuesExp(rawDataVectorSize, &offset,
-                                                                                            reinterpret_cast<uint8_t *>(rawDataVector.data()),
-                                                                                            hCalculationOperation, &setCount, nullptr,
-                                                                                            nullptr, nullptr));
-
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
