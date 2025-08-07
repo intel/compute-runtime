@@ -266,6 +266,9 @@ void Platform::devicesCleanup(bool processTermination) {
         clDevice->getDevice().getRootDeviceEnvironmentRef().debugger.reset(nullptr);
         clDevice->decRefInternal();
     }
+    if (!processTermination) {
+        this->clDevices.clear();
+    }
 }
 
 const PlatformInfo &Platform::getPlatformInfo() const {

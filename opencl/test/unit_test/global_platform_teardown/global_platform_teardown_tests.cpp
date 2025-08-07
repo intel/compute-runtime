@@ -82,3 +82,29 @@ TEST_F(GlobalPlatformTeardownTest, whenCallingPlatformTeardownThenStopDirectSubm
         clDevice->decRefInternal();
     }
 }
+
+TEST_F(GlobalPlatformTeardownTest, whenCallingDevicesCleanupMultipleTimesAndNotTerminatingProcessThenItDoesNotCrash) {
+    globalPlatformSetup();
+    platformsImpl->push_back(std::make_unique<MockPlatform>());
+    auto pPlatform = static_cast<MockPlatform *>((*platformsImpl)[0].get());
+    pPlatform->initializeWithNewDevices();
+
+    EXPECT_EQ(1u, pPlatform->getNumDevices());
+    pPlatform->devicesCleanup(false);
+    EXPECT_EQ(0u, pPlatform->getNumDevices());
+    pPlatform->devicesCleanup(false);
+    EXPECT_EQ(0u, pPlatform->getNumDevices());
+}
+
+TEST_F(GlobalPlatformTeardownTest, whenCallingDevicesCleanupMultipleTimesAndTerminatingProcessThenItDoesNotCrash) {
+    globalPlatformSetup();
+    platformsImpl->push_back(std::make_unique<MockPlatform>());
+    auto pPlatform = static_cast<MockPlatform *>((*platformsImpl)[0].get());
+    pPlatform->initializeWithNewDevices();
+
+    EXPECT_EQ(1u, pPlatform->getNumDevices());
+    pPlatform->devicesCleanup(true);
+    EXPECT_EQ(1u, pPlatform->getNumDevices());
+    pPlatform->devicesCleanup(true);
+    EXPECT_EQ(1u, pPlatform->getNumDevices());
+}
