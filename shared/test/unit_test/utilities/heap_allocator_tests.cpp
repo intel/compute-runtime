@@ -36,7 +36,7 @@ class HeapAllocatorUnderTest : public HeapAllocator {
     using HeapAllocator::pLeftBound;
     using HeapAllocator::pRightBound;
 
-    uint64_t getFromFreedChunksWithStartAddressHint(const uint64_t requiredStartAddress, size_t size, std::vector<HeapChunk> &freedChunks) {
+    uint64_t getFromFreedChunksWithStartAddressHint(const uint64_t requiredStartAddress, size_t size, std::vector<HeapChunk> &freedChunks) override {
         if (failGetFromFreedChunksWithStartAddressHintCall) {
             return 0ULL;
         }
@@ -52,7 +52,7 @@ class HeapAllocatorUnderTest : public HeapAllocator {
         return HeapAllocator::getFromFreedChunks(size, vec, sizeOfFreedChunk, requiredAlignment);
     }
 
-    void free(uint64_t ptr, size_t size) {
+    void free(uint64_t ptr, size_t size) override {
         HeapAllocator::free(ptr, size);
     }
 

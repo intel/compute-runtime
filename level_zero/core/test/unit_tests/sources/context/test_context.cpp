@@ -1346,6 +1346,7 @@ TEST_F(ContextTest, whenCallingQueryVirtualMemPageSizeWithInvalidStartAddressThe
     EXPECT_EQ(pageSize, defaultPageSize);
 
     res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 TEST_F(ContextTest, whenCallingPhysicalMemInterfacesThenSuccessIsReturned) {
