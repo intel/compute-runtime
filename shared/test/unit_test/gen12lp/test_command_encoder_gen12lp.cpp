@@ -151,12 +151,6 @@ GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOffThenExpec
     EXPECT_EQ(itorLRI, commands.end());
 }
 
-using Gen12lpCommandEncodeTest = testing::Test;
-
-GEN12LPTEST_F(Gen12lpCommandEncodeTest, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue) {
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
-}
-
 GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSelectIsCalledThenPipelineIsDispatched) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
 
