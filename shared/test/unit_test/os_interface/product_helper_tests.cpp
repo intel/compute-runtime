@@ -507,7 +507,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallGetInternalHeapsPrealloca
     EXPECT_EQ(productHelper->getInternalHeapsPreallocated(), 3u);
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenTrueIsReturned, IsNotXeCore) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenTrueIsReturned, IsAtMostDg2) {
     EXPECT_TRUE(productHelper->isTlbFlushRequired());
 }
 
