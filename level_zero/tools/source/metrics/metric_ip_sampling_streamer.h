@@ -74,9 +74,7 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
     void fillStallDataMap(const size_t rawDataSize, const uint8_t *pRawData, size_t *processedSize,
                           L0GfxCoreHelper &l0GfxCoreHelper,
                           std::map<uint64_t, void *> &stallReportDataMap,
-                          bool *dataOVerflow,
-                          bool allowInterrupt,
-                          uint32_t requestedReportCount);
+                          bool *dataOverflow);
 
   protected:
     ze_result_t metricCalculateValuesSingle(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,

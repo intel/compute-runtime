@@ -885,185 +885,6 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
 
-HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnSubDevicedCanInterruptAndContinue, EustallSupportedPlatforms) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t metricGroupHandle = nullptr;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
-
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,            // pNext
-        1,                  // metricGroupCount
-        &metricGroupHandle, // phMetricGroups
-        0,                  // metricCount
-        nullptr,            // phMetrics
-        0,                  // timeWindowsCount
-        nullptr,            // pCalculationTimeWindows
-        1000,               // timeAggregationWindow
-    };
-
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
-                                                                             &hCalculationOperation));
-    uint32_t metricsInReportCount = 10;
-    std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation,
-                                                                                      &metricsInReportCount,
-                                                                                      metricsInReport.data()));
-    EXPECT_EQ(metricsInReportCount, 10u);
-    std::vector<zet_metric_properties_t> metricProperties(metricsInReportCount);
-
-    for (uint32_t i = 0; i < metricsInReportCount; i++) {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGetProperties(metricsInReport[i], &metricProperties[i]));
-    }
-
-    uint32_t totalMetricReportCount = 0;
-    size_t processedSize = 0;
-    size_t offset = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
-                                                                  &totalMetricReportCount, nullptr));
-    EXPECT_EQ(totalMetricReportCount, 3U);
-
-    // Request number of reports smaller than available
-    totalMetricReportCount = 2;
-    std::vector<zet_intel_metric_result_exp_t> metricResults(totalMetricReportCount * metricsInReportCount);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
-                                                                  &totalMetricReportCount, metricResults.data()));
-    EXPECT_EQ(totalMetricReportCount, 2U);
-    EXPECT_EQ(offset, IpSamplingMetricGroupBase::rawReportSize * 2);
-    processedSize += offset;
-
-    for (uint32_t i = 0; i < totalMetricReportCount; i++) {
-        for (uint32_t j = 0; j < metricsInReportCount; j++) {
-            uint32_t resultIndex = i * metricsInReportCount + j;
-            EXPECT_TRUE(metricProperties[j].resultType == interruptedExpectedMetricValues12[resultIndex].type);
-            EXPECT_TRUE(metricResults[resultIndex].value.ui64 == interruptedExpectedMetricValues12[resultIndex].value.ui64);
-            EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
-        }
-    }
-
-    // calculate one more report form the offset returned
-    offset = processedSize;
-    totalMetricReportCount = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize - processedSize, &offset,
-                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
-                                                                  &totalMetricReportCount, metricResults.data()));
-    EXPECT_EQ(totalMetricReportCount, 1U);
-    EXPECT_EQ(offset, IpSamplingMetricGroupBase::rawReportSize);
-    processedSize += offset;
-    EXPECT_EQ(processedSize, IpSamplingMetricGroupBase::rawReportSize * 3);
-
-    for (uint32_t i = 0; i < totalMetricReportCount; i++) {
-        for (uint32_t j = 0; j < metricsInReportCount; j++) {
-            uint32_t resultIndex = i * metricsInReportCount + j;
-            EXPECT_TRUE(metricProperties[j].resultType == interruptedExpectedMetricValues3[resultIndex].type);
-            EXPECT_TRUE(metricResults[resultIndex].value.ui64 == interruptedExpectedMetricValues3[resultIndex].value.ui64);
-            EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
-        }
-    }
-
-    // calculate remaining reports in raw data.
-    totalMetricReportCount = 4; // intentionally set to more than left available
-    metricResults.resize(totalMetricReportCount * metricsInReportCount);
-
-    offset = processedSize;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize - processedSize, &offset,
-                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
-                                                                  &totalMetricReportCount, metricResults.data()));
-    EXPECT_EQ(totalMetricReportCount, 2U);
-    EXPECT_EQ(offset, IpSamplingMetricGroupBase::rawReportSize * 3);
-    processedSize += offset;
-    EXPECT_EQ(processedSize, rawDataVectorSize);
-
-    for (uint32_t i = 0; i < totalMetricReportCount; i++) {
-        for (uint32_t j = 0; j < metricsInReportCount; j++) {
-            uint32_t resultIndex = i * metricsInReportCount + j;
-            EXPECT_TRUE(metricProperties[j].resultType == interruptedExpectedMetricValues456[resultIndex].type);
-            EXPECT_TRUE(metricResults[resultIndex].value.ui64 == interruptedExpectedMetricValues456[resultIndex].value.ui64);
-            EXPECT_TRUE(metricResults[resultIndex].resultStatus == ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID);
-        }
-    }
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
-}
-
-HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCoverBoundaryConditionsOfFillStallDataMap, EustallSupportedPlatforms) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t metricGroupHandle = nullptr;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
-
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,            // pNext
-        1,                  // metricGroupCount
-        &metricGroupHandle, // phMetricGroups
-        0,                  // metricCount
-        nullptr,            // phMetrics
-        0,                  // timeWindowsCount
-        nullptr,            // pCalculationTimeWindows
-        1000,               // timeAggregationWindow
-    };
-
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
-                                                                             &hCalculationOperation));
-    uint32_t totalMetricReportCount = 0;
-    size_t offset = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
-                                                                  &totalMetricReportCount, nullptr));
-    EXPECT_EQ(totalMetricReportCount, 3U);
-
-    IpSamplingMetricCalcOpImp *calcop = static_cast<IpSamplingMetricCalcOpImp *>(MetricCalcOpImp::fromHandle(hCalculationOperation));
-    size_t rawDataSize = 0;
-    size_t processedSize = 0;
-    L0::L0GfxCoreHelper &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallReportDataMap;
-    bool dataOverflow = false;
-    bool allowInterrupt = false;
-    uint32_t requestedReportCount = 0;
-
-    // Allow interrupting but pass less than needed for the report count requested
-    rawDataSize = IpSamplingMetricGroupBase::rawReportSize;
-    allowInterrupt = true;
-    requestedReportCount = 2;
-    calcop->fillStallDataMap(rawDataSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &processedSize,
-                             l0GfxCoreHelper, stallReportDataMap, &dataOverflow,
-                             allowInterrupt, requestedReportCount);
-
-    EXPECT_EQ(stallReportDataMap.size(), 1u);
-    EXPECT_EQ(processedSize, IpSamplingMetricGroupBase::rawReportSize);
-    EXPECT_TRUE(dataOverflow == false);
-
-    // Sames as above but request just one report
-    requestedReportCount = 1;
-    calcop->fillStallDataMap(rawDataSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &processedSize,
-                             l0GfxCoreHelper, stallReportDataMap, &dataOverflow,
-                             allowInterrupt, requestedReportCount);
-
-    EXPECT_EQ(stallReportDataMap.size(), 1u);
-    EXPECT_EQ(processedSize, IpSamplingMetricGroupBase::rawReportSize);
-    EXPECT_TRUE(dataOverflow == false);
-
-    l0GfxCoreHelper.stallIpDataMapDelete(stallReportDataMap);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
-}
-
 HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnSubDeviceThenHandleErrorConditions, EustallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
@@ -1199,20 +1020,64 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalculationOperation, &metricsInReportCount, nullptr));
     EXPECT_EQ(metricsInReportCount, 5u);
 
-    // calculate only one report and expect results follow the order of rawDataVector
-    uint32_t totalMetricReportCount = 1;
+    uint32_t totalMetricReportCount = 0;
     size_t offset = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
+                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+                                                                  &totalMetricReportCount, nullptr));
+
     std::vector<zet_intel_metric_result_exp_t> metricResults(totalMetricReportCount * metricsInReportCount);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
                                                                   reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
                                                                   &totalMetricReportCount, metricResults.data()));
-    EXPECT_EQ(totalMetricReportCount, 1U);
-    EXPECT_EQ(offset, IpSamplingMetricGroupBase::rawReportSize);
+    EXPECT_EQ(totalMetricReportCount, 3U);
+    EXPECT_EQ(offset, rawDataVectorSize);
 
     // Expect only odd index metrics results of the first report
     for (uint32_t j = 0; j < metricsInReportCount; j++) {
-        EXPECT_TRUE(metricResults[j].value.ui64 == interruptedExpectedMetricValues12[j * 2 + 1].value.ui64);
+        EXPECT_TRUE(metricResults[j].value.ui64 == expectedMetricValues[j * 2 + 1].value.ui64);
     }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
+}
+
+HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesDoesNotAllowLimitingResults, EustallSupportedPlatforms) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
+
+    uint32_t metricGroupCount = 1;
+    zet_metric_group_handle_t metricGroupHandle = nullptr;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
+        nullptr,            // pNext
+        metricGroupCount,   // metricGroupCount
+        &metricGroupHandle, // phMetricGroups
+        0,                  // metricCount
+        nullptr,            // phMetrics
+        0,                  // timeWindowsCount
+        nullptr,            // pCalculationTimeWindows
+        1000,               // timeAggregationWindow
+    };
+
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                                             device->toHandle(), &calculationDesc,
+                                                                             &hCalculationOperation));
+    uint32_t totalMetricReportCount = 0;
+    size_t offset = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
+                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+                                                                  &totalMetricReportCount, nullptr));
+    EXPECT_EQ(totalMetricReportCount, 3U);
+
+    // Request fewer reports
+    totalMetricReportCount = 1;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
+                                                                                 reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+                                                                                 &totalMetricReportCount, nullptr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }

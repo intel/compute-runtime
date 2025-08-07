@@ -155,24 +155,18 @@ ze_result_t IpSamplingMetricCalcOpImp::destroy() {
 void IpSamplingMetricCalcOpImp::fillStallDataMap(const size_t rawDataSize, const uint8_t *pRawData, size_t *processedSize,
                                                  L0::L0GfxCoreHelper &l0GfxCoreHelper,
                                                  std::map<uint64_t, void *> &stallReportDataMap,
-                                                 bool *dataOVerflow,
-                                                 bool allowInterrupt,
-                                                 uint32_t requestedReportCount) {
+                                                 bool *dataOverflow) {
 
     const uint32_t rawReportSize = IpSamplingMetricGroupBase::rawReportSize;
     *processedSize = 0;
 
-    uint32_t processedReportCount = 0;
     const uint8_t *dataToProcess = pRawData;
     do {
 
-        *dataOVerflow |= l0GfxCoreHelper.stallIpDataMapUpdate(stallReportDataMap, dataToProcess);
+        *dataOverflow |= l0GfxCoreHelper.stallIpDataMapUpdate(stallReportDataMap, dataToProcess);
         *processedSize += rawReportSize;
         dataToProcess += rawReportSize;
-        // Number of reports is defined by the number of IPs in the raw data.
-        processedReportCount = static_cast<uint32_t>(stallReportDataMap.size());
-    } while ((*processedSize < rawDataSize) &&
-             (!allowInterrupt || (processedReportCount < requestedReportCount)));
+    } while (*processedSize < rawDataSize);
 
     return;
 }
@@ -201,15 +195,13 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValuesSingle(const size_t 
         return ZE_RESULT_SUCCESS;
     }
 
-    // Only allow interrupting when requesting less reports than available since it affects the bytes
-    // processed: report count can be reached before processing all data.
-    bool allowInterrupt = false;
     if (*pTotalMetricReportCount < rawDataReportCount) {
-        allowInterrupt = true;
+        METRICS_LOG_ERR("%s", "EU Stall does not allow calculating fewer results than available in raw data");
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     fillStallDataMap(rawDataSize, pRawData, pOffset, l0GfxCoreHelper, stallReportDataMap,
-                     &dataOverflow, allowInterrupt, *pTotalMetricReportCount);
+                     &dataOverflow);
 
     *pTotalMetricReportCount = static_cast<uint32_t>(stallReportDataMap.size());
     return status;
