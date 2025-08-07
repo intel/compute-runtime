@@ -39,3 +39,7 @@ LNLTEST_F(LnlProductHelperWindows, givenOverrideDirectSubmissionTimeoutsCalledTh
 LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->deferMOCSToPatIndex(true));
 }
+
+LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned) {
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
+}
