@@ -925,23 +925,6 @@ void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, 
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
-ze_result_t DriverHandleImp::checkMemoryAccessFromDevice(Device *device, const void *ptr) {
-    auto allocation = svmAllocsManager->getSVMAlloc(ptr);
-    if (allocation == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    if (allocation->memoryType == InternalMemoryType::hostUnifiedMemory ||
-        allocation->memoryType == InternalMemoryType::sharedUnifiedMemory)
-        return ZE_RESULT_SUCCESS;
-
-    if (allocation->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex()) != nullptr) {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-}
-
 void DriverHandleImp::initializeVertexes() {
     for (auto &device : this->devices) {
         auto deviceImpl = static_cast<DeviceImp *>(device);

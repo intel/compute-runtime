@@ -51,7 +51,6 @@ struct DriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
 
     virtual NEO::MemoryManager *getMemoryManager() = 0;
     virtual void setMemoryManager(NEO::MemoryManager *memoryManager) = 0;
-    virtual ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) = 0;
     virtual bool findAllocationDataForRange(const void *buffer,
                                             size_t size,
                                             NEO::SvmAllocationData *&allocData) = 0;
