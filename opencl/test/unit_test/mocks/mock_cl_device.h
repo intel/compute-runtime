@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 
 namespace NEO {
 class FailMemoryManager;
@@ -19,7 +20,7 @@ template <typename GfxFamily>
 class UltCommandStreamReceiver;
 struct HardwareInfo;
 class BuiltIns;
-class ExecutionEnvironment;
+class MockClExecutionEnvironment;
 class MemoryManager;
 enum PreemptionMode : uint32_t;
 struct DeviceInfo;
@@ -74,7 +75,7 @@ class MockClDevice : public ClDevice {
         return MockDevice::createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
     }
 
-    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex);
+    static MockClExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex);
 
     SubDevice *createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;

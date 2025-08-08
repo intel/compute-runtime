@@ -34,6 +34,8 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sharing_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory_with_platform.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory_with_platform.h
     ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr_impl.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context.h

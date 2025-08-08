@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "opencl/source/platform/platform.h"
 
 namespace NEO {
-
+class MockClDevice;
 class MockPlatform : public Platform {
   public:
     using Platform::fillGlobalDispatchTable;
@@ -22,7 +22,15 @@ class MockPlatform : public Platform {
 
 Platform *platform();
 
+Platform *platform(ExecutionEnvironment *executionEnvironment);
+
+void cleanupPlatform(ExecutionEnvironment *executionEnvironment);
+
 Platform *constructPlatform();
+
+Platform *constructPlatform(ExecutionEnvironment *executionEnvironment);
+
+bool initPlatform(std::vector<MockClDevice *> clDeviceVector);
 
 bool initPlatform();
 } // namespace NEO

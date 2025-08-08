@@ -21,11 +21,11 @@ bool &MockClDevice::createSingleDevice = MockDevice::createSingleDevice;
 decltype(&createCommandStream) &MockClDevice::createCommandStreamReceiverFunc = MockDevice::createCommandStreamReceiverFunc;
 
 MockClDevice::MockClDevice(MockDevice *pMockDevice)
-    : ClDevice(*pMockDevice, platform()), device(*pMockDevice), sharedDeviceInfo(device.deviceInfo),
+    : ClDevice(*pMockDevice, platform(pMockDevice->executionEnvironment)), device(*pMockDevice), sharedDeviceInfo(device.deviceInfo),
       executionEnvironment(pMockDevice->executionEnvironment), allEngines(pMockDevice->allEngines) {
 }
 
-ExecutionEnvironment *MockClDevice::prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
+MockClExecutionEnvironment *MockClDevice::prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
     auto executionEnvironment = new MockClExecutionEnvironment();
     auto numRootDevices = debugManager.flags.CreateMultipleRootDevices.get() ? debugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
     executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);

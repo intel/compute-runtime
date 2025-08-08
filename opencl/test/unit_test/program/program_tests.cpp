@@ -2448,21 +2448,6 @@ TEST_F(ProgramTests, WhenLinkingTwoValidSpirvProgramsThenValidProgramIsReturned)
     node1->release();
 }
 
-TEST(ProgramDestructionTests, givenProgramUsingDeviceWhenItIsDestroyedAfterPlatfromCleanupThenItIsCleanedUpProperly) {
-    initPlatform();
-    auto device = platform()->getClDevice(0);
-    MockContext *context = new MockContext(device, false);
-    MockProgram *pProgram = new MockProgram(context, false, toClDeviceVector(*device));
-    auto globalAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
-    pProgram->setGlobalSurface(globalAllocation);
-
-    platformsImpl->clear();
-    EXPECT_EQ(1, device->getRefInternalCount());
-    EXPECT_EQ(1, pProgram->getRefInternalCount());
-    context->decRefInternal();
-    pProgram->decRefInternal();
-}
-
 TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPathIsTaken) {
     auto compilerInterface = new MockCompilerInterface();
     auto compilerMain = new MockCIFMain();

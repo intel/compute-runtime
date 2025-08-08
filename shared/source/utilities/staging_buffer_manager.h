@@ -101,6 +101,7 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
 
     bool registerHostPtr(const void *ptr);
     void resetDetectedPtrs();
+    void freeAllocations();
 
   private:
     std::pair<HeapAllocator *, uint64_t> getExistingBuffer(size_t &size);

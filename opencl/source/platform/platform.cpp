@@ -45,6 +45,12 @@ Platform::~Platform() {
 
     devicesCleanup(false);
 
+    if (isInitialized()) {
+        delete stagingBufferManager;
+        svmAllocsManager->cleanupUSMAllocCaches();
+        delete svmAllocsManager;
+    }
+
     gtpinNotifyPlatformShutdown();
     executionEnvironment.decRefInternal();
 }
@@ -133,13 +139,33 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
 
     state = StateIniting;
 
+    RootDeviceIndicesContainer rootDeviceIndices;
+    std::map<uint32_t, DeviceBitfield> deviceBitfields;
+
     for (auto &inputDevice : devices) {
         ClDevice *pClDevice = nullptr;
         auto pDevice = inputDevice.release();
         UNRECOVERABLE_IF(!pDevice);
         pClDevice = new ClDevice{*pDevice, this};
         this->clDevices.push_back(pClDevice);
+        rootDeviceIndices.pushUnique(pClDevice->getRootDeviceIndex());
     }
+
+    for (auto &rootDeviceIndex : rootDeviceIndices) {
+        DeviceBitfield deviceBitfield{};
+        for (const auto &pDevice : this->clDevices) {
+            if (pDevice->getRootDeviceIndex() == rootDeviceIndex) {
+                deviceBitfield |= pDevice->getDeviceBitfield();
+            }
+        }
+        deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
+    }
+
+    this->svmAllocsManager = new SVMAllocsManager(this->clDevices[0]->getMemoryManager());
+    this->svmAllocsManager->initUsmAllocationsCaches(this->clDevices[0]->getDevice());
+
+    bool requiresWritableStaging = this->clDevices[0]->getDefaultEngine().commandStreamReceiver->getType() != CommandStreamReceiverType::hardware;
+    this->stagingBufferManager = new StagingBufferManager(this->svmAllocsManager, rootDeviceIndices, deviceBitfields, requiresWritableStaging);
 
     DEBUG_BREAK_IF(this->platformInfo);
     this->platformInfo.reset(new PlatformInfo);
@@ -250,5 +276,27 @@ const PlatformInfo &Platform::getPlatformInfo() const {
 std::unique_ptr<Platform> (*Platform::createFunc)(ExecutionEnvironment &) = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {
     return std::make_unique<Platform>(executionEnvironment);
 };
+
+SVMAllocsManager *Platform::getSVMAllocsManager() const {
+    return this->svmAllocsManager;
+}
+
+StagingBufferManager *Platform::getStagingBufferManager() const {
+    return this->stagingBufferManager;
+}
+
+void Platform::incActiveContextCount() {
+    TakeOwnershipWrapper<Platform> platformOwnership(*this);
+    this->activeContextCount++;
+}
+
+void Platform::decActiveContextCount() {
+    TakeOwnershipWrapper<Platform> platformOwnership(*this);
+    this->activeContextCount--;
+    DEBUG_BREAK_IF(this->activeContextCount < 0);
+    if (this->activeContextCount == 0) {
+        this->stagingBufferManager->freeAllocations();
+    }
+}
 
 } // namespace NEO

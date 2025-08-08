@@ -14,6 +14,7 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 #include "CL/cl_gl.h"
 #include "gtest/gtest.h"
@@ -31,8 +32,8 @@ TEST_F(ContextFailureInjection, GivenFailedAllocationInjectionWhenCreatingContex
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0); // same for preallocations
     debugManager.flags.EnableDeviceUsmAllocationPool.set(0);             // usm device allocation pooling
     debugManager.flags.EnableHostUsmAllocationPool.set(0);               // usm host allocation pooling
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    cl_device_id deviceID = device.get();
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    cl_device_id deviceID = deviceFactory.rootDevices[0];
 
     InjectedFunction method = [deviceID](size_t failureIndex) {
         auto retVal = CL_INVALID_VALUE;

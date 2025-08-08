@@ -18,6 +18,7 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 #include "gtest/gtest.h"
 
@@ -216,9 +217,10 @@ TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContext
     stateRestore.clearCurrentState();
     stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    auto device = deviceFactory.rootDevices[0];
 
-    cl_device_id clDevice = device.get();
+    cl_device_id clDevice = device;
     auto deviceVector = ClDeviceVector(&clDevice, 1);
     cl_int retVal;
 

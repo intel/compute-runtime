@@ -73,11 +73,11 @@ Context::~Context() {
             delete specialQueues[rootDeviceIndex];
         }
     }
-    if (svmAllocsManager) {
-        this->stagingBufferManager.reset();
-        svmAllocsManager->cleanupUSMAllocCaches();
-        delete svmAllocsManager;
+
+    if (platformManagersInitialized) {
+        this->getDevice(0)->getPlatform()->decActiveContextCount();
     }
+
     if (driverDiagnostics) {
         delete driverDiagnostics;
     }
@@ -298,10 +298,7 @@ bool Context::createImpl(const cl_context_properties *properties,
         }
 
         setupContextType();
-        this->svmAllocsManager = new SVMAllocsManager(this->memoryManager);
-        this->svmAllocsManager->initUsmAllocationsCaches(device->getDevice());
-        auto requiresWritableStaging = device->getDefaultEngine().commandStreamReceiver->getType() != CommandStreamReceiverType::hardware;
-        this->stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager, rootDeviceIndices, deviceBitfields, requiresWritableStaging);
+        initializeManagers();
 
         smallBufferPoolAllocator.setParams(SmallBuffersParams::getPreferredBufferPoolParams(device->getProductHelper()));
     }
@@ -711,6 +708,14 @@ Buffer *Context::BufferPoolAllocator::allocateFromPools(const MemoryProperties &
     return nullptr;
 }
 
+void Context::initializeManagers() {
+    auto platform = this->getDevice(0)->getPlatform();
+    platform->incActiveContextCount();
+    platformManagersInitialized = true;
+    this->svmAllocsManager = platform->getSVMAllocsManager();
+    this->stagingBufferManager = platform->getStagingBufferManager();
+}
+
 TagAllocatorBase *Context::getMultiRootDeviceTimestampPacketAllocator() {
     return multiRootDeviceTimestampPacketAllocator.get();
 }
@@ -728,10 +733,6 @@ void Context::setContextAsNonZebin() {
 
 bool Context::checkIfContextIsNonZebin() const {
     return this->nonZebinContext;
-}
-
-StagingBufferManager *Context::getStagingBufferManager() const {
-    return this->stagingBufferManager.get();
 }
 
 } // namespace NEO

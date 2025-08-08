@@ -20,6 +20,7 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include <memory>
 
@@ -35,6 +36,7 @@ struct ApiFixture {
         debugManager.flags.ContextGroupSize.set(0);
         executionEnvironment = new ClExecutionEnvironment();
         prepareDeviceEnvironments(*executionEnvironment);
+        NEO::constructPlatform(executionEnvironment);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
@@ -45,6 +47,8 @@ struct ApiFixture {
 
         pDevice = new MockClDevice(rootDevice);
         ASSERT_NE(nullptr, pDevice);
+
+        NEO::initPlatform({pDevice});
 
         testedClDevice = pDevice;
         pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&testedClDevice, 1), nullptr, nullptr, retVal);
@@ -64,6 +68,7 @@ struct ApiFixture {
         pCommandQueue->release();
         pContext->release();
         pProgram->release();
+        NEO::cleanupPlatform(executionEnvironment);
         if (rootDeviceIndex != 0u) {
             rootDeviceEnvironmentBackup.swap(executionEnvironment->rootDeviceEnvironments[0]);
         }

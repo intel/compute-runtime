@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 using namespace NEO;
 
@@ -188,8 +189,8 @@ TEST_F(GetCommandQueueFamilyInfoTests, givenQueueFamilySelectedWhenGettingFamily
 HWCMDTEST_F(IGFX_XE_HP_CORE, GetCommandQueueFamilyInfoTests, givenFamilyIdWhenGettingCommandQueueInfoThenCorrectValueIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrCCSNode = true;
-    MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0)};
-
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0, MockClDevice::prepareExecutionEnvironment(&hwInfo, 0)};
+    MockClDevice &mockClDevice = *deviceFactory.rootDevices[0];
     const cl_device_id deviceId = &mockClDevice;
     auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, nullptr);
     auto ccsFamily = mockClDevice.getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);

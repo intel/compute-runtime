@@ -166,6 +166,11 @@ struct ClEnqueueUnmapImageTests : ClEnqueueUnmapMemObjTests,
         EXPECT_NE(nullptr, image.get());
     }
 
+    void TearDown() override {
+        this->image.reset();
+        ClEnqueueUnmapMemObjTests::TearDown();
+    }
+
     Image *createImage(cl_mem_object_type type) {
         switch (type) {
         case CL_MEM_OBJECT_IMAGE1D:

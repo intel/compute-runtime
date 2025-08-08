@@ -10,6 +10,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 #include "cl_api_tests.h"
 
@@ -594,7 +595,7 @@ TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsWhenMi
 using clCreateBufferWithMultiDeviceContextTests = ClCreateBufferTemplateTests;
 
 TEST_P(clCreateBufferWithMultiDeviceContextTests, GivenBufferCreatedWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyFilled) {
-    UltClDeviceFactory deviceFactory{2, 0};
+    UltClDeviceFactoryWithPlatform deviceFactory{2, 0};
     debugManager.flags.EnableMultiRootDeviceContexts.set(true);
 
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
@@ -644,7 +645,7 @@ INSTANTIATE_TEST_SUITE_P(
 using clCreateBufferWithMultiDeviceContextFaillingAllocationTests = ClCreateBufferTemplateTests;
 
 TEST_F(clCreateBufferWithMultiDeviceContextFaillingAllocationTests, GivenContextdWithMultiDeviceFailingAllocationThenBufferAllocateFails) {
-    UltClDeviceFactory deviceFactory{3, 0};
+    UltClDeviceFactoryWithPlatform deviceFactory{3, 0};
     debugManager.flags.EnableMultiRootDeviceContexts.set(true);
 
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1], deviceFactory.rootDevices[2]};

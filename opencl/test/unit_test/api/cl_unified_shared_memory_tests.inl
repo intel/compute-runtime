@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
@@ -755,7 +756,8 @@ TEST_F(clUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoIN
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableHostUsmAllocationPool.set(2);
     debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
-    MockContext mockContext;
+    UltClDeviceFactoryWithPlatform ultClDeviceFactory{1, 0};
+    MockContext mockContext(ultClDeviceFactory.rootDevices[0]);
     mockContext.usmPoolInitialized = false;
     auto device = mockContext.getDevice(0u);
     REQUIRE_SVM_OR_SKIP(device);
@@ -817,7 +819,8 @@ TEST_F(clUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoIN
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableHostUsmAllocationPool.set(2);
     debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
-    MockContext mockContext;
+    UltClDeviceFactoryWithPlatform ultClDeviceFactory{1, 0};
+    MockContext mockContext(ultClDeviceFactory.rootDevices[0]);
     mockContext.usmPoolInitialized = false;
     auto device = mockContext.getDevice(0u);
     REQUIRE_SVM_OR_SKIP(device);

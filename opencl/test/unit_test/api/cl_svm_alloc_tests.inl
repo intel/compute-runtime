@@ -49,7 +49,7 @@ TEST(clSVMAllocTest, givenPlatformWithoutDevicesWhenClSVMAllocIsCalledThenDevice
     }
     cl_device_id deviceId = clDevice.get();
     cl_int retVal;
-    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
+    auto context = ReleaseableObjectPtr<MockContext>(MockContext::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, platform()->getNumDevices());

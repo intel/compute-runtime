@@ -56,6 +56,17 @@ MockContext::~MockContext() {
         memoryManager->getDeferredDeleter()->removeClient();
     }
     memoryManager = nullptr;
+
+    if (!platformManagersInitialized && stagingBufferManager) {
+        delete stagingBufferManager;
+        stagingBufferManager = nullptr;
+    }
+    if (!platformManagersInitialized && svmAllocsManager) {
+        cleanupUsmAllocationPools();
+        svmAllocsManager->cleanupUSMAllocCaches();
+        delete svmAllocsManager;
+        svmAllocsManager = nullptr;
+    }
 }
 
 MockContext::MockContext() {
@@ -101,7 +112,6 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
 
     this->devices = devices;
     memoryManager = devices[0]->getMemoryManager();
-    svmAllocsManager = new MockSVMAllocsManager(memoryManager);
 
     for (auto &rootDeviceIndex : rootDeviceIndices) {
         DeviceBitfield deviceBitfield{};
@@ -116,7 +126,8 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
         }
         deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
     }
-    stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager, rootDeviceIndices, deviceBitfields, true);
+
+    initializeManagers();
 
     cl_int retVal;
     if (!noSpecialQueue) {
@@ -130,6 +141,16 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
     }
 
     setupContextType();
+}
+
+void MockContext::initializeManagers() {
+    auto platform = this->getDevice(0)->getPlatform();
+    if (platform != nullptr && platform->isInitialized()) {
+        Context::initializeManagers();
+    } else {
+        svmAllocsManager = new SVMAllocsManager(memoryManager);
+        stagingBufferManager = new StagingBufferManager(svmAllocsManager, rootDeviceIndices, deviceBitfields, true);
+    }
 }
 
 MockDefaultContext::MockDefaultContext() : MockDefaultContext(false) {}

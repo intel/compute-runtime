@@ -22,6 +22,8 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
+
 using namespace NEO;
 namespace Ult {
 using PoolAllocator = Context::BufferPoolAllocator;
@@ -624,7 +626,7 @@ template <int32_t poolBufferFlag = -1>
 class AggregatedSmallBuffersApiTestTemplate : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
-        this->deviceFactory = std::make_unique<UltClDeviceFactory>(1, 0);
+        this->deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(1, 0);
         auto device = deviceFactory->rootDevices[0];
         cl_device_id devices[] = {device};
         clContext = clCreateContext(nullptr, 1, devices, nullptr, nullptr, &retVal);
@@ -635,7 +637,7 @@ class AggregatedSmallBuffersApiTestTemplate : public ::testing::Test {
     }
 
   public:
-    std::unique_ptr<UltClDeviceFactory> deviceFactory;
+    std::unique_ptr<UltClDeviceFactoryWithPlatform> deviceFactory;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     size_t size{0u};

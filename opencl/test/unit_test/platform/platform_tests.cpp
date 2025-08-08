@@ -416,20 +416,24 @@ TEST(PlatformInitTest, givenInitializedPlatformWhenInitializeIsCalledOneMoreTime
 TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDeviceVectorWhenInitializePlatformThenCreateOnlyOneClDevice) {
     std::vector<std::unique_ptr<Device>> devices;
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 3);
+    constructPlatform(executionEnvironment);
     devices.push_back(std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 2)));
-    auto status = platform()->initialize(std::move(devices));
+    auto status = platform(executionEnvironment)->initialize(std::move(devices));
     EXPECT_TRUE(status);
     size_t expectedNumDevices = 1u;
-    EXPECT_EQ(expectedNumDevices, platform()->getNumDevices());
-    EXPECT_EQ(2u, platform()->getClDevice(0)->getRootDeviceIndex());
+    EXPECT_EQ(expectedNumDevices, platform(executionEnvironment)->getNumDevices());
+    EXPECT_EQ(2u, platform(executionEnvironment)->getClDevice(0)->getRootDeviceIndex());
+    cleanupPlatform(executionEnvironment);
 }
 
 TEST(PlatformInitTest, GivenPreferredPlatformNameWhenPlatformIsInitializedThenOverridePlatformName) {
     std::vector<std::unique_ptr<Device>> devices;
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
+    constructPlatform(executionEnvironment);
     devices.push_back(std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0)));
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.preferredPlatformName = "Overridden Platform Name";
-    auto status = platform()->initialize(std::move(devices));
+    auto status = platform(executionEnvironment)->initialize(std::move(devices));
     EXPECT_TRUE(status);
-    EXPECT_STREQ("Overridden Platform Name", platform()->getPlatformInfo().name.c_str());
+    EXPECT_STREQ("Overridden Platform Name", platform(executionEnvironment)->getPlatformInfo().name.c_str());
+    cleanupPlatform(executionEnvironment);
 }

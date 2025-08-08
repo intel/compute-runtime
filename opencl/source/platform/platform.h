@@ -7,6 +7,9 @@
 
 #pragma once
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/reference_tracked_object.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/cl_device/cl_device_vector.h"
@@ -22,6 +25,8 @@ class Device;
 class ExecutionEnvironment;
 class GmmHelper;
 class GmmClientContext;
+class SVMAllocsManager;
+class StagingBufferManager;
 struct PlatformInfo;
 struct HardwareInfo;
 class ClDevice;
@@ -55,6 +60,12 @@ class Platform : public BaseObject<_cl_platform_id> {
     const PlatformInfo &getPlatformInfo() const;
     ExecutionEnvironment *peekExecutionEnvironment() const { return &executionEnvironment; }
 
+    SVMAllocsManager *getSVMAllocsManager() const;
+    StagingBufferManager *getStagingBufferManager() const;
+
+    void incActiveContextCount();
+    void decActiveContextCount();
+
     static std::unique_ptr<Platform> (*createFunc)(ExecutionEnvironment &executionEnvironment);
 
   protected:
@@ -70,6 +81,9 @@ class Platform : public BaseObject<_cl_platform_id> {
     ExecutionEnvironment &executionEnvironment;
     std::once_flag initializeExtensionsWithVersionOnce;
     std::once_flag oclInitGTPinOnce;
+    SVMAllocsManager *svmAllocsManager = nullptr;
+    StagingBufferManager *stagingBufferManager = nullptr;
+    int32_t activeContextCount = 0;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<BaseObject<_cl_platform_id>>);

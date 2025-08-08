@@ -148,6 +148,10 @@ class Context : public BaseObject<_cl_context> {
         return memoryManager;
     }
 
+    StagingBufferManager *getStagingBufferManager() const {
+        return stagingBufferManager;
+    }
+
     SVMAllocsManager *getSVMAllocsManager() const {
         return svmAllocsManager;
     }
@@ -257,8 +261,6 @@ class Context : public BaseObject<_cl_context> {
     void initializeUsmAllocationPools();
     void cleanupUsmAllocationPools();
 
-    StagingBufferManager *getStagingBufferManager() const;
-
   protected:
     struct BuiltInKernel {
         const char *pSource = nullptr;
@@ -287,6 +289,8 @@ class Context : public BaseObject<_cl_context> {
 
     void setupContextType();
 
+    virtual void initializeManagers();
+
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, DeviceBitfield> deviceBitfields;
     std::vector<std::unique_ptr<SharingFunctions>> sharingFunctions;
@@ -312,12 +316,13 @@ class Context : public BaseObject<_cl_context> {
     std::unique_ptr<TagAllocatorBase> multiRootDeviceTimestampPacketAllocator;
     std::mutex multiRootDeviceAllocatorMtx;
 
-    std::unique_ptr<StagingBufferManager> stagingBufferManager;
+    StagingBufferManager *stagingBufferManager = nullptr;
 
     bool interopUserSync = false;
     bool resolvesRequiredInKernels = false;
     bool nonZebinContext = false;
     bool usmPoolInitialized = false;
+    bool platformManagersInitialized = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Context>);

@@ -45,9 +45,7 @@ StagingBufferManager::StagingBufferManager(SVMAllocsManager *svmAllocsManager, c
 }
 
 StagingBufferManager::~StagingBufferManager() {
-    for (auto &stagingBuffer : stagingBuffers) {
-        svmAllocsManager->freeSVMAlloc(stagingBuffer.getBaseAddress());
-    }
+    freeAllocations();
 }
 
 /*
@@ -442,6 +440,15 @@ bool StagingBufferManager::registerHostPtr(const void *ptr) {
 void StagingBufferManager::resetDetectedPtrs() {
     auto lock = std::lock_guard<std::mutex>(mtx);
     detectedHostPtrs.clear();
+}
+
+void StagingBufferManager::freeAllocations() {
+    auto lock = std::lock_guard<std::mutex>(mtx);
+    for (auto &stagingBuffer : stagingBuffers) {
+        svmAllocsManager->freeSVMAlloc(stagingBuffer.getBaseAddress());
+    }
+    stagingBuffers.clear();
+    trackers.clear();
 }
 
 } // namespace NEO

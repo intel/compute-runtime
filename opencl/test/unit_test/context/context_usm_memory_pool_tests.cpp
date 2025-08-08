@@ -13,6 +13,7 @@
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 #include "gtest/gtest.h"
 
@@ -20,11 +21,12 @@ using namespace NEO;
 
 struct ContextUsmPoolTest : public ::testing::Test {
     void SetUp() override {
-        device.reset(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0u)});
+        deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(1, 0);
+        device = deviceFactory->rootDevices[0];
         if (device->deviceInfo.svmCapabilities == 0) {
             GTEST_SKIP();
         }
-        cl_device_id deviceId = device.get();
+        cl_device_id deviceId = device;
 
         cl_int retVal;
         mockContext.reset(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
@@ -33,7 +35,8 @@ struct ContextUsmPoolTest : public ::testing::Test {
         mockHostUsmMemAllocPool = static_cast<MockUsmMemAllocPool *>(&mockContext->getHostMemAllocPool());
     }
 
-    std::unique_ptr<MockClDevice> device;
+    MockClDevice *device;
+    std::unique_ptr<UltClDeviceFactoryWithPlatform> deviceFactory;
     std::unique_ptr<MockContext> mockContext;
     MockUsmMemAllocPool *mockDeviceUsmMemAllocPool;
     MockUsmMemAllocPool *mockHostUsmMemAllocPool;

@@ -33,7 +33,9 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
+
 using namespace NEO;
 
 class WhiteBoxContext : public Context {
@@ -297,23 +299,24 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
   public:
     void SetUp() override {
         memoryManager = new MockMemoryManager();
-        device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
+        deviceFactory = new UltClDeviceFactoryWithPlatform{1, 0, memoryManager};
+        device = deviceFactory->rootDevices[0];
         deleter = new MockDeferredDeleter();
 
         device->allEngines.clear();
         device->device.secondaryEngines.clear();
         device->device.regularEngineGroups.clear();
-        device->injectMemoryManager(memoryManager);
         device->createEngines();
         memoryManager->setDeferredDeleter(deleter);
     }
     void TearDown() override {
-        delete device;
+        delete deviceFactory;
     }
     Context *context;
     MockMemoryManager *memoryManager;
     MockDeferredDeleter *deleter;
     MockClDevice *device;
+    UltClDeviceFactoryWithPlatform *deviceFactory;
 };
 
 TEST_P(ContextWithAsyncDeleterTest, givenContextWithMemoryManagerWhenAsyncDeleterIsEnabledThenUsesDeletersMethods) {
@@ -375,7 +378,7 @@ TEST(Context, givenContextWithSingleDevicesWhenGettingDeviceBitfieldForAllocatio
     EXPECT_EQ(expectedDeviceBitfield.to_ulong(), context.getDeviceBitfieldForAllocation(device->getRootDeviceIndex()).to_ulong());
 }
 TEST(Context, givenContextWithMultipleSubDevicesWhenGettingDeviceBitfieldForAllocationThenMergedDeviceBitfieldIsReturned) {
-    UltClDeviceFactory deviceFactory{1, 3};
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 3};
     cl_int retVal;
     cl_device_id devices[]{deviceFactory.subDevices[0], deviceFactory.subDevices[2]};
     ClDeviceVector deviceVector(devices, 2);
@@ -391,7 +394,7 @@ TEST(MultiDeviceContextTest, givenContextWithTwoDifferentSubDevicesFromDifferent
     DebugManagerStateRestore restorer;
 
     debugManager.flags.EnableMultiRootDeviceContexts.set(true);
-    UltClDeviceFactory deviceFactory{2, 2};
+    UltClDeviceFactoryWithPlatform deviceFactory{2, 2};
     cl_int retVal;
     cl_device_id devices[]{deviceFactory.subDevices[1], deviceFactory.subDevices[2]};
     ClDeviceVector deviceVector(devices, 2);
@@ -412,7 +415,7 @@ TEST(MultiDeviceContextTest, givenContextWithTwoDifferentSubDevicesFromDifferent
 TEST(MultiDeviceContextTest, givenMultipleRootDevicesWhenCreatingMultiRootDeviceContextCrossDeviceTagAllocationsAreCreated) {
     DebugManagerStateRestore restorer;
 
-    UltClDeviceFactory deviceFactory{3, 0};
+    UltClDeviceFactoryWithPlatform deviceFactory{3, 0};
     cl_int retVal;
 
     for (auto &csr : deviceFactory.pUltDeviceFactory->rootDevices[0]->commandStreamReceivers) {
@@ -776,54 +779,9 @@ TEST_F(AllocationReuseContextTest, givenHostPtrStoredInMapOperationsStorageAndRe
     EXPECT_TRUE(retrievedCpuCopyStatus);
 }
 
-struct MockGTPinTestContext : Context {
-    using Context::svmAllocsManager;
-};
-
-struct MockSVMAllocManager : SVMAllocsManager {
-    MockSVMAllocManager() : SVMAllocsManager(nullptr) {}
-    ~MockSVMAllocManager() override {
-        svmAllocManagerDeleted = true;
-    }
-
-    inline static bool svmAllocManagerDeleted = false;
-};
-
-struct GTPinContextDestroyTest : ContextTest {
-    void SetUp() override {
-        ContextTest::SetUp();
-    }
-
-    void TearDown() override {
-        PlatformFixture::tearDown();
-    }
-};
-
-void onContextDestroy(gtpin::context_handle_t context) {
-    EXPECT_FALSE(MockSVMAllocManager::svmAllocManagerDeleted);
-}
-
-namespace NEO {
-extern gtpin::ocl::gtpin_events_t gtpinCallbacks;
-TEST_F(GTPinContextDestroyTest, whenCallingConxtextDestructorThenGTPinIsNotifiedBeforeSVMAllocManagerGetsDestroyed) {
-    auto mockContext = reinterpret_cast<MockGTPinTestContext *>(context);
-    if (mockContext->svmAllocsManager) {
-        mockContext->getDeviceMemAllocPool().cleanup();
-        mockContext->getHostMemAllocPool().cleanup();
-        mockContext->svmAllocsManager->cleanupUSMAllocCaches();
-        delete mockContext->svmAllocsManager;
-    }
-    mockContext->svmAllocsManager = new MockSVMAllocManager();
-
-    gtpinCallbacks.onContextDestroy = onContextDestroy;
-    delete context;
-    EXPECT_TRUE(MockSVMAllocManager::svmAllocManagerDeleted);
-}
-} // namespace NEO
-
 struct ContextUsmPoolParamsTest : public ::testing::Test {
     void SetUp() override {
-        deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
+        deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(2, 0);
         device = deviceFactory->rootDevices[rootDeviceIndex];
         mockNeoDevice = static_cast<MockDevice *>(&device->getDevice());
         mockProductHelper = new MockProductHelper;
@@ -837,7 +795,7 @@ struct ContextUsmPoolParamsTest : public ::testing::Test {
     }
 
     const size_t rootDeviceIndex = 1u;
-    std::unique_ptr<UltClDeviceFactory> deviceFactory;
+    std::unique_ptr<UltClDeviceFactoryWithPlatform> deviceFactory;
     MockClDevice *device;
     MockDevice *mockNeoDevice;
     MockProductHelper *mockProductHelper;

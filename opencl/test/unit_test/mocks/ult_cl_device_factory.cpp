@@ -14,23 +14,27 @@
 
 using namespace NEO;
 
-UltClDeviceFactory::UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount) {
-    pUltDeviceFactory = std::make_unique<UltDeviceFactory>(rootDevicesCount, subDevicesCount, *(new ClExecutionEnvironment));
+UltClDeviceFactory::UltClDeviceFactory(){};
 
-    for (auto &pRootDevice : pUltDeviceFactory->rootDevices) {
-        auto pRootClDevice = new MockClDevice{pRootDevice};
-        for (auto &pClSubDevice : pRootClDevice->subDevices) {
-            subDevices.push_back(pClSubDevice.get());
-        }
-        rootDevices.push_back(pRootClDevice);
-    }
+UltClDeviceFactory::UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount) {
+    initialize(rootDevicesCount, subDevicesCount, new ClExecutionEnvironment(), nullptr);
 }
 
 UltClDeviceFactory::UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment) {
-    pUltDeviceFactory = std::make_unique<UltDeviceFactory>(rootDevicesCount, subDevicesCount, *clExecutionEnvironment);
+    initialize(rootDevicesCount, subDevicesCount, clExecutionEnvironment, nullptr);
+}
 
+UltClDeviceFactory::UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount, MemoryManager *memoryManager) {
+    initialize(rootDevicesCount, subDevicesCount, new ClExecutionEnvironment(), memoryManager);
+}
+
+void UltClDeviceFactory::initialize(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment, MemoryManager *memoryManager) {
+    pUltDeviceFactory = std::make_unique<UltDeviceFactory>(rootDevicesCount, subDevicesCount, *clExecutionEnvironment);
     for (auto &pRootDevice : pUltDeviceFactory->rootDevices) {
         auto pRootClDevice = new MockClDevice{pRootDevice};
+        if (memoryManager != nullptr) {
+            pRootClDevice->injectMemoryManager(memoryManager);
+        }
         for (auto &pClSubDevice : pRootClDevice->subDevices) {
             subDevices.push_back(pClSubDevice.get());
         }
