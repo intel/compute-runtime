@@ -479,28 +479,20 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
 bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
                                                  size_t size,
                                                  NEO::SvmAllocationData *&allocData) {
-
-    size_t offset = 0;
-    if (size > 0) {
-        offset = size - 1;
-    }
-
-    // Make sure the host buffer does not overlap any existing allocation
-    const char *baseAddress = reinterpret_cast<const char *>(buffer);
+    uint64_t baseAddress = castToUint64(buffer);
     NEO::SvmAllocationData *beginAllocData = svmAllocsManager->getSVMAlloc(buffer);
-    NEO::SvmAllocationData *endAllocData = offset == 0 ? beginAllocData : svmAllocsManager->getSVMAlloc(static_cast<const void *>(baseAddress + offset));
-
-    if (beginAllocData) {
-        allocData = beginAllocData;
-    } else {
-        allocData = endAllocData;
+    if (!beginAllocData) {
+        allocData = nullptr;
+        return false;
     }
-
-    // Return true if the whole range requested is covered by the same allocation
-    if (beginAllocData && endAllocData &&
-        (beginAllocData->gpuAllocations.getDefaultGraphicsAllocation() == endAllocData->gpuAllocations.getDefaultGraphicsAllocation())) {
+    // for size <= 1 we do not need to do bounds checking as pointer is confirmed to be valid
+    if (size <= 1 || (baseAddress + size <= beginAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress() + beginAllocData->size)) {
+        allocData = beginAllocData;
         return true;
     }
+
+    // we have base allocation, but it doesn't cover whole size, it means we deal with virtual memory pointers, check if we have whole range covered
+
     bool allocationRangeCovered = false;
     // If memory accessed is part of a virtual reservation, then return the first allocation data within the range.
     auto allocDataVec = findAllocationsWithinRange(buffer, size, &allocationRangeCovered);
