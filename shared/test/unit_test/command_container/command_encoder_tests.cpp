@@ -82,6 +82,10 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingStandaloneInO
     EXPECT_TRUE(inOrderExecInfo->isExternalMemoryExecInfo());
     EXPECT_EQ(2u, inOrderExecInfo->getNumDevicePartitionsToWait());
     EXPECT_EQ(3u, inOrderExecInfo->getNumHostPartitionsToWait());
+    EXPECT_EQ(0u, inOrderExecInfo->getDeviceNodeWriteSize());
+    EXPECT_EQ(0u, inOrderExecInfo->getHostNodeWriteSize());
+    EXPECT_EQ(0u, inOrderExecInfo->getDeviceNodeGpuAddress());
+    EXPECT_EQ(0u, inOrderExecInfo->getHostNodeGpuAddress());
 
     inOrderExecInfo->reset();
 
@@ -215,11 +219,17 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
         DebugManagerStateRestore restore;
         debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
 
-        auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, hostNode, mockDevice, 2, false);
+        constexpr uint32_t partitionCount = 2u;
+        auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, hostNode, mockDevice, partitionCount, false);
 
         EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(), hostNode->getGpuAddress());
         EXPECT_NE(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
         EXPECT_NE(deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), inOrderExecInfo->getHostCounterAllocation());
+        EXPECT_NE(0u, inOrderExecInfo->getDeviceNodeGpuAddress());
+        size_t deviceNodeSize = sizeof(uint64_t) * (mockDevice.getGfxCoreHelper().inOrderAtomicSignallingEnabled(mockDevice.getRootDeviceEnvironment()) ? 1u : partitionCount);
+        EXPECT_EQ(deviceNodeSize, inOrderExecInfo->getDeviceNodeWriteSize());
+        EXPECT_NE(0u, inOrderExecInfo->getHostNodeGpuAddress());
+        EXPECT_EQ(sizeof(uint64_t) * partitionCount, inOrderExecInfo->getHostNodeWriteSize());
 
         EXPECT_NE(deviceNode->getCpuBase(), inOrderExecInfo->getBaseHostAddress());
         EXPECT_EQ(ptrOffset(inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer(), offset), inOrderExecInfo->getBaseHostAddress());

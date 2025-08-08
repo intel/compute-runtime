@@ -63,6 +63,23 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint64_t getBaseDeviceAddress() const { return deviceAddress; }
     uint64_t getBaseHostGpuAddress() const;
 
+    uint64_t getDeviceNodeGpuAddress() const;
+    uint64_t getHostNodeGpuAddress() const;
+    size_t getDeviceNodeWriteSize() const {
+        if (deviceCounterNode) {
+            const size_t deviceAllocationWriteSize = sizeof(uint64_t) * numDevicePartitionsToWait;
+            return deviceAllocationWriteSize;
+        }
+        return 0;
+    }
+    size_t getHostNodeWriteSize() const {
+        if (hostCounterNode) {
+            const size_t hostAllocationWriteSize = sizeof(uint64_t) * numHostPartitionsToWait;
+            return hostAllocationWriteSize;
+        }
+        return 0;
+    }
+
     uint64_t getCounterValue() const { return counterValue; }
     void addCounterValue(uint64_t addValue) { counterValue += addValue; }
     void resetCounterValue() { counterValue = 0; }

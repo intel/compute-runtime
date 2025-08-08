@@ -1704,5 +1704,17 @@ HWTEST_F(ImmediateCommandListTest,
     EXPECT_TRUE(ultCsr.isMadeResident(cmdBufferAllocation));
 }
 
+HWTEST_F(CommandListCreateTests, givenRegularOutOfOrderCommandListWhenGettingInOrderPropertiesThenReturnZeros) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto commandListImp = static_cast<L0::CommandListImp *>(commandList.get());
+    EXPECT_EQ(0u, commandListImp->getInOrderExecDeviceRequiredSize());
+    EXPECT_EQ(0u, commandListImp->getInOrderExecDeviceGpuAddress());
+    EXPECT_EQ(0u, commandListImp->getInOrderExecHostRequiredSize());
+    EXPECT_EQ(0u, commandListImp->getInOrderExecHostGpuAddress());
+}
+
 } // namespace ult
 } // namespace L0

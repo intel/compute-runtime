@@ -788,12 +788,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         }
         commandList->storeReferenceTsToMappedEvents(false);
 
-        if (commandList->inOrderCmdsPatchingEnabled()) {
-            commandList->addRegularCmdListSubmissionCounter();
-            commandList->patchInOrderCmds();
-        } else {
-            commandList->clearInOrderExecCounterAllocation();
-        }
+        this->prepareInOrderCommandList(commandList);
 
         commandList->setInterruptEventsCsr(*this->csr);
 

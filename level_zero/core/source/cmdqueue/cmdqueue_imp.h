@@ -34,6 +34,7 @@ class MemoryManager;
 
 namespace L0 {
 struct CommandList;
+struct CommandListImp;
 struct Kernel;
 struct CommandQueueImp : public CommandQueue {
     class CommandBufferManager {
@@ -126,6 +127,7 @@ struct CommandQueueImp : public CommandQueue {
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeoutNanoseconds);
 
     void postSyncOperations(bool hangDetected);
+    void prepareInOrderCommandList(CommandListImp *commandList);
 
     static constexpr uint32_t defaultCommandListStateChangeListSize = 10;
     struct CommandListDirtyFlags {

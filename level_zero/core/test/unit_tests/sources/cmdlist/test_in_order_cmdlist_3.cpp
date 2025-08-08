@@ -318,5 +318,29 @@ HWTEST_F(InOrderIpcTests, givenIncorrectParamsWhenUsingIpcApisThenReturnError) {
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventOpenIpcHandle(context->toHandle(), zexIpcData, nullptr));
 }
 
+using InOrderRegularCmdListTests = InOrderCmdListFixture;
+HWTEST_F(InOrderRegularCmdListTests, givenInOrderCmdListWhenQueryingRequiredSizeThenExpectCorrectValues) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+
+    auto deviceRequiredSize = regularCmdList->getInOrderExecDeviceRequiredSize();
+    EXPECT_EQ(sizeof(uint64_t), deviceRequiredSize);
+    auto deviceNodeAddress = regularCmdList->getInOrderExecDeviceGpuAddress();
+    EXPECT_NE(0u, deviceNodeAddress);
+    auto hostRequiredSize = regularCmdList->getInOrderExecHostRequiredSize();
+    EXPECT_EQ(0u, hostRequiredSize);
+    auto hostNodeAddress = regularCmdList->getInOrderExecHostGpuAddress();
+    EXPECT_EQ(0u, hostNodeAddress);
+
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    hostRequiredSize = regularCmdList->getInOrderExecHostRequiredSize();
+    EXPECT_EQ(sizeof(uint64_t), hostRequiredSize);
+    hostNodeAddress = regularCmdList->getInOrderExecHostGpuAddress();
+    EXPECT_NE(0u, hostNodeAddress);
+}
+
 } // namespace ult
 } // namespace L0

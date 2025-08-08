@@ -23,6 +23,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_imp.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -397,6 +398,15 @@ void CommandQueueImp::makeResidentForResidencyContainer(const NEO::ResidencyCont
     for (auto alloc : residencyContainer) {
         alloc->prepareHostPtrForResidency(csr);
         csr->makeResident(*alloc);
+    }
+}
+
+void CommandQueueImp::prepareInOrderCommandList(CommandListImp *commandList) {
+    if (commandList->inOrderCmdsPatchingEnabled()) {
+        commandList->addRegularCmdListSubmissionCounter();
+        commandList->patchInOrderCmds();
+    } else {
+        commandList->clearInOrderExecCounterAllocation();
     }
 }
 

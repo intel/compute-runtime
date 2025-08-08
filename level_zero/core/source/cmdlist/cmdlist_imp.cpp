@@ -374,6 +374,38 @@ void CommandListImp::clearInOrderExecCounterAllocation() {
     }
 }
 
+size_t CommandListImp::getInOrderExecDeviceRequiredSize() const {
+    size_t size = 0;
+    if (isInOrderExecutionEnabled()) {
+        size = inOrderExecInfo->getDeviceNodeWriteSize();
+    }
+    return size;
+}
+
+uint64_t CommandListImp::getInOrderExecDeviceGpuAddress() const {
+    uint64_t gpuAddress = 0;
+    if (isInOrderExecutionEnabled()) {
+        gpuAddress = inOrderExecInfo->getDeviceNodeGpuAddress();
+    }
+    return gpuAddress;
+}
+
+size_t CommandListImp::getInOrderExecHostRequiredSize() const {
+    size_t size = 0;
+    if (isInOrderExecutionEnabled()) {
+        size = inOrderExecInfo->getHostNodeWriteSize();
+    }
+    return size;
+}
+
+uint64_t CommandListImp::getInOrderExecHostGpuAddress() const {
+    uint64_t gpuAddress = 0;
+    if (isInOrderExecutionEnabled()) {
+        gpuAddress = inOrderExecInfo->getHostNodeGpuAddress();
+    }
+    return gpuAddress;
+}
+
 void CommandListImp::enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode) {
     if (!device->isImplicitScalingCapable() || this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
         return;

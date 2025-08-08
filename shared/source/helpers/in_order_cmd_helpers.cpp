@@ -165,4 +165,18 @@ void InOrderExecInfo::releaseNotUsedTempTimestampNodes(bool forceReturn) {
     tempTimestampNodes.swap(tempVector);
 }
 
+uint64_t InOrderExecInfo::getHostNodeGpuAddress() const {
+    if (hostCounterNode) {
+        return hostCounterNode->getGpuAddress() + allocationOffset;
+    }
+    return 0;
+}
+
+uint64_t InOrderExecInfo::getDeviceNodeGpuAddress() const {
+    if (deviceCounterNode) {
+        return deviceCounterNode->getGpuAddress() + allocationOffset;
+    }
+    return 0;
+}
+
 } // namespace NEO
