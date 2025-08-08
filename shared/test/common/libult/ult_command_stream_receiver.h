@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -607,6 +607,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t drainPagingFenceQueueCalled = 0;
     uint32_t flushHandlerCalled = 0;
     uint32_t obtainUniqueOwnershipCalledTimes = 0;
+    uint32_t walkerWithProfilingEnqueuedTimes = 0;
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;

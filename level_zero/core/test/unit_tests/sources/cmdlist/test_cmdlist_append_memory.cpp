@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -407,8 +407,12 @@ HWTEST2_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemo
     auto cmdQueue = std::make_unique<Mock<CommandQueue>>();
     cmdQueue->csr = ultCsr;
     cmdQueue->isCopyOnlyCommandQueue = true;
-    void *srcPtr = reinterpret_cast<void *>(0x1234);
-    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    constexpr size_t transferSize = sizeof(size_t);
+    void *src, *dst;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, transferSize, 0u, &src));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, transferSize, 0u, &dst));
 
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
@@ -437,7 +441,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemo
         expectedSize = alignUp(ultCsr->getCmdsSizeForHardwareContext() + sizeof(typename FamilyType::MI_BATCH_BUFFER_START), MemoryConstants::cacheLineSize);
     }
 
-    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dst, src, transferSize, nullptr, 0, nullptr, copyParams));
 
     EXPECT_EQ(expectedSize, ultCsr->getCS(0).getUsed() - sizeUsedBefore);
 
@@ -488,13 +492,16 @@ HWTEST2_F(AppendMemoryCopyTests, givenAsyncImmediateCommandListWhenAppendingMemo
     size_t csrOfffset = ultCsr->getCS(0).getUsed();
     size_t cmdListOffset = commandList->commandContainer.getCommandStream()->getUsed();
 
-    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dst, src, transferSize, nullptr, 0, nullptr, copyParams));
 
     EXPECT_EQ(csrOfffset, ultCsr->getCS(0).getUsed());
 
     EXPECT_FALSE(findTagUpdate(ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), cmdListOffset),
                                commandList->commandContainer.getCommandStream()->getUsed() - cmdListOffset,
                                ultCsr->getTagAllocation()->getGpuAddress()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(src));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(dst));
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenSyncImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenProgramCmdStreamWithFlushTask, MatchAny) {

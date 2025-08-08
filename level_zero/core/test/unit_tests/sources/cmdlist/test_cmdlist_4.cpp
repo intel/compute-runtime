@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1383,13 +1383,20 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingCopy
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
     ultCsr->recordFlushedBatchBuffer = true;
 
-    void *srcPtr = reinterpret_cast<void *>(0x12000);
-    void *dstPtr = reinterpret_cast<void *>(0x23000);
+    constexpr size_t transferSize = sizeof(size_t);
+    void *src, *dst;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, transferSize, 0u, &src));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, transferSize, 0u, &dst));
+
     CmdListMemoryCopyParams copyParams = {};
-    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
+    returnValue = commandList->appendMemoryCopy(dst, src, transferSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(src));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(dst));
 }
 
 HWTEST2_F(ImmediateCommandListTest, givenCopyEngineSyncCmdListWhenAppendingCopyOperationThenRequireMonitorFence, IsAtLeastXeHpcCore) {

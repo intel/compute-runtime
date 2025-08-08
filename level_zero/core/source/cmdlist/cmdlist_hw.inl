@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1631,6 +1631,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     }
 
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(*srcAllocationStruct.alloc, *dstAllocationStruct.alloc);
+    if (this->isImmediateType()) {
+        memoryCopyParams.taskCountUpdateRequired |= (dstAllocationStruct.alloc && dstAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr) ||
+                                                    (srcAllocationStruct.alloc && srcAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr);
+    }
+
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
@@ -1865,6 +1870,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     if (dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    if (this->isImmediateType()) {
+        memoryCopyParams.taskCountUpdateRequired |= dstAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr ||
+                                                    srcAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr;
     }
 
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(*srcAllocationStruct.alloc, *dstAllocationStruct.alloc);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -683,6 +683,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     if (isSplitNeeded) {
         memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1, false); // split generates more than 1 event
         memoryCopyParams.forceDisableCopyOnlyInOrderSignaling = true;
+        memoryCopyParams.taskCountUpdateRequired = true;
         hasStallindCmds = !memoryCopyParams.relaxedOrderingDispatch;
 
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
@@ -693,7 +694,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
                                                                      numWaitEvents, phWaitEvents, memoryCopyParams);
     }
 
-    return flushImmediate(ret, true, hasStallindCmds, memoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel, memoryCopyParams.copyOffloadAllowed, hSignalEvent, isSplitNeeded, nullptr, nullptr);
+    return flushImmediate(ret, true, hasStallindCmds, memoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel, memoryCopyParams.copyOffloadAllowed, hSignalEvent, memoryCopyParams.taskCountUpdateRequired, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -730,6 +731,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     if (isSplitNeeded) {
         memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1, false); // split generates more than 1 event
         memoryCopyParams.forceDisableCopyOnlyInOrderSignaling = true;
+        memoryCopyParams.taskCountUpdateRequired = true;
         hasStallindCmds = !memoryCopyParams.relaxedOrderingDispatch;
 
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uint32_t, uint32_t>(this, dstRegion->originX, srcRegion->originX, dstRegion->width, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, [&](uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
@@ -751,7 +753,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
                                                                            hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
     }
 
-    return flushImmediate(ret, true, hasStallindCmds, memoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel, memoryCopyParams.copyOffloadAllowed, hSignalEvent, isSplitNeeded, nullptr, nullptr);
+    return flushImmediate(ret, true, hasStallindCmds, memoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel, memoryCopyParams.copyOffloadAllowed, hSignalEvent, memoryCopyParams.taskCountUpdateRequired, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,5 +85,6 @@ struct CmdListMemoryCopyParams {
     bool relaxedOrderingDispatch = false;
     bool forceDisableCopyOnlyInOrderSignaling = false;
     bool copyOffloadAllowed = false;
+    bool taskCountUpdateRequired = false;
 };
 } // namespace L0

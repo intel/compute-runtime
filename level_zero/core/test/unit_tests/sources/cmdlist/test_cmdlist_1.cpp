@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2702,6 +2702,50 @@ TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmedia
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     auto result = commandList->appendMemoryCopyFromContext(dstPtr, nullptr, srcPtr, 8, nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST_F(CommandListCreateTests, givenImmediateCmdListWhenInvokingAppendMemoryCopyWithExternalHostPtrThenRequireTaskCountUpdate) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    EXPECT_EQ(device, commandList->getDevice());
+    EXPECT_TRUE(commandList->isImmediateType());
+    EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
+
+    constexpr size_t transferSize = sizeof(size_t);
+    void *hostPtr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, transferSize, 0u, &hostPtr));
+    size_t externalHostAlloc = 0;
+    CmdListMemoryCopyParams copyParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(hostPtr, &externalHostAlloc, sizeof(size_t), nullptr, 0, nullptr, copyParams));
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
+
+    if (L0GfxCoreHelper::useImmediateComputeFlushTask(device->getNEODevice()->getRootDeviceEnvironment())) {
+        ImmediateDispatchFlags &recordedImmediateDispatchFlags = ultCsr->recordedImmediateDispatchFlags;
+        EXPECT_TRUE(recordedImmediateDispatchFlags.requireTaskCountUpdate);
+    } else {
+        DispatchFlags &recordedDispatchFlags = ultCsr->recordedDispatchFlags;
+        EXPECT_TRUE(recordedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
+
+    const ze_copy_region_t region = {0U, 0U, 0U, 1, 1, 0U};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(hostPtr, &region, 0, 0, &externalHostAlloc, &region, 0, 0, nullptr, 0, nullptr, copyParams));
+
+    if (L0GfxCoreHelper::useImmediateComputeFlushTask(device->getNEODevice()->getRootDeviceEnvironment())) {
+        ImmediateDispatchFlags &recordedImmediateDispatchFlags = ultCsr->recordedImmediateDispatchFlags;
+        EXPECT_TRUE(recordedImmediateDispatchFlags.requireTaskCountUpdate);
+    } else {
+        DispatchFlags &recordedDispatchFlags = ultCsr->recordedDispatchFlags;
+        EXPECT_TRUE(recordedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(hostPtr));
 }
 
 TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmediateCommandListThenSuccessIsReturned) {
