@@ -1799,6 +1799,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
+    if (this->isImmediateType()) {
+        memoryCopyParams.taskCountUpdateRequired |= (dstAllocationStruct.alloc && dstAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr) ||
+                                                    (srcAllocationStruct.alloc && srcAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr);
+    }
+
     if ((dstAllocationStruct.alloc == nullptr) && (NEO::debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.get() == 1)) {
         appendMemAdvise(device, reinterpret_cast<void *>(dstAllocationStruct.alignedAllocationPtr), size, static_cast<ze_memory_advice_t>(ZE_MEMORY_ADVICE_SET_SYSTEM_MEMORY_PREFERRED_LOCATION));
     }
@@ -2050,6 +2055,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     if (dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    if (this->isImmediateType()) {
+        memoryCopyParams.taskCountUpdateRequired |= dstAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr ||
+                                                    srcAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr;
     }
 
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(*srcAllocationStruct.alloc, *dstAllocationStruct.alloc);

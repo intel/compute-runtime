@@ -576,6 +576,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     void printDeviceIndex();
     void checkForNewResources(TaskCountType submittedTaskCount, TaskCountType allocationTaskCount, GraphicsAllocation &gfxAllocation);
     bool checkImplicitFlushForGpuIdle();
+    MOCKABLE_VIRTUAL bool getAndClearIsWalkerWithProfilingEnqueued();
     void downloadTagAllocation(TaskCountType taskCountToWait);
     void printTagAddressContent(TaskCountType taskCountToWait, int64_t waitTimeout, bool start);
     virtual void addToEvictionContainer(GraphicsAllocation &gfxAllocation);

@@ -1026,6 +1026,12 @@ bool CommandStreamReceiver::checkImplicitFlushForGpuIdle() {
     return false;
 }
 
+bool CommandStreamReceiver::getAndClearIsWalkerWithProfilingEnqueued() {
+    bool retVal = this->isWalkerWithProfilingEnqueued;
+    this->isWalkerWithProfilingEnqueued = false;
+    return retVal;
+}
+
 void CommandStreamReceiver::downloadTagAllocation(TaskCountType taskCountToWait) {
     if (this->getTagAllocation()) {
         if (taskCountToWait && taskCountToWait <= this->peekLatestFlushedTaskCount()) {

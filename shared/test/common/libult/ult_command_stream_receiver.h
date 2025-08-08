@@ -441,6 +441,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         }
     }
 
+    bool getAndClearIsWalkerWithProfilingEnqueued() override {
+        if (this->isWalkerWithProfilingEnqueued) {
+            ++this->walkerWithProfilingEnqueuedTimes;
+        }
+        return CommandStreamReceiverHw<GfxFamily>::getAndClearIsWalkerWithProfilingEnqueued();
+    }
+
     bool createPerDssBackedBuffer(Device &device) override {
         createPerDssBackedBufferCalled++;
         return BaseClass::createPerDssBackedBuffer(device);
@@ -630,6 +637,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t drainPagingFenceQueueCalled = 0;
     uint32_t flushHandlerCalled = 0;
     uint32_t obtainUniqueOwnershipCalledTimes = 0;
+    uint32_t walkerWithProfilingEnqueuedTimes = 0;
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;

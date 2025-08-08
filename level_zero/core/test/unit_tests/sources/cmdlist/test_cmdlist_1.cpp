@@ -2201,41 +2201,47 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
 
-    auto verifyFlag = [&ultCsr](ze_result_t result, bool dispatchFlag) {
+    auto verifyWalkerWithProfilingEnqueued = [&ultCsr](ze_result_t result, bool expectEnqueued) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_EQ(ultCsr->isWalkerWithProfilingEnqueued, dispatchFlag);
+        const auto enqueueTimes = ultCsr->walkerWithProfilingEnqueuedTimes + ultCsr->isWalkerWithProfilingEnqueued;
+        if (expectEnqueued) {
+            EXPECT_GT(enqueueTimes, 0u);
+        } else {
+            EXPECT_EQ(0u, enqueueTimes);
+        }
+        ultCsr->walkerWithProfilingEnqueuedTimes = 0u;
         ultCsr->isWalkerWithProfilingEnqueued = false;
     };
 
-    auto expectFlagEnabled = true && this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
+    bool expectWalkerWithProfilingEnqueued = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
     // non-pipelined state
-    verifyFlag(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event, 0, nullptr, launchParams), expectFlagEnabled);
+    verifyWalkerWithProfilingEnqueued(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event, 0, nullptr, launchParams), expectWalkerWithProfilingEnqueued);
 
     // non-pipelined state already programmed
-    verifyFlag(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event, 0, nullptr, launchParams), expectFlagEnabled);
+    verifyWalkerWithProfilingEnqueued(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event, 0, nullptr, launchParams), expectWalkerWithProfilingEnqueued);
 
-    verifyFlag(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams), false);
+    verifyWalkerWithProfilingEnqueued(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams), false);
 
-    verifyFlag(commandList->appendLaunchKernelIndirect(kernel.toHandle(), groupCount, event, 0, nullptr, false), expectFlagEnabled);
+    verifyWalkerWithProfilingEnqueued(commandList->appendLaunchKernelIndirect(kernel.toHandle(), groupCount, event, 0, nullptr, false), expectWalkerWithProfilingEnqueued);
 
-    verifyFlag(commandList->appendBarrier(event, 0, nullptr, false), false);
+    verifyWalkerWithProfilingEnqueued(commandList->appendBarrier(event, 0, nullptr, false), false);
 
     CmdListMemoryCopyParams copyParams = {};
-    verifyFlag(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, event, 0, nullptr, copyParams), expectFlagEnabled);
+    verifyWalkerWithProfilingEnqueued(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, event, 0, nullptr, copyParams), expectWalkerWithProfilingEnqueued);
 
-    verifyFlag(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, event, 0, nullptr, copyParams), expectFlagEnabled);
+    verifyWalkerWithProfilingEnqueued(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, event, 0, nullptr, copyParams), expectWalkerWithProfilingEnqueued);
 
-    verifyFlag(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, event, 0, nullptr, copyParams), expectFlagEnabled);
+    verifyWalkerWithProfilingEnqueued(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, event, 0, nullptr, copyParams), expectWalkerWithProfilingEnqueued);
 
-    verifyFlag(commandList->appendEventReset(event), false);
+    verifyWalkerWithProfilingEnqueued(commandList->appendEventReset(event), false);
 
-    verifyFlag(commandList->appendSignalEvent(event, false), false);
+    verifyWalkerWithProfilingEnqueued(commandList->appendSignalEvent(event, false), false);
 
-    verifyFlag(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false);
+    verifyWalkerWithProfilingEnqueued(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false);
 
-    verifyFlag(commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false), false);
+    verifyWalkerWithProfilingEnqueued(commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false), false);
 
-    verifyFlag(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), event, 0, nullptr), false);
+    verifyWalkerWithProfilingEnqueued(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), event, 0, nullptr), false);
 
     if constexpr (FamilyType::supportsSampler) {
         auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
@@ -2251,27 +2257,27 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
 
         CmdListMemoryCopyParams copyParams = {};
 
-        verifyFlag(commandList->appendImageCopyRegion(image->toHandle(), image->toHandle(), &imgRegion, &imgRegion, event, 0, nullptr, copyParams), expectFlagEnabled);
+        verifyWalkerWithProfilingEnqueued(commandList->appendImageCopyRegion(image->toHandle(), image->toHandle(), &imgRegion, &imgRegion, event, 0, nullptr, copyParams), expectWalkerWithProfilingEnqueued);
 
-        verifyFlag(commandList->appendImageCopyFromMemory(image->toHandle(), dstPtr, &imgRegion, event, 0, nullptr, copyParams), expectFlagEnabled);
+        verifyWalkerWithProfilingEnqueued(commandList->appendImageCopyFromMemory(image->toHandle(), dstPtr, &imgRegion, event, 0, nullptr, copyParams), expectWalkerWithProfilingEnqueued);
 
-        verifyFlag(commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &imgRegion, event, 0, nullptr, copyParams), expectFlagEnabled);
+        verifyWalkerWithProfilingEnqueued(commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &imgRegion, event, 0, nullptr, copyParams), expectWalkerWithProfilingEnqueued);
 
-        verifyFlag(commandList->appendImageCopyFromMemoryExt(image->toHandle(), dstPtr, &imgRegion, bytesPerPixel, bytesPerPixel, event, 0, nullptr, copyParams), expectFlagEnabled);
+        verifyWalkerWithProfilingEnqueued(commandList->appendImageCopyFromMemoryExt(image->toHandle(), dstPtr, &imgRegion, bytesPerPixel, bytesPerPixel, event, 0, nullptr, copyParams), expectWalkerWithProfilingEnqueued);
 
-        verifyFlag(commandList->appendImageCopyToMemoryExt(dstPtr, image->toHandle(), &imgRegion, bytesPerPixel, bytesPerPixel, event, 0, nullptr, copyParams), expectFlagEnabled);
+        verifyWalkerWithProfilingEnqueued(commandList->appendImageCopyToMemoryExt(dstPtr, image->toHandle(), &imgRegion, bytesPerPixel, bytesPerPixel, event, 0, nullptr, copyParams), expectWalkerWithProfilingEnqueued);
     }
 
     size_t rangeSizes = 1;
     const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
-    verifyFlag(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, event, 0, nullptr), false);
+    verifyWalkerWithProfilingEnqueued(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, event, 0, nullptr), false);
 
     CmdListKernelLaunchParams cooperativeParams = {};
     cooperativeParams.isCooperative = true;
 
-    verifyFlag(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event, 0, nullptr, cooperativeParams), expectFlagEnabled);
+    verifyWalkerWithProfilingEnqueued(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event, 0, nullptr, cooperativeParams), expectWalkerWithProfilingEnqueued);
 
-    verifyFlag(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event, 0, nullptr, cooperativeParams), expectFlagEnabled);
+    verifyWalkerWithProfilingEnqueued(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event, 0, nullptr, cooperativeParams), expectWalkerWithProfilingEnqueued);
 
     driverHandle->releaseImportedPointer(dstPtr);
 }
@@ -2957,6 +2963,50 @@ TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmedia
     size_t dst = 0;
     auto result = commandList->appendMemoryCopyFromContext(&dst, nullptr, &src, sizeof(size_t), nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST_F(CommandListCreateTests, givenImmediateCmdListWhenInvokingAppendMemoryCopyWithExternalHostPtrThenRequireTaskCountUpdate) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    EXPECT_EQ(device, commandList->getDevice());
+    EXPECT_TRUE(commandList->isImmediateType());
+    EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
+
+    constexpr size_t transferSize = sizeof(size_t);
+    void *hostPtr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, transferSize, 0u, &hostPtr));
+    size_t externalHostAlloc = 0;
+    CmdListMemoryCopyParams copyParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(hostPtr, &externalHostAlloc, sizeof(size_t), nullptr, 0, nullptr, copyParams));
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
+
+    if (L0GfxCoreHelper::useImmediateComputeFlushTask(device->getNEODevice()->getRootDeviceEnvironment())) {
+        ImmediateDispatchFlags &recordedImmediateDispatchFlags = ultCsr->recordedImmediateDispatchFlags;
+        EXPECT_TRUE(recordedImmediateDispatchFlags.requireTaskCountUpdate);
+    } else {
+        DispatchFlags &recordedDispatchFlags = ultCsr->recordedDispatchFlags;
+        EXPECT_TRUE(recordedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
+
+    const ze_copy_region_t region = {0U, 0U, 0U, 1, 1, 0U};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopyRegion(hostPtr, &region, 0, 0, &externalHostAlloc, &region, 0, 0, nullptr, 0, nullptr, copyParams));
+
+    if (L0GfxCoreHelper::useImmediateComputeFlushTask(device->getNEODevice()->getRootDeviceEnvironment())) {
+        ImmediateDispatchFlags &recordedImmediateDispatchFlags = ultCsr->recordedImmediateDispatchFlags;
+        EXPECT_TRUE(recordedImmediateDispatchFlags.requireTaskCountUpdate);
+    } else {
+        DispatchFlags &recordedDispatchFlags = ultCsr->recordedDispatchFlags;
+        EXPECT_TRUE(recordedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(hostPtr));
 }
 
 TEST_F(CommandListCreateTests, whenInvokingAppendMemoryCopyFromContextForImmediateCommandListThenSuccessIsReturned) {
