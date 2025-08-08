@@ -243,12 +243,13 @@ ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(
 /// @brief Metric Calculation extension Version(s)
 typedef enum _zet_intel_metric_calculation_exp_version_t {
     ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                            ///< version 1.0
-    ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_1_0, ///< latest known version
+    ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_1_1 = ZE_MAKE_VERSION(1, 1),                            ///< version 1.1
+    ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_1_1, ///< latest known version
     ZET_INTEL_METRIC_CALCULATION_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zet_intel_metric_calculation_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Query an metric group calculation properties
+/// @brief Query metric group calculation properties
 /// This structure can be passed in the 'pNext' of zet_metric_group_properties_t
 typedef struct _zet_intel_metric_group_calculation_properties_exp_t {
     zet_structure_type_ext_t stype; ///< [in] type of this structure
@@ -257,6 +258,16 @@ typedef struct _zet_intel_metric_group_calculation_properties_exp_t {
     bool isTimeFilterSupported;     ///< [out] Flag to indicate if the metric group supports time filtering for
                                     ///< metrics calculation.
 } zet_intel_metric_group_calculation_properties_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query a metric calculable property
+/// This structure can be passed in the 'pNext' of zet_metric_properties_t
+typedef struct _zet_intel_metric_calculable_properties_exp_t {
+    zet_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    bool isCalculable;              ///< [out] Flag to indicate if the metric supports calculation.
+} zet_intel_metric_calculable_properties_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Handle of metric calculation operation

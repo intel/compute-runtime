@@ -669,7 +669,19 @@ IpSamplingMetricImp::IpSamplingMetricImp(MetricSource &metricSource, zet_metric_
 }
 
 ze_result_t IpSamplingMetricImp::getProperties(zet_metric_properties_t *pProperties) {
+    auto pNext = pProperties->pNext;
     *pProperties = properties;
+
+    while (pNext != nullptr) {
+        auto extendedProperties = reinterpret_cast<zet_base_properties_t *>(pNext);
+        if (static_cast<uint32_t>(extendedProperties->stype) == ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULABLE_PROPERTIES_EXP) {
+            auto calculableProperties = reinterpret_cast<zet_intel_metric_calculable_properties_exp_t *>(extendedProperties);
+            // All metrics are calculable in IP Sampling
+            calculableProperties->isCalculable = true;
+        }
+        pNext = extendedProperties->pNext;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

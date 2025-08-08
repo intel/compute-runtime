@@ -245,6 +245,42 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricG
         }
     }
 }
+
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenIpSamplingMetricsCalculablePropertyIsAlwaysTrue, EustallSupportedPlatforms) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    for (auto device : testDevices) {
+
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        EXPECT_EQ(metricGroupCount, 1u);
+        std::vector<zet_metric_group_handle_t> metricGroups(metricGroupCount);
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data());
+        ASSERT_NE(metricGroups[0], nullptr);
+
+        uint32_t metricCount = 0;
+        EXPECT_EQ(zetMetricGet(metricGroups[0], &metricCount, nullptr), ZE_RESULT_SUCCESS);
+        std::vector<zet_metric_handle_t> metricHandles(metricCount);
+        EXPECT_EQ(zetMetricGet(metricGroups[0], &metricCount, metricHandles.data()), ZE_RESULT_SUCCESS);
+
+        zet_metric_properties_t ipSamplingMetricProperties = {};
+        zet_intel_metric_calculable_properties_exp_t calculableProperties{};
+        calculableProperties.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULABLE_PROPERTIES_EXP;
+        calculableProperties.pNext = nullptr;
+        ipSamplingMetricProperties.pNext = &calculableProperties;
+
+        for (auto &metricHandle : metricHandles) {
+            EXPECT_EQ(zetMetricGetProperties(metricHandle, &ipSamplingMetricProperties), ZE_RESULT_SUCCESS);
+            EXPECT_TRUE(calculableProperties.isCalculable);
+        }
+
+        // Check that invalid structure is handled gracefully
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+        ipSamplingMetricProperties.pNext = &metricGroupProperties;
+        EXPECT_EQ(zetMetricGetProperties(metricHandles[0], &ipSamplingMetricProperties), ZE_RESULT_SUCCESS);
+    }
+}
+
 using IsNotGen9ThruPVC = IsNotWithinProducts<IGFX_SKYLAKE, IGFX_PVC>;
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnableMetricAPIOnUnsupportedPlatformsThenFailureIsReturned, IsNotGen9ThruPVC) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
