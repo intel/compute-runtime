@@ -19,7 +19,6 @@
 #include <limits.h>
 #include <map>
 #include <optional>
-#include <queue>
 #include <vector>
 
 using namespace NEO;

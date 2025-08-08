@@ -20,7 +20,7 @@ class DeviceCapsReaderDrm : public DeviceCapsReader {
     static std::unique_ptr<DeviceCapsReaderDrm> create(const Drm &drm) {
         auto ioctlHelper = drm.getIoctlHelper();
         auto caps = ioctlHelper->queryDeviceCaps();
-        if (!caps) {
+        if (nullptr == caps) {
             return nullptr;
         }
 

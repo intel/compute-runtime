@@ -243,7 +243,7 @@ class IoctlHelper {
     virtual void syncUserptrAlloc(DrmMemoryManager &memoryManager, GraphicsAllocation &allocation) { return; };
 
     virtual bool queryDeviceParams(uint32_t *moduleId, uint16_t *serverType) { return false; }
-    virtual std::optional<std::vector<uint32_t>> queryDeviceCaps() { return std::nullopt; }
+    virtual std::unique_ptr<std::vector<uint32_t>> queryDeviceCaps() { return nullptr; }
 
     virtual bool isTimestampsRefreshEnabled() { return false; }
     virtual uint32_t getNumProcesses() const { return 1; }
