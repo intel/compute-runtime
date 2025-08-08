@@ -249,11 +249,7 @@ KernelMutableState::KernelMutableState(const KernelMutableState &rhs) : Params{r
     pImplicitArgs = (rhs.pImplicitArgs) ? std::make_unique<NEO::ImplicitArgs>(*rhs.pImplicitArgs) : nullptr;
     pExtension = nullptr;
 
-    crossThreadDataSize = rhs.crossThreadDataSize;
-    if (crossThreadDataSize) {
-        crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
-        std::memcpy(crossThreadData.get(), rhs.crossThreadData.get(), crossThreadDataSize);
-    }
+    crossThreadData = rhs.crossThreadData;
 
     surfaceStateHeapDataSize = rhs.surfaceStateHeapDataSize;
     if (surfaceStateHeapDataSize) {
@@ -292,7 +288,6 @@ void KernelMutableState::swap(KernelMutableState &rhs) {
     swap(this->pImplicitArgs, rhs.pImplicitArgs);
     swap(this->pExtension, rhs.pExtension);
     swap(this->crossThreadData, rhs.crossThreadData);
-    swap(this->crossThreadDataSize, rhs.crossThreadDataSize);
     swap(this->surfaceStateHeapData, rhs.surfaceStateHeapData);
     swap(this->surfaceStateHeapDataSize, rhs.surfaceStateHeapDataSize);
     swap(this->dynamicStateHeapData, rhs.dynamicStateHeapData);
@@ -318,7 +313,6 @@ void KernelMutableState::moveMembersFrom(KernelMutableState &&orig) {
     pImplicitArgs = std::move(orig.pImplicitArgs);
     pExtension = std::move(orig.pExtension);
 
-    crossThreadDataSize = std::exchange(orig.crossThreadDataSize, 0U);
     crossThreadData = std::move(orig.crossThreadData);
     surfaceStateHeapDataSize = std::exchange(orig.surfaceStateHeapDataSize, 0U);
     surfaceStateHeapData = std::move(orig.surfaceStateHeapData);
@@ -686,7 +680,7 @@ ze_result_t KernelImp::setArgImmediate(uint32_t argIndex, size_t argSize, const 
             size_t maxBytesToCopy = argSize - element.sourceOffset;
             size_t bytesToCopy = std::min(static_cast<size_t>(element.size), maxBytesToCopy);
 
-            auto pDst = ptrOffset(state.crossThreadData.get(), element.offset);
+            auto pDst = &getCrossThreadDataSpan()[element.offset];
             if (argVal) {
                 auto pSrc = ptrOffset(argVal, element.sourceOffset);
                 memcpy_s(pDst, element.size, pSrc, bytesToCopy);
@@ -832,7 +826,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         state.slmArgSizes[argIndex] = static_cast<uint32_t>(argSize);
         state.kernelArgInfos[argIndex] = KernelArgInfo{nullptr, 0, 0, false};
         UNRECOVERABLE_IF(NEO::isUndefinedOffset(currArg.as<NEO::ArgDescPointer>().slmOffset));
-        auto slmOffset = *reinterpret_cast<uint32_t *>(state.crossThreadData.get() + currArg.as<NEO::ArgDescPointer>().slmOffset);
+        auto slmOffset = *reinterpret_cast<uint32_t *>(&getCrossThreadDataSpan()[currArg.as<NEO::ArgDescPointer>().slmOffset]);
         state.slmArgOffsetValues[argIndex] = slmOffset;
         slmOffset += static_cast<uint32_t>(argSize);
         ++argIndex;
@@ -1231,13 +1225,13 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         this->state.surfaceStateHeapDataSize = kernelImmData->getSurfaceStateHeapSize();
     }
 
-    if (kernelDescriptor.kernelAttributes.crossThreadDataSize != 0) {
-        this->state.crossThreadData.reset(new uint8_t[kernelDescriptor.kernelAttributes.crossThreadDataSize]);
-        memcpy_s(this->state.crossThreadData.get(),
-                 kernelDescriptor.kernelAttributes.crossThreadDataSize,
+    if (uint16_t crossThreadDataSize = kernelDescriptor.kernelAttributes.crossThreadDataSize;
+        crossThreadDataSize != 0) {
+        this->state.crossThreadData.resize(crossThreadDataSize);
+        memcpy_s(this->state.crossThreadData.data(),
+                 crossThreadDataSize,
                  kernelImmData->getCrossThreadDataTemplate(),
-                 kernelDescriptor.kernelAttributes.crossThreadDataSize);
-        this->state.crossThreadDataSize = kernelDescriptor.kernelAttributes.crossThreadDataSize;
+                 crossThreadDataSize);
     }
 
     if (kernelImmData->getDynamicStateHeapDataSize() != 0) {

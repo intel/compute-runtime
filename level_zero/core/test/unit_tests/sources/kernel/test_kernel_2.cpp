@@ -59,16 +59,17 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssigningToItselfThenTheCurrent
     constexpr size_t mockSize{8U};
 
     KernelMutableState state1{};
-    state1.crossThreadData.reset(new uint8_t[mockSize]);
-    auto addressBeforeAssignment{state1.crossThreadData.get()};
+    state1.crossThreadData.clear();
+    state1.crossThreadData.resize(mockSize, 0x0);
+    auto addressBeforeAssignment{state1.crossThreadData.data()};
 
     auto &notReallyDifferentState{state1};
     state1 = notReallyDifferentState;
-    auto addressAfterAssignment{state1.crossThreadData.get()};
+    auto addressAfterAssignment{state1.crossThreadData.data()};
 
     auto &&notReallyDifferentState2{std::move(state1)};
     state1 = std::move(notReallyDifferentState2);
-    auto addressAfterAssignment2{state1.crossThreadData.get()};
+    auto addressAfterAssignment2{state1.crossThreadData.data()};
 
     EXPECT_EQ(addressBeforeAssignment, addressAfterAssignment);
     EXPECT_EQ(addressBeforeAssignment, addressAfterAssignment2);
@@ -86,9 +87,9 @@ void fillKernelMutableStateWithMockData(KernelMutableState &state) {
     state.pExtension = std::make_unique<KernelExt>();
 
     constexpr size_t mockSize{8U};
-    state.crossThreadData.reset(new uint8_t[mockSize]);
-    std::memcpy(state.crossThreadData.get(), std::to_array<uint8_t>({11, 12, 13, 14, 15, 16, 17, 18}).data(), mockSize);
-    state.crossThreadDataSize = mockSize;
+    state.crossThreadData.clear();
+    state.crossThreadData.reserve(mockSize);
+    std::ranges::copy(std::to_array<uint8_t, mockSize>({11, 12, 13, 14, 15, 16, 17, 18}), std::back_inserter(state.crossThreadData));
 
     state.surfaceStateHeapData.reset(new uint8_t[mockSize]);
     std::memcpy(state.surfaceStateHeapData.get(), std::to_array<uint8_t>({21, 22, 23, 24, 25, 26, 27, 28}).data(), mockSize);
@@ -142,7 +143,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     KernelMutableState state2{};
     state2 = state1; // assignment operator is being tested
 
-    EXPECT_EQ(0, std::memcmp(state1.crossThreadData.get(), state2.crossThreadData.get(), state1.crossThreadDataSize));
+    EXPECT_EQ(0, std::memcmp(state1.crossThreadData.data(), state2.crossThreadData.data(), state1.crossThreadData.size()));
     EXPECT_EQ(0, std::memcmp(state1.surfaceStateHeapData.get(), state2.surfaceStateHeapData.get(), state1.surfaceStateHeapDataSize));
     EXPECT_EQ(0, std::memcmp(state1.dynamicStateHeapData.get(), state2.dynamicStateHeapData.get(), state1.dynamicStateHeapDataSize));
 
@@ -164,7 +165,6 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
 
     EXPECT_EQ(0, std::memcmp(state1.globalOffsets, state2.globalOffsets, KernelMutableState::dimMax * sizeof(uint32_t)));
     EXPECT_EQ(0, std::memcmp(state1.groupSize, state2.groupSize, KernelMutableState::dimMax * sizeof(uint32_t)));
-    EXPECT_EQ(state1.crossThreadDataSize, state2.crossThreadDataSize);
     EXPECT_EQ(state1.surfaceStateHeapDataSize, state2.surfaceStateHeapDataSize);
     EXPECT_EQ(state1.dynamicStateHeapDataSize, state2.dynamicStateHeapDataSize);
     EXPECT_EQ(state1.perThreadDataSize, state2.perThreadDataSize);
@@ -182,8 +182,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     KernelMutableState state3{};
     state3 = std::move(state1);
 
-    EXPECT_EQ(nullptr, state1.crossThreadData.get());
-    EXPECT_EQ(0U, state1.crossThreadDataSize);
+    EXPECT_EQ(0U, state1.crossThreadData.size());
     EXPECT_EQ(nullptr, state1.surfaceStateHeapData.get());
     EXPECT_EQ(0U, state1.surfaceStateHeapDataSize);
     EXPECT_EQ(nullptr, state1.dynamicStateHeapData.get());
@@ -194,7 +193,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     EXPECT_EQ(0U, state1.perThreadDataSizeForWholeThreadGroup);
     EXPECT_EQ(0U, state1.perThreadDataSizeForWholeThreadGroupAllocated);
 
-    EXPECT_EQ(0, std::memcmp(state3.crossThreadData.get(), state2.crossThreadData.get(), state3.crossThreadDataSize));
+    EXPECT_EQ(0, std::memcmp(state3.crossThreadData.data(), state2.crossThreadData.data(), state3.crossThreadData.size()));
     EXPECT_EQ(0, std::memcmp(state3.surfaceStateHeapData.get(), state2.surfaceStateHeapData.get(), state3.surfaceStateHeapDataSize));
     EXPECT_EQ(0, std::memcmp(state3.dynamicStateHeapData.get(), state2.dynamicStateHeapData.get(), state3.dynamicStateHeapDataSize));
 
@@ -216,7 +215,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
 
     EXPECT_EQ(0, std::memcmp(state3.globalOffsets, state2.globalOffsets, KernelMutableState::dimMax * sizeof(uint32_t)));
     EXPECT_EQ(0, std::memcmp(state3.groupSize, state2.groupSize, KernelMutableState::dimMax * sizeof(uint32_t)));
-    EXPECT_EQ(state3.crossThreadDataSize, state2.crossThreadDataSize);
+    EXPECT_EQ(state3.crossThreadData.size(), state2.crossThreadData.size());
     EXPECT_EQ(state3.surfaceStateHeapDataSize, state2.surfaceStateHeapDataSize);
     EXPECT_EQ(state3.dynamicStateHeapDataSize, state2.dynamicStateHeapDataSize);
     EXPECT_EQ(state3.perThreadDataSize, state2.perThreadDataSize);
@@ -243,9 +242,9 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenKernelImpClonedThenStateAssigne
     kernel1.module = &module;
 
     constexpr size_t mockSize{8U};
-    kernel1.state.crossThreadData.reset(new uint8_t[mockSize]);
-    std::memcpy(kernel1.state.crossThreadData.get(), std::to_array<uint8_t>({91, 92, 93, 94, 95, 96, 97, 98}).data(), mockSize);
-    kernel1.state.crossThreadDataSize = mockSize;
+    kernel1.state.crossThreadData.clear();
+    kernel1.state.crossThreadData.reserve(mockSize);
+    std::ranges::copy(std::to_array<uint8_t, mockSize>({91, 92, 93, 94, 95, 96, 97, 98}), std::back_inserter(kernel1.state.crossThreadData));
     kernel1.state.reservePerThreadDataForWholeThreadGroup(mockSize);
     std::memcpy(kernel1.state.perThreadDataForWholeThreadGroup, std::to_array<uint8_t>({81, 82, 83, 84, 85, 86, 87, 88}).data(), mockSize);
 
@@ -254,14 +253,14 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenKernelImpClonedThenStateAssigne
     fillKernelMutableStateWithMockData(state);
 
     // No need to check each and every member again
-    EXPECT_NE(0, std::memcmp(kernel1.state.crossThreadData.get(), state.crossThreadData.get(), mockSize));
+    EXPECT_NE(0, std::memcmp(kernel1.state.crossThreadData.data(), state.crossThreadData.data(), mockSize));
     EXPECT_NE(0, std::memcmp(kernel1.state.perThreadDataForWholeThreadGroup, state.perThreadDataForWholeThreadGroup, mockSize));
 
     auto clonedKernel = kernel1.cloneWithStateOverride(&state);
     auto kernel2 = static_cast<WhiteBox<KernelImp> *>(clonedKernel.get());
 
     // KernelMutableState part taken from `state`
-    EXPECT_EQ(0, std::memcmp(kernel2->state.crossThreadData.get(), state.crossThreadData.get(), mockSize));
+    EXPECT_EQ(0, std::memcmp(kernel2->state.crossThreadData.data(), state.crossThreadData.data(), mockSize));
     EXPECT_EQ(0, std::memcmp(kernel2->state.perThreadDataForWholeThreadGroup, state.perThreadDataForWholeThreadGroup, mockSize));
 
     // KernelImp part taken from `kernel1`
@@ -284,9 +283,6 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenKernelImpClonedThenStateAssigne
 }
 
 TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAndGroupCount) {
-    uint32_t *crossThreadData =
-        reinterpret_cast<uint32_t *>(alignedMalloc(sizeof(uint32_t[6]), 32));
-
     WhiteBox<::L0::KernelImmutableData> kernelInfo = {};
     NEO::KernelDescriptor descriptor;
     kernelInfo.kernelDescriptor = &descriptor;
@@ -299,8 +295,7 @@ TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSi
 
     Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
-    kernel.state.crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData));
-    kernel.state.crossThreadDataSize = sizeof(uint32_t[6]);
+    kernel.state.crossThreadData.resize(sizeof(uint32_t[6]));
     kernel.state.groupSize[0] = 2;
     kernel.state.groupSize[1] = 3;
     kernel.state.groupSize[2] = 5;
@@ -318,8 +313,7 @@ TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSi
     EXPECT_EQ(11U, numGroups[1]);
     EXPECT_EQ(13U, numGroups[2]);
 
-    kernel.state.crossThreadData.release();
-    alignedFree(crossThreadData);
+    kernel.state.crossThreadData.clear();
 }
 
 TEST_F(KernelImpTest, givenExecutionMaskWithoutReminderWhenProgrammingItsValueThenSetValidNumberOfBits) {

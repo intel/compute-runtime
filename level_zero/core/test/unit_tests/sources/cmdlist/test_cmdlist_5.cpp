@@ -1831,8 +1831,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
-    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
-    mockKernel.state.crossThreadDataSize = 4 * sizeof(uint64_t);
+    mockKernel.state.crossThreadData.resize(4 * sizeof(uint64_t), 0x0);
     mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
 
@@ -1902,8 +1901,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
     argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
-    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
-    mockKernel.state.crossThreadDataSize = 4 * sizeof(uint64_t);
+    mockKernel.state.crossThreadData.resize(4 * sizeof(uint64_t), 0x0);
     const auto surfStateSize = static_cast<uint32_t>(device->getNEODevice()->getGfxCoreHelper().getRenderSurfaceStateSize());
     mockKernel.state.surfaceStateHeapData = std::make_unique<uint8_t[]>(surfStateSize);
     mockKernel.state.surfaceStateHeapDataSize = surfStateSize;
@@ -1955,7 +1953,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     auto offsetInHeap = ptrDiff(sshHeap->getSpace(0), sshHeap->getCpuBase()) - surfStateSize;
     uint64_t bindlessSshBaseOffset = ptrDiff(sshHeap->getGraphicsAllocation()->getGpuAddress(), sshHeap->getGraphicsAllocation()->getGpuBaseAddress()) + offsetInHeap;
     auto patchValue = device->getNEODevice()->getGfxCoreHelper().getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSshBaseOffset));
-    auto patchLocation = reinterpret_cast<uint32_t *>(mockKernel.state.crossThreadData.get());
+    auto patchLocation = reinterpret_cast<const uint32_t *>(mockKernel.getCrossThreadData());
     EXPECT_EQ(patchValue, *patchLocation);
 }
 

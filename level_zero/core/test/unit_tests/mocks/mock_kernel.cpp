@@ -41,7 +41,8 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
     NEO::populateKernelDescriptor(descriptor, kernelTokens, 8);
     immutableData.kernelDescriptor = &descriptor;
     immutableData.kernelInfo = &info;
-    state.crossThreadData.reset(new uint8_t[100]);
+    state.crossThreadData.clear();
+    state.crossThreadData.resize(100U, 0x0);
 
     state.groupSize[0] = 1;
     state.groupSize[1] = 1;

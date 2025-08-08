@@ -2968,8 +2968,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     kernel.module = mockModule.get();
     kernel.descriptor.kernelAttributes.flags.passInlineData = false;
     kernel.state.perThreadDataSizeForWholeThreadGroup = 0;
-    kernel.state.crossThreadDataSize = 64;
-    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(kernel.state.crossThreadDataSize);
+    kernel.state.crossThreadData.resize(64U, 0x0);
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0);
@@ -3000,8 +2999,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughIohSpaceWhenLaunchingKern
     kernel.module = mockModule.get();
     kernel.descriptor.kernelAttributes.flags.passInlineData = false;
     kernel.state.perThreadDataSizeForWholeThreadGroup = 0;
-    kernel.state.crossThreadDataSize = 64;
-    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(kernel.state.crossThreadDataSize);
+    kernel.state.crossThreadData.resize(64U, 0x0);
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0);

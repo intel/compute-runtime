@@ -81,8 +81,8 @@ struct KernelImp : Kernel {
 
     uint32_t suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineGroupType, uint32_t *groupSize, bool forceSingleTileQuery);
 
-    const uint8_t *getCrossThreadData() const override { return state.crossThreadData.get(); }
-    uint32_t getCrossThreadDataSize() const override { return state.crossThreadDataSize; }
+    const uint8_t *getCrossThreadData() const override { return state.crossThreadData.data(); }
+    uint32_t getCrossThreadDataSize() const override { return static_cast<uint32_t>(state.crossThreadData.size()); }
 
     const std::vector<NEO::GraphicsAllocation *> &getArgumentsResidencyContainer() const override {
         return state.argumentsResidencyContainer;
@@ -251,7 +251,7 @@ struct KernelImp : Kernel {
     void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
     uint32_t getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const;
     ze_result_t validateWorkgroupSize() const;
-    ArrayRef<uint8_t> getCrossThreadDataSpan() { return ArrayRef<uint8_t>(state.crossThreadData.get(), state.crossThreadDataSize); }
+    ArrayRef<uint8_t> getCrossThreadDataSpan() { return ArrayRef<uint8_t>(state.crossThreadData.data(), state.crossThreadData.size()); }
 
     const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;

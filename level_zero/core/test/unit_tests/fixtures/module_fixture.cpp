@@ -72,9 +72,8 @@ void ModuleImmutableDataFixture::MockModule::checkIfPrivateMemoryPerDispatchIsNe
 }
 
 void ModuleImmutableDataFixture::MockKernel::setCrossThreadData(uint32_t dataSize) {
-    state.crossThreadData.reset(new uint8_t[dataSize]);
-    state.crossThreadDataSize = dataSize;
-    memset(state.crossThreadData.get(), 0x00, state.crossThreadDataSize);
+    state.crossThreadData.clear();
+    state.crossThreadData.resize(dataSize, 0x0);
 }
 
 void ModuleImmutableDataFixture::setUp() {

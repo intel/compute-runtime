@@ -629,9 +629,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
 
     constexpr uint32_t crossThreadDataSize = 64;
-    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
-    kernel.state.crossThreadDataSize = crossThreadDataSize;
-    memset(kernel.state.crossThreadData.get(), 0, crossThreadDataSize);
+    kernel.state.crossThreadData.resize(crossThreadDataSize, 0x0);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -665,7 +663,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto patchPtr = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.state.crossThreadData.get(), syncBufferAddress.stateless));
+    auto patchPtr = *reinterpret_cast<uint64_t *>(&kernel.getCrossThreadDataSpan()[syncBufferAddress.stateless]);
     EXPECT_EQ(0u, patchPtr);
 
     EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getSyncBufferIndex());
@@ -694,9 +692,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSync
     kernel.module = pMockModule.get();
 
     constexpr uint32_t crossThreadDataSize = 64;
-    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
-    kernel.state.crossThreadDataSize = crossThreadDataSize;
-    memset(kernel.state.crossThreadData.get(), 0, crossThreadDataSize);
+    kernel.state.crossThreadData.resize(crossThreadDataSize, 0x0);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -803,9 +799,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     EXPECT_EQ(nullptr, kernel.getRegionGroupBarrierAllocation());
 
     constexpr uint32_t crossThreadDataSize = 64;
-    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
-    kernel.state.crossThreadDataSize = crossThreadDataSize;
-    memset(kernel.state.crossThreadData.get(), 0, crossThreadDataSize);
+    kernel.state.crossThreadData.resize(crossThreadDataSize, 0x0);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -827,7 +821,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
     EXPECT_EQ(std::numeric_limits<size_t>::max(), launchParams.regionBarrierPatchIndex);
 
-    auto patchPtr = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.state.crossThreadData.get(), regionGroupBarrier.stateless));
+    auto patchPtr = *reinterpret_cast<uint64_t *>(&kernel.getCrossThreadDataSpan()[regionGroupBarrier.stateless]);
     EXPECT_NE(0u, patchPtr);
 
     auto allocIter = std::find_if(ultCsr->makeResidentAllocations.begin(), ultCsr->makeResidentAllocations.end(), [patchPtr](const std::pair<GraphicsAllocation *, uint32_t> &element) {
@@ -853,7 +847,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     auto notFoundIt = std::find(regionGroupBarrierAllocIt + 1, kernel.state.internalResidencyContainer.end(), regionGroupBarrierAllocation);
     EXPECT_EQ(kernel.state.internalResidencyContainer.end(), notFoundIt);
 
-    auto patchPtr2 = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.state.crossThreadData.get(), regionGroupBarrier.stateless));
+    auto patchPtr2 = *reinterpret_cast<uint64_t *>(&kernel.getCrossThreadDataSpan()[regionGroupBarrier.stateless]);
 
     size_t requestedNumberOfWorkgroups = groupCount.groupCountX * groupCount.groupCountY * groupCount.groupCountZ;
 
@@ -886,9 +880,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     EXPECT_EQ(nullptr, kernel.getRegionGroupBarrierAllocation());
 
     constexpr uint32_t crossThreadDataSize = 64;
-    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
-    kernel.state.crossThreadDataSize = crossThreadDataSize;
-    memset(kernel.state.crossThreadData.get(), 0, crossThreadDataSize);
+    kernel.state.crossThreadData.resize(crossThreadDataSize, 0x0);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -916,7 +908,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
 
-    auto patchPtr = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.state.crossThreadData.get(), regionGroupBarrier.stateless));
+    auto patchPtr = *reinterpret_cast<uint64_t *>(&kernel.getCrossThreadDataSpan()[regionGroupBarrier.stateless]);
     EXPECT_EQ(0u, patchPtr);
 
     EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getRegionGroupBarrierIndex());
@@ -945,9 +937,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedRegi
     kernel.module = pMockModule.get();
 
     constexpr uint32_t crossThreadDataSize = 64;
-    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
-    kernel.state.crossThreadDataSize = crossThreadDataSize;
-    memset(kernel.state.crossThreadData.get(), 0, crossThreadDataSize);
+    kernel.state.crossThreadData.resize(crossThreadDataSize, 0x0);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};

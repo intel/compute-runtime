@@ -1475,9 +1475,9 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
 
     immDataVector->push_back(std::move(mockKernelImmutableData));
 
-    auto crossThreadData = std::make_unique<uint32_t[]>(4);
-    kernel->state.crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData.get()));
-    kernel->state.crossThreadDataSize = sizeof(uint32_t[4]);
+    constexpr size_t ctdDwords = 4U;
+    kernel->state.crossThreadData.clear();
+    kernel->state.crossThreadData.resize(sizeof(uint32_t[ctdDwords]));
 
     auto result = kernel->initialize(&kernelDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1485,11 +1485,11 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
     auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
     EXPECT_NE(nullptr, rtDispatchGlobals);
 
-    auto dispatchGlobalsAddressPatched = *reinterpret_cast<uint64_t *>(ptrOffset(crossThreadData.get(), rtGlobalPointerPatchOffset));
+    auto dispatchGlobalsAddressPatched = *reinterpret_cast<const uint64_t *>(ptrOffset(kernel->getCrossThreadData(), rtGlobalPointerPatchOffset));
     auto dispatchGlobalsGpuAddressOffset = static_cast<uint64_t>(rtDispatchGlobals->rtDispatchGlobalsArray->getGpuAddressToPatch());
     EXPECT_EQ(dispatchGlobalsGpuAddressOffset, dispatchGlobalsAddressPatched);
 
-    kernel->state.crossThreadData.release();
+    kernel->state.crossThreadData.clear();
 }
 
 using KernelIndirectPropertiesFromIGCTests = KernelImmutableDataTests;
@@ -3188,7 +3188,7 @@ HWTEST2_F(SetKernelArg, givenHeaplessWhenPatchingImageWithBindlessEnabledCorrect
         auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
         auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
 
-        auto ctd = kernel->state.crossThreadData.get();
+        auto ctd = kernel->state.crossThreadData.data();
 
         auto ssInHeap = imageHW->getBindlessSlot();
         auto patchLocation = ptrOffset(ctd, imageArg.bindless);
@@ -3336,8 +3336,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCal
     argDescriptor.as<NEO::ArgDescImage>() = NEO::ArgDescImage();
     argDescriptor.as<NEO::ArgDescImage>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
     argDescriptor.as<NEO::ArgDescImage>().bindless = 0x0;
-    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
-    mockKernel.state.crossThreadDataSize = 4 * sizeof(uint64_t);
+    mockKernel.state.crossThreadData.resize(sizeof(uint64_t[4]));
     mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
@@ -3848,23 +3847,20 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
     mockKernel.module = &mockModule;
 
-    auto crossThreadData = std::make_unique<uint32_t[]>(4);
-
     mockKernel.descriptor.payloadMappings.implicitArgs.printfSurfaceAddress.stateless = 0;
     mockKernel.descriptor.payloadMappings.implicitArgs.printfSurfaceAddress.pointerSize = sizeof(uintptr_t);
-    mockKernel.state.crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData.get()));
-    mockKernel.state.crossThreadDataSize = sizeof(uint32_t[4]);
+    mockKernel.state.crossThreadData.resize(sizeof(uint32_t[4]));
 
     mockKernel.createPrintfBuffer();
 
     auto printfBufferAllocation = mockKernel.getPrintfBufferAllocation();
     EXPECT_NE(nullptr, printfBufferAllocation);
 
-    auto printfBufferAddressPatched = *reinterpret_cast<uintptr_t *>(crossThreadData.get());
+    auto printfBufferAddressPatched = *reinterpret_cast<const uintptr_t *>(mockKernel.getCrossThreadData());
     auto printfBufferGpuAddressOffset = static_cast<uintptr_t>(printfBufferAllocation->getGpuAddressToPatch());
     EXPECT_EQ(printfBufferGpuAddressOffset, printfBufferAddressPatched);
 
-    mockKernel.state.crossThreadData.release();
+    mockKernel.state.crossThreadData.clear();
 }
 
 using PrintfHandlerTests = ::testing::Test;
@@ -4251,9 +4247,8 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
 
-    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(5 * sizeof(uint64_t));
-    mockKernel.state.crossThreadDataSize = 5 * sizeof(uint64_t);
-    memset(mockKernel.state.crossThreadData.get(), 0, mockKernel.state.crossThreadDataSize);
+    constexpr size_t ctdQwords = 5U;
+    mockKernel.state.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
 
     const uint64_t baseAddress = 0x1000;
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
@@ -4266,8 +4261,8 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
 
     mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
 
-    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.state.crossThreadDataSize / sizeof(uint64_t));
-    memcpy(crossThreadData.get(), mockKernel.state.crossThreadData.get(), mockKernel.state.crossThreadDataSize);
+    auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(patchValue1, crossThreadData[0]);
     EXPECT_EQ(patchValue2, crossThreadData[1]);
@@ -4313,9 +4308,8 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatc
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
 
-    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
-    mockKernel.state.crossThreadDataSize = 4 * sizeof(uint64_t);
-    memset(mockKernel.state.crossThreadData.get(), 0, mockKernel.state.crossThreadDataSize);
+    constexpr size_t ctdQwords = 4U;
+    mockKernel.state.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
 
     const uint64_t baseAddress = 0x1000;
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
@@ -4325,8 +4319,8 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatc
 
     mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
 
-    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.state.crossThreadDataSize / sizeof(uint64_t));
-    memcpy(crossThreadData.get(), mockKernel.state.crossThreadData.get(), mockKernel.state.crossThreadDataSize);
+    auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(0u, crossThreadData[0]);
     EXPECT_EQ(patchValue2, crossThreadData[1]);
@@ -4348,15 +4342,14 @@ TEST_F(BindlessKernelTest, givenNoEntryInBindlessOffsetsMapWhenPatchingCrossThre
     argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
     mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
-    mockKernel.state.crossThreadDataSize = 4 * sizeof(uint64_t);
-    memset(mockKernel.state.crossThreadData.get(), 0, mockKernel.state.crossThreadDataSize);
+    constexpr size_t ctdQwords = 4U;
+    mockKernel.state.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
 
     const uint64_t baseAddress = 0x1000;
     mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
 
-    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.state.crossThreadDataSize / sizeof(uint64_t));
-    memcpy(crossThreadData.get(), mockKernel.state.crossThreadData.get(), mockKernel.state.crossThreadDataSize);
+    auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(0u, crossThreadData[0]);
 }
@@ -4374,17 +4367,15 @@ TEST_F(BindlessKernelTest, givenNoStatefulArgsWhenPatchingBindlessOffsetsInCross
     argDescriptor.as<NEO::ArgDescValue>().elements.push_back(NEO::ArgDescValue::Element{0, 8, 0, false});
     mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(sizeof(uint64_t));
-    mockKernel.state.crossThreadDataSize = sizeof(uint64_t);
-    memset(mockKernel.state.crossThreadData.get(), 0, mockKernel.state.crossThreadDataSize);
+    mockKernel.state.crossThreadData.resize(sizeof(uint64_t), 0x0);
 
     const uint64_t baseAddress = 0x1000;
     mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
 
-    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.state.crossThreadDataSize / sizeof(uint64_t));
-    memcpy(crossThreadData.get(), mockKernel.state.crossThreadData.get(), mockKernel.state.crossThreadDataSize);
+    uint64_t crossThreadData = 0U;
+    memcpy_s(&crossThreadData, sizeof(uint64_t), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
 
-    EXPECT_EQ(0u, crossThreadData[0]);
+    EXPECT_EQ(0u, crossThreadData);
 }
 
 TEST_F(BindlessKernelTest, givenGlobalBindlessAllocatorAndBindlessKernelWithImplicitArgsWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {
@@ -4413,15 +4404,14 @@ TEST_F(BindlessKernelTest, givenGlobalBindlessAllocatorAndBindlessKernelWithImpl
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
 
-    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
-    mockKernel.state.crossThreadDataSize = 4 * sizeof(uint64_t);
-    memset(mockKernel.state.crossThreadData.get(), 0, mockKernel.state.crossThreadDataSize);
+    constexpr size_t ctdQwords = 4U;
+    mockKernel.state.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
 
     const uint64_t baseAddress = 0x1000;
     mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
 
-    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.state.crossThreadDataSize / sizeof(uint64_t));
-    memcpy(crossThreadData.get(), mockKernel.state.crossThreadData.get(), mockKernel.state.crossThreadDataSize);
+    auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(0u, crossThreadData[0]);
     EXPECT_EQ(0u, crossThreadData[1]);
@@ -4510,9 +4500,8 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingSamplerOffsetsInCrossT
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
 
-    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(5 * sizeof(uint64_t));
-    mockKernel.state.crossThreadDataSize = 5 * sizeof(uint64_t);
-    memset(mockKernel.state.crossThreadData.get(), 0, mockKernel.state.crossThreadDataSize);
+    constexpr size_t ctdQwords = 5U;
+    mockKernel.state.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
 
     const uint64_t baseAddress = 0x1000;
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
@@ -4523,8 +4512,8 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingSamplerOffsetsInCrossT
 
     mockKernel.patchSamplerBindlessOffsetsInCrossThreadData(baseAddress);
 
-    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.state.crossThreadDataSize / sizeof(uint64_t));
-    memcpy(crossThreadData.get(), mockKernel.state.crossThreadData.get(), mockKernel.state.crossThreadDataSize);
+    auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(patchValue1, crossThreadData[1]);
     EXPECT_EQ(0u, patchValue2);
@@ -4574,9 +4563,8 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithInlineSamplersWhenPatchingSamp
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
 
-    mockKernel.state.crossThreadData = std::make_unique<uint8_t[]>(7 * sizeof(uint64_t));
-    mockKernel.state.crossThreadDataSize = 7 * sizeof(uint64_t);
-    memset(mockKernel.state.crossThreadData.get(), 0, mockKernel.state.crossThreadDataSize);
+    constexpr size_t ctdQwords = 7U;
+    mockKernel.state.crossThreadData.resize(sizeof(uint64_t[ctdQwords]), 0x0);
 
     const uint64_t baseAddress = 0x1000;
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
@@ -4587,8 +4575,8 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithInlineSamplersWhenPatchingSamp
 
     mockKernel.patchSamplerBindlessOffsetsInCrossThreadData(baseAddress);
 
-    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.state.crossThreadDataSize / sizeof(uint64_t));
-    memcpy(crossThreadData.get(), mockKernel.state.crossThreadData.get(), mockKernel.state.crossThreadDataSize);
+    auto crossThreadData = std::make_unique<uint64_t[]>(ctdQwords);
+    memcpy_s(crossThreadData.get(), sizeof(uint64_t[ctdQwords]), mockKernel.getCrossThreadData(), mockKernel.getCrossThreadDataSize());
 
     EXPECT_EQ(patchValue1, crossThreadData[5]);
     EXPECT_EQ(patchValue2, crossThreadData[6]);
@@ -4603,8 +4591,7 @@ TEST_F(KernelSyncBufferTest, GivenSyncBufferArgWhenPatchingSyncBufferThenPtrIsCo
     Mock<Module> mockModule(device, nullptr);
     kernel.module = &mockModule;
 
-    kernel.state.crossThreadData = std::make_unique<uint8_t[]>(64);
-    kernel.state.crossThreadDataSize = 64;
+    kernel.state.crossThreadData.resize(64U);
 
     auto &syncBuffer = kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress;
     syncBuffer.stateless = 0x8;
@@ -4618,7 +4605,7 @@ TEST_F(KernelSyncBufferTest, GivenSyncBufferArgWhenPatchingSyncBufferThenPtrIsCo
 
     kernel.patchSyncBuffer(&alloc, bufferOffset);
 
-    auto patchValue = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.state.crossThreadData.get(), syncBuffer.stateless));
+    auto patchValue = *reinterpret_cast<const uint64_t *>(ptrOffset(kernel.getCrossThreadData(), syncBuffer.stateless));
     auto expectedPatchValue = ptrOffset(alloc.getGpuAddressToPatch(), bufferOffset);
     EXPECT_EQ(expectedPatchValue, patchValue);
 

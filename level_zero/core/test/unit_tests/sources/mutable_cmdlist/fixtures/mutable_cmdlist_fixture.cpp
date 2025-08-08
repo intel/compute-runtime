@@ -315,11 +315,11 @@ void MutableCommandListFixtureInit::prepareKernelArg(uint16_t argIndex, L0::MCL:
         argSlm.pointerSize = 8;
 
         if (kernelMask & kernel1Bit) {
-            memset(ptrOffset(kernel->state.crossThreadData.get(), argSlm.slmOffset), 0, 8);
+            memset(&kernel->getCrossThreadDataSpan()[argSlm.slmOffset], 0, 8);
             mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgSlm;
         }
         if (kernelMask & kernel2Bit) {
-            memset(ptrOffset(kernel2->state.crossThreadData.get(), argSlm.slmOffset), 0, 8);
+            memset(&kernel2->getCrossThreadDataSpan()[argSlm.slmOffset], 0, 8);
             mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgSlm;
         }
     }

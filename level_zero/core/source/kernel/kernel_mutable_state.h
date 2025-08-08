@@ -91,7 +91,7 @@ struct KernelMutableState : public KernelMutableStateDefaultCopyableParams {
 
     std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
     std::unique_ptr<KernelExt> pExtension;
-    std::unique_ptr<uint8_t[]> crossThreadData = nullptr;
+    std::vector<uint8_t> crossThreadData{};
     std::unique_ptr<uint8_t[]> surfaceStateHeapData = nullptr;
     std::unique_ptr<uint8_t[]> dynamicStateHeapData = nullptr;
 
@@ -99,7 +99,6 @@ struct KernelMutableState : public KernelMutableStateDefaultCopyableParams {
     uint32_t perThreadDataSizeForWholeThreadGroup = 0U;
     uint32_t perThreadDataSizeForWholeThreadGroupAllocated = 0U;
 
-    uint32_t crossThreadDataSize = 0U;
     uint32_t surfaceStateHeapDataSize = 0U;
     uint32_t dynamicStateHeapDataSize = 0U;
 };
