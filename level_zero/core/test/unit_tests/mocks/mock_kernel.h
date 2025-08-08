@@ -95,7 +95,7 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
             state.kernelRequiresGenerationOfLocalIdsByRuntime = !forceGenerateLocalIdByHw;
         }
     }
-    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) override {
+    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *allocData) override {
         return ZE_RESULT_SUCCESS;
     }
 

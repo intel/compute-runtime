@@ -750,7 +750,7 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) {
+ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *allocData) {
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
     const auto val = argVal;
     const int64_t bufferSize = static_cast<int64_t>(allocation->getUnderlyingBufferSize() - (ptrDiff(argVal, allocation->getGpuAddress())));
@@ -767,10 +767,8 @@ ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal
 
         setBufferSurfaceState(argIndex, reinterpret_cast<void *>(val), allocation);
     }
-    NEO::SvmAllocationData *allocData = nullptr;
-    if (peerAllocData) {
-        allocData = peerAllocData;
-    } else {
+
+    if (!allocData) {
         allocData = this->module->getDevice()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(allocation->getGpuAddress()));
     }
     if (allocData) {
@@ -903,7 +901,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     const uint32_t allocId = allocData->getAllocId();
     state.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
 
-    return setArgBufferWithAlloc(argIndex, gpuAddress, alloc, peerAllocData);
+    return setArgBufferWithAlloc(argIndex, gpuAddress, alloc, peerAllocData ? peerAllocData : allocData);
 }
 
 ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void *argVal) {

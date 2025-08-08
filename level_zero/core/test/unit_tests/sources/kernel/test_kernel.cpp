@@ -243,9 +243,9 @@ TEST(KernelArgTest, givenKernelWhenSetArgUnknownCalledThenSuccessRteurned) {
 struct MockKernelWithCallTracking : Mock<::L0::KernelImp> {
     using ::L0::KernelImp::state;
 
-    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) override {
+    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *allocData) override {
         ++setArgBufferWithAllocCalled;
-        return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation, peerAllocData);
+        return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation, allocData);
     }
     size_t setArgBufferWithAllocCalled = 0u;
 
@@ -2683,8 +2683,8 @@ struct MyMockKernel : public Mock<KernelImp> {
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
         setSurfaceStateCalled = true;
     }
-    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *peerAllocData) override {
-        return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation, peerAllocData);
+    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *allocData) override {
+        return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation, allocData);
     }
     bool setSurfaceStateCalled = false;
 };
