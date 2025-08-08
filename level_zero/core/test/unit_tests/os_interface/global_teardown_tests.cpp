@@ -8,9 +8,7 @@
 #include "level_zero/core/test/unit_tests/os_interface/global_teardown_tests.h"
 
 #include "shared/source/os_interface/os_library.h"
-#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -72,7 +70,7 @@ TEST_F(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionForTra
 
     EXPECT_EQ(nullptr, setDriverTeardownFunc);
     EXPECT_EQ(mockLoaderTranslateHandlePtr, reinterpret_cast<void *>(loaderTranslateHandleFunc));
-    globalDriverTeardown(false);
+    globalDriverTeardown();
 }
 
 uint32_t loaderTearDownCalled = 0;
@@ -95,14 +93,14 @@ TEST_F(GlobalTearDownTests, givenInitializedDriverWhenCallingGlobalDriverTeardow
 
     loaderTranslateHandleFunc = reinterpret_cast<decltype(loaderTranslateHandleFunc)>(mockLoaderTranslateHandlePtr);
     MockOsLibrary::loadLibraryNewObject = nullptr;
-    globalDriverTeardown(false);
+    globalDriverTeardown();
 
     EXPECT_EQ(nullptr, setDriverTeardownFunc);
     EXPECT_EQ(nullptr, loaderTranslateHandleFunc);
 
     loaderTranslateHandleFunc = reinterpret_cast<decltype(loaderTranslateHandleFunc)>(mockLoaderTranslateHandlePtr);
     MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    globalDriverTeardown(false);
+    globalDriverTeardown();
 
     EXPECT_EQ(nullptr, setDriverTeardownFunc);
     EXPECT_EQ(mockLoaderTranslateHandlePtr, reinterpret_cast<void *>(loaderTranslateHandleFunc));
@@ -110,7 +108,7 @@ TEST_F(GlobalTearDownTests, givenInitializedDriverWhenCallingGlobalDriverTeardow
     MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
     auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
     osLibrary->procMap["zelSetDriverTeardown"] = reinterpret_cast<void *>(&loaderTearDown);
-    globalDriverTeardown(false);
+    globalDriverTeardown();
 
     EXPECT_EQ(&loaderTearDown, reinterpret_cast<void *>(setDriverTeardownFunc));
     EXPECT_EQ(mockLoaderTranslateHandlePtr, reinterpret_cast<void *>(loaderTranslateHandleFunc));
@@ -119,7 +117,7 @@ TEST_F(GlobalTearDownTests, givenInitializedDriverWhenCallingGlobalDriverTeardow
     MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
     osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
     osLibrary->procMap["zelLoaderTranslateHandle"] = mockLoaderTranslateHandlePtr;
-    globalDriverTeardown(false);
+    globalDriverTeardown();
 
     EXPECT_EQ(nullptr, setDriverTeardownFunc);
     EXPECT_EQ(mockLoaderTranslateHandlePtr, reinterpret_cast<void *>(loaderTranslateHandleFunc));
@@ -130,7 +128,7 @@ TEST_F(GlobalTearDownTests, givenInitializedDriverWhenCallingGlobalDriverTeardow
     osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
     osLibrary->procMap["zelSetDriverTeardown"] = reinterpret_cast<void *>(&loaderTearDown);
     osLibrary->procMap["zelLoaderTranslateHandle"] = mockLoaderTranslateHandlePtr;
-    globalDriverTeardown(false);
+    globalDriverTeardown();
 
     EXPECT_EQ(&loaderTearDown, reinterpret_cast<void *>(setDriverTeardownFunc));
     EXPECT_EQ(nullptr, loaderTranslateHandleFunc);
@@ -142,7 +140,7 @@ TEST_F(GlobalTearDownTests, givenInitializedDriverAndNoTeardownFunctionIsAvailab
 
     levelZeroDriverInitialized = true;
     setDriverTeardownFunc = nullptr;
-    EXPECT_NO_THROW(globalDriverTeardown(false));
+    EXPECT_NO_THROW(globalDriverTeardown());
 }
 
 TEST_F(GlobalTearDownTests, givenNotInitializedDriverAndTeardownFunctionIsAvailableWhenCallGlobalTeardownThenDontCallTeardownFunc) {
@@ -154,36 +152,18 @@ TEST_F(GlobalTearDownTests, givenNotInitializedDriverAndTeardownFunctionIsAvaila
         EXPECT_TRUE(false);
         return ZE_RESULT_SUCCESS;
     };
-    EXPECT_NO_THROW(globalDriverTeardown(false));
+    EXPECT_NO_THROW(globalDriverTeardown());
 }
 
-TEST_F(GlobalTearDownTests, givenCallToGlobalTearDownFunctionWhenNotTerminatingProcessThenGlobalDriversAreNull) {
-    Sysman::globalSysmanDriver = new Sysman::SysmanDriverHandleImp();
-    globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
-
-    globalDriverTeardown(false);
+TEST_F(GlobalTearDownTests, givenCallToGlobalTearDownFunctionThenGlobalDriversAreNull) {
+    globalDriverTeardown();
     EXPECT_EQ(globalDriverHandles, nullptr);
     EXPECT_EQ(Sysman::globalSysmanDriver, nullptr);
 }
-
-TEST_F(GlobalTearDownTests, givenCallToGlobalTearDownFunctionWhenTerminatingProcessThenGlobalDriversAreNotNull) {
-    Sysman::globalSysmanDriver = new Sysman::SysmanDriverHandleImp();
-    globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
-
-    globalDriverTeardown(true);
-    EXPECT_NE(globalDriverHandles, nullptr);
-    EXPECT_NE(Sysman::globalSysmanDriver, nullptr);
-
-    delete Sysman::globalSysmanDriver;
-    Sysman::globalSysmanDriver = nullptr;
-    delete globalDriverHandles;
-    globalDriverHandles = nullptr;
-}
-
 TEST_F(GlobalTearDownTests, givenCallToGlobalTearDownFunctionWithNullSysManDriverThenGlobalDriverIsNull) {
     delete Sysman::globalSysmanDriver;
     Sysman::globalSysmanDriver = nullptr;
-    globalDriverTeardown(false);
+    globalDriverTeardown();
     EXPECT_EQ(globalDriverHandles, nullptr);
     EXPECT_EQ(Sysman::globalSysmanDriver, nullptr);
 }
@@ -205,14 +185,14 @@ TEST_F(GlobalTearDownTests, givenForkedProcessWhenGlobalTearDownFunctionCalledTh
     // change pid in driver
     tempDriver->pid = tempDriver->pid + 5;
 
-    globalDriverTeardown(false);
+    globalDriverTeardown();
     EXPECT_EQ(globalDriverHandles, nullptr);
     EXPECT_EQ(Sysman::globalSysmanDriver, nullptr);
 
     delete tempDriver;
 }
 
-TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenGlobalSetupAndTeardownWithoutTerminatingProcessAreCalledThenPerApiValidFlagsAreChanged) {
+TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenGlobalSetupAndTeardownAreCalledThenPerApiValidFlagsAreChanged) {
     VariableBackup<DriverDispatch> globalDispatchBackup{&globalDriverDispatch};
 
     globalDriverSetup();
@@ -221,50 +201,11 @@ TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenGlobalSetupAndTeardownW
     EXPECT_TRUE(globalDriverDispatch.tools.isValidFlag);
     EXPECT_TRUE(globalDriverDispatch.sysman.isValidFlag);
 
-    globalDriverTeardown(false);
+    globalDriverTeardown();
 
     EXPECT_FALSE(globalDriverDispatch.core.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.tools.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.sysman.isValidFlag);
 }
-
-TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenGlobalSetupAndTeardownWithTerminatingProcessAreCalledThenPerApiValidFlagsAreChanged) {
-    VariableBackup<DriverDispatch> globalDispatchBackup{&globalDriverDispatch};
-
-    globalDriverSetup();
-
-    EXPECT_TRUE(globalDriverDispatch.core.isValidFlag);
-    EXPECT_TRUE(globalDriverDispatch.tools.isValidFlag);
-    EXPECT_TRUE(globalDriverDispatch.sysman.isValidFlag);
-
-    globalDriverTeardown(true);
-
-    EXPECT_FALSE(globalDriverDispatch.core.isValidFlag);
-    EXPECT_FALSE(globalDriverDispatch.tools.isValidFlag);
-    EXPECT_FALSE(globalDriverDispatch.sysman.isValidFlag);
-
-    globalDriverTeardown(false);
-}
-
-TEST_F(GlobalTearDownTests, givenCallToGlobalTearDownFunctionWhenTerminatingProcessThenStopDirectSubmissionCalled) {
-    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-    NEO::DeviceVector devices;
-    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    auto driverHandle = new L0::DriverHandleImp;
-    driverHandle->initialize(std::move(devices));
-    globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
-    globalDriverHandles->push_back(driverHandle);
-
-    EXPECT_FALSE(neoDevice->stopDirectSubmissionCalled);
-
-    globalDriverTeardown(true);
-
-    EXPECT_TRUE(neoDevice->stopDirectSubmissionCalled);
-
-    delete driverHandle;
-    delete globalDriverHandles;
-    globalDriverHandles = nullptr;
-}
-
 } // namespace ult
 } // namespace L0
