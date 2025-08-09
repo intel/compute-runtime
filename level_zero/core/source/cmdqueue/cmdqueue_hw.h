@@ -82,6 +82,7 @@ struct CommandQueueHw : public CommandQueueImp {
 
         size_t spaceForResidency = 10;
         size_t bufferSpaceForPatchPreamble = 0;
+        size_t totalNoopSpaceForPatchPreamble = 0;
         CommandList *firstCommandList = nullptr;
         CommandList *lastCommandList = nullptr;
         void *currentPatchForChainedBbStart = nullptr;
@@ -156,9 +157,11 @@ struct CommandQueueHw : public CommandQueueImp {
     inline size_t estimateCommandListPrimaryStart(bool required);
     inline size_t estimateCommandListPatchPreamble(CommandListExecutionContext &ctx, uint32_t numCommandLists);
     inline size_t estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList);
-    inline size_t estimateCommandListPatchPreambleNoopSpace(CommandListExecutionContext &ctx, CommandList *commandList);
+    inline void getCommandListPatchPreambleNoopSpace(CommandListExecutionContext &ctx, CommandList *commandList);
+    inline size_t estimateTotalPatchPreambleNoopSpace(CommandListExecutionContext &ctx);
     inline void retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream);
     inline void dispatchPatchPreambleEnding(CommandListExecutionContext &ctx);
+    inline void dispatchPatchPreambleInOrderNoop(CommandListExecutionContext &ctx, CommandList *commandList);
     inline size_t estimateCommandListResidencySize(CommandList *commandList);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
     inline void handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx);
@@ -259,6 +262,7 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void updateBaseAddressState(CommandList *lastCommandList);
     inline void updateDebugSurfaceState(CommandListExecutionContext &ctx);
     inline void patchCommands(CommandList &commandList, CommandListExecutionContext &ctx);
+    void prepareInOrderCommandList(CommandListImp *commandList, CommandListExecutionContext &ctx);
 
     size_t alignedChildStreamPadding{};
 };

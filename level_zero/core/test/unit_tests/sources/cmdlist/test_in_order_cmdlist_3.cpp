@@ -342,5 +342,78 @@ HWTEST_F(InOrderRegularCmdListTests, givenInOrderCmdListWhenQueryingRequiredSize
     EXPECT_NE(0u, hostNodeAddress);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            InOrderRegularCmdListTests,
+            givenPatchPreambleWhenExecutingInOrderCommandListThenPatchInOrderExecInfoSpace) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(false, false, false);
+    mockCmdQHw->setPatchingPreamble(true);
+
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    regularCmdList->close();
+
+    auto deviceNodeAddress = regularCmdList->getInOrderExecDeviceGpuAddress();
+
+    void *queueCpuBase = mockCmdQHw->commandStream.getCpuBase();
+    auto usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
+    auto commandListHandle = regularCmdList->toHandle();
+    auto returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = mockCmdQHw->commandStream.getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(queueCpuBase, usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_LT(1u, sdiCmds.size());
+
+    auto storeDataDeviceInOrderNoop = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[0]);
+    EXPECT_EQ(deviceNodeAddress, storeDataDeviceInOrderNoop->getAddress());
+    EXPECT_TRUE(storeDataDeviceInOrderNoop->getStoreQword());
+    EXPECT_EQ(0u, storeDataDeviceInOrderNoop->getDataDword0());
+    EXPECT_EQ(0u, storeDataDeviceInOrderNoop->getDataDword1());
+
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+    cmdList.clear();
+
+    regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    regularCmdList->close();
+
+    deviceNodeAddress = regularCmdList->getInOrderExecDeviceGpuAddress();
+    auto hostNodeAddress = regularCmdList->getInOrderExecHostGpuAddress();
+
+    usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
+    commandListHandle = regularCmdList->toHandle();
+    returnValue = mockCmdQHw->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    usedSpaceAfter = mockCmdQHw->commandStream.getUsed();
+
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(queueCpuBase, usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+    sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_LT(2u, sdiCmds.size());
+
+    storeDataDeviceInOrderNoop = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[0]);
+    EXPECT_EQ(deviceNodeAddress, storeDataDeviceInOrderNoop->getAddress());
+    EXPECT_TRUE(storeDataDeviceInOrderNoop->getStoreQword());
+    EXPECT_EQ(0u, storeDataDeviceInOrderNoop->getDataDword0());
+    EXPECT_EQ(0u, storeDataDeviceInOrderNoop->getDataDword1());
+
+    auto storeDataHostInOrderNoop = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[1]);
+    EXPECT_EQ(hostNodeAddress, storeDataHostInOrderNoop->getAddress());
+    EXPECT_TRUE(storeDataHostInOrderNoop->getStoreQword());
+    EXPECT_EQ(0u, storeDataHostInOrderNoop->getDataDword0());
+    EXPECT_EQ(0u, storeDataHostInOrderNoop->getDataDword1());
+}
+
 } // namespace ult
 } // namespace L0

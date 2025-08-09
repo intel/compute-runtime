@@ -401,13 +401,4 @@ void CommandQueueImp::makeResidentForResidencyContainer(const NEO::ResidencyCont
     }
 }
 
-void CommandQueueImp::prepareInOrderCommandList(CommandListImp *commandList) {
-    if (commandList->inOrderCmdsPatchingEnabled()) {
-        commandList->addRegularCmdListSubmissionCounter();
-        commandList->patchInOrderCmds();
-    } else {
-        commandList->clearInOrderExecCounterAllocation();
-    }
-}
-
 } // namespace L0
