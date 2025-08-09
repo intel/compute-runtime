@@ -92,6 +92,9 @@ struct CommandQueue : _ze_command_queue_handle_t {
     inline void setPatchingPreamble(bool patching) {
         this->patchingPreamble = patching;
     }
+    inline bool getPatchingPreamble() const {
+        return this->patchingPreamble;
+    }
 
   protected:
     bool frontEndTrackingEnabled() const;

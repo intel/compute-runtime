@@ -1768,9 +1768,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     bool copyEngineExecution = isCopyOnly(copyOffloadOperation);
 
     auto ret = ZE_RESULT_SUCCESS;
+    auto additionalSize = estimateAdditionalSizeAppendRegularCommandLists(numCommandLists, phCommandLists);
     checkAvailableSpace(numWaitEvents,
                         relaxedOrderingDispatch,
-                        commonImmediateCommandSize,
+                        additionalSize + commonImmediateCommandSize,
                         this->dispatchCmdListBatchBufferAsPrimary);
 
     ret = CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(numWaitEvents, phWaitEvents,
@@ -1932,6 +1933,27 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(co
     }
     auto neoDevice = this->getDevice()->getNEODevice();
     return driver->getStagingBufferManager()->isValidForStagingTransfer(*neoDevice, srcptr, size, hasDependencies);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
+    size_t additionalSize = 0;
+    if (this->cmdQImmediate->getPatchingPreamble()) {
+        constexpr size_t bbStartSize = NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
+        size_t singleBbStartEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(bbStartSize);
+        additionalSize = singleBbStartEncodeSize * numCommandLists;
+
+        size_t totalNoopSpace = 0;
+        for (uint32_t i = 0; i < numCommandLists; i++) {
+            auto cmdList = static_cast<CommandListImp *>(CommandList::fromHandle(phCommandLists[i]));
+            totalNoopSpace += cmdList->getTotalNoopSpace();
+            totalNoopSpace += cmdList->getInOrderExecDeviceRequiredSize();
+            totalNoopSpace += cmdList->getInOrderExecHostRequiredSize();
+        }
+        const size_t noopEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(totalNoopSpace);
+        additionalSize += noopEncodeSize;
+    }
+    return additionalSize;
 }
 
 } // namespace L0
