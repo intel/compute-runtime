@@ -1446,6 +1446,42 @@ TEST_F(GmmCompressionTests, givenMediaCompressedImageApplyAuxFlagsForImageThenSe
     EXPECT_TRUE(gmm.isCompressionEnabled());
 }
 
+HWTEST2_F(GmmCompressionTests, givenGmmCreatedFromExistingGmmWithRenderCompressionThenCompressionTrueForSecondResource, IsAtMostXeCore) {
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    MockGmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto flags = gmm.gmmResourceInfo->getResourceFlags();
+    flags->Gpu.CCS = true;
+    flags->Gpu.UnifiedAuxSurface = true;
+    flags->Info.MediaCompressed = true;
+    flags->Info.RenderCompressed = false;
+    gmm.resourceParams.Flags.Info.MediaCompressed = false;
+    gmm.resourceParams.Flags.Info.RenderCompressed = true;
+    gmm.setupImageResourceParams(imgInfo, true);
+
+    EXPECT_TRUE(gmm.isCompressionEnabled());
+
+    auto gmmRes2 = std::make_unique<Gmm>(getGmmHelper(), gmm.gmmResourceInfo->peekGmmResourceInfo(), false);
+    EXPECT_TRUE(gmmRes2->isCompressionEnabled());
+}
+
+HWTEST2_F(GmmCompressionTests, givenGmmCreatedFromExistingGmmWithCompressionDisabledThenCompressionFalseForSecondResource, IsAtMostXeCore) {
+    localPlatformDevice->capabilityTable.ftrRenderCompressedImages = false;
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    MockGmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    gmm.resourceParams.Flags.Info.MediaCompressed = false;
+    gmm.resourceParams.Flags.Info.RenderCompressed = false;
+    gmm.setupImageResourceParams(imgInfo, false);
+
+    EXPECT_FALSE(gmm.isCompressionEnabled());
+
+    auto gmmRes2 = std::make_unique<Gmm>(getGmmHelper(), gmm.gmmResourceInfo->peekGmmResourceInfo(), false);
+    EXPECT_FALSE(gmmRes2->isCompressionEnabled());
+}
+
 TEST_F(GmmCompressionTests, givenRenderCompressedImageApplyAuxFlagsForImageThenSetFlagsToCompressed) {
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;

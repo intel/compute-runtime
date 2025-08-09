@@ -11,6 +11,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
@@ -24,6 +25,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
@@ -1258,6 +1260,94 @@ HWTEST_F(GfxCoreHelperTest, whenSetCompressedFlagThenProperFlagSet) {
 
     gfxCoreHelper.applyRenderCompressionFlag(*gmm, 0);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
+}
+
+HWTEST2_F(GfxCoreHelperTest, whenSetNotCompressedFlagThenProperValueReturned, IsAtLeastXe2HpgCore) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    auto gmmFlags = gmm->gmmResourceInfo->getResourceFlags();
+    gmmFlags->Info.NotCompressed = 0;
+    EXPECT_TRUE(gfxCoreHelper.isCompressionAppliedForImportedResource(*gmm));
+}
+
+HWTEST2_F(GfxCoreHelperTest, whenSetRenderCompressedFlagThenProperValueReturned, IsAtMostDg2) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    auto gmmFlags = gmm->gmmResourceInfo->getResourceFlags();
+    gmmFlags->Info.RenderCompressed = 1;
+    gmmFlags->Info.MediaCompressed = 0;
+    EXPECT_TRUE(gfxCoreHelper.isCompressionAppliedForImportedResource(*gmm));
+}
+
+HWTEST2_F(GfxCoreHelperTest, whenSetMediaCompressedFlagThenProperValueReturned, IsAtMostDg2) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    auto gmmFlags = gmm->gmmResourceInfo->getResourceFlags();
+    gmmFlags->Info.RenderCompressed = 0;
+    gmmFlags->Info.MediaCompressed = 1;
+    EXPECT_TRUE(gfxCoreHelper.isCompressionAppliedForImportedResource(*gmm));
+}
+
+HWTEST2_F(GfxCoreHelperTest, whenSetRenderAndMediaCompressedFlagsThenProperValueReturned, IsAtMostDg2) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    auto gmmFlags = gmm->gmmResourceInfo->getResourceFlags();
+    gmmFlags->Info.RenderCompressed = 1;
+    gmmFlags->Info.MediaCompressed = 1;
+    EXPECT_TRUE(gfxCoreHelper.isCompressionAppliedForImportedResource(*gmm));
+}
+
+class MockGmmResourceInfoWithDenyCompression : public MockGmmResourceInfo {
+  public:
+    MockGmmResourceInfoWithDenyCompression(GMM_RESCREATE_PARAMS *resourceCreateParams) : MockGmmResourceInfo(resourceCreateParams) {}
+    MockGmmResourceInfoWithDenyCompression(GMM_RESOURCE_INFO *inputGmmResourceInfo) : MockGmmResourceInfo(inputGmmResourceInfo) {}
+
+    bool isResourceDenyCompressionEnabled() override {
+        return true;
+    }
+};
+
+HWTEST_F(GfxCoreHelperTest, givenResourceDenyCompressionEnabledWhenIsCompressionAppliedForImportedResourceCalledThenReturnsFalse) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    // Create GMM params for a compressed resource
+    GMM_RESCREATE_PARAMS gmmParams = {};
+    gmmParams.Type = GMM_RESOURCE_TYPE::RESOURCE_BUFFER;
+    gmmParams.Format = GMM_FORMAT_GENERIC_8BIT;
+    gmmParams.BaseWidth64 = 1024;
+    gmmParams.BaseHeight = 1;
+    gmmParams.Depth = 1;
+    gmmParams.Flags.Info.NotCompressed = 0; // Compression enabled in flags
+
+    // Create our custom mock that returns true for isResourceDenyCompressionEnabled
+    auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfoWithDenyCompression>(&gmmParams);
+    MockGmm mockGmm(pDevice->getGmmHelper());
+    mockGmm.gmmResourceInfo.reset(mockGmmResourceInfo.release());
+
+    // Even though NotCompressed = 0 (compression enabled), the deny compression should override it
+    EXPECT_FALSE(gfxCoreHelper.isCompressionAppliedForImportedResource(mockGmm));
+}
+
+HWTEST_F(GfxCoreHelperTest, givenResourceDenyCompressionEnabledWhenRenderAndMediaCompressionAreSetThenIsCompressionAppliedIsFalse) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    // Create GMM params for a compressed resource
+    GMM_RESCREATE_PARAMS gmmParams = {};
+    gmmParams.Type = GMM_RESOURCE_TYPE::RESOURCE_BUFFER;
+    gmmParams.Format = GMM_FORMAT_GENERIC_8BIT;
+    gmmParams.BaseWidth64 = 1024;
+    gmmParams.BaseHeight = 1;
+    gmmParams.Depth = 1;
+    gmmParams.Flags.Info.RenderCompressed = 1;
+    gmmParams.Flags.Info.MediaCompressed = 1;
+
+    // Create our custom mock that returns true for isResourceDenyCompressionEnabled
+    auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfoWithDenyCompression>(&gmmParams);
+    MockGmm mockGmm(pDevice->getGmmHelper());
+    mockGmm.gmmResourceInfo.reset(mockGmmResourceInfo.release());
+
+    // Even though Render and Media compression are enabled, the deny compression should override it
+    EXPECT_FALSE(gfxCoreHelper.isCompressionAppliedForImportedResource(mockGmm));
 }
 
 HWTEST_F(GfxCoreHelperTest, whenAdjustPreemptionSurfaceSizeIsCalledThenCsrSizeDoesntChange) {
