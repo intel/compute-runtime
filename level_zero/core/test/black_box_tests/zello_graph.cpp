@@ -11,9 +11,9 @@
 #include "zello_compile.h"
 
 #include <cstring>
-#include <iomanip>
 #include <iostream>
-#include <limits>
+
+#define ENABLE_GRAPH_DUMP false
 
 using zeGraphCreateExpFP = ze_result_t(ZE_APICALL *)(ze_context_handle_t context, ze_graph_handle_t *phGraph, void *pNext);
 using zeCommandListBeginGraphCaptureExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, void *pNext);
@@ -47,6 +47,21 @@ struct GraphApi {
         return graphCreate && commandListBeginGraphCapture && commandListBeginCaptureIntoGraph && commandListEndGraphCapture && commandListInstantiateGraph && commandListAppendGraph && graphDestroy && executableGraphDestroy && commandListIsGraphCaptureEnabled && graphIsEmpty && graphDumpContents;
     }
 };
+
+void dumpGraphToDotIfEnabled(const GraphApi &graphApi, ze_graph_handle_t virtualGraph, const std::string &testName) {
+    if (!ENABLE_GRAPH_DUMP) {
+        return;
+    }
+
+    std::string filename = testName + "_graph.gv";
+    ze_result_t dumpResult = graphApi.graphDumpContents(virtualGraph, filename.c_str(), nullptr);
+
+    if (dumpResult == ZE_RESULT_SUCCESS) {
+        std::cout << "Graph dumped to " << filename << std::endl;
+    } else {
+        std::cerr << "Failed to dump graph for test " << testName << " (result: " << std::hex << dumpResult << ")" << std::endl;
+    }
+}
 
 GraphApi loadGraphApi(ze_driver_handle_t driver) {
     GraphApi ret;
@@ -129,6 +144,8 @@ void testAppendMemoryCopy(ze_driver_handle_t driver, ze_context_handle_t &contex
         std::cerr << "heapBuffer == " << static_cast<void *>(heapBuffer) << "\n";
         std::cerr << "stackBuffer == " << static_cast<void *>(stackBuffer) << std::endl;
     }
+
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__);
 
     delete[] heapBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
@@ -224,6 +241,8 @@ void testMultiGraph(ze_driver_handle_t driver, ze_context_handle_t &context, ze_
         std::cerr << "heapBuffer == " << static_cast<void *>(heapBuffer) << "\n";
         std::cerr << "stackBuffer == " << static_cast<void *>(stackBuffer) << std::endl;
     }
+
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__);
 
     delete[] heapBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
@@ -444,6 +463,8 @@ void testAppendLaunchKernel(ze_driver_handle_t driver,
         std::cerr << "outputData == " << static_cast<void *>(outputData.get()) << std::endl;
     }
 
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__);
+
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, interimBuffer));
@@ -607,6 +628,8 @@ void testAppendLaunchMultipleKernelsIndirect(ze_driver_handle_t driver,
         std::cerr << "incrementedData == " << static_cast<void *>(incrementedOut.data()) << "\n";
         std::cerr << "expectedData == " << static_cast<void *>(expectedIncremented.data()) << std::endl;
     }
+
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__);
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dispatchTraits));

@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <span>
 #include <unordered_map>
 #include <variant>
@@ -51,6 +52,22 @@ using ClosureVariants = std::variant<
 using CapturedCommand = ClosureVariants;
 
 using CapturedCommandId = uint32_t;
+
+struct Graph;
+
+struct ForkInfo {
+    CapturedCommandId forkCommandId = 0;
+    ze_event_handle_t forkEvent = nullptr;
+};
+
+struct ForkJoinInfo {
+    CapturedCommandId forkCommandId = 0;
+    CapturedCommandId joinCommandId = 0;
+    ze_event_handle_t forkEvent = nullptr;
+    ze_event_handle_t joinEvent = nullptr;
+    Graph *forkDestiny = nullptr;
+};
+
 struct Graph : _ze_graph_handle_t {
     Graph(L0::Context *ctx, bool preallocated) : ctx(ctx), preallocated(preallocated) {
         commands.reserve(16);
@@ -85,8 +102,20 @@ struct Graph : _ze_graph_handle_t {
         return ZE_RESULT_SUCCESS;
     }
 
-    const std::vector<CapturedCommand> &getCapturedCommands() {
+    const std::vector<CapturedCommand> &getCapturedCommands() const {
         return commands;
+    }
+
+    const StackVec<Graph *, 16> &getSubgraphs() const {
+        return subGraphs;
+    }
+
+    const std::unordered_map<CapturedCommandId, ForkJoinInfo> &getJoinedForks() const {
+        return joinedForks;
+    }
+
+    const std::unordered_map<L0::CommandList *, ForkInfo> &getUnjoinedForks() const {
+        return unjoinedForks;
     }
 
     Graph *getJoinedForkTarget(CapturedCommandId cmdId) {
@@ -165,21 +194,7 @@ struct Graph : _ze_graph_handle_t {
     bool wasCapturingStopped = false;
 
     std::unordered_map<L0::Event *, CapturedCommandId> recordedSignals;
-
-    struct ForkInfo {
-        CapturedCommandId forkCommandId = 0;
-        ze_event_handle_t forkEvent = nullptr;
-    };
-
     std::unordered_map<L0::CommandList *, ForkInfo> unjoinedForks;
-
-    struct ForkJoinInfo {
-        CapturedCommandId forkCommandId = 0;
-        CapturedCommandId joinCommandId = 0;
-        ze_event_handle_t forkEvent = nullptr;
-        ze_event_handle_t joinEvent = nullptr;
-        Graph *forkDestiny = nullptr;
-    };
     std::unordered_map<CapturedCommandId, ForkJoinInfo> joinedForks;
 };
 
@@ -270,6 +285,31 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     StackVec<std::unique_ptr<ExecutableGraph>, 16> subGraphs;
 
     GraphSubmissionChain submissionChain;
+};
+
+class GraphDotExporter {
+  public:
+    ze_result_t exportToFile(const Graph &graph, const char *filePath) const;
+
+  protected:
+    std::string exportToString(const Graph &graph) const;
+
+    void writeHeader(std::ostringstream &dot) const;
+    void writeNodes(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const;
+    void writeSubgraphs(std::ostringstream &dot, const Graph &graph, uint32_t level) const;
+    void writeEdges(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const;
+    void writeSequentialEdges(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const;
+    void writeForkJoinEdges(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const;
+    void writeUnjoinedForkEdges(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const;
+
+    std::optional<uint32_t> findSubgraphIndex(const StackVec<Graph *, 16> &subGraphs, const Graph *targetGraph) const;
+    std::optional<uint32_t> findSubgraphIndexByCommandList(const StackVec<Graph *, 16> &subGraphs, const L0::CommandList *cmdList) const;
+
+    std::string getCommandNodeLabel(const Graph &graph, CapturedCommandId cmdId) const;
+    std::string getCommandNodeAttributes(const Graph &graph, CapturedCommandId cmdId) const;
+    std::string generateNodeId(uint32_t level, uint32_t subgraphId, CapturedCommandId cmdId) const;
+    std::string generateSubgraphId(uint32_t level, uint32_t subgraphId) const;
+    std::string getSubgraphFillColor(uint32_t level) const;
 };
 
 constexpr size_t maxVariantSize = 2 * 64;

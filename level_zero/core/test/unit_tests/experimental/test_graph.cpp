@@ -328,14 +328,6 @@ TEST(GraphTestDebugApis, GivenNonEmptyGraphWhenGraphIsEmptyIsCalledThenErrorIsRe
     EXPECT_EQ(ZE_RESULT_QUERY_FALSE, ::zeGraphIsEmptyExp(&srcGraph));
 }
 
-TEST(GraphTestDebugApis, WhenGraphDumpContentsIsCalledThenReturnUnsupportedFeature) {
-    GraphsCleanupGuard graphCleanup;
-    Mock<Context> ctx;
-    L0::Graph srcGraph(&ctx, true);
-    auto err = ::zeGraphDumpContentsExp(&srcGraph, "dump", nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, err);
-}
-
 TEST(GraphTestApiSubmit, GivenNonNullPNextThenGraphAppendReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;

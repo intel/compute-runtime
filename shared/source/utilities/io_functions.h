@@ -30,7 +30,7 @@ using fseekFuncPtr = int (*)(FILE *, long int, int);
 using ftellFuncPtr = long int (*)(FILE *);
 using rewindFuncPtr = decltype(&rewind);
 using freadFuncPtr = size_t (*)(void *, size_t, size_t, FILE *);
-using fwriteFuncPtr = decltype(&fwrite);
+using fwriteFuncPtr = size_t (*)(const void *, size_t, size_t, FILE *);
 using fflushFuncPtr = decltype(&fflush);
 using mkdirFuncPtr = int (*)(const char *);
 
