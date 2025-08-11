@@ -2555,14 +2555,13 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedBufferAddressWhenSettingSurf
 
     mockKernel.setBufferSurfaceState(0, ptrOffset(buffer, 8), &mockAllocation);
     auto surfaceStateAfter = *reinterpret_cast<RENDER_SURFACE_STATE *>(expectedSsInHeap.ssPtr);
-    auto surfaceStateOnSsh = *reinterpret_cast<RENDER_SURFACE_STATE *>(mockKernel.state.surfaceStateHeapData.get());
+    auto surfaceStateOnSsh = *reinterpret_cast<RENDER_SURFACE_STATE *>(mockKernel.state.surfaceStateHeapData.data());
 
     EXPECT_TRUE(memcmp(&surfaceStateAfter, &surfaceStateBefore, size) == 0);
 
     EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(buffer, 8)), surfaceStateOnSsh.getSurfaceBaseAddress());
     EXPECT_FALSE(mockKernel.state.isBindlessOffsetSet[0]);
     EXPECT_TRUE(mockKernel.state.usingSurfaceStateHeap[0]);
-    EXPECT_EQ(mockKernel.state.surfaceStateHeapDataSize, mockKernel.getSurfaceStateHeapDataSize());
 }
 
 HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedAndAlignedBufferAddressWhenSettingSurfaceStateThenKernelReportsNonZeroSurfaceStateHeapDataSize) {
@@ -2603,7 +2602,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedAndAlignedBufferAddressWhenS
     // aligned buffer - using allocated bindless surface state
     mockKernel.setBufferSurfaceState(1, buffer, &mockAllocation);
 
-    auto surfaceStateOnSsh = reinterpret_cast<RENDER_SURFACE_STATE *>(mockKernel.state.surfaceStateHeapData.get());
+    auto surfaceStateOnSsh = reinterpret_cast<RENDER_SURFACE_STATE *>(mockKernel.state.surfaceStateHeapData.data());
 
     EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(buffer, 8)), surfaceStateOnSsh->getSurfaceBaseAddress());
     EXPECT_FALSE(mockKernel.state.isBindlessOffsetSet[0]);
@@ -2612,7 +2611,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedAndAlignedBufferAddressWhenS
     EXPECT_TRUE(mockKernel.state.isBindlessOffsetSet[1]);
     EXPECT_FALSE(mockKernel.state.usingSurfaceStateHeap[1]);
 
-    EXPECT_EQ(mockKernel.state.surfaceStateHeapDataSize, mockKernel.getSurfaceStateHeapDataSize());
+    EXPECT_EQ(mockKernel.state.surfaceStateHeapData.size(), mockKernel.getSurfaceStateHeapDataSize());
 }
 
 HWTEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulThenSurfaceStateNotUpdated) {
@@ -3341,7 +3340,8 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCal
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
 
-    mockKernel.state.surfaceStateHeapData = std::make_unique<uint8_t[]>(surfaceStateSize);
+    mockKernel.state.surfaceStateHeapData.clear();
+    mockKernel.state.surfaceStateHeapData.resize(surfaceStateSize);
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
     mockKernel.state.argumentsResidencyContainer.resize(1);
     mockKernel.state.isBindlessOffsetSet.resize(1, 0);
@@ -3362,7 +3362,8 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCal
     if (bindlessHeapsHelper) {
         expectedSsInHeap = ptrOffset(imageHW->getBindlessSlot()->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage);
     } else {
-        expectedSsInHeap = ptrOffset(mockKernel.state.surfaceStateHeapData.get(), mockKernel.kernelImmData->getDescriptor().getBindlessOffsetToSurfaceState().find(0x0)->second * surfaceStateSize);
+        const auto surfaceStateOffset = mockKernel.kernelImmData->getDescriptor().getBindlessOffsetToSurfaceState().find(0x0)->second * surfaceStateSize;
+        expectedSsInHeap = &mockKernel.getSurfaceStateHeapDataSpan()[surfaceStateOffset];
     }
 
     EXPECT_EQ(imageHW->passedRedescribedSurfaceStateHeap, expectedSsInHeap);

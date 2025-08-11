@@ -60,7 +60,7 @@ struct KernelHw : public KernelImp {
         auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
         if (NEO::isValidOffset(argInfo.bindful)) {
-            surfaceStateAddress = ptrOffset(state.surfaceStateHeapData.get(), argInfo.bindful);
+            surfaceStateAddress = &getSurfaceStateHeapDataSpan()[argInfo.bindful];
             surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
 
         } else if (NEO::isValidOffset(argInfo.bindless)) {
@@ -71,7 +71,8 @@ struct KernelHw : public KernelImp {
                 state.isBindlessOffsetSet[argIndex] = true;
             } else {
                 state.usingSurfaceStateHeap[argIndex] = true;
-                surfaceStateAddress = ptrOffset(state.surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE));
+                const auto surfaceStateOffset = getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE);
+                surfaceStateAddress = &getSurfaceStateHeapDataSpan()[surfaceStateOffset];
             }
         }
 

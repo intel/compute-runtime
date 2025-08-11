@@ -227,8 +227,8 @@ void CommandListPrivateHeapsFixture::setUp() {
     mockKernelImmData->mockKernelInfo->heapInfo.surfaceStateHeapSize = 128;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
-    kernel->state.surfaceStateHeapDataSize = 128;
-    kernel->state.surfaceStateHeapData.reset(new uint8_t[256]);
+    kernel->state.surfaceStateHeapData.reserve(256);
+    kernel->state.surfaceStateHeapData.resize(128);
 
     bindlessHeapsHelper = device->getNEODevice()->getBindlessHeapsHelper();
 }
@@ -312,8 +312,7 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
     mockKernelImmData->mockKernelDescriptor->payloadMappings.bindingTable.tableOffset = 0x40;
     mockKernelImmData->mockKernelDescriptor->kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
 
-    kernel->state.surfaceStateHeapDataSize = mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize;
-    kernel->state.surfaceStateHeapData.reset(new uint8_t[kernel->state.surfaceStateHeapDataSize]);
+    kernel->state.surfaceStateHeapData.resize(mockKernelImmData->kernelInfo->heapInfo.surfaceStateHeapSize);
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -561,8 +560,8 @@ void ImmediateFlushTaskCsrSharedHeapCmdListFixture::setUp() {
     mockKernelImmData->mockKernelInfo->heapInfo.surfaceStateHeapSize = 128;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
-    kernel->state.surfaceStateHeapDataSize = 128;
-    kernel->state.surfaceStateHeapData.reset(new uint8_t[256]);
+    kernel->state.surfaceStateHeapData.reserve(256);
+    kernel->state.surfaceStateHeapData.resize(128);
 }
 
 void ImmediateFlushTaskPrivateHeapCmdListFixture::setUp() {

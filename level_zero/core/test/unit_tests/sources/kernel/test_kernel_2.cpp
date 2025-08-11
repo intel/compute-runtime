@@ -91,9 +91,9 @@ void fillKernelMutableStateWithMockData(KernelMutableState &state) {
     state.crossThreadData.reserve(mockSize);
     std::ranges::copy(std::to_array<uint8_t, mockSize>({11, 12, 13, 14, 15, 16, 17, 18}), std::back_inserter(state.crossThreadData));
 
-    state.surfaceStateHeapData.reset(new uint8_t[mockSize]);
-    std::memcpy(state.surfaceStateHeapData.get(), std::to_array<uint8_t>({21, 22, 23, 24, 25, 26, 27, 28}).data(), mockSize);
-    state.surfaceStateHeapDataSize = mockSize;
+    state.surfaceStateHeapData.clear();
+    state.surfaceStateHeapData.reserve(mockSize);
+    std::ranges::copy(std::to_array<uint8_t, mockSize>({21, 22, 23, 24, 25, 26, 27, 28}), std::back_inserter(state.surfaceStateHeapData));
 
     state.dynamicStateHeapData.reset(new uint8_t[mockSize]);
     std::memcpy(state.dynamicStateHeapData.get(), std::to_array<uint8_t>({31, 32, 33, 34, 35, 36, 37, 38}).data(), mockSize);
@@ -144,7 +144,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     state2 = state1; // assignment operator is being tested
 
     EXPECT_EQ(0, std::memcmp(state1.crossThreadData.data(), state2.crossThreadData.data(), state1.crossThreadData.size()));
-    EXPECT_EQ(0, std::memcmp(state1.surfaceStateHeapData.get(), state2.surfaceStateHeapData.get(), state1.surfaceStateHeapDataSize));
+    EXPECT_EQ(0, std::memcmp(state1.surfaceStateHeapData.data(), state2.surfaceStateHeapData.data(), state1.surfaceStateHeapData.size()));
     EXPECT_EQ(0, std::memcmp(state1.dynamicStateHeapData.get(), state2.dynamicStateHeapData.get(), state1.dynamicStateHeapDataSize));
 
     EXPECT_EQ(0, std::memcmp(state1.perThreadDataForWholeThreadGroup, state2.perThreadDataForWholeThreadGroup, state1.perThreadDataSizeForWholeThreadGroup));
@@ -165,7 +165,8 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
 
     EXPECT_EQ(0, std::memcmp(state1.globalOffsets, state2.globalOffsets, KernelMutableState::dimMax * sizeof(uint32_t)));
     EXPECT_EQ(0, std::memcmp(state1.groupSize, state2.groupSize, KernelMutableState::dimMax * sizeof(uint32_t)));
-    EXPECT_EQ(state1.surfaceStateHeapDataSize, state2.surfaceStateHeapDataSize);
+    EXPECT_EQ(state1.crossThreadData, state2.crossThreadData);
+    EXPECT_EQ(state1.surfaceStateHeapData, state2.surfaceStateHeapData);
     EXPECT_EQ(state1.dynamicStateHeapDataSize, state2.dynamicStateHeapDataSize);
     EXPECT_EQ(state1.perThreadDataSize, state2.perThreadDataSize);
     EXPECT_EQ(state1.slmArgsTotalSize, state2.slmArgsTotalSize);
@@ -183,8 +184,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     state3 = std::move(state1);
 
     EXPECT_EQ(0U, state1.crossThreadData.size());
-    EXPECT_EQ(nullptr, state1.surfaceStateHeapData.get());
-    EXPECT_EQ(0U, state1.surfaceStateHeapDataSize);
+    EXPECT_EQ(0U, state1.surfaceStateHeapData.size());
     EXPECT_EQ(nullptr, state1.dynamicStateHeapData.get());
     EXPECT_EQ(0U, state1.dynamicStateHeapDataSize);
     EXPECT_EQ(nullptr, state1.pImplicitArgs);
@@ -194,7 +194,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     EXPECT_EQ(0U, state1.perThreadDataSizeForWholeThreadGroupAllocated);
 
     EXPECT_EQ(0, std::memcmp(state3.crossThreadData.data(), state2.crossThreadData.data(), state3.crossThreadData.size()));
-    EXPECT_EQ(0, std::memcmp(state3.surfaceStateHeapData.get(), state2.surfaceStateHeapData.get(), state3.surfaceStateHeapDataSize));
+    EXPECT_EQ(0, std::memcmp(state3.surfaceStateHeapData.data(), state2.surfaceStateHeapData.data(), state3.surfaceStateHeapData.size()));
     EXPECT_EQ(0, std::memcmp(state3.dynamicStateHeapData.get(), state2.dynamicStateHeapData.get(), state3.dynamicStateHeapDataSize));
 
     EXPECT_EQ(0, std::memcmp(state3.perThreadDataForWholeThreadGroup, state2.perThreadDataForWholeThreadGroup, state3.perThreadDataSizeForWholeThreadGroup));
@@ -216,7 +216,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     EXPECT_EQ(0, std::memcmp(state3.globalOffsets, state2.globalOffsets, KernelMutableState::dimMax * sizeof(uint32_t)));
     EXPECT_EQ(0, std::memcmp(state3.groupSize, state2.groupSize, KernelMutableState::dimMax * sizeof(uint32_t)));
     EXPECT_EQ(state3.crossThreadData.size(), state2.crossThreadData.size());
-    EXPECT_EQ(state3.surfaceStateHeapDataSize, state2.surfaceStateHeapDataSize);
+    EXPECT_EQ(state3.surfaceStateHeapData.size(), state2.surfaceStateHeapData.size());
     EXPECT_EQ(state3.dynamicStateHeapDataSize, state2.dynamicStateHeapDataSize);
     EXPECT_EQ(state3.perThreadDataSize, state2.perThreadDataSize);
     EXPECT_EQ(state3.slmArgsTotalSize, state2.slmArgsTotalSize);

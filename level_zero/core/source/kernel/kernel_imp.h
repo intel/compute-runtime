@@ -128,7 +128,7 @@ struct KernelImp : Kernel {
     void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
     void patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
 
-    const uint8_t *getSurfaceStateHeapData() const override { return state.surfaceStateHeapData.get(); }
+    const uint8_t *getSurfaceStateHeapData() const override { return state.surfaceStateHeapData.data(); }
     uint32_t getSurfaceStateHeapDataSize() const override;
 
     const uint8_t *getDynamicStateHeapData() const override { return state.dynamicStateHeapData.get(); }
@@ -252,6 +252,7 @@ struct KernelImp : Kernel {
     uint32_t getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const;
     ze_result_t validateWorkgroupSize() const;
     ArrayRef<uint8_t> getCrossThreadDataSpan() { return ArrayRef<uint8_t>(state.crossThreadData.data(), state.crossThreadData.size()); }
+    ArrayRef<uint8_t> getSurfaceStateHeapDataSpan() { return ArrayRef<uint8_t>(state.surfaceStateHeapData.data(), state.surfaceStateHeapData.size()); }
 
     const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;

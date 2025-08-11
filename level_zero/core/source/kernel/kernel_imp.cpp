@@ -250,12 +250,7 @@ KernelMutableState::KernelMutableState(const KernelMutableState &rhs) : Params{r
     pExtension = nullptr;
 
     crossThreadData = rhs.crossThreadData;
-
-    surfaceStateHeapDataSize = rhs.surfaceStateHeapDataSize;
-    if (surfaceStateHeapDataSize) {
-        surfaceStateHeapData = std::make_unique<uint8_t[]>(surfaceStateHeapDataSize);
-        std::memcpy(surfaceStateHeapData.get(), rhs.surfaceStateHeapData.get(), surfaceStateHeapDataSize);
-    }
+    surfaceStateHeapData = rhs.surfaceStateHeapData;
 
     dynamicStateHeapDataSize = rhs.dynamicStateHeapDataSize;
     if (dynamicStateHeapDataSize) {
@@ -289,7 +284,6 @@ void KernelMutableState::swap(KernelMutableState &rhs) {
     swap(this->pExtension, rhs.pExtension);
     swap(this->crossThreadData, rhs.crossThreadData);
     swap(this->surfaceStateHeapData, rhs.surfaceStateHeapData);
-    swap(this->surfaceStateHeapDataSize, rhs.surfaceStateHeapDataSize);
     swap(this->dynamicStateHeapData, rhs.dynamicStateHeapData);
     swap(this->dynamicStateHeapDataSize, rhs.dynamicStateHeapDataSize);
     swap(this->perThreadDataForWholeThreadGroup, rhs.perThreadDataForWholeThreadGroup);
@@ -314,7 +308,6 @@ void KernelMutableState::moveMembersFrom(KernelMutableState &&orig) {
     pExtension = std::move(orig.pExtension);
 
     crossThreadData = std::move(orig.crossThreadData);
-    surfaceStateHeapDataSize = std::exchange(orig.surfaceStateHeapDataSize, 0U);
     surfaceStateHeapData = std::move(orig.surfaceStateHeapData);
     dynamicStateHeapDataSize = std::exchange(orig.dynamicStateHeapDataSize, 0U);
     dynamicStateHeapData = std::move(orig.dynamicStateHeapData);
@@ -733,11 +726,11 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
             state.isBindlessOffsetSet[argIndex] = true;
         } else {
             state.usingSurfaceStateHeap[argIndex] = true;
-            auto ssPtr = ptrOffset(state.surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
+            auto ssPtr = &getSurfaceStateHeapDataSpan()[getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize];
             image->copySurfaceStateToSSH(ssPtr, 0u, bindlessSlot, false);
         }
     } else {
-        image->copySurfaceStateToSSH(state.surfaceStateHeapData.get(), arg.bindful, bindlessSlot, false);
+        image->copySurfaceStateToSSH(state.surfaceStateHeapData.data(), arg.bindful, bindlessSlot, false);
     }
     state.argumentsResidencyContainer[argIndex] = image->getAllocation();
 
@@ -937,11 +930,11 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
             state.isBindlessOffsetSet[argIndex] = true;
         } else {
             state.usingSurfaceStateHeap[argIndex] = true;
-            auto ssPtr = ptrOffset(state.surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
+            auto ssPtr = &getSurfaceStateHeapDataSpan()[getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize];
             image->copySurfaceStateToSSH(ssPtr, 0u, NEO::BindlessImageSlot::image, isMediaBlockImage);
         }
     } else {
-        image->copySurfaceStateToSSH(state.surfaceStateHeapData.get(), arg.bindful, NEO::BindlessImageSlot::image, isMediaBlockImage);
+        image->copySurfaceStateToSSH(state.surfaceStateHeapData.data(), arg.bindful, NEO::BindlessImageSlot::image, isMediaBlockImage);
     }
 
     state.argumentsResidencyContainer[argIndex] = image->getAllocation();
@@ -1096,9 +1089,7 @@ NEO::GraphicsAllocation *KernelImp::allocatePrivateMemoryGraphicsAllocation() {
 void KernelImp::patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocation *privateAllocation) {
     auto device = module->getDevice();
 
-    ArrayRef<uint8_t> surfaceStateHeapArrayRef = ArrayRef<uint8_t>(this->state.surfaceStateHeapData.get(), this->state.surfaceStateHeapDataSize);
-
-    patchWithImplicitSurface(getCrossThreadDataSpan(), surfaceStateHeapArrayRef,
+    patchWithImplicitSurface(getCrossThreadDataSpan(), getSurfaceStateHeapDataSpan(),
                              static_cast<uintptr_t>(privateAllocation->getGpuAddressToPatch()),
                              *privateAllocation, kernelImmData->getDescriptor().payloadMappings.implicitArgs.privateMemoryAddress,
                              *device->getNEODevice(), device->isImplicitScalingCapable());
@@ -1216,16 +1207,16 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     state.isBindlessOffsetSet.resize(this->state.kernelArgHandlers.size(), 0);
     state.usingSurfaceStateHeap.resize(this->state.kernelArgHandlers.size(), 0);
 
-    if (kernelImmData->getSurfaceStateHeapSize() > 0) {
-        this->state.surfaceStateHeapData.reset(new uint8_t[kernelImmData->getSurfaceStateHeapSize()]);
-        memcpy_s(this->state.surfaceStateHeapData.get(),
-                 kernelImmData->getSurfaceStateHeapSize(),
+    if (auto surfaceStateHeapSize = kernelImmData->getSurfaceStateHeapSize();
+        surfaceStateHeapSize > 0U) {
+        this->state.surfaceStateHeapData.resize(surfaceStateHeapSize);
+        memcpy_s(this->state.surfaceStateHeapData.data(),
+                 surfaceStateHeapSize,
                  kernelImmData->getSurfaceStateHeapTemplate(),
-                 kernelImmData->getSurfaceStateHeapSize());
-        this->state.surfaceStateHeapDataSize = kernelImmData->getSurfaceStateHeapSize();
+                 surfaceStateHeapSize);
     }
 
-    if (uint16_t crossThreadDataSize = kernelDescriptor.kernelAttributes.crossThreadDataSize;
+    if (auto crossThreadDataSize = kernelDescriptor.kernelAttributes.crossThreadDataSize;
         crossThreadDataSize != 0) {
         this->state.crossThreadData.resize(crossThreadDataSize);
         memcpy_s(this->state.crossThreadData.data(),
@@ -1438,7 +1429,7 @@ uint32_t KernelImp::getSurfaceStateHeapDataSize() const {
             return 0;
         }
     }
-    return state.surfaceStateHeapDataSize;
+    return static_cast<uint32_t>(state.surfaceStateHeapData.size());
 }
 
 void *KernelImp::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
