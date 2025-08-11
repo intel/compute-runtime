@@ -241,9 +241,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
                                       sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
         size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
-        if (device->getProductHelper().isNonCoherentTimestampsModeEnabled()) {
-            postSyncSize += NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
-        }
+
         auto useSizeBefore = cmdListStream->getUsed();
         auto result = commandList->appendBarrier(eventHandle, 0, nullptr, false);
         auto useSizeAfter = cmdListStream->getUsed();

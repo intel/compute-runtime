@@ -751,7 +751,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     auto isHeaplessModeDisabled = !this->device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo);
     auto isDcFlushAllowed = this->device->getProductHelper().isDcFlushAllowed();
     auto isFlushForOptimizedBarrierRequired = isDcFlushAllowed && this->isEventOnBarrierOptimized;
-    if ((((this->isCounterBased() && !this->inOrderTimestampNode.empty()) || this->mitigateHostVisibleSignal) && isDcFlushAllowed && isHeaplessModeDisabled) ||
+    auto isPostSyncWriteCachedInL2 = this->device->getProductHelper().isNonCoherentTimestampsModeEnabled();
+    if ((((this->isCounterBased() && !this->inOrderTimestampNode.empty()) || this->mitigateHostVisibleSignal || isPostSyncWriteCachedInL2) && isDcFlushAllowed && isHeaplessModeDisabled) ||
         isFlushForOptimizedBarrierRequired) {
         auto lock = this->csrs[0]->obtainUniqueOwnership();
         this->csrs[0]->flushTagUpdate();

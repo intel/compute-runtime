@@ -4489,15 +4489,9 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
             value,
             device->getNEODevice()->getRootDeviceEnvironment(),
             pipeControlArgs);
+
         if (syncCmdBuffer != nullptr) {
             *syncCmdBuffer = pipeControlArgs.postSyncCmd;
-        }
-        if (productHelper.isNonCoherentTimestampsModeEnabled()) {
-            pipeControlArgs = {};
-            pipeControlArgs.dcFlushEnable = getDcFlushRequired(signalScope);
-            NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(
-                *commandContainer.getCommandStream(),
-                pipeControlArgs);
         }
     }
 

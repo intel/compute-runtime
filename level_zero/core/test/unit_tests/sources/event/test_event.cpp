@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -4930,7 +4931,15 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
 
     EXPECT_EQ(1u, ultCsr1->downloadAllocationsCalledCount);
     EXPECT_TRUE(ultCsr1->latestDownloadAllocationsBlocking);
-    EXPECT_EQ(0u, downloadCounter1);
+    auto &hwInfo = device->getHwInfo();
+    auto isHeaplessModeDisabled = !device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo);
+    auto isDcFlushAllowed = device->getProductHelper().isDcFlushAllowed();
+    auto isPostSyncWriteCachedInL2 = device->getProductHelper().isNonCoherentTimestampsModeEnabled();
+    if (isPostSyncWriteCachedInL2 && isDcFlushAllowed && isHeaplessModeDisabled) {
+        EXPECT_EQ(1u, downloadCounter1);
+    } else {
+        EXPECT_EQ(0u, downloadCounter1);
+    }
 
     EXPECT_EQ(0u, ultCsr2->downloadAllocationsCalledCount);
     EXPECT_EQ(0u, downloadCounter2);

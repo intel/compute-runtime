@@ -521,9 +521,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
-    if (device->getProductHelper().isNonCoherentTimestampsModeEnabled()) {
-        expectedSize += NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
-    }
     size_t usedSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, usedSize);
 
@@ -565,9 +562,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle(), false));
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
-    if (device->getProductHelper().isNonCoherentTimestampsModeEnabled()) {
-        expectedSize += NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
-    }
+
     auto unifiedPostSyncLayout = device->getL0GfxCoreHelper().hasUnifiedPostSyncAllocationLayout();
 
     if (!unifiedPostSyncLayout) {
@@ -719,9 +714,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
-    if (device->getProductHelper().isNonCoherentTimestampsModeEnabled()) {
-        expectedSize += NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
-    }
     size_t usedSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, usedSize);
 
@@ -786,9 +778,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
-    if (device->getProductHelper().isNonCoherentTimestampsModeEnabled()) {
-        expectedSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
-    }
     size_t usedSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, usedSize);
 
