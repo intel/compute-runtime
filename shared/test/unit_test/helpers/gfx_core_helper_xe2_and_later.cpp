@@ -13,6 +13,8 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -118,4 +120,33 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenIsCacheFlushPrior
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     EXPECT_TRUE(gfxCoreHelper.isCacheFlushPriorImageReadRequired());
+}
+
+class MockGmmResourceInfoWithDenyCompression : public MockGmmResourceInfo {
+  public:
+    MockGmmResourceInfoWithDenyCompression(GMM_RESCREATE_PARAMS *resourceCreateParams) : MockGmmResourceInfo(resourceCreateParams) {}
+
+    bool isResourceDenyCompressionEnabled() override {
+        return true;
+    }
+};
+
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenXe2AndLaterWhenIsCompressionAppliedForImportedResourceWithDenyCompressionEnabledThenFalseIsReturned, IsAtLeastXe2HpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+
+    GMM_RESCREATE_PARAMS gmmParams = {};
+    gmmParams.Type = GMM_RESOURCE_TYPE::RESOURCE_BUFFER;
+    gmmParams.Format = GMM_FORMAT_GENERIC_8BIT;
+    gmmParams.BaseWidth64 = 1024;
+    gmmParams.BaseHeight = 1;
+    gmmParams.Depth = 1;
+    gmmParams.Flags.Info.NotCompressed = 0; // Compression enabled in flags
+
+    auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfoWithDenyCompression>(&gmmParams);
+    MockGmm mockGmm(mockExecutionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
+    mockGmm.gmmResourceInfo.reset(mockGmmResourceInfo.release());
+
+    // Even though NotCompressed = 0 (compression enabled), the deny compression should override it
+    EXPECT_FALSE(gfxCoreHelper.isCompressionAppliedForImportedResource(mockGmm));
 }
