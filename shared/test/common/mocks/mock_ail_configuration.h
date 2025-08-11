@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/ail/ail_configuration.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 namespace NEO {
 class MockAILConfiguration : public AILConfiguration {
@@ -95,6 +96,8 @@ class AILWhitebox : public AILConfigurationHw<productFamily> {
     using AILConfiguration::isKernelHashCorrect;
     using AILConfiguration::processName;
     using AILConfiguration::sourcesContain;
+
+    DebugManagerStateRestore dbgRestore;
 };
 
 } // namespace NEO
