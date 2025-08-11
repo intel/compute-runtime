@@ -153,6 +153,8 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromDeviceName(const st
     } else {
         config = getProductConfigFromAcronym(device);
     }
+
+    adjustProductConfig(config);
     if (!isSupportedProductConfig(config)) {
         return AOT::UNKNOWN_ISA;
     }

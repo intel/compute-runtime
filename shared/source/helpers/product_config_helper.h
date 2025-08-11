@@ -48,6 +48,7 @@ struct ProductConfigHelper {
         MismatchedValue = -1,
     };
     static void adjustDeviceName(std::string &device);
+    static void adjustProductConfig(uint32_t &productConfig);
     static std::string parseMajorMinorValue(NEO::HardwareIpVersion config);
     static std::string parseMajorMinorRevisionValue(NEO::HardwareIpVersion config);
     static int parseProductConfigFromString(const std::string &device, size_t begin, size_t end);

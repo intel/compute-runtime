@@ -74,6 +74,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info_helper.h
     ${NEO_SHARED_DIRECTORY}/helpers/path.h
+    ${NEO_SHARED_DIRECTORY}/helpers/${BRANCH_DIR_SUFFIX}product_config_helper_extra.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.h
     ${NEO_SHARED_DIRECTORY}/kernel/${BRANCH_DIR_SUFFIX}kernel_descriptor_ext.cpp
