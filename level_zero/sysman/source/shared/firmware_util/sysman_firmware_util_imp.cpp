@@ -23,10 +23,12 @@ static const std::map<std::string, csc_late_binding_type> lateBindingTypeToEnumM
 const std::string fwDeviceInitByDevice = "igsc_device_init_by_device_info";
 const std::string fwDeviceGetDeviceInfo = "igsc_device_get_device_info";
 const std::string fwDeviceFwVersion = "igsc_device_fw_version";
+const std::string fwDeviceFwDataVersion = "igsc_device_fwdata_version";
 const std::string fwDeviceIteratorCreate = "igsc_device_iterator_create";
 const std::string fwDeviceIteratorNext = "igsc_device_iterator_next";
 const std::string fwDeviceIteratorDestroy = "igsc_device_iterator_destroy";
 const std::string fwDeviceFwUpdate = "igsc_device_fw_update";
+const std::string fwDeviceFwDataUpdate = "igsc_device_fwdata_update";
 const std::string fwImageOpromInit = "igsc_image_oprom_init";
 const std::string fwImageOpromType = "igsc_image_oprom_type";
 const std::string fwDeviceOpromUpdate = "igsc_device_oprom_update";
@@ -38,10 +40,12 @@ const std::string fwDeviceUpdateLateBindingConfig = "igsc_device_update_late_bin
 pIgscDeviceInitByDevice deviceInitByDevice;
 pIgscDeviceGetDeviceInfo deviceGetDeviceInfo;
 pIgscDeviceFwVersion deviceGetFwVersion;
+pIgscDeviceFwDataVersion deviceGetFwDataVersion;
 pIgscDeviceIteratorCreate deviceIteratorCreate;
 pIgscDeviceIteratorNext deviceItreatorNext;
 pIgscDeviceIteratorDestroy deviceItreatorDestroy;
 pIgscDeviceFwUpdate deviceFwUpdate;
+pIgscDeviceFwDataUpdate deviceFwDataUpdate;
 pIgscImageOpromInit imageOpromInit;
 pIgscImageOpromType imageOpromType;
 pIgscDeviceOpromUpdate deviceOpromUpdate;
@@ -54,10 +58,12 @@ bool FirmwareUtilImp::loadEntryPoints() {
     bool ok = getSymbolAddr(fwDeviceInitByDevice, deviceInitByDevice);
     ok = ok && getSymbolAddr(fwDeviceGetDeviceInfo, deviceGetDeviceInfo);
     ok = ok && getSymbolAddr(fwDeviceFwVersion, deviceGetFwVersion);
+    ok = ok && getSymbolAddr(fwDeviceFwDataVersion, deviceGetFwDataVersion);
     ok = ok && getSymbolAddr(fwDeviceIteratorCreate, deviceIteratorCreate);
     ok = ok && getSymbolAddr(fwDeviceIteratorNext, deviceItreatorNext);
     ok = ok && getSymbolAddr(fwDeviceIteratorDestroy, deviceItreatorDestroy);
     ok = ok && getSymbolAddr(fwDeviceFwUpdate, deviceFwUpdate);
+    ok = ok && getSymbolAddr(fwDeviceFwDataUpdate, deviceFwDataUpdate);
     ok = ok && getSymbolAddr(fwImageOpromInit, imageOpromInit);
     ok = ok && getSymbolAddr(fwImageOpromType, imageOpromType);
     ok = ok && getSymbolAddr(fwDeviceOpromUpdate, deviceOpromUpdate);
@@ -147,6 +153,23 @@ ze_result_t FirmwareUtilImp::fwGetVersion(std::string &fwVersion) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FirmwareUtilImp::fwDataGetVersion(std::string &fwDataVersion) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
+    igsc_fwdata_version deviceFwDataVersion;
+    memset(&deviceFwDataVersion, 0, sizeof(deviceFwDataVersion));
+    int ret = deviceGetFwDataVersion(&fwDeviceHandle, &deviceFwDataVersion);
+    if (ret != IGSC_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    fwDataVersion.append("Major : ");
+    fwDataVersion.append(std::to_string(deviceFwDataVersion.major_version));
+    fwDataVersion.append(", OEM Manufacturing Data : ");
+    fwDataVersion.append(std::to_string(deviceFwDataVersion.oem_manuf_data_version));
+    fwDataVersion.append(", Major VCN : ");
+    fwDataVersion.append(std::to_string(deviceFwDataVersion.major_vcn));
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     igsc_oprom_version opromVersion;
@@ -175,6 +198,15 @@ ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
 ze_result_t FirmwareUtilImp::fwFlashGSC(void *pImage, uint32_t size) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     int ret = deviceFwUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, this);
+    if (ret != IGSC_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t FirmwareUtilImp::fwFlashGfxData(void *pImage, uint32_t size) {
+    const std::lock_guard<std::mutex> lock(this->fwLock);
+    int ret = deviceFwDataUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, this);
     if (ret != IGSC_SUCCESS) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }

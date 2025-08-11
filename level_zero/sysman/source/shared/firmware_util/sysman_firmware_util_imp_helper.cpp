@@ -11,9 +11,9 @@
 
 #include <algorithm>
 
-static std::vector<std ::string> deviceSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
+static std::vector<std::string> deviceSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC", "GFX_DATA"};
 static constexpr uint8_t eccStateNone = 0xFF;
-static std::vector<std ::string> lateBindingFirmwareTypes = {"FanTable", "VRConfig"};
+static std::vector<std::string> lateBindingFirmwareTypes = {"FanTable", "VRConfig"};
 
 namespace L0 {
 namespace Sysman {
@@ -345,6 +345,9 @@ ze_result_t FirmwareUtilImp::flashFirmware(std::string fwType, void *pImage, uin
     if (fwType == deviceSupportedFirmwareTypes[2]) { // PSC
         return fwFlashIafPsc(pImage, size);
     }
+    if (fwType == deviceSupportedFirmwareTypes[3]) { // GFX_DATA
+        return fwFlashGfxData(pImage, size);
+    }
     if (std::find(lateBindingFirmwareTypes.begin(), lateBindingFirmwareTypes.end(), fwType) != lateBindingFirmwareTypes.end()) { // FanTable and VRConfig
         return fwFlashLateBinding(pImage, size, fwType);
     }
@@ -381,6 +384,14 @@ void FirmwareUtilImp::getDeviceSupportedFwTypes(std::vector<std::string> &fwType
     if (ret == IGSC_SUCCESS) {
         fwTypes.push_back(deviceSupportedFirmwareTypes[2]);
     }
+
+    igsc_fwdata_version deviceFwDataVersion;
+    memset(&deviceFwDataVersion, 0, sizeof(deviceFwDataVersion));
+    deviceGetFwDataVersion = reinterpret_cast<pIgscDeviceFwDataVersion>(libraryHandle->getProcAddress(fwDeviceFwDataVersion));
+    ret = deviceGetFwDataVersion(&fwDeviceHandle, &deviceFwDataVersion);
+    if (ret == IGSC_SUCCESS) {
+        fwTypes.push_back(deviceSupportedFirmwareTypes[3]);
+    }
 }
 
 void FirmwareUtilImp::getLateBindingSupportedFwTypes(std::vector<std::string> &fwTypes) {
@@ -396,6 +407,9 @@ ze_result_t FirmwareUtilImp::getFwVersion(std::string fwType, std::string &firmw
     }
     if (fwType == deviceSupportedFirmwareTypes[2]) { // PSC
         return pscGetVersion(firmwareVersion);
+    }
+    if (fwType == deviceSupportedFirmwareTypes[3]) { // GFX_DATA
+        return fwDataGetVersion(firmwareVersion);
     }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

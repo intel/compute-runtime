@@ -26,6 +26,7 @@ namespace ult {
 constexpr static uint32_t mockMaxTileCount = 2;
 static int mockMemoryHealthIndicator = IGSC_HEALTH_INDICATOR_HEALTHY;
 static int mockGetFwVersion = IGSC_SUCCESS;
+static int mockGetFwDataVersion = IGSC_SUCCESS;
 static int mockGetOpromCodeVersion = IGSC_SUCCESS;
 static int mockGetOpromDataVersion = IGSC_SUCCESS;
 static int mockGetPscVersion = IGSC_SUCCESS;
@@ -155,6 +156,11 @@ static int mockGetEccConfig(struct igsc_device_handle *handle, uint32_t gfspCmd,
 static int mockIgscDeviceFwVersion(struct igsc_device_handle *handle,
                                    struct igsc_fw_version *version) {
     return mockGetFwVersion;
+}
+
+static int mockIgscDeviceFwDataVersion(struct igsc_device_handle *handle,
+                                       struct igsc_fwdata_version *version) {
+    return mockGetFwDataVersion;
 }
 
 static int mockIgscDeviceOpromVersion(struct igsc_device_handle *handle,
@@ -965,18 +971,20 @@ TEST(FwGetSupportedFwTypesTest, GivenFirmwareUtilAndAllFwTypesSupportedWhenCalli
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
     osLibHandle->funcMap["igsc_device_fw_version"] = reinterpret_cast<void *>(&mockIgscDeviceFwVersion);
+    osLibHandle->funcMap["igsc_device_fwdata_version"] = reinterpret_cast<void *>(&mockIgscDeviceFwDataVersion);
     osLibHandle->funcMap["igsc_device_oprom_version"] = reinterpret_cast<void *>(&mockIgscDeviceOpromVersion);
     osLibHandle->funcMap["igsc_device_psc_version"] = reinterpret_cast<void *>(&mockIgscDevicePscVersion);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
 
     mockGetFwVersion = IGSC_SUCCESS;
+    mockGetFwDataVersion = IGSC_SUCCESS;
     mockGetOpromCodeVersion = IGSC_SUCCESS;
     mockGetOpromDataVersion = IGSC_SUCCESS;
     mockGetPscVersion = IGSC_SUCCESS;
 
     std::vector<std::string> fwTypes{};
     pFwUtilImp->getDeviceSupportedFwTypes(fwTypes);
-    EXPECT_EQ(fwTypes.size(), 3u);
+    EXPECT_EQ(fwTypes.size(), 4u);
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
@@ -987,11 +995,13 @@ TEST(FwGetSupportedFwTypesTest, GivenFirmwareUtilAndAllFwTypesUnsupportedWhenCal
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
     osLibHandle->funcMap["igsc_device_fw_version"] = reinterpret_cast<void *>(&mockIgscDeviceFwVersion);
+    osLibHandle->funcMap["igsc_device_fwdata_version"] = reinterpret_cast<void *>(&mockIgscDeviceFwDataVersion);
     osLibHandle->funcMap["igsc_device_oprom_version"] = reinterpret_cast<void *>(&mockIgscDeviceOpromVersion);
     osLibHandle->funcMap["igsc_device_psc_version"] = reinterpret_cast<void *>(&mockIgscDevicePscVersion);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
 
     mockGetFwVersion = IGSC_ERROR_NOT_SUPPORTED;
+    mockGetFwDataVersion = IGSC_ERROR_NOT_SUPPORTED;
     mockGetOpromCodeVersion = IGSC_ERROR_NOT_SUPPORTED;
     mockGetOpromDataVersion = IGSC_ERROR_NOT_SUPPORTED;
     mockGetPscVersion = IGSC_ERROR_NOT_SUPPORTED;
@@ -1009,18 +1019,20 @@ TEST(FwGetSupportedFwTypesTest, GivenFirmwareUtilAndOnlyOpromCodeSupportedWhenCa
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     MockFwUtilOsLibrary *osLibHandle = new MockFwUtilOsLibrary();
     osLibHandle->funcMap["igsc_device_fw_version"] = reinterpret_cast<void *>(&mockIgscDeviceFwVersion);
+    osLibHandle->funcMap["igsc_device_fwdata_version"] = reinterpret_cast<void *>(&mockIgscDeviceFwDataVersion);
     osLibHandle->funcMap["igsc_device_oprom_version"] = reinterpret_cast<void *>(&mockIgscDeviceOpromVersion);
     osLibHandle->funcMap["igsc_device_psc_version"] = reinterpret_cast<void *>(&mockIgscDevicePscVersion);
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(osLibHandle);
 
     mockGetFwVersion = IGSC_SUCCESS;
+    mockGetFwDataVersion = IGSC_SUCCESS;
     mockGetOpromCodeVersion = IGSC_SUCCESS;
     mockGetOpromDataVersion = IGSC_ERROR_NOT_SUPPORTED;
     mockGetPscVersion = IGSC_SUCCESS;
 
     std::vector<std::string> fwTypes{};
     pFwUtilImp->getDeviceSupportedFwTypes(fwTypes);
-    EXPECT_EQ(fwTypes.size(), 2u);
+    EXPECT_EQ(fwTypes.size(), 3u);
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;

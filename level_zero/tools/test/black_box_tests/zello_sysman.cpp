@@ -1267,6 +1267,7 @@ void testSysmanFirmware(ze_device_handle_t &device, std::string imagePath) {
         }
         if (imagePath.size() != 0 && imgSize > 0) {
             std::vector<char> img(imgSize);
+            imageFile.seekg(0, std::ios::beg);
             imageFile.read(img.data(), imgSize);
 
             flashData.flashComplete = false;
