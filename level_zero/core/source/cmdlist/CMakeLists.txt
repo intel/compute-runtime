@@ -12,7 +12,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_extended${BRANCH_DIR_SUFFIX}cmdlist_extended.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw.inl
-               ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_skl_to_tgllp.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_immediate.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_immediate.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_imp.cpp

@@ -10,7 +10,6 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture_status.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver.h

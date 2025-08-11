@@ -18,7 +18,6 @@ using Family = NEO::Gen12LpFamily;
 #include "shared/source/helpers/blit_commands_helper_base.inl"
 #include "shared/source/helpers/blit_commands_helper_from_gen12lp_to_xe3.inl"
 #include "shared/source/helpers/populate_factory.h"
-#include "shared/source/helpers/state_base_address_tgllp_and_later.inl"
 
 namespace NEO {
 static auto gfxCore = IGFX_GEN12LP_CORE;

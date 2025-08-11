@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/windows/gmm_callbacks_tgllp_and_later.inl"
+#include "shared/source/helpers/windows/gmm_callbacks.inl"
 #include "shared/source/xe3_core/hw_cmds_base.h"
 
 namespace NEO {

@@ -91,8 +91,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_bdw_to_dg2.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_bdw_to_icllp.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tgllp_to_dg2.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_pvc_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gpu_page_fault_helper.cpp
@@ -146,11 +145,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/sleep.h
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address.h
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_icllp_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_skl.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/stdio.h
     ${CMAKE_CURRENT_SOURCE_DIR}/string.h
     ${CMAKE_CURRENT_SOURCE_DIR}/string_helpers.h
@@ -253,7 +248,6 @@ set(NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.h
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks_tgllp_and_later.inl
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS ${NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS})
