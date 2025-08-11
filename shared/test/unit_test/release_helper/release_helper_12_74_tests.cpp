@@ -122,3 +122,7 @@ TEST_F(ReleaseHelper1274Tests, whenIsBlitImageAllowedForDepthFormatCalledThenFal
         EXPECT_FALSE(releaseHelper->isBlitImageAllowedForDepthFormat());
     }
 }
+
+TEST_F(ReleaseHelper1274Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+    whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
+}

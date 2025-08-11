@@ -199,3 +199,15 @@ void ReleaseHelperTestsBase::whenIsPostImageWriteFlushRequiredCalledThenFalseRet
         EXPECT_FALSE(releaseHelper->isPostImageWriteFlushRequired());
     }
 }
+
+void ReleaseHelperTestsBase::whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        for (auto grfCount : releaseHelper->getSupportedNumGrfs()) {
+            uint32_t maxThreadsPerEuCount = 17;
+            EXPECT_EQ(maxThreadsPerEuCount, releaseHelper->adjustMaxThreadsPerEuCount(maxThreadsPerEuCount, grfCount));
+        }
+    }
+}

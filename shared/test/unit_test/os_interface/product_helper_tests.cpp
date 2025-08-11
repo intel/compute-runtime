@@ -1268,8 +1268,3 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSuppo
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingAdjustMaxThreadsPerEuCountThenDoNotChangeMaxThreadsPerEuCount) {
-    uint32_t maxThreadsPerEuCount = 17u;
-    EXPECT_EQ(maxThreadsPerEuCount, productHelper->adjustMaxThreadsPerEuCount(maxThreadsPerEuCount, 0u));
-}

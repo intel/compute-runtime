@@ -105,3 +105,7 @@ TEST_F(ReleaseHelper1261Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
         EXPECT_EQ(13u, preferredSlmValueArray[5].valueToProgram);
     }
 }
+
+TEST_F(ReleaseHelper1261Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
+    whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
+}

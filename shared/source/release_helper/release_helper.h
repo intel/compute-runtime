@@ -68,6 +68,7 @@ class ReleaseHelper {
     virtual uint32_t computeSlmValues(uint32_t slmSize, bool isHeapless) const = 0;
     virtual bool isBlitImageAllowedForDepthFormat() const = 0;
     virtual bool isPostImageWriteFlushRequired() const = 0;
+    virtual uint32_t adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -115,6 +116,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     uint32_t computeSlmValues(uint32_t slmSize, bool isHeapless) const override;
     bool isBlitImageAllowedForDepthFormat() const override;
     bool isPostImageWriteFlushRequired() const override;
+    uint32_t adjustMaxThreadsPerEuCount(uint32_t maxThreadsPerEuCount, uint32_t grfCount) const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

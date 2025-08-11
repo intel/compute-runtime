@@ -45,6 +45,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(computeSlmValues, uint32_t, {}, (uint32_t slmSize, bool isHeapless));
     ADDMETHOD_CONST_NOBASE(programmAdditionalStallPriorToBarrierWithTimestamp, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isPostImageWriteFlushRequired, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(adjustMaxThreadsPerEuCount, uint32_t, 8u, (uint32_t maxThreadsPerEuCount, uint32_t grfCount));
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(adjustRTDispatchGlobals, (void *rtDispatchGlobals, uint32_t rtStacksPerDss, bool heaplessEnabled, uint32_t maxBvhLevels));
 
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override {
