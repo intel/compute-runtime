@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,7 +110,11 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         }
         // wait for the completness of previous commands
         if (transferProperties.finishRequired) {
-            finish();
+            auto ret = finish();
+            if (ret != CL_SUCCESS) {
+                err.set(ret);
+                return nullptr;
+            }
             eventCompleted = true;
         }
 
