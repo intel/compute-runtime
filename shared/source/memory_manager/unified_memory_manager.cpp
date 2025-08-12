@@ -66,13 +66,14 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         svmData->isImportedAllocation) {
         return false;
     }
+
+    std::lock_guard<std::mutex> lock(this->mtx);
     if (svmData->device ? svmData->device->shouldLimitAllocationsReuse() : memoryManager->shouldLimitAllocationsReuse()) {
         return false;
     }
     if (svmData->isSavedForReuse) {
         return true;
     }
-    std::lock_guard<std::mutex> lock(this->mtx);
     bool isSuccess = true;
     if (auto device = svmData->device) {
         auto lock = device->usmReuseInfo.obtainAllocationsReuseLock();
