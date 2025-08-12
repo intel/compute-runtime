@@ -30,4 +30,6 @@ class FileDescriptor : NonCopyableAndNonMovableClass {
     const int handle;
 };
 
+static_assert(NEO::NonCopyableAndNonMovable<FileDescriptor>);
+
 } // namespace NEO

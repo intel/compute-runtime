@@ -42,4 +42,7 @@ class PrintfHandler : NonCopyableAndNonMovableClass {
     Kernel *kernel = nullptr;
     GraphicsAllocation *printfSurface = nullptr;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<PrintfHandler>);
+
 } // namespace NEO

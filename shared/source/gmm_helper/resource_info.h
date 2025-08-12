@@ -111,4 +111,7 @@ class GmmResourceInfo : NonCopyableAndNonMovableClass {
     void *handle = nullptr;
     size_t handleSize = 0;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<GmmResourceInfo>);
+
 } // namespace NEO

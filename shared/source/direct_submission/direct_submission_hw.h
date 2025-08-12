@@ -122,6 +122,8 @@ class DirectSubmissionHw {
         const DirectSubmissionHw<GfxFamily, Dispatcher> &directSubmission;
     };
 
+    static_assert(NEO::NonCopyableAndNonMovable<SemaphoreFenceHelper>);
+
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
     static constexpr size_t prefetchNoops = prefetchSize / sizeof(uint32_t);
     bool allocateResources();

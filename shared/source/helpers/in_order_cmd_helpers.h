@@ -143,6 +143,8 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     bool isTbx = false;
 };
 
+static_assert(NEO::NonCopyable<InOrderExecInfo>);
+
 namespace InOrderPatchCommandHelpers {
 inline uint64_t getAppendCounterValue(const InOrderExecInfo &inOrderExecInfo) {
     if (inOrderExecInfo.isRegularCmdList() && inOrderExecInfo.getRegularCmdListSubmissionCounter() > 1) {
