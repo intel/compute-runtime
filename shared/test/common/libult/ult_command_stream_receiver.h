@@ -210,6 +210,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return nullptr;
     }
 
+    uint64_t peekTotalMemoryUsed() {
+        return this->totalMemoryUsed;
+    }
+
     void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency, bool clearAllocations) override {
         makeSurfacePackNonResidentCalled++;
         BaseClass::makeSurfacePackNonResident(allocationsForResidency, clearAllocations);
