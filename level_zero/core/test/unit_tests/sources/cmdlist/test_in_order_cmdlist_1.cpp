@@ -4914,15 +4914,7 @@ HWTEST_F(InOrderCmdListTests, givenEventCounterNotReusedFromPreviousAppendWhenHo
 
     EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
     events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
-    auto &hwInfo = device->getHwInfo();
-    auto isHeaplessModeDisabled = !device->getCompilerProductHelper().isHeaplessModeEnabled(hwInfo);
-    auto isDcFlushAllowed = device->getProductHelper().isDcFlushAllowed();
-    auto isPostSyncWriteCachedInL2 = device->getProductHelper().isNonCoherentTimestampsModeEnabled();
-    if (isPostSyncWriteCachedInL2 && isDcFlushAllowed && isHeaplessModeDisabled) {
-        EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
-    } else {
-        EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-    }
+    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
     EXPECT_EQ(2u, events[0]->inOrderExecSignalValue);
 }
 

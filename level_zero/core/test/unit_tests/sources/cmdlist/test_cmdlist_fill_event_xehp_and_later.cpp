@@ -561,6 +561,9 @@ void testMultiTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpected
         // 1st dc flush after cross-tile sync, 2nd dc flush for signal scope event
         expectedDcFlush = NEO::ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired() ? 1 : 0;
         expectedDcFlush++;
+        if (!input.eventPoolFlags && !input.allPackets && input.device->getProductHelper().isNonCoherentTimestampsModeEnabled()) {
+            expectedDcFlush++;
+        }
     }
 
     EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
