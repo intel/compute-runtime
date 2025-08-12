@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/os_interface/windows/windows_wrapper.h"
-
-#include <cstdint>
+#include "shared/source/helpers/windows/gmm_callbacks.h"
 
 namespace NEO {
-long(__stdcall *notifyAubCaptureImpl)(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate) = nullptr;
+NotifyAubCaptureFunc notifyAubCaptureFuncFactory[IGFX_MAX_CORE]{};
+WriteL3AddressFunc writeL3AddressFuncFactory[IGFX_MAX_CORE]{};
 } // namespace NEO

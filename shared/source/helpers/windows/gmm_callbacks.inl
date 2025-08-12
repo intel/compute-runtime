@@ -6,9 +6,7 @@
  */
 
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 
@@ -49,6 +47,12 @@ int __stdcall TTCallbacks<GfxFamily>::writeL3Address(void *queueHandle, uint64_t
                                   false);
 
     return 1;
+}
+
+template <typename GfxFamily>
+GmmCallbacksFactory<GfxFamily>::GmmCallbacksFactory() noexcept {
+    notifyAubCaptureFuncFactory[gfxCore] = DeviceCallbacks<GfxFamily>::notifyAubCapture;
+    writeL3AddressFuncFactory[gfxCore] = TTCallbacks<GfxFamily>::writeL3Address;
 }
 
 } // namespace NEO

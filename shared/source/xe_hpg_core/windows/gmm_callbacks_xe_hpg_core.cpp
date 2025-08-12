@@ -5,12 +5,16 @@
  *
  */
 
-#include "shared/source/helpers/windows/gmm_callbacks.inl"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
+
+static auto gfxCore = IGFX_XE_HPG_CORE;
+
+#include "shared/source/helpers/windows/gmm_callbacks.inl"
 
 namespace NEO {
 
 template struct DeviceCallbacks<XeHpgCoreFamily>;
 template struct TTCallbacks<XeHpgCoreFamily>;
+GmmCallbacksFactory<XeHpgCoreFamily> gmmCallbacksXeHpg;
 
 } // namespace NEO

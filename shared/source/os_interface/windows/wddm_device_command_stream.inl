@@ -16,6 +16,7 @@
 #include "shared/source/direct_submission/windows/wddm_direct_submission.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -40,7 +41,6 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnviron
                                                                 const DeviceBitfield deviceBitfield)
     : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield) {
 
-    notifyAubCaptureImpl = DeviceCallbacks<GfxFamily>::notifyAubCapture;
     this->wddm = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Wddm>();
 
     PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(this->peekHwInfo());
@@ -175,9 +175,10 @@ bool WddmCommandStreamReceiver<GfxFamily>::isTlbFlushRequiredForStateCacheFlush(
 template <typename GfxFamily>
 GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager() {
     GMM_TRANSLATIONTABLE_CALLBACKS ttCallbacks = {};
-    ttCallbacks.pfWriteL3Adr = TTCallbacks<GfxFamily>::writeL3Address;
-
     auto rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
+    auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
+
+    ttCallbacks.pfWriteL3Adr = writeL3AddressFuncFactory[hwInfo->platform.eRenderCoreFamily];
 
     GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(rootDeviceEnvironment->getGmmClientContext(), TT_TYPE::AUXTT, &ttCallbacks);
     gmmPageTableMngr->setCsrHandle(this);
