@@ -293,7 +293,7 @@ void BindlessHeapsHelper::releaseSSToReusePool(const SurfaceStateInHeapInfo &sur
     if (surfStateInfo.heapAllocation != nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);
         int index = getReusedSshVectorIndex(surfStateInfo.ssSize);
-        surfaceStateInHeapVectorReuse[releasePoolIndex][index].push_back(std::move(surfStateInfo));
+        surfaceStateInHeapVectorReuse[releasePoolIndex][index].push_back(surfStateInfo);
     }
 
     return;
