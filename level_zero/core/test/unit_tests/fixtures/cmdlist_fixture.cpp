@@ -221,8 +221,7 @@ void CommandListPrivateHeapsFixture::setUp() {
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.numSamplers = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.tableOffset = 16;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.borderColor = 0;
-    kernel->state.dynamicStateHeapData.reset(new uint8_t[512]);
-    kernel->state.dynamicStateHeapDataSize = 512;
+    kernel->state.dynamicStateHeapData.resize(512);
 
     mockKernelImmData->mockKernelInfo->heapInfo.surfaceStateHeapSize = 128;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
@@ -301,8 +300,8 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
 
         auto surfaceStateSize = device->getNEODevice()->getGfxCoreHelper().getSamplerStateSize();
 
-        kernel->state.dynamicStateHeapDataSize = static_cast<uint32_t>(surfaceStateSize * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
-        kernel->state.dynamicStateHeapData.reset(new uint8_t[kernel->state.dynamicStateHeapDataSize]);
+        const auto dynamicStateHeapDataSize = static_cast<uint32_t>(surfaceStateSize * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
+        kernel->state.dynamicStateHeapData.resize(dynamicStateHeapDataSize);
 
         mockKernelImmData->mockKernelDescriptor->payloadMappings.samplerTable = mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable;
     }
@@ -554,8 +553,7 @@ void ImmediateFlushTaskCsrSharedHeapCmdListFixture::setUp() {
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.numSamplers = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.tableOffset = 16;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.borderColor = 0;
-    kernel->state.dynamicStateHeapData.reset(new uint8_t[512]);
-    kernel->state.dynamicStateHeapDataSize = 512;
+    kernel->state.dynamicStateHeapData.resize(512);
 
     mockKernelImmData->mockKernelInfo->heapInfo.surfaceStateHeapSize = 128;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;

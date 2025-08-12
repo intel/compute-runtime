@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ struct SamplerCoreFamily : public SamplerImp {
 
     ze_result_t initialize(Device *device, const ze_sampler_desc_t *desc) override;
 
-    void copySamplerStateToDSH(void *dynamicStateHeap, const uint32_t dynamicStateHeapSize,
+    void copySamplerStateToDSH(ArrayRef<uint8_t> dynamicStateHeap,
                                const uint32_t offset) override;
 
     static constexpr float getGenSamplerMaxLod() {

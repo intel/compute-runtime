@@ -251,12 +251,7 @@ KernelMutableState::KernelMutableState(const KernelMutableState &rhs) : Params{r
 
     crossThreadData = rhs.crossThreadData;
     surfaceStateHeapData = rhs.surfaceStateHeapData;
-
-    dynamicStateHeapDataSize = rhs.dynamicStateHeapDataSize;
-    if (dynamicStateHeapDataSize) {
-        dynamicStateHeapData = std::make_unique<uint8_t[]>(dynamicStateHeapDataSize);
-        std::memcpy(dynamicStateHeapData.get(), rhs.dynamicStateHeapData.get(), dynamicStateHeapDataSize);
-    }
+    dynamicStateHeapData = rhs.dynamicStateHeapData;
 
     if (rhs.perThreadDataSizeForWholeThreadGroup) {
         reservePerThreadDataForWholeThreadGroup(rhs.perThreadDataSizeForWholeThreadGroup);
@@ -285,7 +280,6 @@ void KernelMutableState::swap(KernelMutableState &rhs) {
     swap(this->crossThreadData, rhs.crossThreadData);
     swap(this->surfaceStateHeapData, rhs.surfaceStateHeapData);
     swap(this->dynamicStateHeapData, rhs.dynamicStateHeapData);
-    swap(this->dynamicStateHeapDataSize, rhs.dynamicStateHeapDataSize);
     swap(this->perThreadDataForWholeThreadGroup, rhs.perThreadDataForWholeThreadGroup);
     swap(this->perThreadDataSizeForWholeThreadGroup, rhs.perThreadDataSizeForWholeThreadGroup);
     swap(this->perThreadDataSizeForWholeThreadGroupAllocated, rhs.perThreadDataSizeForWholeThreadGroupAllocated);
@@ -309,7 +303,6 @@ void KernelMutableState::moveMembersFrom(KernelMutableState &&orig) {
 
     crossThreadData = std::move(orig.crossThreadData);
     surfaceStateHeapData = std::move(orig.surfaceStateHeapData);
-    dynamicStateHeapDataSize = std::exchange(orig.dynamicStateHeapDataSize, 0U);
     dynamicStateHeapData = std::move(orig.dynamicStateHeapData);
 
     perThreadDataForWholeThreadGroup = std::exchange(orig.perThreadDataForWholeThreadGroup, nullptr);
@@ -985,14 +978,14 @@ ze_result_t KernelImp::setArgSampler(uint32_t argIndex, size_t argSize, const vo
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescSampler>();
     const auto sampler = Sampler::fromHandle(*static_cast<const ze_sampler_handle_t *>(argVal));
     if (NEO::isValidOffset(arg.bindful)) {
-        sampler->copySamplerStateToDSH(state.dynamicStateHeapData.get(), state.dynamicStateHeapDataSize, arg.bindful);
+        sampler->copySamplerStateToDSH(getDynamicStateHeapDataSpan(), arg.bindful);
     } else if (NEO::isValidOffset(arg.bindless)) {
         const auto offset = kernelImmData->getDescriptor().payloadMappings.samplerTable.tableOffset;
         auto &gfxCoreHelper = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getHelper<NEO::GfxCoreHelper>();
         const auto stateSize = gfxCoreHelper.getSamplerStateSize();
         auto heapOffset = offset + static_cast<uint32_t>(stateSize) * arg.index;
 
-        sampler->copySamplerStateToDSH(state.dynamicStateHeapData.get(), state.dynamicStateHeapDataSize, heapOffset);
+        sampler->copySamplerStateToDSH(getDynamicStateHeapDataSpan(), heapOffset);
     }
     auto samplerDesc = sampler->getSamplerDesc();
 
@@ -1113,11 +1106,11 @@ void KernelImp::setInlineSamplers() {
             auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
             uint32_t offset = inlineSampler.borderColorStateSize;
             offset += static_cast<uint32_t>(samplerStateSize) * samplerStateIndex;
-            sampler->copySamplerStateToDSH(state.dynamicStateHeapData.get(), state.dynamicStateHeapDataSize, offset);
+            sampler->copySamplerStateToDSH(getDynamicStateHeapDataSpan(), offset);
 
         } else {
 
-            sampler->copySamplerStateToDSH(state.dynamicStateHeapData.get(), state.dynamicStateHeapDataSize, inlineSampler.getSamplerBindfulOffset());
+            sampler->copySamplerStateToDSH(getDynamicStateHeapDataSpan(), inlineSampler.getSamplerBindfulOffset());
         }
     }
 }
@@ -1207,7 +1200,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     state.isBindlessOffsetSet.resize(this->state.kernelArgHandlers.size(), 0);
     state.usingSurfaceStateHeap.resize(this->state.kernelArgHandlers.size(), 0);
 
-    if (auto surfaceStateHeapSize = kernelImmData->getSurfaceStateHeapSize();
+    if (const auto surfaceStateHeapSize = kernelImmData->getSurfaceStateHeapSize();
         surfaceStateHeapSize > 0U) {
         this->state.surfaceStateHeapData.resize(surfaceStateHeapSize);
         memcpy_s(this->state.surfaceStateHeapData.data(),
@@ -1216,7 +1209,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                  surfaceStateHeapSize);
     }
 
-    if (auto crossThreadDataSize = kernelDescriptor.kernelAttributes.crossThreadDataSize;
+    if (const auto crossThreadDataSize = kernelDescriptor.kernelAttributes.crossThreadDataSize;
         crossThreadDataSize != 0) {
         this->state.crossThreadData.resize(crossThreadDataSize);
         memcpy_s(this->state.crossThreadData.data(),
@@ -1225,13 +1218,14 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                  crossThreadDataSize);
     }
 
-    if (kernelImmData->getDynamicStateHeapDataSize() != 0) {
-        this->state.dynamicStateHeapData.reset(new uint8_t[kernelImmData->getDynamicStateHeapDataSize()]);
-        memcpy_s(this->state.dynamicStateHeapData.get(),
-                 kernelImmData->getDynamicStateHeapDataSize(),
+    if (const auto dynamicStateHeapSize = kernelImmData->getDynamicStateHeapDataSize();
+        dynamicStateHeapSize != 0) {
+        this->state.dynamicStateHeapData.clear();
+        this->state.dynamicStateHeapData.resize(dynamicStateHeapSize);
+        memcpy_s(this->state.dynamicStateHeapData.data(),
+                 dynamicStateHeapSize,
                  kernelImmData->getDynamicStateHeapTemplate(),
-                 kernelImmData->getDynamicStateHeapDataSize());
-        this->state.dynamicStateHeapDataSize = kernelImmData->getDynamicStateHeapDataSize();
+                 dynamicStateHeapSize);
     }
 
     if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {

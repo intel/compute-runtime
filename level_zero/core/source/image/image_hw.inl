@@ -257,7 +257,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
             auto samplerStateOffset = static_cast<uint32_t>(NEO::BindlessImageSlot::sampler * surfaceStateSize);
 
-            sampler->copySamplerStateToDSH(ssInHeap->ssPtr, static_cast<uint32_t>(ssInHeap->ssSize), samplerStateOffset);
+            ArrayRef<uint8_t> ssInHeapSpan{reinterpret_cast<uint8_t *>(ssInHeap->ssPtr), ssInHeap->ssSize};
+            sampler->copySamplerStateToDSH(ssInHeapSpan, samplerStateOffset);
             sampler->destroy();
         }
     }

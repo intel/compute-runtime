@@ -95,9 +95,9 @@ void fillKernelMutableStateWithMockData(KernelMutableState &state) {
     state.surfaceStateHeapData.reserve(mockSize);
     std::ranges::copy(std::to_array<uint8_t, mockSize>({21, 22, 23, 24, 25, 26, 27, 28}), std::back_inserter(state.surfaceStateHeapData));
 
-    state.dynamicStateHeapData.reset(new uint8_t[mockSize]);
-    std::memcpy(state.dynamicStateHeapData.get(), std::to_array<uint8_t>({31, 32, 33, 34, 35, 36, 37, 38}).data(), mockSize);
-    state.dynamicStateHeapDataSize = mockSize;
+    state.dynamicStateHeapData.clear();
+    state.dynamicStateHeapData.reserve(mockSize);
+    std::ranges::copy(std::to_array<uint8_t>({31, 32, 33, 34, 35, 36, 37, 38}), std::back_inserter(state.dynamicStateHeapData));
 
     state.reservePerThreadDataForWholeThreadGroup(mockSize);
     std::memcpy(state.perThreadDataForWholeThreadGroup, std::to_array<uint8_t>({41, 42, 43, 44, 45, 46, 47, 48}).data(), mockSize);
@@ -145,7 +145,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
 
     EXPECT_EQ(0, std::memcmp(state1.crossThreadData.data(), state2.crossThreadData.data(), state1.crossThreadData.size()));
     EXPECT_EQ(0, std::memcmp(state1.surfaceStateHeapData.data(), state2.surfaceStateHeapData.data(), state1.surfaceStateHeapData.size()));
-    EXPECT_EQ(0, std::memcmp(state1.dynamicStateHeapData.get(), state2.dynamicStateHeapData.get(), state1.dynamicStateHeapDataSize));
+    EXPECT_EQ(0, std::memcmp(state1.dynamicStateHeapData.data(), state2.dynamicStateHeapData.data(), state1.dynamicStateHeapData.size()));
 
     EXPECT_EQ(0, std::memcmp(state1.perThreadDataForWholeThreadGroup, state2.perThreadDataForWholeThreadGroup, state1.perThreadDataSizeForWholeThreadGroup));
 
@@ -167,7 +167,6 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     EXPECT_EQ(0, std::memcmp(state1.groupSize, state2.groupSize, KernelMutableState::dimMax * sizeof(uint32_t)));
     EXPECT_EQ(state1.crossThreadData, state2.crossThreadData);
     EXPECT_EQ(state1.surfaceStateHeapData, state2.surfaceStateHeapData);
-    EXPECT_EQ(state1.dynamicStateHeapDataSize, state2.dynamicStateHeapDataSize);
     EXPECT_EQ(state1.perThreadDataSize, state2.perThreadDataSize);
     EXPECT_EQ(state1.slmArgsTotalSize, state2.slmArgsTotalSize);
     EXPECT_EQ(state1.perThreadDataSizeForWholeThreadGroup, state2.perThreadDataSizeForWholeThreadGroup);
@@ -185,8 +184,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
 
     EXPECT_EQ(0U, state1.crossThreadData.size());
     EXPECT_EQ(0U, state1.surfaceStateHeapData.size());
-    EXPECT_EQ(nullptr, state1.dynamicStateHeapData.get());
-    EXPECT_EQ(0U, state1.dynamicStateHeapDataSize);
+    EXPECT_EQ(0U, state1.dynamicStateHeapData.size());
     EXPECT_EQ(nullptr, state1.pImplicitArgs);
     EXPECT_EQ(nullptr, state1.pExtension);
     EXPECT_EQ(nullptr, state1.perThreadDataForWholeThreadGroup);
@@ -195,7 +193,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
 
     EXPECT_EQ(0, std::memcmp(state3.crossThreadData.data(), state2.crossThreadData.data(), state3.crossThreadData.size()));
     EXPECT_EQ(0, std::memcmp(state3.surfaceStateHeapData.data(), state2.surfaceStateHeapData.data(), state3.surfaceStateHeapData.size()));
-    EXPECT_EQ(0, std::memcmp(state3.dynamicStateHeapData.get(), state2.dynamicStateHeapData.get(), state3.dynamicStateHeapDataSize));
+    EXPECT_EQ(0, std::memcmp(state3.dynamicStateHeapData.data(), state2.dynamicStateHeapData.data(), state3.dynamicStateHeapData.size()));
 
     EXPECT_EQ(0, std::memcmp(state3.perThreadDataForWholeThreadGroup, state2.perThreadDataForWholeThreadGroup, state3.perThreadDataSizeForWholeThreadGroup));
 
@@ -217,7 +215,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     EXPECT_EQ(0, std::memcmp(state3.groupSize, state2.groupSize, KernelMutableState::dimMax * sizeof(uint32_t)));
     EXPECT_EQ(state3.crossThreadData.size(), state2.crossThreadData.size());
     EXPECT_EQ(state3.surfaceStateHeapData.size(), state2.surfaceStateHeapData.size());
-    EXPECT_EQ(state3.dynamicStateHeapDataSize, state2.dynamicStateHeapDataSize);
+    EXPECT_EQ(state3.dynamicStateHeapData.size(), state2.dynamicStateHeapData.size());
     EXPECT_EQ(state3.perThreadDataSize, state2.perThreadDataSize);
     EXPECT_EQ(state3.slmArgsTotalSize, state2.slmArgsTotalSize);
     EXPECT_EQ(state3.perThreadDataSizeForWholeThreadGroup, state2.perThreadDataSizeForWholeThreadGroup);
@@ -745,12 +743,11 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     Mock<KernelImp> kernel;
     kernel.module = &module;
     kernel.kernelImmData = &kernelImmData;
-    kernel.state.dynamicStateHeapData.reset(new uint8_t[64 + sizeof(SamplerState)]);
-    kernel.state.dynamicStateHeapDataSize = 64 + sizeof(SamplerState);
+    kernel.state.dynamicStateHeapData.resize(64 + sizeof(SamplerState));
 
     kernel.setInlineSamplers();
 
-    auto samplerState = reinterpret_cast<const SamplerState *>(kernel.state.dynamicStateHeapData.get() + 64U);
+    auto samplerState = reinterpret_cast<const SamplerState *>(&kernel.getDynamicStateHeapDataSpan()[64U]);
     EXPECT_TRUE(samplerState->getNonNormalizedCoordinateEnable());
     EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_WRAP, samplerState->getTcxAddressControlMode());
     EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_WRAP, samplerState->getTcyAddressControlMode());
@@ -791,13 +788,12 @@ HWTEST2_F(KernelTest, givenTwoInlineSamplersWithBindlessAddressingWhenSettingInl
     Mock<KernelImp> kernel;
     kernel.module = &module;
     kernel.kernelImmData = &kernelImmData;
-    kernel.state.dynamicStateHeapData.reset(new uint8_t[borderColorStateSize + 2 * sizeof(SamplerState)]);
-    kernel.state.dynamicStateHeapDataSize = borderColorStateSize + 2 * sizeof(SamplerState);
+    kernel.state.dynamicStateHeapData.resize(borderColorStateSize + 2 * sizeof(SamplerState));
 
     kernel.setInlineSamplers();
 
-    const SamplerState *samplerState = reinterpret_cast<const SamplerState *>(kernel.state.dynamicStateHeapData.get() + borderColorStateSize);
-    const SamplerState *samplerState2 = reinterpret_cast<const SamplerState *>(kernel.state.dynamicStateHeapData.get() + sizeof(SamplerState) + borderColorStateSize);
+    const SamplerState *samplerState = reinterpret_cast<const SamplerState *>(&kernel.getDynamicStateHeapDataSpan()[borderColorStateSize]);
+    const SamplerState *samplerState2 = reinterpret_cast<const SamplerState *>(&kernel.getDynamicStateHeapDataSpan()[sizeof(SamplerState) + borderColorStateSize]);
 
     EXPECT_TRUE(samplerState->getNonNormalizedCoordinateEnable());
     EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_CLAMP, samplerState->getTcxAddressControlMode());

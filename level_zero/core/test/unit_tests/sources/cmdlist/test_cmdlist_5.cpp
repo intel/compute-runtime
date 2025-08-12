@@ -1766,7 +1766,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
-    memset(kernel->state.dynamicStateHeapData.get(), 0, kernel->state.dynamicStateHeapDataSize);
+    memset(kernel->state.dynamicStateHeapData.data(), 0, kernel->state.dynamicStateHeapData.size());
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

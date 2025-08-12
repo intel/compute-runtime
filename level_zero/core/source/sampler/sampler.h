@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/utilities/arrayref.h"
+
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
 struct _ze_sampler_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_SAMPLER> {};
@@ -26,8 +28,7 @@ struct Sampler : _ze_sampler_handle_t {
     static Sampler *create(uint32_t productFamily, Device *device,
                            const ze_sampler_desc_t *desc);
 
-    virtual void copySamplerStateToDSH(void *dynamicStateHeap,
-                                       const uint32_t dynamicStateHeapSize,
+    virtual void copySamplerStateToDSH(ArrayRef<uint8_t> dynamicStateHeap,
                                        const uint32_t heapOffset) = 0;
 
     static Sampler *fromHandle(ze_sampler_handle_t handle) {

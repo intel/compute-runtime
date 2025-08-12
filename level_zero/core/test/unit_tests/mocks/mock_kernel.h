@@ -45,6 +45,7 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::createPrintfBuffer;
     using ::L0::KernelImp::devicePrintfKernelMutex;
     using ::L0::KernelImp::getCrossThreadDataSpan;
+    using ::L0::KernelImp::getDynamicStateHeapDataSpan;
     using ::L0::KernelImp::getSurfaceStateHeapDataSpan;
     using ::L0::KernelImp::heaplessEnabled;
     using ::L0::KernelImp::implicitArgsVersion;

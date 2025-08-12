@@ -131,7 +131,7 @@ struct KernelImp : Kernel {
     const uint8_t *getSurfaceStateHeapData() const override { return state.surfaceStateHeapData.data(); }
     uint32_t getSurfaceStateHeapDataSize() const override;
 
-    const uint8_t *getDynamicStateHeapData() const override { return state.dynamicStateHeapData.get(); }
+    const uint8_t *getDynamicStateHeapData() const override { return state.dynamicStateHeapData.data(); }
 
     const KernelImmutableData *getImmutableData() const override { return kernelImmData; }
 
@@ -253,6 +253,7 @@ struct KernelImp : Kernel {
     ze_result_t validateWorkgroupSize() const;
     ArrayRef<uint8_t> getCrossThreadDataSpan() { return ArrayRef<uint8_t>(state.crossThreadData.data(), state.crossThreadData.size()); }
     ArrayRef<uint8_t> getSurfaceStateHeapDataSpan() { return ArrayRef<uint8_t>(state.surfaceStateHeapData.data(), state.surfaceStateHeapData.size()); }
+    ArrayRef<uint8_t> getDynamicStateHeapDataSpan() { return ArrayRef<uint8_t>(state.dynamicStateHeapData.data(), state.dynamicStateHeapData.size()); }
 
     const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;
