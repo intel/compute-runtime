@@ -700,32 +700,6 @@ TEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesThenSourc
     pProgram->release();
 }
 
-TEST_F(MinimumProgramFixture, givenApplicationContextMarkedAsNonZebinWhenBuildingProgramThenInternalOptionsShouldContainDisableZebinOption) {
-    const char *kernelSources[] = {"some source code"};
-    size_t knownSourceSize = strlen(kernelSources[0]);
-
-    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
-    auto pDevice = pContext->getDevice(0);
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
-
-    MockProgram *pProgram = nullptr;
-    pContext->setContextAsNonZebin();
-    pProgram = Program::create<SucceedingGenBinaryProgram>(
-        pContext,
-        1,
-        kernelSources,
-        &knownSourceSize,
-        retVal);
-
-    ASSERT_NE(nullptr, pProgram);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    retVal = pProgram->build(pProgram->getDevices(), "");
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::disableZebin));
-    pProgram->release();
-}
-
 TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
     zebinPtr->setAsMockCompilerLoadedFile("copybuffer.bin");
 

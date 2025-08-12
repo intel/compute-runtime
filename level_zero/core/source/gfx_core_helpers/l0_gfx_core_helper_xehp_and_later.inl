@@ -66,11 +66,6 @@ uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDe
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::isZebinAllowed(const NEO::Debugger *debugger) const {
-    return true;
-}
-
-template <typename Family>
 NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
     return NEO::HeapAddressModel::privateHeaps;
 }

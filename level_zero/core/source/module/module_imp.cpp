@@ -273,18 +273,7 @@ ze_result_t ModuleTranslationUnit::buildFromIntermediate(IGC::CodeType::CodeType
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
 
-    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     std::string internalOptions = this->generateCompilerOptions(buildOptions, internalBuildOptions);
-    auto isZebinAllowed = l0GfxCoreHelper.isZebinAllowed(neoDevice->getDebugger());
-    if (isZebinAllowed == false) {
-        const auto &rootDevice = neoDevice->getRootDevice();
-        if (!rootDevice->getCompilerInterface()->addOptionDisableZebin(this->options, internalOptions)) {
-            CREATE_DEBUG_STRING(str, "%s", "Cannot build zebinary for this device with debugger enabled. Remove \"-ze-intel-enable-zebin\" build flag\n");
-            driverHandle->setErrorDescription(std::string(str.get()));
-            updateBuildLog(std::string(str.get()));
-            return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-        }
-    }
 
     NEO::TranslationInput inputArgs = {intermediateType, IGC::CodeType::oclGenBin};
 

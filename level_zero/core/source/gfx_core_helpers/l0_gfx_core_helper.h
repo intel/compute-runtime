@@ -90,7 +90,6 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool platformSupportsPipelineSelectTracking() const = 0;
     virtual bool platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool platformSupportsPrimaryBatchBufferCmdList() const = 0;
-    virtual bool isZebinAllowed(const NEO::Debugger *debugger) const = 0;
     virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual NEO::HeapAddressModel getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
@@ -150,7 +149,6 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool platformSupportsPipelineSelectTracking() const override;
     bool platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool platformSupportsPrimaryBatchBufferCmdList() const override;
-    bool isZebinAllowed(const NEO::Debugger *debugger) const override;
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
     uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     NEO::HeapAddressModel getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;

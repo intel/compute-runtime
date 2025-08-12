@@ -727,12 +727,4 @@ std::unique_lock<std::mutex> Context::obtainOwnershipForMultiRootDeviceAllocator
     return std::unique_lock<std::mutex>(multiRootDeviceAllocatorMtx);
 }
 
-void Context::setContextAsNonZebin() {
-    this->nonZebinContext = true;
-}
-
-bool Context::checkIfContextIsNonZebin() const {
-    return this->nonZebinContext;
-}
-
 } // namespace NEO

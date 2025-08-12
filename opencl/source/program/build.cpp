@@ -95,13 +95,6 @@ cl_int Program::build(
                 NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::debugManager.flags.InjectInternalBuildOptions.get());
             }
 
-            if (nullptr != this->getContextPtr()) {
-                if (this->getContext().checkIfContextIsNonZebin()) {
-                    const auto &rootDevice = defaultDevice.getRootDevice();
-                    rootDevice->getCompilerInterface()->addOptionDisableZebin(options, internalOptions);
-                }
-            }
-
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
             inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
             inputArgs.gtPinInput = gtpinGetIgcInit();

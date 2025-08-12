@@ -255,8 +255,6 @@ class Context : public BaseObject<_cl_context> {
     TagAllocatorBase *getMultiRootDeviceTimestampPacketAllocator();
     std::unique_lock<std::mutex> obtainOwnershipForMultiRootDeviceAllocator();
     void setMultiRootDeviceTimestampPacketAllocator(std::unique_ptr<TagAllocatorBase> &allocator);
-    void setContextAsNonZebin();
-    bool checkIfContextIsNonZebin() const;
 
     void initializeUsmAllocationPools();
     void cleanupUsmAllocationPools();
@@ -320,7 +318,6 @@ class Context : public BaseObject<_cl_context> {
 
     bool interopUserSync = false;
     bool resolvesRequiredInKernels = false;
-    bool nonZebinContext = false;
     bool usmPoolInitialized = false;
     bool platformManagersInitialized = false;
 };
