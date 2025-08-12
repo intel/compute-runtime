@@ -115,7 +115,17 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                 flushL3AfterPostSyncForExternalAllocation = true;
             }
 
-            if (walkerArgs.event != nullptr || walkerArgs.blocking || containsPrintBuffer) {
+            bool forceFlushL3 = false;
+            if (debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.get()) {
+                forceFlushL3 = true;
+                flushL3AfterPostSyncForHostUsm = true;
+            }
+            if (debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.get()) {
+                forceFlushL3 = true;
+                flushL3AfterPostSyncForExternalAllocation = true;
+            }
+
+            if (walkerArgs.event != nullptr || walkerArgs.blocking || containsPrintBuffer || forceFlushL3) {
                 GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacketFlushL3<WalkerType>(&walkerCmd, productHelper, flushL3AfterPostSyncForHostUsm, flushL3AfterPostSyncForExternalAllocation);
             }
         }
