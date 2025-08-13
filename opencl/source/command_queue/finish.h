@@ -25,20 +25,6 @@ cl_int CommandQueueHw<GfxFamily>::finish() {
 
     bool waitForTaskCountRequired = false;
 
-    if (!l3FlushedAfterCpuRead && l3FlushAfterPostSyncEnabled) {
-        csr.flushTagUpdate();
-
-        CompletionStamp completionStamp = {
-            csr.peekTaskCount(),
-            csr.peekTaskLevel(),
-            csr.obtainCurrentFlushStamp()};
-
-        this->updateFromCompletionStamp(completionStamp, nullptr);
-
-        this->l3FlushedAfterCpuRead = true;
-        waitForTaskCountRequired = true;
-    }
-
     // Stall until HW reaches taskCount on all its engines
     const auto waitStatus = waitForAllEngines(true, nullptr, waitForTaskCountRequired);
     if (waitStatus == WaitStatus::gpuHang) {

@@ -283,7 +283,6 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::isCompleted;
     using BaseClass::isGpgpuSubmissionForBcsRequired;
     using BaseClass::l3FlushAfterPostSyncEnabled;
-    using BaseClass::l3FlushedAfterCpuRead;
     using BaseClass::latestSentEnqueueType;
     using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::obtainCommandStream;

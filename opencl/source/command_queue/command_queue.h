@@ -547,7 +547,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool heaplessModeEnabled = false;
     bool heaplessStateInitEnabled = false;
     bool isForceStateless = false;
-    bool l3FlushedAfterCpuRead = true;
     bool l3FlushAfterPostSyncEnabled = false;
     bool isWalkerWithProfilingEnqueued = false;
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;

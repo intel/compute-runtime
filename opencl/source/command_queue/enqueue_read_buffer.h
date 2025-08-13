@@ -76,7 +76,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferImpl(
 
     if (isCpuCopyAllowed) {
         if (isMemTransferNeeded) {
-            this->l3FlushedAfterCpuRead = false;
             return enqueueReadWriteBufferOnCpuWithMemoryTransfer(cmdType, buffer, offset, size, ptr,
                                                                  numEventsInWaitList, eventWaitList, event);
         } else {
