@@ -25,6 +25,13 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsTimestampSh
     EXPECT_FALSE(gfxCoreHelper.isTimestampShiftRequired());
 }
 
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsNonCoherentTimestampsModeEnabledThenReturnCorrectValue, IsAtLeastXe2HpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    EXPECT_EQ(!productHelper.isDcFlushAllowed(), productHelper.isNonCoherentTimestampsModeEnabled());
+}
+
 HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsLNL) {
     DebugManagerStateRestore restorer;
 
