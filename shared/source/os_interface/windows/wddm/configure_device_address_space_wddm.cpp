@@ -16,6 +16,10 @@
 
 namespace NEO {
 
+long __stdcall notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate) {
+    return notifyAubCaptureImpl(csrHandle, gfxAddress, gfxSize, allocate);
+}
+
 bool Wddm::configureDeviceAddressSpace() {
     GMM_DEVICE_CALLBACKS_INT deviceCallbacks{};
     deviceCallbacks.Adapter.KmtHandle = getAdapter();
@@ -37,10 +41,7 @@ bool Wddm::configureDeviceAddressSpace() {
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUnLock = getGdi()->unlock2;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEscape = getGdi()->escape;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnFreeGPUVA = getGdi()->freeGpuVirtualAddress;
-
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = notifyAubCaptureFuncFactory[hwInfo->platform.eRenderCoreFamily];
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = notifyAubCapture;
 
     GMM_DEVICE_INFO deviceInfo{};
     deviceInfo.pGfxPartition = &gfxPartition;
@@ -62,7 +63,7 @@ bool Wddm::configureDeviceAddressSpace() {
                        ? maximumApplicationAddress + 1u
                        : 0u;
 
-    bool obtainMinAddress = hwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
+    bool obtainMinAddress = rootDeviceEnvironment.getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
     return gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, svmSize, featureTable->flags.ftrL3IACoherency, minAddress, obtainMinAddress);
 }
 
