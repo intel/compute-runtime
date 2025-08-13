@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,9 @@
 #include "aubstream/aub_manager.h"
 #include "aubstream/aubstream.h"
 #include "aubstream/hardware_context.h"
+
+#include <optional>
+#include <unordered_map>
 
 struct MockHardwareContext : public aub_stream::HardwareContext {
     using SurfaceInfo = aub_stream::SurfaceInfo;
@@ -150,6 +153,13 @@ class MockAubManager : public aub_stream::AubManager {
     bool reservePhysicalMemory(aub_stream::AllocationParams allocationParams, aub_stream::PhysicalAllocationInfo &physicalAllocInfo) override { return false; };
     bool mapGpuVa(uint64_t gfxAddress, size_t size, aub_stream::PhysicalAllocationInfo physicalAllocInfo) override { return false; };
 
+    uint32_t readMMIO(uint32_t offset) override {
+        if (mmioData)
+            return (*mmioData)[offset];
+        else
+            return ::aub_stream::AubManager::readMMIO(offset);
+    }
+
     std::vector<aub_stream::AllocationParams> storedAllocationParams;
     uint32_t openCalledCnt = 0;
     std::string fileName = "";
@@ -168,6 +178,7 @@ class MockAubManager : public aub_stream::AubManager {
     uint32_t contextFlags = 0;
     int hintToWriteMemory = 0;
     size_t writeMemoryPageSizePassed = 0;
+    std::optional<std::unordered_map<uint32_t, uint32_t>> mmioData;
 
     aub_stream::AubManagerOptions options{};
 
