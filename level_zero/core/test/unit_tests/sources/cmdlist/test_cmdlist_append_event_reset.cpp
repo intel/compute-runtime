@@ -389,9 +389,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData) +
                           commandList->estimateBufferSizeMultiTileBarrier(device->getNEODevice()->getRootDeviceEnvironment());
-    if (device->getProductHelper().isNonCoherentTimestampsModeEnabled()) {
-        expectedSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
-    }
     size_t usedSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, usedSize);
 
