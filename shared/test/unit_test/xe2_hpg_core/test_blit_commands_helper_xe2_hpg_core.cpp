@@ -63,11 +63,11 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForVillBuffer
     }
 }
 
-HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndSystemMemWhenAppendBlitCommandsForVillBufferThenCompresionDisabled, IsXe2HpgCore) {
+HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndSystemMemWhenAppendBlitCommandsForVillBufferThenCompresionEnabled, IsXe2HpgCore) {
     using MEM_SET = typename FamilyType::MEM_SET;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-    debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.set(2);
+    debugManager.flags.BcsCompressionFormatForXe2Plus.set(2);
 
     uint32_t pattern = 1;
     uint32_t streamBuffer[100] = {};
@@ -86,15 +86,14 @@ HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndSystemMe
     EXPECT_NE(cmdList.end(), itor);
     {
         auto blitCmd = genCmdCast<MEM_SET *>(*itor);
-        EXPECT_EQ(blitCmd->getCompressionFormat(), 0u);
+        EXPECT_EQ(blitCmd->getCompressionFormat(), 2u);
     }
 }
 
 HWTEST2_F(BlitTests, givenEnableStatelessCompressionWithUnifiedMemoryAndLocalMemWhenAppendBlitCommandsForVillBufferThenCompresionEnabled, IsXe2HpgCore) {
     using MEM_SET = typename FamilyType::MEM_SET;
     DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-    debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.set(2);
+    debugManager.flags.BcsCompressionFormatForXe2Plus.set(2);
 
     uint32_t pattern = 1;
     uint32_t streamBuffer[100] = {};

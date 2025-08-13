@@ -227,21 +227,8 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
         }
     }
 
-    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        bool enable = false;
-        if (srcAllocation) {
-            if (!MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
-                enable = true;
-            }
-        }
-        if (dstAllocation) {
-            if (!MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
-                enable = true;
-            }
-        }
-        if (enable) {
-            compressionFormat = static_cast<uint8_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
-        }
+    if (debugManager.flags.BcsCompressionFormatForXe2Plus.get() != -1) {
+        compressionFormat = static_cast<uint8_t>(debugManager.flags.BcsCompressionFormatForXe2Plus.get());
     }
 
     blitCmd.setCompressionFormat(static_cast<COMPRESSION_FORMAT30>(compressionFormat));

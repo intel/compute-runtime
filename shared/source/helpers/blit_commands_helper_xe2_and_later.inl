@@ -19,10 +19,8 @@ void BlitCommandsHelper<GfxFamily>::appendBlitMemSetCompressionFormat(void *blit
         memSetCmd->setCompressionFormat(compressionFormat);
     }
 
-    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (!MemoryPoolHelper::isSystemMemoryPool(dstAlloc->getMemoryPool())) {
-            memSetCmd->setCompressionFormat(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
-        }
+    if (debugManager.flags.BcsCompressionFormatForXe2Plus.get() != -1) {
+        memSetCmd->setCompressionFormat(debugManager.flags.BcsCompressionFormatForXe2Plus.get());
     }
 }
 

@@ -163,6 +163,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceMemoryBankIndexOverride, -1, "-1: default, 
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePrivateScratchSlot1, -1, "-1: default, 0: disable, 1: enable Allows using private scratch space")
 DECLARE_DEBUG_VARIABLE(int32_t, DisablePipeControlPrecedingPostSyncCommand, -1, "-1 default - disabled adding PIPE_CONTROL, 0 - disabled adding PIPE_CONTROL, 1 - enabled adding PIPE_CONTROL")
 DECLARE_DEBUG_VARIABLE(int32_t, FormatForStatelessCompressionWithUnifiedMemory, 0xF, "Format for stateless compression with unified memory")
+DECLARE_DEBUG_VARIABLE(int32_t, BcsCompressionFormatForXe2Plus, -1, "Format for compression starting from Xe2 on BCS copies")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceBufferCompressionFormat, -1, "-1: default, >0: Format value")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHwGenerationLocalIds, -1, "-1: default, 0: disable, 1: enable : Enables generation of local ids on HW")
 DECLARE_DEBUG_VARIABLE(int32_t, WalkerPartitionPreferHighestDimension, -1, "-1: default, 0: prefer biggest dimension, 1: prefer Z over Y over X if they divide partition count evenly")

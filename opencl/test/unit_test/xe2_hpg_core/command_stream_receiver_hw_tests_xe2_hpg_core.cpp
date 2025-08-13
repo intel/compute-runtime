@@ -579,6 +579,9 @@ struct Xe2BcsTests : public UltCommandStreamReceiverTest {
 
 XE2_HPG_CORETEST_F(Xe2BcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionIsEnabledThenBlitterForBufferUsesStatelessCompressedSettings) {
     using MEM_COPY = typename Xe2HpgCoreFamily::MEM_COPY;
+
+    debugManager.flags.BcsCompressionFormatForXe2Plus.set(0x1);
+
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
     MockGraphicsAllocation clearColorAlloc;
@@ -600,13 +603,13 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenBufferInDeviceMemoryWhenStatelessCompressio
 
     BlitCommandsHelper<Xe2HpgCoreFamily>::appendBlitCommandsForBuffer<MEM_COPY>(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
 
-    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), bltCmd->getCompressionFormat());
+    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.BcsCompressionFormatForXe2Plus.get()), bltCmd->getCompressionFormat());
 }
 
 XE2_HPG_CORETEST_F(Xe2BcsTests, givenDstBufferInDeviceAndSrcInSystemMemoryWhenStatelessCompressionIsEnabledThenBlitterForBufferUsesStatelessCompressedSettings) {
     using MEM_COPY = typename Xe2HpgCoreFamily::MEM_COPY;
 
-    debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.set(0x1);
+    debugManager.flags.BcsCompressionFormatForXe2Plus.set(0x1);
 
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
@@ -630,33 +633,7 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenDstBufferInDeviceAndSrcInSystemMemoryWhenSt
 
     BlitCommandsHelper<Xe2HpgCoreFamily>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
 
-    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get()), bltCmd->getCompressionFormat());
-}
-
-XE2_HPG_CORETEST_F(Xe2BcsTests, givenBufferInSystemMemoryWhenStatelessCompressionIsEnabledThenBlitterForBufferDoesntUseStatelessCompressedSettings) {
-    using MEM_COPY = typename Xe2HpgCoreFamily::MEM_COPY;
-    char buff[1024] = {0};
-    LinearStream stream(buff, 1024);
-    MockGraphicsAllocation clearColorAlloc;
-
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL, MemoryConstants::pageSize64k, nullptr, retVal));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
-
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
-                                                                     0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
-    auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
-    *bltCmd = Xe2HpgCoreFamily::cmdInitXyCopyBlt;
-
-    debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-    platformsImpl->clear();
-    EXPECT_EQ(platform(), nullptr);
-
-    BlitCommandsHelper<Xe2HpgCoreFamily>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
-
-    EXPECT_EQ(0u, bltCmd->getCompressionFormat());
+    EXPECT_EQ(static_cast<uint32_t>(debugManager.flags.BcsCompressionFormatForXe2Plus.get()), bltCmd->getCompressionFormat());
 }
 
 XE2_HPG_CORETEST_F(Xe2BcsTests, givenCompressibleDstBuffersWhenAppendBlitCommandsForBufferCalledThenSetCompressionFormat) {
