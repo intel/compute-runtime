@@ -130,6 +130,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenQueueFlagWhenCreatingCmdL
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 
     EXPECT_TRUE(static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(cmdList)->isInOrderExecutionEnabled());
+    auto flags = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(cmdList)->getCmdListFlags();
+    EXPECT_EQ(static_cast<ze_command_list_flags_t>(ZE_COMMAND_LIST_FLAG_IN_ORDER), flags);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdList));
 }

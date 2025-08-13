@@ -136,7 +136,7 @@ struct Graph : _ze_graph_handle_t {
 
     struct CaptureTargetDesc {
         ze_device_handle_t hDevice = nullptr;
-        ze_command_list_desc_t desc;
+        ze_command_list_desc_t desc{};
     };
 
     const CaptureTargetDesc &getCaptureTargetDesc() const {
@@ -182,20 +182,21 @@ struct Graph : _ze_graph_handle_t {
     void unregisterSignallingEvents();
 
     ClosureExternalStorage externalStorage;
+    CaptureTargetDesc captureTargetDesc;
+
     std::vector<CapturedCommand> commands;
     StackVec<Graph *, 16> subGraphs;
-
-    L0::CommandList *captureSrc = nullptr;
-    CaptureTargetDesc captureTargetDesc;
-    L0::CommandList *executionTarget = nullptr;
-
-    L0::Context *ctx = nullptr;
-    bool preallocated = false;
-    bool wasCapturingStopped = false;
 
     std::unordered_map<L0::Event *, CapturedCommandId> recordedSignals;
     std::unordered_map<L0::CommandList *, ForkInfo> unjoinedForks;
     std::unordered_map<CapturedCommandId, ForkJoinInfo> joinedForks;
+
+    L0::CommandList *captureSrc = nullptr;
+    L0::CommandList *executionTarget = nullptr;
+    L0::Context *ctx = nullptr;
+
+    bool preallocated = false;
+    bool wasCapturingStopped = false;
 };
 
 void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events);

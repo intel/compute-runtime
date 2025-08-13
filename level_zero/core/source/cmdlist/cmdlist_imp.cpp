@@ -237,6 +237,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
     if ((cmdQdesc.flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER) || (NEO::debugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1)) {
         commandList->enableInOrderExecution();
+        commandList->flags |= ZE_COMMAND_LIST_FLAG_IN_ORDER;
     }
 
     if (queueProperties.synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {

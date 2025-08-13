@@ -82,6 +82,7 @@ TEST(GraphTestApiCaptureBeginEnd, GivenValidDestinyGraphThenBeginCaptureReturnsS
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    cmdlist.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
 
     L0::Graph graph(&ctx, true);
     auto err = ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &graph, nullptr);
@@ -91,6 +92,8 @@ TEST(GraphTestApiCaptureBeginEnd, GivenValidDestinyGraphThenBeginCaptureReturnsS
     err = ::zeCommandListEndGraphCaptureExp(&cmdlist, &retGraph, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
     EXPECT_EQ(retGraph, &graph);
+
+    EXPECT_EQ(static_cast<ze_command_list_flags_t>(ZE_COMMAND_LIST_FLAG_IN_ORDER), graph.getCaptureTargetDesc().desc.flags);
 }
 
 TEST(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphEndCaptureReturnsError) {

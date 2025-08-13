@@ -477,6 +477,10 @@ struct CommandList : _ze_command_list_handle_t {
 
     void forceDisableInOrderWaits() { inOrderWaitsDisabled = true; }
 
+    ze_command_list_flags_t getCmdListFlags() const {
+        return flags;
+    }
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
@@ -519,6 +523,7 @@ struct CommandList : _ze_command_list_handle_t {
     CommandQueue *cmdQImmediateCopyOffload = nullptr;
     Device *device = nullptr;
     NEO::ScratchSpaceController *usedScratchController = nullptr;
+    Graph *captureTarget = nullptr;
 
     size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
     size_t cmdListCurrentStartOffset = 0;
@@ -579,8 +584,6 @@ struct CommandList : _ze_command_list_handle_t {
     bool isWalkerWithProfilingEnqueued = false;
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
     bool inOrderWaitsDisabled = false;
-
-    Graph *captureTarget = nullptr;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);
