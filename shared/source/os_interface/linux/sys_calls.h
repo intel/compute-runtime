@@ -13,6 +13,7 @@
 #include <iostream>
 #include <poll.h>
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -59,6 +60,8 @@ long sysconf(int name);
 int mkfifo(const char *pathname, mode_t mode);
 int pidfdopen(pid_t pid, unsigned int flags);
 int pidfdgetfd(int pidfd, int targetfd, unsigned int flags);
+int prctl(int option, unsigned long arg);
 char **getEnviron();
+
 } // namespace SysCalls
 } // namespace NEO

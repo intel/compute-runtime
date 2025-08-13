@@ -664,6 +664,10 @@ bool Wddm::isReadOnlyFlagFallbackAvailable(const D3DKMT_CREATEALLOCATION &create
 }
 
 NTSTATUS Wddm::createAllocation(const void *cpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle) {
+    return createAllocation(cpuPtr, gmm, outHandle, outResourceHandle, outSharedHandle, true);
+}
+
+NTSTATUS Wddm::createAllocation(const void *cpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle, bool createNTHandle) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DDDI_ALLOCATIONINFO2 allocationInfo = {};
     D3DKMT_CREATEALLOCATION createAllocation = {};
@@ -704,7 +708,7 @@ NTSTATUS Wddm::createAllocation(const void *cpuPtr, const Gmm *gmm, D3DKMT_HANDL
 
     outHandle = allocationInfo.hAllocation;
     outResourceHandle = createAllocation.hResource;
-    if (outSharedHandle) {
+    if (outSharedHandle && createNTHandle) {
         HANDLE ntSharedHandle = NULL;
         status = this->createNTHandle(&outResourceHandle, &ntSharedHandle);
         if (status != STATUS_SUCCESS) {
@@ -922,7 +926,8 @@ bool Wddm::verifyNTHandle(HANDLE handle) {
 bool Wddm::openNTHandle(const MemoryManager::OsHandleData &osHandleData, WddmAllocation *alloc) {
     D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE queryResourceInfoFromNtHandle = {};
     queryResourceInfoFromNtHandle.hDevice = device;
-    queryResourceInfoFromNtHandle.hNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));
+    HANDLE sharedNtHandle = this->getSharedHandle(osHandleData);
+    queryResourceInfoFromNtHandle.hNtHandle = sharedNtHandle;
     [[maybe_unused]] auto status = getGdi()->queryResourceInfoFromNtHandle(&queryResourceInfoFromNtHandle);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
@@ -938,7 +943,7 @@ bool Wddm::openNTHandle(const MemoryManager::OsHandleData &osHandleData, WddmAll
     D3DKMT_OPENRESOURCEFROMNTHANDLE openResourceFromNtHandle = {};
 
     openResourceFromNtHandle.hDevice = device;
-    openResourceFromNtHandle.hNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));
+    openResourceFromNtHandle.hNtHandle = sharedNtHandle;
     openResourceFromNtHandle.NumAllocations = queryResourceInfoFromNtHandle.NumAllocations;
     openResourceFromNtHandle.pOpenAllocationInfo2 = allocationInfo2.get();
     openResourceFromNtHandle.pTotalPrivateDriverDataBuffer = allocPrivateData.get();

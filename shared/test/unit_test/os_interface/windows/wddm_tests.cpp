@@ -1200,6 +1200,15 @@ TEST_F(WddmTests, givenPageAlignedReadOnlyMemoryPassedToCreateAllocationsAndMapG
     EXPECT_FALSE(readWriteExistingSysMemSupportedForTest);
 }
 
+TEST_F(WddmTests, givenOsHandleDataWithoutOpaqueInformationWhenGettingSharedHandleThenReturnOriginalHandle) {
+    uint64_t originalHandle = 0x12345678;
+    MemoryManager::OsHandleData osHandleData(originalHandle);
+
+    HANDLE sharedHandle = wddm->getSharedHandle(osHandleData);
+
+    EXPECT_EQ(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(originalHandle)), sharedHandle);
+}
+
 TEST_F(WddmTests, whenThereIsNoExisitngSysMemoryThenReadOnlyFallbackIsNotAvailable) {
     D3DKMT_CREATEALLOCATION createAllocation{};
     D3DDDI_ALLOCATIONINFO2 allocationInfo2{};
@@ -1231,4 +1240,156 @@ TEST_F(WddmTests, givenSysMemoryPointerAndReadOnlyFlagNotSetInCreateAllocationFl
     auto readOnlyFallbackSupported = wddm->isReadOnlyFlagFallbackSupported();
     EXPECT_EQ(readOnlyFallbackSupported, wddm->isReadOnlyFlagFallbackAvailable(createAllocation));
 }
+
+// Mock class for testing createNTHandle scenarios
+class WddmCreateNTHandleMock : public WddmMock {
+  public:
+    using WddmMock::WddmMock;
+
+    NTSTATUS createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle) override {
+        createNTHandleCalled = true;
+        lastResourceHandle = resourceHandle ? *resourceHandle : 0;
+
+        if (shouldCreateNTHandleFail) {
+            return STATUS_UNSUCCESSFUL;
+        }
+
+        *ntHandle = reinterpret_cast<HANDLE>(0x12345678);
+        return STATUS_SUCCESS;
+    }
+
+    bool createNTHandleCalled = false;
+    D3DKMT_HANDLE lastResourceHandle = 0;
+    bool shouldCreateNTHandleFail = false;
+};
+
+class WddmCreateAllocationNTHandleTests : public WddmTestWithMockGdiDll {
+  public:
+    void SetUp() override {
+        WddmTestWithMockGdiDll::SetUp();
+
+        // Replace the wddm with our mock
+        mockWddm = new WddmCreateNTHandleMock(*rootDeviceEnvironment);
+        auto wddmMockInterface = new WddmMockInterface20(*mockWddm);
+        mockWddm->wddmInterface.reset(wddmMockInterface);
+        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
+        rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(mockWddm);
+
+        // Initialize the mock WDDM
+        mockWddm->init();
+    }
+
+    void initGmm() {
+        GmmRequirements gmmRequirements{};
+        gmmRequirements.allowLargePages = true;
+        gmmRequirements.preferCompressed = true;
+        gmm = std::make_unique<Gmm>(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(),
+                                    nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    }
+
+    WddmCreateNTHandleMock *mockWddm = nullptr;
+    std::unique_ptr<Gmm> gmm;
+};
+
+TEST_F(WddmCreateAllocationNTHandleTests, givenOutSharedHandleAndCreateNTHandleTrueThenCreateNTHandleIsCalled) {
+    initGmm();
+
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE resourceHandle = 0;
+    uint64_t sharedHandle = 0;
+
+    // Test the condition: outSharedHandle && createNTHandle (both true)
+    auto result = mockWddm->createAllocation(nullptr, gmm.get(), handle, resourceHandle, &sharedHandle, true);
+
+    EXPECT_EQ(STATUS_SUCCESS, result);
+    EXPECT_TRUE(mockWddm->createNTHandleCalled);
+    EXPECT_NE(0u, handle);
+    EXPECT_NE(0u, resourceHandle);
+    EXPECT_NE(0u, sharedHandle);
+
+    // Cleanup
+    EXPECT_TRUE(mockWddm->destroyAllocations(&handle, 1, resourceHandle));
+}
+
+TEST_F(WddmCreateAllocationNTHandleTests, givenOutSharedHandleNullAndCreateNTHandleTrueThenCreateNTHandleIsNotCalled) {
+    initGmm();
+
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE resourceHandle = 0;
+
+    // Test the condition: outSharedHandle is null, createNTHandle is true
+    auto result = mockWddm->createAllocation(nullptr, gmm.get(), handle, resourceHandle, nullptr, true);
+
+    EXPECT_EQ(STATUS_SUCCESS, result);
+    EXPECT_FALSE(mockWddm->createNTHandleCalled);
+    EXPECT_NE(0u, handle);
+    // When outSharedHandle is null, CreateResource flag is FALSE, so resourceHandle stays 0
+    EXPECT_EQ(0u, resourceHandle);
+
+    // Cleanup only the handle (no resource handle to clean up)
+    EXPECT_TRUE(mockWddm->destroyAllocations(&handle, 1, 0));
+}
+
+TEST_F(WddmCreateAllocationNTHandleTests, givenOutSharedHandleAndCreateNTHandleFalseThenCreateNTHandleIsNotCalled) {
+    initGmm();
+
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE resourceHandle = 0;
+    uint64_t sharedHandle = 0;
+
+    // Test the condition: outSharedHandle is valid, createNTHandle is false
+    auto result = mockWddm->createAllocation(nullptr, gmm.get(), handle, resourceHandle, &sharedHandle, false);
+
+    EXPECT_EQ(STATUS_SUCCESS, result);
+    EXPECT_FALSE(mockWddm->createNTHandleCalled);
+    EXPECT_NE(0u, handle);
+    EXPECT_NE(0u, resourceHandle);
+    EXPECT_EQ(0u, sharedHandle); // Should remain 0 since no NT handle was created
+
+    // Cleanup
+    EXPECT_TRUE(mockWddm->destroyAllocations(&handle, 1, resourceHandle));
+}
+
+TEST_F(WddmCreateAllocationNTHandleTests, givenCreateNTHandleFailsThenAllocationIsDestroyedAndHandlesAreReset) {
+    initGmm();
+
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE resourceHandle = 0;
+    uint64_t sharedHandle = 0;
+
+    // Set up the mock to fail createNTHandle
+    mockWddm->shouldCreateNTHandleFail = true;
+
+    // Test the condition: outSharedHandle && createNTHandle (both true) but createNTHandle fails
+    auto result = mockWddm->createAllocation(nullptr, gmm.get(), handle, resourceHandle, &sharedHandle, true);
+
+    EXPECT_NE(STATUS_SUCCESS, result);
+    EXPECT_TRUE(mockWddm->createNTHandleCalled);
+    EXPECT_EQ(0u, handle);         // Should be reset to NULL_HANDLE
+    EXPECT_EQ(0u, resourceHandle); // Should be reset to NULL_HANDLE
+    // sharedHandle value is not modified on failure in this path
+}
+
+TEST_F(WddmCreateAllocationNTHandleTests, givenCreateNTHandleSucceedsThenSharedHandleIsSet) {
+    initGmm();
+
+    D3DKMT_HANDLE handle = 0;
+    D3DKMT_HANDLE resourceHandle = 0;
+    uint64_t sharedHandle = 0;
+
+    // Test successful createNTHandle path
+    auto result = mockWddm->createAllocation(nullptr, gmm.get(), handle, resourceHandle, &sharedHandle, true);
+
+    EXPECT_EQ(STATUS_SUCCESS, result);
+    EXPECT_TRUE(mockWddm->createNTHandleCalled);
+    EXPECT_EQ(mockWddm->lastResourceHandle, resourceHandle);
+    EXPECT_NE(0u, handle);
+    EXPECT_NE(0u, resourceHandle);
+    EXPECT_EQ(0x12345678u, sharedHandle); // Should be set to the mock handle value
+
+    // Cleanup
+    EXPECT_TRUE(mockWddm->destroyAllocations(&handle, 1, resourceHandle));
+}
+
 } // namespace NEO

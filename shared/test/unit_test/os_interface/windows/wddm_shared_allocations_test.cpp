@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,44 @@ TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationAndGetNTHandleFailedThenAllo
     Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
 
     EXPECT_NE(STATUS_SUCCESS, wddm->createAllocation(nullptr, &gmm, handle, resourceHandle, &ntHandle));
-    EXPECT_EQ(wddm->destroyAllocationResult.called++, 1u);
+    EXPECT_EQ(wddm->destroyAllocationResult.called++, 2u);
+    EXPECT_EQ(handle, 0u);
+    EXPECT_EQ(resourceHandle, 0u);
+}
+
+TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationWithShareableWithoutNTHandleFlagThenNTHandleIsNotCreated) {
+    init();
+
+    D3DKMT_HANDLE handle = 32u;
+    D3DKMT_HANDLE resourceHandle = 32u;
+    uint64_t ntHandle = 0u;
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = true;
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+
+    // Test with createNTHandle = false (shareableWithoutNTHandle = true)
+    EXPECT_EQ(STATUS_SUCCESS, wddm->createAllocation(nullptr, &gmm, handle, resourceHandle, &ntHandle, false));
+    EXPECT_NE(handle, 0u);
+    EXPECT_NE(resourceHandle, 0u);
+    EXPECT_EQ(ntHandle, 0u); // Should be set to 1 to indicate shared resource without NT handle
+    EXPECT_EQ(wddm->destroyAllocationResult.called, 0u);
+}
+
+TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationWithNormalShareableFlagThenNTHandleCreationIsAttempted) {
+    init();
+
+    D3DKMT_HANDLE handle = 32u;
+    D3DKMT_HANDLE resourceHandle = 32u;
+    uint64_t ntHandle = 0u;
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = true;
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+
+    // Test with createNTHandle = true (shareableWithoutNTHandle = false)
+    EXPECT_NE(STATUS_SUCCESS, wddm->createAllocation(nullptr, &gmm, handle, resourceHandle, &ntHandle, true));
+    EXPECT_EQ(wddm->destroyAllocationResult.called, 2u); // Should be called because NT handle creation failed
     EXPECT_EQ(handle, 0u);
     EXPECT_EQ(resourceHandle, 0u);
 }

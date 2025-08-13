@@ -205,6 +205,10 @@ int pidfdgetfd(int pidfd, int targetfd, unsigned int flags) {
     return static_cast<int>(retval);
 }
 
+int prctl(int option, unsigned long arg) {
+    return ::prctl(option, arg);
+}
+
 off_t lseek(int fd, off_t offset, int whence) noexcept {
     return ::lseek(fd, offset, whence);
 }

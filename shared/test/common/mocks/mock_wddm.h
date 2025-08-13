@@ -82,6 +82,7 @@ class WddmMock : public Wddm {
     bool mapGpuVirtualAddress(WddmAllocation *allocation);
     bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override;
     NTSTATUS createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResource, uint64_t *outSharedHandle) override;
+    NTSTATUS createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResource, uint64_t *outSharedHandle, bool createNTHandle) override;
     bool createAllocation(const Gmm *gmm, D3DKMT_HANDLE &outHandle) override;
     bool destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) override;
 

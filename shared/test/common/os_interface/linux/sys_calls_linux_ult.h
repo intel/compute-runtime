@@ -57,6 +57,7 @@ extern int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize);
 extern int (*sysCallsClose)(int fileDescriptor);
 extern int (*sysCallsPidfdOpen)(pid_t pid, unsigned int flags);
 extern int (*sysCallsPidfdGetfd)(int pidfd, int fd, unsigned int flags);
+extern int (*sysCallsPrctl)(int option, unsigned long arg);
 
 extern bool allowFakeDevicePath;
 extern int flockRetVal;
@@ -93,6 +94,7 @@ extern bool failAccess;
 extern int setErrno;
 extern int pidfdopenCalled;
 extern int pidfdgetfdCalled;
+extern int prctlCalled;
 
 extern std::vector<void *> mmapVector;
 extern std::vector<void *> mmapCapturedExtendedPointers;

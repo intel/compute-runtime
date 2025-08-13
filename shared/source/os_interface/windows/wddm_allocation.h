@@ -90,6 +90,9 @@ class WddmAllocation : public GraphicsAllocation {
     void setMakeResidentBeforeLockRequired(bool makeResidentBeforeLockRequired) { this->makeResidentBeforeLockRequired = makeResidentBeforeLockRequired; }
     bool isAllocInFrontWindowPool() const { return allocInFrontWindowPool; }
     void setAllocInFrontWindowPool(bool allocInFrontWindowPool) { this->allocInFrontWindowPool = allocInFrontWindowPool; }
+    bool isShareable() const { return shareable; }
+    bool isShareableWithoutNTHandle() const { return shareableWithoutNTHandle; }
+    void setShareableWithoutNTHandle(bool shareableWithoutNTHandle) { this->shareableWithoutNTHandle = shareableWithoutNTHandle; }
     bool isPhysicalMemoryReservation() const { return physicalMemoryReservation; }
     void setPhysicalMemoryReservation(bool physicalMemoryReservation) { this->physicalMemoryReservation = physicalMemoryReservation; }
     bool isMappedPhysicalMemoryReservation() const { return mappedPhysicalMemoryReservation; }
@@ -125,5 +128,6 @@ class WddmAllocation : public GraphicsAllocation {
     bool physicalMemoryReservation = false;
     bool mappedPhysicalMemoryReservation = false;
     bool makeResidentBeforeLockRequired = false;
+    bool shareableWithoutNTHandle = false;
 };
 } // namespace NEO

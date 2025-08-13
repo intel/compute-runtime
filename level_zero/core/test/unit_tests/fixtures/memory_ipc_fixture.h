@@ -79,7 +79,7 @@ struct MemoryExportImportTest : public ::testing::Test {
 };
 
 struct DriverHandleGetMemHandleMock : public L0::DriverHandleImp {
-    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) override;
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) override;
     void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle,
                          NEO::AllocationType allocationType, void *basePointer,
                          NEO::GraphicsAllocation **pAloc, NEO::SvmAllocationData &mappedPeerAllocData) override;
@@ -128,7 +128,7 @@ struct MemoryExportImportWSLTest : public ::testing::Test {
 };
 
 struct DriverHandleGetWinHandleMock : public L0::DriverHandleImp {
-    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) override;
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) override;
 
     uint64_t mockHandle = 57;
     std::pair<void *, uint64_t> allocationMap;

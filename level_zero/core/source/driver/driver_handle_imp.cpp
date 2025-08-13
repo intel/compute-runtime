@@ -886,12 +886,13 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
     return alloc;
 }
 
-void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) {
+void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     bool isHostIpcAllocation = (allocationType == NEO::AllocationType::bufferHostMemory) ? true : false;
 
     NEO::MemoryManager::OsHandleData osHandleData{handle};
+    osHandleData.parentProcessId = parentProcessId;
     NEO::AllocationProperties properties{neoDevice->getRootDeviceIndex(),
                                          MemoryConstants::pageSize,
                                          allocationType,

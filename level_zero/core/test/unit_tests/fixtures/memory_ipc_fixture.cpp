@@ -108,7 +108,7 @@ void MemoryExportImportTest::SetUp() {
     context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
 }
 
-void *DriverHandleGetMemHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) {
+void *DriverHandleGetMemHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) {
     if (mockHandle == allocationHandleMap.second) {
         return allocationHandleMap.first;
     }
@@ -199,7 +199,7 @@ void MemoryExportImportWSLTest::TearDown() {
     delete currMemoryManager;
 }
 
-void *DriverHandleGetWinHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) {
+void *DriverHandleGetWinHandleMock::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) {
     if (mockHandle == allocationMap.second) {
         return allocationMap.first;
     }
