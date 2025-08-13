@@ -55,4 +55,7 @@ void createScratchModuleKernel(ze_context_handle_t &context,
                                ze_kernel_handle_t &kernel,
                                std::string *additionalBuildOptions);
 
+void createModuleFromSpirV(ze_context_handle_t context, ze_device_handle_t device, const char *kernelSrc, ze_module_handle_t &module);
+void createKernelWithName(ze_module_handle_t module, const char *kernelName, ze_kernel_handle_t &kernel);
+
 } // namespace LevelZeroBlackBoxTests
