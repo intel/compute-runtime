@@ -11,7 +11,6 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 using namespace NEO;
 
@@ -770,7 +769,6 @@ TEST_F(PageFaultManagerTest, givenAllocationMovedToGpuDomainWhenVerifyingPagefau
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledThenAllocIsAubWritable) {
-    REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
@@ -825,7 +823,6 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMigratedBetweenCpuAndGpu
 }
 
 TEST_F(PageFaultManagerTest, givenPageFaultMAnagerWhenSetCpuAllocEvictableIsCalledThenPeekEvictableForCpuAllocReturnCorrectValue) {
-    REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
 
     DebugManagerStateRestore restore;
     debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);

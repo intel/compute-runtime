@@ -857,7 +857,6 @@ HWTEST_F(EnqueueReadBufferHw, givenHostPtrIsFromMappedBufferWhenReadBufferIsCall
 
 struct ReadBufferStagingBufferTest : public EnqueueReadBufferHw {
     void SetUp() override {
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         EnqueueReadBufferHw::SetUp();
     }
 

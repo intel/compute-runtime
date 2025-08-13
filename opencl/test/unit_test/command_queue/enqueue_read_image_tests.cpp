@@ -1097,7 +1097,6 @@ HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageWithUsmPtrThenDontImportAlloc
 
 struct ReadImageStagingBufferTest : public EnqueueReadImageTest {
     void SetUp() override {
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         EnqueueReadImageTest::SetUp();
         ptr = new unsigned char[readSize];
         device.reset(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});

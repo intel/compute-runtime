@@ -8,7 +8,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -49,7 +48,6 @@ struct CommandQueueMock : public MockCommandQueue {
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSynchronizeMemoryThenEnqueueProperCalls) {
     MockExecutionEnvironment executionEnvironment;
-    REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
 
     auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
     auto svmAllocsManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
@@ -79,7 +77,6 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSynchronizeMemoryThenEnq
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenGpuTransferIsInvokedThenInsertMapOperation) {
     MockExecutionEnvironment executionEnvironment;
-    REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
 
     struct MockSVMAllocsManager : SVMAllocsManager {
         using SVMAllocsManager::SVMAllocsManager;
@@ -110,7 +107,6 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenGpuTransferIsInvokedThen
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenAllowCPUMemoryEvictionIsCalledThenSelectCorrectCsrWithOsContextForEviction) {
     MockExecutionEnvironment executionEnvironment;
-    REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
 
     auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
     auto svmAllocsManager = std::make_unique<SVMAllocsManager>(memoryManager.get());

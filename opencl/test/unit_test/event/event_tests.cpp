@@ -21,7 +21,6 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/memory_manager/mem_obj_surface.h"

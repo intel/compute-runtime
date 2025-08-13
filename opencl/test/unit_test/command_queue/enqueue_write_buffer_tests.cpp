@@ -637,7 +637,6 @@ HWTEST_F(EnqueueWriteBufferHw, givenHostPtrIsFromMappedBufferWhenWriteBufferIsCa
 
 struct WriteBufferStagingBufferTest : public EnqueueWriteBufferHw {
     void SetUp() override {
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         EnqueueWriteBufferHw::SetUp();
     }
 

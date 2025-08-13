@@ -35,7 +35,6 @@
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include <memory>
 
@@ -2505,7 +2504,6 @@ TEST_F(WddmMemoryManagerSimpleTest, given32BitAllocationOfBufferWhenItIsAllocate
     if constexpr (is64bit) {
         GTEST_SKIP();
     }
-    REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     AllocationType allocationTypes[] = {AllocationType::buffer,
                                         AllocationType::sharedBuffer,
                                         AllocationType::scratchSurface,

@@ -835,7 +835,6 @@ HWTEST_F(EnqueueWriteImageTest, whenisValidForStagingTransferCalledThenReturnCor
 
 struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {
     void SetUp() override {
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         EnqueueWriteImageTest::SetUp();
         ptr = new unsigned char[writeSize];
         device.reset(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});

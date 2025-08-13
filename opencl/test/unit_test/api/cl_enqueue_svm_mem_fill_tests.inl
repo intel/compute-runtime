@@ -150,7 +150,6 @@ TEST_F(ClEnqueueSVMMemFillTests, GivenValidParametersWhenFillingSVMMemoryThenSuc
 }
 
 TEST_F(ClEnqueueSVMMemFillTests, GivenQueueIncapableWhenFillingSvmBufferThenInvalidOperationIsReturned) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
 
     disableQueueCapabilities(CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL);
 

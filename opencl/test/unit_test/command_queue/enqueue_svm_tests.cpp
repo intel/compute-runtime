@@ -47,7 +47,6 @@ struct EnqueueSvmTest : public ClDeviceFixture,
     }
 
     void SetUp() override {
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         ClDeviceFixture::setUp();
         CommandQueueFixture::setUp(pClDevice, 0);
         ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
@@ -1111,7 +1110,6 @@ TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmTh
 struct EnqueueSvmTestLocalMemory : public ClDeviceFixture,
                                    public ::testing::Test {
     void SetUp() override {
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
         debugManager.flags.EnableLocalMemory.set(1);
 
@@ -1754,7 +1752,6 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyC
 
 struct CreateHostUnifiedMemoryAllocationTest : public ::testing::Test {
     void SetUp() override {
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         device0 = context.pRootDevice0;
         device1 = context.pRootDevice1;
         device2 = context.pRootDevice2;
@@ -2396,7 +2393,6 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToMappedPtrWhenCallingSvmMemcpyTh
 
 struct StagingBufferTest : public EnqueueSvmTest {
     void SetUp() override {
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         EnqueueSvmTest::SetUp();
         SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
         unifiedMemoryProperties.device = pDevice;

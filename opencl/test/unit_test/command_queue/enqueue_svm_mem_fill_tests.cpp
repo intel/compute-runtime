@@ -29,7 +29,6 @@ struct BaseEnqueueSvmMemFillFixture : public ClDeviceFixture,
     void setUp() {
         ClDeviceFixture::setUp();
         CommandQueueFixture::setUp(pClDevice, 0);
-        REQUIRE_SVM_OR_SKIP(pDevice);
         SVMAllocsManager::SvmAllocationProperties svmProperties;
         svmProperties.coherent = true;
         svmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, svmProperties, context->getRootDeviceIndices(), context->getDeviceBitfields());
@@ -137,7 +136,6 @@ struct EnqueueSvmMemFillTest : public BaseEnqueueSvmMemFillFixture,
 
     void SetUp() override {
         BaseEnqueueSvmMemFillFixture::setUp();
-        REQUIRE_SVM_OR_SKIP(pDevice);
         patternSize = (size_t)GetParam();
         ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
     }

@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"

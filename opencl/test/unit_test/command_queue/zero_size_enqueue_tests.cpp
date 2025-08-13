@@ -760,7 +760,6 @@ HWTEST_F(ZeroSizeEnqueueHandlerImageTest, GivenZeroSizeEnqueueIsDetectedWhenFill
 }
 
 HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSvmMemThenCommandMarkerShouldBeEnqueued) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     void *pSrcSVM = context.getSVMAllocsManager()->createSVMAlloc(256, {}, context.getRootDeviceIndices(), context.getDeviceBitfields());
@@ -774,7 +773,6 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSv
 }
 
 HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSvmMemThenEventCommandTypeShouldBeUnchanged) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;
@@ -798,7 +796,6 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSv
 }
 
 HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingSvmMemThenCommandMarkerShouldBeEnqueued) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     void *pSVM = context.getSVMAllocsManager()->createSVMAlloc(256, {}, context.getRootDeviceIndices(), context.getDeviceBitfields());
@@ -811,7 +808,6 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingSv
 }
 
 HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingSvmMemThenEventCommandTypeShouldBeUnchanged) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;

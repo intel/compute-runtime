@@ -76,7 +76,6 @@ struct BcsBufferTests : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         debugManager.flags.EnableTimestampPacket.set(1);
         debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
@@ -1427,7 +1426,6 @@ struct BcsSvmTests : public BcsBufferTests {
         if (is32bit) {
             GTEST_SKIP();
         }
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         BcsBufferTests::setUpT<FamilyType>();
         if (IsSkipped()) {
             GTEST_SKIP();

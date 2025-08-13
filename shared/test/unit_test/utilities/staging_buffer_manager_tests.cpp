@@ -15,7 +15,6 @@
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "gtest/gtest.h"
 
@@ -32,7 +31,6 @@ class StagingBufferManagerFixture : public DeviceFixture {
   public:
     void setUp() {
         DeviceFixture::setUp();
-        REQUIRE_SVM_OR_SKIP(&hardwareInfo);
         this->svmAllocsManager = std::make_unique<MockSVMAllocsManager>(pDevice->getMemoryManager());
         debugManager.flags.EnableCopyWithStagingBuffers.set(1);
         RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};

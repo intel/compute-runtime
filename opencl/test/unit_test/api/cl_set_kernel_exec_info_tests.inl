@@ -70,7 +70,6 @@ TEST_F(clSetKernelExecInfoTests, GivenNullKernelWhenSettingAdditionalKernelInfoT
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenNullParamValueWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
-    REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void **pSvmPtrList = nullptr;
     size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
 
@@ -84,7 +83,6 @@ TEST_F(clSetKernelExecInfoTests, GivenNullParamValueWhenSettingAdditionalKernelI
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenNullPointerInParamValueWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
-    REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void *pSvmPtrList[] = {nullptr};
     size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
 
@@ -98,7 +96,6 @@ TEST_F(clSetKernelExecInfoTests, GivenNullPointerInParamValueWhenSettingAddition
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenParamSizeZeroWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
-    REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void *pSvmPtrList[] = {ptrSvm};
     size_t svmPtrListSizeInBytes = 0;
 
@@ -112,7 +109,6 @@ TEST_F(clSetKernelExecInfoTests, GivenParamSizeZeroWhenSettingAdditionalKernelIn
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenInvalidParamSizeWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
-    REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void *pSvmPtrList[] = {ptrSvm};
     size_t svmPtrListSizeInBytes = (size_t)(-1);
 

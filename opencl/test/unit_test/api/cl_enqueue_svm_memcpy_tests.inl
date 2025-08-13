@@ -135,7 +135,6 @@ TEST_F(ClEnqueueSVMMemcpyTests, GivenNonZeroSizeWhenCopyingSVMMemoryThenSuccessI
 }
 
 TEST_F(ClEnqueueSVMMemcpyTests, GivenQueueIncapableWhenCopyingSvmBufferThenInvalidOperationIsReturned) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
 
     disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL);
 

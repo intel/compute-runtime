@@ -11,7 +11,6 @@
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -22,7 +21,6 @@ namespace ult {
 template <int hostUsmReuseFlag = -1, int deviceUsmReuseFlag = -1, uint16_t numRootDevices = 1>
 struct UsmReuseMemoryTest : public ::testing::Test {
     void SetUp() override {
-        REQUIRE_SVM_OR_SKIP(NEO::defaultHwInfo);
         NEO::debugManager.flags.ExperimentalEnableHostAllocationCache.set(hostUsmReuseFlag);
         NEO::debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(deviceUsmReuseFlag);
 

@@ -20,7 +20,6 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/api/api.h"

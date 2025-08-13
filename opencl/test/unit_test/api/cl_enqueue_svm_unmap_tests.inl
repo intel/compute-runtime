@@ -99,7 +99,6 @@ TEST_F(ClEnqueueSVMUnmapTests, GivenValidParametersWhenUnmappingSvmThenSuccessIs
 }
 
 TEST_F(ClEnqueueSVMUnmapTests, GivenQueueIncapableWhenUnmappingSvmBufferThenInvalidOperationIsReturned) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
 
     void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
     EXPECT_NE(nullptr, ptrSvm);

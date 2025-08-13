@@ -35,8 +35,6 @@ bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
         GTEST_SKIP();                   \
     }
 
-#define REQUIRE_SVM_OR_SKIP(param) (void)param
-
 #define REQUIRE_BLITTER_OR_SKIP(param)                      \
     if (NEO::TestChecks::supportsBlitter(param) == false) { \
         GTEST_SKIP();                                       \

@@ -49,7 +49,6 @@ TEST_F(SVMMemoryAllocatorTest, whenRequestSVMAllocsThenReturnNonNullptr) {
 using MultiDeviceSVMMemoryAllocatorTest = MultiRootDeviceWithSubDevicesFixture;
 
 TEST_F(MultiDeviceSVMMemoryAllocatorTest, givenMultipleDevicesWhenCreatingSVMAllocThenCreateOneGraphicsAllocationPerRootDeviceIndex) {
-    REQUIRE_SVM_OR_SKIP(device1);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device1->getMemoryManager());
 
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
@@ -849,8 +848,6 @@ TEST_F(ShareableUnifiedMemoryManagerPropertiesTest, givenShareableUnifiedPropert
 
 TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedForTransferCallsThenUSMAllocationIsReused) {
     MockContext mockContext;
-    auto device = mockContext.getDevice(0u);
-    REQUIRE_SVM_OR_SKIP(device);
 
     cl_context clContext = &mockContext;
 
@@ -1026,8 +1023,6 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTra
 
 TEST(UnifiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTransferRequirementsThenErrorIsReturned) {
     MockContext mockContext;
-    auto device = mockContext.getDevice(0u);
-    REQUIRE_SVM_OR_SKIP(device);
 
     cl_context clContext = &mockContext;
 

@@ -11,7 +11,6 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"

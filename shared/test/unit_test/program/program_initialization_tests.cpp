@@ -16,7 +16,6 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "gtest/gtest.h"
 
@@ -26,7 +25,6 @@ using namespace NEO;
 
 TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedThenMemoryIsAllocatedAsNonSvmAllocation) {
     MockDevice device{};
-    REQUIRE_SVM_OR_SKIP(&device);
     device.injectMemoryManager(new MockMemoryManager());
     MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
     WhiteBox<LinkerInput> emptyLinkerInput;
@@ -72,7 +70,6 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceLocalMemoryAccessMode.set(0);
     MockDevice device{};
-    REQUIRE_SVM_OR_SKIP(&device);
     device.injectMemoryManager(new MockMemoryManager());
     MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
     WhiteBox<LinkerInput> linkerInputExportGlobalVariables;
@@ -204,7 +201,6 @@ TEST(AllocateGlobalSurfaceTest, WhenGlobalsAreNotExportedAndAllocationFailsThenG
 }
 
 TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenAllocatingNonSvmAllocationThenBlitterIsUsed) {
-    REQUIRE_SVM_OR_SKIP(defaultHwInfo.get());
     DebugManagerStateRestore restorer;
 
     uint32_t blitsCounter = 0;

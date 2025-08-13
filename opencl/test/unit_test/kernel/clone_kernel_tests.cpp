@@ -457,7 +457,6 @@ TEST_F(CloneKernelTest, givenArgImmediateWhenCloningKernelThenKernelInfoIsCorrec
 }
 
 TEST_F(CloneKernelTest, givenExecInfoWhenCloningKernelThenSvmAllocationIsCorrect) {
-    REQUIRE_SVM_OR_SKIP(device1);
     void *ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     ASSERT_NE(nullptr, ptrSVM);
 
@@ -485,7 +484,6 @@ TEST_F(CloneKernelTest, givenExecInfoWhenCloningKernelThenSvmAllocationIsCorrect
 }
 
 TEST_F(CloneKernelTest, givenUnifiedMemoryExecInfoWhenCloningKernelThenUnifiedMemoryAllocationIsCorrect) {
-    REQUIRE_SVM_OR_SKIP(device1);
     void *ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     ASSERT_NE(nullptr, ptrSVM);
 

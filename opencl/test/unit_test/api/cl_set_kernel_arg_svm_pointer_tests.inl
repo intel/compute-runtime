@@ -23,7 +23,6 @@ class KernelArgSvmApiFixture : public ApiFixture<> {
   protected:
     void setUp() {
         ApiFixture::setUp();
-        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
 
         pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;

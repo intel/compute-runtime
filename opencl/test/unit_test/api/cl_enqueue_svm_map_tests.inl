@@ -127,7 +127,6 @@ TEST_F(ClEnqueueSVMMapTests, GivenValidParametersWhenMappingSVMThenSuccessIsRetu
 }
 
 TEST_F(ClEnqueueSVMMapTests, GivenQueueIncapableWhenMappingSvmBufferThenInvalidOperationIsReturned) {
-    REQUIRE_SVM_OR_SKIP(pDevice);
 
     disableQueueCapabilities(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL);
 

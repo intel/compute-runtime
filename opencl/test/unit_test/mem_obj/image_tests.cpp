@@ -24,7 +24,6 @@
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/mipmap.h"

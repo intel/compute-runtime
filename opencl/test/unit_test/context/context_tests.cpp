@@ -650,7 +650,6 @@ struct AllocationReuseContextTest : ContextTest {
 };
 
 TEST_F(AllocationReuseContextTest, givenSharedSvmAllocPresentWhenGettingExistingHostPtrAllocThenRetrieveTheAllocation) {
-    REQUIRE_SVM_OR_SKIP(context->getDevice(0));
 
     uint64_t svmPtrGpu = 0x1234;
     void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
@@ -669,7 +668,6 @@ TEST_F(AllocationReuseContextTest, givenSharedSvmAllocPresentWhenGettingExisting
 }
 
 TEST_F(AllocationReuseContextTest, givenHostSvmAllocPresentWhenGettingExistingHostPtrAllocThenRetrieveTheAllocation) {
-    REQUIRE_SVM_OR_SKIP(context->getDevice(0));
 
     uint64_t svmPtrGpu = 0x1234;
     void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
@@ -688,7 +686,6 @@ TEST_F(AllocationReuseContextTest, givenHostSvmAllocPresentWhenGettingExistingHo
 }
 
 TEST_F(AllocationReuseContextTest, givenDeviceSvmAllocPresentWhenGettingExistingHostPtrAllocThenRetrieveTheAllocationAndDisallowCpuCopy) {
-    REQUIRE_SVM_OR_SKIP(context->getDevice(0));
 
     uint64_t svmPtrGpu = 0x1234;
     void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
@@ -707,7 +704,6 @@ TEST_F(AllocationReuseContextTest, givenDeviceSvmAllocPresentWhenGettingExisting
 }
 
 TEST_F(AllocationReuseContextTest, givenHostSvmAllocPresentButRequestingTooBigSizeWhenGettingExistingHostPtrAllocThenReturnError) {
-    REQUIRE_SVM_OR_SKIP(context->getDevice(0));
 
     uint64_t svmPtrGpu = 0x1234;
     void *svmPtr = reinterpret_cast<void *>(svmPtrGpu);
