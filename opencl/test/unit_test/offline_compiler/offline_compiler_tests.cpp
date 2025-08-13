@@ -1967,40 +1967,6 @@ bool containsAnyIRSection(ArrayRef<const uint8_t> elfBinary, std::string &outErr
     return isAnyIrSectionDefined(elf.sectionHeaders);
 }
 
-TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenGeneratingElfBinaryFromPatchtokensThenIrSectionIsNotPresent) {
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clCopybufferFilename.c_str(),
-        "-exclude_ir",
-        "-device",
-        gEnvironment->devicePrefix.c_str(),
-        "--format",
-        "patchtokens"};
-
-    MockOfflineCompiler mockOfflineCompiler{};
-    mockOfflineCompiler.initialize(argv.size(), argv);
-
-    std::vector<uint8_t> storage;
-    iOpenCL::SProgramBinaryHeader headerTok = {};
-    headerTok.Magic = iOpenCL::MAGIC_CL;
-    headerTok.Version = iOpenCL::CURRENT_ICBE_VERSION;
-    headerTok.GPUPointerSizeInBytes = sizeof(uintptr_t);
-
-    storage.insert(storage.end(), reinterpret_cast<uint8_t *>(&headerTok), reinterpret_cast<uint8_t *>(&headerTok) + sizeof(iOpenCL::SProgramBinaryHeader));
-    mockOfflineCompiler.genBinary = new char[storage.size()];
-    mockOfflineCompiler.genBinarySize = storage.size();
-    memcpy_s(mockOfflineCompiler.genBinary, mockOfflineCompiler.genBinarySize, storage.data(), storage.size());
-    mockOfflineCompiler.generateElfBinary();
-
-    std::string errorReason{};
-    std::string warning{};
-    auto hasIR = containsAnyIRSection(mockOfflineCompiler.elfBinary, errorReason, warning);
-    ASSERT_TRUE(errorReason.empty());
-    ASSERT_TRUE(warning.empty());
-    EXPECT_FALSE(hasIR);
-}
-
 TEST_F(OfflineCompilerTests, givenZeroSizeInputFileWhenInitializationIsPerformedThenInvalidFileIsReturned) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -2200,9 +2166,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
         "-file",
         clCopybufferFilename.c_str(),
         "-device",
-        gEnvironment->devicePrefix.c_str(),
-        "--format",
-        "patchtokens"};
+        gEnvironment->devicePrefix.c_str()};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -2243,9 +2207,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuild
         "-file",
         clCopybufferFilename.c_str(),
         "-device",
-        configStr,
-        "--format",
-        "patchtokens"};
+        configStr};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -2286,9 +2248,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceIpVersionValueThenBu
         "-file",
         clCopybufferFilename.c_str(),
         "-device",
-        ipVersion.str(),
-        "--format",
-        "patchtokens"};
+        ipVersion.str()};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -2317,9 +2277,7 @@ TEST_F(OfflineCompilerTests, GivenLlvmTextWhenBuildingThenBuildSucceeds) {
         clCopybufferFilename.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str(),
-        "-llvm_text",
-        "--format",
-        "patchtokens"};
+        "-llvm_text"};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -2570,9 +2528,7 @@ TEST_F(OfflineCompilerTests, GivenCppFileWhenBuildingThenBuildSucceeds) {
         clCopybufferFilename.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str(),
-        "-cpp_file",
-        "--format",
-        "patchtokens"};
+        "-cpp_file"};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -4983,15 +4939,6 @@ TEST_F(OfflineCompilerTests, givenFormatFlagWithKnownFormatPassedThenEnforceSpec
     MockOfflineCompiler ocloc;
     ocloc.uniqueHelper->filesMap = filesMap;
 
-    std::vector<std::string> argvEnforcedFormatPatchtokens = {
-        "ocloc",
-        "-q",
-        "-file",
-        clCopybufferFilename.c_str(),
-        "-spv_only",
-        "--format",
-        "patchtokens"};
-
     std::vector<std::string> argvEnforcedFormatZebin = {
         "ocloc",
         "-q",
@@ -5001,32 +4948,35 @@ TEST_F(OfflineCompilerTests, givenFormatFlagWithKnownFormatPassedThenEnforceSpec
         "--format",
         "zebin"};
 
+    StreamCapture capture;
+    capture.captureStdout();
     int retVal = ocloc.initialize(argvEnforcedFormatZebin.size(), argvEnforcedFormatZebin);
     ASSERT_EQ(0, retVal);
-    EXPECT_FALSE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::disableZebin}));
-
-    ocloc.internalOptions.clear();
-    retVal = ocloc.initialize(argvEnforcedFormatPatchtokens.size(), argvEnforcedFormatPatchtokens);
-    ASSERT_EQ(0, retVal);
-    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::disableZebin}));
+    const auto output = capture.getCapturedStdout();
+    EXPECT_TRUE(output.empty());
 }
 
-HWTEST2_F(OfflineCompilerTests, givenNoFormatFlagSpecifiedWhenOclocInitializeThenZebinFormatIsEnforcedByDefault, HasOclocZebinFormatEnforced) {
+TEST_F(OfflineCompilerTests, givenPatchtokensFormatFlagThenWarningAboutDeprecatedFormatIsProduced) {
     MockOfflineCompiler ocloc;
     ocloc.uniqueHelper->filesMap = filesMap;
 
-    std::vector<std::string> argvNoFormatFlag = {
+    std::vector<std::string> argvEnforcedFormatPatchtokens = {
         "ocloc",
         "-q",
         "-file",
         clCopybufferFilename.c_str(),
         "-spv_only",
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
+        "--format",
+        "patchtokens"};
 
-    int retVal = ocloc.initialize(argvNoFormatFlag.size(), argvNoFormatFlag);
+    StreamCapture capture;
+    capture.captureStdout();
+    int retVal = ocloc.initialize(argvEnforcedFormatPatchtokens.size(), argvEnforcedFormatPatchtokens);
+    const auto output = capture.getCapturedStdout();
     ASSERT_EQ(0, retVal);
-    EXPECT_FALSE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::disableZebin}));
+
+    const auto expectedOutput{"WARNING: Ignoring deprecated '--format patchtokens' option.\n"};
+    EXPECT_EQ(expectedOutput, output);
 }
 
 TEST_F(OfflineCompilerTests, givenFormatFlagWithUnknownFormatPassedThenPrintWarning) {

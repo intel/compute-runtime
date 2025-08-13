@@ -33,7 +33,6 @@ inline constexpr ConstStringRef bindlessMode = "-cl-intel-use-bindless-mode -cl-
 inline constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
 inline constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
 inline constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
-inline constexpr ConstStringRef disableZebin = "-cl-intel-disable-zebin";
 inline constexpr ConstStringRef enableImageSupport = "-D__IMAGE_SUPPORT__=1";
 inline constexpr ConstStringRef optLevel = "-ze-opt-level=O";
 inline constexpr ConstStringRef excludeIrFromZebin = "-exclude-ir-from-zebin";

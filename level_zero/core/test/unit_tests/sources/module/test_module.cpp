@@ -3805,23 +3805,6 @@ HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingMod
     }
 }
 
-HWTEST_F(ModuleTranslationUnitTest, givenZebinEnabledWhenBuildWithSpirvThenOptionsDontContainDisableZebin) {
-    auto mockCompilerInterface = new MockCompilerInterface;
-    auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
-    rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
-
-    MockModuleTranslationUnit moduleTu(device);
-    moduleTu.processUnpackedBinaryCallBase = false;
-    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-    auto buildOption = "";
-
-    result = moduleTu.buildFromSpirV("", 0U, buildOption, "", nullptr);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(moduleTu.processUnpackedBinaryCalled, 1u);
-    EXPECT_TRUE(mockCompilerInterface->receivedApiOptions.empty());
-    EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find(NEO::CompilerOptions::disableZebin.str()), std::string::npos);
-}
-
 TEST(ModuleBuildLog, WhenGreaterBufferIsPassedToGetStringThenOutputSizeIsOverridden) {
     const auto infoLog{"[INFO] This is a log!"};
     const auto infoLogLength{strlen(infoLog)};

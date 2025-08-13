@@ -150,9 +150,6 @@ class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> getIgcFeaturesAndWorkarounds(const NEO::Device &device);
 
-    bool addOptionDisableZebin(std::string &options, std::string &internalOptions);
-    bool disableZebin(std::string &options, std::string &internalOptions);
-
   protected:
     struct CompilerLibraryEntry {
         std::string revision;

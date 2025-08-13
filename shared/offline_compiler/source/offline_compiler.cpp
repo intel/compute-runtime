@@ -1448,7 +1448,6 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   --format                                  Enforce given binary format. The possible values are:
                                             --format zebin - Enforce generating zebin binary
-                                            --format patchtokens - Enforce generating patchtokens (legacy) binary.
 
   -stateful_address_mode                    Enforce given addressing mode. The possible values are:
                                             -stateful_address_mode bindful - enforce generating in bindful mode
@@ -1727,7 +1726,7 @@ void OfflineCompiler::enforceFormat(std::string &format) {
     if (format == "zebin") {
         // zebin is enabled by default
     } else if (format == "patchtokens") {
-        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
+        argHelper->printf("WARNING: Ignoring deprecated '--format patchtokens' option.\n");
     } else {
         argHelper->printf("Invalid format passed: %s. Ignoring.\n", format.c_str());
     }

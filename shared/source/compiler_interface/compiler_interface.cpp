@@ -612,15 +612,6 @@ CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createFina
     return deviceCtx->CreateTranslationCtx(inType, outType);
 }
 
-bool CompilerInterface::addOptionDisableZebin(std::string &options, std::string &internalOptions) {
-    CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
-    return true;
-}
-
-bool CompilerInterface::disableZebin(std::string &options, std::string &internalOptions) {
-    return addOptionDisableZebin(options, internalOptions);
-}
-
 bool CompilerInterface::isFclAvailable(const Device *device) {
     return useIgcAsFcl(device) ? isIgcAvailable(device) : static_cast<bool>(fcl.entryPoint);
 }
