@@ -13,6 +13,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -1387,6 +1388,7 @@ HWTEST_F(ImmediateCommandListAppendWriteToMem, givenAppendWriteToMemWithNoScopeT
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_FALSE(cmd->getDcFlushEnable());
             postSyncFound = true;
+            break;
         }
     }
     ASSERT_TRUE(postSyncFound);
@@ -1414,6 +1416,7 @@ HWTEST_F(ImmediateCommandListAppendWriteToMem, givenAppendWriteToMemOnBcsWithNoS
         if (cmd->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
             EXPECT_EQ(cmd->getImmediateData(), data);
             postSyncFound = true;
+            break;
         }
     }
     ASSERT_TRUE(postSyncFound);
@@ -1432,6 +1435,17 @@ HWTEST_F(ImmediateCommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThe
     result = immCommandList->appendWriteToMemory(reinterpret_cast<void *>(&desc), ptr, data);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
+
+    if (L0GfxCoreHelper::useImmediateComputeFlushTask(device->getNEODevice()->getRootDeviceEnvironment())) {
+        ImmediateDispatchFlags &recordedImmediateDispatchFlags = ultCsr->recordedImmediateDispatchFlags;
+        EXPECT_TRUE(recordedImmediateDispatchFlags.requireTaskCountUpdate);
+    } else {
+        DispatchFlags &recordedDispatchFlags = ultCsr->recordedDispatchFlags;
+        EXPECT_TRUE(recordedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
+
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -1446,6 +1460,7 @@ HWTEST_F(ImmediateCommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThe
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
             postSyncFound = true;
+            break;
         }
     }
     ASSERT_TRUE(postSyncFound);

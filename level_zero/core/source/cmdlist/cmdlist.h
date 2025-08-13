@@ -15,6 +15,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/heap_base_address_model.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
@@ -227,6 +228,10 @@ struct CommandList : _ze_command_list_handle_t {
 
     static CommandList *fromHandle(ze_command_list_handle_t handle) {
         return static_cast<CommandList *>(handle);
+    }
+
+    static bool isExternalHostPtrAlloc(NEO::GraphicsAllocation *alloc) {
+        return alloc && alloc->getAllocationType() == NEO::AllocationType::externalHostPtr;
     }
 
     inline ze_command_list_handle_t toHandle() { return this; }

@@ -836,6 +836,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
+    memoryCopyParams.taskCountUpdateRequired |= CommandList::isExternalHostPtrAlloc(allocationStruct.alloc);
+
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (driverHandle->isRemoteImageNeeded(image, device)) {
         L0::Image *peerImage = nullptr;
@@ -1033,6 +1035,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     if (allocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
+
+    memoryCopyParams.taskCountUpdateRequired |= CommandList::isExternalHostPtrAlloc(allocationStruct.alloc);
 
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (driverHandle->isRemoteImageNeeded(image, device)) {
@@ -1800,8 +1804,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     }
 
     if (this->isImmediateType()) {
-        memoryCopyParams.taskCountUpdateRequired |= (dstAllocationStruct.alloc && dstAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr) ||
-                                                    (srcAllocationStruct.alloc && srcAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr);
+        memoryCopyParams.taskCountUpdateRequired |= CommandList::isExternalHostPtrAlloc(dstAllocationStruct.alloc) ||
+                                                    CommandList::isExternalHostPtrAlloc(srcAllocationStruct.alloc);
     }
 
     if ((dstAllocationStruct.alloc == nullptr) && (NEO::debugManager.flags.EmitMemAdvisePriorToCopyForNonUsm.get() == 1)) {
@@ -2058,8 +2062,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     }
 
     if (this->isImmediateType()) {
-        memoryCopyParams.taskCountUpdateRequired |= dstAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr ||
-                                                    srcAllocationStruct.alloc->getAllocationType() == NEO::AllocationType::externalHostPtr;
+        memoryCopyParams.taskCountUpdateRequired |= CommandList::isExternalHostPtrAlloc(dstAllocationStruct.alloc) ||
+                                                    CommandList::isExternalHostPtrAlloc(srcAllocationStruct.alloc);
     }
 
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(*srcAllocationStruct.alloc, *dstAllocationStruct.alloc);
@@ -4308,6 +4312,14 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc,
                                                                       void *ptr,
                                                                       uint64_t data) {
+    return this->appendWriteToMemory(desc, ptr, data, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc,
+                                                                      void *ptr,
+                                                                      uint64_t data,
+                                                                      bool *requireTaskCountUpdate) {
     auto descriptor = reinterpret_cast<zex_write_to_mem_desc_t *>(desc);
 
     size_t bufSize = sizeof(uint64_t);
@@ -4315,6 +4327,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     if (dstAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
+
+    if (requireTaskCountUpdate) {
+        *requireTaskCountUpdate = CommandList::isExternalHostPtrAlloc(dstAllocationStruct.alloc);
+    }
+
     UNRECOVERABLE_IF(dstAllocationStruct.alloc == nullptr);
     commandContainer.addToResidencyContainer(dstAllocationStruct.alloc);
 

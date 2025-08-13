@@ -178,6 +178,8 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t appendWaitOnMemory(void *desc, void *ptr, uint64_t data, ze_event_handle_t signalEventHandle, bool useQwordData) override;
     ze_result_t appendWriteToMemory(void *desc, void *ptr,
                                     uint64_t data) override;
+    ze_result_t appendWriteToMemory(void *desc, void *ptr,
+                                    uint64_t data, bool *requireTaskCountUpdate);
 
     ze_result_t appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
                                              const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
