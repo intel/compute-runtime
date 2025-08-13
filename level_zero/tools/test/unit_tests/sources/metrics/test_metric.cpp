@@ -71,20 +71,17 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpAndInvalidParamsPassedThenErrorIs
     // Aggregation window is zero
     zet_intel_metric_calculation_exp_desc_t calculationDesc{
         ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,        // pNext
-        1,              // metricGroupCount
-        &phMetricGroup, // phMetricGroups
-        0,              // metricCount
-        nullptr,        // phMetrics
-        0,              // timeWindowsCount
-        nullptr,        // pCalculationTimeWindows
-        0,              // timeAggregationWindow, zero is not accepted
+        nullptr, // pNext
+        0,       // metricGroupCount
+        nullptr, // phMetricGroups
+        0,       // metricCount
+        nullptr, // phMetrics
+        0,       // timeWindowsCount
+        nullptr, // pCalculationTimeWindows
+        0,       // timeAggregationWindow
     };
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                                            device->toHandle(), &calculationDesc,
-                                                                                            &hCalculationOperation));
 
     // No metric groups or metrics
     calculationDesc.timeAggregationWindow = 100;

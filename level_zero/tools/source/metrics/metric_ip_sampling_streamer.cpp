@@ -144,7 +144,14 @@ ze_result_t IpSamplingMetricCalcOpImp::create(IpSamplingMetricSourceImp &metricS
                                                 metricsInReport, includedMetricIndexes,
                                                 isMultiDevice);
     *phCalculationOperation = calcOp->toHandle();
-    return ZE_RESULT_SUCCESS;
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    if ((pCalculationDesc->timeWindowsCount > 0) || (pCalculationDesc->timeAggregationWindow != 0)) {
+        // Time filtering is not supported in IP sampling
+        status = ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP;
+        METRICS_LOG_INFO("%s", "Time filtering is not supported in IP sampling, ignoring time windows and aggregation window");
+    }
+
+    return status;
 }
 
 ze_result_t IpSamplingMetricCalcOpImp::destroy() {

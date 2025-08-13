@@ -8,6 +8,7 @@
 #ifndef _ZET_INTEL_GPU_METRIC_H
 #define _ZET_INTEL_GPU_METRIC_H
 
+#include "level_zero/include/level_zero/ze_intel_results.h"
 #include "level_zero/include/level_zero/ze_stypes.h"
 #include <level_zero/zet_api.h>
 

@@ -606,7 +606,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCrea
             nullptr,            // phMetrics
             0,                  // timeWindowsCount
             nullptr,            // pCalculationTimeWindows
-            1000,               // timeAggregationWindow
+            0,                  // timeAggregationWindow
         };
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -632,6 +632,56 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCrea
     }
 }
 
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupCreatingCalcOpIgnoresTimeFilters, EustallSupportedPlatforms) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+
+        ze_device_properties_t props = {};
+        device->getProperties(&props);
+
+        uint32_t metricGroupCount = 1;
+        zet_metric_group_handle_t metricGroupHandle = nullptr;
+        EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(metricGroupCount, 1u);
+        EXPECT_NE(metricGroupHandle, nullptr);
+
+        zet_intel_metric_calculation_exp_desc_t calculationDesc{
+            ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
+            nullptr,            // pNext
+            1,                  // metricGroupCount
+            &metricGroupHandle, // phMetricGroups
+            0,                  // metricCount
+            nullptr,            // phMetrics
+            0,                  // timeWindowsCount
+            nullptr,            // pCalculationTimeWindows
+            100,                // timeAggregationWindow, ip samping ingores it.
+        };
+
+        zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+        EXPECT_EQ(ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP,
+                  zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                              device->toHandle(), &calculationDesc,
+                                                              &hCalculationOperation));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
+
+        calculationDesc.timeWindowsCount = 1;
+        EXPECT_EQ(ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP,
+                  zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                              device->toHandle(), &calculationDesc,
+                                                              &hCalculationOperation));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
+
+        calculationDesc.timeAggregationWindow = 0;
+        EXPECT_EQ(ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP,
+                  zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                              device->toHandle(), &calculationDesc,
+                                                              &hCalculationOperation));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
+    }
+}
+
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportFormat, EustallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
@@ -653,7 +703,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportF
             nullptr,            // phMetrics
             0,                  // timeWindowsCount
             nullptr,            // pCalculationTimeWindows
-            1000,               // timeAggregationWindow
+            0,                  // timeAggregationWindow
         };
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -724,7 +774,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportForm
             metricsToCalculate.data(), // phMetrics
             0,                         // timeWindowsCount
             nullptr,                   // pCalculationTimeWindows
-            1000,                      // timeAggregationWindow
+            0,                         // timeAggregationWindow
         };
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -771,7 +821,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetExclude
             nullptr,            // phMetrics
             0,                  // timeWindowsCount
             nullptr,            // pCalculationTimeWindows
-            1000,               // timeAggregationWindow
+            0,                  // timeAggregationWindow
         };
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -840,7 +890,7 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
         nullptr,            // phMetrics
         0,                  // timeWindowsCount
         nullptr,            // pCalculationTimeWindows
-        1000,               // timeAggregationWindow
+        0,                  // timeAggregationWindow
     };
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -904,7 +954,7 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
         nullptr,            // phMetrics
         0,                  // timeWindowsCount
         nullptr,            // pCalculationTimeWindows
-        1000,               // timeAggregationWindow
+        0,                  // timeAggregationWindow
     };
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -950,7 +1000,7 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
         nullptr,            // phMetrics
         0,                  // timeWindowsCount
         nullptr,            // pCalculationTimeWindows
-        1000,               // timeAggregationWindow
+        0,                  // timeAggregationWindow
     };
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -1008,7 +1058,7 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
         metricsToCalculate.data(), // phMetrics
         0,                         // timeWindowsCount
         nullptr,                   // pCalculationTimeWindows
-        1000,                      // timeAggregationWindow
+        0,                         // timeAggregationWindow
     };
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -1058,7 +1108,7 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
         nullptr,            // phMetrics
         0,                  // timeWindowsCount
         nullptr,            // pCalculationTimeWindows
-        1000,               // timeAggregationWindow
+        0,                  // timeAggregationWindow
     };
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
@@ -1106,7 +1156,7 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingCalcOpCallingMetric
         nullptr,            // phMetrics
         0,                  // timeWindowsCount
         nullptr,            // pCalculationTimeWindows
-        1000,               // timeAggregationWindow
+        0,                  // timeAggregationWindow
     };
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;

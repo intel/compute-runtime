@@ -604,11 +604,6 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
                                                      zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                                      zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
 
-    if (pCalculationDesc->timeAggregationWindow == 0) {
-        METRICS_LOG_ERR("%s", "Must define an aggregation window");
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
     uint32_t metricGroupsSourceType = MetricSource::metricSourceTypeUndefined;
     MetricGroupImp *metricGroupImp = nullptr;
     if (pCalculationDesc->metricGroupCount > 0) {
