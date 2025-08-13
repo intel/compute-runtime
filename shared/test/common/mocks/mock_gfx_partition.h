@@ -13,7 +13,6 @@ using namespace NEO;
 
 class MockGfxPartition : public GfxPartition {
   public:
-    using GfxPartition::isAddressInHeapRange;
     using GfxPartition::osMemory;
 
     MockGfxPartition() : GfxPartition(reservedCpuAddressRange) {}

@@ -66,23 +66,6 @@ using namespace NEO;
 constexpr size_t reservedCpuAddressRangeSize = static_cast<size_t>(is64bit ? (6 * 4 * MemoryConstants::gigaByte) : 0);
 constexpr uint64_t sizeHeap32 = 4 * MemoryConstants::gigaByte;
 
-TEST(GfxPartitionTest, GivenHeapAndAddressInGfxPartitionThenIsAddressInHeapRangeCorrectlyReturns) {
-    MockGfxPartition gfxPartition;
-    uint64_t gfxTop = maxNBitValue(48) + 1;
-    gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop);
-
-    auto heap = HeapIndex::heapStandard64KB;
-
-    auto heapBase = gfxPartition.getHeapBase(heap);
-    auto heapLimit = gfxPartition.getHeapLimit(heap);
-
-    EXPECT_FALSE(gfxPartition.isAddressInHeapRange(heap, heapBase - 1));
-    EXPECT_TRUE(gfxPartition.isAddressInHeapRange(heap, heapBase));
-    EXPECT_TRUE(gfxPartition.isAddressInHeapRange(heap, heapBase + MemoryConstants::pageSize));
-    EXPECT_TRUE(gfxPartition.isAddressInHeapRange(heap, heapLimit));
-    EXPECT_FALSE(gfxPartition.isAddressInHeapRange(heap, heapLimit + 1));
-}
-
 void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t gfxTop, uint64_t svmTop) {
     if (svmTop) {
         // SVM should be initialized
@@ -147,10 +130,7 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
         }
 
         const bool isInternalHeapType = heap == HeapIndex::heapInternal || heap == HeapIndex::heapInternalDeviceMemory;
-        auto heapGranularity = (heap == HeapIndex::heapSvm || heap == HeapIndex::heapStandard2MB) ? GfxPartition::heapGranularity2MB : GfxPartition::heapGranularity;
-        if (is32bit && heap == HeapIndex::heapSvm) {
-            heapGranularity = GfxPartition::heapGranularity;
-        }
+        const auto heapGranularity = (heap == HeapIndex::heapStandard2MB) ? GfxPartition::heapGranularity2MB : GfxPartition::heapGranularity;
 
         if (heap == HeapIndex::heapSvm) {
             EXPECT_EQ(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap));
@@ -179,12 +159,6 @@ void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t
         EXPECT_EQ(ptrSmall, gfxPartition.getHeapBase(heap) + gfxPartition.getHeapSize(heap) - heapGranularity - sizeSmall);
 
         gfxPartition.heapFree(heap, ptrSmall, sizeSmall);
-
-        uint64_t requiredStartAddress = gfxPartition.getHeapBase(heap) + MemoryConstants::pageSize2M;
-        auto ptrSmallWithHint = gfxPartition.heapAllocateWithStartAddressHint(requiredStartAddress, heap, sizeSmall);
-        EXPECT_NE(ptrSmallWithHint, 0ull);
-        EXPECT_EQ(ptrSmallWithHint, requiredStartAddress);
-        gfxPartition.heapFree(heap, ptrSmallWithHint, sizeSmall);
     }
 }
 

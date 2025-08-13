@@ -111,26 +111,24 @@ void GfxPartition::Heap::init(uint64_t base, uint64_t size, size_t allocationAli
         heapGranularity = GfxPartition::heapGranularity2MB;
     }
 
-    // Exclude very first and very last page from GPU address range allocation
+    // Exclude very first and very last 64K from GPU address range allocation
     if (size > 2 * heapGranularity) {
         size -= 2 * heapGranularity;
     }
 
     alloc = std::make_unique<HeapAllocator>(base + heapGranularity, size, allocationAlignment);
-    initialized = true;
 }
 
-void GfxPartition::Heap::initExternalWithFrontWindow(uint64_t base, uint64_t size, size_t allocationAlignment) {
+void GfxPartition::Heap::initExternalWithFrontWindow(uint64_t base, uint64_t size) {
     this->base = base;
     this->size = size;
 
     size -= GfxPartition::heapGranularity;
 
-    alloc = std::make_unique<HeapAllocator>(base, size, allocationAlignment, 0u);
-    initialized = true;
+    alloc = std::make_unique<HeapAllocator>(base, size, MemoryConstants::pageSize, 0u);
 }
 
-void GfxPartition::Heap::initWithFrontWindow(uint64_t base, uint64_t size, uint64_t frontWindowSize, size_t allocationAlignment) {
+void GfxPartition::Heap::initWithFrontWindow(uint64_t base, uint64_t size, uint64_t frontWindowSize) {
     this->base = base;
     this->size = size;
 
@@ -138,36 +136,22 @@ void GfxPartition::Heap::initWithFrontWindow(uint64_t base, uint64_t size, uint6
     size -= GfxPartition::heapGranularity;
     size -= frontWindowSize;
 
-    alloc = std::make_unique<HeapAllocator>(base + frontWindowSize, size, allocationAlignment);
-    initialized = true;
+    alloc = std::make_unique<HeapAllocator>(base + frontWindowSize, size, MemoryConstants::pageSize);
 }
 
-void GfxPartition::Heap::initFrontWindow(uint64_t base, uint64_t size, size_t allocationAlignment) {
+void GfxPartition::Heap::initFrontWindow(uint64_t base, uint64_t size) {
     this->base = base;
     this->size = size;
 
-    alloc = std::make_unique<HeapAllocator>(base, size, allocationAlignment, 0u);
-    initialized = true;
-}
-
-size_t GfxPartition::Heap::getAllocAlignment() const {
-    return alloc->getAllocationAlignment();
+    alloc = std::make_unique<HeapAllocator>(base, size, MemoryConstants::pageSize, 0u);
 }
 
 uint64_t GfxPartition::Heap::allocate(size_t &size) {
     return alloc->allocate(size);
 }
 
-uint64_t GfxPartition::Heap::allocateWithStartAddressHint(const uint64_t requiredStartAddress, size_t &size) {
-    return alloc->allocateWithStartAddressHint(requiredStartAddress, size);
-}
-
 uint64_t GfxPartition::Heap::allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) {
     return alloc->allocateWithCustomAlignment(sizeToAllocate, alignment);
-}
-
-uint64_t GfxPartition::Heap::allocateWithCustomAlignmentWithStartAddressHint(const uint64_t requiredStartAddress, size_t &sizeToAllocate, size_t alignment) {
-    return alloc->allocateWithCustomAlignmentWithStartAddressHint(requiredStartAddress, sizeToAllocate, alignment);
 }
 
 void GfxPartition::Heap::free(uint64_t ptr, size_t size) {
@@ -264,7 +248,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
         auto cpuVirtualAddressSize = CpuInfo::getInstance().getVirtualAddressSize();
         if (cpuVirtualAddressSize == 48 && gpuAddressSpace == maxNBitValue(48)) {
             gfxBase = maxNBitValue(48 - 1) + 1;
-            heapInitWithAllocationAlignment(HeapIndex::heapSvm, 0ull, gfxBase, MemoryConstants::pageSize2M);
+            heapInit(HeapIndex::heapSvm, 0ull, gfxBase);
         } else if (gpuAddressSpace == maxNBitValue(47)) {
             if (reservedCpuAddressRangeForHeapSvm.alignedPtr == nullptr) {
                 if (cpuAddressRangeSizeToReserve == 0) {
@@ -280,10 +264,10 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             }
             gfxBase = reinterpret_cast<uint64_t>(reservedCpuAddressRangeForHeapSvm.alignedPtr);
             gfxTop = gfxBase + cpuAddressRangeSizeToReserve;
-            heapInitWithAllocationAlignment(HeapIndex::heapSvm, 0ull, gpuAddressSpace + 1, MemoryConstants::pageSize2M);
+            heapInit(HeapIndex::heapSvm, 0ull, gpuAddressSpace + 1);
         } else if (gpuAddressSpace < maxNBitValue(47)) {
             gfxBase = 0ull;
-            heapInitWithAllocationAlignment(HeapIndex::heapSvm, 0ull, 0ull, MemoryConstants::pageSize2M);
+            heapInit(HeapIndex::heapSvm, 0ull, 0ull);
         } else {
             if (!initAdditionalRange(cpuVirtualAddressSize, gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, systemMemorySize)) {
                 return false;
@@ -293,14 +277,14 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
 
     for (auto heap : GfxPartition::heap32Names) {
         if (useExternalFrontWindowPool && HeapAssigner::heapTypeExternalWithFrontWindowPool(heap)) {
-            heapInitExternalWithFrontWindow(heap, gfxBase, gfxHeap32Size, MemoryConstants::pageSize);
+            heapInitExternalWithFrontWindow(heap, gfxBase, gfxHeap32Size);
             size_t externalFrontWindowSize = GfxPartition::externalFrontWindowPoolSize;
             auto allocation = heapAllocate(heap, externalFrontWindowSize);
             heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), allocation,
-                                            externalFrontWindowSize, MemoryConstants::pageSize);
+                                            externalFrontWindowSize);
         } else if (HeapAssigner::isInternalHeap(heap)) {
-            heapInitWithFrontWindow(heap, gfxBase, gfxHeap32Size, GfxPartition::internalFrontWindowPoolSize, MemoryConstants::pageSize);
-            heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), gfxBase, GfxPartition::internalFrontWindowPoolSize, MemoryConstants::pageSize);
+            heapInitWithFrontWindow(heap, gfxBase, gfxHeap32Size, GfxPartition::internalFrontWindowPoolSize);
+            heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), gfxBase, GfxPartition::internalFrontWindowPoolSize);
         } else {
             heapInit(heap, gfxBase, gfxHeap32Size);
         }
@@ -384,9 +368,9 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
         gfxBase = castToUint64(reservedCpuAddressRangeForHeapSvm.alignedPtr);
         gfxTop = gfxBase + reservedCpuAddressRangeForHeapSvm.sizeToReserve;
         if (gpuAddressSpace == maxNBitValue(57)) {
-            heapInitWithAllocationAlignment(HeapIndex::heapSvm, 0ull, maxNBitValue(57 - 1) + 1, MemoryConstants::pageSize2M);
+            heapInit(HeapIndex::heapSvm, 0ull, maxNBitValue(57 - 1) + 1);
         } else {
-            heapInitWithAllocationAlignment(HeapIndex::heapSvm, 0ull, maxNBitValue(48) + 1, MemoryConstants::pageSize2M);
+            heapInit(HeapIndex::heapSvm, 0ull, maxNBitValue(48) + 1);
         }
 
         if (gpuAddressSpace == maxNBitValue(57)) {
@@ -400,7 +384,7 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
         // On 48 bit CPU this range is reserved for OS usage, do not reserve
         gfxBase = maxNBitValue(48 - 1) + 1; // 0x800000000000
         gfxTop = maxNBitValue(48) + 1;      // 0x1000000000000
-        heapInitWithAllocationAlignment(HeapIndex::heapSvm, 0ull, gfxBase, MemoryConstants::pageSize2M);
+        heapInit(HeapIndex::heapSvm, 0ull, gfxBase);
     }
 
     // Init HEAP_EXTENDED only for 57 bit GPU
