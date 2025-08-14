@@ -94,14 +94,12 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     }
 
     GraphicsAllocation *externalAlloc = nullptr;
+    int transferDataToHostPtrCalledCount{0};
+    int transferDataFromHostPtrCalledCount{0};
+    std::optional<bool> allowCpuAccessReturnValue{};
 
     bool callBaseTransferDataToHostPtr{true};
     bool callBaseTransferDataFromHostPtr{true};
-
-    int transferDataToHostPtrCalledCount{0};
-    int transferDataFromHostPtrCalledCount{0};
-
-    std::optional<bool> allowCpuAccessReturnValue{};
 };
 
 class AlignedBuffer : public MockBufferStorage, public Buffer {

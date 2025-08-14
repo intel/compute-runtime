@@ -230,9 +230,9 @@ class MockProgram : public Program {
     std::map<uint32_t, int> processGenBinaryCalledPerRootDevice;
     std::map<uint32_t, int> replaceDeviceBinaryCalledPerRootDevice;
     static int getInternalOptionsCalled;
-    bool contextSet = false;
     int isFlagOptionOverride = -1;
     int isOptionValueValidOverride = -1;
+    bool contextSet = false;
     bool wasProcessDebugDataCalled = false;
     bool wasCreateDebugZebinCalled = false;
     bool wasDebuggerNotified = false;
