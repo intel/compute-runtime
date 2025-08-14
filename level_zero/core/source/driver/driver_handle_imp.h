@@ -14,7 +14,6 @@
 #include "shared/source/os_interface/sys_calls_common.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
-#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/ze_intel_gpu.h"
 
@@ -28,6 +27,43 @@ struct FabricVertex;
 struct FabricEdge;
 struct Image;
 class ExternalSemaphoreController;
+
+#pragma pack(1)
+struct IpcMemoryData {
+    uint64_t handle = 0;
+    uint64_t poolOffset = 0;
+    uint8_t type = 0;
+};
+#pragma pack()
+static_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
+enum class IpcHandleType : uint8_t {
+    fdHandle = 0,
+    maxHandle
+};
+
+struct IpcOpaqueMemoryData {
+    union IpcHandle {
+        int fd;
+        uint64_t reserved;
+    };
+    IpcHandle handle = {};
+    uint64_t poolOffset = 0;
+    unsigned int processId = 0;
+    IpcHandleType type = IpcHandleType::maxHandle;
+    uint8_t memoryType = 0;
+};
+static_assert(sizeof(IpcOpaqueMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+
+struct IpcHandleTracking {
+    uint64_t refcnt = 0;
+    NEO::GraphicsAllocation *alloc = nullptr;
+    uint32_t handleId = 0;
+    uint64_t handle = 0;
+    uint64_t ptr = 0;
+    struct IpcMemoryData ipcData = {};
+};
+
 struct DriverHandleImp : public DriverHandle {
     ~DriverHandleImp() override;
     DriverHandleImp();
@@ -50,7 +86,7 @@ struct DriverHandleImp : public DriverHandle {
     void setMemoryManager(NEO::MemoryManager *memoryManager) override;
     MOCKABLE_VIRTUAL void *importFdHandle(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::AllocationType allocationType, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData);
     MOCKABLE_VIRTUAL void *importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData);
-    MOCKABLE_VIRTUAL void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId);
+    MOCKABLE_VIRTUAL void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType);
     NEO::SVMAllocsManager *getSvmAllocsManager() override;
     NEO::StagingBufferManager *getStagingBufferManager() override;
     ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices);

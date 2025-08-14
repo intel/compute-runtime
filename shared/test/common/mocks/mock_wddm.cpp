@@ -141,30 +141,6 @@ NTSTATUS WddmMock::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D
     return createAllocationStatus;
 }
 
-NTSTATUS WddmMock::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle, bool createNTHandle) {
-    createAllocationResult.called++;
-    if (failCreateAllocation) {
-        return STATUS_NO_MEMORY;
-    }
-    if (callBaseDestroyAllocations) {
-        createAllocationStatus = Wddm::createAllocation(alignedCpuPtr, gmm, outHandle, outResourceHandle, outSharedHandle, createNTHandle);
-        createAllocationResult.success = createAllocationStatus == STATUS_SUCCESS;
-        if (createAllocationStatus != STATUS_SUCCESS) {
-            destroyAllocationResult.called++;
-        }
-    } else {
-        createAllocationResult.success = true;
-        outHandle = ALLOCATION_HANDLE;
-        outResourceHandle = ALLOCATION_HANDLE;
-        if (outSharedHandle && !createNTHandle) {
-            // For shared allocations without NT handle, set a special value
-            *outSharedHandle = 1u;
-        }
-        return createAllocationStatus;
-    }
-    return createAllocationStatus;
-}
-
 bool WddmMock::createAllocation64k(WddmAllocation *wddmAllocation) {
     if (wddmAllocation) {
         return createAllocation(wddmAllocation->getDefaultGmm(), wddmAllocation->getHandleToModify(0u));

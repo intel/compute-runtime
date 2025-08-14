@@ -79,17 +79,15 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(getVirtualAddressSpaceIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, ze_ipc_mem_handle_t *));
     ADDMETHOD_NOBASE(putVirtualAddressSpaceIpcHandle, ze_result_t, ZE_RESULT_SUCCESS, (ze_ipc_mem_handle_t ipcHandle));
     ADDMETHOD_NOBASE(lockMemory, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, void *ptr, size_t size));
-    ADDMETHOD_NOBASE(isShareableMemory, bool, true, (const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle));
-    ADDMETHOD_NOBASE(isOpaqueHandleSupported, bool, true, (IpcHandleType * handleType));
-    ADDMETHOD_NOBASE(getMemHandlePtr, void *, nullptr, (ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags));
-    ADDMETHOD_NOBASE_VOIDRETURN(getDataFromIpcHandle, (ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset));
+    ADDMETHOD_NOBASE(isShareableMemory, bool, true, (const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice));
+    ADDMETHOD_NOBASE(getMemHandlePtr, void *, nullptr, (ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, ze_ipc_memory_flags_t flags));
     ADDMETHOD_NOBASE(getPitchFor2dImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t, size_t, size_t, unsigned int, size_t *));
     ADDMETHOD_NOBASE(getContextExt, ContextExt *, nullptr, ());
 };
 
 struct ContextShareableMock : public L0::ContextImp {
     ContextShareableMock(L0::DriverHandle *driverHandle) : L0::ContextImp(driverHandle) {}
-    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override {
+    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice) override {
         return true;
     }
 };

@@ -34,9 +34,6 @@ extern SysCalls::ProcessPowerThrottlingState setProcessPowerThrottlingStateLastV
 extern size_t setThreadPriorityCalled;
 extern SysCalls::ThreadPriority setThreadPriorityLastValue;
 extern MEMORY_BASIC_INFORMATION virtualQueryMemoryBasicInformation;
-extern size_t closeHandleCalled;
-extern BOOL (*sysCallsDuplicateHandle)(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions);
-extern HANDLE (*sysCallsOpenProcess)(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId);
 } // namespace SysCalls
 extern uint32_t numRootDevicesToEnum;
 extern bool gCreateAllocation2FailOnReadOnlyAllocation;
@@ -461,100 +458,4 @@ TEST_F(WddmTestWithMockGdiDll, whenGettingReadOnlyFlagThenReturnTrueOnlyForPageM
 
 TEST_F(WddmTestWithMockGdiDll, whenGettingReadOnlyFlagFallbackSupportThenTrueIsReturned) {
     EXPECT_TRUE(wddm->isReadOnlyFlagFallbackSupported());
-}
-
-TEST_F(WddmTestWithMockGdiDll, givenOsHandleDataWithoutParentProcessWhenGettingSharedHandleThenReturnOriginalHandle) {
-    uint64_t originalHandle = 0x12345678;
-    MemoryManager::OsHandleData osHandleData(originalHandle);
-
-    HANDLE sharedHandle = wddm->getSharedHandle(osHandleData);
-
-    EXPECT_EQ(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(originalHandle)), sharedHandle);
-}
-
-TEST_F(WddmTestWithMockGdiDll, givenOsHandleDataWithParentProcessWhenGettingSharedHandleThenDuplicateHandleFromParentProcess) {
-    uint64_t originalHandle = 0x12345678;
-    uint32_t parentProcessId = 1234;
-    MemoryManager::OsHandleData osHandleData(originalHandle);
-    osHandleData.parentProcessId = parentProcessId;
-
-    HANDLE mockDuplicatedHandle = reinterpret_cast<HANDLE>(0x8888);
-
-    // Mock openProcess to return a valid handle
-    SysCalls::sysCallsOpenProcess = [](DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) -> HANDLE {
-        EXPECT_EQ(static_cast<DWORD>(PROCESS_DUP_HANDLE), dwDesiredAccess);
-        EXPECT_EQ(FALSE, bInheritHandle);
-        EXPECT_EQ(1234u, dwProcessId);
-        return reinterpret_cast<HANDLE>(0x9999);
-    };
-
-    // Mock duplicateHandle to succeed
-    SysCalls::sysCallsDuplicateHandle = [](HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) -> BOOL {
-        EXPECT_EQ(reinterpret_cast<HANDLE>(0x9999), hSourceProcessHandle);
-        EXPECT_EQ(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x12345678)), hSourceHandle);
-        EXPECT_EQ(GetCurrentProcess(), hTargetProcessHandle);
-        EXPECT_EQ(GENERIC_READ | GENERIC_WRITE, dwDesiredAccess);
-        EXPECT_EQ(FALSE, bInheritHandle);
-        EXPECT_EQ(0u, dwOptions);
-        *lpTargetHandle = reinterpret_cast<HANDLE>(0x8888);
-        return TRUE;
-    };
-
-    size_t closeHandleCallsBefore = SysCalls::closeHandleCalled;
-
-    HANDLE sharedHandle = wddm->getSharedHandle(osHandleData);
-
-    EXPECT_EQ(mockDuplicatedHandle, sharedHandle);
-    EXPECT_EQ(closeHandleCallsBefore + 1, SysCalls::closeHandleCalled); // Parent process handle should be closed
-
-    // Cleanup
-    SysCalls::sysCallsOpenProcess = nullptr;
-    SysCalls::sysCallsDuplicateHandle = nullptr;
-}
-
-TEST_F(WddmTestWithMockGdiDll, givenOsHandleDataWithParentProcessWhenOpenProcessFailsThenReturnOriginalHandle) {
-    uint64_t originalHandle = 0x12345678;
-    uint32_t parentProcessId = 1234;
-    MemoryManager::OsHandleData osHandleData(originalHandle);
-    osHandleData.parentProcessId = parentProcessId;
-
-    // Mock openProcess to fail
-    SysCalls::sysCallsOpenProcess = [](DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) -> HANDLE {
-        return nullptr;
-    };
-
-    HANDLE sharedHandle = wddm->getSharedHandle(osHandleData);
-
-    EXPECT_EQ(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(originalHandle)), sharedHandle);
-
-    // Cleanup
-    SysCalls::sysCallsOpenProcess = nullptr;
-}
-
-TEST_F(WddmTestWithMockGdiDll, givenOsHandleDataWithParentProcessWhenDuplicateHandleFailsThenReturnOriginalHandle) {
-    uint64_t originalHandle = 0x12345678;
-    uint32_t parentProcessId = 1234;
-    MemoryManager::OsHandleData osHandleData(originalHandle);
-    osHandleData.parentProcessId = parentProcessId;
-
-    // Mock openProcess to succeed
-    SysCalls::sysCallsOpenProcess = [](DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) -> HANDLE {
-        return reinterpret_cast<HANDLE>(0x9999);
-    };
-
-    // Mock duplicateHandle to fail
-    SysCalls::sysCallsDuplicateHandle = [](HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) -> BOOL {
-        return FALSE;
-    };
-
-    size_t closeHandleCallsBefore = SysCalls::closeHandleCalled;
-
-    HANDLE sharedHandle = wddm->getSharedHandle(osHandleData);
-
-    EXPECT_EQ(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(originalHandle)), sharedHandle);
-    EXPECT_EQ(closeHandleCallsBefore + 1, SysCalls::closeHandleCalled); // Parent process handle should still be closed
-
-    // Cleanup
-    SysCalls::sysCallsOpenProcess = nullptr;
-    SysCalls::sysCallsDuplicateHandle = nullptr;
 }

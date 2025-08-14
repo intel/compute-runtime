@@ -9,17 +9,14 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpu_info.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -78,15 +75,15 @@ ContextImp::ContextImp(DriverHandle *driverHandle) {
     }
     contextSettings.enableSvmHeapReservation = platformSupportSvmHeapReservation;
 
-    bool useOpaqueHandle = true;
+    bool pidfdOrSocket = true;
     for (auto &device : this->driverHandle->devices) {
         auto &productHelper = device->getNEODevice()->getProductHelper();
         if (!productHelper.isPidFdOrSocketForIpcSupported()) {
-            useOpaqueHandle = false;
+            pidfdOrSocket = false;
             break;
         }
     }
-    contextSettings.enablePidfdOrSockets = useOpaqueHandle;
+    contextSettings.enablePidfdOrSockets = pidfdOrSocket;
 }
 
 ContextImp::~ContextImp() {
@@ -138,7 +135,6 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
             *ptr = getMemHandlePtr(this->devices.begin()->second,
                                    lookupTable.sharedHandleType.fd,
                                    NEO::AllocationType::bufferHostMemory,
-                                   0u,
                                    flags);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -147,7 +143,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
             UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
             *ptr = this->driverHandle->importNTHandle(this->devices.begin()->second,
                                                       lookupTable.sharedHandleType.ntHandle,
-                                                      NEO::AllocationType::bufferHostMemory, 0);
+                                                      NEO::AllocationType::bufferHostMemory);
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -270,7 +266,6 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
             *ptr = getMemHandlePtr(hDevice,
                                    lookupTable.sharedHandleType.fd,
                                    NEO::AllocationType::buffer,
-                                   0u,
                                    flags);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -279,8 +274,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
             UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
             *ptr = this->driverHandle->importNTHandle(hDevice,
                                                       lookupTable.sharedHandleType.ntHandle,
-                                                      NEO::AllocationType::buffer,
-                                                      0);
+                                                      NEO::AllocationType::buffer);
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
@@ -295,10 +289,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
 
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, this->driverHandle->rootDeviceIndices, deviceBitfields);
-    if (NEO::debugManager.flags.EnableShareableWithoutNTHandle.get()) {
-        unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle = 1;
-    }
-    unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice, unifiedMemoryProperties.allocationFlags.flags.shareableWithoutNTHandle);
+    unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice);
     unifiedMemoryProperties.device = neoDevice;
     unifiedMemoryProperties.allocationFlags.flags.compressedHint = isAllocationSuitableForCompression(lookupTable, *device, size);
 
@@ -808,8 +799,7 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
         ipcType = InternalIpcMemoryType::hostUnifiedMemory;
     }
 
-    IpcHandleType handleType = IpcHandleType::maxHandle;
-    bool useOpaqueHandle = isOpaqueHandleSupported(&handleType);
+    bool pidfdOrSocket = contextSettings.enablePidfdOrSockets;
     uint32_t loopCount = numIpcHandles ? *numIpcHandles : 1u;
     for (uint32_t i = 0u; i < loopCount; i++) {
         uint64_t handle = 0;
@@ -820,12 +810,12 @@ ze_result_t ContextImp::getIpcMemHandlesImpl(const void *ptr,
 
         memoryManager->registerIpcExportedAllocation(alloc);
 
-        if (useOpaqueHandle) {
+        if (pidfdOrSocket) {
             IpcOpaqueMemoryData &ipcData = *reinterpret_cast<IpcOpaqueMemoryData *>(pIpcHandles[i].data);
-            setIPCHandleData<IpcOpaqueMemoryData>(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool, handleType);
+            setIPCHandleData<IpcOpaqueMemoryData>(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool);
         } else {
             IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandles[i].data);
-            setIPCHandleData<IpcMemoryData>(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool, handleType);
+            setIPCHandleData<IpcMemoryData>(alloc, handle, ipcData, reinterpret_cast<uint64_t>(ptr), static_cast<uint8_t>(ipcType), usmPool);
         }
     }
     return ZE_RESULT_SUCCESS;
@@ -847,12 +837,11 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
                                          const ze_ipc_mem_handle_t &pIpcHandle,
                                          ze_ipc_memory_flags_t flags,
                                          void **ptr) {
-    uint64_t handle;
-    uint8_t type;
-    unsigned int processId;
-    uint64_t poolOffset;
+    using IpcDataT = IpcMemoryData;
+    const IpcDataT &ipcData = *reinterpret_cast<const IpcDataT *>(pIpcHandle.data);
 
-    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset);
+    uint64_t handle = ipcData.handle;
+    uint8_t type = ipcData.type;
 
     NEO::AllocationType allocationType = NEO::AllocationType::unknown;
     if (type == static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
@@ -866,13 +855,12 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
     *ptr = getMemHandlePtr(hDevice,
                            handle,
                            allocationType,
-                           processId,
                            flags);
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    *ptr = ptrOffset(*ptr, poolOffset);
+    *ptr = ptrOffset(*ptr, ipcData.poolOffset);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -885,15 +873,12 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
     std::vector<NEO::osHandle> handles;
     handles.reserve(numIpcHandles);
 
+    using IpcDataT = IpcMemoryData;
     for (uint32_t i = 0; i < numIpcHandles; i++) {
-        uint64_t handle;
-        uint8_t type;
-        unsigned int processId;
-        [[maybe_unused]] uint64_t poolOffset;
+        const IpcDataT &ipcData = *reinterpret_cast<const IpcDataT *>(pIpcHandles[i].data);
+        uint64_t handle = ipcData.handle;
 
-        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset);
-
-        if (type != static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
+        if (ipcData.type != static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 

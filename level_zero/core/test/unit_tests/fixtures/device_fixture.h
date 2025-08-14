@@ -85,7 +85,7 @@ struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {
         return &mockFd;
     }
 
-    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType, uint32_t parentProcessId) override {
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) override {
         if (failHandleLookup) {
             return nullptr;
         }

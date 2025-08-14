@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/memory_manager/allocation_type.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
@@ -30,45 +29,6 @@ struct DriverHandle;
 struct Image;
 
 class ContextExt;
-
-#pragma pack(1)
-struct IpcMemoryData {
-    uint64_t handle = 0;
-    uint64_t poolOffset = 0;
-    uint8_t type = 0;
-};
-#pragma pack()
-static_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
-
-enum class IpcHandleType : uint8_t {
-    fdHandle = 0,
-    ntHandle = 1,
-    maxHandle
-};
-
-#pragma pack(1)
-struct IpcOpaqueMemoryData {
-    union IpcHandle {
-        int fd;
-        uint64_t reserved;
-    };
-    IpcHandle handle = {};
-    uint64_t poolOffset = 0;
-    unsigned int processId = 0;
-    IpcHandleType type = IpcHandleType::maxHandle;
-    uint8_t memoryType = 0;
-};
-#pragma pack()
-static_assert(sizeof(IpcOpaqueMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcOpaqueMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
-
-struct IpcHandleTracking {
-    uint64_t refcnt = 0;
-    NEO::GraphicsAllocation *alloc = nullptr;
-    uint32_t handleId = 0;
-    uint64_t handle = 0;
-    uint64_t ptr = 0;
-    struct IpcMemoryData ipcData = {};
-};
 
 struct Context : _ze_context_handle_t {
     inline static ze_memory_type_t parseUSMType(InternalMemoryType memoryType) {
@@ -210,10 +170,8 @@ struct Context : _ze_context_handle_t {
                                                         ze_ipc_mem_handle_t *pIpcHandle) = 0;
     virtual ze_result_t putVirtualAddressSpaceIpcHandle(ze_ipc_mem_handle_t ipcHandle) = 0;
     virtual ze_result_t lockMemory(ze_device_handle_t hDevice, void *ptr, size_t size) = 0;
-    virtual bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) = 0;
-    virtual void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags) = 0;
-    virtual void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset) = 0;
-    virtual bool isOpaqueHandleSupported(IpcHandleType *handleType) = 0;
+    virtual bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) = 0;
+    virtual void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, ze_ipc_memory_flags_t flags) = 0;
 
     virtual ze_result_t getPitchFor2dImage(
         ze_device_handle_t hDevice,

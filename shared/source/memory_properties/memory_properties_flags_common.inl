@@ -30,7 +30,6 @@ struct MemoryFlags {
     uint32_t resource48Bit : 1;
     uint32_t compressedHint : 1;
     uint32_t uncompressedHint : 1;
-    uint32_t shareableWithoutNTHandle : 1;
 };
 
 struct MemoryAllocFlags {
