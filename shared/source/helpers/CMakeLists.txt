@@ -244,13 +244,6 @@ if(SUPPORT_XE3_AND_BEFORE)
   )
 endif()
 
-set(NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.inl
-)
-
-set_property(GLOBAL PROPERTY NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS ${NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS})
 set_property(GLOBAL PROPERTY NEO_CORE_HELPERS ${NEO_CORE_HELPERS})
 
 add_subdirectories()

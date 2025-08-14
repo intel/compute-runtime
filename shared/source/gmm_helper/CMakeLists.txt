@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,6 +15,10 @@ set(NEO_CORE_GMM_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_settings_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/${DRIVER_MODEL}/gmm_callbacks.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface.h

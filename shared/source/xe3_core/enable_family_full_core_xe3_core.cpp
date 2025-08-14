@@ -20,6 +20,9 @@ extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE];
 using Family = Xe3CoreFamily;
 static auto gfxFamily = IGFX_XE3_CORE;
 
+template <typename GfxFamily>
+struct GmmCallbacks;
+
 struct EnableCoreXe3Core {
     EnableCoreXe3Core() {
         gfxCoreHelperFactory[gfxFamily] = GfxCoreHelperHw<Family>::create;
@@ -27,6 +30,7 @@ struct EnableCoreXe3Core {
         populateFactoryTable<CommandStreamReceiverHw<Family>>();
         populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();
         populateFactoryTable<DebuggerL0Hw<Family>>();
+        populateFactoryTable<GmmCallbacks<Family>>();
     }
 };
 

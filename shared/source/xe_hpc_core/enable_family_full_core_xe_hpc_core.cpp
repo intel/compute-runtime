@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,9 @@ extern GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE];
 using Family = XeHpcCoreFamily;
 static auto gfxFamily = IGFX_XE_HPC_CORE;
 
+template <typename GfxFamily>
+struct GmmCallbacks;
+
 struct EnableCoreXeHpcCore {
     EnableCoreXeHpcCore() {
         gfxCoreHelperFactory[gfxFamily] = GfxCoreHelperHw<Family>::create;
@@ -27,6 +30,7 @@ struct EnableCoreXeHpcCore {
         populateFactoryTable<CommandStreamReceiverHw<Family>>();
         populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();
         populateFactoryTable<DebuggerL0Hw<Family>>();
+        populateFactoryTable<GmmCallbacks<Family>>();
     }
 };
 

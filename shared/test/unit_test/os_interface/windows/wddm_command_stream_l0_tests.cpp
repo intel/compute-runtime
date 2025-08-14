@@ -14,7 +14,6 @@
 #include "shared/source/direct_submission/windows/wddm_direct_submission.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/flush_stamp.h"
-#include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
