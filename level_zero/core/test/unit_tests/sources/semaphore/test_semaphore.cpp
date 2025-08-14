@@ -86,41 +86,6 @@ HWTEST_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendSignalExternalS
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-template <GFXCORE_FAMILY gfxCoreFamily>
-struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
-    MockCommandListImmediateExtSem() : WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>() {}
-
-    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) override {
-
-        appendWaitOnEventsCalledTimes++;
-
-        if (failingWaitOnEvents) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override {
-        appendSignalEventCalledTimes++;
-
-        if (failOnSecondSignalEvent && appendSignalEventCalledTimes == 2) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        if (failingSignalEvent) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    uint32_t appendWaitOnEventsCalledTimes = 0;
-    uint32_t appendSignalEventCalledTimes = 0;
-    bool failingWaitOnEvents = false;
-    bool failingSignalEvent = false;
-    bool failOnSecondSignalEvent = false;
-};
-
 using MockDriverHandleImp = Mock<L0::DriverHandleImp>;
 
 HWTEST_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendSignalExternalSemaphoresExpIsCalledThenSuccessIsReturned) {
