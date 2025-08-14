@@ -13,8 +13,6 @@
 #include <cstring>
 #include <iostream>
 
-#define ENABLE_GRAPH_DUMP false
-
 using zeGraphCreateExpFP = ze_result_t(ZE_APICALL *)(ze_context_handle_t context, ze_graph_handle_t *phGraph, void *pNext);
 using zeCommandListBeginGraphCaptureExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, void *pNext);
 using zeCommandListBeginCaptureIntoGraphExpFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t hCommandList, ze_graph_handle_t hGraph, void *pNext);
@@ -49,8 +47,8 @@ struct GraphApi {
     bool loaded = false;
 };
 
-void dumpGraphToDotIfEnabled(const GraphApi &graphApi, ze_graph_handle_t virtualGraph, const std::string &testName) {
-    if (!ENABLE_GRAPH_DUMP) {
+void dumpGraphToDotIfEnabled(const GraphApi &graphApi, ze_graph_handle_t virtualGraph, const std::string &testName, bool dumpGraph) {
+    if (!dumpGraph) {
         return;
     }
 
@@ -67,13 +65,14 @@ void dumpGraphToDotIfEnabled(const GraphApi &graphApi, ze_graph_handle_t virtual
 inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
                                            ze_device_handle_t device,
                                            ze_command_queue_mode_t mode,
+                                           ze_command_queue_flags_t flags,
                                            ze_command_list_handle_t &cmdList) {
     ze_command_queue_desc_t cmdQueueDesc{
         .stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
         .pNext = nullptr,
         .ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false),
         .index = 0,
-        .flags = 0,
+        .flags = flags,
         .mode = mode,
         .priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
     };
@@ -103,7 +102,7 @@ GraphApi loadGraphApi(ze_driver_handle_t driver) {
     return testGraphFunctions;
 }
 
-bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode) {
+bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, bool dumpGraph) {
     bool validRet = true;
     ze_graph_handle_t virtualGraph = nullptr;
     ze_executable_graph_handle_t physicalGraph = nullptr;
@@ -132,7 +131,7 @@ bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_d
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
 
     ze_command_list_handle_t cmdList;
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, cmdList);
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdList);
 
     SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
 
@@ -159,7 +158,7 @@ bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_d
         }
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__);
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, heapBuffer));
@@ -171,7 +170,7 @@ bool testAppendMemoryCopy(GraphApi &graphApi, ze_context_handle_t &context, ze_d
     return validRet;
 }
 
-bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode) {
+bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, bool dumpGraph) {
     bool validRet = true;
     ze_graph_handle_t virtualGraph = nullptr;
     ze_executable_graph_handle_t physicalGraph = nullptr;
@@ -219,8 +218,8 @@ bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_
     eventDesc.index = 1;
     SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &eventJoin));
 
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, cmdListMain);
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, cmdListSub);
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdListMain);
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdListSub);
 
     SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdListMain, virtualGraph, nullptr));
 
@@ -249,7 +248,7 @@ bool testMultiGraph(GraphApi &graphApi, ze_context_handle_t &context, ze_device_
         }
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__);
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, heapBuffer));
@@ -295,7 +294,8 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
                             ze_context_handle_t &context,
                             ze_device_handle_t &device,
                             bool areDispatchTraitsIndirect,
-                            bool aubMode) {
+                            bool aubMode,
+                            bool dumpGraph) {
     bool validRet = true;
     ze_module_handle_t module;
     LevelZeroBlackBoxTests::createModuleFromSpirV(context, device, LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, module);
@@ -312,7 +312,7 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
                                                      1, &eventCopied, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     ze_command_list_handle_t cmdList;
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, cmdList);
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdList);
 
     // Buffers
     constexpr size_t allocSize = 4096;
@@ -395,7 +395,7 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
 
     // Validate
     if (aubMode == false) {
-        validRet = LevelZeroBlackBoxTests::validateToValue(srcInitValue, outputData.get(), allocSize);
+        validRet = LevelZeroBlackBoxTests::validateToValue(srcInitValue, outputData.get(), numThreads);
         if (!validRet) {
             std::cerr << "Data mismatches found!\n";
             std::cerr << "srcInitValue == " << std::dec << srcInitValue << "\n";
@@ -403,7 +403,7 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
         }
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__);
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
@@ -425,7 +425,8 @@ bool testAppendLaunchKernel(GraphApi &graphApi,
 bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
                                              ze_context_handle_t &context,
                                              ze_device_handle_t &device,
-                                             bool aubMode) {
+                                             bool aubMode,
+                                             bool dumpGraph) {
     bool validRet = true;
     ze_module_handle_t module;
     LevelZeroBlackBoxTests::createModuleFromSpirV(context, device, LevelZeroBlackBoxTests::memcpyBytesAndAddConstTestKernelSrc, module);
@@ -444,7 +445,7 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
                                                      1, &eventCopied, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     ze_command_list_handle_t cmdList;
-    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, cmdList);
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdList);
 
     // Buffers
     constexpr size_t allocSize = 4096;
@@ -566,7 +567,7 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
         validRet &= validRet2; // Combine results
     }
 
-    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__);
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dispatchTraits));
@@ -590,17 +591,83 @@ bool testAppendLaunchMultipleKernelsIndirect(GraphApi &graphApi,
     return validRet;
 }
 
+bool testMultipleGraphExecution(GraphApi &graphApi,
+                                ze_context_handle_t &context,
+                                ze_device_handle_t &device,
+                                bool aubMode,
+                                bool dumpGraph) {
+    bool validRet = true;
+
+    constexpr size_t allocSize = 4096;
+    constexpr size_t elemCount = allocSize / sizeof(uint32_t);
+
+    uint32_t initialValue = 1;
+    uint32_t loopCount = 3;
+    uint32_t addValue = 5;
+
+    uint32_t expectedValue = initialValue + loopCount * addValue;
+
+    ze_module_handle_t module;
+    LevelZeroBlackBoxTests::createModuleFromSpirV(context, device, LevelZeroBlackBoxTests::memcpyBytesAndAddConstTestKernelSrc, module);
+    ze_kernel_handle_t kernelAddConstant;
+    LevelZeroBlackBoxTests::createKernelWithName(module, "add_constant", kernelAddConstant);
+    ze_command_list_handle_t cmdList;
+    createImmediateCmdlistWithMode(context, device, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, 0, cmdList);
+    void *buffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &buffer));
+    for (size_t i = 0; i < elemCount; i++) {
+        reinterpret_cast<uint32_t *>(buffer)[i] = initialValue;
+    }
+
+    ze_graph_handle_t virtualGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.graphCreate(context, &virtualGraph, nullptr));
+    SUCCESS_OR_TERMINATE(graphApi.commandListBeginCaptureIntoGraph(cmdList, virtualGraph, nullptr));
+
+    uint32_t groupSizeX = 64;
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernelAddConstant, groupSizeX, groupSizeY, groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddConstant, 0, sizeof(buffer), &buffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernelAddConstant, 1, sizeof(addValue), &addValue));
+    ze_group_count_t groupCount = {static_cast<uint32_t>(elemCount / groupSizeX), 1, 1};
+    SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernelAddConstant, &groupCount, nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(graphApi.commandListEndGraphCapture(cmdList, nullptr, nullptr));
+    ze_executable_graph_handle_t physicalGraph = nullptr;
+    SUCCESS_OR_TERMINATE(graphApi.commandListInstantiateGraph(virtualGraph, &physicalGraph, nullptr));
+
+    // Dispatch and wait
+    for (uint32_t i = 0; i < loopCount; i++) {
+        SUCCESS_OR_TERMINATE(graphApi.commandListAppendGraph(cmdList, physicalGraph, nullptr, nullptr, 0, nullptr));
+    }
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+
+    if (aubMode == false) {
+        validRet = LevelZeroBlackBoxTests::validateToValue(expectedValue, buffer, elemCount);
+    }
+    dumpGraphToDotIfEnabled(graphApi, virtualGraph, __func__, dumpGraph);
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, buffer));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernelAddConstant));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+    return validRet;
+}
+
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestStandardMemoryCopy = 0u;
     constexpr uint32_t bitNumberTestStandardMemoryCopyMultigraph = 1u;
     constexpr uint32_t bitNumberTestAppendLaunchKernel = 2u;
     constexpr uint32_t bitNumberTestAppendLaunchKernelIndirect = 3u;
     constexpr uint32_t bitNumberTestAppendLaunchMultipleKernelsIndirect = 4u;
+    constexpr uint32_t bitNumberTestMultipleExecution = 5u;
 
     constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max();
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
+    bool dumpGraph = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-d", "--dump_graph");
 
     const std::string blackBoxName("Zello Graph");
 
@@ -625,35 +692,42 @@ int main(int argc, char *argv[]) {
     std::string currentTest;
     if (testMask.test(bitNumberTestStandardMemoryCopy)) {
         currentTest = "Standard Memory Copy";
-        casePass = testAppendMemoryCopy(graphApi, context, device0, aubMode);
+        casePass = testAppendMemoryCopy(graphApi, context, device0, aubMode, dumpGraph);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
 
     if (testMask.test(bitNumberTestStandardMemoryCopyMultigraph)) {
         currentTest = "Standard Memory Copy - multigraph";
-        casePass = testMultiGraph(graphApi, context, device0, aubMode);
+        casePass = testMultiGraph(graphApi, context, device0, aubMode, dumpGraph);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
 
     if (testMask.test(bitNumberTestAppendLaunchKernel)) {
         currentTest = "AppendLaunchKernel";
-        casePass = testAppendLaunchKernel(graphApi, context, device0, false, aubMode);
+        casePass = testAppendLaunchKernel(graphApi, context, device0, false, aubMode, dumpGraph);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
 
     if (testMask.test(bitNumberTestAppendLaunchKernelIndirect)) {
         currentTest = "AppendLaunchKernelIndirect";
-        casePass = testAppendLaunchKernel(graphApi, context, device0, true, aubMode);
+        casePass = testAppendLaunchKernel(graphApi, context, device0, true, aubMode, dumpGraph);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }
 
     if (testMask.test(bitNumberTestAppendLaunchMultipleKernelsIndirect)) {
         currentTest = "AppendLaunchMultipleKernelsIndirect";
-        casePass = testAppendLaunchMultipleKernelsIndirect(graphApi, context, device0, aubMode);
+        casePass = testAppendLaunchMultipleKernelsIndirect(graphApi, context, device0, aubMode, dumpGraph);
+        LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
+        boxPass &= casePass;
+    }
+
+    if (testMask.test(bitNumberTestMultipleExecution)) {
+        currentTest = "Multiple Graph Execution";
+        casePass = testMultipleGraphExecution(graphApi, context, device0, aubMode, dumpGraph);
         LevelZeroBlackBoxTests::printResult(aubMode, casePass, blackBoxName, currentTest);
         boxPass &= casePass;
     }

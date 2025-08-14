@@ -1957,4 +1957,9 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
     return additionalSize;
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline void CommandListCoreFamilyImmediate<gfxCoreFamily>::setPatchingPreamble(bool value) {
+    this->cmdQImmediate->setPatchingPreamble(value);
+}
+
 } // namespace L0

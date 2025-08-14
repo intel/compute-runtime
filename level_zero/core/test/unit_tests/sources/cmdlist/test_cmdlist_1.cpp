@@ -2543,6 +2543,7 @@ TEST_F(CommandListCreateTests, givenCreatingRegularCommandlistAndppendCommandLis
     EXPECT_FALSE(commandList->isImmediateType());
     auto result = commandList->appendCommandLists(0u, nullptr, nullptr, 0u, nullptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    commandList->setPatchingPreamble(true);
 }
 
 HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAndAppendingEventResetThenDeviceLostIsReturned) {

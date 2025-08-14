@@ -486,6 +486,8 @@ struct CommandList : _ze_command_list_handle_t {
         return flags;
     }
 
+    virtual void setPatchingPreamble(bool value) {}
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);

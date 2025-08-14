@@ -7,6 +7,12 @@
 
 #include "level_zero/core/test/unit_tests/experimental/test_graph.h"
 
+#include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_stream/linear_stream.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/test_macros/hw_test.h"
+
+#include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -708,9 +714,9 @@ TEST(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThenW
     }
 }
 
-using GraphTestInstantiationFixture = Test<DeviceFixture>;
+using GraphTestInstantiationTest = Test<DeviceFixture>;
 
-TEST_F(GraphTestInstantiationFixture, WhenInstantiatingGraphThenBakeCommandsIntoCommandlists) {
+TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCommandlists) {
     GraphsCleanupGuard graphCleanup;
 
     MockGraphContextReturningSpecificCmdList ctx;
@@ -833,6 +839,66 @@ TEST_F(GraphTestInstantiationFixture, WhenInstantiatingGraphThenBakeCommandsInto
     EXPECT_EQ(2U, graphHwCommands->appendLaunchKernelCalled); // +1 for zeCommandListAppendLaunchCooperativeKernel
     EXPECT_EQ(1U, graphHwCommands->appendLaunchKernelIndirectCalled);
     EXPECT_EQ(1U, graphHwCommands->appendLaunchMultipleKernelsIndirectCalled);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            GivenExecutableGraphWhenSubmittingItToCommandListThenPatchPreambleIsUsed) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    uint32_t bbStartDwordBuffer[alignUp(sizeof(MI_BATCH_BUFFER_START) / sizeof(uint32_t), 2)] = {0};
+
+    GraphsCleanupGuard graphCleanup;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    ze_command_list_handle_t immCmdList;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &immCmdList));
+    auto immCmdListHw = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(immCmdList);
+
+    Graph srcGraph(context, true);
+    immCmdListHw->setCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(*immCmdListHw, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListAppendBarrier(immCmdList, nullptr, 0U, nullptr));
+    srcGraph.stopCapturing();
+    immCmdListHw->setCaptureTarget(nullptr);
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(srcGraph);
+
+    auto cmdStream = immCmdListHw->getCmdContainer().getCommandStream();
+
+    void *immListCpuBase = cmdStream->getCpuBase();
+    auto usedSpaceBefore = cmdStream->getUsed();
+    auto res = execGraph.execute(immCmdListHw, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    auto usedSpaceAfter = cmdStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(immListCpuBase, usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_LT(1u, sdiCmds.size());
+
+    size_t bbStartIdx = 0;
+    for (auto &sdiCmd : sdiCmds) {
+        auto storeDataImm = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmd);
+
+        bbStartDwordBuffer[bbStartIdx] = storeDataImm->getDataDword0();
+        bbStartIdx++;
+        if (storeDataImm->getStoreQword()) {
+            bbStartDwordBuffer[bbStartIdx] = storeDataImm->getDataDword1();
+            bbStartIdx++;
+        }
+    }
+
+    MI_BATCH_BUFFER_START *chainBackBbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(bbStartDwordBuffer);
+    ASSERT_NE(nullptr, chainBackBbStartCmd);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(immCmdList));
 }
 
 TEST(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenTakeCareOnlyOfEvents) {
