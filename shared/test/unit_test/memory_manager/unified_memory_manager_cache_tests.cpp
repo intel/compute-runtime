@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
@@ -352,7 +353,23 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigAndProductHelper
         EXPECT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
     }
 
-    for (auto csrType = 0u;
+    for (int32_t csrType = 0;
+         csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum);
+         ++csrType) {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.SetCommandStreamReceiver.set(csrType);
+        debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(8);
+        raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
+        mockAilConfigurationHelper.limitAmountOfDeviceMemoryForRecyclingReturn = false;
+        device->initUsmReuseLimits();
+        auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+        EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
+        svmManager->initUsmAllocationsCaches(*device);
+        ASSERT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
+        EXPECT_EQ(csrType != 0, svmManager->usmDeviceAllocationsCache->requireUpdatingAllocsForIndirectAccess);
+    }
+
+    for (int32_t csrType = 0;
          csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum);
          ++csrType) {
         DebugManagerStateRestore restorer;
@@ -363,8 +380,7 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigAndProductHelper
         auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
         EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
         svmManager->initUsmAllocationsCaches(*device);
-        ASSERT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
-        EXPECT_EQ(csrType != 0u, svmManager->usmDeviceAllocationsCache->requireUpdatingAllocsForIndirectAccess);
+        EXPECT_EQ(NEO::DeviceFactory::isHwModeSelected(), nullptr != svmManager->usmDeviceAllocationsCache);
     }
 }
 
@@ -1375,7 +1391,22 @@ HWTEST_F(SvmHostAllocationCacheTest, givenOclApiSpecificConfigAndProductHelperAn
         EXPECT_NE(nullptr, svmManager->usmHostAllocationsCache);
     }
 
-    for (auto csrType = 0u;
+    for (int32_t csrType = 0;
+         csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum);
+         ++csrType) {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.SetCommandStreamReceiver.set(csrType);
+        debugManager.flags.ExperimentalEnableHostAllocationCache.set(2);
+        raii.mockProductHelper->isHostUsmAllocationReuseSupportedResult = true;
+        device->getMemoryManager()->initUsmReuseLimits();
+        auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+        EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
+        svmManager->initUsmAllocationsCaches(*device);
+        ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
+        EXPECT_EQ(csrType != 0, svmManager->usmHostAllocationsCache->requireUpdatingAllocsForIndirectAccess);
+    }
+
+    for (int32_t csrType = 0;
          csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum);
          ++csrType) {
         DebugManagerStateRestore restorer;
@@ -1385,8 +1416,7 @@ HWTEST_F(SvmHostAllocationCacheTest, givenOclApiSpecificConfigAndProductHelperAn
         auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
         EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
         svmManager->initUsmAllocationsCaches(*device);
-        ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
-        EXPECT_EQ(csrType != 0u, svmManager->usmHostAllocationsCache->requireUpdatingAllocsForIndirectAccess);
+        EXPECT_EQ(NEO::DeviceFactory::isHwModeSelected(), nullptr != svmManager->usmHostAllocationsCache);
     }
 }
 

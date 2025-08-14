@@ -22,10 +22,10 @@
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
-
 namespace NEO {
 
 uint32_t SVMAllocsManager::UnifiedMemoryProperties::getRootDeviceIndex() const {
@@ -953,9 +953,11 @@ void SVMAllocsManager::initUsmHostAllocationsCache() {
 
 void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
     const bool debuggerEnabled = nullptr != device.getDebugger();
+    const bool isHwModeSelected = NEO::DeviceFactory::isHwModeSelected();
     bool usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() &&
                                             device.getProductHelper().isDeviceUsmAllocationReuseSupported() &&
-                                            !debuggerEnabled;
+                                            !debuggerEnabled &&
+                                            isHwModeSelected;
     if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
         usmDeviceAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableDeviceAllocationCache.get();
     }
@@ -969,7 +971,8 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
 
     bool usmHostAllocationsCacheEnabled = NEO::ApiSpecificConfig::isHostAllocationCacheEnabled() &&
                                           device.getProductHelper().isHostUsmAllocationReuseSupported() &&
-                                          !debuggerEnabled;
+                                          !debuggerEnabled &&
+                                          isHwModeSelected;
     if (debugManager.flags.ExperimentalEnableHostAllocationCache.get() != -1) {
         usmHostAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableHostAllocationCache.get();
     }
