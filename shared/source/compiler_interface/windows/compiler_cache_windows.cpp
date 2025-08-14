@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/path.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/utilities/directory.h"
@@ -220,7 +221,7 @@ bool CompilerCache::renameTempFileBinaryToProperName(const std::string &oldName,
     return NEO::SysCalls::moveFileExA(oldName.c_str(), kernelFileHash.c_str(), MOVEFILE_REPLACE_EXISTING);
 }
 
-class HandleGuard {
+class HandleGuard : NonCopyableAndNonMovableClass {
   public:
     HandleGuard() = delete;
     explicit HandleGuard(void *&h) : handle(h) {}
@@ -233,6 +234,8 @@ class HandleGuard {
   private:
     void *handle = nullptr;
 };
+
+static_assert(NonCopyableAndNonMovable<HandleGuard>);
 
 void writeDirSizeToConfigFile(void *hConfigFile, size_t directorySize) {
     DWORD sizeWritten = 0;

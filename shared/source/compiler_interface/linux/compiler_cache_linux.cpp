@@ -9,6 +9,7 @@
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/path.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -202,7 +203,7 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
     }
 }
 
-class HandleGuard {
+class HandleGuard : NonCopyableAndNonMovableClass {
   public:
     HandleGuard() = delete;
     explicit HandleGuard(int &fileDescriptor) : fd(fileDescriptor) {}
@@ -215,6 +216,8 @@ class HandleGuard {
   private:
     int fd = -1;
 };
+
+static_assert(NonCopyableAndNonMovable<HandleGuard>);
 
 bool CompilerCache::cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize) {
     if (pBinary == nullptr || binarySize == 0 || binarySize > config.cacheSize) {

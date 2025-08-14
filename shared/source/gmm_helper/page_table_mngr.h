@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "External/Common/GmmPageTableMgr.h"
 
@@ -14,7 +15,7 @@ namespace NEO {
 class Gmm;
 class GmmClientContext;
 class LinearStream;
-class GmmPageTableMngr {
+class GmmPageTableMngr : NonCopyableAndNonMovableClass {
   public:
     MOCKABLE_VIRTUAL ~GmmPageTableMngr();
 
@@ -40,4 +41,7 @@ class GmmPageTableMngr {
     GMM_CLIENT_CONTEXT *clientContext = nullptr;
     GMM_PAGETABLE_MGR *pageTableManager = nullptr;
 };
+
+static_assert(NonCopyableAndNonMovable<GmmPageTableMngr>);
+
 } // namespace NEO

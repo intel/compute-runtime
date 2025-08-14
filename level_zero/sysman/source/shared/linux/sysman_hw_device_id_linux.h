@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 
 #include <mutex>
 
 namespace L0 {
 namespace Sysman {
-class SysmanHwDeviceIdDrm : public NEO::HwDeviceIdDrm {
+class SysmanHwDeviceIdDrm : public NEO::HwDeviceIdDrm, NEO::NonCopyableAndNonMovableClass {
   public:
     using NEO::HwDeviceIdDrm::HwDeviceIdDrm;
     class SingleInstance {
@@ -38,6 +39,8 @@ class SysmanHwDeviceIdDrm : public NEO::HwDeviceIdDrm {
     std::mutex fdMutex{};
     uint32_t fdRefCounter = 0;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<SysmanHwDeviceIdDrm>);
 
 } // namespace Sysman
 } // namespace L0
