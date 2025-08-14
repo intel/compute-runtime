@@ -418,6 +418,10 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenQueryDeviceCapsIsCalledThenNullopt
     EXPECT_EQ(ioctlHelper.queryDeviceCaps(), std::nullopt);
 }
 
+TEST_F(IoctlPrelimHelperTests, givenIoctlHelperWhenCallingoverrideMaxSlicesSupportedThenResultIsFalse) {
+    EXPECT_TRUE(ioctlHelper.overrideMaxSlicesSupported());
+}
+
 struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
     using IoctlHelperPrelim20::createGemExt;
     using IoctlHelperPrelim20::IoctlHelperPrelim20;

@@ -97,7 +97,7 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
 
     auto hdr = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
 
-    auto numSlices = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
+    auto numSlices = hwInfo.gtSystemInfo.MaxSlicesSupported;
     size_t stateSaveAreaSize = 0;
     if (hdr->versionHeader.version.major == 4) {
         stateSaveAreaSize = static_cast<size_t>(hdr->totalWmtpDataSize);

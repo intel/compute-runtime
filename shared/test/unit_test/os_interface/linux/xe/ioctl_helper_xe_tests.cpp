@@ -3016,3 +3016,10 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingFlagSetToTrueWhenMake
     auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
     EXPECT_TRUE(xeIoctlHelper->makeResidentBeforeLockNeeded());
 }
+
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCallingOverrideMaxSlicesSupportedThenResultIsFalse) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    EXPECT_FALSE(xeIoctlHelper->overrideMaxSlicesSupported());
+}

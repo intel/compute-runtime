@@ -2310,6 +2310,30 @@ TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndNoCommonSubSliceMaskWhenS
     EXPECT_GE(GfxCoreHelper::getHighestEnabledDualSubSlice(*hwInfo), 2u * ioctlHelper->topologyDataToSet.maxSubSlicesPerSlice);
 }
 
+TEST(DrmHwInfoTest, givenOverrideMaxSlicesSupportedIsFalseThenMaxSlicesSupportedIsNotSetToSliceCount) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+    auto ioctlHelper = static_cast<MockIoctlHelper *>(drm.ioctlHelper.get());
+    ioctlHelper->overrideMaxSlicesSupportedResult = false;
+
+    ioctlHelper->topologyDataToSet.sliceCount = 4;
+    ioctlHelper->topologyDataToSet.maxEusPerSubSlice = 8;
+    ioctlHelper->topologyDataToSet.maxSubSlicesPerSlice = 8;
+    ioctlHelper->topologyDataToSet.euCount = 64;
+    ioctlHelper->topologyDataToSet.subSliceCount = 8;
+
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+    hwInfo->gtSystemInfo = {};
+    auto setupHardwareInfo = [](HardwareInfo *hwInfo, bool, const ReleaseHelper *) {
+        hwInfo->gtSystemInfo.MaxSlicesSupported = 8;
+    };
+    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+    EXPECT_EQ(0, drm.setupHardwareInfo(&device, false));
+    EXPECT_EQ(8u, hwInfo->gtSystemInfo.MaxSlicesSupported);
+}
+
 TEST(DrmHwInfoTest, givenTopologyDataWithSingleSliceAndMoreSubslicesThanMaxSubslicePerSliceWhenSettingHwInfoThenNoSubSliceInfoIsSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};

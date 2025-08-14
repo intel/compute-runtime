@@ -450,7 +450,7 @@ TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAr
 
 TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenCorrectDbgSurfaceSizeIsReturned) {
     auto hwInfo = pDevice->getHardwareInfo();
-    auto numSlices = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
+    auto numSlices = hwInfo.gtSystemInfo.MaxSlicesSupported;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
     EXPECT_EQ(0x1800u * numSlices * 2 * 16 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 

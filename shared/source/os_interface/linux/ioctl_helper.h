@@ -252,6 +252,7 @@ class IoctlHelper {
     virtual bool hasContextFreqHint() { return false; }
     virtual void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) { return; }
     virtual bool isSmallBarConfigAllowed() const = 0;
+    virtual bool overrideMaxSlicesSupported() const { return false; }
 
   protected:
     Drm &drm;
@@ -295,6 +296,7 @@ class IoctlHelperI915 : public IoctlHelper {
     void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) override;
     bool isSmallBarConfigAllowed() const override { return true; }
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
+    bool overrideMaxSlicesSupported() const override { return true; }
 
   protected:
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);

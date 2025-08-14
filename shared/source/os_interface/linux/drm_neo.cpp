@@ -625,7 +625,9 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
     hwInfo->gtSystemInfo.ThreadCount = numThreadsPerEu * hwInfo->gtSystemInfo.EUCount;
 
-    hwInfo->gtSystemInfo.MaxSlicesSupported = hwInfo->gtSystemInfo.SliceCount;
+    if (ioctlHelper->overrideMaxSlicesSupported()) {
+        hwInfo->gtSystemInfo.MaxSlicesSupported = hwInfo->gtSystemInfo.SliceCount;
+    }
 
     auto calculatedMaxSubSliceCount = topologyData.maxSlices * topologyData.maxSubSlicesPerSlice;
     auto maxSubSliceCount = std::max(static_cast<uint32_t>(calculatedMaxSubSliceCount), hwInfo->gtSystemInfo.MaxSubSlicesSupported);
