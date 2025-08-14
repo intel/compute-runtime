@@ -18,7 +18,7 @@ function(compile_kernels_gen device revision_id platform_name use_stateless_suff
 
     set(outputname_base "${basename}_${platform_name}")
     if(${use_heapless})
-      set(outputname_base "${outputname_base}-heapless")
+      set(outputname_base "${outputname_base}-heapless_")
     elseif(${use_stateless_suffix})
       set(outputname_base "${outputname_base}-cl-intel-greater-than-4GB-buffer-required_")
     endif()
@@ -32,13 +32,15 @@ function(compile_kernels_gen device revision_id platform_name use_stateless_suff
       )
 
       set(heapless_mode "disable")
+      set(internal_options "")
       if(${use_heapless})
         set(heapless_mode "enable")
+        set(internal_options "${HEAPLESS_INTERNAL_OPTIONS}")
       endif()
 
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -heapless_mode ${heapless_mode} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id}
+                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -heapless_mode ${heapless_mode} -internal_options ${internal_options} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc copy_compiler_files
       )
@@ -59,6 +61,8 @@ function(compile_kernels_gen device revision_id platform_name use_stateless_suff
   endforeach()
   set(compiled_kernels_${platform_name}_${revision_id} ${compiled_kernels_${platform_name}_${revision_id}} PARENT_SCOPE)
 endfunction()
+
+add_subdirectories()
 
 file(GLOB_RECURSE TEST_KERNELS *.cl)
 file(GLOB_RECURSE TEST_KERNELS_IMAGES *_images.cl)
@@ -83,6 +87,9 @@ macro(macro_for_each_platform)
 
   set(STATELESS_SUPPORT FALSE)
   CORE_CONTAINS_PLATFORM("SUPPORTED_STATELESS" ${CORE_TYPE} ${PLATFORM_IT} STATELESS_SUPPORT)
+
+  set(HEAPLESS_SUPPORT FALSE)
+  CORE_CONTAINS_PLATFORM("SUPPORTED_HEAPLESS" ${CORE_TYPE} ${PLATFORM_IT} HEAPLESS_SUPPORT)
 
   foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
     parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
@@ -113,3 +120,4 @@ endmacro()
 
 set(PREVIOUS_TARGET "")
 apply_macro_for_each_core_type("TESTED")
+

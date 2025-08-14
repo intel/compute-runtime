@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,11 +26,11 @@ void retrieveBinaryKernelFilename(std::string &outputFilename, const std::string
     outputFilename.reserve(2 * testFiles.length());
     outputFilename.append(testFiles);
     outputFilename.append(kernelName);
+    outputFilename.append(binaryNameSuffix);
     if (false == options.empty()) {
         outputFilename.append(options);
         outputFilename.append("_");
     }
-    outputFilename.append(binaryNameSuffix);
     outputFilename.append(extension);
 }
 

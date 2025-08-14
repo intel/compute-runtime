@@ -415,8 +415,12 @@ int main(int argc, char **argv) {
         } else {
             builtInsFileName = KernelBinaryHelper::BUILT_INS;
         }
-        retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv");
-        retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
+        std::string options = "";
+        if (defaultHwInfo->featureTable.flags.ftrHeaplessMode) {
+            options = "-heapless";
+        }
+        retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv", options);
+        retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin", options);
 
         gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
         gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
