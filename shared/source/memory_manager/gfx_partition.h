@@ -133,6 +133,7 @@ class GfxPartition {
 
     OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForHeapSvm;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRangeForHeapExtended{};
+    std::vector<OSMemory::ReservedCpuAddressRange> reservedCpuAddressRangesBlocked;
     std::unique_ptr<OSMemory> osMemory;
 };
 } // namespace NEO
