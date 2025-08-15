@@ -340,7 +340,9 @@ bool DrmMemoryManager::setSharedSystemAtomicAccess(const void *ptr, const size_t
     auto ioctlHelper = drm.getIoctlHelper();
 
     uint32_t attribute = ioctlHelper->getAtomicAdvise(false);
-    uint64_t param = (static_cast<uint64_t>(ioctlHelper->getAtomicAccess(mode)) << 32) | 0;
+    uint32_t atomicParam = ioctlHelper->getAtomicAccess(mode);
+
+    uint64_t param = (static_cast<uint64_t>(atomicParam) << 32) | 0;
 
     // Apply the shared system USM IOCTL to all the VMs of the device
     std::vector<uint32_t> vmIds;

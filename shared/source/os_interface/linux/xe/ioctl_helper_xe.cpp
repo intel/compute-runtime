@@ -771,18 +771,19 @@ uint32_t IoctlHelperXe::getAtomicAccess(AtomicAccessMode mode) {
     uint32_t retVal = 0;
     switch (mode) {
     case AtomicAccessMode::device:
-        retVal = static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassDevice));
+        retVal = static_cast<uint32_t>(this->getDrmParamValue(DrmParam::atomicClassDevice));
         break;
     case AtomicAccessMode::system:
-        retVal = static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassGlobal));
+        retVal = static_cast<uint32_t>(this->getDrmParamValue(DrmParam::atomicClassGlobal));
         break;
     case AtomicAccessMode::host:
-        retVal = static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassSystem));
+        retVal = static_cast<uint32_t>(this->getDrmParamValue(DrmParam::atomicClassSystem));
         break;
     case AtomicAccessMode::none:
-        retVal = static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined));
+        retVal = static_cast<uint32_t>(this->getDrmParamValue(DrmParam::atomicClassUndefined));
         break;
     default:
+        xeLog(" Invalid advise mode %s\n", __FUNCTION__);
         break;
     }
 
