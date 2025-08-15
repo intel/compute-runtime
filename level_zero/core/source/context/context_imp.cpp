@@ -1102,7 +1102,12 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    if (isSharedSystemAlloc) {
+    if (sharedSystemAllocEnabled) {
+        // For BO this feature will be available in the future. Currently only supporting SVM madvise.
+        if (allocData != nullptr) {
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "BO madvise not supported");
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
         auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
         unifiedMemoryManager->sharedSystemAtomicAccess(*deviceImp->getNEODevice(), mode, ptr, size);
 
@@ -1127,9 +1132,14 @@ ze_result_t ContextImp::getAtomicAccessAttribute(ze_device_handle_t hDevice, con
     }
 
     DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
-    const bool isSharedSystemAlloc = ((allocData == nullptr) && sharedSystemAllocEnabled);
 
-    if (isSharedSystemAlloc) {
+    if (sharedSystemAllocEnabled) {
+        // For BO this feature will be available in the future. Currently only supporting SVM madvise.
+        if (allocData != nullptr) {
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "BO madvise not supported");
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
         auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
         auto mode = unifiedMemoryManager->getSharedSystemAtomicAccess(*deviceImp->getNEODevice(), ptr, size);
         switch (mode) {
@@ -1149,7 +1159,6 @@ ze_result_t ContextImp::getAtomicAccessAttribute(ze_device_handle_t hDevice, con
         default:
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-
     } else {
         if (deviceImp->atomicAccessAllocations.find(allocData) != deviceImp->atomicAccessAllocations.end()) {
             *pAttr = deviceImp->atomicAccessAllocations[allocData];
