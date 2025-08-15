@@ -1,2 +1,3 @@
 git_revision: b60301774a8fe6c30b14a95104ec099290a2e904
 git_url: https://gitlab.freedesktop.org/drm/kernel.git
+patch: https://lore.kernel.org/intel-xe/20250818215753.2762426-1-himal.prasad.ghimiray@intel.com/T/#m758572b8b93a525db7523255cd49e8c3c06bb6a8
