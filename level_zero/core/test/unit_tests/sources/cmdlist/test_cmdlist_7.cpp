@@ -9,7 +9,6 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -2075,14 +2074,10 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithIn
         allocateMsix.stype = ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES;
         allocateMsix.uniqueMsix = true;
 
-        auto mockProductHelper = new MockProductHelper;
-        mockProductHelper->isInterruptSupportedResult = true;
-        device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-
         ze_command_queue_desc_t desc = {};
         desc.pNext = &allocateMsix;
 
-        ze_command_list_handle_t commandListHandle1, commandListHandle2, commandListHandle3, commandListHandle4;
+        ze_command_list_handle_t commandListHandle1, commandListHandle2, commandListHandle3;
 
         auto result = device->createCommandListImmediate(&desc, &commandListHandle1);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -2093,11 +2088,6 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithIn
         allocateMsix.uniqueMsix = false;
         result = device->createCommandListImmediate(&desc, &commandListHandle3);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-        allocateMsix.uniqueMsix = true;
-        mockProductHelper->isInterruptSupportedResult = false;
-        result = device->createCommandListImmediate(&desc, &commandListHandle4);
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 
         auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
         auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));

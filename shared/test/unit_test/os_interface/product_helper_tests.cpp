@@ -1268,7 +1268,3 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSuppo
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIsInterruptSupportedThenFalseReturned) {
-    EXPECT_FALSE(productHelper->isInterruptSupported());
-}

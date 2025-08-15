@@ -1095,8 +1095,4 @@ bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() co
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isInterruptSupported() const {
-    return false;
-}
 } // namespace NEO
