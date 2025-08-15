@@ -76,6 +76,14 @@ const char *IoctlHelperXe::xeGetBindOperationName(int bindOperation) {
 }
 
 const char *IoctlHelperXe::xeGetAdviseOperationName(int adviseOperation) {
+    switch (adviseOperation) {
+    case DRM_XE_MEM_RANGE_ATTR_PREFERRED_LOC:
+        return "PREFERRED_LOC";
+    case DRM_XE_MEM_RANGE_ATTR_ATOMIC:
+        return "ATOMIC";
+    case DRM_XE_MEM_RANGE_ATTR_PAT:
+        return "PAT";
+    }
     return "Unknown operation";
 }
 
@@ -754,17 +762,36 @@ int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
 
 uint32_t IoctlHelperXe::getAtomicAdvise(bool /* isNonAtomic */) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    return 0;
+    return DRM_XE_MEM_RANGE_ATTR_ATOMIC;
 }
 
 uint32_t IoctlHelperXe::getAtomicAccess(AtomicAccessMode mode) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    return 0;
+
+    uint32_t retVal = 0;
+    switch (mode) {
+    case AtomicAccessMode::device:
+        retVal = static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassDevice));
+        break;
+    case AtomicAccessMode::system:
+        retVal = static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassGlobal));
+        break;
+    case AtomicAccessMode::host:
+        retVal = static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassSystem));
+        break;
+    case AtomicAccessMode::none:
+        retVal = static_cast<uint32_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined));
+        break;
+    default:
+        break;
+    }
+
+    return retVal;
 }
 
 uint32_t IoctlHelperXe::getPreferredLocationAdvise() {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    return 0;
+    return DRM_XE_MEM_RANGE_ATTR_PREFERRED_LOC;
 }
 
 std::optional<MemoryClassInstance> IoctlHelperXe::getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) {
@@ -791,8 +818,126 @@ bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t siz
     }
     vmIdsStr += "]";
     xeLog(" -> IoctlHelperXe::%s h=0x%x s=0x%lx vmids=%s\n", __FUNCTION__, handle, size, vmIdsStr.c_str());
-    // There is no vmAdvise attribute in Xe, so return success
+
+    drm_xe_madvise vmAdvise{};
+
+    vmAdvise.vm_id = 0;
+    vmAdvise.start = alignDown(handle, MemoryConstants::pageSize);
+    vmAdvise.range = alignSizeWholePage(reinterpret_cast<void *>(handle), size);
+    vmAdvise.type = attribute;
+
+    if (attribute == this->getPreferredLocationAdvise()) {
+        uint32_t devmen_fd = static_cast<uint32_t>(param >> 32);
+        uint32_t migrationPolicy = static_cast<uint32_t>(param & 0xFFFFFFFF);
+        vmAdvise.preferred_mem_loc.devmem_fd = devmen_fd;
+        vmAdvise.preferred_mem_loc.migration_policy = migrationPolicy;
+    } else if (attribute == this->getAtomicAdvise(false)) {
+        uint32_t val = static_cast<uint32_t>(param >> 32);
+        vmAdvise.atomic.val = val;
+    } else {
+        return false;
+    }
+
+    for (auto vmId : vmIds) {
+
+        // Call madvise on all VM Ids.
+        vmAdvise.vm_id = vmId;
+        auto ret = IoctlHelper::ioctl(DrmIoctl::gemVmAdvise, &vmAdvise);
+
+        xeLog(" vm=%d start=0x%lx size=0x%lx param=0x%lx operation=%d(%s) ret=%d\n",
+              vmAdvise.vm_id,
+              vmAdvise.start,
+              vmAdvise.range,
+              param,
+              vmAdvise.type,
+              xeGetAdviseOperationName(vmAdvise.type),
+              ret);
+
+        if (ret != 0) {
+            xeLog("error: %s ret=%d\n", xeGetAdviseOperationName(vmAdvise.type), ret);
+            return false;
+        }
+    }
+
     return true;
+}
+
+AtomicAccessMode IoctlHelperXe::getVmSharedSystemAtomicAttribute(uint64_t handle, const size_t size, const std::vector<uint32_t> &vmIds) {
+    std::string vmIdsStr = "[";
+    for (size_t i = 0; i < vmIds.size(); ++i) {
+        {
+            std::stringstream ss;
+            ss << std::hex << vmIds[i];
+            vmIdsStr += "0x" + ss.str();
+        }
+        if (i != vmIds.size() - 1) {
+            vmIdsStr += ", ";
+        }
+    }
+    vmIdsStr += "]";
+    xeLog(" -> IoctlHelperXe::%s h=0x%x s=0x%lx vmids=%s\n", __FUNCTION__, handle, size, vmIdsStr.c_str());
+
+    drm_xe_vm_query_mem_range_attr query{};
+
+    query.vm_id = vmIds[0];
+    query.start = handle;
+    query.range = size;
+
+    // First ioctl call to get num of mem regions and sizeof each attribute
+    auto ret = IoctlHelper::ioctl(DrmIoctl::gemVmGetMemRangeAttr, &query);
+
+    xeLog(" vm=%d start=0x%lx size=0x%lx num_mem_ranges=%d sizeof_mem_range_attr=%d ret=%d\n",
+          query.vm_id, query.start, query.range, query.num_mem_ranges, query.sizeof_mem_range_attr, ret);
+
+    if (ret != 0) {
+        xeLog("error: %s ret=%d\n", "QUERY RANGE ATTR", ret);
+        return AtomicAccessMode::invalid;
+    }
+
+    if (sizeof(drm_xe_mem_range_attr) != query.sizeof_mem_range_attr) {
+        xeLog("Error: sizeof(drm_xe_mem_range_attr) != query.sizeof_mem_range_attr\n");
+        return AtomicAccessMode::invalid;
+    }
+
+    if (query.num_mem_ranges > 1) {
+        xeLog("Error: More than one memory ranges found for vmId %d\n", query.vm_id);
+        return AtomicAccessMode::invalid;
+    }
+
+    // Allocate buffer for the memory region attributes
+    void *ptr = malloc(query.num_mem_ranges * query.sizeof_mem_range_attr);
+    if (ptr == nullptr) {
+        xeLog("Error: malloc failed for memory region attributes\n");
+        return AtomicAccessMode::invalid;
+    }
+
+    query.vector_of_mem_attr = (uintptr_t)ptr;
+
+    // Second ioctl call to actually fill the memory attributes
+    ret = IoctlHelper::ioctl(DrmIoctl::gemVmGetMemRangeAttr, &query);
+
+    xeLog(" vm=%d start=0x%lx size=0x%lx num_mem_ranges=%d sizeof_mem_range_attr=%d ret=%d\n",
+          query.vm_id, query.start, query.range, query.num_mem_ranges, query.sizeof_mem_range_attr, ret);
+
+    struct drm_xe_mem_range_attr *attr = (struct drm_xe_mem_range_attr *)ptr;
+    uint32_t val = attr->atomic.val;
+    xeLog("Found atomic attribute: val=0x%x\n", val);
+
+    free(ptr);
+
+    int atomicValue = static_cast<int>(val);
+    if (atomicValue == this->getDrmParamValue(DrmParam::atomicClassDevice)) {
+        return AtomicAccessMode::device;
+    } else if (atomicValue == this->getDrmParamValue(DrmParam::atomicClassGlobal)) {
+        return AtomicAccessMode::system;
+    } else if (atomicValue == this->getDrmParamValue(DrmParam::atomicClassSystem)) {
+        return AtomicAccessMode::host;
+    } else if (atomicValue == this->getDrmParamValue(DrmParam::atomicClassUndefined)) {
+        return AtomicAccessMode::none;
+    } else {
+        xeLog("Unknown atomic access mode: 0x%x\n", val);
+    }
+    return AtomicAccessMode::invalid;
 }
 
 bool IoctlHelperXe::setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) {
@@ -1070,17 +1215,25 @@ int IoctlHelperXe::getDrmParamValue(DrmParam drmParam) const {
     xeLog(" -> IoctlHelperXe::%s 0x%x %s\n", __FUNCTION__, drmParam, getDrmParamString(drmParam).c_str());
     switch (drmParam) {
     case DrmParam::atomicClassUndefined:
-        return -1;
+        return DRM_XE_ATOMIC_UNDEFINED;
     case DrmParam::atomicClassDevice:
-        return -1;
+        return DRM_XE_ATOMIC_DEVICE;
     case DrmParam::atomicClassGlobal:
-        return -1;
+        return DRM_XE_ATOMIC_GLOBAL;
     case DrmParam::atomicClassSystem:
-        return -1;
+        return DRM_XE_ATOMIC_CPU;
     case DrmParam::memoryClassDevice:
         return DRM_XE_MEM_REGION_CLASS_VRAM;
     case DrmParam::memoryClassSystem:
         return DRM_XE_MEM_REGION_CLASS_SYSMEM;
+    case DrmParam::memoryAdviseLocationDevice:
+        return DRM_XE_PREFERRED_LOC_DEFAULT_DEVICE;
+    case DrmParam::memoryAdviseLocationSystem:
+        return DRM_XE_PREFERRED_LOC_DEFAULT_SYSTEM;
+    case DrmParam::memoryAdviseMigrationPolicyAllPages:
+        return DRM_XE_MIGRATE_ALL_PAGES;
+    case DrmParam::memoryAdviseMigrationPolicySystemPages:
+        return DRM_XE_MIGRATE_ONLY_SYSTEM_PAGES;
     case DrmParam::engineClassRender:
         return DRM_XE_ENGINE_CLASS_RENDER;
     case DrmParam::engineClassCopy:
@@ -1748,6 +1901,10 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
         RETURN_ME(DRM_IOCTL_XE_EXEC);
     case DrmIoctl::gemVmBind:
         RETURN_ME(DRM_IOCTL_XE_VM_BIND);
+    case DrmIoctl::gemVmAdvise:
+        RETURN_ME(DRM_IOCTL_XE_MADVISE);
+    case DrmIoctl::gemVmGetMemRangeAttr:
+        RETURN_ME(DRM_IOCTL_XE_VM_QUERY_MEM_RANGE_ATTRS);
     case DrmIoctl::query:
         RETURN_ME(DRM_IOCTL_XE_DEVICE_QUERY);
     case DrmIoctl::gemContextCreateExt:
@@ -1803,6 +1960,8 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         STRINGIFY_ME(DRM_IOCTL_XE_GEM_MMAP_OFFSET);
     case DrmIoctl::gemCreate:
         STRINGIFY_ME(DRM_IOCTL_XE_GEM_CREATE);
+    case DrmIoctl::gemVmAdvise:
+        STRINGIFY_ME(DRM_IOCTL_XE_MADVISE);
     case DrmIoctl::gemExecbuffer2:
         STRINGIFY_ME(DRM_IOCTL_XE_EXEC);
     case DrmIoctl::gemVmBind:

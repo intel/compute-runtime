@@ -299,28 +299,26 @@ bool DrmMemoryManager::setSharedSystemMemAdvise(const void *ptr, const size_t si
     auto &drm = this->getDrm(rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    uint32_t attribute = 0;
+    uint32_t attribute = ioctlHelper->getPreferredLocationAdvise();
     uint64_t param = 0;
+
+    uint64_t preferredLocation = 0;
+    uint64_t policy = 0;
 
     switch (memAdviseOp) {
     case MemAdvise::setPreferredLocation:
-        attribute = ioctlHelper->getPreferredLocationAdvise();
-        param = (static_cast<uint64_t>(-1) << 32) //-1 as currently not supported and ignored. This will be useful in multi device settings.
-                | static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice));
-        break;
     case MemAdvise::clearPreferredLocation:
-        // Assumes that the default location is VRAM, i.e. 1 == DrmParam::memoryClassDevice
-        attribute = ioctlHelper->getPreferredLocationAdvise();
-        param = (static_cast<uint64_t>(-1) << 32) | static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice));
-        break;
-    case MemAdvise::setSystemMemoryPreferredLocation:
-        attribute = ioctlHelper->getPreferredLocationAdvise();
-        param = (static_cast<uint64_t>(-1) << 32) | static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem));
-        break;
-    case MemAdvise::clearSystemMemoryPreferredLocation:
-        attribute = ioctlHelper->getPreferredLocationAdvise();
-        param = (static_cast<uint64_t>(-1) << 32) | static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice));
-        break;
+    case MemAdvise::clearSystemMemoryPreferredLocation: {
+        // Assumes that the default location is VRAM, i.e. 1 == DrmParam::memoryAdviseLocationDevice
+        preferredLocation = static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationDevice));
+        policy = static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicyAllPages));
+        param = (preferredLocation << 32) | policy;
+    } break;
+    case MemAdvise::setSystemMemoryPreferredLocation: {
+        preferredLocation = static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryAdviseLocationSystem));
+        policy = static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryAdviseMigrationPolicySystemPages));
+        param = (preferredLocation << 32) | policy;
+    } break;
     default:
         return false;
     }
@@ -341,29 +339,8 @@ bool DrmMemoryManager::setSharedSystemAtomicAccess(const void *ptr, const size_t
     auto &drm = this->getDrm(rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    uint32_t attribute = 0;
-    uint64_t param = 0;
-
-    switch (mode) {
-    case AtomicAccessMode::device:
-        attribute = ioctlHelper->getAtomicAdvise(false);
-        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassDevice)) << 32);
-        break;
-    case AtomicAccessMode::system:
-        attribute = ioctlHelper->getAtomicAdvise(false);
-        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassGlobal)) << 32);
-        break;
-    case AtomicAccessMode::host:
-        attribute = ioctlHelper->getAtomicAdvise(false);
-        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassSystem)) << 32);
-        break;
-    case AtomicAccessMode::none:
-        attribute = ioctlHelper->getAtomicAdvise(false);
-        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined)) << 32);
-        break;
-    default:
-        return false;
-    }
+    uint32_t attribute = ioctlHelper->getAtomicAdvise(false);
+    uint64_t param = (static_cast<uint64_t>(ioctlHelper->getAtomicAccess(mode)) << 32) | 0;
 
     // Apply the shared system USM IOCTL to all the VMs of the device
     std::vector<uint32_t> vmIds;
@@ -373,6 +350,23 @@ bool DrmMemoryManager::setSharedSystemAtomicAccess(const void *ptr, const size_t
     }
 
     auto result = ioctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmIds);
+
+    return result;
+}
+
+AtomicAccessMode DrmMemoryManager::getSharedSystemAtomicAccess(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
+
+    auto &drm = this->getDrm(rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
+
+    // Apply the shared system USM IOCTL to all the VMs of the device
+    std::vector<uint32_t> vmIds;
+    vmIds.reserve(subDeviceIds.size());
+    for (auto subDeviceId : subDeviceIds) {
+        vmIds.push_back(drm.getVirtualMemoryAddressSpace(subDeviceId));
+    }
+
+    auto result = ioctlHelper->getVmSharedSystemAtomicAttribute(reinterpret_cast<uint64_t>(ptr), size, vmIds);
 
     return result;
 }
