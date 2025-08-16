@@ -36,6 +36,14 @@ unsigned int getCurrentProcessId() {
     return GetCurrentProcessId();
 }
 
+BOOL duplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) {
+    return DuplicateHandle(hSourceProcessHandle, hSourceHandle, hTargetProcessHandle, lpTargetHandle, dwDesiredAccess, bInheritHandle, dwOptions);
+}
+
+HANDLE openProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) {
+    return OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
+}
+
 unsigned long getNumThreads() {
     return 1;
 }

@@ -68,6 +68,7 @@ int readdirCalled = 0;
 int closedirCalled = 0;
 int pidfdopenCalled = 0;
 int pidfdgetfdCalled = 0;
+int prctlCalled = 0;
 int fsyncCalled = 0;
 int fsyncArgPassed = 0;
 int fsyncRetVal = 0;
@@ -116,6 +117,7 @@ int (*sysCallsClosedir)(DIR *dir) = nullptr;
 int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize) = nullptr;
 int (*sysCallsPidfdOpen)(pid_t pid, unsigned int flags) = nullptr;
 int (*sysCallsPidfdGetfd)(int pidfd, int fd, unsigned int flags) = nullptr;
+int (*sysCallsPrctl)(int option, unsigned long arg) = nullptr;
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
 long sysconfReturn = 1ull << 30;
@@ -555,6 +557,15 @@ int pidfdgetfd(int pid, int targetfd, unsigned int flags) {
     }
     return 0;
 }
+
+int prctl(int option, unsigned long arg) {
+    prctlCalled++;
+    if (sysCallsPrctl != nullptr) {
+        return sysCallsPrctl(option, arg);
+    }
+    return 0;
+}
+
 char **getEnviron() {
     return NEO::ULT::getCurrentEnviron();
 }

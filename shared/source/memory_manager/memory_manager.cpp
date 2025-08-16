@@ -643,6 +643,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.forceKMDAllocation = properties.forceKMDAllocation;
     allocationData.makeGPUVaDifferentThanCPUPtr = properties.makeGPUVaDifferentThanCPUPtr;
     allocationData.flags.shareable = properties.flags.shareable;
+    allocationData.flags.shareableWithoutNTHandle = properties.flags.shareableWithoutNTHandle;
     allocationData.flags.isUSMDeviceMemory = properties.flags.isUSMDeviceAllocation;
     allocationData.flags.requiresCpuAccess = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
     allocationData.flags.allocateMemory = properties.flags.allocateMemory;

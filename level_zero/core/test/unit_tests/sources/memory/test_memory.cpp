@@ -5879,7 +5879,7 @@ struct ContextMultiDeviceMock : public L0::ContextImp {
         alignedFree(const_cast<void *>(ptr));
         return ZE_RESULT_SUCCESS;
     }
-    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice) override {
+    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override {
         return true;
     }
 };

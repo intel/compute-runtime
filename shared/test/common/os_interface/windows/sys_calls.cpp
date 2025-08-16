@@ -120,6 +120,12 @@ LPVOID(*sysCallsHeapAlloc)
 BOOL(*sysCallsHeapFree)
 (HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) = nullptr;
 
+BOOL(*sysCallsDuplicateHandle)
+(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) = nullptr;
+
+HANDLE(*sysCallsOpenProcess)
+(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) = nullptr;
+
 void exit(int code) {
 }
 
@@ -342,6 +348,20 @@ BOOL heapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) {
         return sysCallsHeapFree(hHeap, dwFlags, lpMem);
     }
     return HeapFree(hHeap, dwFlags, lpMem);
+}
+
+BOOL duplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions) {
+    if (sysCallsDuplicateHandle != nullptr) {
+        return sysCallsDuplicateHandle(hSourceProcessHandle, hSourceHandle, hTargetProcessHandle, lpTargetHandle, dwDesiredAccess, bInheritHandle, dwOptions);
+    }
+    return FALSE;
+}
+
+HANDLE openProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId) {
+    if (sysCallsOpenProcess != nullptr) {
+        return sysCallsOpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
+    }
+    return nullptr;
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {

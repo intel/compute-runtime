@@ -174,8 +174,10 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
     ContextSettings contextSettings;
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
-    bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) override;
-    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, ze_ipc_memory_flags_t flags) override;
+    bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool shareableWithoutNTHandle) override;
+    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, unsigned int processId, ze_ipc_memory_flags_t flags) override;
+    void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset) override;
+    bool isOpaqueHandleSupported(IpcHandleType *handleType) override;
 
     void initDeviceHandles(uint32_t numDevices, ze_device_handle_t *deviceHandles) {
         this->numDevices = numDevices;
@@ -207,18 +209,24 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
     template <typename IpcDataT>
-    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool) {
+    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool, IpcHandleType handleType) {
         std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
 
         ipcData = {};
         if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
             ipcData.handle = handle;
             ipcData.type = type;
-        } else if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
+        }
+        if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
             ipcData.memoryType = type;
             ipcData.processId = NEO::SysCalls::getCurrentProcessId();
-            ipcData.type = IpcHandleType::fdHandle;
-            ipcData.handle.fd = static_cast<int>(handle);
+            ipcData.type = handleType;
+            if (handleType == IpcHandleType::ntHandle) {
+                ipcData.handle.reserved = handle;
+            } else if (handleType == IpcHandleType::fdHandle) {
+                // For fdHandle, we store the handle as an int
+                ipcData.handle.fd = static_cast<int>(handle);
+            }
         }
 
         if (usmPool) {
@@ -238,6 +246,9 @@ struct ContextImp : Context, NEO::NonCopyableAndNonMovableClass {
             handleTracking->handle = handle;
             if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
                 handleTracking->ipcData = ipcData;
+            } else {
+                handleTracking->opaqueData = ipcData;
+                handleTracking->opaqueIpcHandle = true;
             }
             this->driverHandle->getIPCHandleMap().insert(std::pair<uint64_t, IpcHandleTracking *>(handle, handleTracking));
         }

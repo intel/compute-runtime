@@ -111,6 +111,7 @@ class MemoryManager {
     struct OsHandleData {
         osHandle handle;
         uint32_t arrayIndex;
+        uint32_t parentProcessId = 0;
 
         OsHandleData(uint64_t handle, uint32_t arrayIndex = 0) : handle(static_cast<osHandle>(handle)), arrayIndex(arrayIndex){};
         OsHandleData(void *handle, uint32_t arrayIndex = 0) : handle(toOsHandle(handle)), arrayIndex(arrayIndex){};

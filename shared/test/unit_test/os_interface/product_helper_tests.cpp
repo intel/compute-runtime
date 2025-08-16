@@ -1268,3 +1268,11 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenPidFdOrSocketForIpcIsNotSuppo
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }
+
+HWTEST2_F(ProductHelperTest, givenDG1ProductHelperWhenCanShareMemoryWithoutNTHandleIsCalledThenFalseIsReturned, IsDG1) {
+    EXPECT_FALSE(productHelper->canShareMemoryWithoutNTHandle());
+}
+
+HWTEST2_F(ProductHelperTest, givenNonDG1ProductHelperWhenCanShareMemoryWithoutNTHandleIsCalledThenTrueIsReturned, IsNotDG1) {
+    EXPECT_TRUE(productHelper->canShareMemoryWithoutNTHandle());
+}

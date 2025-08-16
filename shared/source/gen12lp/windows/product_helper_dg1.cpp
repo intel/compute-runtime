@@ -22,5 +22,10 @@ void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo 
     coherencyFlag = false;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::canShareMemoryWithoutNTHandle() const {
+    return false;
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

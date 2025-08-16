@@ -29,5 +29,10 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     return 0;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::canShareMemoryWithoutNTHandle() const {
+    return false;
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

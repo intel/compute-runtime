@@ -28,7 +28,8 @@ struct AllocationProperties {
             uint32_t forceSystemMemory : 1;
             uint32_t preferCompressed : 1;
             uint32_t cantBeReadOnly : 1;
-            uint32_t reserved : 18;
+            uint32_t shareableWithoutNTHandle : 1;
+            uint32_t reserved : 16;
         } flags;
         uint32_t allFlags = 0;
     };
@@ -112,7 +113,8 @@ struct AllocationData {
             uint32_t isUSMDeviceMemory : 1;
             uint32_t zeroMemory : 1;
             uint32_t cantBeReadOnly : 1;
-            uint32_t reserved : 15;
+            uint32_t shareableWithoutNTHandle : 1;
+            uint32_t reserved : 14;
         } flags;
         uint32_t allFlags = 0;
     };
