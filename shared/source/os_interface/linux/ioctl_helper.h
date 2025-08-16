@@ -133,6 +133,7 @@ class IoctlHelper {
     virtual std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) = 0;
     virtual bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) = 0;
     virtual bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const std::vector<uint32_t> &vmIds) { return true; }
+    virtual AtomicAccessMode getVmSharedSystemAtomicAttribute(uint64_t handle, const size_t size, const std::vector<uint32_t> &vmIds) { return AtomicAccessMode::none; }
     virtual bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) = 0;
     virtual bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) = 0;
     virtual bool setGemTiling(void *setTiling) = 0;
