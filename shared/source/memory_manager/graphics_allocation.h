@@ -422,7 +422,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     MemoryPool memoryPool = MemoryPool::memoryNull;
     AllocationType allocationType = AllocationType::unknown;
 
-    StackVec<UsageInfo, 5> usageInfos;
+    StackVec<UsageInfo, 32> usageInfos;
     StackVec<Gmm *, EngineLimits::maxHandleCount> gmms;
     ResidencyData residency;
     std::atomic<uint32_t> registeredContextsNum{0};
