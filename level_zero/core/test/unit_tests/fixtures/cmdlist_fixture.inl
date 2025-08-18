@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/grf_config.h"
@@ -1571,7 +1572,7 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
 }
 
 template <typename FamilyType>
-void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
+void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate, bool patchPreamble) {
     auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     auto scratchController = csr->getScratchSpaceController();
 
@@ -1593,6 +1594,9 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
     const ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
+    auto cmdListGpuBase = cmdListStream->getGpuBase();
+    auto cmdListCpuBase = cmdListStream->getCpuBase();
+
     auto result = ZE_RESULT_SUCCESS;
     size_t usedBefore = cmdListStream->getUsed();
     result = scratchCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
@@ -1610,6 +1614,7 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
     auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerIterator);
     void *walkerPtrWithScratch = *walkerIterator;
+    auto walkerOffset = ptrDiff(walkerPtrWithScratch, cmdListCpuBase);
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x0;
 
@@ -1631,10 +1636,25 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
     if (!useImmediate) {
         result = commandList->close();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(1u, commandList->getActiveScratchPatchElements());
 
         auto commandListHandle = commandList->toHandle();
+
+        void *queueCpuBase = commandQueue->commandStream.getCpuBase();
+        auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+        commandQueue->setPatchingPreamble(patchPreamble);
         result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+        ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+        if (patchPreamble) {
+            cmdList.clear();
+            ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+                cmdList,
+                ptrOffset(queueCpuBase, usedSpaceBefore),
+                usedSpaceAfter - usedSpaceBefore));
+        }
     }
 
     auto scratchAddress = scratchController->getScratchPatchAddress();
@@ -1642,17 +1662,48 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
 
     uint64_t scratchInlineValue = 0;
 
-    void *scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
-    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
-    EXPECT_EQ(fullScratchAddress, scratchInlineValue);
+    if (patchPreamble) {
+        using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    scratchInlinePtr = ptrOffset(walkerPtrWithoutScratch, (inlineOffset + scratchInlineOffset));
-    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
-    EXPECT_EQ(0u, scratchInlineValue);
+        auto sdiCmds = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        ASSERT_LT(2u, sdiCmds.size()); // last two SDI encodes returning BB_START
+
+        uint64_t walkerScratchInlineGpuVa = cmdListGpuBase + walkerOffset + (inlineOffset + scratchInlineOffset);
+
+        uint32_t scratchLowerDword = static_cast<uint32_t>(fullScratchAddress & std::numeric_limits<uint32_t>::max());
+        uint32_t scratchUpperDword = static_cast<uint32_t>(fullScratchAddress >> 32);
+
+        size_t sdiMax = sdiCmds.size() - 2;
+        for (size_t i = 0; i < sdiMax; i++) {
+            auto sdiCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(*sdiCmds[i]);
+            EXPECT_EQ(walkerScratchInlineGpuVa, sdiCmd->getAddress());
+            if (i == 0) {
+                EXPECT_EQ(scratchLowerDword, sdiCmd->getDataDword0());
+            } else {
+                EXPECT_EQ(scratchUpperDword, sdiCmd->getDataDword0());
+            }
+            if (sdiCmd->getStoreQword() == false) {
+                walkerScratchInlineGpuVa += sizeof(uint32_t);
+            } else {
+                EXPECT_EQ(scratchUpperDword, sdiCmd->getDataDword1());
+            }
+        }
+    } else {
+        void *scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
+        std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+        EXPECT_EQ(fullScratchAddress, scratchInlineValue);
+
+        scratchInlinePtr = ptrOffset(walkerPtrWithoutScratch, (inlineOffset + scratchInlineOffset));
+        std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+        EXPECT_EQ(0u, scratchInlineValue);
+    }
 
     auto scratch0Allocation = scratchController->getScratchSpaceSlot0Allocation();
     bool scratchInResidency = ultCsr->isMadeResident(scratch0Allocation);
     EXPECT_TRUE(scratchInResidency);
+
+    commandList->reset();
+    EXPECT_EQ(0u, commandList->getActiveScratchPatchElements());
 }
 
 template <typename FamilyType>

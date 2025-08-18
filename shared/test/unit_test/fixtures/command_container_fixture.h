@@ -41,9 +41,11 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             .dynamicStateHeap = nullptr,
             .threadGroupDimensions = threadGroupDimensions,
             .outWalkerPtr = nullptr,
+            .outWalkerGpuVa = 0,
             .cpuWalkerBuffer = nullptr,
             .cpuPayloadBuffer = nullptr,
             .outImplicitArgsPtr = nullptr,
+            .outImplicitArgsGpuVa = 0,
             .additionalCommands = nullptr,
             .extendedArgs = nullptr,
             .postSyncArgs = {

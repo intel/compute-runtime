@@ -263,12 +263,12 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
     linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(ctx.globalInit || this->forceBbStartJump);
     for (uint32_t i = 0; i < numCommandLists; i++) {
         auto cmdList = CommandList::fromHandle(commandListHandles[i]);
-        getCommandListPatchPreambleNoopSpace(ctx, cmdList);
+        getCommandListPatchPreambleData(ctx, cmdList);
 
         linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, cmdList);
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(cmdList);
     }
-    linearStreamSizeEstimate += estimateTotalPatchPreambleNoopSpace(ctx);
+    linearStreamSizeEstimate += estimateTotalPatchPreambleData(ctx);
 
     if (ctx.isDispatchTaskCountPostSyncRequired) {
         linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData);
@@ -500,7 +500,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     if (fenceRequired) {
         linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, device->getNEODevice()->getRootDeviceEnvironment());
     }
-    linearStreamSizeEstimate += estimateTotalPatchPreambleNoopSpace(ctx);
+    linearStreamSizeEstimate += estimateTotalPatchPreambleData(ctx);
 
     NEO::EncodeDummyBlitWaArgs waArgs{false, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
     linearStreamSizeEstimate += NEO::EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
@@ -925,20 +925,27 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleFrontEndCm
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateTotalPatchPreambleNoopSpace(CommandListExecutionContext &ctx) {
+inline size_t CommandQueueHw<gfxCoreFamily>::estimateTotalPatchPreambleData(CommandListExecutionContext &ctx) {
     size_t encodeSize = 0;
     if (this->patchingPreamble) {
         encodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(ctx.totalNoopSpaceForPatchPreamble);
+
+        const size_t qwordEncodeSize = NEO::EncodeDataMemory<GfxFamily>::getCommandSizeForEncode(sizeof(uint64_t));
+        size_t patchScratchElemsEncodeSize = qwordEncodeSize * ctx.totalActiveScratchPatchElements;
+
+        encodeSize += patchScratchElemsEncodeSize;
         ctx.bufferSpaceForPatchPreamble += encodeSize;
     }
     return encodeSize;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::getCommandListPatchPreambleNoopSpace(CommandListExecutionContext &ctx, CommandList *commandList) {
+inline void CommandQueueHw<gfxCoreFamily>::getCommandListPatchPreambleData(CommandListExecutionContext &ctx, CommandList *commandList) {
     if (this->patchingPreamble) {
         const size_t totalNoopSize = commandList->getTotalNoopSpace();
         ctx.totalNoopSpaceForPatchPreamble += totalNoopSize;
+
+        ctx.totalActiveScratchPatchElements += commandList->getActiveScratchPatchElements();
     }
 }
 
@@ -1070,7 +1077,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
         const NEO::StreamProperties &requiredStreamState = cmdList->getRequiredStreamState();
         const NEO::StreamProperties &finalStreamState = cmdList->getFinalStreamState();
 
-        getCommandListPatchPreambleNoopSpace(ctx, cmdList);
+        getCommandListPatchPreambleData(ctx, cmdList);
         linearStreamSizeEstimate += estimateCommandListPatchPreambleFrontEndCmd(ctx, cmdList);
         linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, cmdList,
                                                                                    streamProperties, requiredStreamState, finalStreamState,
@@ -1098,7 +1105,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
             cmdListState.flags.cleanDirty();
         }
     }
-    linearStreamSizeEstimate += estimateTotalPatchPreambleNoopSpace(ctx);
+    linearStreamSizeEstimate += estimateTotalPatchPreambleData(ctx);
 
     if (ctx.gsbaStateDirty && !this->stateBaseAddressTracking) {
         linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();

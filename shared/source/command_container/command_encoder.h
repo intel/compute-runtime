@@ -118,9 +118,11 @@ struct EncodeDispatchKernelArgs {
     IndirectHeap *dynamicStateHeap = nullptr;
     const void *threadGroupDimensions = nullptr;
     void *outWalkerPtr = nullptr;
+    uint64_t outWalkerGpuVa = 0;
     void *cpuWalkerBuffer = nullptr;
     void *cpuPayloadBuffer = nullptr;
     void *outImplicitArgsPtr = nullptr;
+    uint64_t outImplicitArgsGpuVa = 0;
     std::list<void *> *additionalCommands = nullptr;
     EncodeKernelArgsExt *extendedArgs = nullptr;
     NEO::EncodePostSyncArgs postSyncArgs{};

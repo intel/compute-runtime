@@ -3964,6 +3964,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
         commandsToPatch.clear();
     }
     this->frontEndPatchListCount = 0;
+    this->activeScratchPatchElements = 0;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -4807,10 +4808,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendFullSynchronizedDispatchInit() 
 
     // End section
     NEO::EncodeMiPredicate<GfxFamily>::encode(*cmdStream, NEO::MiPredicateType::disable);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addPatchScratchAddressInImplicitArgs(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &args, const NEO::KernelDescriptor &kernelDescriptor, bool kernelNeedsImplicitArgs) {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

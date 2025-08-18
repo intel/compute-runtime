@@ -1297,7 +1297,12 @@ using CommandListScratchPatchGlobalStatelessHeapsStateInitTest = Test<CommandLis
 
 HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchInline<FamilyType>(false);
+    testScratchInline<FamilyType>(false, false);
+}
+
+HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithPatchPreambleWithScratchThenExpectCorrectEncoding, IsHeapfulSupportedAndAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false, true);
 }
 
 HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
@@ -1332,7 +1337,12 @@ HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
 
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
-    testScratchInline<FamilyType>(false);
+    testScratchInline<FamilyType>(false, false);
+}
+
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithPatchPreambleWithScratchThenExpectCorrectEncoding, IsAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false, true);
 }
 
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
@@ -1362,7 +1372,12 @@ HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
 
 HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsHeapfulSupportedAndAtLeastXeHpcCore) {
-    testScratchInline<FamilyType>(false);
+    testScratchInline<FamilyType>(false, false);
+}
+
+HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithPatchPreambleWithScratchThenExpectCorrectEncoding, IsHeapfulSupportedAndAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false, true);
 }
 
 HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
@@ -1392,7 +1407,12 @@ HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
 
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
-    testScratchInline<FamilyType>(false);
+    testScratchInline<FamilyType>(false, false);
+}
+
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithPatchPreambleWithScratchThenExpectCorrectEncoding, IsAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false, true);
 }
 
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,

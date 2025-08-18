@@ -399,7 +399,7 @@ struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixtu
     uint64_t getExpectedScratchPatchAddress(uint64_t controllerScratchAddress);
 
     template <typename FamilyType>
-    void testScratchInline(bool useImmediate);
+    void testScratchInline(bool useImmediate, bool patchPreamble);
 
     template <typename FamilyType>
     void testScratchGrowingPatching();

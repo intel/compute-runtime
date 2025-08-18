@@ -248,8 +248,13 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             }
 
             uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
-            void *scratchAddressPatch = ptrOffset(commandToPatch.pDestination, commandToPatch.offset);
-            std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
+            if (this->patchingPreamble) {
+                uint64_t gpuAddressToPatch = commandToPatch.gpuAddress + commandToPatch.offset;
+                NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, gpuAddressToPatch, &fullScratchAddress, commandToPatch.patchSize);
+            } else {
+                void *scratchAddressPatch = ptrOffset(commandToPatch.pDestination, commandToPatch.offset);
+                std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
+            }
             commandToPatch.scratchAddressAfterPatch = scratchAddress;
             break;
         }
@@ -258,8 +263,13 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 continue;
             }
             uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
-            void *scratchAddressPatch = ptrOffset(commandToPatch.pDestination, commandToPatch.offset);
-            std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
+            if (this->patchingPreamble) {
+                uint64_t gpuAddressToPatch = commandToPatch.gpuAddress + commandToPatch.offset;
+                NEO::EncodeDataMemory<GfxFamily>::programDataMemory(*patchPreambleBuffer, gpuAddressToPatch, &fullScratchAddress, commandToPatch.patchSize);
+            } else {
+                void *scratchAddressPatch = ptrOffset(commandToPatch.pDestination, commandToPatch.offset);
+                std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
+            }
             commandToPatch.scratchAddressAfterPatch = scratchAddress;
             break;
         }

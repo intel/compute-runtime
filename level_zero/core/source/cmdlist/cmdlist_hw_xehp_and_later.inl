@@ -385,9 +385,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .dynamicStateHeap = dsh,
         .threadGroupDimensions = reinterpret_cast<const void *>(&threadGroupDimensions),
         .outWalkerPtr = nullptr,
+        .outWalkerGpuVa = 0,
         .cpuWalkerBuffer = launchParams.cmdWalkerBuffer,
         .cpuPayloadBuffer = launchParams.hostPayloadBuffer,
         .outImplicitArgsPtr = nullptr,
+        .outImplicitArgsGpuVa = 0,
         .additionalCommands = &additionalCommands,
         .extendedArgs = &dispatchKernelArgsExt,
         .postSyncArgs = {
@@ -439,10 +441,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
         CommandToPatch scratchInlineData;
         scratchInlineData.pDestination = dispatchKernelArgs.outWalkerPtr;
+        scratchInlineData.gpuAddress = dispatchKernelArgs.outWalkerGpuVa;
         scratchInlineData.scratchAddressAfterPatch = 0;
         scratchInlineData.type = CommandToPatch::CommandType::ComputeWalkerInlineDataScratch;
         scratchInlineData.offset = NEO::isDefined(scratchPointerAddress.offset) ? NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) + scratchPointerAddress.offset : NEO::undefined<size_t>;
         scratchInlineData.patchSize = NEO::isDefined(scratchPointerAddress.pointerSize) ? scratchPointerAddress.pointerSize : NEO::undefined<size_t>;
+        if (NEO::isDefined(scratchPointerAddress.offset)) {
+            this->activeScratchPatchElements++;
+        }
 
         auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         if (ssh != nullptr) {

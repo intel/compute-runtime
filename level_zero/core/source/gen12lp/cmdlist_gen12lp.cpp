@@ -211,9 +211,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .dynamicStateHeap = dsh,
         .threadGroupDimensions = reinterpret_cast<const void *>(&threadGroupDimensions),
         .outWalkerPtr = nullptr,
+        .outWalkerGpuVa = 0,
         .cpuWalkerBuffer = nullptr,
         .cpuPayloadBuffer = nullptr,
         .outImplicitArgsPtr = nullptr,
+        .outImplicitArgsGpuVa = 0,
         .additionalCommands = &additionalCommands,
         .extendedArgs = nullptr,
         .postSyncArgs = {

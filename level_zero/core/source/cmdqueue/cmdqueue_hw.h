@@ -95,6 +95,7 @@ struct CommandQueueHw : public CommandQueueImp {
         NEO::PreemptionMode statePreemption{};
         uint32_t perThreadScratchSpaceSlot0Size = 0;
         uint32_t perThreadScratchSpaceSlot1Size = 0;
+        uint32_t totalActiveScratchPatchElements = 0;
         UnifiedMemoryControls unifiedMemoryControls{};
 
         bool anyCommandListWithCooperativeKernels = false;
@@ -157,8 +158,8 @@ struct CommandQueueHw : public CommandQueueImp {
     inline size_t estimateCommandListPrimaryStart(bool required);
     inline size_t estimateCommandListPatchPreamble(CommandListExecutionContext &ctx, uint32_t numCommandLists);
     inline size_t estimateCommandListPatchPreambleFrontEndCmd(CommandListExecutionContext &ctx, CommandList *commandList);
-    inline void getCommandListPatchPreambleNoopSpace(CommandListExecutionContext &ctx, CommandList *commandList);
-    inline size_t estimateTotalPatchPreambleNoopSpace(CommandListExecutionContext &ctx);
+    inline void getCommandListPatchPreambleData(CommandListExecutionContext &ctx, CommandList *commandList);
+    inline size_t estimateTotalPatchPreambleData(CommandListExecutionContext &ctx);
     inline void retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream);
     inline void dispatchPatchPreambleEnding(CommandListExecutionContext &ctx);
     inline void dispatchPatchPreambleInOrderNoop(CommandListExecutionContext &ctx, CommandList *commandList);
