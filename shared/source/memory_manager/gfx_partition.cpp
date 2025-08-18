@@ -81,10 +81,10 @@ static void reserveRangeWithMemoryMapsParse(OSMemory *osMemory, OSMemory::Reserv
     }
 }
 
-static void reserveHigh48BitRangeWithMemoryMapsParse(OSMemory *osMemory, OSMemory::ReservedCpuAddressRange &reservedCpuAddressRange) {
+static void reserveHigh48BitRangeWithMemoryMapsParse(OSMemory *osMemory, OSMemory::ReservedCpuAddressRange &reservedCpuAddressRange, size_t numRootDevices) {
     constexpr uint64_t high48BitAreaBase = maxNBitValue(47) + 1; // 0x800000000000
     constexpr uint64_t high48BitAreaTop = maxNBitValue(48);      // 0xFFFFFFFFFFFF
-    uint64_t reservationSize = MemoryConstants::teraByte;
+    uint64_t reservationSize = numRootDevices * MemoryConstants::teraByte;
     reserveRangeWithMemoryMapsParse(osMemory, reservedCpuAddressRange, high48BitAreaBase, high48BitAreaTop, reservationSize);
 }
 
@@ -269,7 +269,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = 0ull;
             heapInit(HeapIndex::heapSvm, 0ull, 0ull);
         } else {
-            if (!initAdditionalRange(cpuVirtualAddressSize, gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, systemMemorySize)) {
+            if (!initAdditionalRange(cpuVirtualAddressSize, gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, systemMemorySize, numRootDevices)) {
                 return false;
             }
         }
@@ -326,7 +326,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
     return true;
 }
 
-bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, uint64_t systemMemorySize) {
+bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, uint64_t systemMemorySize, size_t numRootDevices) {
     /*
      * 57-bit Full Range SVM gfx layout:
      *
@@ -354,7 +354,7 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
     if (cpuVirtualAddressSize == 57 && CpuInfo::getInstance().isCpuFlagPresent("la57")) {
         // Always reserve 48 bit window on 57 bit CPU
         if (reservedCpuAddressRangeForNonSvmHeaps.alignedPtr == nullptr) {
-            reserveHigh48BitRangeWithMemoryMapsParse(osMemory.get(), reservedCpuAddressRangeForNonSvmHeaps);
+            reserveHigh48BitRangeWithMemoryMapsParse(osMemory.get(), reservedCpuAddressRangeForNonSvmHeaps, numRootDevices);
 
             if (reservedCpuAddressRangeForNonSvmHeaps.alignedPtr == nullptr) {
                 reserveLow48BitRangeWithRetry(osMemory.get(), reservedCpuAddressRangeForNonSvmHeaps);

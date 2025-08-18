@@ -855,7 +855,7 @@ TEST_F(GfxPartitionOn57bTest, whenInitGfxPartitionThenDoubleHeapStandardAtTheCos
     EXPECT_EQ(gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard), 4 * gfxPartitions[0]->getHeapSize(HeapIndex::heapStandard2MB));
 }
 
-TEST_F(GfxPartitionOn57bTest, given48bitGpuAddressSpaceAnd57bitCpuAddressWidthWhenInitializingMultipleGfxPartitionsThenReserveSpaceForSvmHeapOnlyOnce) {
+TEST_F(GfxPartitionOn57bTest, given48bitGpuAddressSpaceAnd57bitCpuAddressWidthWhenInitializingMultipleGfxPartitionsThenReserveHigherSpaceForNonSvmHeapsOnlyOnce) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -868,16 +868,20 @@ TEST_F(GfxPartitionOn57bTest, given48bitGpuAddressSpaceAnd57bitCpuAddressWidthWh
 
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     std::vector<std::unique_ptr<MockGfxPartition>> gfxPartitions;
-    for (int i = 0; i < 10; ++i) {
+    constexpr auto numRootDevices = 10;
+    for (int i = 0; i < numRootDevices; ++i) {
         gfxPartitions.push_back(std::make_unique<MockGfxPartition>(reservedCpuAddressRange));
         gfxPartitions[i]->osMemory.reset(new MockOsMemory);
-        EXPECT_TRUE(gfxPartitions[i]->init(maxNBitValue(gpuAddressSpace), 0, i, 10, false, 0u, gfxTop));
+        EXPECT_TRUE(gfxPartitions[i]->init(maxNBitValue(gpuAddressSpace), 0, i, numRootDevices, false, 0u, gfxTop));
     }
 
-    EXPECT_EQ(1u, static_cast<MockOsMemory *>(gfxPartitions[0]->osMemory.get())->getReserveCount());
+    auto osMemory = static_cast<MockOsMemory *>(gfxPartitions[0]->osMemory.get());
+    EXPECT_EQ(1u, osMemory->getReserveCount());
+    constexpr auto expectedReserveSizeForNonSvm = numRootDevices * MemoryConstants::teraByte;
+    EXPECT_EQ(expectedReserveSizeForNonSvm, osMemory->reservationSizes[0]);
 }
 
-TEST_F(GfxPartitionOn57bTest, given57bitGpuAddressSpaceAnd57bitCpuAddressWidthWhenInitializingMultipleGfxPartitionsThenReserveSpaceForSvmHeapAndExtendedHeapsPerGfxPartition) {
+TEST_F(GfxPartitionOn57bTest, given57bitGpuAddressSpaceAnd57bitCpuAddressWidthWhenInitializingMultipleGfxPartitionsThenReserveSpaceForNonSvmHeapsOnceAndExtendedHeapsPerGfxPartition) {
     if (is32bit) {
         GTEST_SKIP();
     }
@@ -890,13 +894,26 @@ TEST_F(GfxPartitionOn57bTest, given57bitGpuAddressSpaceAnd57bitCpuAddressWidthWh
     uint64_t gfxTop = maxNBitValue(gpuAddressSpace) + 1;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     std::vector<std::unique_ptr<MockGfxPartition>> gfxPartitions;
-    for (int i = 0; i < 10; ++i) {
+    constexpr auto numRootDevices = 10;
+    constexpr auto systemMemorySize = 128 * MemoryConstants::gigaByte;
+    for (int i = 0; i < numRootDevices; ++i) {
         gfxPartitions.push_back(std::make_unique<MockGfxPartition>(reservedCpuAddressRange));
         gfxPartitions[i]->osMemory.reset(new MockOsMemory);
-        EXPECT_TRUE(gfxPartitions[i]->init(maxNBitValue(gpuAddressSpace), 0, i, 10, false, 0u, gfxTop));
+        EXPECT_TRUE(gfxPartitions[i]->init(maxNBitValue(gpuAddressSpace), 0, i, numRootDevices, false, systemMemorySize, gfxTop));
     }
+    constexpr auto expectedReserveSizeForNonSvm = numRootDevices * MemoryConstants::teraByte;
+    constexpr auto expectedReserveSizeForHeapExtended = 4 * systemMemorySize;
 
-    EXPECT_EQ(11u, static_cast<MockOsMemory *>(gfxPartitions[0]->osMemory.get())->getReserveCount());
+    auto osMemory0 = static_cast<MockOsMemory *>(gfxPartitions[0]->osMemory.get());
+    EXPECT_EQ(2u, osMemory0->reservationSizes.size());
+    EXPECT_EQ(expectedReserveSizeForNonSvm, osMemory0->reservationSizes[0]);
+    EXPECT_EQ(expectedReserveSizeForHeapExtended, osMemory0->reservationSizes[1]);
+
+    for (int i = 1; i < numRootDevices; i++) {
+        auto osMemory = static_cast<MockOsMemory *>(gfxPartitions[i]->osMemory.get());
+        EXPECT_EQ(1u, osMemory->reservationSizes.size());
+        EXPECT_EQ(expectedReserveSizeForHeapExtended, osMemory->reservationSizes[0]);
+    }
 }
 
 TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapExtendedIsSplitted) {
