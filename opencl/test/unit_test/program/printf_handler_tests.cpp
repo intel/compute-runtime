@@ -97,9 +97,9 @@ TEST_F(PrintfHandlerTests, givenKernelWithImplicitArgsWhenPreparingPrintfHandler
 
     MockProgram program{&context, false, toClDeviceVector(*device)};
 
-    uint64_t crossThread[10];
+    uint64_t crossThread[10] = {};
     MockKernel kernel{&program, *pKernelInfo, *device};
-    kernel.setCrossThreadData(&crossThread, sizeof(uint64_t) * 10);
+    kernel.setCrossThreadData(crossThread, sizeof(uint64_t) * 10);
     kernel.initialize();
 
     MockMultiDispatchInfo multiDispatchInfo(device.get(), &kernel);

@@ -2423,8 +2423,8 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenPostsyncDataWhenInitCalledThenFiel
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, cmd.TheStructure.Common.Operation);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndexToMocsTables);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DataportSubsliceCacheFlush);
-    EXPECT_EQ(0x0ull, cmd.TheStructure.Common.DestinationAddress);
-    EXPECT_EQ(0x0ull, cmd.TheStructure.Common.ImmediateData);
+    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.DestinationAddress); // patched
+    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.ImmediateData);      // patched
 }
 
 XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenPostsyncDataWhenSetterUsedThenGetterReturnsValidValue) {

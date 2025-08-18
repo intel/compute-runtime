@@ -62,7 +62,9 @@ class StreamCapture {
         pipefd[1] = -1;
 #else
         fflush(stream);
-        pipe(pipefd);
+        if (pipe(pipefd) == -1) {
+            return;
+        }
         fcntl(pipefd[0], F_SETPIPE_SZ, bufferSize);
         savedFd = dup(fileno(stream));
         dup2(pipefd[1], fileno(stream));

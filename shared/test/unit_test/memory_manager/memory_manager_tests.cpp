@@ -2964,11 +2964,16 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEng
     EXPECT_TRUE(result);
 
     EXPECT_EQ(1u, mockMngr->updateAuxTableCalled);
-    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    EXPECT_EQ(expectedDdiUpdateAuxTable.BaseGpuVA, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA);
+    EXPECT_EQ(expectedDdiUpdateAuxTable.BaseResInfo, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseResInfo);
+    EXPECT_EQ(expectedDdiUpdateAuxTable.DoNotWait, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.DoNotWait);
+    EXPECT_EQ(expectedDdiUpdateAuxTable.Map, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.Map);
 
     EXPECT_EQ(1u, mockMngr2->updateAuxTableCalled);
-
-    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &mockMngr2->updateAuxTableParamsPassed[0].ddiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    EXPECT_EQ(expectedDdiUpdateAuxTable.BaseGpuVA, mockMngr2->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA);
+    EXPECT_EQ(expectedDdiUpdateAuxTable.BaseResInfo, mockMngr2->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseResInfo);
+    EXPECT_EQ(expectedDdiUpdateAuxTable.DoNotWait, mockMngr2->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.DoNotWait);
+    EXPECT_EQ(expectedDdiUpdateAuxTable.Map, mockMngr2->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.Map);
 }
 HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorThenMapAuxGpuVaReturnFalse) {
     MockExecutionEnvironment executionEnvironment{};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,7 +102,7 @@ TEST(PopulateProgramInfoFromPatchtokensTests, WhenProgramRequiresMixedGlobalVarA
     EXPECT_TRUE(programInfo.kernelInfos.empty());
     ASSERT_NE(nullptr, programInfo.linkerInput);
 
-    const NEO::LinkerInput::RelocationInfo *relocationGlobalConst, *relocationGlobalVar;
+    const NEO::LinkerInput::RelocationInfo *relocationGlobalConst = nullptr, *relocationGlobalVar = nullptr;
     ASSERT_EQ(2U, programInfo.linkerInput->getDataRelocations().size());
     for (const auto &reloc : programInfo.linkerInput->getDataRelocations()) {
         switch (reloc.relocationSegment) {

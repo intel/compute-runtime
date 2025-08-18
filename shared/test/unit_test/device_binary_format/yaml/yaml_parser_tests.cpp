@@ -212,7 +212,7 @@ TEST(YamlConsumeNumberOrSign, GivenInvalidCharacterThenReturnCurrentParsePositio
 
     for (int c = std::numeric_limits<char>::min(); c <= std::numeric_limits<char>::max(); ++c) {
         bool isSignOrNumber = NEO::Yaml::isSign(static_cast<char>(c)) || NEO::Yaml::isNumber(static_cast<char>(c));
-        char numberStr[] = {static_cast<char>(c), '\0'};
+        char numberStr[2] = {static_cast<char>(c), '\0'};
         auto expected = numberStr + (isSignOrNumber ? 1 : 0);
         EXPECT_EQ(expected, NEO::Yaml::consumeNumberOrSign(ConstStringRef::fromArray(numberStr), numberStr)) << c;
     }

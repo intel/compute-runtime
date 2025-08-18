@@ -623,8 +623,7 @@ TEST_F(IoctlHelperXeTest, verifyPublicFunctions) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
-    auto mockXeIoctlHelper = static_cast<MockIoctlHelperXe *>(xeIoctlHelper.get());
+    auto mockXeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
     auto verifyXeClassName = [&mockXeIoctlHelper](const char *name, auto xeClass) {
         EXPECT_STREQ(name, mockXeIoctlHelper->xeGetClassName(xeClass));
@@ -684,17 +683,17 @@ TEST_F(IoctlHelperXeTest, verifyPublicFunctions) {
     query.numItems = 1;
 
     EXPECT_EQ(-1, mockXeIoctlHelper->ioctl(DrmIoctl::query, &query));
-    queryItem.queryId = xeIoctlHelper->getDrmParamValue(DrmParam::queryHwconfigTable);
+    queryItem.queryId = mockXeIoctlHelper->getDrmParamValue(DrmParam::queryHwconfigTable);
     mockXeIoctlHelper->ioctl(DrmIoctl::query, &query);
     EXPECT_EQ(0, queryItem.length);
 
     memset(&queryItem, 0, sizeof(queryItem));
-    queryItem.queryId = xeIoctlHelper->getDrmParamValue(DrmParam::queryEngineInfo);
+    queryItem.queryId = mockXeIoctlHelper->getDrmParamValue(DrmParam::queryEngineInfo);
     mockXeIoctlHelper->ioctl(DrmIoctl::query, &query);
     EXPECT_EQ(0, queryItem.length);
 
     memset(&queryItem, 0, sizeof(queryItem));
-    queryItem.queryId = xeIoctlHelper->getDrmParamValue(DrmParam::queryTopologyInfo);
+    queryItem.queryId = mockXeIoctlHelper->getDrmParamValue(DrmParam::queryTopologyInfo);
     mockXeIoctlHelper->ioctl(DrmIoctl::query, &query);
     EXPECT_EQ(0, queryItem.length);
 }

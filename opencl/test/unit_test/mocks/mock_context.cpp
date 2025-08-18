@@ -40,7 +40,6 @@ MockContext::MockContext(
     userData = data;
     memoryManager = nullptr;
     driverDiagnostics = nullptr;
-    rootDeviceIndices = {};
     maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     deviceBitfields = {};
 }

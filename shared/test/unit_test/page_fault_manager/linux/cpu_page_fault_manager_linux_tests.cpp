@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,6 +115,7 @@ TEST_F(PageFaultManagerLinuxTest, givenProtectedMemoryWithFaultHandlerRegistered
 
     EXPECT_FALSE(pageFaultManager->handlerInvoked);
     ptr[0] = 10;
+    std::atomic_thread_fence(std::memory_order_seq_cst);
     EXPECT_TRUE(pageFaultManager->handlerInvoked);
     EXPECT_EQ(ptr[0], 10);
 }

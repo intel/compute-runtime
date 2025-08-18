@@ -1095,7 +1095,7 @@ TEST_F(ProgramFromSourceTest, GivenEmptyProgramWhenCreatingProgramThenInvalidVal
 }
 
 TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
-    cl_program inputHeaders;
+    cl_program inputHeaders = nullptr;
     const char *headerIncludeNames = "";
     cl_program nullprogram = nullptr;
     cl_program invprogram = (cl_program)pContext;

@@ -2129,8 +2129,8 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenPostsyncDataWhenInitCalledThenFiel
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndexToMocsTables);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SystemMemoryFenceRequest);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DataportSubsliceCacheFlush);
-    EXPECT_EQ(0x0ull, cmd.TheStructure.Common.DestinationAddress);
-    EXPECT_EQ(0x0ull, cmd.TheStructure.Common.ImmediateData);
+    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.DestinationAddress); // patched
+    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.ImmediateData);      // patched
 }
 
 XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenPostsyncDataWhenSetterUsedThenGetterReturnsValidValue) {

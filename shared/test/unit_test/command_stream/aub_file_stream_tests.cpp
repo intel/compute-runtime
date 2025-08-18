@@ -41,69 +41,69 @@ using AubFileStreamWithoutAubStreamTests = Test<AubCommandStreamReceiverWithoutA
 using AubCsrTests = Test<AubCommandStreamReceiverFixture>;
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitFileIsCalledWithInvalidFileNameThenFileIsNotOpened) {
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     std::string invalidFileName = "";
 
-    EXPECT_THROW(aubCsr->initFile(invalidFileName), std::exception);
+    EXPECT_THROW(aubCsr.initFile(invalidFileName), std::exception);
 }
 
 HWTEST_F(AubCsrTests, givenAubCommandStreamReceiverWhenInitFileIsCalledThenFileIsOpenedAndFileNameIsStored) {
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     std::string fileName = "file_name.aub";
 
-    aubCsr->initFile(fileName);
-    EXPECT_TRUE(aubCsr->isFileOpen());
-    EXPECT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
+    aubCsr.initFile(fileName);
+    EXPECT_TRUE(aubCsr.isFileOpen());
+    EXPECT_STREQ(fileName.c_str(), aubCsr.getFileName().c_str());
 
-    aubCsr->closeFile();
-    EXPECT_FALSE(aubCsr->isFileOpen());
-    EXPECT_TRUE(aubCsr->getFileName().empty());
+    aubCsr.closeFile();
+    EXPECT_FALSE(aubCsr.isFileOpen());
+    EXPECT_TRUE(aubCsr.getFileName().empty());
 }
 
 HWTEST_F(AubCsrTests, givenAubCommandStreamReceiverWhenReopenFileIsCalledThenFileWithSpecifiedNameIsReopened) {
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     std::string fileName = "file_name.aub";
     std::string newFileName = "new_file_name.aub";
 
-    aubCsr->reopenFile(fileName);
-    EXPECT_TRUE(aubCsr->isFileOpen());
-    EXPECT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
+    aubCsr.reopenFile(fileName);
+    EXPECT_TRUE(aubCsr.isFileOpen());
+    EXPECT_STREQ(fileName.c_str(), aubCsr.getFileName().c_str());
 
-    aubCsr->reopenFile(newFileName);
-    EXPECT_TRUE(aubCsr->isFileOpen());
-    EXPECT_STREQ(newFileName.c_str(), aubCsr->getFileName().c_str());
+    aubCsr.reopenFile(newFileName);
+    EXPECT_TRUE(aubCsr.isFileOpen());
+    EXPECT_STREQ(newFileName.c_str(), aubCsr.getFileName().c_str());
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenFileShouldBeInitializedOnce) {
     auto mockAubManager = std::make_unique<MockAubManager>();
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     std::string fileName = "file_name.aub";
-    aubCsr->aubManager = mockAubManager.get();
+    aubCsr.aubManager = mockAubManager.get();
 
-    aubCsr->initFile(fileName);
-    aubCsr->initFile(fileName);
+    aubCsr.initFile(fileName);
+    aubCsr.initFile(fileName);
 
     EXPECT_EQ(1u, mockAubManager->openCalledCnt);
 }
 
 HWTEST_F(AubCsrTests, givenAubCommandStreamReceiverWithAubManagerWhenFileFunctionsAreCalledThenTheyShouldCallTheExpectedAubManagerFunctions) {
     auto mockAubManager = std::make_unique<MockAubManager>();
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     std::string fileName = "file_name.aub";
-    aubCsr->aubManager = mockAubManager.get();
+    aubCsr.aubManager = mockAubManager.get();
 
-    aubCsr->initFile(fileName);
+    aubCsr.initFile(fileName);
     EXPECT_EQ(1u, mockAubManager->openCalledCnt);
 
-    EXPECT_TRUE(aubCsr->isFileOpen());
+    EXPECT_TRUE(aubCsr.isFileOpen());
     EXPECT_TRUE(mockAubManager->isOpenCalled);
 
-    EXPECT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
+    EXPECT_STREQ(fileName.c_str(), aubCsr.getFileName().c_str());
     EXPECT_TRUE(mockAubManager->getFileNameCalled);
 
-    aubCsr->closeFile();
-    EXPECT_FALSE(aubCsr->isFileOpen());
-    EXPECT_TRUE(aubCsr->getFileName().empty());
+    aubCsr.closeFile();
+    EXPECT_FALSE(aubCsr.isFileOpen());
+    EXPECT_TRUE(aubCsr.getFileName().empty());
     EXPECT_TRUE(mockAubManager->closeCalled);
 }
 
@@ -418,18 +418,18 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInit
     executionEnvironment.initializeMemoryManager();
     DeviceBitfield deviceBitfield(1);
 
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, executionEnvironment, 0, deviceBitfield);
+    AUBCommandStreamReceiverHw<FamilyType> aubCsr("", true, executionEnvironment, 0, deviceBitfield);
 
-    aubCsr->aubManager = mockAubManager.get();
-    ASSERT_NE(nullptr, aubCsr->aubManager);
+    aubCsr.aubManager = mockAubManager.get();
+    ASSERT_NE(nullptr, aubCsr.aubManager);
 
     std::string fileName = "file_name.aub";
-    aubCsr->initFile(fileName);
+    aubCsr.initFile(fileName);
 
     std::string commentWithDriverVersion = "driver version: " + std::string(driverVersion);
     EXPECT_EQ(mockAubManager->receivedComments, commentWithDriverVersion);
 
-    aubCsr->aubManager = nullptr;
+    aubCsr.aubManager = nullptr;
 }
 
 HWTEST2_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledForMultipleDevicesThenFileNameIsExtendedWithSuffixToIndicateMultipleDevices, IsAtMostXeCore) {
