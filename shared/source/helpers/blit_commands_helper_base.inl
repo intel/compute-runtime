@@ -168,6 +168,13 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
         if (blitProperties.multiRootDeviceEventSync != nullptr) {
             size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
         }
+
+        bool deviceToHostPostSyncFenceRequired = rootDeviceEnvironment.getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
+                                                 !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() &&
+                                                 blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
+        if (deviceToHostPostSyncFenceRequired) {
+            size += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
+        }
     }
     waArgs.isWaRequired = true;
     size += BlitCommandsHelper<GfxFamily>::getWaCmdsSize(blitPropertiesContainer);

@@ -694,6 +694,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCal
     const size_t bltSize = (3 * max2DBlitSize);
     const uint32_t numberOfBlitOperations = 4;
 
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
     EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
 
     size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize();
@@ -712,15 +714,28 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCal
     auto baseSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     auto expectedAlignedSize = baseSize + (2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 
+    MockGraphicsAllocation bufferMockAllocation(0, 1u, AllocationType::buffer, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    MockGraphicsAllocation hostMockAllocation(0, 1u, AllocationType::externalHostPtr, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::system64KBPages, MemoryManager::maxOsContextCount);
+
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
         blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
         blitProperties.auxTranslationDirection = AuxTranslationDirection::none;
         blitProperties.copySize = {bltSize, 1, 1};
+        blitProperties.dstAllocation = &hostMockAllocation;
+        blitProperties.srcAllocation = &bufferMockAllocation;
+
         blitPropertiesContainer.push_back(blitProperties);
 
         expectedAlignedSize += expectedBlitInstructionsSize;
+
+        bool deviceToHostPostSyncFenceRequired = rootDeviceEnvironment.getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
+                                                 !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() &&
+                                                 blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
+        if (deviceToHostPostSyncFenceRequired) {
+            expectedAlignedSize += MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
+        }
     }
 
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
@@ -754,12 +769,17 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstima
     auto baseSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_START);
     auto expectedAlignedSize = baseSize + (2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 
+    MockGraphicsAllocation bufferMockAllocation(0, 1u, AllocationType::buffer, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    MockGraphicsAllocation hostMockAllocation(0, 1u, AllocationType::externalHostPtr, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::system64KBPages, MemoryManager::maxOsContextCount);
+
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
         blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
         blitProperties.auxTranslationDirection = AuxTranslationDirection::none;
         blitProperties.copySize = {bltSize, 1, 1};
+        blitProperties.dstAllocation = &hostMockAllocation;
+        blitProperties.srcAllocation = &bufferMockAllocation;
         blitPropertiesContainer.push_back(blitProperties);
 
         expectedAlignedSize += expectedBlitInstructionsSize;
@@ -795,15 +815,29 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWrit
     auto baseSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     auto expectedAlignedSize = baseSize + (2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 
+    MockGraphicsAllocation bufferMockAllocation(0, 1u, AllocationType::buffer, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    MockGraphicsAllocation hostMockAllocation(0, 1u, AllocationType::externalHostPtr, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::system64KBPages, MemoryManager::maxOsContextCount);
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
         blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
         blitProperties.auxTranslationDirection = AuxTranslationDirection::none;
         blitProperties.copySize = bltSize;
+        blitProperties.dstAllocation = &hostMockAllocation;
+        blitProperties.srcAllocation = &bufferMockAllocation;
         blitPropertiesContainer.push_back(blitProperties);
 
         expectedAlignedSize += expectedBlitInstructionsSize;
+
+        bool deviceToHostPostSyncFenceRequired = rootDeviceEnvironment.getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
+                                                 !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() &&
+                                                 blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
+        if (deviceToHostPostSyncFenceRequired) {
+            expectedAlignedSize += MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
+        }
     }
 
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
@@ -836,15 +870,29 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstima
     auto baseSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_START);
     auto expectedAlignedSize = baseSize + (2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment()));
 
+    MockGraphicsAllocation bufferMockAllocation(0, 1u, AllocationType::buffer, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    MockGraphicsAllocation hostMockAllocation(0, 1u, AllocationType::externalHostPtr, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::system64KBPages, MemoryManager::maxOsContextCount);
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
     BlitPropertiesContainer blitPropertiesContainer;
     for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
         BlitProperties blitProperties;
         blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
         blitProperties.auxTranslationDirection = AuxTranslationDirection::none;
         blitProperties.copySize = bltSize;
+        blitProperties.dstAllocation = &hostMockAllocation;
+        blitProperties.srcAllocation = &bufferMockAllocation;
         blitPropertiesContainer.push_back(blitProperties);
 
         expectedAlignedSize += expectedBlitInstructionsSize;
+
+        bool deviceToHostPostSyncFenceRequired = rootDeviceEnvironment.getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
+                                                 !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() &&
+                                                 blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
+        if (deviceToHostPostSyncFenceRequired) {
+            expectedAlignedSize += MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
+        }
     }
 
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);

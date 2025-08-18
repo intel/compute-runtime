@@ -1118,8 +1118,15 @@ HWTEST2_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlu
 HWTEST_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlushDwIsProgramed) {
     auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
     auto tag = mockTagAllocator->getTag();
+
+    MockGraphicsAllocation bufferMockAllocation(0, 1u, AllocationType::buffer, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    MockGraphicsAllocation hostMockAllocation(0, 1u, AllocationType::externalHostPtr, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::system64KBPages, MemoryManager::maxOsContextCount);
+
     BlitProperties blitProperties{};
     blitProperties.copySize = {1, 1, 1};
+    blitProperties.dstAllocation = &hostMockAllocation;
+    blitProperties.srcAllocation = &bufferMockAllocation;
+
     BlitPropertiesContainer blitPropertiesContainer1;
     blitPropertiesContainer1.push_back(blitProperties);
     blitPropertiesContainer1.push_back(blitProperties);

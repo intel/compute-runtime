@@ -96,8 +96,13 @@ HWTEST_F(BcsTests, givenDebugCapabilityWhenEstimatingCommandSizeThenAddAllRequir
                         EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSize = alignUp(expectedSize, MemoryConstants::cacheLineSize);
 
+    MockGraphicsAllocation bufferMockAllocation(0, 1u, AllocationType::buffer, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    MockGraphicsAllocation hostMockAllocation(0, 1u, AllocationType::externalHostPtr, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::system64KBPages, MemoryManager::maxOsContextCount);
+
     BlitProperties blitProperties{};
     blitProperties.copySize = {bltSize, 1, 1};
+    blitProperties.dstAllocation = &hostMockAllocation;
+    blitProperties.srcAllocation = &bufferMockAllocation;
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
@@ -119,8 +124,13 @@ HWTEST_F(BcsTests, givenRelaxedOrderingEnabledWhenEstimatingCommandSizeThenAddAl
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     MockTimestampPacketContainer timestamp(*csr.getTimestampPacketAllocator(), 1);
 
+    MockGraphicsAllocation bufferMockAllocation(0, 1u, AllocationType::buffer, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    MockGraphicsAllocation hostMockAllocation(0, 1u, AllocationType::externalHostPtr, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::system64KBPages, MemoryManager::maxOsContextCount);
+
     BlitProperties blitProperties;
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp);
+    blitProperties.dstAllocation = &hostMockAllocation;
+    blitProperties.srcAllocation = &bufferMockAllocation;
 
     waArgs.isWaRequired = true;
     auto expectedSize = cmdsSizePerBlit + (2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment())) +
