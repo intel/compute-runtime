@@ -52,7 +52,7 @@ HWTEST2_F(BuiltInSharedTest, givenUseBindlessBuiltinEnabledWhenBinExtensionPasse
     EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
 }
 
-HWTEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatformThenOnlyIntermediateFormatIsAvailable) {
+TEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatformThenOnlyIntermediateFormatIsAvailable) {
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo.ipVersion.value += 0xdead;
@@ -78,7 +78,7 @@ HWTEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatfor
     }
 }
 
-HWTEST2_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAddressingIsStateless, HasStatefulSupport) {
+TEST_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAddressingIsStateless) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
@@ -109,7 +109,7 @@ HWTEST2_F(BuiltInSharedTest, GivenPlatformWithoutStatefulAddresingSupportWhenGet
     }
 }
 
-HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNamesThenReturnForReleaseAndGenericResourceNames) {
+TEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNamesThenReturnForReleaseAndGenericResourceNames) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(0);
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -125,7 +125,7 @@ HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNam
     EXPECT_EQ(resourceNames[1], expectedResourceNameGeneric);
 }
 
-HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinResourceNameThenCorrectNameIsReturned) {
+TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinResourceNameThenCorrectNameIsReturned) {
 
     const std::pair<EBuiltInOps::Type, const char *> testCases[] = {
         {EBuiltInOps::auxTranslation, "aux_translation.builtin_kernel"},
@@ -167,7 +167,7 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltin
     }
 }
 
-HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {
+TEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {
     auto builtinsLib = std::make_unique<MockBuiltinsLib>();
     auto builtinCode = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::binary, builtinCode.type);
