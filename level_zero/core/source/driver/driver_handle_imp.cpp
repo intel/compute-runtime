@@ -233,7 +233,6 @@ DriverHandleImp::~DriverHandleImp() {
         this->externalSemaphoreController.reset();
     }
 
-    this->stagingBufferManager.reset();
     if (memoryManager != nullptr) {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
         if (this->svmAllocsManager) {
@@ -248,6 +247,7 @@ DriverHandleImp::~DriverHandleImp() {
         }
         delete device;
     }
+    this->stagingBufferManager.reset();
 
     for (auto &fabricVertex : this->fabricVertices) {
         delete fabricVertex;
