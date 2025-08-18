@@ -2860,3 +2860,96 @@ HWTEST_F(DeviceTests, givenMaskedSubDevicesWhenCallingPollForCompletionOnRootDev
     }
     EXPECT_EQ(callCount, numMaskedSubDevices);
 }
+
+TEST(DeviceCanAccessPeerTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
+    UltDeviceFactory deviceFactory{2, 0};
+    auto rootDevice0 = deviceFactory.rootDevices[0];
+
+    auto queryPeerAccess = [](Device &peerDevice, Device &device, bool &canAccess) -> bool {
+        canAccess = false;
+        return false;
+    };
+
+    bool canAccess = false;
+    bool result = rootDevice0->canAccessPeer(queryPeerAccess, rootDevice0, canAccess);
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(canAccess);
+}
+
+TEST(DeviceCanAccessPeerTest, givenTwoRootDevicesThenCanAccessPeerReturnsValueBasedOnDebugVariable) {
+    DebugManagerStateRestore restorer;
+
+    UltDeviceFactory deviceFactory{2, 0};
+    auto rootDevice0 = deviceFactory.rootDevices[0];
+    auto rootDevice1 = deviceFactory.rootDevices[1];
+
+    {
+        uint32_t flagValue = 1;
+        bool canAccess = false;
+        auto queryPeerAccess = [&flagValue](Device &peerDevice, Device &device, bool &canAccess) -> bool {
+            canAccess = !!flagValue;
+            return false;
+        };
+        debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(flagValue);
+        bool result = rootDevice0->canAccessPeer(queryPeerAccess, rootDevice1, canAccess);
+        EXPECT_TRUE(result);
+        EXPECT_TRUE(canAccess);
+    }
+
+    {
+        uint32_t flagValue = 0;
+        bool canAccess = true;
+        auto queryPeerAccess = [&flagValue](Device &peerDevice, Device &device, bool &canAccess) -> bool {
+            canAccess = !!flagValue;
+            return false;
+        };
+        debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(flagValue);
+        bool result = rootDevice0->canAccessPeer(queryPeerAccess, rootDevice1, canAccess);
+        EXPECT_TRUE(result);
+        EXPECT_FALSE(canAccess);
+    }
+}
+
+TEST(DeviceCanAccessPeerTest, givenCanAccessPeerCalledTwiceThenCanAccessPeerCachesResultAndReturnsSameValueEachTime) {
+    UltDeviceFactory deviceFactory{2, 0};
+    auto rootDevice0 = deviceFactory.rootDevices[0];
+    auto rootDevice1 = deviceFactory.rootDevices[1];
+
+    uint32_t queryCalled = 0;
+
+    auto queryPeerAccess = [&queryCalled](Device &peerDevice, Device &device, bool &canAccess) -> bool {
+        queryCalled++;
+        canAccess = true;
+        return true;
+    };
+
+    bool canAccess = false;
+
+    bool res = rootDevice0->canAccessPeer(queryPeerAccess, rootDevice1, canAccess);
+    EXPECT_EQ(1u, queryCalled);
+    EXPECT_TRUE(res);
+    EXPECT_TRUE(canAccess);
+
+    res = rootDevice0->canAccessPeer(queryPeerAccess, rootDevice1, canAccess);
+    EXPECT_EQ(1u, queryCalled);
+    EXPECT_TRUE(res);
+    EXPECT_TRUE(canAccess);
+}
+
+TEST(DeviceCanAccessPeerTest, givenTwoSubDevicesFromTheSameRootDeviceThenCanAccessPeerReturnsTrue) {
+    UltDeviceFactory deviceFactory{1, 2};
+
+    auto rootDevice = deviceFactory.rootDevices[0];
+    auto subDevice0 = rootDevice->getSubDevices()[0];
+    auto subDevice1 = rootDevice->getSubDevices()[1];
+
+    auto queryPeerAccess = [](Device &peerDevice, Device &device, bool &canAccess) -> bool {
+        canAccess = false;
+        return false;
+    };
+
+    bool canAccess = false;
+    bool res = subDevice0->canAccessPeer(queryPeerAccess, subDevice1, canAccess);
+    EXPECT_TRUE(res);
+    EXPECT_TRUE(canAccess);
+}

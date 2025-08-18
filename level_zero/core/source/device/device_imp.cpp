@@ -179,49 +179,29 @@ bool DeviceImp::submitCopyForP2P(DeviceImp *peerDevice, ze_result_t &ret) {
 }
 
 ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
-    DeviceImp *pPeerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
-    uint32_t peerRootDeviceIndex = pPeerDevice->getNEODevice()->getRootDeviceIndex();
-    auto rootDeviceIndex = getRootDeviceIndex();
+    bool canAccess = false;
+    bool retVal = neoDevice->canAccessPeer(queryPeerAccess, fromHandle(hPeerDevice)->getNEODevice(), canAccess);
 
-    auto retVal = ZE_RESULT_SUCCESS;
-
-    if (NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get() != -1) {
-        *value = !!NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get();
-        return retVal;
-    }
-
-    if (rootDeviceIndex == peerRootDeviceIndex) {
-        *value = true;
-        return retVal;
-    }
-
-    auto lock = static_cast<DriverHandleImp *>(driverHandle)->obtainPeerAccessQueryLock();
-    if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) == this->crossAccessEnabledDevices.end()) {
-        retVal = queryPeerAccess(pPeerDevice);
-    }
-    *value = this->crossAccessEnabledDevices[peerRootDeviceIndex];
-    return retVal;
+    *value = canAccess;
+    return retVal ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_DEVICE_LOST;
 }
 
-ze_result_t DeviceImp::queryPeerAccess(DeviceImp *peerDevice) {
-    auto retVal = ZE_RESULT_SUCCESS;
-    auto rootDeviceIndex = getRootDeviceIndex();
-    auto peerRootDeviceIndex = peerDevice->getRootDeviceIndex();
+bool DeviceImp::queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, bool &canAccess) {
+    ze_result_t retVal = ZE_RESULT_SUCCESS;
 
-    auto setPeerAccess = [&](bool value) {
-        this->crossAccessEnabledDevices[peerRootDeviceIndex] = value;
-        peerDevice->crossAccessEnabledDevices[rootDeviceIndex] = value;
-    };
+    auto deviceImp = device.getSpecializedDevice<DeviceImp>();
+    auto peerDeviceImp = peerDevice.getSpecializedDevice<DeviceImp>();
 
     uint32_t latency = std::numeric_limits<uint32_t>::max();
     uint32_t bandwidth = 0;
-    ze_result_t res = queryFabricStats(peerDevice, latency, bandwidth);
-    if (res == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE || bandwidth == 0) {
-        setPeerAccess(submitCopyForP2P(peerDevice, retVal));
+    ze_result_t result = deviceImp->queryFabricStats(peerDeviceImp, latency, bandwidth);
+    if (result == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE || bandwidth == 0) {
+        canAccess = deviceImp->submitCopyForP2P(peerDeviceImp, retVal);
     } else {
-        setPeerAccess(true);
+        canAccess = true;
     }
-    return retVal;
+
+    return retVal == ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
@@ -2062,7 +2042,6 @@ DebugSession *DeviceImp::createDebugSession(const zet_debug_config_t &config, ze
     } else if (NEO::debugManager.flags.ExperimentalEnableTileAttach.get()) {
         result = ZE_RESULT_SUCCESS;
         auto rootL0Device = getNEODevice()->getRootDevice()->getSpecializedDevice<DeviceImp>();
-
         auto session = rootL0Device->getDebugSession(config);
         if (!session) {
             session = rootL0Device->createDebugSession(config, result, isRootAttach);

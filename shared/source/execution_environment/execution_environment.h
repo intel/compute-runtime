@@ -77,6 +77,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     DirectSubmissionController *initializeDirectSubmissionController();
     void initializeUnifiedMemoryReuseCleaner(bool isAnyDirectSubmissionLightEnabled);
 
+    std::unique_lock<std::mutex> obtainPeerAccessQueryLock() {
+        return std::unique_lock<std::mutex>(peerAccessQueryMutex);
+    }
+
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<UnifiedMemoryReuseCleaner> unifiedMemoryReuseCleaner;
     std::unique_ptr<DirectSubmissionController> directSubmissionController;
@@ -89,6 +93,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>> mapOfSubDeviceIndices;
     std::unordered_map<std::thread::id, std::string> errorDescs;
     std::mutex errorDescsMutex;
+    std::mutex peerAccessQueryMutex;
 
   protected:
     static bool comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2);

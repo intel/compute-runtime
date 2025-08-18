@@ -437,6 +437,7 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManag
                                                   sizeof(std::unordered_map<uint32_t, uint32_t>) +
                                                   sizeof(std::mutex) +
                                                   sizeof(std::vector<std::tuple<std::string, uint32_t>>) +
+                                                  sizeof(std::mutex) +
                                                   (is64bit ? 22 : 14),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 

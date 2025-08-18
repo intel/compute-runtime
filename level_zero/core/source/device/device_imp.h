@@ -139,7 +139,6 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     uint32_t maxNumHwThreads = 0;
     uint32_t numSubDevices = 0;
     std::vector<Device *> subDevices;
-    std::unordered_map<uint32_t, bool> crossAccessEnabledDevices;
     DriverHandle *driverHandle = nullptr;
     FabricVertex *fabricVertex = nullptr;
     CommandList *pageFaultCommandList = nullptr;
@@ -185,7 +184,7 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     void bcsSplitReleaseResources() override;
 
   protected:
-    ze_result_t queryPeerAccess(DeviceImp *peerDevice);
+    static bool queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, bool &canAccess);
     bool submitCopyForP2P(DeviceImp *hPeerDevice, ze_result_t &result);
     ze_result_t getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);
     ze_result_t getGlobalTimestampsUsingOsInterface(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);

@@ -91,6 +91,8 @@ struct RTDispatchGlobalsInfo {
     std::vector<GraphicsAllocation *> rtStacks; // per tile
 };
 
+using QueryPeerAccessFunc = std::function<bool(Device &, Device &, bool &)>;
+
 class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMovableClass {
   public:
     ~Device() override;
@@ -259,6 +261,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
 
     void resetUsmAllocationPool(UsmMemAllocPool *usmMemAllocPool);
     void cleanupUsmAllocationPool();
+
+    std::unordered_map<uint32_t, bool> crossAccessEnabledDevices;
+    bool canAccessPeer(QueryPeerAccessFunc queryPeerAccess, Device *peerDevice, bool &canAccess);
 
   protected:
     Device() = delete;

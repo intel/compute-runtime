@@ -1347,4 +1347,34 @@ std::vector<DeviceVector> Device::groupDevices(DeviceVector devices) {
     return outDevices;
 }
 
+bool Device::canAccessPeer(QueryPeerAccessFunc queryPeerAccess, Device *peerDevice, bool &canAccess) {
+    bool retVal = true;
+
+    if (NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get() != -1) {
+        canAccess = !!NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.get();
+        return retVal;
+    }
+
+    const uint32_t rootDeviceIndex = this->getRootDeviceIndex();
+    const uint32_t peerRootDeviceIndex = peerDevice->getRootDeviceIndex();
+
+    if (rootDeviceIndex == peerRootDeviceIndex) {
+        canAccess = true;
+        return retVal;
+    }
+
+    auto setPeerAccess = [&](bool value) {
+        this->crossAccessEnabledDevices[peerRootDeviceIndex] = value;
+        peerDevice->crossAccessEnabledDevices[rootDeviceIndex] = value;
+    };
+
+    auto lock = executionEnvironment->obtainPeerAccessQueryLock();
+    if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) == this->crossAccessEnabledDevices.end()) {
+        retVal = queryPeerAccess(*this, *peerDevice, canAccess);
+        setPeerAccess(canAccess);
+    }
+    canAccess = this->crossAccessEnabledDevices[peerRootDeviceIndex];
+
+    return retVal;
+}
 } // namespace NEO

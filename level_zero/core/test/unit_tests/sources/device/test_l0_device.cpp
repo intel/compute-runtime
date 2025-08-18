@@ -2732,15 +2732,6 @@ TEST_F(MultipleDevicesTest, whenRetriecingSubDevicePropertiesThenCorrectFlagIsSe
     EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
 }
 
-TEST_F(MultipleDevicesTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
-    L0::Device *device0 = driverHandle->devices[0];
-
-    ze_bool_t canAccess = false;
-    ze_result_t res = device0->canAccessPeer(device0->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_TRUE(canAccess);
-}
-
 TEST_F(MultipleDevicesTest, whenCallingsetAtomicAccessAttributeForSystemAccessSharedCrossDeviceThenSuccessIsReturned) {
     size_t size = 10;
     size_t alignment = 1u;
@@ -2769,7 +2760,7 @@ TEST_F(MultipleDevicesTest, whenCallingsetAtomicAccessAttributeForSystemAccessSh
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerSuccessfullyCompletes) {
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyThenQueryPeerAccessSuccessfullyCompletes) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2777,12 +2768,12 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFa
     GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
     EXPECT_EQ(device0Family, device1Family);
 
-    ze_bool_t canAccess = true;
-    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    bool canAccess = true;
+    bool res = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), canAccess);
+    EXPECT_TRUE(res);
 }
 
-HWTEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyAndDeviceLostSynchronizeThenCanAccessPeerReturnsDeviceLost) {
+HWTEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyAndDeviceLostSynchronizeThenQueryPeerAccessReturnsFalse) {
     constexpr size_t devicesCount{2};
     ASSERT_LE(devicesCount, driverHandle->devices.size());
 
@@ -2811,9 +2802,9 @@ HWTEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSame
     GFXCORE_FAMILY device1Family = devices[1]->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
     EXPECT_EQ(device0Family, device1Family);
 
-    ze_bool_t canAccess = true;
-    ze_result_t res = devices[0]->canAccessPeer(devices[1]->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
+    bool canAccess = true;
+    bool res = MockDeviceImp::queryPeerAccess(*devices[0]->getNEODevice(), *devices[1]->getNEODevice(), canAccess);
+    EXPECT_FALSE(res);
 }
 
 using DeviceGetStatusTest = Test<DeviceFixture>;
@@ -2952,8 +2943,8 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
             context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
-        static_cast<L0::DeviceImp *>(driverHandle->devices[0])->crossAccessEnabledDevices[1] = p2pAccess;
-        static_cast<L0::DeviceImp *>(driverHandle->devices[1])->crossAccessEnabledDevices[0] = p2pAccess;
+        driverHandle->devices[0]->getNEODevice()->crossAccessEnabledDevices[1] = p2pAccess;
+        driverHandle->devices[1]->getNEODevice()->crossAccessEnabledDevices[0] = p2pAccess;
     }
 
     DebugManagerStateRestore restorer;
@@ -3209,10 +3200,10 @@ struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
         EXPECT_NE(nullptr, device1SubDevices[0]);
         EXPECT_NE(nullptr, device1SubDevices[1]);
 
-        static_cast<L0::DeviceImp *>(device0SubDevices[0])->crossAccessEnabledDevices[1] = p2pAccess;
-        static_cast<L0::DeviceImp *>(device0SubDevices[1])->crossAccessEnabledDevices[1] = p2pAccess;
-        static_cast<L0::DeviceImp *>(device1SubDevices[0])->crossAccessEnabledDevices[0] = p2pAccess;
-        static_cast<L0::DeviceImp *>(device1SubDevices[1])->crossAccessEnabledDevices[0] = p2pAccess;
+        static_cast<L0::Device *>(device0SubDevices[0])->getNEODevice()->crossAccessEnabledDevices[1] = p2pAccess;
+        static_cast<L0::Device *>(device0SubDevices[1])->getNEODevice()->crossAccessEnabledDevices[1] = p2pAccess;
+        static_cast<L0::Device *>(device1SubDevices[0])->getNEODevice()->crossAccessEnabledDevices[0] = p2pAccess;
+        static_cast<L0::Device *>(device1SubDevices[1])->getNEODevice()->crossAccessEnabledDevices[0] = p2pAccess;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[0])->getFabricVertex(&vertex0SubVertices[0]));
         EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[1])->getFabricVertex(&vertex0SubVertices[1]));
@@ -3408,7 +3399,7 @@ TEST_F(MultipleDevicesP2PWithXeLinkDevice0Access1Atomic1Device1Access1Atomic1Tes
     EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsTrue) {
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyThenQueryPeerAccessReturnsTrue) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -3416,29 +3407,13 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFa
     GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
     EXPECT_EQ(device0Family, device1Family);
 
-    ze_bool_t canAccess = false;
-    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    bool canAccess = false;
+    bool res = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), canAccess);
+    EXPECT_TRUE(res);
     EXPECT_TRUE(canAccess);
 }
 
-TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsValueBasingOnDebugVariable) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(0);
-    L0::Device *device0 = driverHandle->devices[0];
-    L0::Device *device1 = driverHandle->devices[1];
-
-    ze_bool_t canAccess = false;
-    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_FALSE(canAccess);
-    debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(1);
-    res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_TRUE(canAccess);
-}
-
-TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenCanAccessPeerCalledTwiceThenCanAccessPeerReturnsSameValueEachTime) {
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenQueryPeerAccessCalledTwiceThenQueryPeerAccessReturnsSameValueEachTime) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -3446,39 +3421,22 @@ TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenCanAccessPeerCalledTwice
     GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
     EXPECT_EQ(device0Family, device1Family);
 
-    ze_bool_t canAccess = false;
-    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    bool canAccess = false;
+    bool res = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), canAccess);
+    EXPECT_TRUE(res);
     EXPECT_TRUE(canAccess);
 
-    res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_TRUE(canAccess);
-}
-
-TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenQueryPeerStatsCalledThenCanAccessPeerReturnsSameValueEachTime) {
-    L0::Device *device0 = driverHandle->devices[0];
-    L0::Device *device1 = driverHandle->devices[1];
-
-    GFXCORE_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
-    GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
-    EXPECT_EQ(device0Family, device1Family);
-
-    ze_bool_t canAccess = false;
-    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_TRUE(canAccess);
-
-    res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), canAccess);
+    EXPECT_TRUE(res);
     EXPECT_TRUE(canAccess);
 }
 
-TEST_F(MultipleDevicesTest, givenDeviceFailsAppendMemoryCopyThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesTest, givenDeviceFailsAppendMemoryCopyThenQueryPeerAccessReturnsFalse) {
     struct MockDeviceFail : public MockDeviceImp {
         MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice()) {
             this->driverHandle = device->getDriverHandle();
             this->commandList.appendMemoryCopyResult = ZE_RESULT_ERROR_UNKNOWN;
+            this->neoDevice->setSpecializedDevice<L0::Device>(this);
         }
 
         ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) override {
@@ -3515,15 +3473,81 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsAppendMemoryCopyThenCanAccessPeerRet
     MockDeviceFail *device0 = new MockDeviceFail(driverHandle->devices[0]);
     L0::Device *device1 = driverHandle->devices[1];
 
-    ze_bool_t canAccess = false;
-    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    bool canAccess = false;
+    bool res = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), canAccess);
     EXPECT_GT(device0->commandList.appendMemoryCopyCalled, 0u);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(res);
     EXPECT_FALSE(canAccess);
     delete device0;
 }
 
-TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesTest, givenCanAccessPeerSucceedsThenReturnsSuccessAndCorrectValue) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_bool_t canAccess = false;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(canAccess);
+}
+
+TEST_F(MultipleDevicesTest, givenCanAccessPeerFailsThenReturnsDeviceLost) {
+    struct MockDeviceFail : public MockDeviceImp {
+        struct MockCommandQueueImp : public Mock<CommandQueue> {
+            ze_result_t synchronize(uint64_t timeout) override {
+                return ZE_RESULT_ERROR_DEVICE_LOST;
+            }
+        };
+
+        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice()) {
+            this->driverHandle = device->getDriverHandle();
+            this->neoDevice->setSpecializedDevice<L0::Device>(this);
+        }
+
+        ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) override {
+            bandwidth = 0;
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+
+        ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
+                                       ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createCommandList(const ze_command_list_desc_t *desc,
+                                      ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createInternalCommandQueue(const ze_command_queue_desc_t *desc,
+                                               ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createInternalCommandList(const ze_command_list_desc_t *desc,
+                                              ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        MockCommandList commandList;
+        MockCommandQueueImp commandQueue;
+    };
+
+    MockDeviceFail *device0 = new MockDeviceFail(driverHandle->devices[0]);
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_bool_t canAccess = true;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
+    EXPECT_FALSE(canAccess);
+    delete device0;
+}
+
+TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenQueryPeerAccessReturnsFalse) {
     struct MockDeviceFail : public MockDeviceImp {
         struct MockCommandQueueImp : public Mock<CommandQueue> {
             ze_result_t destroy() override {
@@ -3540,6 +3564,7 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
 
         MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice()) {
             this->driverHandle = device->getDriverHandle();
+            this->neoDevice->setSpecializedDevice<L0::Device>(this);
         }
 
         ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) override {
@@ -3576,14 +3601,14 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
     MockDeviceFail *device0 = new MockDeviceFail(driverHandle->devices[0]);
     L0::Device *device1 = driverHandle->devices[1];
 
-    ze_bool_t canAccess = false;
-    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    bool canAccess = false;
+    bool res = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), canAccess);
+    EXPECT_TRUE(res);
     EXPECT_FALSE(canAccess);
     delete device0;
 }
 
-TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFailsThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesTest, givenQueryFabricStatsReturningBandwidthZeroAndDeviceFailsThenQueryPeerAccessReturnsFalse) {
     struct MockDeviceFail : public MockDeviceImp {
         struct MockCommandQueueImp : public Mock<CommandQueue> {
             ze_result_t destroy() override {
@@ -3600,6 +3625,7 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFa
 
         MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice()) {
             this->driverHandle = device->getDriverHandle();
+            this->neoDevice->setSpecializedDevice<L0::Device>(this);
         }
 
         ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) override {
@@ -3637,14 +3663,14 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFa
     MockDeviceFail *device0 = new MockDeviceFail(driverHandle->devices[0]);
     L0::Device *device1 = driverHandle->devices[1];
 
-    ze_bool_t canAccess = false;
-    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    bool canAccess = false;
+    bool res = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), canAccess);
+    EXPECT_TRUE(res);
     EXPECT_FALSE(canAccess);
     delete device0;
 }
 
-TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthNonZeroAndDeviceDoesFailThenCanAccessPeerReturnsFalse) {
+TEST_F(MultipleDevicesTest, givenQueryFabricStatsReturningBandwidthNonZeroAndDeviceDoesFailThenQueryPeerAccessReturnsTrue) {
     struct MockDeviceFail : public MockDeviceImp {
         struct MockCommandQueueImp : public Mock<CommandQueue> {
             ze_result_t destroy() override {
@@ -3662,6 +3688,7 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthNonZeroAndDevic
 
         MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice()) {
             this->driverHandle = device->getDriverHandle();
+            this->neoDevice->setSpecializedDevice<L0::Device>(this);
         }
 
         ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) override {
@@ -3700,44 +3727,11 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthNonZeroAndDevic
     MockDeviceFail *device0 = new MockDeviceFail(driverHandle->devices[0]);
     L0::Device *device1 = driverHandle->devices[1];
 
-    ze_bool_t canAccess = false;
-    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    bool canAccess = false;
+    bool res = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), canAccess);
+    EXPECT_TRUE(res);
     EXPECT_TRUE(canAccess);
     delete device0;
-}
-
-TEST_F(MultipleDevicesTest, givenTwoSubDevicesFromTheSameRootDeviceThenCanAccessPeerReturnsTrue) {
-    L0::Device *device0 = driverHandle->devices[0];
-    L0::Device *device1 = driverHandle->devices[1];
-
-    uint32_t subDeviceCount = 0;
-    ze_result_t res = device0->getSubDevices(&subDeviceCount, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(numSubDevices, subDeviceCount);
-
-    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
-    res = device0->getSubDevices(&subDeviceCount, subDevices0.data());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    subDeviceCount = 0;
-    res = device1->getSubDevices(&subDeviceCount, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(numSubDevices, subDeviceCount);
-
-    std::vector<ze_device_handle_t> subDevices1(subDeviceCount);
-    res = device1->getSubDevices(&subDeviceCount, subDevices1.data());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    ze_bool_t canAccess = false;
-    L0::Device *subDevice00 = Device::fromHandle(subDevices0[0]);
-    subDevice00->canAccessPeer(subDevices0[1], &canAccess);
-    EXPECT_TRUE(canAccess);
-
-    canAccess = false;
-    L0::Device *subDevice10 = Device::fromHandle(subDevices1[0]);
-    subDevice10->canAccessPeer(subDevices1[1], &canAccess);
-    EXPECT_TRUE(canAccess);
 }
 
 TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWithRootDeviceThenCorrectMappingIsUsedAndApiSliceIdsForSubdeviceReturned) {
