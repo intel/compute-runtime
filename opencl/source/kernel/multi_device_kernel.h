@@ -98,7 +98,7 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     void callOnEachKernel(FuncType function, Args &&...args) {
         for (auto &pKernel : kernels) {
             if (pKernel) {
-                (pKernel->*function)(std::forward<Args>(args)...);
+                (pKernel->*function)(args...);
             }
         }
     }
