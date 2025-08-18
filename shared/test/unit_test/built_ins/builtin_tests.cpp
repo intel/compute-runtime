@@ -11,6 +11,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_builtinslib.h"
+#include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -173,16 +174,16 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCod
     EXPECT_NE(0U, builtinCode.resource.size());
 }
 
-HWTEST2_F(BuiltInSharedTest, GivenHeaplessModeEnabledWhenGetBuiltinResourceNamesIsCalledThenResourceNameIsCorrect, MatchAny) {
+TEST_F(BuiltInSharedTest, GivenHeaplessModeEnabledWhenGetBuiltinResourceNamesIsCalledThenResourceNameIsCorrect) {
 
-    class MockCompilerProductHelper : public CompilerProductHelperHw<productFamily> {
+    class BuiltinMockCompilerProductHelper : public MockCompilerProductHelper {
       public:
         bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const override {
             return true;
         }
     };
 
-    pDevice->executionEnvironment->rootDeviceEnvironments[0]->compilerProductHelper.reset(new MockCompilerProductHelper());
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->compilerProductHelper.reset(new BuiltinMockCompilerProductHelper());
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 

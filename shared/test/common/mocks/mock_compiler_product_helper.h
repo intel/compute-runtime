@@ -9,16 +9,6 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {
-template <PRODUCT_FAMILY productFamily>
-class MockCompilerProductHelperHeaplessHw : public CompilerProductHelperHw<productFamily> {
-  public:
-    bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const override {
-        return heaplessModeEnabled;
-    }
-
-    MockCompilerProductHelperHeaplessHw(bool heaplessModeEnabled) : CompilerProductHelperHw<productFamily>(), heaplessModeEnabled(heaplessModeEnabled) {}
-    bool heaplessModeEnabled = false;
-};
 
 class MockCompilerProductHelper : public CompilerProductHelper {
   public:
@@ -66,6 +56,17 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     ADDMETHOD_CONST_NOBASE(getFinalizerLibraryName, const char *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(useIgcAsFcl, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getPreferredIntermediateRepresentation, IGC::CodeType::CodeType_t, IGC::CodeType::undefined, ());
+};
+
+class MockCompilerProductHelperHeapless : public MockCompilerProductHelper {
+  public:
+    bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const override {
+        return heaplessModeEnabled;
+    }
+
+    MockCompilerProductHelperHeapless() = default;
+    MockCompilerProductHelperHeapless(bool heaplessModeEnabled) : MockCompilerProductHelper(), heaplessModeEnabled(heaplessModeEnabled) {}
+    bool heaplessModeEnabled = false;
 };
 
 } // namespace NEO

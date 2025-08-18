@@ -1954,7 +1954,7 @@ HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAn
 
     for (bool heaplessModeEnabled : {true, false}) {
 
-        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHeaplessHw<productFamily>(heaplessModeEnabled));
+        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHeapless(heaplessModeEnabled));
         neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
 
         auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -2001,7 +2001,7 @@ HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAn
 
     for (bool heaplessModeEnabled : {true, false}) {
 
-        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHeaplessHw<productFamily>(heaplessModeEnabled));
+        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHeapless(heaplessModeEnabled));
         neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
 
         auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();

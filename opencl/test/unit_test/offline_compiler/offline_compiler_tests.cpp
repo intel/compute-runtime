@@ -28,6 +28,7 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compiler_cache.h"
+#include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
@@ -4385,8 +4386,7 @@ TEST_F(OfflineCompilerStatelessToStatefulTests, whenAppendExtraInternalOptionsTh
     runTest();
 }
 
-template <PRODUCT_FAMILY productFamily>
-class MockCompilerProductHelperHw : public CompilerProductHelperHw<productFamily> {
+class MockCompilerProductHelperForceStateless : public MockCompilerProductHelper {
   public:
     bool isForceToStatelessRequired() const override {
         return true;
@@ -4394,8 +4394,7 @@ class MockCompilerProductHelperHw : public CompilerProductHelperHw<productFamily
 };
 
 HWTEST2_F(OfflineCompilerStatelessToStatefulTests, givenMockWhenAppendExtraInternalOptionsThenInternalOptionsAreCorrect, MatchAny) {
-
-    auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHw<productFamily>());
+    auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperForceStateless());
     this->mockOfflineCompiler->compilerProductHelper.swap(backup);
 
     runTest();

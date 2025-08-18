@@ -703,7 +703,7 @@ HWTEST2_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched, MatchAn
     for (bool heaplessModeEnabled : {false, true}) {
 
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHeaplessHw<productFamily>(heaplessModeEnabled));
+        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHeapless(heaplessModeEnabled));
         device->device.getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
 
         auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
