@@ -306,10 +306,10 @@ bool UsmMemAllocPoolsManager::recycleSVMAlloc(void *ptr, bool blocking) {
     if (svmData->size > maxPoolableSize || belongsInPreallocatedPool(svmData->size)) {
         return false;
     }
+    std::unique_lock<std::mutex> lock(mtx);
     if (this->totalSize + svmData->size > getFreeMemory() * UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(svmData->memoryType)) {
         return false;
     }
-    std::unique_lock<std::mutex> lock(mtx);
     for (auto poolInfoIndex = firstNonPreallocatedIndex; poolInfoIndex < this->poolInfos.size(); ++poolInfoIndex) {
         const auto &poolInfo = this->poolInfos[poolInfoIndex];
         if (svmData->size <= poolInfo.maxServicedSize) {
