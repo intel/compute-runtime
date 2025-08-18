@@ -370,15 +370,17 @@ TEST_F(ClMemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHas
     WhiteBox<NEO::LinkerInput> linkerInput;
     linkerInput.traits.exportsGlobalConstants = true;
     linkerInput.traits.exportsGlobalVariables = true;
-    GraphicsAllocation *allocation = allocateGlobalsSurface(context->svmAllocsManager, device1->getDevice(), initData.size(), 0u, false, &linkerInput, initData.data());
+    std::unique_ptr<SharedPoolAllocation> surface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(context->svmAllocsManager, device1->getDevice(), initData.size(), 0u, false, &linkerInput, initData.data()));
 
+    ASSERT_NE(nullptr, surface);
+    auto allocation = surface->getGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(expectedRootDeviceIndex, allocation->getRootDeviceIndex());
 
     if (device1->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
         device1->getMemoryManager()->freeGraphicsMemory(allocation);
     } else {
-        context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(allocation->getGpuAddress()));
+        context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(surface->getGpuAddress()));
     }
 }
 

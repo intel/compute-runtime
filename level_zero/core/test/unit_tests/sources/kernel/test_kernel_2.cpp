@@ -838,7 +838,8 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
         size_t allocSize = 0x1100;
-        NEO::MockGraphicsAllocation globalConstBuffer(buffer, gpuAddress, allocSize);
+        auto globalConstBufferMockGA = NEO::MockGraphicsAllocation(buffer, gpuAddress, allocSize);
+        auto globalConstBuffer = std::make_unique<NEO::SharedPoolAllocation>(&globalConstBufferMockGA);
 
         auto kernelInfo = std::make_unique<KernelInfo>();
 
@@ -861,7 +862,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         const auto globalConstantsSurfaceAddressSSIndex = 1;
 
         auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, &globalConstBuffer, nullptr, false);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, globalConstBuffer.get(), nullptr, false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
@@ -870,14 +871,14 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
 
         auto &residencyContainer = kernelImmutableData->getResidencyContainer();
         EXPECT_EQ(1u, residencyContainer.size());
-        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), &globalConstBuffer));
+        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), globalConstBuffer->getGraphicsAllocation()));
 
         EXPECT_EQ(1u, encodeBufferSurfaceStateCalled);
         EXPECT_EQ(allocSize, savedSurfaceStateArgs.size);
         EXPECT_EQ(gpuAddress, savedSurfaceStateArgs.graphicsAddress);
 
         EXPECT_EQ(ptrOffset(kernelImmutableData->getSurfaceStateHeapTemplate(), globalConstantsSurfaceAddressSSIndex * surfaceStateSize), savedSurfaceStateArgs.outMemory);
-        EXPECT_EQ(&globalConstBuffer, savedSurfaceStateArgs.allocation);
+        EXPECT_EQ(globalConstBuffer->getGraphicsAllocation(), savedSurfaceStateArgs.allocation);
     }
 }
 
@@ -908,7 +909,8 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
         size_t allocSize = 0x1100;
-        NEO::MockGraphicsAllocation globalVarBuffer(buffer, gpuAddress, allocSize);
+        auto globalVarBufferMockGA = NEO::MockGraphicsAllocation(buffer, gpuAddress, allocSize);
+        auto globalVarBuffer = std::make_unique<NEO::SharedPoolAllocation>(&globalVarBufferMockGA);
 
         auto kernelInfo = std::make_unique<KernelInfo>();
 
@@ -931,7 +933,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         const auto globalVariablesSurfaceAddressSSIndex = 1;
 
         auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, &globalVarBuffer, false);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, globalVarBuffer.get(), false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
@@ -940,14 +942,14 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
 
         auto &residencyContainer = kernelImmutableData->getResidencyContainer();
         EXPECT_EQ(1u, residencyContainer.size());
-        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), &globalVarBuffer));
+        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), globalVarBuffer->getGraphicsAllocation()));
 
         EXPECT_EQ(1u, encodeBufferSurfaceStateCalled);
         EXPECT_EQ(allocSize, savedSurfaceStateArgs.size);
         EXPECT_EQ(gpuAddress, savedSurfaceStateArgs.graphicsAddress);
 
         EXPECT_EQ(ptrOffset(kernelImmutableData->getSurfaceStateHeapTemplate(), globalVariablesSurfaceAddressSSIndex * surfaceStateSize), savedSurfaceStateArgs.outMemory);
-        EXPECT_EQ(&globalVarBuffer, savedSurfaceStateArgs.allocation);
+        EXPECT_EQ(globalVarBuffer->getGraphicsAllocation(), savedSurfaceStateArgs.allocation);
     }
 }
 
@@ -982,7 +984,8 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
         size_t allocSize = 0x1100;
-        NEO::MockGraphicsAllocation globalConstBuffer(buffer, gpuAddress, allocSize);
+        auto globalConstBufferMockGA = NEO::MockGraphicsAllocation(buffer, gpuAddress, allocSize);
+        auto globalConstBuffer = std::make_unique<NEO::SharedPoolAllocation>(&globalConstBufferMockGA);
 
         auto kernelInfo = std::make_unique<KernelInfo>();
 
@@ -1005,7 +1008,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
 
         auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, &globalConstBuffer, nullptr, false);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, globalConstBuffer.get(), nullptr, false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
@@ -1014,12 +1017,12 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
 
         auto &residencyContainer = kernelImmutableData->getResidencyContainer();
         EXPECT_EQ(1u, residencyContainer.size());
-        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), &globalConstBuffer));
-        EXPECT_EQ(0, std::count(residencyContainer.begin(), residencyContainer.end(), globalConstBuffer.getBindlessInfo().heapAllocation));
+        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), globalConstBuffer->getGraphicsAllocation()));
+        EXPECT_EQ(0, std::count(residencyContainer.begin(), residencyContainer.end(), globalConstBuffer->getGraphicsAllocation()->getBindlessInfo().heapAllocation));
 
         auto crossThreadData = kernelImmutableData->getCrossThreadDataTemplate();
         auto patchLocation = reinterpret_cast<const uint32_t *>(ptrOffset(crossThreadData, globalConstSurfaceAddressBindlessOffset));
-        auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(globalConstBuffer.getBindlessInfo().surfaceStateOffset));
+        auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(globalConstBuffer->getGraphicsAllocation()->getBindlessInfo().surfaceStateOffset));
 
         EXPECT_EQ(patchValue, *patchLocation);
 
@@ -1027,12 +1030,12 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         EXPECT_EQ(allocSize, savedSurfaceStateArgs.size);
         EXPECT_EQ(gpuAddress, savedSurfaceStateArgs.graphicsAddress);
 
-        EXPECT_NE(globalConstBuffer.getBindlessInfo().ssPtr, savedSurfaceStateArgs.outMemory);
+        EXPECT_NE(globalConstBuffer->getGraphicsAllocation()->getBindlessInfo().ssPtr, savedSurfaceStateArgs.outMemory);
 
-        const auto surfState = reinterpret_cast<RENDER_SURFACE_STATE *>(globalConstBuffer.getBindlessInfo().ssPtr);
+        const auto surfState = reinterpret_cast<RENDER_SURFACE_STATE *>(globalConstBuffer->getGraphicsAllocation()->getBindlessInfo().ssPtr);
         ASSERT_NE(nullptr, surfState);
         EXPECT_EQ(gpuAddress, surfState->getSurfaceBaseAddress());
-        EXPECT_EQ(&globalConstBuffer, savedSurfaceStateArgs.allocation);
+        EXPECT_EQ(globalConstBuffer->getGraphicsAllocation(), savedSurfaceStateArgs.allocation);
     }
 }
 
@@ -1067,7 +1070,8 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         uint64_t gpuAddress = 0x1200;
         void *buffer = reinterpret_cast<void *>(gpuAddress);
         size_t allocSize = 0x1100;
-        NEO::MockGraphicsAllocation globalVarBuffer(buffer, gpuAddress, allocSize);
+        auto globalVarBufferMockGA = NEO::MockGraphicsAllocation(buffer, gpuAddress, allocSize);
+        auto globalVarBuffer = std::make_unique<NEO::SharedPoolAllocation>(&globalVarBufferMockGA);
 
         auto kernelInfo = std::make_unique<KernelInfo>();
 
@@ -1090,7 +1094,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
 
         auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
-        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, &globalVarBuffer, false);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, globalVarBuffer.get(), false);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
@@ -1099,12 +1103,12 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
 
         auto &residencyContainer = kernelImmutableData->getResidencyContainer();
         EXPECT_EQ(1u, residencyContainer.size());
-        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), &globalVarBuffer));
-        EXPECT_EQ(0, std::count(residencyContainer.begin(), residencyContainer.end(), globalVarBuffer.getBindlessInfo().heapAllocation));
+        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), globalVarBuffer->getGraphicsAllocation()));
+        EXPECT_EQ(0, std::count(residencyContainer.begin(), residencyContainer.end(), globalVarBuffer->getGraphicsAllocation()->getBindlessInfo().heapAllocation));
 
         auto crossThreadData = kernelImmutableData->getCrossThreadDataTemplate();
         auto patchLocation = reinterpret_cast<const uint32_t *>(ptrOffset(crossThreadData, globalVariablesSurfaceAddressBindlessOffset));
-        auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(globalVarBuffer.getBindlessInfo().surfaceStateOffset));
+        auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(globalVarBuffer->getGraphicsAllocation()->getBindlessInfo().surfaceStateOffset));
 
         EXPECT_EQ(patchValue, *patchLocation);
 
@@ -1112,12 +1116,12 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         EXPECT_EQ(allocSize, savedSurfaceStateArgs.size);
         EXPECT_EQ(gpuAddress, savedSurfaceStateArgs.graphicsAddress);
 
-        EXPECT_NE(globalVarBuffer.getBindlessInfo().ssPtr, savedSurfaceStateArgs.outMemory);
+        EXPECT_NE(globalVarBuffer->getGraphicsAllocation()->getBindlessInfo().ssPtr, savedSurfaceStateArgs.outMemory);
 
-        const auto surfState = reinterpret_cast<RENDER_SURFACE_STATE *>(globalVarBuffer.getBindlessInfo().ssPtr);
+        const auto surfState = reinterpret_cast<RENDER_SURFACE_STATE *>(globalVarBuffer->getGraphicsAllocation()->getBindlessInfo().ssPtr);
         ASSERT_NE(nullptr, surfState);
         EXPECT_EQ(gpuAddress, surfState->getSurfaceBaseAddress());
-        EXPECT_EQ(&globalVarBuffer, savedSurfaceStateArgs.allocation);
+        EXPECT_EQ(globalVarBuffer->getGraphicsAllocation(), savedSurfaceStateArgs.allocation);
     }
 }
 

@@ -156,7 +156,7 @@ struct DebuggerZebinProgramTest : public Test<DebuggerClFixture> {
         delete program->getKernelInfoArray(rootDeviceIndex)[0]->kernelAllocation;
         delete program->getKernelInfoArray(rootDeviceIndex)[0];
         program->getKernelInfoArray(rootDeviceIndex).clear();
-        delete program->getGlobalSurface(rootDeviceIndex);
+        delete program->getGlobalSurfaceGA(rootDeviceIndex);
         program->setGlobalSurface(nullptr);
         delete program;
         program = nullptr;

@@ -316,7 +316,7 @@ void LinkerInput::parseRelocationForExtFuncUsage(const RelocationInfo &relocInfo
 }
 
 LinkingStatus Linker::link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo,
-                           const SegmentInfo &globalStringsSegInfo, GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
+                           const SegmentInfo &globalStringsSegInfo, SharedPoolAllocation *globalVariablesSeg, SharedPoolAllocation *globalConstantsSeg,
                            const PatchableSegments &instructionsSegments, UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData,
                            size_t constantsInitDataSize, const void *variablesInitData, size_t variablesInitDataSize, const KernelDescriptorsT &kernelDescriptors,
                            ExternalFunctionsT &externalFunctions) {
@@ -471,7 +471,7 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
 }
 
 void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo,
-                               GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
+                               SharedPoolAllocation *globalVariablesSeg, SharedPoolAllocation *globalConstantsSeg,
                                std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
                                const void *constantsInitData, size_t constantsInitDataSize, const void *variablesInitData, size_t variablesInitDataSize) {
     std::vector<uint8_t> constantsData(globalConstantsSegInfo.segmentSize, 0u);
@@ -535,12 +535,12 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
         auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
         auto &productHelper = pDevice->getProductHelper();
         if (globalConstantsSeg) {
-            bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *globalConstantsSeg);
-            MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalConstantsSeg, 0, constantsData.data(), constantsData.size());
+            bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *globalConstantsSeg->getGraphicsAllocation());
+            MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalConstantsSeg->getGraphicsAllocation(), globalConstantsSeg->getOffset(), constantsData.data(), constantsData.size());
         }
         if (globalVariablesSeg) {
-            bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *globalVariablesSeg);
-            MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalVariablesSeg, 0, variablesData.data(), variablesData.size());
+            bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *globalVariablesSeg->getGraphicsAllocation());
+            MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalVariablesSeg->getGraphicsAllocation(), globalVariablesSeg->getOffset(), variablesData.data(), variablesData.size());
         }
     }
 }

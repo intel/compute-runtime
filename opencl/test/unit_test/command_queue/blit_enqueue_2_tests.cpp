@@ -574,8 +574,10 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenLocalMemoryAccessNotAllowedWhenGlobalCons
 
     auto rootDeviceIndex = device->getRootDeviceIndex();
 
-    ASSERT_NE(nullptr, program.getConstantSurface(rootDeviceIndex));
-    auto gpuAddress = reinterpret_cast<const void *>(program.getConstantSurface(rootDeviceIndex)->getGpuAddress());
+    auto surface = program.getConstantSurface(rootDeviceIndex);
+    ASSERT_NE(nullptr, surface);
+    ASSERT_NE(nullptr, surface->getGraphicsAllocation());
+    auto gpuAddress = reinterpret_cast<const void *>(surface->getGpuAddress());
     EXPECT_NE(nullptr, bcsMockContext->getSVMAllocsManager()->getSVMAlloc(gpuAddress));
 }
 

@@ -124,6 +124,10 @@ inline void patch(const SrcT &src, void *dst, CrossThreadDataOffset dstOffsetByt
 }
 
 void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg) {
+    patchWithImplicitSurface(ptrToPatchInCrossThreadData, allocation, reinterpret_cast<void *>(allocation.getGpuAddressToPatch()), allocation.getUnderlyingBufferSize(), arg);
+}
+
+void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, void *addressToPatch, size_t sizeToPatch, const ArgDescPointer &arg) {
     if ((nullptr != crossThreadData) && isValidOffset(arg.stateless)) {
         auto pp = ptrOffset(crossThreadData, arg.stateless);
         patchWithRequiredSize(pp, arg.pointerSize, ptrToPatchInCrossThreadData);
@@ -135,9 +139,6 @@ void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, Grap
 
     void *ssh = getSurfaceStateHeap();
     if (nullptr != ssh) {
-        void *addressToPatch = reinterpret_cast<void *>(allocation.getGpuAddressToPatch());
-        size_t sizeToPatch = allocation.getUnderlyingBufferSize();
-
         if (isValidOffset(arg.bindful)) {
             auto surfaceState = ptrOffset(ssh, arg.bindful);
             Buffer::setSurfaceState(&clDevice.getDevice(), surfaceState, false, false, sizeToPatch, addressToPatch, 0, &allocation, 0, 0,
@@ -264,19 +265,27 @@ cl_int Kernel::initialize() {
     if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless) ||
         isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless)) {
         DEBUG_BREAK_IF(program->getConstantSurface(rootDeviceIndex) == nullptr);
-        uint64_t constMemory = isBuiltIn ? castToUint64(program->getConstantSurface(rootDeviceIndex)->getUnderlyingBuffer()) : program->getConstantSurface(rootDeviceIndex)->getGpuAddressToPatch();
+        DEBUG_BREAK_IF(program->getConstantSurfaceGA(rootDeviceIndex) == nullptr);
+        const auto constantSurface = program->getConstantSurface(rootDeviceIndex);
+        const auto size = constantSurface->getSize();
+
+        uint64_t constMemory = isBuiltIn ? castToUint64(constantSurface->getUnderlyingBuffer()) : constantSurface->getGpuAddressToPatch();
 
         const auto &arg = kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress;
-        patchWithImplicitSurface(constMemory, *program->getConstantSurface(rootDeviceIndex), arg);
+        patchWithImplicitSurface(constMemory, *constantSurface->getGraphicsAllocation(), reinterpret_cast<void *>(constantSurface->getGpuAddressToPatch()), size, arg);
     }
 
     if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless) ||
         isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless)) {
         DEBUG_BREAK_IF(program->getGlobalSurface(rootDeviceIndex) == nullptr);
-        uint64_t globalMemory = isBuiltIn ? castToUint64(program->getGlobalSurface(rootDeviceIndex)->getUnderlyingBuffer()) : program->getGlobalSurface(rootDeviceIndex)->getGpuAddressToPatch();
+        DEBUG_BREAK_IF(program->getGlobalSurfaceGA(rootDeviceIndex) == nullptr);
+        const auto globalSurface = program->getGlobalSurface(rootDeviceIndex);
+        const auto size = globalSurface->getSize();
+
+        uint64_t globalMemory = isBuiltIn ? castToUint64(globalSurface->getUnderlyingBuffer()) : globalSurface->getGpuAddressToPatch();
 
         const auto &arg = kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress;
-        patchWithImplicitSurface(globalMemory, *program->getGlobalSurface(rootDeviceIndex), arg);
+        patchWithImplicitSurface(globalMemory, *globalSurface->getGraphicsAllocation(), reinterpret_cast<void *>(globalSurface->getGpuAddressToPatch()), size, arg);
     }
 
     if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful)) {
@@ -1271,18 +1280,18 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     }
 
     if (program->getConstantSurface(rootDeviceIndex)) {
-        commandStreamReceiver.makeResident(*(program->getConstantSurface(rootDeviceIndex)));
+        commandStreamReceiver.makeResident(*(program->getConstantSurfaceGA(rootDeviceIndex)));
 
-        auto bindlessHeapAllocation = program->getConstantSurface(rootDeviceIndex)->getBindlessInfo().heapAllocation;
+        auto bindlessHeapAllocation = program->getConstantSurfaceGA(rootDeviceIndex)->getBindlessInfo().heapAllocation;
         if (bindlessHeapAllocation) {
             commandStreamReceiver.makeResident(*bindlessHeapAllocation);
         }
     }
 
     if (program->getGlobalSurface(rootDeviceIndex)) {
-        commandStreamReceiver.makeResident(*(program->getGlobalSurface(rootDeviceIndex)));
+        commandStreamReceiver.makeResident(*(program->getGlobalSurfaceGA(rootDeviceIndex)));
 
-        auto bindlessHeapAllocation = program->getGlobalSurface(rootDeviceIndex)->getBindlessInfo().heapAllocation;
+        auto bindlessHeapAllocation = program->getGlobalSurfaceGA(rootDeviceIndex)->getBindlessInfo().heapAllocation;
         if (bindlessHeapAllocation) {
             commandStreamReceiver.makeResident(*bindlessHeapAllocation);
         }
@@ -1336,12 +1345,12 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
 
     auto rootDeviceIndex = getDevice().getRootDeviceIndex();
     if (program->getConstantSurface(rootDeviceIndex)) {
-        GeneralSurface *surface = new GeneralSurface(program->getConstantSurface(rootDeviceIndex));
+        GeneralSurface *surface = new GeneralSurface(program->getConstantSurfaceGA(rootDeviceIndex));
         dst.push_back(surface);
     }
 
     if (program->getGlobalSurface(rootDeviceIndex)) {
-        GeneralSurface *surface = new GeneralSurface(program->getGlobalSurface(rootDeviceIndex));
+        GeneralSurface *surface = new GeneralSurface(program->getGlobalSurfaceGA(rootDeviceIndex));
         dst.push_back(surface);
     }
 

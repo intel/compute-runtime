@@ -93,19 +93,37 @@ class MockProgram : public Program {
     }
     void setConstantSurface(GraphicsAllocation *gfxAllocation) {
         if (gfxAllocation) {
-            buildInfos[gfxAllocation->getRootDeviceIndex()].constantSurface = gfxAllocation;
+            buildInfos[gfxAllocation->getRootDeviceIndex()].constantSurface = std::make_unique<SharedPoolAllocation>(gfxAllocation);
         } else {
             for (auto &buildInfo : buildInfos) {
-                buildInfo.constantSurface = nullptr;
+                buildInfo.constantSurface.reset();
+            }
+        }
+    }
+    void setConstantSurface(std::unique_ptr<SharedPoolAllocation> constantSurface) {
+        if (constantSurface) {
+            buildInfos[constantSurface->getGraphicsAllocation()->getRootDeviceIndex()].constantSurface = std::move(constantSurface);
+        } else {
+            for (auto &buildInfo : buildInfos) {
+                buildInfo.constantSurface.reset();
             }
         }
     }
     void setGlobalSurface(GraphicsAllocation *gfxAllocation) {
         if (gfxAllocation) {
-            buildInfos[gfxAllocation->getRootDeviceIndex()].globalSurface = gfxAllocation;
+            buildInfos[gfxAllocation->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(gfxAllocation);
         } else {
             for (auto &buildInfo : buildInfos) {
-                buildInfo.globalSurface = nullptr;
+                buildInfo.globalSurface.reset();
+            }
+        }
+    }
+    void setGlobalSurface(std::unique_ptr<SharedPoolAllocation> globalSurface) {
+        if (globalSurface) {
+            buildInfos[globalSurface->getGraphicsAllocation()->getRootDeviceIndex()].globalSurface = std::move(globalSurface);
+        } else {
+            for (auto &buildInfo : buildInfos) {
+                buildInfo.globalSurface.reset();
             }
         }
     }

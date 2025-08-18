@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,18 +12,19 @@
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 
 namespace NEO::Zebin::Debug {
 using namespace NEO::Zebin::Elf;
 
 Segments::Segments() {}
 
-Segments::Segments(const GraphicsAllocation *globalVarAlloc, const GraphicsAllocation *globalConstAlloc, ArrayRef<const uint8_t> &globalStrings, std::vector<KernelNameIsaTupleT> &kernels) {
+Segments::Segments(const SharedPoolAllocation *globalVarAlloc, const SharedPoolAllocation *globalConstAlloc, ArrayRef<const uint8_t> &globalStrings, std::vector<KernelNameIsaTupleT> &kernels) {
     if (globalVarAlloc) {
-        varData = {static_cast<uintptr_t>(globalVarAlloc->getGpuAddress()), globalVarAlloc->getUnderlyingBufferSize()};
+        varData = {static_cast<uintptr_t>(globalVarAlloc->getGpuAddress()), globalVarAlloc->getSize()};
     }
     if (globalConstAlloc) {
-        constData = {static_cast<uintptr_t>(globalConstAlloc->getGpuAddress()), globalConstAlloc->getUnderlyingBufferSize()};
+        constData = {static_cast<uintptr_t>(globalConstAlloc->getGpuAddress()), globalConstAlloc->getSize()};
     }
     if (false == globalStrings.empty()) {
         stringData = {reinterpret_cast<uintptr_t>(globalStrings.begin()), globalStrings.size()};

@@ -9,6 +9,7 @@
 
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/test/common/mocks/mock_cif.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -91,8 +92,8 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
 
     ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice) override;
 
-    NEO::GraphicsAllocation *mockGlobalVarBuffer = nullptr;
-    NEO::GraphicsAllocation *mockGlobalConstBuffer = nullptr;
+    std::unique_ptr<NEO::SharedPoolAllocation> mockGlobalVarBuffer = nullptr;
+    std::unique_ptr<NEO::SharedPoolAllocation> mockGlobalConstBuffer = nullptr;
 };
 
 using Module = WhiteBox<::L0::Module>;

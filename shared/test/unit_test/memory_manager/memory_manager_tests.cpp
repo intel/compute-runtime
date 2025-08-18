@@ -2769,14 +2769,14 @@ TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfac
     linkerInput.traits.exportsGlobalConstants = true;
     linkerInput.traits.exportsGlobalVariables = true;
     memoryManager->recentlyPassedDeviceBitfield = {};
-    GraphicsAllocation *allocation = allocateGlobalsSurface(nullptr, device, 1024, 0u, false, &linkerInput, nullptr);
-    EXPECT_EQ(nullptr, allocation);
+    std::unique_ptr<SharedPoolAllocation> globalSurface = std::unique_ptr<SharedPoolAllocation>(allocateGlobalsSurface(nullptr, device, 1024, 0u, false, &linkerInput, nullptr));
+    EXPECT_EQ(nullptr, globalSurface);
     EXPECT_EQ(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
 
     auto svmAllocsManager = std::make_unique<SVMAllocsManager>(memoryManager);
     memoryManager->recentlyPassedDeviceBitfield = {};
-    allocation = allocateGlobalsSurface(svmAllocsManager.get(), device, 1024, 0u, false, &linkerInput, nullptr);
-    EXPECT_EQ(nullptr, allocation);
+    globalSurface.reset(allocateGlobalsSurface(svmAllocsManager.get(), device, 1024, 0u, false, &linkerInput, nullptr));
+    EXPECT_EQ(nullptr, globalSurface);
     EXPECT_EQ(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
 }
 

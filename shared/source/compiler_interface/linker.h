@@ -26,6 +26,7 @@ class Device;
 class GraphicsAllocation;
 struct KernelDescriptor;
 struct ProgramInfo;
+class SharedPoolAllocation;
 
 enum class SegmentType : uint32_t {
     unknown,
@@ -235,7 +236,7 @@ struct Linker {
     }
 
     LinkingStatus link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo,
-                       const SegmentInfo &globalStringsSegInfo, GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
+                       const SegmentInfo &globalStringsSegInfo, SharedPoolAllocation *globalVariablesSeg, SharedPoolAllocation *globalConstantsSeg,
                        const PatchableSegments &instructionsSegments, UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData,
                        size_t constantsInitDataSize, const void *variablesInitData, size_t variablesInitDataSize, const KernelDescriptorsT &kernelDescriptors,
                        ExternalFunctionsT &externalFunctions);
@@ -260,7 +261,7 @@ struct Linker {
     void patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals, const KernelDescriptorsT &kernelDescriptors);
 
     void patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo,
-                           GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
+                           SharedPoolAllocation *globalVariablesSeg, SharedPoolAllocation *globalConstantsSeg,
                            std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
                            const void *constantsInitData, size_t constantsInitDataSize, const void *variablesInitData, size_t variablesInitDataSize);
 

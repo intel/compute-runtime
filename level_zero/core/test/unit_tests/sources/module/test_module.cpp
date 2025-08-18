@@ -3578,8 +3578,8 @@ kernels:
              zebin.data(), zebin.size());
     auto retVal = moduleTu.processUnpackedBinary();
     EXPECT_EQ(retVal, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(AllocationType::constantSurface, moduleTu.globalConstBuffer->getAllocationType());
-    EXPECT_EQ(AllocationType::globalSurface, moduleTu.globalVarBuffer->getAllocationType());
+    EXPECT_EQ(AllocationType::constantSurface, moduleTu.globalConstBuffer->getGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::globalSurface, moduleTu.globalVarBuffer->getGraphicsAllocation()->getAllocationType());
 
     auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
     auto globalConstBufferAllocType = svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress()))->memoryType;
@@ -4206,7 +4206,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
         ~ProxyKernelImmutableData() override { this->KernelImmutableData::~KernelImmutableData(); }
 
         ADDMETHOD(initialize, ze_result_t, true, ZE_RESULT_ERROR_UNKNOWN,
-                  (NEO::KernelInfo * kernelInfo, L0::Device *device, uint32_t computeUnitsUsedForScratch, NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer, bool internalKernel),
+                  (NEO::KernelInfo * kernelInfo, L0::Device *device, uint32_t computeUnitsUsedForScratch, NEO::SharedPoolAllocation *globalConstBuffer, NEO::SharedPoolAllocation *globalVarBuffer, bool internalKernel),
                   (kernelInfo, device, computeUnitsUsedForScratch, globalConstBuffer, globalVarBuffer, internalKernel));
     };
 
@@ -4435,10 +4435,10 @@ TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDe
     auto module = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::user);
     module->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
 
-    module->translationUnit->globalVarBuffer = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::buffer, neoDevice->getDeviceBitfield()});
-    module->translationUnit->globalConstBuffer = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::buffer, neoDevice->getDeviceBitfield()});
+    module->translationUnit->globalVarBuffer = std::make_unique<SharedPoolAllocation>(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::buffer, neoDevice->getDeviceBitfield()}));
+    module->translationUnit->globalConstBuffer = std::make_unique<SharedPoolAllocation>(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::buffer, neoDevice->getDeviceBitfield()}));
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -4458,8 +4458,8 @@ TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDe
 
     auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(this->device);
     kernelImmData->setIsaPerKernelAllocation(module->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo, device, 0, module->translationUnit->globalConstBuffer, module->translationUnit->globalVarBuffer, false);
-    kernelImmData->createRelocatedDebugData(module->translationUnit->globalConstBuffer, module->translationUnit->globalVarBuffer);
+    kernelImmData->initialize(kernelInfo, device, 0, module->translationUnit->globalConstBuffer.get(), module->translationUnit->globalVarBuffer.get(), false);
+    kernelImmData->createRelocatedDebugData(module->translationUnit->globalConstBuffer.get(), module->translationUnit->globalVarBuffer.get());
 
     module->kernelImmDatas.push_back(std::move(kernelImmData));
 
@@ -4912,10 +4912,10 @@ TEST_F(ModuleTests, givenModuleWithGlobalAndConstAllocationsWhenGettingModuleAll
                                                                       ModuleType::user);
     module->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
 
-    module->translationUnit->globalVarBuffer = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::buffer, neoDevice->getDeviceBitfield()});
-    module->translationUnit->globalConstBuffer = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::buffer, neoDevice->getDeviceBitfield()});
+    module->translationUnit->globalVarBuffer = std::make_unique<SharedPoolAllocation>(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::buffer, neoDevice->getDeviceBitfield()}));
+    module->translationUnit->globalConstBuffer = std::make_unique<SharedPoolAllocation>(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::buffer, neoDevice->getDeviceBitfield()}));
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -4929,17 +4929,17 @@ TEST_F(ModuleTests, givenModuleWithGlobalAndConstAllocationsWhenGettingModuleAll
     auto isaAlloc = module->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize);
     ASSERT_NE(isaAlloc, nullptr);
     kernelImmData->setIsaPerKernelAllocation(isaAlloc);
-    kernelImmData->initialize(kernelInfo, device, 0, module->translationUnit->globalConstBuffer, module->translationUnit->globalVarBuffer, false);
+    kernelImmData->initialize(kernelInfo, device, 0, module->translationUnit->globalConstBuffer.get(), module->translationUnit->globalVarBuffer.get(), false);
     module->kernelImmDatas.push_back(std::move(kernelImmData));
 
     const auto allocs = module->getModuleAllocations();
 
     EXPECT_EQ(3u, allocs.size());
 
-    auto iter = std::find(allocs.begin(), allocs.end(), module->translationUnit->globalConstBuffer);
+    auto iter = std::find(allocs.begin(), allocs.end(), module->translationUnit->getGlobalConstBufferGA());
     EXPECT_NE(allocs.end(), iter);
 
-    iter = std::find(allocs.begin(), allocs.end(), module->translationUnit->globalVarBuffer);
+    iter = std::find(allocs.begin(), allocs.end(), module->translationUnit->getGlobalVarBufferGA());
     EXPECT_NE(allocs.end(), iter);
 
     iter = std::find(allocs.begin(), allocs.end(), module->kernelImmDatas[0]->getIsaGraphicsAllocation());
@@ -4995,12 +4995,28 @@ TEST_F(ModuleWithZebinTest, givenZebinSegmentsThenSegmentsArePopulated) {
         EXPECT_EQ(alloc->getGpuAddress(), segment.address);
         EXPECT_EQ(alloc->getUnderlyingBufferSize(), segment.size);
     };
-    checkGPUSeg(module->translationUnit->globalConstBuffer, segments.constData);
-    checkGPUSeg(module->translationUnit->globalConstBuffer, segments.varData);
+    checkGPUSeg(module->translationUnit->getGlobalConstBufferGA(), segments.constData);
+    checkGPUSeg(module->translationUnit->getGlobalConstBufferGA(), segments.varData);
     checkGPUSeg(module->kernelImmDatas[0]->getIsaGraphicsAllocation(), segments.nameToSegMap[ZebinTestData::ValidEmptyProgram<>::kernelName]);
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(module->translationUnit->programInfo.globalStrings.initData), segments.stringData.address);
     EXPECT_EQ(module->translationUnit->programInfo.globalStrings.size, segments.stringData.size);
+}
+
+TEST_F(ModuleWithZebinTest, givenZebinSegmentsWithSharedGlobalConstAndVarBuffersThenSegmentsArePopulated) {
+    constexpr bool createWithSharedGlobalConstSurfaces = true;
+    module->addSegments(createWithSharedGlobalConstSurfaces);
+    auto segments = module->getZebinSegments();
+
+    auto checkGPUSeg = [](NEO::SharedPoolAllocation *poolAlloc, NEO::Zebin::Debug::Segments::Segment segment) {
+        EXPECT_EQ(poolAlloc->getGpuAddress(), segment.address);
+        EXPECT_EQ(poolAlloc->getSize(), segment.size);
+
+        EXPECT_NE(poolAlloc->getGpuAddress(), poolAlloc->getGraphicsAllocation()->getGpuAddress());
+        EXPECT_NE(poolAlloc->getSize(), poolAlloc->getGraphicsAllocation()->getUnderlyingBufferSize());
+    };
+    checkGPUSeg(module->translationUnit->globalConstBuffer.get(), segments.constData);
+    checkGPUSeg(module->translationUnit->globalVarBuffer.get(), segments.varData);
 }
 
 TEST_F(ModuleWithZebinTest, givenValidZebinWhenGettingDebugInfoThenDebugZebinIsCreatedAndReturned) {

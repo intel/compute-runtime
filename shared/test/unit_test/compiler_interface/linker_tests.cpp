@@ -749,8 +749,8 @@ HWTEST_F(LinkerTests, givenEmptyLinkerInputThenLinkerOutputIsEmpty) {
     NEO::LinkerInput linkerInput;
     NEO::Linker linker(linkerInput);
     NEO::Linker::SegmentInfo globalVar, globalConst, exportedFunc;
-    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
-    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
@@ -770,8 +770,8 @@ HWTEST_F(LinkerTests, givenInvalidLinkerInputThenLinkerFails) {
     mockLinkerInput.valid = false;
     NEO::Linker linker(mockLinkerInput);
     NEO::Linker::SegmentInfo globalVar, globalConst, exportedFunc;
-    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
-    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
@@ -836,8 +836,8 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalsWhenLinkThenSubDeviceIDSymbolsAreC
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     NEO::Linker::ExternalFunctionsT externalFunctions;
 
-    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
-    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableConstVarSeg = nullptr;
     std::vector<char> instructionSegment;
     instructionSegment.resize(128u);
     NEO::Linker::PatchableSegments instructionsSegments;
@@ -1013,8 +1013,8 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalWhenPatchingInstructionsThenLinkPar
     NEO::Linker::PatchableSegment seg0;
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = instructionSegment.size();
-    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
-    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
 
     auto linkResult = linker.link(
@@ -1116,8 +1116,8 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsThenInstructionSegmentsAreP
     patchableInstructionSegments[1].gpuAddress = 0x0;
     patchableInstructionSegments[1].segmentSize = instructionSegment.size();
 
-    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
-    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     NEO::Linker::ExternalFunctionsT externalFunctions;
 
@@ -1189,8 +1189,8 @@ HWTEST_F(LinkerTests, givenInvalidSymbolOffsetWhenPatchingInstructionsThenReloca
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = instructionSegment.size();
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
-    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
-    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableConstVarSeg = nullptr;
 
     auto linkResult = linker.link(
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
@@ -1241,8 +1241,8 @@ HWTEST_F(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfInstructionsFail
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = relocA.r_offset;
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
-    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
-    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableConstVarSeg = nullptr;
 
     auto linkResult = linker.link(
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
@@ -1294,8 +1294,8 @@ HWTEST_F(LinkerTests, givenUnknownSymbolTypeWhenPatchingInstructionsThenRelocati
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = instructionSegment.size();
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
-    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
-    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableConstVarSeg = nullptr;
 
     ASSERT_EQ(1U, linkerInput.symbols.count("A"));
     linkerInput.symbols["A"].segment = NEO::SegmentType::unknown;
@@ -1467,19 +1467,22 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThe
     exportedFunctionsInit[0] = 0x12; // <- fun1
     exportedFunctionsInit[1] = 0x34; // <- fun2
 
-    NEO::MockGraphicsAllocation globalConstantsPatchableSegment{initGlobalConstantData, sizeof(initGlobalConstantData)};
-    NEO::MockGraphicsAllocation globalVariablesPatchableSegment{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
-    NEO::MockGraphicsAllocation exportedFunctions{&exportedFunctionsInit, sizeof(exportedFunctionsInit)};
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegmentMockGA{initGlobalConstantData, sizeof(initGlobalConstantData)};
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegmentMockGA{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+    NEO::MockGraphicsAllocation exportedFunctionsMockGA{&exportedFunctionsInit, sizeof(exportedFunctionsInit)};
+
+    auto globalConstantsPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalConstantsPatchableSegmentMockGA);
+    auto globalVariablesPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalVariablesPatchableSegmentMockGA);
 
     NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo, exportedFunctionsSegmentInfo;
-    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment.getUnderlyingBuffer());
-    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment.getUnderlyingBufferSize();
+    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
-    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment.getUnderlyingBuffer());
-    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment.getUnderlyingBufferSize();
+    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
-    exportedFunctionsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(exportedFunctions.getUnderlyingBuffer());
-    exportedFunctionsSegmentInfo.segmentSize = exportedFunctions.getUnderlyingBufferSize();
+    exportedFunctionsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(exportedFunctionsMockGA.getUnderlyingBuffer());
+    exportedFunctionsSegmentInfo.segmentSize = exportedFunctionsMockGA.getUnderlyingBufferSize();
 
     WhiteBox<NEO::LinkerInput> linkerInput;
     auto &fun1 = linkerInput.symbols["fun1"];
@@ -1594,7 +1597,7 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThe
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     NEO::Linker::ExternalFunctionsT externalFunctions;
     auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, exportedFunctionsSegmentInfo, {},
-                                  &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
+                                  globalVariablesPatchableSegment.get(), globalConstantsPatchableSegment.get(), {},
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData),
                                   initGlobalVariablesData, sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
     EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
@@ -1633,17 +1636,20 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsToBssDataSectionsWhenPatchi
     uint64_t constantsSegmentData[2]{0};       // size 2 * uint64_t - contains also bss at the end
     uint64_t globalVariablesSegmentData[2]{0}; // size 2 * uint64_t - contains also bss at the end
 
-    NEO::MockGraphicsAllocation globalConstantsPatchableSegment{constantsSegmentData, sizeof(constantsSegmentData)};
-    NEO::MockGraphicsAllocation globalVariablesPatchableSegment{globalVariablesSegmentData, sizeof(globalVariablesSegmentData)};
-    globalConstantsPatchableSegment.gpuAddress = 0xA0000000;
-    globalVariablesPatchableSegment.gpuAddress = 0xB0000000;
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegmentMockGA{constantsSegmentData, sizeof(constantsSegmentData)};
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegmentMockGA{globalVariablesSegmentData, sizeof(globalVariablesSegmentData)};
+    globalConstantsPatchableSegmentMockGA.gpuAddress = 0xA0000000;
+    globalVariablesPatchableSegmentMockGA.gpuAddress = 0xB0000000;
+
+    auto globalConstantsPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalConstantsPatchableSegmentMockGA);
+    auto globalVariablesPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalVariablesPatchableSegmentMockGA);
 
     NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
-    globalConstantsSegmentInfo.gpuAddress = static_cast<uintptr_t>(globalConstantsPatchableSegment.getGpuAddress());
-    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment.getUnderlyingBufferSize();
+    globalConstantsSegmentInfo.gpuAddress = static_cast<uintptr_t>(globalConstantsPatchableSegment->getGraphicsAllocation()->getGpuAddress());
+    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
-    globalVariablesSegmentInfo.gpuAddress = static_cast<uintptr_t>(globalVariablesPatchableSegment.getGpuAddress());
-    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment.getUnderlyingBufferSize();
+    globalVariablesSegmentInfo.gpuAddress = static_cast<uintptr_t>(globalVariablesPatchableSegment->getGraphicsAllocation()->getGpuAddress());
+    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
     auto setUpInstructionSeg = [](std::vector<uint8_t> &instrData, NEO::Linker::PatchableSegments &patchableInstrSeg) -> void {
         uint64_t initData = 0x77777777;
@@ -1745,19 +1751,19 @@ HWTEST_F(LinkerTests, givenValidSymbolsAndRelocationsToBssDataSectionsWhenPatchi
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     NEO::Linker::ExternalFunctionsT externalFunctions;
     auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
-                                  &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, patchableInstructionSegments,
+                                  globalVariablesPatchableSegment.get(), globalConstantsPatchableSegment.get(), patchableInstructionSegments,
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData),
                                   initGlobalVariablesData, sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
     EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
 
-    auto globalConstantsSegmentAddr = reinterpret_cast<uint64_t *>(globalConstantsPatchableSegment.getUnderlyingBuffer());
-    auto globalVariableSegmentAddr = reinterpret_cast<uint64_t *>(globalVariablesPatchableSegment.getUnderlyingBuffer());
+    auto globalConstantsSegmentAddr = reinterpret_cast<uint64_t *>(globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    auto globalVariableSegmentAddr = reinterpret_cast<uint64_t *>(globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
 
-    auto var1Addr = globalVariablesPatchableSegment.getGpuAddress();
-    auto const1Addr = globalConstantsPatchableSegment.getGpuAddress();
-    auto bssConstAddrr = globalConstantsPatchableSegment.getGpuAddress() + sizeof(initGlobalConstantData);
-    auto bssVarAddr = globalVariablesPatchableSegment.getGpuAddress() + sizeof(initGlobalVariablesData);
+    auto var1Addr = globalVariablesPatchableSegment->getGraphicsAllocation()->getGpuAddress();
+    auto const1Addr = globalConstantsPatchableSegment->getGraphicsAllocation()->getGpuAddress();
+    auto bssConstAddrr = globalConstantsPatchableSegment->getGraphicsAllocation()->getGpuAddress() + sizeof(initGlobalConstantData);
+    auto bssVarAddr = globalVariablesPatchableSegment->getGraphicsAllocation()->getGpuAddress() + sizeof(initGlobalVariablesData);
 
     EXPECT_EQ(var1Addr, *(globalConstantsSegmentAddr + 1));
     EXPECT_EQ(const1Addr, *(globalVariableSegmentAddr + 1));
@@ -1769,15 +1775,18 @@ HWTEST_F(LinkerTests, givenInvalidSymbolWhenPatchingDataSegmentsThenRelocationIs
     uint64_t initGlobalConstantData[3] = {};
     uint64_t initGlobalVariablesData[3] = {};
 
-    NEO::MockGraphicsAllocation globalConstantsPatchableSegment{initGlobalConstantData, sizeof(initGlobalConstantData)};
-    NEO::MockGraphicsAllocation globalVariablesPatchableSegment{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegmentMockGA{initGlobalConstantData, sizeof(initGlobalConstantData)};
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegmentMockGA{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+
+    auto globalConstantsPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalConstantsPatchableSegmentMockGA);
+    auto globalVariablesPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalVariablesPatchableSegmentMockGA);
 
     NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
-    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment.getUnderlyingBuffer());
-    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment.getUnderlyingBufferSize();
+    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
-    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment.getUnderlyingBuffer());
-    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment.getUnderlyingBufferSize();
+    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
     WhiteBox<NEO::LinkerInput> linkerInput;
     NEO::LinkerInput::RelocationInfo relocationInfo;
@@ -1792,7 +1801,7 @@ HWTEST_F(LinkerTests, givenInvalidSymbolWhenPatchingDataSegmentsThenRelocationIs
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     NEO::Linker::ExternalFunctionsT externalFunctions;
     auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
-                                  &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
+                                  globalVariablesPatchableSegment.get(), globalConstantsPatchableSegment.get(), {},
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData), initGlobalVariablesData,
                                   sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
     EXPECT_EQ(NEO::LinkingStatus::linkedPartially, linkResult);
@@ -1803,15 +1812,18 @@ HWTEST_F(LinkerTests, givenInvalidRelocationOffsetWhenPatchingDataSegmentsThenRe
     uint64_t initGlobalConstantData[3] = {};
     uint64_t initGlobalVariablesData[3] = {};
 
-    NEO::MockGraphicsAllocation globalConstantsPatchableSegment{initGlobalConstantData, sizeof(initGlobalConstantData)};
-    NEO::MockGraphicsAllocation globalVariablesPatchableSegment{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegmentMockGA{initGlobalConstantData, sizeof(initGlobalConstantData)};
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegmentMockGA{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+
+    auto globalConstantsPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalConstantsPatchableSegmentMockGA);
+    auto globalVariablesPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalVariablesPatchableSegmentMockGA);
 
     NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
-    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment.getUnderlyingBuffer());
-    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment.getUnderlyingBufferSize();
+    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
-    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment.getUnderlyingBuffer());
-    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment.getUnderlyingBufferSize();
+    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
     WhiteBox<NEO::LinkerInput> linkerInput;
     auto &symbol = linkerInput.symbols["symbol"];
@@ -1831,7 +1843,7 @@ HWTEST_F(LinkerTests, givenInvalidRelocationOffsetWhenPatchingDataSegmentsThenRe
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     NEO::Linker::ExternalFunctionsT externalFunctions;
     auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
-                                  &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
+                                  globalVariablesPatchableSegment.get(), globalConstantsPatchableSegment.get(), {},
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData),
                                   initGlobalVariablesData, sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
     EXPECT_EQ(NEO::LinkingStatus::linkedPartially, linkResult);
@@ -1868,15 +1880,18 @@ HWTEST_F(LinkerTests, given32BitBinaryWithValidSymbolsAndRelocationsWhenPatching
     uint64_t initGlobalConstantData[3] = {};
     uint64_t initGlobalVariablesData[3] = {};
 
-    NEO::MockGraphicsAllocation globalConstantsPatchableSegment{initGlobalConstantData, sizeof(initGlobalConstantData)};
-    NEO::MockGraphicsAllocation globalVariablesPatchableSegment{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegmentMockGA{initGlobalConstantData, sizeof(initGlobalConstantData)};
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegmentMockGA{initGlobalVariablesData, sizeof(initGlobalVariablesData)};
+
+    auto globalConstantsPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalConstantsPatchableSegmentMockGA);
+    auto globalVariablesPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalVariablesPatchableSegmentMockGA);
 
     NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
-    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment.getUnderlyingBuffer());
-    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment.getUnderlyingBufferSize();
+    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
-    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment.getUnderlyingBuffer());
-    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment.getUnderlyingBufferSize();
+    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
     WhiteBox<NEO::LinkerInput> linkerInput;
     linkerInput.setPointerSize(NEO::LinkerInput::Traits::PointerSize::Ptr32bit);
@@ -1897,7 +1912,7 @@ HWTEST_F(LinkerTests, given32BitBinaryWithValidSymbolsAndRelocationsWhenPatching
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     NEO::Linker::ExternalFunctionsT externalFunctions;
     auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
-                                  &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
+                                  globalVariablesPatchableSegment.get(), globalConstantsPatchableSegment.get(), {},
                                   unresolvedExternals, pDevice, initGlobalConstantData, sizeof(initGlobalConstantData), initGlobalVariablesData,
                                   sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
     EXPECT_EQ(NEO::LinkingStatus::linkedFully, linkResult);
@@ -2630,8 +2645,8 @@ HWTEST_F(LinkerTests, givenDependencyOnMissingExternalFunctionWhenLinkingThenFai
     linkerInput.extFunDependencies.push_back({"fun0", "fun1"});
     NEO::Linker linker(linkerInput);
     NEO::Linker::SegmentInfo globalVar, globalConst, exportedFunc;
-    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
-    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
@@ -2648,8 +2663,8 @@ HWTEST_F(LinkerTests, givenDependencyOnMissingExternalFunctionAndNoExternalFunct
     linkerInput.extFunDependencies.push_back({"fun0", "fun1"});
     NEO::Linker linker(linkerInput);
     NEO::Linker::SegmentInfo globalVar, globalConst, exportedFunc;
-    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
-    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::SharedPoolAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
@@ -2689,11 +2704,12 @@ TEST_F(LinkerTests, givenRelaWhenPatchingInstructionsSegmentThenAddendIsAdded) {
 
 HWTEST_F(LinkerTests, givenRelaWhenPatchingDataSegmentThenAddendIsAdded) {
     uint64_t globalConstantSegmentData{0U};
-    NEO::MockGraphicsAllocation globalConstantsPatchableSegment{&globalConstantSegmentData, sizeof(globalConstantSegmentData)};
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegmentMockGA{&globalConstantSegmentData, sizeof(globalConstantSegmentData)};
+    auto globalConstantsPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalConstantsPatchableSegmentMockGA);
 
     NEO::Linker::SegmentInfo globalConstantsSegmentInfo;
-    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment.getUnderlyingBuffer());
-    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment.getUnderlyingBufferSize();
+    globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
     WhiteBox<NEO::LinkerInput> linkerInput;
     linkerInput.traits.requiresPatchingOfGlobalConstantsBuffer = true;
@@ -2710,17 +2726,18 @@ HWTEST_F(LinkerTests, givenRelaWhenPatchingDataSegmentThenAddendIsAdded) {
     linker.relocatedSymbols[rela.symbolName].gpuAddress = symValue;
 
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    linker.patchDataSegments({}, globalConstantsSegmentInfo, {}, &globalConstantsPatchableSegment, unresolvedExternals, pDevice, &globalConstantSegmentData, sizeof(globalConstantSegmentData), nullptr, 0);
+    linker.patchDataSegments({}, globalConstantsSegmentInfo, {}, globalConstantsPatchableSegment.get(), unresolvedExternals, pDevice, &globalConstantSegmentData, sizeof(globalConstantSegmentData), nullptr, 0);
     EXPECT_EQ(static_cast<uint64_t>(rela.addend + symValue), globalConstantSegmentData);
 }
 
 HWTEST_F(LinkerTests, givenRelocationInfoWhenPatchingDataSegmentWithGlobalVariableSymbolThenAddendIsAdded) {
     uint64_t globalVariableSegmentData{0U};
-    NEO::MockGraphicsAllocation globalVariablesPatchableSegment{&globalVariableSegmentData, sizeof(globalVariableSegmentData)};
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegmentMockGA{&globalVariableSegmentData, sizeof(globalVariableSegmentData)};
+    auto globalVariablesPatchableSegment = std::make_unique<NEO::SharedPoolAllocation>(&globalVariablesPatchableSegmentMockGA);
 
     NEO::Linker::SegmentInfo globalVariablesSegmentInfo;
-    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment.getUnderlyingBuffer());
-    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment.getUnderlyingBufferSize();
+    globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBuffer());
+    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment->getGraphicsAllocation()->getUnderlyingBufferSize();
 
     WhiteBox<NEO::LinkerInput> linkerInput;
     linkerInput.traits.requiresPatchingOfGlobalVariablesBuffer = true;
@@ -2737,7 +2754,7 @@ HWTEST_F(LinkerTests, givenRelocationInfoWhenPatchingDataSegmentWithGlobalVariab
     linker.relocatedSymbols[relocationInfo.symbolName].gpuAddress = symValue;
 
     NEO::Linker::UnresolvedExternals unresolvedExternals;
-    linker.patchDataSegments(globalVariablesSegmentInfo, {}, &globalVariablesPatchableSegment, {}, unresolvedExternals, pDevice, nullptr, 0, &globalVariableSegmentData, sizeof(globalVariableSegmentData));
+    linker.patchDataSegments(globalVariablesSegmentInfo, {}, globalVariablesPatchableSegment.get(), {}, unresolvedExternals, pDevice, nullptr, 0, &globalVariableSegmentData, sizeof(globalVariableSegmentData));
     EXPECT_EQ(static_cast<uint64_t>(relocationInfo.addend + symValue), globalVariableSegmentData);
 }
 

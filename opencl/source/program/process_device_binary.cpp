@@ -91,15 +91,15 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
     Linker::SegmentInfo constants;
     Linker::SegmentInfo exportedFunctions;
     Linker::SegmentInfo strings;
-    GraphicsAllocation *globalsForPatching = getGlobalSurface(rootDeviceIndex);
-    GraphicsAllocation *constantsForPatching = getConstantSurface(rootDeviceIndex);
+    SharedPoolAllocation *globalsForPatching = getGlobalSurface(rootDeviceIndex);
+    SharedPoolAllocation *constantsForPatching = getConstantSurface(rootDeviceIndex);
     if (globalsForPatching != nullptr) {
         globals.gpuAddress = static_cast<uintptr_t>(globalsForPatching->getGpuAddress());
-        globals.segmentSize = globalsForPatching->getUnderlyingBufferSize();
+        globals.segmentSize = globalsForPatching->getSize();
     }
     if (constantsForPatching != nullptr) {
         constants.gpuAddress = static_cast<uintptr_t>(constantsForPatching->getGpuAddress());
-        constants.segmentSize = constantsForPatching->getUnderlyingBufferSize();
+        constants.segmentSize = constantsForPatching->getSize();
     }
     if (stringsInfo.initData != nullptr) {
         strings.gpuAddress = reinterpret_cast<uintptr_t>(stringsInfo.initData);
@@ -217,11 +217,13 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
     cleanCurrentKernelInfo(rootDeviceIndex);
     auto &buildInfo = buildInfos[rootDeviceIndex];
 
-    if (buildInfo.constantSurface || buildInfo.globalSurface) {
-        clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface);
-        clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.globalSurface);
-        buildInfo.constantSurface = nullptr;
-        buildInfo.globalSurface = nullptr;
+    if (buildInfo.constantSurface) {
+        clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface->getGraphicsAllocation());
+        buildInfo.constantSurface.reset();
+    }
+    if (buildInfo.globalSurface) {
+        clDevice.getMemoryManager()->freeGraphicsMemory(buildInfo.globalSurface->getGraphicsAllocation());
+        buildInfo.globalSurface.reset();
     }
 
     if (!decodedSingleDeviceBinary.isSet) {
@@ -286,9 +288,9 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
     auto svmAllocsManager = context ? context->getSVMAllocsManager() : nullptr;
     auto globalConstDataSize = src.globalConstants.size + src.globalConstants.zeroInitSize;
     if (globalConstDataSize != 0) {
-        buildInfos[rootDeviceIndex].constantSurface = allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), globalConstDataSize, src.globalConstants.zeroInitSize, true, linkerInput, src.globalConstants.initData);
+        buildInfos[rootDeviceIndex].constantSurface.reset(allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), globalConstDataSize, src.globalConstants.zeroInitSize, true, linkerInput, src.globalConstants.initData));
         if (isBindlessKernelPresent) {
-            if (!clDevice.getMemoryManager()->allocateBindlessSlot(buildInfos[rootDeviceIndex].constantSurface)) {
+            if (!clDevice.getMemoryManager()->allocateBindlessSlot(buildInfos[rootDeviceIndex].constantSurface->getGraphicsAllocation())) {
                 return CL_OUT_OF_HOST_MEMORY;
             }
         }
@@ -297,9 +299,9 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
     auto globalVariablesDataSize = src.globalVariables.size + src.globalVariables.zeroInitSize;
     buildInfos[rootDeviceIndex].globalVarTotalSize = globalVariablesDataSize;
     if (globalVariablesDataSize != 0) {
-        buildInfos[rootDeviceIndex].globalSurface = allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), globalVariablesDataSize, src.globalVariables.zeroInitSize, false, linkerInput, src.globalVariables.initData);
+        buildInfos[rootDeviceIndex].globalSurface.reset(allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), globalVariablesDataSize, src.globalVariables.zeroInitSize, false, linkerInput, src.globalVariables.initData));
         if (isBindlessKernelPresent) {
-            if (!clDevice.getMemoryManager()->allocateBindlessSlot(buildInfos[rootDeviceIndex].globalSurface)) {
+            if (!clDevice.getMemoryManager()->allocateBindlessSlot(buildInfos[rootDeviceIndex].globalSurface->getGraphicsAllocation())) {
                 return CL_OUT_OF_HOST_MEMORY;
             }
         }

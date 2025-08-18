@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef<uint8_t> surfaceStateHeap,
-                                     uintptr_t ptrToPatchInCrossThreadData, NEO::GraphicsAllocation &allocation,
+                                     uintptr_t ptrToPatchInCrossThreadData, NEO::GraphicsAllocation &allocation, uint64_t addressToPatch, size_t sizeToPatch,
                                      const NEO::ArgDescPointer &ptr, const NEO::Device &device,
                                      bool implicitScaling) {
     if (false == crossThreadData.empty()) {
@@ -15,8 +15,6 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
 
     if ((false == surfaceStateHeap.empty()) && (NEO::isValidOffset(ptr.bindful))) {
         auto surfaceState = surfaceStateHeap.begin() + ptr.bindful;
-        auto addressToPatch = allocation.getGpuAddress();
-        size_t sizeToPatch = allocation.getUnderlyingBufferSize();
 
         auto &gfxCoreHelper = device.getGfxCoreHelper();
         auto isDebuggerActive = device.getDebugger() != nullptr;
@@ -34,6 +32,15 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
 
         gfxCoreHelper.encodeBufferSurfaceState(args);
     }
+}
+
+inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef<uint8_t> surfaceStateHeap,
+                                     uintptr_t ptrToPatchInCrossThreadData, NEO::GraphicsAllocation &allocation,
+                                     const NEO::ArgDescPointer &ptr, const NEO::Device &device,
+                                     bool implicitScaling) {
+    patchWithImplicitSurface(crossThreadData, surfaceStateHeap,
+                             ptrToPatchInCrossThreadData, allocation, allocation.getGpuAddress(), allocation.getUnderlyingBufferSize(),
+                             ptr, device, implicitScaling);
 }
 
 inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> crossThreadData, ArrayRef<uint8_t> surfaceStateHeap, NEO::GraphicsAllocation *allocation,

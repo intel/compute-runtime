@@ -69,10 +69,14 @@ struct ModuleTranslationUnit {
     MOCKABLE_VIRTUAL ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, bool staticLink);
     void updateBuildLog(const std::string &newLogEntry);
     void processDebugData();
+    void freeGlobalBufferAllocation(const std::unique_ptr<NEO::SharedPoolAllocation> &buffer);
+    NEO::GraphicsAllocation *getGlobalConstBufferGA() const;
+    NEO::GraphicsAllocation *getGlobalVarBufferGA() const;
+
     L0::Device *device = nullptr;
 
-    NEO::GraphicsAllocation *globalConstBuffer = nullptr;
-    NEO::GraphicsAllocation *globalVarBuffer = nullptr;
+    std::unique_ptr<NEO::SharedPoolAllocation> globalConstBuffer;
+    std::unique_ptr<NEO::SharedPoolAllocation> globalVarBuffer;
     NEO::ProgramInfo programInfo;
 
     std::string options;

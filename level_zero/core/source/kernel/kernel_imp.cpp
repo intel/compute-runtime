@@ -72,7 +72,7 @@ KernelImmutableData::~KernelImmutableData() {
 }
 
 ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device, uint32_t computeUnitsUsedForSratch,
-                                            NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer,
+                                            NEO::SharedPoolAllocation *globalConstBuffer, NEO::SharedPoolAllocation *globalVarBuffer,
                                             bool internalKernel) {
 
     UNRECOVERABLE_IF(kernelInfo == nullptr);
@@ -136,21 +136,22 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  static_cast<uintptr_t>(globalConstBuffer->getGpuAddressToPatch()),
-                                 *globalConstBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
-                                 *neoDevice, deviceImp->isImplicitScalingCapable());
-        this->residencyContainer.push_back(globalConstBuffer);
+                                 *globalConstBuffer->getGraphicsAllocation(), globalConstBuffer->getGpuAddress(), globalConstBuffer->getSize(),
+                                 kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress, *neoDevice, deviceImp->isImplicitScalingCapable());
+        this->residencyContainer.push_back(globalConstBuffer->getGraphicsAllocation());
     } else if (nullptr != globalConstBuffer) {
-        this->residencyContainer.push_back(globalConstBuffer);
+        this->residencyContainer.push_back(globalConstBuffer->getGraphicsAllocation());
     }
 
     if (globalConstBuffer && NEO::isValidOffset(kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless)) {
-        if (!neoDevice->getMemoryManager()->allocateBindlessSlot(globalConstBuffer)) {
+        UNRECOVERABLE_IF(globalConstBuffer->getGraphicsAllocation()->getUnderlyingBufferSize() != globalConstBuffer->getSize());
+        if (!neoDevice->getMemoryManager()->allocateBindlessSlot(globalConstBuffer->getGraphicsAllocation())) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
-        auto &ssInHeap = globalConstBuffer->getBindlessInfo();
+        auto &ssInHeap = globalConstBuffer->getGraphicsAllocation()->getBindlessInfo();
 
         patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
-                                                         globalConstBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
+                                                         globalConstBuffer->getGraphicsAllocation(), kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
                                                          *neoDevice, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
     }
 
@@ -159,38 +160,39 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  static_cast<uintptr_t>(globalVarBuffer->getGpuAddressToPatch()),
-                                 *globalVarBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
-                                 *neoDevice, deviceImp->isImplicitScalingCapable());
-        this->residencyContainer.push_back(globalVarBuffer);
+                                 *globalVarBuffer->getGraphicsAllocation(), globalVarBuffer->getGpuAddress(), globalVarBuffer->getSize(),
+                                 kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress, *neoDevice, deviceImp->isImplicitScalingCapable());
+        this->residencyContainer.push_back(globalVarBuffer->getGraphicsAllocation());
     } else if (nullptr != globalVarBuffer) {
-        this->residencyContainer.push_back(globalVarBuffer);
+        this->residencyContainer.push_back(globalVarBuffer->getGraphicsAllocation());
     }
 
     if (globalVarBuffer && NEO::isValidOffset(kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless)) {
-        if (!neoDevice->getMemoryManager()->allocateBindlessSlot(globalVarBuffer)) {
+        UNRECOVERABLE_IF(globalVarBuffer->getGraphicsAllocation()->getUnderlyingBufferSize() != globalVarBuffer->getSize());
+        if (!neoDevice->getMemoryManager()->allocateBindlessSlot(globalVarBuffer->getGraphicsAllocation())) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
-        auto &ssInHeap = globalVarBuffer->getBindlessInfo();
+        auto &ssInHeap = globalVarBuffer->getGraphicsAllocation()->getBindlessInfo();
 
         patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
-                                                         globalVarBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
+                                                         globalVarBuffer->getGraphicsAllocation(), kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
                                                          *neoDevice, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
-void KernelImmutableData::createRelocatedDebugData(NEO::GraphicsAllocation *globalConstBuffer,
-                                                   NEO::GraphicsAllocation *globalVarBuffer) {
+void KernelImmutableData::createRelocatedDebugData(NEO::SharedPoolAllocation *globalConstBuffer,
+                                                   NEO::SharedPoolAllocation *globalVarBuffer) {
     NEO::Linker::SegmentInfo globalData;
     NEO::Linker::SegmentInfo constData;
     if (globalVarBuffer) {
         globalData.gpuAddress = globalVarBuffer->getGpuAddress();
-        globalData.segmentSize = globalVarBuffer->getUnderlyingBufferSize();
+        globalData.segmentSize = globalVarBuffer->getSize();
     }
     if (globalConstBuffer) {
         constData.gpuAddress = globalConstBuffer->getGpuAddress();
-        constData.segmentSize = globalConstBuffer->getUnderlyingBufferSize();
+        constData.segmentSize = globalConstBuffer->getSize();
     }
 
     if (kernelInfo->kernelDescriptor.external.debugData.get()) {

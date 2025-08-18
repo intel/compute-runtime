@@ -124,19 +124,19 @@ Program::~Program() {
     }
 
     for (const auto &buildInfo : buildInfos) {
-        if (buildInfo.constantSurface) {
-            if ((nullptr != context) && (nullptr != context->getSVMAllocsManager()) && (context->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(buildInfo.constantSurface->getGpuAddress())))) {
-                context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(buildInfo.constantSurface->getGpuAddress()));
+        if (auto &constantSurface = buildInfo.constantSurface; constantSurface) {
+            if ((nullptr != context) && (nullptr != context->getSVMAllocsManager()) && (context->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(constantSurface->getGpuAddress())))) {
+                context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(constantSurface->getGpuAddress()));
             } else {
-                this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(buildInfo.constantSurface);
+                this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(constantSurface->getGraphicsAllocation());
             }
         }
 
-        if (buildInfo.globalSurface) {
-            if ((nullptr != context) && (nullptr != context->getSVMAllocsManager()) && (context->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(buildInfo.globalSurface->getGpuAddress())))) {
-                context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(buildInfo.globalSurface->getGpuAddress()));
+        if (auto &globalSurface = buildInfo.globalSurface; globalSurface) {
+            if ((nullptr != context) && (nullptr != context->getSVMAllocsManager()) && (context->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(globalSurface->getGpuAddress())))) {
+                context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(globalSurface->getGpuAddress()));
             } else {
-                this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(buildInfo.globalSurface);
+                this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(globalSurface->getGraphicsAllocation());
             }
         }
     }
@@ -631,8 +631,8 @@ StackVec<NEO::GraphicsAllocation *, 32> Program::getModuleAllocations(uint32_t r
     for (const auto &kernelInfo : kernelInfoArray) {
         allocs.push_back(kernelInfo->getGraphicsAllocation());
     }
-    GraphicsAllocation *globalsForPatching = getGlobalSurface(rootIndex);
-    GraphicsAllocation *constantsForPatching = getConstantSurface(rootIndex);
+    GraphicsAllocation *globalsForPatching = getGlobalSurfaceGA(rootIndex);
+    GraphicsAllocation *constantsForPatching = getConstantSurfaceGA(rootIndex);
 
     if (globalsForPatching) {
         allocs.push_back(globalsForPatching);
@@ -652,6 +652,26 @@ void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex
 void Program::callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) {
     auto &buildInfo = this->buildInfos[rootDeviceIndex];
     metadataGeneration->callGenerateDefaultExtendedArgsMetadataOnce(buildInfo.kernelInfoArray);
+}
+
+NEO::SharedPoolAllocation *Program::getConstantSurface(uint32_t rootDeviceIndex) const {
+    return buildInfos[rootDeviceIndex].constantSurface.get();
+}
+
+NEO::GraphicsAllocation *Program::getConstantSurfaceGA(uint32_t rootDeviceIndex) const {
+    return buildInfos[rootDeviceIndex].constantSurface ? buildInfos[rootDeviceIndex].constantSurface->getGraphicsAllocation() : nullptr;
+}
+
+NEO::SharedPoolAllocation *Program::getGlobalSurface(uint32_t rootDeviceIndex) const {
+    return buildInfos[rootDeviceIndex].globalSurface.get();
+}
+
+NEO::GraphicsAllocation *Program::getGlobalSurfaceGA(uint32_t rootDeviceIndex) const {
+    return buildInfos[rootDeviceIndex].globalSurface ? buildInfos[rootDeviceIndex].globalSurface->getGraphicsAllocation() : nullptr;
+}
+
+NEO::GraphicsAllocation *Program::getExportedFunctionsSurface(uint32_t rootDeviceIndex) const {
+    return buildInfos[rootDeviceIndex].exportedFunctionsSurface;
 }
 
 } // namespace NEO

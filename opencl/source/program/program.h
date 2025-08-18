@@ -37,6 +37,7 @@ struct MetadataGeneration;
 struct KernelInfo;
 enum class DecodeError : uint8_t;
 struct ExternalFunctionInfo;
+class SharedPoolAlloction;
 
 template <>
 struct OpenCLObjectMapper<_cl_program> {
@@ -187,17 +188,11 @@ class Program : public BaseObject<_cl_program> {
         return isSpirV;
     }
 
-    GraphicsAllocation *getConstantSurface(uint32_t rootDeviceIndex) const {
-        return buildInfos[rootDeviceIndex].constantSurface;
-    }
-
-    GraphicsAllocation *getGlobalSurface(uint32_t rootDeviceIndex) const {
-        return buildInfos[rootDeviceIndex].globalSurface;
-    }
-
-    GraphicsAllocation *getExportedFunctionsSurface(uint32_t rootDeviceIndex) const {
-        return buildInfos[rootDeviceIndex].exportedFunctionsSurface;
-    }
+    NEO::SharedPoolAllocation *getConstantSurface(uint32_t rootDeviceIndex) const;
+    NEO::GraphicsAllocation *getConstantSurfaceGA(uint32_t rootDeviceIndex) const;
+    NEO::SharedPoolAllocation *getGlobalSurface(uint32_t rootDeviceIndex) const;
+    NEO::GraphicsAllocation *getGlobalSurfaceGA(uint32_t rootDeviceIndex) const;
+    NEO::GraphicsAllocation *getExportedFunctionsSurface(uint32_t rootDeviceIndex) const;
 
     void cleanCurrentKernelInfo(uint32_t rootDeviceIndex);
 
@@ -331,8 +326,8 @@ class Program : public BaseObject<_cl_program> {
 
     struct BuildInfo : public NonCopyableClass {
         std::vector<KernelInfo *> kernelInfoArray;
-        GraphicsAllocation *constantSurface = nullptr;
-        GraphicsAllocation *globalSurface = nullptr;
+        std::unique_ptr<NEO::SharedPoolAllocation> constantSurface;
+        std::unique_ptr<NEO::SharedPoolAllocation> globalSurface;
         GraphicsAllocation *exportedFunctionsSurface = nullptr;
         size_t globalVarTotalSize = 0U;
         std::unique_ptr<LinkerInput> linkerInput;

@@ -525,15 +525,15 @@ TEST_F(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffers
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
 
-    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface = new MockGraphicsAllocation();
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     pProgram->processGenBinary(*pClDevice);
-    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
-    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.get());
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
 
-    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     pProgram->processGenBinary(*pClDevice);
-    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
-    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface.get());
+    EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface.get());
 }
 
 TEST_F(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {
@@ -583,16 +583,16 @@ TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfo
 TEST_F(ProgramFromBinaryTest, givenProgramWithGlobalAndConstAllocationsWhenGettingModuleAllocationsThenAllAreReturned) {
     pProgram->build(pProgram->getDevices(), nullptr);
     pProgram->processGenBinary(*pClDevice);
-    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface = new MockGraphicsAllocation();
-    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
 
     auto allocs = pProgram->getModuleAllocations(pClDevice->getRootDeviceIndex());
     EXPECT_EQ(pProgram->getNumKernels() + 2u, allocs.size());
 
-    auto iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
+    auto iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface->getGraphicsAllocation());
     EXPECT_NE(allocs.end(), iter);
 
-    iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
+    iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation());
     EXPECT_NE(allocs.end(), iter);
 
     iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].kernelInfoArray[0]->getGraphicsAllocation());
@@ -2080,22 +2080,24 @@ TEST_F(ProgramTests, givenExistingConstantSurfacesWhenProcessGenBinaryThenCleanu
     auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
 
     program->buildInfos.resize(2);
-    program->buildInfos[0].constantSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                                AllocationType::constantSurface, pDevice->getDeviceBitfield()});
-    program->buildInfos[1].constantSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                                AllocationType::constantSurface, pDevice->getDeviceBitfield()});
+    program->buildInfos[0].constantSurface = std::make_unique<SharedPoolAllocation>(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
+                                                                                                                                                       AllocationType::constantSurface, pDevice->getDeviceBitfield()}));
+    program->buildInfos[1].constantSurface = std::make_unique<SharedPoolAllocation>(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
+                                                                                                                                                       AllocationType::constantSurface, pDevice->getDeviceBitfield()}));
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
 
-    auto constantSurface0 = program->buildInfos[0].constantSurface;
+    auto constantSurface0 = program->buildInfos[0].constantSurface.get();
     EXPECT_NE(nullptr, constantSurface0);
-    auto constantSurface1 = program->buildInfos[1].constantSurface;
+    EXPECT_NE(nullptr, constantSurface0->getGraphicsAllocation());
+    auto constantSurface1 = program->buildInfos[1].constantSurface.get();
     EXPECT_NE(nullptr, constantSurface1);
+    EXPECT_NE(nullptr, constantSurface1->getGraphicsAllocation());
 
     auto retVal = program->processGenBinary(*pClDevice);
 
     EXPECT_EQ(nullptr, program->buildInfos[0].constantSurface);
-    EXPECT_EQ(constantSurface1, program->buildInfos[1].constantSurface);
+    EXPECT_EQ(constantSurface1->getGraphicsAllocation(), program->buildInfos[1].constantSurface->getGraphicsAllocation());
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
@@ -2106,22 +2108,24 @@ TEST_F(ProgramTests, givenExistingGlobalSurfacesWhenProcessGenBinaryThenCleanupT
     auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
 
     program->buildInfos.resize(2);
-    program->buildInfos[0].globalSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                              AllocationType::globalSurface, pDevice->getDeviceBitfield()});
-    program->buildInfos[1].globalSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                              AllocationType::globalSurface, pDevice->getDeviceBitfield()});
+    program->buildInfos[0].globalSurface = std::make_unique<SharedPoolAllocation>(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
+                                                                                                                                                     AllocationType::globalSurface, pDevice->getDeviceBitfield()}));
+    program->buildInfos[1].globalSurface = std::make_unique<SharedPoolAllocation>(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
+                                                                                                                                                     AllocationType::globalSurface, pDevice->getDeviceBitfield()}));
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
 
-    auto globalSurface0 = program->buildInfos[0].globalSurface;
+    auto globalSurface0 = program->buildInfos[0].globalSurface.get();
     EXPECT_NE(nullptr, globalSurface0);
-    auto globalSurface1 = program->buildInfos[1].globalSurface;
+    EXPECT_NE(nullptr, globalSurface0->getGraphicsAllocation());
+    auto globalSurface1 = program->buildInfos[1].globalSurface.get();
     EXPECT_NE(nullptr, globalSurface1);
+    EXPECT_NE(nullptr, globalSurface1->getGraphicsAllocation());
 
     auto retVal = program->processGenBinary(*pClDevice);
 
     EXPECT_EQ(nullptr, program->buildInfos[0].globalSurface);
-    EXPECT_EQ(globalSurface1, program->buildInfos[1].globalSurface);
+    EXPECT_EQ(globalSurface1->getGraphicsAllocation(), program->buildInfos[1].globalSurface->getGraphicsAllocation());
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 }

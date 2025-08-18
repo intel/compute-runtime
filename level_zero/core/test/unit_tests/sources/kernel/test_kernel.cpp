@@ -949,8 +949,8 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserKer
 
     mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
                                   device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module->translationUnit->globalConstBuffer,
-                                  module->translationUnit->globalVarBuffer,
+                                  module->translationUnit->globalConstBuffer.get(),
+                                  module->translationUnit->globalVarBuffer.get(),
                                   isInternal);
 
     EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
@@ -972,8 +972,8 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForInterna
 
     mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
                                   device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module->translationUnit->globalConstBuffer,
-                                  module->translationUnit->globalVarBuffer,
+                                  module->translationUnit->globalConstBuffer.get(),
+                                  module->translationUnit->globalVarBuffer.get(),
                                   isInternal);
 
     EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
@@ -2407,20 +2407,20 @@ TEST_F(KernelIsaTests, givenGlobalBuffersWhenCreatingKernelImmutableDataThenBuff
     uint64_t gpuAddress = 0x1200;
     void *buffer = reinterpret_cast<void *>(gpuAddress);
     size_t size = 0x1100;
-    NEO::MockGraphicsAllocation globalVarBuffer(buffer, gpuAddress, size);
-    NEO::MockGraphicsAllocation globalConstBuffer(buffer, gpuAddress, size);
+    NEO::MockGraphicsAllocation globalVarBufferMockGA(buffer, gpuAddress, size);
+    NEO::MockGraphicsAllocation globalConstBufferMockGA(buffer, gpuAddress, size);
 
     ModuleBuildLog *moduleBuildLog = nullptr;
     this->module.reset(new WhiteBox<::L0::Module>{this->device, moduleBuildLog, ModuleType::user});
-    this->module->mockGlobalVarBuffer = &globalVarBuffer;
-    this->module->mockGlobalConstBuffer = &globalConstBuffer;
+    this->module->mockGlobalVarBuffer = std::make_unique<NEO::SharedPoolAllocation>(&globalVarBufferMockGA);
+    this->module->mockGlobalConstBuffer = std::make_unique<NEO::SharedPoolAllocation>(&globalConstBufferMockGA);
 
     this->createModuleFromMockBinary(ModuleType::user);
 
     for (auto &kernelImmData : this->module->kernelImmDatas) {
         auto &resCont = kernelImmData->getResidencyContainer();
-        EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalVarBuffer));
-        EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalConstBuffer));
+        EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalVarBufferMockGA));
+        EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalConstBufferMockGA));
     }
     this->module->translationUnit->globalConstBuffer = nullptr;
     this->module->translationUnit->globalVarBuffer = nullptr;

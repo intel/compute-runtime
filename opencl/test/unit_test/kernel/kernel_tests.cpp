@@ -1494,13 +1494,13 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBuffe
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
     EXPECT_EQ(0u, commandStreamReceiver.makeResidentAllocations.size());
     kernel->makeResident(pDevice->getGpgpuCommandStreamReceiver());
-    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation()));
 
     std::vector<NEO::Surface *> residencySurfaces;
     kernel->getResidency(residencySurfaces);
@@ -1515,7 +1515,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBuffe
             s->makeResident(csrMock);
             delete s;
         }
-        EXPECT_EQ(1U, csrMock.residency.count(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getUnderlyingBuffer()));
+        EXPECT_EQ(1U, csrMock.residency.count(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation()->getUnderlyingBuffer()));
     }
 
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
@@ -1537,10 +1537,10 @@ HWTEST_F(KernelResidencyTest, givenBindlessHeapsHelperAndGlobalAndConstantBuffer
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
-    program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface = new MockGraphicsAllocation();
-    EXPECT_TRUE(memoryManager->allocateBindlessSlot(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface));
-    EXPECT_TRUE(memoryManager->allocateBindlessSlot(program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface));
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
+    program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
+    EXPECT_TRUE(memoryManager->allocateBindlessSlot(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation()));
+    EXPECT_TRUE(memoryManager->allocateBindlessSlot(program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface->getGraphicsAllocation()));
 
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
@@ -1548,11 +1548,11 @@ HWTEST_F(KernelResidencyTest, givenBindlessHeapsHelperAndGlobalAndConstantBuffer
     EXPECT_EQ(0u, commandStreamReceiver.makeResidentAllocations.size());
     kernel->makeResident(pDevice->getGpgpuCommandStreamReceiver());
 
-    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface));
-    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.getGlobalSurface(rootDeviceIndex)->getBindlessInfo().heapAllocation));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation()));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.getGlobalSurfaceGA(rootDeviceIndex)->getBindlessInfo().heapAllocation));
 
-    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface));
-    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.getConstantSurface(rootDeviceIndex)->getBindlessInfo().heapAllocation));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface->getGraphicsAllocation()));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.getConstantSurfaceGA(rootDeviceIndex)->getBindlessInfo().heapAllocation));
 
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
@@ -2095,7 +2095,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNor
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2123,7 +2123,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNor
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2152,7 +2152,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithStackCallsAndDetectIndirectAccessIn
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2182,7 +2182,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithoutStackCallsAndDetectIndirectAcces
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2217,7 +2217,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithPtrByValueArgumentAndDetectIndirect
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2246,7 +2246,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNor
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2275,7 +2275,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadAndDetectIndirectAcc
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2304,7 +2304,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgStoreAndDetectIndirectAc
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2333,7 +2333,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicAndDetectIndirectA
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2362,7 +2362,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicAndImplicitArgsHas
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx;
     program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 

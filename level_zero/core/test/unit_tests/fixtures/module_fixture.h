@@ -186,6 +186,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
         MockModuleWithZebin(L0::Device *device);
 
         void addSegments();
+        void addSegments(bool createWithSharedGlobalConstSurfaces);
 
         void addEmptyZebin();
 

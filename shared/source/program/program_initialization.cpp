@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,12 +15,15 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/program/program_info.h"
 
 namespace NEO {
 
-GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAllocManager, NEO::Device &device, size_t totalSize, size_t zeroInitSize, bool constant,
-                                           LinkerInput *const linkerInput, const void *initData) {
+SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAllocManager, NEO::Device &device, size_t totalSize, size_t zeroInitSize, bool constant,
+                                             LinkerInput *const linkerInput, const void *initData) {
+    size_t allocationOffset{0u};
+    size_t allocatedSize{0u};
     bool globalsAreExported = false;
     GraphicsAllocation *gpuAllocation = nullptr;
     const auto rootDeviceIndex = device.getRootDeviceIndex();
@@ -58,6 +61,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     if (!gpuAllocation) {
         return nullptr;
     }
+    allocatedSize = gpuAllocation->getUnderlyingBufferSize();
 
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     auto &productHelper = device.getProductHelper();
@@ -66,10 +70,10 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     if (false == isOnlyBssData) {
         auto initSize = totalSize - zeroInitSize;
         auto success = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *gpuAllocation),
-                                                                        device, gpuAllocation, 0, initData, initSize);
+                                                                        device, gpuAllocation, allocationOffset, initData, initSize);
         UNRECOVERABLE_IF(!success);
     }
-    return gpuAllocation;
+    return new SharedPoolAllocation(gpuAllocation, allocationOffset, allocatedSize, nullptr);
 }
 
 } // namespace NEO

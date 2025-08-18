@@ -80,30 +80,33 @@ ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
 }
 
 ModuleTranslationUnit::~ModuleTranslationUnit() {
-    if (globalConstBuffer) {
-        auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-
-        if (svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(globalConstBuffer->getGpuAddress()))) {
-            svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(globalConstBuffer->getGpuAddress()));
-        } else {
-            this->device->getNEODevice()->getExecutionEnvironment()->memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(globalConstBuffer);
-        }
-    }
-
-    if (globalVarBuffer) {
-        auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-
-        if (svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(globalVarBuffer->getGpuAddress()))) {
-            svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(globalVarBuffer->getGpuAddress()));
-        } else {
-            this->device->getNEODevice()->getExecutionEnvironment()->memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(globalVarBuffer);
-        }
-    }
+    freeGlobalBufferAllocation(globalConstBuffer);
+    freeGlobalBufferAllocation(globalVarBuffer);
 
     if (this->debugData != nullptr) {
         for (std::vector<char *>::iterator iter = alignedvIsas.begin(); iter != alignedvIsas.end(); ++iter) {
             alignedFree(static_cast<void *>(*iter));
         }
+    }
+}
+
+void ModuleTranslationUnit::freeGlobalBufferAllocation(const std::unique_ptr<NEO::SharedPoolAllocation> &globalBuffer) {
+    if (!globalBuffer) {
+        return;
+    }
+
+    auto graphicsAllocation = globalBuffer->getGraphicsAllocation();
+    if (!graphicsAllocation) {
+        return;
+    }
+
+    auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    auto gpuAddress = reinterpret_cast<void *>(globalBuffer->getGpuAddress());
+
+    if (svmAllocsManager->getSVMAlloc(gpuAddress)) {
+        svmAllocsManager->freeSVMAlloc(gpuAddress);
+    } else {
+        this->device->getNEODevice()->getExecutionEnvironment()->memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
     }
 }
 
@@ -406,14 +409,14 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
     auto globalConstDataSize = programInfo.globalConstants.size + programInfo.globalConstants.zeroInitSize;
     if (globalConstDataSize != 0) {
-        this->globalConstBuffer = NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), globalConstDataSize,
-                                                              programInfo.globalConstants.zeroInitSize, true, programInfo.linkerInput.get(), programInfo.globalConstants.initData);
+        this->globalConstBuffer.reset(NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), globalConstDataSize,
+                                                                  programInfo.globalConstants.zeroInitSize, true, programInfo.linkerInput.get(), programInfo.globalConstants.initData));
     }
 
     auto globalVariablesDataSize = programInfo.globalVariables.size + programInfo.globalVariables.zeroInitSize;
     if (globalVariablesDataSize != 0) {
-        this->globalVarBuffer = NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), globalVariablesDataSize,
-                                                            programInfo.globalVariables.zeroInitSize, false, programInfo.linkerInput.get(), programInfo.globalVariables.initData);
+        this->globalVarBuffer.reset(NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), globalVariablesDataSize,
+                                                                programInfo.globalVariables.zeroInitSize, false, programInfo.linkerInput.get(), programInfo.globalVariables.initData));
     }
 
     for (auto &kernelInfo : this->programInfo.kernelInfos) {
@@ -493,6 +496,14 @@ void ModuleTranslationUnit::processDebugData() {
     }
 }
 
+NEO::GraphicsAllocation *ModuleTranslationUnit::getGlobalConstBufferGA() const {
+    return globalConstBuffer ? globalConstBuffer->getGraphicsAllocation() : nullptr;
+}
+
+NEO::GraphicsAllocation *ModuleTranslationUnit::getGlobalVarBufferGA() const {
+    return globalVarBuffer ? globalVarBuffer->getGraphicsAllocation() : nullptr;
+}
+
 ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type)
     : device(device), translationUnit(std::make_unique<ModuleTranslationUnit>(device)),
       moduleBuildLog(moduleBuildLog), type(type) {
@@ -529,7 +540,7 @@ NEO::Zebin::Debug::Segments ModuleImp::getZebinSegments() {
 
     ArrayRef<const uint8_t> strings = {reinterpret_cast<const uint8_t *>(translationUnit->programInfo.globalStrings.initData),
                                        translationUnit->programInfo.globalStrings.size};
-    return NEO::Zebin::Debug::Segments(translationUnit->globalVarBuffer, translationUnit->globalConstBuffer, strings, kernels);
+    return NEO::Zebin::Debug::Segments(translationUnit->globalVarBuffer.get(), translationUnit->globalConstBuffer.get(), strings, kernels);
 }
 
 void ModuleImp::populateZebinExtendedArgsMetadata() {
@@ -787,8 +798,8 @@ ze_result_t ModuleImp::initializeKernelImmutableDatas() {
             result = kernelImmDatas[i]->initialize(this->translationUnit->programInfo.kernelInfos[i],
                                                    device,
                                                    device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                                   this->translationUnit->globalConstBuffer,
-                                                   this->translationUnit->globalVarBuffer,
+                                                   this->translationUnit->globalConstBuffer.get(),
+                                                   this->translationUnit->globalVarBuffer.get(),
                                                    this->type == ModuleType::builtin);
             if (result != ZE_RESULT_SUCCESS) {
                 kernelImmDatas[i].reset();
@@ -1080,19 +1091,19 @@ bool ModuleImp::linkBinary() {
     Linker::SegmentInfo constants;
     Linker::SegmentInfo exportedFunctions;
     Linker::SegmentInfo strings;
-    GraphicsAllocation *globalsForPatching = translationUnit->globalVarBuffer;
-    GraphicsAllocation *constantsForPatching = translationUnit->globalConstBuffer;
+    SharedPoolAllocation *globalsForPatching = translationUnit->globalVarBuffer.get();
+    SharedPoolAllocation *constantsForPatching = translationUnit->globalConstBuffer.get();
 
     auto &compilerProductHelper = this->device->getNEODevice()->getCompilerProductHelper();
     bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(this->device->getHwInfo());
 
     if (globalsForPatching != nullptr) {
         globals.gpuAddress = static_cast<uintptr_t>(globalsForPatching->getGpuAddress());
-        globals.segmentSize = globalsForPatching->getUnderlyingBufferSize();
+        globals.segmentSize = globalsForPatching->getSize();
     }
     if (constantsForPatching != nullptr) {
         constants.gpuAddress = static_cast<uintptr_t>(constantsForPatching->getGpuAddress());
-        constants.segmentSize = constantsForPatching->getUnderlyingBufferSize();
+        constants.segmentSize = constantsForPatching->getSize();
     }
     if (translationUnit->programInfo.globalStrings.initData != nullptr) {
         strings.gpuAddress = reinterpret_cast<uintptr_t>(translationUnit->programInfo.globalStrings.initData);
@@ -1614,10 +1625,10 @@ void ModuleImp::registerElfInDebuggerL0() {
         }
 
         if (translationUnit->globalVarBuffer) {
-            segmentAllocs.push_back(translationUnit->globalVarBuffer);
+            segmentAllocs.push_back(translationUnit->globalVarBuffer->getGraphicsAllocation());
         }
         if (translationUnit->globalConstBuffer) {
-            segmentAllocs.push_back(translationUnit->globalConstBuffer);
+            segmentAllocs.push_back(translationUnit->globalConstBuffer->getGraphicsAllocation());
         }
 
         debuggerL0->attachZebinModuleToSegmentAllocations(segmentAllocs, this->debugModuleHandle, this->debugElfHandle);
@@ -1696,10 +1707,10 @@ StackVec<NEO::GraphicsAllocation *, 32> ModuleImp::getModuleAllocations() {
 
     if (translationUnit) {
         if (translationUnit->globalVarBuffer) {
-            allocs.push_back(translationUnit->globalVarBuffer);
+            allocs.push_back(translationUnit->globalVarBuffer->getGraphicsAllocation());
         }
         if (translationUnit->globalConstBuffer) {
-            allocs.push_back(translationUnit->globalConstBuffer);
+            allocs.push_back(translationUnit->globalConstBuffer->getGraphicsAllocation());
         }
     }
     return allocs;

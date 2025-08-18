@@ -31,6 +31,7 @@ class ProgramWithZebinFixture : public ProgramTests {
     void TearDown() override;
     void addEmptyZebin(MockProgram *program);
     void populateProgramWithSegments(MockProgram *program);
+    void populateProgramWithSegments(MockProgram *program, bool createWithSharedGlobalConstSurfaces);
     ~ProgramWithZebinFixture() override;
     ProgramWithZebinFixture();
 };

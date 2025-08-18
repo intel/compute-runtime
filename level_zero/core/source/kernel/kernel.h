@@ -25,6 +25,7 @@ namespace NEO {
 class Device;
 struct KernelInfo;
 class MemoryManager;
+class SharedPoolAllocation;
 } // namespace NEO
 
 namespace L0 {
@@ -37,7 +38,7 @@ struct KernelImmutableData {
     virtual ~KernelImmutableData();
 
     MOCKABLE_VIRTUAL ze_result_t initialize(NEO::KernelInfo *kernelInfo, Device *device, uint32_t computeUnitsUsedForSratch,
-                                            NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer,
+                                            NEO::SharedPoolAllocation *globalConstBuffer, NEO::SharedPoolAllocation *globalVarBuffer,
                                             bool internalKernel);
 
     const std::vector<NEO::GraphicsAllocation *> &getResidencyContainer() const {
@@ -80,8 +81,8 @@ struct KernelImmutableData {
         return isaCopiedToAllocation;
     }
 
-    MOCKABLE_VIRTUAL void createRelocatedDebugData(NEO::GraphicsAllocation *globalConstBuffer,
-                                                   NEO::GraphicsAllocation *globalVarBuffer);
+    MOCKABLE_VIRTUAL void createRelocatedDebugData(NEO::SharedPoolAllocation *globalConstBuffer,
+                                                   NEO::SharedPoolAllocation *globalVarBuffer);
 
   protected:
     Device *device = nullptr;

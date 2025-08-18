@@ -22,6 +22,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/numeric_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/shared_pool_allocation_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/software_tags_manager_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/sorted_vector_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/spinlock_tests.cpp

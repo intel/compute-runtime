@@ -13,10 +13,10 @@ namespace ult {
 ze_result_t WhiteBox<::L0::Module>::initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
     auto result = this->BaseClass::initializeTranslationUnit(desc, neoDevice);
     if (this->mockGlobalConstBuffer) {
-        this->translationUnit->globalConstBuffer = this->mockGlobalConstBuffer;
+        this->translationUnit->globalConstBuffer = std::move(this->mockGlobalConstBuffer);
     }
     if (this->mockGlobalVarBuffer) {
-        this->translationUnit->globalVarBuffer = this->mockGlobalVarBuffer;
+        this->translationUnit->globalVarBuffer = std::move(mockGlobalVarBuffer);
     }
     return result;
 }
