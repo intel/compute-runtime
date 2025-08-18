@@ -94,11 +94,11 @@ static void reserve57BitRangeWithMemoryMapsParse(OSMemory *osMemory, OSMemory::R
     reserveRangeWithMemoryMapsParse(osMemory, reservedCpuAddressRange, areaBase, areaTop, reservationSize);
 }
 
-GfxPartition::GfxPartition(OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForHeapSvm) : reservedCpuAddressRangeForHeapSvm(reservedCpuAddressRangeForHeapSvm), osMemory(OSMemory::create()) {}
+GfxPartition::GfxPartition(OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForNonSvmHeaps) : reservedCpuAddressRangeForNonSvmHeaps(reservedCpuAddressRangeForNonSvmHeaps), osMemory(OSMemory::create()) {}
 
 GfxPartition::~GfxPartition() {
-    osMemory->releaseCpuAddressRange(reservedCpuAddressRangeForHeapSvm);
-    reservedCpuAddressRangeForHeapSvm = {};
+    osMemory->releaseCpuAddressRange(reservedCpuAddressRangeForNonSvmHeaps);
+    reservedCpuAddressRangeForNonSvmHeaps = {};
     osMemory->releaseCpuAddressRange(reservedCpuAddressRangeForHeapExtended);
 }
 
@@ -250,19 +250,19 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = maxNBitValue(48 - 1) + 1;
             heapInit(HeapIndex::heapSvm, 0ull, gfxBase);
         } else if (gpuAddressSpace == maxNBitValue(47)) {
-            if (reservedCpuAddressRangeForHeapSvm.alignedPtr == nullptr) {
+            if (reservedCpuAddressRangeForNonSvmHeaps.alignedPtr == nullptr) {
                 if (cpuAddressRangeSizeToReserve == 0) {
                     return false;
                 }
-                reservedCpuAddressRangeForHeapSvm = osMemory->reserveCpuAddressRange(cpuAddressRangeSizeToReserve, GfxPartition::heapGranularity);
-                if (reservedCpuAddressRangeForHeapSvm.originalPtr == nullptr) {
+                reservedCpuAddressRangeForNonSvmHeaps = osMemory->reserveCpuAddressRange(cpuAddressRangeSizeToReserve, GfxPartition::heapGranularity);
+                if (reservedCpuAddressRangeForNonSvmHeaps.originalPtr == nullptr) {
                     return false;
                 }
-                if (!isAligned<GfxPartition::heapGranularity>(reservedCpuAddressRangeForHeapSvm.alignedPtr)) {
+                if (!isAligned<GfxPartition::heapGranularity>(reservedCpuAddressRangeForNonSvmHeaps.alignedPtr)) {
                     return false;
                 }
             }
-            gfxBase = reinterpret_cast<uint64_t>(reservedCpuAddressRangeForHeapSvm.alignedPtr);
+            gfxBase = reinterpret_cast<uint64_t>(reservedCpuAddressRangeForNonSvmHeaps.alignedPtr);
             gfxTop = gfxBase + cpuAddressRangeSizeToReserve;
             heapInit(HeapIndex::heapSvm, 0ull, gpuAddressSpace + 1);
         } else if (gpuAddressSpace < maxNBitValue(47)) {
@@ -353,20 +353,20 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
 
     if (cpuVirtualAddressSize == 57 && CpuInfo::getInstance().isCpuFlagPresent("la57")) {
         // Always reserve 48 bit window on 57 bit CPU
-        if (reservedCpuAddressRangeForHeapSvm.alignedPtr == nullptr) {
-            reserveHigh48BitRangeWithMemoryMapsParse(osMemory.get(), reservedCpuAddressRangeForHeapSvm);
+        if (reservedCpuAddressRangeForNonSvmHeaps.alignedPtr == nullptr) {
+            reserveHigh48BitRangeWithMemoryMapsParse(osMemory.get(), reservedCpuAddressRangeForNonSvmHeaps);
 
-            if (reservedCpuAddressRangeForHeapSvm.alignedPtr == nullptr) {
-                reserveLow48BitRangeWithRetry(osMemory.get(), reservedCpuAddressRangeForHeapSvm);
+            if (reservedCpuAddressRangeForNonSvmHeaps.alignedPtr == nullptr) {
+                reserveLow48BitRangeWithRetry(osMemory.get(), reservedCpuAddressRangeForNonSvmHeaps);
             }
 
-            if (reservedCpuAddressRangeForHeapSvm.alignedPtr == nullptr) {
+            if (reservedCpuAddressRangeForNonSvmHeaps.alignedPtr == nullptr) {
                 return false;
             }
         }
 
-        gfxBase = castToUint64(reservedCpuAddressRangeForHeapSvm.alignedPtr);
-        gfxTop = gfxBase + reservedCpuAddressRangeForHeapSvm.sizeToReserve;
+        gfxBase = castToUint64(reservedCpuAddressRangeForNonSvmHeaps.alignedPtr);
+        gfxTop = gfxBase + reservedCpuAddressRangeForNonSvmHeaps.sizeToReserve;
         if (gpuAddressSpace == maxNBitValue(57)) {
             heapInit(HeapIndex::heapSvm, 0ull, maxNBitValue(57 - 1) + 1);
         } else {

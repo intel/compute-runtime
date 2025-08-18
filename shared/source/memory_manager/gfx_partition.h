@@ -36,7 +36,7 @@ enum class HeapIndex : uint32_t {
 
 class GfxPartition {
   public:
-    GfxPartition(OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForHeapSvm);
+    GfxPartition(OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForNonSvmHeaps);
     MOCKABLE_VIRTUAL ~GfxPartition();
 
     MOCKABLE_VIRTUAL bool init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool, uint64_t systemMemorySize, uint64_t gfxTop);
@@ -131,7 +131,7 @@ class GfxPartition {
 
     std::array<Heap, static_cast<uint32_t>(HeapIndex::totalHeaps)> heaps;
 
-    OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForHeapSvm;
+    OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForNonSvmHeaps;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRangeForHeapExtended{};
     std::unique_ptr<OSMemory> osMemory;
 };
