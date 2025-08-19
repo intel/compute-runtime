@@ -173,6 +173,25 @@ ze_result_t zeCommandListAppendLaunchKernelWithArguments(
     return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelWithArguments(hKernel, groupCounts, groupSizes, pArguments, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
+ze_result_t zeCommandListAppendLaunchKernelWithParameters(
+    ze_command_list_handle_t hCommandList,
+    ze_kernel_handle_t hKernel,
+    const ze_group_count_t *pGroupCounts,
+    const void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    if (!hCommandList) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+    auto cmdList = L0::CommandList::fromHandle(hCommandList);
+    auto ret = cmdList->capture<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(hCommandList, hKernel, pGroupCounts, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret != ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        return ret;
+    }
+
+    return cmdList->appendLaunchKernelWithParameters(hKernel, pGroupCounts, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
 } // namespace L0
 
 extern "C" {
@@ -321,5 +340,17 @@ ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     return L0::zeCommandListAppendLaunchKernelWithArguments(hCommandList, hKernel, groupCounts, groupSizes, pArguments, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithParameters(
+    ze_command_list_handle_t hCommandList,
+    ze_kernel_handle_t hKernel,
+    const ze_group_count_t *pGroupCounts,
+    const void *pNext,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+
+    return L0::zeCommandListAppendLaunchKernelWithParameters(
+        hCommandList, hKernel, pGroupCounts, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 } // extern "C"

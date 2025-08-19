@@ -445,6 +445,23 @@ HWTEST_F(CommandListTest, givenComputeCommandListAnd2dRegionWhenMemoryCopyRegion
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 }
 
+HWTEST_F(CommandListTest, givenCooperativeDescriptorWithTrueValueWhenObtainLaunchParamsFromExtensionsIsCalledThenIsCooperativeIsSet) {
+    L0::CmdListKernelLaunchParams launchParams = {};
+    ze_command_list_append_launch_kernel_param_cooperative_desc_t cooperativeDesc = {};
+    cooperativeDesc.stype = static_cast<ze_structure_type_t>(ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC);
+    cooperativeDesc.pNext = nullptr;
+    cooperativeDesc.isCooperative = true;
+
+    ze_base_desc_t *desc = reinterpret_cast<ze_base_desc_t *>(&cooperativeDesc);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_result_t result = commandList->obtainLaunchParamsFromExtensions(desc, launchParams, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(launchParams.isCooperative);
+}
+
 HWTEST_F(CommandListTest, givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInUsmHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
