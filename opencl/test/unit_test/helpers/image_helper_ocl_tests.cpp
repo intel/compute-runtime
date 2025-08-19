@@ -13,17 +13,11 @@
 #include "opencl/test/unit_test/command_queue/enqueue_copy_image_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 
-struct ImageHelperFixture : ::testing::Test {
-    using MockContext = NEO::MockContext;
-
-    MockContext context;
-};
-
-HWTEST_F(ImageHelperFixture, whenImagesCheckedForPackageFormatThenFalseIsReturned) {
-    std::unique_ptr<ImageHw<FamilyType>> srcImage1(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(&context)));
-    std::unique_ptr<ImageHw<FamilyType>> dstImage1(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(&context)));
-    auto srcAllocation1 = srcImage1->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    auto dstAllocation1 = dstImage1->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
+HWTEST_F(EnqueueCopyImageTest, whenImagesCheckedForPackageFormatThenFalseIsReturned) {
+    std::unique_ptr<ImageHw<FamilyType>> srcImage1(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(context)));
+    std::unique_ptr<ImageHw<FamilyType>> dstImage1(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(context)));
+    auto srcAllocation1 = srcImage1->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+    auto dstAllocation1 = dstImage1->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     auto srcMockGmmResourceInfo1 = reinterpret_cast<MockGmmResourceInfo *>(srcAllocation1->getDefaultGmm()->gmmResourceInfo.get());
     auto dstMockGmmResourceInfo1 = reinterpret_cast<MockGmmResourceInfo *>(dstAllocation1->getDefaultGmm()->gmmResourceInfo.get());
     srcMockGmmResourceInfo1->getResourceFlags()->Info.Tile64 = 1;
@@ -49,7 +43,7 @@ HWTEST_F(ImageHelperFixture, whenImagesCheckedForPackageFormatThenFalseIsReturne
     dstImgInfo1.surfaceFormat = &dstSurfaceFormatInfo1.surfaceFormat;
     dstImgInfo1.xOffset = dstSurfaceOffsets1.xOffset;
 
-    EXPECT_FALSE(ImageHelper::areImagesCompatibleWithPackedFormat(context.getDevice(0)->getProductHelper(), srcImgInfo1, dstImgInfo1, srcAllocation1, dstAllocation1, 4));
+    EXPECT_FALSE(ImageHelper::areImagesCompatibleWithPackedFormat(context->getDevice(0)->getProductHelper(), srcImgInfo1, dstImgInfo1, srcAllocation1, dstAllocation1, 4));
 }
 
 HWTEST_F(EnqueueCopyImageTest, givenPackedSurfaceStateWhenCopyingImageThenSurfaceStateIsNotModified) {

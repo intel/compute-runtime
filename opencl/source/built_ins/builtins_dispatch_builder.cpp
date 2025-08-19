@@ -880,7 +880,7 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBui
         auto srcSurfaceFormatInfo = srcImage->getSurfaceFormatInfo();
         SurfaceOffsets srcSurfaceOffsets;
         srcImage->getSurfaceOffsets(srcSurfaceOffsets);
-        ImageInfo srcImgInfo;
+        ImageInfo srcImgInfo{};
         srcImgInfo.imgDesc = srcImageDescriptor;
         srcImgInfo.surfaceFormat = &srcSurfaceFormatInfo.surfaceFormat;
         srcImgInfo.xOffset = srcSurfaceOffsets.xOffset;
@@ -889,7 +889,7 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBui
         auto dstSurfaceFormatInfo = dstImage->getSurfaceFormatInfo();
         SurfaceOffsets dstSurfaceOffsets;
         dstImage->getSurfaceOffsets(dstSurfaceOffsets);
-        ImageInfo dstImgInfo;
+        ImageInfo dstImgInfo{};
         dstImgInfo.imgDesc = dstImageDescriptor;
         dstImgInfo.surfaceFormat = &dstSurfaceFormatInfo.surfaceFormat;
         dstImgInfo.xOffset = dstSurfaceOffsets.xOffset;
