@@ -61,9 +61,9 @@ struct BcsSplit {
         Events(BcsSplit &bcsSplit) : bcsSplit(bcsSplit) {}
     } events;
 
-    std::vector<CommandList *> cmdLists;
-    std::vector<CommandList *> h2dCmdLists;
-    std::vector<CommandList *> d2hCmdLists;
+    std::vector<CommandQueue *> cmdQs;
+    std::vector<CommandQueue *> h2dCmdQs;
+    std::vector<CommandQueue *> d2hCmdQs;
 
     template <GFXCORE_FAMILY gfxCoreFamily, typename T, typename K>
     ze_result_t appendSplitCall(CommandListCoreFamilyImmediate<gfxCoreFamily> *cmdList,
@@ -76,8 +76,9 @@ struct BcsSplit {
                                 bool performMigration,
                                 bool hasRelaxedOrderingDependencies,
                                 NEO::TransferDirection direction,
-                                std::function<ze_result_t(CommandListCoreFamilyImmediate<gfxCoreFamily> *, T, K, size_t, ze_event_handle_t)> appendCall) {
+                                std::function<ze_result_t(T, K, size_t, ze_event_handle_t)> appendCall) {
         ze_result_t result = ZE_RESULT_SUCCESS;
+        const bool hasStallingCmds = !hasRelaxedOrderingDependencies;
 
         auto markerEventIndexRet = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
         if (!markerEventIndexRet.has_value()) {
@@ -91,10 +92,10 @@ struct BcsSplit {
             cmdList->appendSignalEvent(this->events.barrier[markerEventIndex]->toHandle(), false);
         }
 
-        auto subcopyEventIndex = markerEventIndex * this->cmdLists.size();
-        StackVec<ze_event_handle_t, 16> eventHandles;
+        auto subcopyEventIndex = markerEventIndex * this->cmdQs.size();
+        StackVec<ze_event_handle_t, 4> eventHandles;
 
-        auto &cmdListsForSplit = this->getCmdListsForSplit(direction);
+        auto &cmdQsForSplit = this->getCmdQsForSplit(direction);
 
         auto signalEvent = Event::fromHandle(hSignalEvent);
 
@@ -105,23 +106,17 @@ struct BcsSplit {
         const auto aggregatedEventsMode = this->events.aggregatedEventsMode;
 
         auto totalSize = size;
-        auto engineCount = cmdListsForSplit.size();
-        for (size_t i = 0; i < cmdListsForSplit.size(); i++) {
-            auto subCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(cmdListsForSplit[i]);
-
+        auto engineCount = cmdQsForSplit.size();
+        for (size_t i = 0; i < cmdQsForSplit.size(); i++) {
             if (barrierRequired) {
                 auto barrierEventHandle = this->events.barrier[markerEventIndex]->toHandle();
-                subCmdList->addEventsToCmdList(1u, &barrierEventHandle, nullptr, hasRelaxedOrderingDependencies, false, true, false, false);
+                cmdList->addEventsToCmdList(1u, &barrierEventHandle, nullptr, hasRelaxedOrderingDependencies, false, true, false, false);
             }
 
-            if (cmdList->hasInOrderDependencies()) {
-                auto &inOrderExecInfo = cmdList->getInOrderExecInfo();
-                subCmdList->appendWaitOnInOrderDependency(inOrderExecInfo, nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), hasRelaxedOrderingDependencies, false, false, false, false);
-            }
-            subCmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, hasRelaxedOrderingDependencies, false, false, false, false);
+            cmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, hasRelaxedOrderingDependencies, false, true, false, false);
 
             if (signalEvent && i == 0u) {
-                subCmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, true, false, true);
+                cmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, true, false, true);
             }
 
             auto localSize = totalSize / engineCount;
@@ -130,7 +125,9 @@ struct BcsSplit {
 
             auto copyEventIndex = aggregatedEventsMode ? markerEventIndex : subcopyEventIndex + i;
             auto eventHandle = this->events.subcopy[copyEventIndex]->toHandle();
-            result = appendCall(subCmdList, localDstPtr, localSrcPtr, localSize, eventHandle);
+            result = appendCall(localDstPtr, localSrcPtr, localSize, eventHandle);
+
+            cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, true, cmdQsForSplit[i], nullptr, nullptr);
 
             if ((aggregatedEventsMode && i == 0) || !aggregatedEventsMode) {
                 eventHandles.push_back(eventHandle);
@@ -140,7 +137,7 @@ struct BcsSplit {
             engineCount--;
 
             if (signalEvent) {
-                signalEvent->appendAdditionalCsr(subCmdList->getCsr(false));
+                signalEvent->appendAdditionalCsr(static_cast<CommandQueueImp *>(cmdQsForSplit[i])->getCsr());
             }
         }
 
@@ -167,7 +164,7 @@ struct BcsSplit {
 
     bool setupDevice(NEO::CommandStreamReceiver *csr);
     void releaseResources();
-    std::vector<CommandList *> &getCmdListsForSplit(NEO::TransferDirection direction);
+    std::vector<CommandQueue *> &getCmdQsForSplit(NEO::TransferDirection direction);
     void setupEnginesMask(NEO::BcsSplitSettings &settings);
     bool setupQueues(const NEO::BcsSplitSettings &settings);
 

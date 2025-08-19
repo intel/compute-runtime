@@ -1100,7 +1100,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenLimitedEnginesCountWhenCreatingBcsSplitT
 
     bcsSplit.setupDevice(cmdList->getCsr(false));
 
-    EXPECT_EQ(expectedEnginesCount, bcsSplit.cmdLists.size());
+    EXPECT_EQ(expectedEnginesCount, bcsSplit.cmdQs.size());
 
     bcsSplit.releaseResources();
 }
@@ -1141,7 +1141,7 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
         EXPECT_FALSE(bcsSplit->events.subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
         EXPECT_TRUE(bcsSplit->events.subcopy[i]->isSignalScope(ZE_EVENT_SCOPE_FLAG_DEVICE));
         EXPECT_EQ(1u, bcsSplit->events.subcopy[i]->getInOrderIncrementValue());
-        EXPECT_EQ(static_cast<uint64_t>(bcsSplit->cmdLists.size()), bcsSplit->events.subcopy[i]->getInOrderExecBaseSignalValue());
+        EXPECT_EQ(static_cast<uint64_t>(bcsSplit->cmdQs.size()), bcsSplit->events.subcopy[i]->getInOrderExecBaseSignalValue());
 
         EXPECT_EQ(nullptr, bcsSplit->events.marker[i]->getInOrderExecInfo());
         EXPECT_TRUE(bcsSplit->events.marker[i]->isCounterBased());
@@ -1186,7 +1186,7 @@ HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, 
     for (auto &event : bcsSplit->events.subcopy) {
         EXPECT_TRUE(event->isCounterBased());
         EXPECT_EQ(1u, event->getInOrderIncrementValue());
-        EXPECT_EQ(static_cast<uint64_t>(bcsSplit->cmdLists.size()), event->getInOrderExecSignalValueWithSubmissionCounter());
+        EXPECT_EQ(static_cast<uint64_t>(bcsSplit->cmdQs.size()), event->getInOrderExecSignalValueWithSubmissionCounter());
     }
 }
 
@@ -1285,7 +1285,7 @@ struct MultiTileAggregatedBcsSplitTests : public AggregatedBcsSplitTests {
 };
 
 HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenSetupingThenCreateCorrectQueues, IsAtLeastXeHpcCore) {
-    ASSERT_EQ(expectedEnginesCount, bcsSplit->cmdLists.size());
+    ASSERT_EQ(expectedEnginesCount, bcsSplit->cmdQs.size());
 
     auto perTileEngineCount = expectedEnginesCount / expectedTileCount;
 
@@ -1295,7 +1295,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenMuliTileBcsSplitWhenSetupingThe
 
             auto expectedEngineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + baseEngineId);
 
-            auto &osContext = static_cast<CommandListImp *>(bcsSplit->cmdLists[engineId])->getCsr(false)->getOsContext();
+            auto &osContext = static_cast<CommandQueueImp *>(bcsSplit->cmdQs[engineId])->getCsr()->getOsContext();
             EXPECT_EQ(expectedEngineType, osContext.getEngineType());
             EXPECT_EQ(1u << tileId, osContext.getDeviceBitfield().to_ulong());
         }
@@ -1306,10 +1306,10 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenIncorrectNumberOfTilesWhenCreat
     debugManager.flags.SplitBcsRequiredTileCount.set(expectedTileCount + 1);
     cmdList.reset();
     bcsSplit->releaseResources();
-    EXPECT_EQ(0u, bcsSplit->cmdLists.size());
+    EXPECT_EQ(0u, bcsSplit->cmdQs.size());
 
     cmdList = createCmdList();
-    EXPECT_EQ(0u, bcsSplit->cmdLists.size());
+    EXPECT_EQ(0u, bcsSplit->cmdQs.size());
 }
 
 } // namespace ult

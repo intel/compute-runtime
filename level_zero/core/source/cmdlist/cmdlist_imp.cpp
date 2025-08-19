@@ -153,13 +153,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                                           const ze_command_queue_desc_t *desc,
                                           bool internalUsage, NEO::EngineGroupType engineGroupType,
                                           ze_result_t &returnValue) {
-    return createImmediate(productFamily, device, desc, internalUsage, engineGroupType, nullptr, returnValue);
-}
-
-CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device,
-                                          const ze_command_queue_desc_t *desc,
-                                          bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
-                                          ze_result_t &returnValue) {
 
     ze_command_queue_desc_t cmdQdesc = *desc;
 
@@ -175,17 +168,13 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     CommandListImp *commandList = nullptr;
     returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
 
-    if (!allocator) {
-        return nullptr;
-    }
-
     auto queueProperties = CommandQueue::extractQueueProperties(cmdQdesc);
 
-    auto deviceImp = static_cast<DeviceImp *>(device);
-    const auto &hwInfo = device->getHwInfo();
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-
-    if (!csr) {
+    if (allocator) {
+        NEO::CommandStreamReceiver *csr = nullptr;
+        auto deviceImp = static_cast<DeviceImp *>(device);
+        const auto &hwInfo = device->getHwInfo();
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
         if (internalUsage) {
             if (NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && deviceImp->getActiveDevice()->getInternalCopyEngine()) {
                 csr = deviceImp->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;
@@ -200,73 +189,73 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 return commandList;
             }
         }
-    }
 
-    LOG_CRITICAL_FOR_CORE(unlikely(csr == nullptr), "Error during creation of immediate command queue. Unable to create CSR object. Aborting!!");
+        LOG_CRITICAL_FOR_CORE(unlikely(csr == nullptr), "Error during creation of immediate command queue. Unable to create CSR object. Aborting!!");
 
-    UNRECOVERABLE_IF(nullptr == csr);
+        UNRECOVERABLE_IF(nullptr == csr);
 
-    commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
-    commandList->internalUsage = internalUsage;
-    commandList->cmdListType = CommandListType::typeImmediate;
-    commandList->isSyncModeQueue = (cmdQdesc.mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
-    if (NEO::debugManager.flags.MakeEachEnqueueBlocking.get()) {
-        commandList->isSyncModeQueue |= true;
-    }
-
-    auto &productHelper = device->getProductHelper();
-
-    if (!internalUsage) {
-        auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
-        bool enabledCmdListSharing = !NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
-        commandList->immediateCmdListHeapSharing = L0GfxCoreHelper::enableImmediateCmdListHeapSharing(rootDeviceEnvironment, enabledCmdListSharing);
-    }
-    csr->initializeResources(false, device->getDevicePreemptionMode());
-    csr->initDirectSubmission();
-
-    auto commandQueue = CommandQueue::create(productFamily, device, csr, &cmdQdesc, NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType), internalUsage, true, returnValue);
-    if (!commandQueue) {
-        commandList->destroy();
-        commandList = nullptr;
-        return commandList;
-    }
-
-    commandList->cmdQImmediate = commandQueue;
-
-    returnValue = commandList->initialize(device, engineGroupType, 0);
-
-    if ((cmdQdesc.flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER) || (NEO::debugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1)) {
-        commandList->enableInOrderExecution();
-        commandList->flags |= ZE_COMMAND_LIST_FLAG_IN_ORDER;
-    }
-
-    if (queueProperties.synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
-        if (commandList->isInOrderExecutionEnabled()) {
-            commandList->enableSynchronizedDispatch(queueProperties.synchronizedDispatchMode);
-        } else {
-            returnValue = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
+        commandList->internalUsage = internalUsage;
+        commandList->cmdListType = CommandListType::typeImmediate;
+        commandList->isSyncModeQueue = (cmdQdesc.mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
+        if (NEO::debugManager.flags.MakeEachEnqueueBlocking.get()) {
+            commandList->isSyncModeQueue |= true;
         }
-    }
 
-    if (returnValue != ZE_RESULT_SUCCESS) {
-        commandList->destroy();
-        commandList = nullptr;
-        return commandList;
-    }
+        auto &productHelper = device->getProductHelper();
 
-    commandList->isTbxMode = csr->isTbxMode();
-    commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
+        if (!internalUsage) {
+            auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+            bool enabledCmdListSharing = !NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
+            commandList->immediateCmdListHeapSharing = L0GfxCoreHelper::enableImmediateCmdListHeapSharing(rootDeviceEnvironment, enabledCmdListSharing);
+        }
+        csr->initializeResources(false, device->getDevicePreemptionMode());
+        csr->initDirectSubmission();
 
-    if (!internalUsage) {
-        commandList->isBcsSplitNeeded = deviceImp->bcsSplit->setupDevice(csr);
-    }
+        auto commandQueue = CommandQueue::create(productFamily, device, csr, &cmdQdesc, NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType), internalUsage, true, returnValue);
+        if (!commandQueue) {
+            commandList->destroy();
+            commandList = nullptr;
+            return commandList;
+        }
 
-    commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper);
+        commandList->cmdQImmediate = commandQueue;
 
-    const bool cmdListSupportsCopyOffload = commandList->isInOrderExecutionEnabled() && !productHelper.isDcFlushAllowed();
+        returnValue = commandList->initialize(device, engineGroupType, 0);
 
-    if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && cmdListSupportsCopyOffload) {
-        commandList->enableCopyOperationOffload();
+        if ((cmdQdesc.flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER) || (NEO::debugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1)) {
+            commandList->enableInOrderExecution();
+            commandList->flags |= ZE_COMMAND_LIST_FLAG_IN_ORDER;
+        }
+
+        if (queueProperties.synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
+            if (commandList->isInOrderExecutionEnabled()) {
+                commandList->enableSynchronizedDispatch(queueProperties.synchronizedDispatchMode);
+            } else {
+                returnValue = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        }
+
+        if (returnValue != ZE_RESULT_SUCCESS) {
+            commandList->destroy();
+            commandList = nullptr;
+            return commandList;
+        }
+
+        commandList->isTbxMode = csr->isTbxMode();
+        commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
+
+        if (!internalUsage) {
+            commandList->isBcsSplitNeeded = deviceImp->bcsSplit->setupDevice(csr);
+        }
+
+        commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper);
+
+        const bool cmdListSupportsCopyOffload = commandList->isInOrderExecutionEnabled() && !productHelper.isDcFlushAllowed();
+
+        if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && cmdListSupportsCopyOffload) {
+            commandList->enableCopyOperationOffload();
+        }
     }
 
     return commandList;
