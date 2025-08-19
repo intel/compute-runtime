@@ -716,13 +716,13 @@ HWTEST_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenMultiTileWhenCalcul
 }
 
 HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenBarriersWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToBarriersCount, IsAtLeastXe2HpgCore) {
-    usesBarriers = 1;
+    usesBarriers = 4;
     auto expected = dssCount * (maxBarrierCount / usesBarriers);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
 HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenUsedSlmSizeWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToUsedSlmSize, IsAtLeastXe2HpgCore) {
-    usedSlm = 64 * MemoryConstants::kiloByte;
+    usedSlm = 128 * MemoryConstants::kiloByte;
     auto expected = availableSlm / usedSlm;
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
