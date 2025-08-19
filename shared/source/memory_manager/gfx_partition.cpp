@@ -30,8 +30,8 @@ const std::array<HeapIndex, 8> GfxPartition::heapNonSvmNames{{HeapIndex::heapInt
                                                               HeapIndex::heapStandard2MB,
                                                               HeapIndex::heapExtended}};
 
-static void reserveLow48BitRangeWithRetry(OSMemory *osMemory, OSMemory::ReservedCpuAddressRange &reservedCpuAddressRange) {
-    uint64_t reservationSize = 256 * MemoryConstants::gigaByte;
+static void reserveLow48BitRangeWithRetry(OSMemory *osMemory, OSMemory::ReservedCpuAddressRange &reservedCpuAddressRange, size_t numRootDevices) {
+    uint64_t reservationSize = numRootDevices * MemoryConstants::teraByte;
     constexpr uint64_t minimalReservationSize = 32 * MemoryConstants::gigaByte;
 
     while (reservationSize >= minimalReservationSize) {
@@ -357,7 +357,7 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
             reserveHigh48BitRangeWithMemoryMapsParse(osMemory.get(), reservedCpuAddressRangeForNonSvmHeaps, numRootDevices);
 
             if (reservedCpuAddressRangeForNonSvmHeaps.alignedPtr == nullptr) {
-                reserveLow48BitRangeWithRetry(osMemory.get(), reservedCpuAddressRangeForNonSvmHeaps);
+                reserveLow48BitRangeWithRetry(osMemory.get(), reservedCpuAddressRangeForNonSvmHeaps, numRootDevices);
             }
 
             if (reservedCpuAddressRangeForNonSvmHeaps.alignedPtr == nullptr) {
