@@ -102,6 +102,7 @@ struct EventDescriptor {
     bool kernelMappedTsPoolFlag = false;
     bool importedIpcPool = false;
     bool ipcPool = false;
+    bool graphExternalEvent = false;
 };
 
 struct Event : _ze_event_handle_t {
@@ -362,6 +363,10 @@ struct Event : _ze_event_handle_t {
         this->optimizedCbEvent = value;
     }
 
+    bool isGraphExternalEvent() const {
+        return this->graphExternalEvent;
+    }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
@@ -373,7 +378,10 @@ struct Event : _ze_event_handle_t {
     void releaseTempInOrderTimestampNodes();
     virtual void clearTimestampTagData(uint32_t partitionCount, NEO::TagNodeBase *newNode) = 0;
 
+    static const uint64_t completionTimeoutMs;
+
     EventPool *eventPool = nullptr;
+    CommandList *recordedSignalFrom = nullptr;
 
     uint64_t timestampRefreshIntervalInNanoSec = 0;
 
@@ -442,10 +450,7 @@ struct Event : _ze_event_handle_t {
     bool reportEmptyCbEventAsReady = true;
     bool isEventOnBarrierOptimized = false;
     bool optimizedCbEvent = false;
-
-    static const uint64_t completionTimeoutMs;
-
-    CommandList *recordedSignalFrom = nullptr;
+    bool graphExternalEvent = false;
 };
 
 struct EventPool : _ze_event_pool_handle_t {

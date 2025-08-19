@@ -126,6 +126,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
             .kernelMappedTsPoolFlag = false,
             .importedIpcPool = false,
             .ipcPool = false,
+            .graphExternalEvent = false,
         };
 
         standaloneCbEventStorage.push_back(1);
