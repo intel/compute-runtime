@@ -2212,6 +2212,9 @@ cl_int CL_API_CALL clReleaseEvent(cl_event event) {
     DBG_LOG_INPUTS("cl_event", event, "Event", pEvent);
 
     if (pEvent) {
+        if (debugManager.flags.BlockingEventRelease.get() && pEvent->getRefApiCount() == 1 && pEvent->getCommandQueue()) {
+            pEvent->wait(false, false);
+        }
         pEvent->release();
         TRACING_EXIT(ClReleaseEvent, &retVal);
         return retVal;

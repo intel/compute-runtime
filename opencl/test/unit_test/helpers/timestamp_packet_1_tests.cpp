@@ -866,7 +866,7 @@ HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitForQueuesWhenFinish
 HWTEST_F(TimestampPacketTests, givenOOQAndWithoutEventWhenEnqueueCalledThenMoveCurrentNodeToDeferredContainer) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UpdateTaskCountFromWait.set(3);
-    debugManager.flags.EnableTimestampWaitForQueues.set(1);
+    debugManager.flags.EnableTimestampWaitForQueues.set(0);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -894,6 +894,29 @@ HWTEST_F(TimestampPacketTests, givenOOQAndWithoutEventWhenEnqueueCalledThenMoveC
 
     clReleaseEvent(event);
 
+    cmdQ.reset();
+}
+
+HWTEST_F(TimestampPacketTests, whenReleaseEventThenWait) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableTimestampWaitForQueues.set(0);
+    debugManager.flags.BlockingEventRelease.set(1);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), props);
+
+    cl_event event;
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
+    cmdQ->finish();
+    EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 1u);
+
+    clReleaseEvent(event);
+
+    EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 2u);
     cmdQ.reset();
 }
 

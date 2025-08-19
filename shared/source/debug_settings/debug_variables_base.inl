@@ -88,6 +88,7 @@ DECLARE_DEBUG_VARIABLE(bool, PipelinedPipelineSelect, false, "Restore usage of d
 DECLARE_DEBUG_VARIABLE(bool, AbortHostSyncOnNonHostVisibleEvent, false, "Aborts execution when user calls zeEventHostSynchronize on event without host signal scope")
 DECLARE_DEBUG_VARIABLE(bool, IgnoreProductSpecificIoctlHelper, false, "When set then product specific ioctl helper is not created even if available, generic one is used")
 DECLARE_DEBUG_VARIABLE(bool, EnableDdiHandlesExtension, true, "Enable L0 Driver Direct Device Interface (DDI) Handles Extension")
+DECLARE_DEBUG_VARIABLE(bool, BlockingEventRelease, false, "Makes clReleaseEvent blocking")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")
 DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened; ignored when unk")
