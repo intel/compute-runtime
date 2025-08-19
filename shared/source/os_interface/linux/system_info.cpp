@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,6 +75,12 @@ void SystemInfo::parseDeviceBlob(const std::vector<uint32_t> &inputData) {
         }
         if (DeviceBlobConstants::numRegions == data[i]) {
             numRegions = data[i + 2];
+        }
+        if (DeviceBlobConstants::numL3BanksPerGroup == data[i]) {
+            numL3BanksPerGroup = data[i + 2];
+        }
+        if (DeviceBlobConstants::numL3BankGroups == data[i]) {
+            numL3BankGroups = data[i + 2];
         }
         /* Skip to next attribute */
         auto blobLength = 2 + data[i + 1];

@@ -640,6 +640,10 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     if (systemInfo) {
+        if (systemInfo->getNumL3BanksPerGroup() > 0 && systemInfo->getNumL3BankGroups() > 0) {
+            hwInfo->gtSystemInfo.L3BankCount = systemInfo->getNumL3BanksPerGroup() * systemInfo->getNumL3BankGroups();
+        }
+
         hwInfo->gtSystemInfo.L3CacheSizeInKb = systemInfo->getL3BankSizeInKb() * hwInfo->gtSystemInfo.L3BankCount;
     }
 

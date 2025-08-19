@@ -186,6 +186,8 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecific
     EXPECT_EQ(0x04u, systemInfo.getNumHbmStacksPerTile());
     EXPECT_EQ(0x08u, systemInfo.getNumChannlesPerHbmStack());
     EXPECT_EQ(0x02u, systemInfo.getNumRegions());
+    EXPECT_EQ(0x02u, systemInfo.getNumL3BankGroups());
+    EXPECT_EQ(0x03u, systemInfo.getNumL3BanksPerGroup());
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobAndDifferentMaxSubSlicesAndMaxDSSThenQueryReturnsTheMaxValue) {
@@ -346,6 +348,7 @@ TEST(DrmSystemInfoTest, givenZeroBankCountWhenCreatingSystemInfoThenUseDualSubsl
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.dontQueryL3BankGroups = true;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.L3BankCount = 0;
@@ -371,6 +374,7 @@ TEST(DrmSystemInfoTest, givenNonZeroBankCountWhenCreatingSystemInfoThenUseDualSu
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.dontQueryL3BankGroups = true;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.L3BankCount = 5;
@@ -388,10 +392,64 @@ TEST(DrmSystemInfoTest, givenNonZeroBankCountWhenCreatingSystemInfoThenUseDualSu
     uint64_t expectedL3Size = gtSystemInfo.L3BankCount * drm.getSystemInfo()->getL3BankSizeInKb();
     uint64_t calculatedL3Size = gtSystemInfo.L3CacheSizeInKb;
 
+    EXPECT_EQ(5u, gtSystemInfo.L3BankCount);
     EXPECT_EQ(expectedL3Size, calculatedL3Size);
 }
 
-TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopoologyDataWhenCreatingSystemInfoThenRespectThatNumberOfL3Banks) {
+TEST(DrmSystemInfoTest, givenL3GroupsInfoWhenCreatingSystemInfoThenUseL3GroupsToCalculateL3Size) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    int ret = drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(ret, 0);
+    EXPECT_NE(nullptr, drm.getSystemInfo());
+    const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
+
+    uint64_t expectedL3Size = drm.getSystemInfo()->getL3BankSizeInKb() * drm.getSystemInfo()->getNumL3BanksPerGroup() * drm.getSystemInfo()->getNumL3BankGroups();
+    uint64_t calculatedL3Size = gtSystemInfo.L3CacheSizeInKb;
+
+    EXPECT_EQ(expectedL3Size, calculatedL3Size);
+}
+
+TEST(DrmSystemInfoTest, givenIncompleteL3GroupsInfoWhenCreatingSystemInfoThenDontUseL3GroupsToCalculateL3Size) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.L3BankCount = 5;
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    for (auto dontQueryL3BankGroups : ::testing::Bool()) {
+        for (auto dontQueryL3BanksPerGroup : ::testing::Bool()) {
+            DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+            drm.dontQueryL3BankGroups = dontQueryL3BankGroups;
+            drm.dontQueryL3BanksPerGroup = dontQueryL3BanksPerGroup;
+            int ret = drm.setupHardwareInfo(&device, false);
+            EXPECT_EQ(ret, 0);
+            EXPECT_NE(nullptr, drm.getSystemInfo());
+            const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
+
+            uint64_t expectedL3SizeWithL3Groups = drm.getSystemInfo()->getL3BankSizeInKb() * drm.getSystemInfo()->getNumL3BanksPerGroup() * drm.getSystemInfo()->getNumL3BankGroups();
+            uint64_t expectedL3SizeWithL3BankCount = drm.getSystemInfo()->getL3BankSizeInKb() * hwInfo.gtSystemInfo.L3BankCount;
+            uint64_t calculatedL3Size = gtSystemInfo.L3CacheSizeInKb;
+
+            ASSERT_NE(expectedL3SizeWithL3Groups, expectedL3SizeWithL3BankCount);
+            if (dontQueryL3BankGroups || dontQueryL3BanksPerGroup) {
+                EXPECT_EQ(expectedL3SizeWithL3BankCount, calculatedL3Size);
+            } else {
+                EXPECT_EQ(expectedL3SizeWithL3Groups, calculatedL3Size);
+            }
+        }
+    }
+}
+
+TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopologyDataWhenCreatingSystemInfoThenRespectThatNumberOfL3Banks) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     class MyMockIoctlHelper : public IoctlHelperPrelim20 {
@@ -407,6 +465,7 @@ TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopoologyDataWhenCreatingSystemInfoT
 
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
     drm.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm);
+    drm.dontQueryL3BankGroups = true;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.L3BankCount = 5;

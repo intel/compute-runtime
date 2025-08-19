@@ -375,7 +375,10 @@ class DrmMockEngine : public DrmMock {
     int handleRemainingRequests(DrmIoctl request, void *arg) override;
 
     void handleQueryItem(QueryItem *queryItem);
+    void adjustL3BankGroupsInfo(QueryItem *queryItem);
     bool failQueryDeviceBlob = false;
+    bool dontQueryL3BankGroups = false;
+    bool dontQueryL3BanksPerGroup = false;
 };
 
 class DrmMockResources : public DrmMock {
