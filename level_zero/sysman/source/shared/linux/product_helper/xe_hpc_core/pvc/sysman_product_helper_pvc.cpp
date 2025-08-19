@@ -157,7 +157,7 @@ ze_result_t getVFIDString(std::map<std::string, uint64_t> keyOffsetMap, std::str
 
     uint32_t vf1VfIdVal = 0;
     key = "VF1_VFID";
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, vf1VfIdVal)) {
+    if (!PlatformMonitoringTech::readValue(std::move(keyOffsetMap), telemDir, key, telemOffset, vf1VfIdVal)) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF1_VFID is returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -244,7 +244,7 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLi
     keyOffsetMap = keyOffsetMapEntry->second;
 
     if (guid != guid64BitMemoryCounters) {
-        return getHBMBandwidth(keyOffsetMap, pBandwidth, pLinuxSysmanImp, telemDir, telemOffset, subdeviceId, stepping);
+        return getHBMBandwidth(std::move(keyOffsetMap), pBandwidth, pLinuxSysmanImp, telemDir, telemOffset, subdeviceId, stepping);
     }
 
     pBandwidth->readCounter = 0;

@@ -439,11 +439,11 @@ ze_result_t LinuxGlobalOperationsImp::getMemoryStatsUsedByProcess(std::vector<st
         label = label.substr(0, label.length() - 1);
         if (label.substr(0, memSizeString.length()) == memSizeString) {
             // Convert Memory obtained to bytes
-            value = value * convertToBytes(unitOfSize);
+            value = value * convertToBytes(std::move(unitOfSize));
             memSize += value;
         } else if (label.substr(0, sharedSizeString.length()) == sharedSizeString) {
             // Convert Memory obtained to bytes
-            value = value * convertToBytes(unitOfSize);
+            value = value * convertToBytes(std::move(unitOfSize));
             sharedSize += value;
         }
     }
@@ -546,7 +546,7 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromFdInfo(std::map<uint64_t
         for (const auto &fd : gpuClientProcess.second) {
             std::string fdInfoPath = "/proc/" + std::to_string(static_cast<int>(pid)) + "/fdinfo/" + std::to_string(fd);
             std::vector<std::string> fdFileContents;
-            result = pFsAccess->read(fdInfoPath, fdFileContents);
+            result = pFsAccess->read(std::move(fdInfoPath), fdFileContents);
             if (ZE_RESULT_SUCCESS != result) {
                 if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
                     // update the result as Success as ZE_RESULT_ERROR_NOT_AVAILABLE is expected if process exited by the time we are readig it.
@@ -613,7 +613,7 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromSysfs(std::map<uint64_t,
 
         if (ZE_RESULT_SUCCESS != result) {
             std::string bPidString;
-            result = pSysfsAccess->read(realClientPidPath, bPidString);
+            result = pSysfsAccess->read(std::move(realClientPidPath), bPidString);
             if (result == ZE_RESULT_SUCCESS) {
                 size_t start = bPidString.find("<");
                 size_t end = bPidString.find(">");
@@ -654,7 +654,7 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromSysfs(std::map<uint64_t,
         for (const auto &engineNum : engineNums) {
             uint64_t timeSpent = 0;
             std::string engine = busyDirForEngines + "/" + engineNum;
-            result = pSysfsAccess->read(engine, timeSpent);
+            result = pSysfsAccess->read(std::move(engine), timeSpent);
             if (ZE_RESULT_SUCCESS != result) {
                 if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
                     continue;

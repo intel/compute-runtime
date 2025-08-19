@@ -104,7 +104,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
         if (isSubdevice) {
             std::string memval;
             std::string physicalSizeFile = pSysmanKmdInterface->getSysfsFilePathForPhysicalMemorySize(subDeviceId);
-            ze_result_t result = pSysFsAccess->read(physicalSizeFile, memval);
+            ze_result_t result = pSysFsAccess->read(std::move(physicalSizeFile), memval);
             uint64_t intval = strtoull(memval.c_str(), nullptr, 16);
             if (ZE_RESULT_SUCCESS != result) {
                 pProperties->physicalSize = 0u;
@@ -176,16 +176,16 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
         std::string throttleReasonPL4File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL4, subdeviceId, baseDirectoryExists);
         std::string throttleReasonThermalFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonThermal, subdeviceId, baseDirectoryExists);
 
-        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonPL1File, val)) && val) {
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(std::move(throttleReasonPL1File), val)) && val) {
             throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_AVE_PWR_CAP;
         }
-        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonPL2File, val)) && val) {
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(std::move(throttleReasonPL2File), val)) && val) {
             throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_BURST_PWR_CAP;
         }
-        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonPL4File, val)) && val) {
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(std::move(throttleReasonPL4File), val)) && val) {
             throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_CURRENT_LIMIT;
         }
-        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonThermalFile, val)) && val) {
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(std::move(throttleReasonThermalFile), val)) && val) {
             throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
         }
     } else {

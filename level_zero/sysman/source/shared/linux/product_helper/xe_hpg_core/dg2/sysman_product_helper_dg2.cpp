@@ -184,7 +184,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
     }
     keyOffsetMap = keyOffsetMapEntry->second;
 
-    result = readMcChannelCounters(keyOffsetMap, pBandwidth->readCounter, pBandwidth->writeCounter, telemDir, telemOffset);
+    result = readMcChannelCounters(std::move(keyOffsetMap), pBandwidth->readCounter, pBandwidth->writeCounter, std::move(telemDir), telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", __FUNCTION__, result);
         return result;
@@ -214,7 +214,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     }
 
     std::map<std::string, uint64_t> keyOffsetMap;
-    if (!PlatformMonitoringTech::getKeyOffsetMap(this, guid, keyOffsetMap)) {
+    if (!PlatformMonitoringTech::getKeyOffsetMap(this, std::move(guid), keyOffsetMap)) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -254,7 +254,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getVfLocalMemoryQuota(SysFsAccess
     const std::string pathForLmemQuota = "/gt/lmem_quota";
     std::string pathForDeviceMemQuota = "iov/vf" + std::to_string(vfId) + pathForLmemQuota;
 
-    auto result = pSysfsAccess->read(pathForDeviceMemQuota, lMemQuota);
+    auto result = pSysfsAccess->read(std::move(pathForDeviceMemQuota), lMemQuota);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
         return result;

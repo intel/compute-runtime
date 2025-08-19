@@ -426,7 +426,7 @@ std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSy
         auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
         auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
         auto baseDir = pSysmanKmdInterface->getFreqMediaDomainBasePath();
-        if (pSysfsAccess->directoryExists(baseDir)) {
+        if (pSysfsAccess->directoryExists(std::move(baseDir))) {
             freqDomains.push_back(ZES_FREQ_DOMAIN_MEDIA);
         }
     }

@@ -65,7 +65,7 @@ ze_result_t SysmanKmdInterface::initFsAccessInterface(const NEO::Drm &drm) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to device name and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
-    pSysfsAccess = SysFsAccessInterface::create(deviceName);
+    pSysfsAccess = SysFsAccessInterface::create(std::move(deviceName));
     return result;
 }
 
@@ -120,7 +120,7 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForSubDevices(std::m
 ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForDevice(std::string engineDir, std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                                                       SysFsAccessInterface *pSysfsAccess) {
     std::vector<std::string> localListOfAllEngines = {};
-    auto result = pSysfsAccess->scanDirEntries(engineDir, localListOfAllEngines);
+    auto result = pSysfsAccess->scanDirEntries(std::move(engineDir), localListOfAllEngines);
     if (ZE_RESULT_SUCCESS != result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
             result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
