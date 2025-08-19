@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,7 +167,7 @@ int BinaryEncoder::processBinary(const std::vector<std::string> &ptmFileLines, s
             std::stringstream ss(ptmFileLines[deviceMarker]);
             ss.ignore(32, ' ');
             ss.ignore(32, ' ');
-            uint32_t gfxCore = 0;
+            int32_t gfxCore = 0;
             ss >> gfxCore;
             iga->setGfxCore(static_cast<GFXCORE_FAMILY>(gfxCore));
         }
