@@ -35,6 +35,7 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64S
 }
 
 HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalledThenPreferredPlatformNameIsSet, MatchAny) {
+    DebugManagerStateRestore restorer;
     AILWhitebox<productFamily> ail;
     ail.processName = "Adobe Premiere Pro";
 

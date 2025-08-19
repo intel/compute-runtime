@@ -412,6 +412,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryNotEqu
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInitFileIsCalledThenMemTraceCommentWithDriverVersionIsPutIntoAubStream) {
+    DebugManagerStateRestore stateRestore;
     auto mockAubManager = std::make_unique<MockAubManager>();
 
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
