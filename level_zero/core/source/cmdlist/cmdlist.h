@@ -139,13 +139,6 @@ struct CommandList : _ze_command_list_handle_t {
                                                         uint32_t numWaitEvents,
                                                         ze_event_handle_t *phWaitEvents) = 0;
 
-    virtual ze_result_t appendLaunchKernelWithParameters(ze_kernel_handle_t hKernel,
-                                                         const ze_group_count_t *pGroupCounts,
-                                                         const void *pNext,
-                                                         ze_event_handle_t hSignalEvent,
-                                                         uint32_t numWaitEvents,
-                                                         ze_event_handle_t *phWaitEvents) = 0;
-
     virtual ze_result_t appendMemAdvise(ze_device_handle_t hDevice, const void *ptr, size_t size,
                                         ze_memory_advice_t advice) = 0;
     virtual ze_result_t executeMemAdvise(ze_device_handle_t hDevice,

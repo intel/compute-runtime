@@ -635,43 +635,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithArgument
             return result;
         }
     }
-    return this->appendLaunchKernelWithParameters(hKernel, &groupCounts, pNext, hSignalEvent, numWaitEvents, phWaitEvents);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParameters(
-    ze_kernel_handle_t hKernel,
-    const ze_group_count_t *pGroupCounts,
-    const void *pNext,
-    ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-
-    if (hKernel == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-
-    auto kernel = L0::Kernel::fromHandle(hKernel);
-    if (kernel == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-
-    if (pGroupCounts == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-    if ((phWaitEvents == nullptr) && (numWaitEvents > 0)) {
-        return ZE_RESULT_ERROR_INVALID_SIZE;
-    }
 
     L0::CmdListKernelLaunchParams launchParams = {};
     launchParams.skipInOrderNonWalkerSignaling = this->skipInOrderNonWalkerSignalingAllowed(hSignalEvent);
 
-    auto result = this->obtainLaunchParamsFromExtensions(reinterpret_cast<const ze_base_desc_t *>(pNext), launchParams, hKernel);
+    result = this->obtainLaunchParamsFromExtensions(reinterpret_cast<const ze_base_desc_t *>(pNext), launchParams, hKernel);
+
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
 
-    return this->appendLaunchKernel(hKernel, *pGroupCounts, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
+    return this->appendLaunchKernel(hKernel, groupCounts, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

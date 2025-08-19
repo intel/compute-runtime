@@ -25,10 +25,10 @@ inline void validate(ResulT result, const char *message);
 extern decltype(&zerGetDefaultContext) zerGetDefaultContextFunc;
 extern decltype(&zeDeviceSynchronize) zeDeviceSynchronizeFunc;
 extern decltype(&zeCommandListAppendLaunchKernelWithArguments) zeCommandListAppendLaunchKernelWithArgumentsFunc;
-extern decltype(&zeCommandListAppendLaunchKernelWithParameters) zeCommandListAppendLaunchKernelWithParametersFunc;
 extern decltype(&zerTranslateIdentifierToDeviceHandle) zerTranslateIdentifierToDeviceHandleFunc;
 extern decltype(&zerTranslateDeviceHandleToIdentifier) zerTranslateDeviceHandleToIdentifierFunc;
 extern decltype(&zerGetLastErrorDescription) zerGetLastErrorDescriptionFunc;
+
 } // namespace LevelZeroBlackBoxTests
 
 #define SUCCESS_OR_TERMINATE(CALL) LevelZeroBlackBoxTests::validate<true>(CALL, #CALL)

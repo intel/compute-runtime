@@ -40,7 +40,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zeDeviceGetPriorityLevels);
 
     RETURN_FUNC_PTR_IF_EXIST(zeCommandListAppendLaunchKernelWithArguments);
-    RETURN_FUNC_PTR_IF_EXIST(zeCommandListAppendLaunchKernelWithParameters);
 
     RETURN_FUNC_PTR_IF_EXIST(zexKernelGetBaseAddress);
     RETURN_FUNC_PTR_IF_EXIST(zexKernelGetArgumentSize);

@@ -41,7 +41,6 @@ struct Event;
     RR_CAPTURED_API(zeCommandListAppendLaunchKernel)                  \
     RR_CAPTURED_API(zeCommandListAppendLaunchCooperativeKernel)       \
     RR_CAPTURED_API(zeCommandListAppendLaunchKernelIndirect)          \
-    RR_CAPTURED_API(zeCommandListAppendLaunchKernelWithParameters)    \
     RR_CAPTURED_API(zeCommandListAppendLaunchMultipleKernelsIndirect) \
     RR_CAPTURED_API(zeCommandListAppendSignalExternalSemaphoreExt)    \
     RR_CAPTURED_API(zeCommandListAppendWaitExternalSemaphoreExt)      \
