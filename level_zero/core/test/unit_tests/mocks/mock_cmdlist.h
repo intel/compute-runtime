@@ -395,6 +395,12 @@ struct Mock<CommandList> : public CommandList {
                       ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents));
+    ADDMETHOD_NOBASE(appendLaunchKernelWithParameters, ze_result_t, ZE_RESULT_SUCCESS,
+                     (ze_kernel_handle_t hKernel,
+                      const ze_group_count_t *pGroupCounts,
+                      const void *pNext, ze_event_handle_t hSignalEvent,
+                      uint32_t numWaitEvents,
+                      ze_event_handle_t *phWaitEvents));
 
     ADDMETHOD_NOBASE(appendSoftwareTag, ze_result_t, ZE_RESULT_SUCCESS,
                      (const char *data));
