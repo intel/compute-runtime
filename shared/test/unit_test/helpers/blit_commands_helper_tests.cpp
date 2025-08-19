@@ -294,11 +294,8 @@ HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenRetu
     DebugManagerStateRestore restore{};
 
     size_t arbCheckSize = EncodeMiArbCheck<FamilyType>::getCommandSize();
-    size_t expectedDefaultSize = arbCheckSize;
 
-    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
-        expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
-    }
+    size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSize();
 
     EXPECT_EQ(expectedDefaultSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize());
 
@@ -323,27 +320,13 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
     size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSize() + BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
 
-    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
-        expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
-    }
-
     // -1: default
     BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
 
     EXPECT_EQ(expectedDefaultSize, linearStream.getUsed());
     CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
 
-    auto iterator = commands.begin();
-    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
-        iterator = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
-        EXPECT_NE(commands.end(), iterator);
-        if (EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) == 2 * sizeof(MI_FLUSH_DW)) {
-            iterator = find<MI_FLUSH_DW *>(++iterator, commands.end());
-            EXPECT_NE(commands.end(), iterator);
-        }
-    }
-
-    auto arbCheck = find<MI_ARB_CHECK *>(iterator, commands.end());
+    auto arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
     EXPECT_NE(commands.end(), arbCheck);
 
     // 0: MI_ARB_CHECK

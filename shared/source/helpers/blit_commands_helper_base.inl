@@ -93,10 +93,6 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
         }
     }
 
-    if (BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired()) {
-        EncodeMiFlushDW<GfxFamily>::programWithWa(linearStream, 0, 0, args);
-    }
-
     EncodeMiArbCheck<GfxFamily>::program(linearStream, std::nullopt);
 }
 
@@ -114,12 +110,8 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
             return 0;
         }
     }
-    size_t size = 0u;
-    if (BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired()) {
-        size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
-    }
-    size += EncodeMiArbCheck<GfxFamily>::getCommandSize();
-    return size;
+
+    return EncodeMiArbCheck<GfxFamily>::getCommandSize();
 }
 
 template <typename GfxFamily>

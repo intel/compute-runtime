@@ -430,10 +430,6 @@ HWTEST2_F(BlitTests, givenDisabledGlobalCacheInvalidationWhenProgrammingGlobalSe
     EXPECT_EQ(0u, stream.getUsed());
 }
 
-HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue, IsXeHPOrAbove) {
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
-}
-
 HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsCalledThenCmdDetailsArePrintedToStdOutput, IsXeHPOrAbove) {
     DebugManagerStateRestore restore;
     debugManager.flags.PrintImageBlitBlockCopyCmdDetails.set(true);
