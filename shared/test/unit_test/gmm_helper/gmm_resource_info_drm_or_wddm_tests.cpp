@@ -21,7 +21,7 @@ using namespace NEO;
 // Mock the underlying GMM_RESOURCE_INFO to test the real DRM_OR_WDDM implementation
 class MockGmmResourceInfoDrmOrWddm {
   public:
-    uint64_t GetDriverProtectionBits(GMM_OVERRIDE_VALUES overrideValues) {
+    uint64_t getDriverProtectionBits(GMM_OVERRIDE_VALUES overrideValues) {
         lastOverrideValues = overrideValues;
         getDriverProtectionBitsCalled = true;
         return returnValue;
@@ -47,7 +47,7 @@ class TestableGmmResourceInfo : public GmmResourceInfo {
         if (GMM_RESOURCE_USAGE_UNKNOWN != overrideUsage) {
             overrideValues.Usage = static_cast<GMM_RESOURCE_USAGE_TYPE>(overrideUsage);
         }
-        return mockResourceInfo->GetDriverProtectionBits(overrideValues);
+        return mockResourceInfo->getDriverProtectionBits(overrideValues);
     }
 
     // Expose clientContext for testing

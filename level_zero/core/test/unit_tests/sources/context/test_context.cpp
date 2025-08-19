@@ -2994,7 +2994,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithInvalidIpcHandleTypeThenHandl
     // Test with completely invalid handle type (beyond enum range)
     handle = 22222;
     opaqueIpcData = {}; // Reset
-    L0::IpcHandleType invalidHandleType2 = static_cast<L0::IpcHandleType>(255);
+    L0::IpcHandleType invalidHandleType2 = L0::IpcHandleType::maxHandle;
 
     contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, invalidHandleType2);
 
