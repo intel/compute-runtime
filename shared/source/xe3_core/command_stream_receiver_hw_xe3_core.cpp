@@ -170,15 +170,14 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
 
     if (dstAllocation) {
         if (dstAllocation->isCompressionEnabled()) {
-            auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-            compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+            compressionFormat = 2;
         }
     }
+
     if (compressionFormat == 0) {
         if (srcAllocation) {
             if (srcAllocation->isCompressionEnabled()) {
-                auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-                compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
+                compressionFormat = 2;
             }
         }
     }
