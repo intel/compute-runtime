@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -496,6 +496,7 @@ static ze_result_t getNumEngineTypeAndInstancesForSubDevices(std::map<zes_engine
 
         std::string sysfsEngineDirNode = sysfEngineString->second + std::to_string(engine.engineInstance);
         auto level0EngineType = sysfsEngineMapToLevel0EngineType.find(sysfEngineString->second);
+        UNRECOVERABLE_IF(level0EngineType == sysfsEngineMapToLevel0EngineType.end());
         auto ret = mapOfEngines.find(level0EngineType->second);
         if (ret != mapOfEngines.end()) {
             ret->second.push_back(sysfsEngineDirNode);

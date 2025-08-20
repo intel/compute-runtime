@@ -105,6 +105,12 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForSubDevices(std::m
 
         std::string sysfsEngineDirNode = sysfEngineString + std::to_string(engine.engineInstance);
         auto level0EngineType = sysfsEngineMapToLevel0EngineType.find(sysfEngineString);
+        if (level0EngineType == sysfsEngineMapToLevel0EngineType.end()) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", __FUNCTION__, sysfEngineString.c_str(),
+                                  ZE_RESULT_ERROR_UNKNOWN);
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
         auto ret = mapOfEngines.find(level0EngineType->second);
         if (ret != mapOfEngines.end()) {
             ret->second.push_back(sysfsEngineDirNode);

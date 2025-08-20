@@ -66,6 +66,10 @@ void LinuxEngineImp::checkErrorNumberAndUpdateStatus() {
 
 void LinuxEngineImp::init() {
     auto i915EngineClass = engineToI915Map.find(engineGroup);
+    if (i915EngineClass == engineToI915Map.end()) {
+        checkErrorNumberAndUpdateStatus();
+        return;
+    }
     vfConfigs.clear();
     // I915_PMU_ENGINE_BUSY macro provides the perf type config which we want to listen to get the engine busyness.
     auto fd = pPmuInterface->pmuInterfaceOpen(I915_PMU_ENGINE_BUSY(i915EngineClass->second, engineInstance), -1, PERF_FORMAT_TOTAL_TIME_ENABLED);

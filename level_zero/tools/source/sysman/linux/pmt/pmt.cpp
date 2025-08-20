@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,9 +97,11 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
 
     // listOfTelemNodes vector could contain non "telem" entries which are not interested to us.
     // Lets refactor listOfTelemNodes vector as below
-    for (auto iterator = listOfTelemNodes.begin(); iterator != listOfTelemNodes.end(); iterator++) {
+    for (auto iterator = listOfTelemNodes.begin(); iterator != listOfTelemNodes.end();) {
         if (iterator->compare(0, telem.size(), telem) != 0) {
-            listOfTelemNodes.erase(iterator--); // Remove entry if its suffix is not "telem"
+            iterator = listOfTelemNodes.erase(iterator); // Remove entry if its suffix is not "telem"
+        } else {
+            iterator++;
         }
     }
 
