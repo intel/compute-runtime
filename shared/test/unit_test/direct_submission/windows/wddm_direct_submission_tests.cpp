@@ -534,25 +534,6 @@ HWTEST_F(WddmDirectSubmissionTest, whenCreateWddmDirectSubmissionThenDisableMoni
     EXPECT_TRUE(wddmDirectSubmission.disableMonitorFence);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectcompletionFenceUpdated) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
-
-    uint64_t address = 0xFF00FF0000ull;
-    uint64_t value = 0x12345678ull;
-    MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
-    contextFence.gpuAddress = address;
-    contextFence.currentFenceValue = value;
-
-    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
-
-    uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(wddmDirectSubmission.dispatchMonitorFenceRequired(false));
-    EXPECT_EQ(value, actualTagValue);
-    EXPECT_EQ(value + 1, contextFence.currentFenceValue);
-    EXPECT_EQ(value, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFence);
-}
-
 HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceAndStallingCmdsWhenUpdatingTagValueThenUpdateCompletionFence) {
     uint64_t address = 0xFF00FF0000ull;
     uint64_t value = 0x12345678ull;
@@ -1254,55 +1235,6 @@ TEST(DirectSubmissionControllerWindowsTest, givenDirectSubmissionControllerWhenC
     EXPECT_EQ(1u, SysCalls::timeEndPeriodCalled);
     EXPECT_EQ(1u, SysCalls::timeBeginPeriodLastValue);
     EXPECT_EQ(1u, SysCalls::timeEndPeriodLastValue);
-}
-
-HWTEST_F(WddmDirectSubmissionTest,
-         givenDirectSubmissionDisableMonitorFenceWhenStopRingIsCalledThenExpectStopCommandAndMonitorFenceDispatched) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using Dispatcher = RenderDispatcher<FamilyType>;
-
-    MockWddmDirectSubmission<FamilyType, Dispatcher> regularDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    regularDirectSubmission.disableMonitorFence = false;
-    size_t regularSizeEnd = regularDirectSubmission.getSizeEnd(false);
-
-    MockWddmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    directSubmission.setTagAddressValue = true;
-    bool ret = directSubmission.allocateResources();
-    directSubmission.ringStart = true;
-
-    EXPECT_TRUE(ret);
-
-    size_t tagUpdateSize = 2 * Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment);
-
-    size_t disabledSizeEnd = directSubmission.getSizeEnd(false);
-    EXPECT_EQ(disabledSizeEnd, regularSizeEnd + tagUpdateSize);
-
-    directSubmission.tagValueSetValue = 0x4343123ull;
-    directSubmission.tagAddressSetValue = 0xBEEF00000ull;
-    directSubmission.stopRingBuffer(false);
-    size_t expectedDispatchSize = disabledSizeEnd;
-    EXPECT_LE(directSubmission.ringCommandStream.getUsed(), expectedDispatchSize);
-    EXPECT_GE(directSubmission.ringCommandStream.getUsed() + MemoryConstants::cacheLineSize, expectedDispatchSize);
-
-    HardwareParse hwParse;
-    hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
-    hwParse.findHardwareCommands<FamilyType>();
-    MI_BATCH_BUFFER_END *bbEnd = hwParse.getCommand<MI_BATCH_BUFFER_END>();
-    EXPECT_NE(nullptr, bbEnd);
-
-    bool foundFenceUpdate = false;
-    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        uint64_t data = pipeControl->getImmediateData();
-        if ((directSubmission.tagAddressSetValue == NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl)) &&
-            (directSubmission.tagValueSetValue == data)) {
-            foundFenceUpdate = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(foundFenceUpdate);
 }
 
 HWTEST2_F(WddmDirectSubmissionTest, givenRelaxedOrderingSchedulerRequiredWhenAskingForCmdsSizeThenReturnCorrectValue, IsAtLeastXeHpcCore) {

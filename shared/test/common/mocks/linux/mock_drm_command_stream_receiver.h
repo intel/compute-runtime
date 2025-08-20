@@ -133,6 +133,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
 
     void stopDirectSubmission(bool blocking, bool needsLock) override {
         stopDirectSubmissionCalled = true;
+        DrmCommandStreamReceiver<GfxFamily>::stopDirectSubmission(blocking, needsLock);
     }
 
     void *latestReadBackAddress = nullptr;

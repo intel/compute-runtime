@@ -28,6 +28,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
 
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->stopDirectSubmission(false, false);
     testedCsr->directSubmission.reset();
 
     csr->initDirectSubmission();
@@ -56,6 +57,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenWaitpkgParamsSetBy
     VariableBackup<bool> backupWaitpkgSupport(&WaitUtils::waitpkgSupport, true);
 
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->stopDirectSubmission(false, false);
     testedCsr->directSubmission.reset();
 
     csr->initDirectSubmission();

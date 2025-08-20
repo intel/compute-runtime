@@ -547,21 +547,6 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_EQ(expectedSize, actualSize);
 }
 
-HWTEST_F(DirectSubmissionTest,
-         givenDirectSubmissionDisableMonitorFenceWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
-    using Dispatcher = RenderDispatcher<FamilyType>;
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    directSubmission.disableMonitorFence = true;
-    size_t expectedSize = directSubmission.getSizeStartSection() +
-                          Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
-                          directSubmission.getSizeSemaphoreSection(false) + directSubmission.getSizeNewResourceHandler();
-
-    size_t actualSize = directSubmission.getSizeDispatch(false, false, directSubmission.dispatchMonitorFenceRequired(false));
-    EXPECT_EQ(expectedSize, actualSize);
-}
-
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetEndSizeThenExpectCorrectSizeReturned) {
     using Dispatcher = RenderDispatcher<FamilyType>;
 

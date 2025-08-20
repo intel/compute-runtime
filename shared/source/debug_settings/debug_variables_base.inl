@@ -448,7 +448,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideRenderSupport, -1, "Over
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideComputeSupport, -1, "Overrides default compute support: -1: do not override, 0: disable engine support, 1: enable engine support with init start, 2: enable engine support without init start")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableCacheFlush, -1, "-1: driver default, 0: additional cache flush is present 1: disable dispatching cache flush commands")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionNewResourceTlbFlush, -1, "-1: driver default - flush when new resource is bound, 0: disabled, 1: enabled")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableMonitorFence, -1, "Disable dispatching monitor fence commands")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDetectGpuHang, -1, "-1: default, 0: disable gpu hang detection after raising ulls semaphore, 1: enable gpu hang detection after raising ulls semaphore")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionFlatRingBuffer, -1, "-1: default, 0: disable, 1: enable, Copies task command buffer directly into ring, implemented for immediate command lists only")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmissionController, -1, "Enable direct submission terminating after given timeout, -1: default, 0: disabled, 1: enabled")

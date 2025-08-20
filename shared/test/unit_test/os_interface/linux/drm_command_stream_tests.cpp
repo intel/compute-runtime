@@ -44,7 +44,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenEnabledDirectSubmissionWhenGetting
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDrmCompletionFence.set(1);
     debugManager.flags.EnableDirectSubmission.set(1);
-    debugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
     MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1);
     csr.setupContext(*osContext);
     EXPECT_EQ(nullptr, csr.completionFenceValuePointer);
@@ -66,6 +65,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenEnabledDirectSubmissionWhenGetting
     allocation.updateTaskCount(notExpectedValue, osContext->getContextId());
     EXPECT_EQ(expectedValue, csr.getCompletionValue(allocation));
     *csr.completionFenceValuePointer = 0;
+    csr.stopDirectSubmission(false, false);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDisabledDirectSubmissionWhenCheckingIsKmdWaitOnTaskCountAllowedThenFalseIsReturned) {

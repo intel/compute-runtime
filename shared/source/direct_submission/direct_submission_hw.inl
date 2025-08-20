@@ -51,9 +51,6 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
     disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
-    if (debugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
-        this->disableMonitorFence = debugManager.flags.DirectSubmissionDisableMonitorFence.get();
-    }
 
     if (debugManager.flags.DirectSubmissionMaxRingBuffers.get() != -1) {
         this->maxRingBufferCount = debugManager.flags.DirectSubmissionMaxRingBuffers.get();

@@ -261,17 +261,18 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
     template <typename GfxFamily>
     void setUpT() {
         debugManager.flags.EnableDirectSubmission.set(1u);
-        debugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
         debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
         DrmCommandStreamEnhancedTest::setUpT<GfxFamily>();
         auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
         auto engineType = device->getDefaultEngine().osContext->getEngineType();
         hwInfo->capabilityTable.directSubmissionEngines.data[engineType].engineSupported = true;
+        device->finalizeRayTracing();
         csr->initDirectSubmission();
     }
 
     template <typename GfxFamily>
     void tearDownT() {
+        csr->stopDirectSubmission(false, false);
         this->dbgState.reset();
         DrmCommandStreamEnhancedTest::tearDownT<GfxFamily>();
     }

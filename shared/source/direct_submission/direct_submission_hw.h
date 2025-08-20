@@ -254,7 +254,7 @@ class DirectSubmissionHw {
     void *semaphorePtr = nullptr;
     volatile RingSemaphoreData *semaphoreData = nullptr;
     uint32_t *pciBarrierPtr = nullptr;
-    volatile TagAddressType *tagAddress;
+    volatile TagAddressType *tagAddress = nullptr;
 
     uint32_t currentQueueWorkCount = 1u;
     uint32_t activeTiles = 1u;
