@@ -23,7 +23,6 @@
 #include "opencl/source/helpers/properties_helper.h"
 
 #include <cstdint>
-#include <mutex>
 #include <optional>
 #include <span>
 
@@ -498,7 +497,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     mutable EngineControl *gpgpuEngine = nullptr;
     std::array<EngineControl *, bcsInfoMaskSize> bcsEngines = {};
     std::optional<aub_stream::EngineType> bcsQueueEngineType{};
-    std::mutex bcsInitMutex;
     size_t bcsEngineCount = bcsInfoMaskSize;
 
     cl_command_queue_properties commandQueueProperties = 0;

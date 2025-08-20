@@ -348,47 +348,40 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
 }
 
 void CommandQueue::constructBcsEngine(bool internalUsage) {
-    if (!bcsAllowed) {
-        return;
-    }
-    if (!bcsInitialized) {
-        const std::lock_guard lock{bcsInitMutex};
+    if (bcsAllowed && !bcsInitialized) {
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
+        auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
+        auto bcsEngineType = EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
+        auto bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
+        auto engineUsage = (internalUsage && gfxCoreHelper.preferInternalBcsEngine()) ? EngineUsage::internal : EngineUsage::regular;
 
-        if (!bcsInitialized) {
-            auto &gfxCoreHelper = device->getGfxCoreHelper();
-            auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
-            auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
-            auto bcsEngineType = EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
-            auto bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
-            auto engineUsage = (internalUsage && gfxCoreHelper.preferInternalBcsEngine()) ? EngineUsage::internal : EngineUsage::regular;
+        if (priority == QueuePriority::high) {
+            auto hpBcs = neoDevice.getHpCopyEngine();
 
-            if (priority == QueuePriority::high) {
-                auto hpBcs = neoDevice.getHpCopyEngine();
-
-                if (hpBcs) {
-                    bcsEngineType = hpBcs->getEngineType();
-                    engineUsage = EngineUsage::highPriority;
-                    bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
-                    bcsEngines[bcsIndex] = hpBcs;
-                }
+            if (hpBcs) {
+                bcsEngineType = hpBcs->getEngineType();
+                engineUsage = EngineUsage::highPriority;
+                bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
+                bcsEngines[bcsIndex] = hpBcs;
             }
-
-            if (bcsEngines[bcsIndex] == nullptr) {
-                bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
-            }
-
-            if (bcsEngines[bcsIndex]) {
-                bcsQueueEngineType = bcsEngineType;
-
-                if (gfxCoreHelper.areSecondaryContextsSupported() && !internalUsage) {
-                    tryAssignSecondaryEngine(device->getDevice(), bcsEngines[bcsIndex], {bcsEngineType, engineUsage});
-                }
-
-                bcsEngines[bcsIndex]->osContext->ensureContextInitialized(false);
-                bcsEngines[bcsIndex]->commandStreamReceiver->initDirectSubmission();
-            }
-            bcsInitialized = true;
         }
+
+        if (bcsEngines[bcsIndex] == nullptr) {
+            bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
+        }
+
+        if (bcsEngines[bcsIndex]) {
+            bcsQueueEngineType = bcsEngineType;
+
+            if (gfxCoreHelper.areSecondaryContextsSupported() && !internalUsage) {
+                tryAssignSecondaryEngine(device->getDevice(), bcsEngines[bcsIndex], {bcsEngineType, engineUsage});
+            }
+
+            bcsEngines[bcsIndex]->osContext->ensureContextInitialized(false);
+            bcsEngines[bcsIndex]->commandStreamReceiver->initDirectSubmission();
+        }
+        bcsInitialized = true;
     }
 }
 
