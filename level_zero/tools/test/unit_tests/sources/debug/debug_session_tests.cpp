@@ -107,7 +107,7 @@ TEST(DebugSessionTest, givenAllStoppedThreadsWhenInterruptCalledThenErrorNotAvai
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
         sessionMock->allThreads[thread]->reportAsStopped();
@@ -977,7 +977,7 @@ TEST(DebugSessionTest, givenSomeThreadsRunningWhenResumeCalledThenOnlyStoppedThr
 
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
         sessionMock->allThreads[thread]->reportAsStopped();
@@ -989,9 +989,9 @@ TEST(DebugSessionTest, givenSomeThreadsRunningWhenResumeCalledThenOnlyStoppedThr
     auto result = sessionMock->resume(thread);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount - 1u, sessionMock->resumeThreadCount);
+    EXPECT_EQ(hwInfo.gtSystemInfo.NumThreadsPerEu - 1u, sessionMock->resumeThreadCount);
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         EXPECT_TRUE(sessionMock->allThreads[thread]->isRunning());
     }
@@ -1018,7 +1018,7 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenResumeAllCalledThenOnlyReportedSto
         sessionMock->stateSaveAreaHeader.resize(size);
     }
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         // set reportAsStopped threads from EU0
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
@@ -1034,9 +1034,9 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenResumeAllCalledThenOnlyReportedSto
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     // only threads from EU0 resumed
-    EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount, sessionMock->resumeThreadCount);
+    EXPECT_EQ(hwInfo.gtSystemInfo.NumThreadsPerEu, sessionMock->resumeThreadCount);
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         EXPECT_TRUE(sessionMock->allThreads[thread]->isRunning());
 
@@ -1065,7 +1065,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSa
         sessionMock->stateSaveAreaHeader.resize(size);
     }
 
-    auto threadCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    auto threadCount = hwInfo.gtSystemInfo.NumThreadsPerEu;
     for (uint32_t i = 0; i < threadCount; i++) {
         // set reportAsStopped threads from EU0
         EuThread::ThreadId thread(0, 0, 0, 0, i);
@@ -1137,7 +1137,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSa
                 pStateSaveAreaHeader->regHeader.state_save_size * 16;
     sessionMock->stateSaveAreaHeader.resize(size);
 
-    auto threadCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    auto threadCount = hwInfo.gtSystemInfo.NumThreadsPerEu;
     for (uint32_t i = 0; i < threadCount; i++) {
         // set reportAsStopped threads from EU0
         EuThread::ThreadId thread(0, 0, 0, 0, i);
@@ -1185,7 +1185,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsAndInvalidStateSaveAreaWhenRes
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     sessionMock->forceZeroStateSaveAreaSize = true;
 
-    auto threadCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    auto threadCount = hwInfo.gtSystemInfo.NumThreadsPerEu;
     for (uint32_t i = 0; i < threadCount; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);

@@ -2947,6 +2947,7 @@ HWTEST_F(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedTh
     mySysInfo.EUCount = 24;
     mySysInfo.SubSliceCount = 3;
     mySysInfo.DualSubSliceCount = 3;
+    mySysInfo.NumThreadsPerEu = 7;
     mySysInfo.ThreadCount = 24 * 7;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 

@@ -5762,12 +5762,12 @@ HWTEST_F(DebugApiLinuxTest, GivenErrorFromSynchronousAttScanWhenMultipleThreadsP
 }
 
 HWTEST2_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedToBitmask, IsAtMostXe2HpgCore) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
-    auto releaseHelper = neoDevice->getRootDeviceEnvironment().getReleaseHelper();
-    auto numBytesPerThread = releaseHelper ? Math::divideAndRoundUp(releaseHelper->getNumThreadsPerEu(), 8u) : 1u;
+    auto numBytesPerThread = Math::divideAndRoundUp(hwInfo.gtSystemInfo.NumThreadsPerEu, 8u);
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};

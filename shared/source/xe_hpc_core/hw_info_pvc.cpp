@@ -101,14 +101,19 @@ void PVC::adjustHardwareInfo(HardwareInfo *hwInfo) {
 }
 
 void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    setupDefaultGtSysInfo(hwInfo, releaseHelper);
+    setupDefaultGtSysInfo(hwInfo);
     setupHardwareInfoMultiTileBase(hwInfo, true);
+
+    hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
+    hwInfo->gtSystemInfo.ThreadCount = hwInfo->gtSystemInfo.EUCount * hwInfo->gtSystemInfo.NumThreadsPerEu;
 
     PVC::adjustHardwareInfo(hwInfo);
 
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
     }
+
+    applyDebugOverrides(*hwInfo);
 }
 
 void PVC::setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo, bool setupMultiTile) {

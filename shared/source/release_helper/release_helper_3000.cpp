@@ -25,14 +25,6 @@ std::vector<uint32_t> ReleaseHelperHw<release>::getSupportedNumGrfs() const {
 }
 
 template <>
-uint32_t ReleaseHelperHw<release>::getNumThreadsPerEu() const {
-    if (debugManager.flags.OverrideNumThreadsPerEu.get() != -1) {
-        return debugManager.flags.OverrideNumThreadsPerEu.get();
-    }
-    return 10;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
     return false;
 }

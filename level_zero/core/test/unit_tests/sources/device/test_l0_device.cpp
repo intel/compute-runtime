@@ -5147,7 +5147,7 @@ HWTEST2_F(DeviceSimpleTests, WhenCreatingImageThenSuccessIsReturned, IsAtMostPro
 TEST_F(DeviceSimpleTests, WhenGettingMaxHwThreadsThenCorrectValueIsReturned) {
     auto hwInfo = neoDevice->getHardwareInfo();
 
-    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) +
+    uint32_t threadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu +
                             hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     uint32_t value = device->getMaxNumHwThreads();
 

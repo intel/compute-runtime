@@ -90,12 +90,17 @@ void PTL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelp
 }
 
 void PTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    setupDefaultGtSysInfo(hwInfo, releaseHelper);
+    setupDefaultGtSysInfo(hwInfo);
+
+    hwInfo->gtSystemInfo.NumThreadsPerEu = 10u;
+    hwInfo->gtSystemInfo.ThreadCount = hwInfo->gtSystemInfo.EUCount * hwInfo->gtSystemInfo.NumThreadsPerEu;
 
     adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
     }
+
+    applyDebugOverrides(*hwInfo);
 }
 
 FeatureTable PTL::featureTable{};

@@ -103,7 +103,8 @@ void RKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
 
 void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * 7u;
+    gtSysInfo->NumThreadsPerEu = 7u;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
     gtSysInfo->TotalVsThreads = 0;
     gtSysInfo->TotalHsThreads = 0;
     gtSysInfo->TotalDsThreads = 0;
@@ -120,6 +121,8 @@ void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
+
+    applyDebugOverrides(*hwInfo);
 }
 
 const HardwareInfo RklHwConfig::hwInfo = {

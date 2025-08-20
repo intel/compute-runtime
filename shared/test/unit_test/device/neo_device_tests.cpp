@@ -1551,7 +1551,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTest, givenHwInfoWhenRequestedComputeUnitsUse
     auto &productHelper = pDevice->getProductHelper();
 
     const uint32_t multiplyFactor = productHelper.getThreadEuRatioForScratch(hwInfo) / 8u;
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) * multiplyFactor;
+    const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.NumThreadsPerEu * multiplyFactor;
 
     uint32_t expectedValue = productHelper.computeMaxNeededSubSliceSpace(hwInfo) * hwInfo.gtSystemInfo.MaxEuPerSubSlice * numThreadsPerEu;
 

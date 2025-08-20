@@ -105,7 +105,8 @@ void DG1::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
 
 void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * 7u;
+    gtSysInfo->NumThreadsPerEu = 7u;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
     gtSysInfo->TotalVsThreads = 672;
     gtSysInfo->TotalHsThreads = 672;
     gtSysInfo->TotalDsThreads = 672;
@@ -122,6 +123,8 @@ void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
+
+    applyDebugOverrides(*hwInfo);
 }
 
 const HardwareInfo Dg1HwConfig::hwInfo = {

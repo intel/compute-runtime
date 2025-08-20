@@ -217,13 +217,13 @@ PVCTEST_F(PvcProductHelper, givenDeviceIdThenProperMaxThreadsForWorkgroupIsRetur
 
     for (const auto &deviceId : pvcXtDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
-        uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+        uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu;
         EXPECT_EQ(64u * numThreadsPerEU, productHelper->getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, 64u, 64u));
     }
 
     for (const auto &deviceId : pvcXtVgDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
-        uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+        uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu;
         EXPECT_EQ(64u * numThreadsPerEU, productHelper->getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, 64u, 64u));
     }
 }

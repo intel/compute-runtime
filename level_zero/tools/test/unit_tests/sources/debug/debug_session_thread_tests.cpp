@@ -225,7 +225,7 @@ TEST(DebugSession, givenAllThreadsWhenGettingSingleThreadsThenCorrectThreadsAreR
 
     auto subslice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported - 1;
     ze_device_thread_t physicalThread = {0, subslice, 2, UINT32_MAX};
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.NumThreadsPerEu;
 
     auto threads = debugSession->getSingleThreadsForDevice(0, physicalThread, hwInfo);
 
@@ -398,7 +398,7 @@ TEST(DebugSession, givenAllStoppedThreadsWhenAreRequestedThreadsStoppedCalledThe
 
     auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
     sessionMock->initialize();
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
         sessionMock->allThreads[thread]->reportAsStopped();
@@ -418,7 +418,7 @@ TEST(DebugSession, givenSomeStoppedThreadsWhenAreRequestedThreadsStoppedCalledTh
 
     auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
     sessionMock->initialize();
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         if (i % 2) {
             sessionMock->allThreads[thread]->stopThread(1u);
@@ -477,7 +477,7 @@ TEST(DebugSession, givenDifferentCombinationsOfThreadsAndMemoryTypeCheckExpected
     retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 
-    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.NumThreadsPerEu; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
         sessionMock->allThreads[thread]->reportAsStopped();
@@ -495,7 +495,7 @@ TEST(DebugSession, givenDifferentThreadsWhenGettingPerThreadScratchOffsetThenCor
     auto &productHelper = neoDevice->getProductHelper();
 
     const uint32_t multiplyFactor = productHelper.getThreadEuRatioForScratch(hwInfo) / 8u;
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) * multiplyFactor;
+    const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.NumThreadsPerEu * multiplyFactor;
     EuThread::ThreadId thread0Eu0 = {0, 0, 0, 0, 0};
     EuThread::ThreadId thread0Eu1 = {0, 0, 0, 1, 0};
     EuThread::ThreadId thread2Subslice1 = {0, 0, 1, 0, 2};

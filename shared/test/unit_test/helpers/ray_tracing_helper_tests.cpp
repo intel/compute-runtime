@@ -90,11 +90,13 @@ TEST(RayTracingHelperTests, whenNumRtStacksPerDssIsRequestedAndFixedValueIsFalse
     uint32_t maxEuPerSubSlice = 16;
     uint32_t threadCount = 672;
     uint32_t euCount = 96;
+    uint32_t numThreadsPerEu = threadCount / euCount;
 
     auto hwInfo = *NEO::defaultHwInfo;
     hwInfo.gtSystemInfo.MaxEuPerSubSlice = maxEuPerSubSlice;
     hwInfo.gtSystemInfo.ThreadCount = threadCount;
     hwInfo.gtSystemInfo.EUCount = euCount;
+    hwInfo.gtSystemInfo.NumThreadsPerEu = numThreadsPerEu;
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     mockDevice->mockReleaseHelper = &mockReleaseHelper;
@@ -113,6 +115,7 @@ TEST(RayTracingHelperTests, whenNumRtStacksPerDssExceedsMaxThenReturnsMaxRtStack
     hwInfo.gtSystemInfo.MaxEuPerSubSlice = 512;
     hwInfo.gtSystemInfo.ThreadCount = 2048;
     hwInfo.gtSystemInfo.EUCount = 256;
+    hwInfo.gtSystemInfo.NumThreadsPerEu = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     mockDevice->mockReleaseHelper = &mockReleaseHelper;

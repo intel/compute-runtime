@@ -93,8 +93,9 @@ bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwIn
 void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfoIn);
 bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
-void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHelper);
+void setupDefaultGtSysInfo(HardwareInfo *hwInfo);
 void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper);
 uint32_t getNumSubSlicesPerSlice(const HardwareInfo &hwInfo);
+void applyDebugOverrides(HardwareInfo &hwInfo);
 
 } // namespace NEO

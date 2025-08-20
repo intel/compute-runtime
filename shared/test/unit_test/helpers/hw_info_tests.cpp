@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -64,4 +65,16 @@ TEST(HwInfoTest, whenGettingHwInfoForUnknownPlatformStringThenFailureIsReturned)
     const HardwareInfo *pHwInfo = &hwInfo;
     std::string invalidPlatformString = "invalid";
     EXPECT_FALSE(getHwInfoForPlatformString(invalidPlatformString, pHwInfo));
+}
+
+TEST(HwInfoTest, whenApplyDebugOverrideCalledThenDebugVariablesAreApplied) {
+    DebugManagerStateRestore debugRestorer;
+    debugManager.flags.OverrideNumThreadsPerEu.set(123);
+
+    HardwareInfo hwInfo{};
+    hwInfo.gtSystemInfo.EUCount = 2;
+
+    applyDebugOverrides(hwInfo);
+    EXPECT_EQ(hwInfo.gtSystemInfo.NumThreadsPerEu, 123u);
+    EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount, hwInfo.gtSystemInfo.EUCount * 123u);
 }

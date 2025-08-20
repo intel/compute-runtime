@@ -53,7 +53,7 @@ bool GfxCoreHelper::cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo) {
 }
 
 uint32_t GfxCoreHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
-    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t threadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     auto maxHwThreadsCapable = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
     auto maxHwThreadsReturned = maxHwThreadsCapable;
     if (debugManager.flags.MaxHwThreadsPercent.get() != 0) {

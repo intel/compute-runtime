@@ -132,7 +132,7 @@ aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo) {
                ? hwInfo.capabilityTable.defaultEngineType
                : static_cast<aub_stream::EngineType>(debugManager.flags.NodeOrdinal.get());
 }
-void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHelper) {
+void setupDefaultGtSysInfo(HardwareInfo *hwInfo) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->L3CacheSizeInKb = 1;
     gtSysInfo->CCSInfo.IsValid = 1;
@@ -144,14 +144,14 @@ void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHel
         gtSysInfo->SubSliceCount = 8;
         gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
         gtSysInfo->EUCount = 64;
+        gtSysInfo->NumThreadsPerEu = 8u;
+        gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
 
         gtSysInfo->MaxEuPerSubSlice = gtSysInfo->EUCount / gtSysInfo->SubSliceCount;
         gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
         gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
         gtSysInfo->MaxDualSubSlicesSupported = gtSysInfo->DualSubSliceCount;
     }
-
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * releaseHelper->getNumThreadsPerEu();
 }
 
 void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
@@ -179,6 +179,13 @@ void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const Rele
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
+}
+
+void applyDebugOverrides(HardwareInfo &hwInfo) {
+    if (debugManager.flags.OverrideNumThreadsPerEu.get() != -1) {
+        hwInfo.gtSystemInfo.NumThreadsPerEu = debugManager.flags.OverrideNumThreadsPerEu.get();
+        hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * hwInfo.gtSystemInfo.NumThreadsPerEu;
+    }
 }
 
 uint32_t getNumSubSlicesPerSlice(const HardwareInfo &hwInfo) {

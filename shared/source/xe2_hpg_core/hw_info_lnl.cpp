@@ -104,12 +104,17 @@ GT_SYSTEM_INFO LnlHwConfig::gtSystemInfo = {};
 const HardwareInfo LNL::hwInfo = LnlHwConfig::hwInfo;
 
 void LNL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    setupDefaultGtSysInfo(hwInfo, releaseHelper);
+    setupDefaultGtSysInfo(hwInfo);
+
+    hwInfo->gtSystemInfo.NumThreadsPerEu = 8u;
+    hwInfo->gtSystemInfo.ThreadCount = hwInfo->gtSystemInfo.EUCount * hwInfo->gtSystemInfo.NumThreadsPerEu;
 
     LNL::adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         LNL::setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
     }
+
+    applyDebugOverrides(*hwInfo);
 }
 void LnlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
     LNL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);

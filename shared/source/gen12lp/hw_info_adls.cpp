@@ -104,7 +104,8 @@ void ADLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
 
 void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * 7u;
+    gtSysInfo->NumThreadsPerEu = 7u;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
     gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = ADLS::maxEuPerSubslice;
@@ -117,6 +118,8 @@ void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
+
+    applyDebugOverrides(*hwInfo);
 }
 
 const HardwareInfo AdlsHwConfig::hwInfo = {

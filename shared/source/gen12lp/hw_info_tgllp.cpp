@@ -104,7 +104,8 @@ void TGLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
 
 void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * 7u;
+    gtSysInfo->NumThreadsPerEu = 7u;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * gtSysInfo->NumThreadsPerEu;
     gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = TGLLP::maxEuPerSubslice;
@@ -117,6 +118,8 @@ void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAn
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
+
+    applyDebugOverrides(*hwInfo);
 }
 
 const HardwareInfo TgllpHw1x6x16::hwInfo = {

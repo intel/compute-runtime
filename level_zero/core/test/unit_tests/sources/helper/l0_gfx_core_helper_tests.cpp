@@ -124,11 +124,10 @@ HWTEST2_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmas
     };
 
     auto hwInfo = *NEO::defaultHwInfo.get();
-    const auto threadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
 
     hwInfo.gtSystemInfo.MaxEuPerSubSlice = 16u;
     hwInfo.gtSystemInfo.EUCount = hwInfo.gtSystemInfo.MaxEuPerSubSlice * hwInfo.gtSystemInfo.SubSliceCount;
-    hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * threadsPerEu;
+    hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * hwInfo.gtSystemInfo.NumThreadsPerEu;
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
@@ -138,8 +137,7 @@ HWTEST2_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmas
     uint32_t subslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     uint32_t subslice = subslicesPerSlice > 1 ? subslicesPerSlice - 1 : 0;
 
-    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
-    auto bytesPerEu = releaseHelper ? Math::divideAndRoundUp(releaseHelper->getNumThreadsPerEu(), 8u) : 1u;
+    auto bytesPerEu = Math::divideAndRoundUp(hwInfo.gtSystemInfo.NumThreadsPerEu, 8u);
 
     const auto maxEUsInAtt = hwInfo.gtSystemInfo.MaxEuPerSubSlice > 8 ? 8 : hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const auto threadsSizePerSubSlice = maxEUsInAtt * bytesPerEu;
@@ -177,7 +175,7 @@ HWTEST2_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmas
     data = ptrOffset(data, 3 * bytesPerEu);
     data[0] = 1 << 6;
 
-    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, hwInfo.gtSystemInfo.NumThreadsPerEu);
     EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
 
     threads.clear();
@@ -192,7 +190,7 @@ HWTEST2_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmas
     data = ptrOffset(data, 3 * bytesPerEu);
     data[0] = 1 << 6;
 
-    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, hwInfo.gtSystemInfo.NumThreadsPerEu);
     EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
 
     threads.clear();
@@ -212,7 +210,7 @@ HWTEST2_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmas
     }
     data[0] = 1;
 
-    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, threadsPerEu);
+    printAttentionBitmask(expectedBitmask.get(), bitmask.get(), hwInfo.gtSystemInfo.MaxSlicesSupported, subslicesPerSlice, hwInfo.gtSystemInfo.MaxEuPerSubSlice, hwInfo.gtSystemInfo.NumThreadsPerEu);
     EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
 }
 
@@ -230,8 +228,7 @@ HWTEST2_F(L0GfxCoreHelperTest, givenSingleThreadsWhenGettingBitmaskThenCorrectBi
 
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
 
-    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
-    auto numBytesPerThread = releaseHelper ? Math::divideAndRoundUp(releaseHelper->getNumThreadsPerEu(), 8u) : 1u;
+    auto numBytesPerThread = Math::divideAndRoundUp(hwInfo.gtSystemInfo.NumThreadsPerEu, 8u);
 
     auto data = bitmask.get();
     EXPECT_EQ(1u << 3, data[0]);
@@ -254,10 +251,12 @@ HWTEST2_F(L0GfxCoreHelperTest, givenSingleThreadsWhenGettingBitmaskThenCorrectBi
     hwInfo.gtSystemInfo.SliceInfo[2].Enabled = true;
     hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
 
+    hwInfo.gtSystemInfo.NumThreadsPerEu = 10u;
+    hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * hwInfo.gtSystemInfo.NumThreadsPerEu;
+
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-    const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
+    const uint32_t bytesPerEu = alignUp(hwInfo.gtSystemInfo.NumThreadsPerEu, 8) / 8;
     const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
 
     std::unique_ptr<uint8_t[]> bitmask;
@@ -334,18 +333,17 @@ HWTEST2_F(L0GfxCoreHelperTest, givenSingleThreadsWhenGettingBitmaskThenCorrectBi
 HWTEST2_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrectBitmaskIsReturned, IsXe3Core) {
 
     auto hwInfo = *NEO::defaultHwInfo.get();
-    const auto threadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
 
     hwInfo.gtSystemInfo.MaxEuPerSubSlice = 16u;
     hwInfo.gtSystemInfo.EUCount = hwInfo.gtSystemInfo.MaxEuPerSubSlice * hwInfo.gtSystemInfo.SubSliceCount;
-    hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * threadsPerEu;
+    hwInfo.gtSystemInfo.NumThreadsPerEu = 10u;
+    hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * hwInfo.gtSystemInfo.NumThreadsPerEu;
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-    const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
+    const uint32_t bytesPerEu = alignUp(hwInfo.gtSystemInfo.NumThreadsPerEu, 8) / 8;
     const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
     auto sliceOffset = threadsSizePerSlice;
 
@@ -429,6 +427,9 @@ HWTEST2_F(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForSingleThreadWhenG
     auto hwInfo = *NEO::defaultHwInfo.get();
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+
+    hwInfo.gtSystemInfo.NumThreadsPerEu = 10u;
+    hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * hwInfo.gtSystemInfo.NumThreadsPerEu;
 
     std::unique_ptr<uint8_t[]> bitmask;
     size_t size = 0;
@@ -535,8 +536,7 @@ HWTEST2_F(L0GfxCoreHelperTest, givenEu0To1Threads0To3BitmaskWhenGettingThreadsTh
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
-    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
-    auto numBytesPerEu = releaseHelper ? Math::divideAndRoundUp(releaseHelper->getNumThreadsPerEu(), 8u) : 1u;
+    auto numBytesPerEu = Math::divideAndRoundUp(hwInfo.gtSystemInfo.NumThreadsPerEu, 8u);
 
     uint8_t data[4]{};
     data[0] = 0x0f;
@@ -569,10 +569,12 @@ HWTEST2_F(L0GfxCoreHelperTest, givenEu0To1Threads6To10BitmaskWhenGettingThreadsT
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
+    hwInfo.gtSystemInfo.NumThreadsPerEu = 10u;
+    hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * hwInfo.gtSystemInfo.NumThreadsPerEu;
+
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-    const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
+    const uint32_t bytesPerEu = alignUp(hwInfo.gtSystemInfo.NumThreadsPerEu, 8) / 8;
     const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
 
     auto subsliceOffset = numEuPerSubslice * bytesPerEu;
@@ -633,6 +635,9 @@ HWTEST2_F(L0GfxCoreHelperTest, givenThreadsToBitmaskThenSameThreadsReturnedParsi
     }
     hwInfo.gtSystemInfo.SliceInfo[2].Enabled = true;
     hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
+
+    hwInfo.gtSystemInfo.NumThreadsPerEu = 10u;
+    hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * hwInfo.gtSystemInfo.NumThreadsPerEu;
 
     std::unique_ptr<uint8_t[]> bitmask;
     size_t size = 0;
@@ -775,8 +780,7 @@ HWTEST2_F(L0GfxCoreHelperFusedEuTest, givenDynamicallyPopulatesSliceInfoGreaterT
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threadsWithAtt, hwInfo, bitmask, size);
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-    const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
+    const uint32_t bytesPerEu = alignUp(hwInfo.gtSystemInfo.NumThreadsPerEu, 8) / 8;
     auto expectedSize = 4 * numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
     EXPECT_EQ(size, expectedSize);
 

@@ -128,7 +128,7 @@ HWTEST_F(PreambleTest, givenDebuggerInitializedAndMidThreadPreemptionWhenGetAddi
 
 HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsReturned) {
     const HardwareInfo &hwInfo = *defaultHwInfo;
-    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t threadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
 
     uint32_t expected = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
@@ -137,7 +137,7 @@ HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMa
 
 HWTEST_F(PreambleTest, givenMaxHwThreadsPercentDebugVariableWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsCappedToRequestedNumber) {
     const HardwareInfo &hwInfo = *defaultHwInfo;
-    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t threadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     DebugManagerStateRestore debugManagerStateRestore;
     debugManager.flags.MaxHwThreadsPercent.set(80);
     uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
@@ -148,7 +148,7 @@ HWTEST_F(PreambleTest, givenMaxHwThreadsPercentDebugVariableWhenGetThreadsMaxNum
 
 HWTEST_F(PreambleTest, givenMinHwThreadsUnoccupiedDebugVariableWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsCappedToMatchRequestedNumber) {
     const HardwareInfo &hwInfo = *defaultHwInfo;
-    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t threadsPerEU = hwInfo.gtSystemInfo.NumThreadsPerEu + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     DebugManagerStateRestore debugManagerStateRestore;
     debugManager.flags.MinHwThreadsUnoccupied.set(2);
     uint32_t value = GfxCoreHelper::getMaxThreadsForVfe(hwInfo);

@@ -248,8 +248,7 @@ bool ProductHelperHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const Hardw
 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {
-    uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
-    return maxNumEUsPerSubSlice * numThreadsPerEU;
+    return maxNumEUsPerSubSlice * hwInfo.gtSystemInfo.NumThreadsPerEu;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

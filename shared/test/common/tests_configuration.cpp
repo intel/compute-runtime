@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,8 +24,6 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
     auto hwInfoConfig = compilerProductHelper->getHwInfoConfig(hwInfoForTests);
     setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
 
-    uint32_t threadsPerEu = releaseHelper ? releaseHelper->getNumThreadsPerEu() : 7u;
-
     // set Gt and FeatureTable to initial state
     bool setupFeatureTableAndWorkaroundTable = isAubTestMode(testMode);
     hardwareInfoSetup[hwInfoForTests.platform.eProductFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig, releaseHelper.get());
@@ -48,7 +46,8 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
     gtSystemInfo.SubSliceCount = gtSystemInfo.SliceCount * subSlicePerSliceCount;
     gtSystemInfo.DualSubSliceCount = gtSystemInfo.SubSliceCount;
     gtSystemInfo.EUCount = gtSystemInfo.SubSliceCount * euPerSubSlice - dieRecovery;
-    gtSystemInfo.ThreadCount = gtSystemInfo.EUCount * threadsPerEu;
+    gtSystemInfo.NumThreadsPerEu = 8;
+    gtSystemInfo.ThreadCount = gtSystemInfo.EUCount * gtSystemInfo.NumThreadsPerEu;
     gtSystemInfo.MaxEuPerSubSlice = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);
     gtSystemInfo.MaxSlicesSupported = std::max(gtSystemInfo.MaxSlicesSupported, gtSystemInfo.SliceCount);
     gtSystemInfo.MaxSubSlicesSupported = std::max(gtSystemInfo.MaxSubSlicesSupported, gtSystemInfo.SubSliceCount);

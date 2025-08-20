@@ -91,14 +91,6 @@ bool ReleaseHelperHw<releaseType>::isGlobalBindlessAllocatorEnabled() const {
 }
 
 template <ReleaseType releaseType>
-uint32_t ReleaseHelperHw<releaseType>::getNumThreadsPerEu() const {
-    if (debugManager.flags.OverrideNumThreadsPerEu.get() != -1) {
-        return debugManager.flags.OverrideNumThreadsPerEu.get();
-    }
-    return 8u;
-}
-
-template <ReleaseType releaseType>
 uint64_t ReleaseHelperHw<releaseType>::getTotalMemBankSize() const {
     return 32ull * MemoryConstants::gigaByte;
 }

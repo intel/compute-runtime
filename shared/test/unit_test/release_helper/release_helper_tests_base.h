@@ -32,7 +32,6 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenIsLocalOnlyAllowedCalledThenFalseReturned();
     void whenGettingPreferredSlmSizeThenAllEntriesEmpty();
     void whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
-    void whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnOverrideNumThreadsPerEuDebugKey();
     void whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
     void whenIsBlitImageAllowedForDepthFormatCalledThenTrueReturned();
     void whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();

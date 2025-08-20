@@ -510,6 +510,8 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         if (numRegions > 0) {
             hwInfo->featureTable.regionCount = numRegions;
         }
+
+        hwInfo->gtSystemInfo.NumThreadsPerEu = systemInfo->getNumThreadsPerEu();
     }
 
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
@@ -618,12 +620,11 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         return -1;
     }
 
-    auto numThreadsPerEu = systemInfo ? systemInfo->getNumThreadsPerEu() : (releaseHelper ? releaseHelper->getNumThreadsPerEu() : 7u);
     if (debugManager.flags.OverrideNumThreadsPerEu.get() != -1) {
-        numThreadsPerEu = debugManager.flags.OverrideNumThreadsPerEu.get();
+        hwInfo->gtSystemInfo.NumThreadsPerEu = debugManager.flags.OverrideNumThreadsPerEu.get();
     }
 
-    hwInfo->gtSystemInfo.ThreadCount = numThreadsPerEu * hwInfo->gtSystemInfo.EUCount;
+    hwInfo->gtSystemInfo.ThreadCount = hwInfo->gtSystemInfo.NumThreadsPerEu * hwInfo->gtSystemInfo.EUCount;
 
     if (ioctlHelper->overrideMaxSlicesSupported()) {
         hwInfo->gtSystemInfo.MaxSlicesSupported = hwInfo->gtSystemInfo.SliceCount;

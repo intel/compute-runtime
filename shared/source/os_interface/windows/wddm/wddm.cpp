@@ -110,6 +110,9 @@ bool Wddm::init() {
     hardwareInfo->capabilityTable.instrumentationEnabled =
         (hardwareInfo->capabilityTable.instrumentationEnabled && instrumentationEnabled);
 
+    DEBUG_BREAK_IF(hardwareInfo->gtSystemInfo.NumThreadsPerEu != hardwareInfo->gtSystemInfo.ThreadCount / hardwareInfo->gtSystemInfo.EUCount);
+    hardwareInfo->gtSystemInfo.NumThreadsPerEu = hardwareInfo->gtSystemInfo.ThreadCount / hardwareInfo->gtSystemInfo.EUCount;
+
     rootDeviceEnvironment.initProductHelper();
     rootDeviceEnvironment.initCompilerProductHelper();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();

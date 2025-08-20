@@ -29,7 +29,7 @@ PVCTEST_F(PVCDebugSession, givenPVCRevId3WhenGettingPerThreadScratchOffsetThenPe
     L0::ult::MockDeviceImp deviceImp(neoDevice);
     auto debugSession = std::make_unique<L0::ult::DebugSessionMock>(zet_debug_config_t{0x1234}, &deviceImp);
 
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.NumThreadsPerEu;
 
     EuThread::ThreadId thread0Eu0 = {0, 0, 0, 0, 0};
     EuThread::ThreadId thread0Eu1 = {0, 0, 0, 1, 0};

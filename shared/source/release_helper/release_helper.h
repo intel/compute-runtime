@@ -49,7 +49,6 @@ class ReleaseHelper {
     virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
     virtual bool isBindlessAddressingDisabled() const = 0;
     virtual bool isGlobalBindlessAllocatorEnabled() const = 0;
-    virtual uint32_t getNumThreadsPerEu() const = 0;
     virtual uint64_t getTotalMemBankSize() const = 0;
     virtual const ThreadsPerEUConfigs getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const = 0;
     virtual const std::string getDeviceConfigString(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) const = 0;
@@ -97,7 +96,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     std::vector<uint32_t> getSupportedNumGrfs() const override;
     bool isBindlessAddressingDisabled() const override;
     bool isGlobalBindlessAllocatorEnabled() const override;
-    uint32_t getNumThreadsPerEu() const override;
     uint64_t getTotalMemBankSize() const override;
     const StackVec<uint32_t, 6> getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const override;
     const std::string getDeviceConfigString(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) const override;

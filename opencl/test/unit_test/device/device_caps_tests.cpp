@@ -1147,6 +1147,7 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
 
     mySysInfo.EUCount = 24;
     mySysInfo.SubSliceCount = 3;
+    mySysInfo.NumThreadsPerEu = 7;
     mySysInfo.ThreadCount = 24 * 7;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -1162,7 +1163,8 @@ HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxW
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
-    mySysInfo.ThreadCount = 32 * gfxCoreHelper.getMinimalSIMDSize(); // 128 threads per subslice, in simd 8 gives 1024
+    mySysInfo.NumThreadsPerEu = gfxCoreHelper.getMinimalSIMDSize();
+    mySysInfo.ThreadCount = 32 * mySysInfo.NumThreadsPerEu; // 128 threads per subslice, in simd 8 gives 1024
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
