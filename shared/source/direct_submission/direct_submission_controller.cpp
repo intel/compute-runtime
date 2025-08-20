@@ -133,7 +133,7 @@ void DirectSubmissionController::checkNewSubmissions() {
                 isCopyEngineIdle = isCopyEngineOnDeviceIdle(csr->getRootDeviceIndex(), bcsTaskCount);
             }
             auto lock = csr->obtainUniqueOwnership();
-            if (!isCsrIdleDetectionEnabled || (isCopyEngineIdle && isDirectSubmissionIdle(csr, lock))) {
+            if (!isCsrIdleDetectionEnabled || (isDirectSubmissionIdle(csr, lock) && isCopyEngineIdle)) {
                 csr->stopDirectSubmission(false, false);
                 state.isStopped = true;
                 shouldRecalculateTimeout = true;
