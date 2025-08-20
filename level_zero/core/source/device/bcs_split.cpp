@@ -42,7 +42,7 @@ bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr) {
 
     this->clientCount++;
 
-    if (!this->cmdQs.empty()) {
+    if (!this->cmdLists.empty()) {
         return true;
     }
 
@@ -82,24 +82,27 @@ bool BcsSplit::setupQueues(const NEO::BcsSplitSettings &settings) {
         return false;
     }
 
-    const ze_command_queue_desc_t splitDesc = {.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS};
+    ze_command_queue_flags_t flags = events.aggregatedEventsMode ? static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER) : 0u;
+    const ze_command_queue_desc_t splitDesc = {.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, .flags = flags, .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS};
     auto productFamily = this->device.getHwInfo().platform.eProductFamily;
 
     for (const auto &csr : csrs) {
         ze_result_t result;
-        auto commandQueue = CommandQueue::create(productFamily, &device, csr, &splitDesc, true, false, true, result);
+        auto cmdList = CommandList::createImmediate(productFamily, &device, &splitDesc, true, NEO::EngineHelpers::engineTypeToEngineGroupType(csr->getOsContext().getEngineType()), csr, result);
         UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
 
-        this->cmdQs.push_back(commandQueue);
+        cmdList->forceDisableInOrderWaits();
+
+        this->cmdLists.push_back(cmdList);
 
         auto engineType = csr->getOsContext().getEngineType();
         auto bcsId = NEO::EngineHelpers::getBcsIndex(engineType);
 
         if (settings.h2dEngines.test(bcsId)) {
-            this->h2dCmdQs.push_back(commandQueue);
+            this->h2dCmdLists.push_back(cmdList);
         }
         if (settings.d2hEngines.test(bcsId)) {
-            this->d2hCmdQs.push_back(commandQueue);
+            this->d2hCmdLists.push_back(cmdList);
         }
     }
 
@@ -127,24 +130,24 @@ void BcsSplit::releaseResources() {
     this->clientCount--;
 
     if (this->clientCount == 0u) {
-        for (auto cmdQ : cmdQs) {
-            cmdQ->destroy();
+        for (auto cmdList : cmdLists) {
+            cmdList->destroy();
         }
-        cmdQs.clear();
-        d2hCmdQs.clear();
-        h2dCmdQs.clear();
+        cmdLists.clear();
+        d2hCmdLists.clear();
+        h2dCmdLists.clear();
         this->events.releaseResources();
     }
 }
 
-std::vector<CommandQueue *> &BcsSplit::getCmdQsForSplit(NEO::TransferDirection direction) {
+std::vector<CommandList *> &BcsSplit::getCmdListsForSplit(NEO::TransferDirection direction) {
     if (direction == NEO::TransferDirection::hostToLocal) {
-        return this->h2dCmdQs;
+        return this->h2dCmdLists;
     } else if (direction == NEO::TransferDirection::localToHost) {
-        return this->d2hCmdQs;
+        return this->d2hCmdLists;
     }
 
-    return this->cmdQs;
+    return this->cmdLists;
 }
 
 size_t BcsSplit::Events::obtainAggregatedEventsForSplit(Context *context) {
@@ -212,7 +215,7 @@ size_t BcsSplit::Events::createAggregatedEvent(Context *context) {
 
     zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES,
                                                                                             .incrementValue = 1,
-                                                                                            .completionValue = static_cast<uint64_t>(bcsSplit.cmdQs.size())};
+                                                                                            .completionValue = static_cast<uint64_t>(bcsSplit.cmdLists.size())};
 
     const zex_counter_based_event_desc_t counterBasedDesc = {.stype = ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC,
                                                              .pNext = &externalStorageAllocProperties,
@@ -269,7 +272,7 @@ std::optional<size_t> BcsSplit::Events::createFromPool(Context *context, size_t 
      *  - 1 event to handle barrier (vector of barrier events).
      */
 
-    const size_t neededEvents = this->bcsSplit.cmdQs.size() + 2;
+    const size_t neededEvents = this->bcsSplit.cmdLists.size() + 2;
 
     if (!allocatePool(context, maxEventCountInPool, neededEvents)) {
         return std::nullopt;
@@ -311,8 +314,8 @@ std::optional<size_t> BcsSplit::Events::createFromPool(Context *context, size_t 
 void BcsSplit::Events::resetEventPackage(size_t index) {
     this->marker[index]->reset();
     this->barrier[index]->reset();
-    for (size_t j = 0; j < this->bcsSplit.cmdQs.size(); j++) {
-        this->subcopy[index * this->bcsSplit.cmdQs.size() + j]->reset();
+    for (size_t j = 0; j < this->bcsSplit.cmdLists.size(); j++) {
+        this->subcopy[index * this->bcsSplit.cmdLists.size() + j]->reset();
     }
 }
 

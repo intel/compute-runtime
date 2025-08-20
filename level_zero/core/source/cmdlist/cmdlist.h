@@ -228,6 +228,11 @@ struct CommandList : _ze_command_list_handle_t {
                                         bool internalUsage, NEO::EngineGroupType engineGroupType,
                                         ze_result_t &resultValue);
 
+    static CommandList *createImmediate(uint32_t productFamily, Device *device,
+                                        const ze_command_queue_desc_t *desc,
+                                        bool internalUsage, NEO::EngineGroupType engineGroupType, NEO::CommandStreamReceiver *csr,
+                                        ze_result_t &resultValue);
+
     static CommandList *fromHandle(ze_command_list_handle_t handle) {
         return static_cast<CommandList *>(handle);
     }
@@ -482,6 +487,8 @@ struct CommandList : _ze_command_list_handle_t {
         return totalNoopSpace;
     }
 
+    void forceDisableInOrderWaits() { inOrderWaitsDisabled = true; }
+
     ze_command_list_flags_t getCmdListFlags() const {
         return flags;
     }
@@ -595,6 +602,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool closedCmdList = false;
     bool isWalkerWithProfilingEnqueued = false;
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
+    bool inOrderWaitsDisabled = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

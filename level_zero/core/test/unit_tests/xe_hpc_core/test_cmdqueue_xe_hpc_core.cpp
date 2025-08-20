@@ -353,19 +353,19 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenSpl
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
-    ASSERT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 0u);
+    ASSERT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 
     std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList2);
-    EXPECT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 0u);
+    EXPECT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 
     commandList->destroy();
     commandList.release();
-    EXPECT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 0u);
+    EXPECT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 
     commandList2->destroy();
     commandList2.release();
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableWhenCreateImmediateThenSplitCmdQAreNotCreated, IsXeHpcCore) {
@@ -384,11 +384,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableWhenCreateImmed
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 
     commandList->destroy();
     commandList.release();
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableAndSplitBcsMaskSetWhenCreateImmediateThenSplitCmdQAreCreated, IsXeHpcCore) {
@@ -409,11 +409,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenNotAllBlittersAvailableAndSplitBcsMask
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 2u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 2u);
 
     commandList->destroy();
     commandList.release();
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndSplitBcsMaskWhenCreateImmediateThenGivenCountOfSplitCmdQAreCreated, IsXeHpcCore) {
@@ -434,7 +434,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndSplitBcsMaskWhenCreateI
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 3u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 3u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenInitializeCmdQsOnce, IsXeHpcCore) {
@@ -455,13 +455,13 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenIni
     debugManager.flags.SplitBcsRequiredEnginesCount.set(3);
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 3u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 3u);
 
     debugManager.flags.SplitBcsMask.set(0b110);
     debugManager.flags.SplitBcsRequiredEnginesCount.set(2);
     std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList2);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 3u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 3u);
 
     commandList->destroy();
     commandList.release();
@@ -485,7 +485,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateInterna
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, true, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateLinkedThenSplitCmdQAreNotCreated, IsXeHpcCore) {
@@ -504,7 +504,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateLinkedT
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopySetZeroWhenCreateImmediateThenSplitCmdQAreNotCreated, IsXeHpcCore) {
@@ -523,7 +523,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopySetZeroWhenCreateImmediate
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 0u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyWithSizeLessThanFourMBThenDoNotSplit, IsXeHpcCore) {
@@ -547,11 +547,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 4 * MemoryConstants::megaByte - 1;
@@ -566,10 +566,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
@@ -596,11 +596,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -613,10 +613,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
 
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
@@ -644,11 +644,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediat
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -659,10 +659,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediat
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     context->freeMem(dstPtr);
 }
@@ -689,11 +689,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediat
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -704,10 +704,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyHostptrDisabledAndImmediat
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     context->freeMem(srcPtr);
 }
@@ -733,11 +733,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -748,10 +748,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
 
     context->freeMem(dstPtr);
 }
@@ -777,11 +777,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -792,10 +792,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
 
     context->freeMem(srcPtr);
 }
@@ -821,11 +821,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -841,10 +841,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
@@ -873,11 +873,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -896,14 +896,14 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getCsr()->peekTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getCsr()->peekTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getCsr()->peekTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getCsr()->peekTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->getCsr(false)->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->getCsr(false)->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->getCsr(false)->peekTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->getCsr(false)->peekTaskCount(), 1u);
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 
     context->freeMem(srcPtr);
@@ -935,11 +935,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -956,43 +956,51 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     int client;
     ultCsr->registerClient(&client);
 
-    auto cmdStream = commandList0->getCmdContainer().getCommandStream();
-    auto offset = cmdStream->getUsed();
+    auto cmdStream0 = commandList0->getCmdContainer().getCommandStream();
+    auto offset0 = cmdStream0->getUsed();
+
+    auto cmdList2 = static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2]);
+    auto cmdStream2 = cmdList2->getCmdContainer().getCommandStream();
+    auto offset2 = cmdStream2->getUsed();
+
+    auto cmdList3 = static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3]);
+    auto cmdStream3 = cmdList3->getCmdContainer().getCommandStream();
+    auto offset3 = cmdStream3->getUsed();
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto csr0 = commandList0->getCsr(false);
-    auto csr2 = static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getCsr();
-    auto csr3 = static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getCsr();
+    auto csr2 = cmdList2->getCsr(false);
+    auto csr3 = cmdList3->getCsr(false);
 
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getCsr()->peekTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getCsr()->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->getCsr(false)->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->getCsr(false)->peekTaskCount(), 0u);
     EXPECT_EQ(csr2->peekTaskCount(), 1u);
     EXPECT_EQ(csr3->peekTaskCount(), 1u);
 
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+    GenCmdList genCmdList0;
+    GenCmdList genCmdList2;
+    GenCmdList genCmdList3;
 
-    bool csr0TaskCountFound = false;
-    bool csr2TaskCountFound = false;
-    bool csr3TaskCountFound = false;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList0, ptrOffset(cmdStream0->getCpuBase(), offset0), (cmdStream0->getUsed() - offset0)));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList2, ptrOffset(cmdStream2->getCpuBase(), offset2), (cmdStream2->getUsed() - offset2)));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList3, ptrOffset(cmdStream3->getCpuBase(), offset3), (cmdStream3->getUsed() - offset3)));
 
-    for (auto &cmd : cmdList) {
-        if (auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(cmd)) {
-            if (miFlushCmd->getDestinationAddress() == csr2->getTagAllocation()->getGpuAddress()) {
-                csr2TaskCountFound = true;
-            } else if (miFlushCmd->getDestinationAddress() == csr3->getTagAllocation()->getGpuAddress()) {
-                csr3TaskCountFound = true;
-            } else if (miFlushCmd->getDestinationAddress() == csr0->getTagAllocation()->getGpuAddress()) {
-                csr0TaskCountFound = true;
+    auto findTagUpdate = [&](GenCmdList &genCmdList, CommandStreamReceiver *csr) {
+        auto found = std::find_if(genCmdList.cbegin(), genCmdList.cend(), [&](void *cmd) {
+            if (auto cmdHw = genCmdCast<MI_FLUSH_DW *>(cmd)) {
+                return cmdHw->getDestinationAddress() == csr->getTagAllocation()->getGpuAddress();
             }
-        }
-    }
+            return false;
+        });
 
-    EXPECT_TRUE(csr0TaskCountFound);
-    EXPECT_TRUE(csr2TaskCountFound);
-    EXPECT_TRUE(csr3TaskCountFound);
+        return (found != genCmdList.cend());
+    };
+
+    EXPECT_TRUE(findTagUpdate(genCmdList0, csr0));
+    EXPECT_TRUE(findTagUpdate(genCmdList2, csr2));
+    EXPECT_TRUE(findTagUpdate(genCmdList3, csr3));
 
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
@@ -1022,11 +1030,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndImmediate
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -1045,14 +1053,14 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndImmediate
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getCsr()->peekTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getCsr()->peekTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getCsr()->peekTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getCsr()->peekTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->getCsr(false)->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->getCsr(false)->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->getCsr(false)->peekTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->getCsr(false)->peekTaskCount(), 1u);
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
     EXPECT_EQ(ultCsr->waitForCompletionWithTimeoutTaskCountCalled, 1u);
 
@@ -1086,11 +1094,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -1113,14 +1121,14 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getCsr()->peekTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getCsr()->peekTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getCsr()->peekTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getCsr()->peekTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->getCsr(false)->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->getCsr(false)->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->getCsr(false)->peekTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->getCsr(false)->peekTaskCount(), 1u);
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 
     commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
@@ -1181,14 +1189,14 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchS
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, ultCsr->getNumClients());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getCsr()->peekTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getCsr()->peekTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getCsr()->peekTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getCsr()->peekTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->getCsr(false)->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->getCsr(false)->peekTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->getCsr(false)->peekTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->getCsr(false)->peekTaskCount(), 1u);
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 
     uint32_t semaphoresFound = 0;
@@ -1228,11 +1236,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -1247,10 +1255,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
 
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
@@ -1277,11 +1285,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -1296,10 +1304,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
@@ -1326,11 +1334,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -1346,10 +1354,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
 
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
@@ -1378,11 +1386,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -1409,10 +1417,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, event->toHandle(), 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
@@ -1449,11 +1457,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     ASSERT_NE(nullptr, commandList0);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -1470,16 +1478,16 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
 
     auto itor = cmdList.begin();
-    for (uint32_t i = 0u; i < static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size() * 2; ++i) {
+    for (uint32_t i = 0u; i < static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size() * 2; ++i) {
         itor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
         EXPECT_NE(cmdList.end(), itor);
     }
@@ -1512,11 +1520,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -1543,10 +1551,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, event->toHandle(), 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
@@ -1582,11 +1590,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->events.pools.size(), 0u);
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->events.marker.size(), 0u);
@@ -1640,11 +1648,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->events.pools.size(), 0u);
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->events.marker.size(), 0u);
@@ -1718,11 +1726,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->events.pools.size(), 0u);
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->events.marker.size(), 0u);
@@ -1768,11 +1776,11 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                                                NEO::EngineGroupType::copy,
                                                                                returnValue));
     ASSERT_NE(nullptr, commandList0);
-    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs.size(), 4u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists.size(), 4u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 0u);
 
     constexpr size_t alignment = 4096u;
     constexpr size_t size = 8 * MemoryConstants::megaByte;
@@ -1790,10 +1798,10 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                                                     size,
                                                     false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[0])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[1])->getTaskCount(), 0u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[2])->getTaskCount(), 1u);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdQs[3])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[0])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[1])->cmdQImmediate->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[2])->cmdQImmediate->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<WhiteBox<CommandList> *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit->cmdLists[3])->cmdQImmediate->getTaskCount(), 1u);
 
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
