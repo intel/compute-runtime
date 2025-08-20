@@ -683,27 +683,27 @@ zerGetLastErrorDescription(
 
 #if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
 
-const ze_device_mem_alloc_desc_t defaultDeviceMemDesc = {
-    ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,                                        // stype
-    nullptr,                                                                        // pNext
-    static_cast<ze_device_mem_alloc_flags_t>(ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED), // flags
-    0                                                                               // ordinal
+static const ze_device_mem_alloc_desc_t defaultDeviceMemDesc = {
+    ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, // stype
+    nullptr,                                 // pNext
+    ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED,    // flags
+    0                                        // ordinal
 };
 
-const ze_host_mem_alloc_desc_t defaultHostMemDesc = {
-    ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,                                                                                     // stype
-    nullptr,                                                                                                                   // pNext
-    static_cast<ze_host_mem_alloc_flags_t>(ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED | ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) // flags
+static const ze_host_mem_alloc_desc_t defaultHostMemDesc = {
+    ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,                                             // stype
+    nullptr,                                                                           // pNext
+    ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED | ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT // flags
 };
 
-const ze_command_queue_desc_t defaultCommandQueueDesc = {
-    ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,                                                                            // stype
-    nullptr,                                                                                                         // pNext
-    0,                                                                                                               // ordinal
-    0,                                                                                                               // index
-    static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT), // flags
-    ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,                                                                              // mode
-    ZE_COMMAND_QUEUE_PRIORITY_NORMAL                                                                                 // priority
+static const ze_command_queue_desc_t defaultCommandQueueDesc = {
+    ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,                                     // stype
+    nullptr,                                                                  // pNext
+    0,                                                                        // ordinal
+    0,                                                                        // index
+    ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT, // flags
+    ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,                                       // mode
+    ZE_COMMAND_QUEUE_PRIORITY_NORMAL                                          // priority
 };
 #endif // ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
 #endif
