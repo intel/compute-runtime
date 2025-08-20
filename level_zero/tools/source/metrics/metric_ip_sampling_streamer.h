@@ -48,17 +48,20 @@ struct MultiDeviceIpSamplingMetricStreamerImp : public IpSamplingMetricStreamerB
 };
 
 struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
-    IpSamplingMetricCalcOpImp(uint32_t inCachedMetricsCount,
+    IpSamplingMetricCalcOpImp(bool multidevice,
+                              const std::vector<MetricScopeImp *> &metricScopes,
+                              uint32_t cachedMetricsCount,
                               std::vector<MetricImp *> &metricsInReport,
-                              std::vector<uint32_t> &inputIncludedMetricIndexes, bool multidevice)
-        : MetricCalcOpImp(multidevice, metricsInReport),
-          cachedMetricsCount(inCachedMetricsCount),
-          includedMetricIndexes(inputIncludedMetricIndexes) {}
+                              std::vector<uint32_t> &includedMetricIndexes)
+        : MetricCalcOpImp(multidevice, metricScopes, metricsInReport, std::vector<MetricImp *>()),
+          cachedMetricsCount(cachedMetricsCount),
+          includedMetricIndexes(includedMetricIndexes) {}
 
     ~IpSamplingMetricCalcOpImp() override{};
-    static ze_result_t create(IpSamplingMetricSourceImp &metricSource,
+    static ze_result_t create(bool isMultiDevice,
+                              const std::vector<MetricScopeImp *> &metricScopes,
+                              IpSamplingMetricSourceImp &metricSource,
                               zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
-                              bool isMultiDevice,
                               zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation);
     ze_result_t destroy() override;
 

@@ -34,13 +34,13 @@ void MetricSource::getMetricGroupSourceIdProperty(zet_base_properties_t *propert
 
 void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceContext) {
 
-    auto createScope = [&metricDeviceContext](const std::string &name, const std::string &desc, uint32_t id) {
+    auto createScope = [&metricDeviceContext](const std::string &name, const std::string &desc, uint32_t id, bool aggregated) {
         zet_intel_metric_scope_properties_exp_t scopeProperties = {ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP, nullptr};
         scopeProperties.iD = id;
         snprintf(scopeProperties.name, ZET_INTEL_MAX_METRIC_SCOPE_NAME_EXP, "%s", name.c_str());
         snprintf(scopeProperties.description, ZET_INTEL_MAX_METRIC_SCOPE_NAME_EXP, "%s", desc.c_str());
 
-        auto metricScopeImp = MetricScopeImp::create(scopeProperties);
+        auto metricScopeImp = MetricScopeImp::create(scopeProperties, aggregated);
         DEBUG_BREAK_IF(metricScopeImp == nullptr);
         metricDeviceContext.addMetricScope(std::move(metricScopeImp));
     };
@@ -50,25 +50,25 @@ void MetricSource::initComputeMetricScopes(MetricDeviceContext &metricDeviceCont
         auto deviceImp = static_cast<DeviceImp *>(&metricDeviceContext.getDevice());
         uint32_t subDeviceCount = deviceImp->numSubDevices;
         for (uint32_t i = 0; i < subDeviceCount; i++) {
-            std::string scopeName = "COMPUTE_TILE_" + std::to_string(i);
-            std::string scopeDesc = "Metrics results for tile " + std::to_string(i);
+            std::string scopeName = std::string(computeScopeNamePrefix) + std::to_string(i);
+            std::string scopeDesc = std::string(computeScopeDescriptionPrefix) + std::to_string(i);
 
-            createScope(scopeName, scopeDesc, i);
+            createScope(scopeName, scopeDesc, i, false);
         }
 
         auto &l0GfxCoreHelper = metricDeviceContext.getDevice().getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
         if (l0GfxCoreHelper.supportMetricsAggregation()) {
-            std::string scopeName = "DEVICE_AGGREGATED";
-            std::string scopeDesc = "Metrics results aggregated at device level";
+            std::string scopeName(aggregatedScopeName);
+            std::string scopeDesc(aggregatedScopeDescription);
 
-            createScope(scopeName, scopeDesc, subDeviceCount);
+            createScope(scopeName, scopeDesc, subDeviceCount, true);
         }
     } else {
         auto subDeviceIndex = metricDeviceContext.getSubDeviceIndex();
-        std::string scopeName = "COMPUTE_TILE_" + std::to_string(subDeviceIndex);
-        std::string scopeDesc = "Metrics results for tile " + std::to_string(subDeviceIndex);
+        std::string scopeName = std::string(computeScopeNamePrefix) + std::to_string(subDeviceIndex);
+        std::string scopeDesc = std::string(computeScopeDescriptionPrefix) + std::to_string(subDeviceIndex);
 
-        createScope(scopeName, scopeDesc, subDeviceIndex);
+        createScope(scopeName, scopeDesc, subDeviceIndex, false);
     }
 
     metricDeviceContext.setComputeMetricScopeInitialized();
@@ -646,12 +646,38 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    if (pCalculationDesc->metricScopesCount == 0) {
+        METRICS_LOG_ERR("%s", "Must define at least one metric scope");
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    std::vector<MetricScopeImp *> metricScopes;
+    bool aggregatedScopeProvided = false;
+    for (uint32_t i = 0; i < pCalculationDesc->metricScopesCount; i++) {
+        metricScopes.push_back(static_cast<MetricScopeImp *>(MetricScope::fromHandle(pCalculationDesc->phMetricScopes[i])));
+        if (metricScopes.back()->isAggregated()) {
+            aggregatedScopeProvided = true;
+        }
+    }
+
+    std::sort(metricScopes.begin(), metricScopes.end());
+    metricScopes.erase(std::unique(metricScopes.begin(), metricScopes.end()), metricScopes.end());
+
+    // If aggregated scope is provided, make it be listed first.
+    if (aggregatedScopeProvided) {
+        auto aggregatedScopeIt = std::find_if(metricScopes.begin(), metricScopes.end(),
+                                              [](const zet_intel_metric_scope_exp_handle_t &scope) {
+                                                  return static_cast<MetricScopeImp *>(MetricScope::fromHandle(scope))->isAggregated();
+                                              });
+        std::swap(metricScopes[0], *aggregatedScopeIt);
+    }
+
     MetricSource &metricSource = (metricGroupImp) ? metricGroupImp->getMetricSource() : metricImp->getMetricSource(); // NOLINT(clang-analyzer-core.CallAndMessage)
-    return metricSource.calcOperationCreate(*this, pCalculationDesc, phCalculationOperation);
+    return metricSource.calcOperationCreate(*this, pCalculationDesc, metricScopes, phCalculationOperation);
 }
 
-std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_properties_exp_t &scopeProperties) {
-    return std::make_unique<MetricScopeImp>(scopeProperties);
+std::unique_ptr<MetricScopeImp> MetricScopeImp::create(zet_intel_metric_scope_properties_exp_t &scopeProperties, bool aggregated) {
+    return std::make_unique<MetricScopeImp>(scopeProperties, aggregated);
 }
 
 void MetricDeviceContext::initMetricScopes() {
@@ -973,15 +999,15 @@ MetricImp *HomogeneousMultiDeviceMetricCreated::create(MetricSource &metricSourc
 
 ze_result_t MetricCalcOpImp::getMetricsFromCalcOp(uint32_t *pCount, zet_metric_handle_t *phMetrics, bool isExcludedMetrics) {
     if (*pCount == 0) {
-        *pCount = isExcludedMetrics ? excludedMetricCount : metricInReportCount;
+        *pCount = isExcludedMetrics ? getExcludedMetricsCount() : getMetricsInReportCount();
         return ZE_RESULT_SUCCESS;
-    } else if (*pCount < (isExcludedMetrics ? excludedMetricCount : metricInReportCount)) {
+    } else if (*pCount < (isExcludedMetrics ? getExcludedMetricsCount() : getMetricsInReportCount())) {
         METRICS_LOG_ERR("%s", "Metric can't be smaller than report size");
         *pCount = 0;
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    *pCount = isExcludedMetrics ? excludedMetricCount : metricInReportCount;
+    *pCount = isExcludedMetrics ? getExcludedMetricsCount() : getMetricsInReportCount();
     for (uint32_t index = 0; index < *pCount; index++) {
         phMetrics[index] = isExcludedMetrics ? excludedMetrics[index]->toHandle() : metricsInReport[index]->toHandle();
     }

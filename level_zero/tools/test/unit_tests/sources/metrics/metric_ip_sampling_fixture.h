@@ -10,6 +10,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_source.h"
 #include <level_zero/zet_api.h>
 
 #include "gtest/gtest.h"
@@ -223,11 +224,25 @@ class MetricIpSamplingCalculateBaseFixture {
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}}};
+
+    MockMetricScope *mockMetricScope;
+    zet_intel_metric_scope_exp_handle_t hMockScope = nullptr;
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{};
+    zet_metric_group_handle_t metricGroupHandle = nullptr;
+
+    void initCalcDescriptor();
+    void cleanupCalcDescriptor();
 };
 
 struct MetricIpSamplingCalculateSingleDevFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingFixture {
+  public:
+    void SetUp() override;
+    void TearDown() override;
 };
 struct MetricIpSamplingCalculateMultiDevFixture : public MetricIpSamplingCalculateBaseFixture, MetricIpSamplingMultiDevFixture {
+  public:
+    void SetUp() override;
+    void TearDown() override;
 };
 
 } // namespace ult

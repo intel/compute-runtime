@@ -59,6 +59,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
     }
     ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
                                     zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
+                                    const std::vector<MetricScopeImp *> &metricScopes,
                                     zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) override;
 
     uint32_t metricSourceCount = 0;

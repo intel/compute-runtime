@@ -3688,6 +3688,13 @@ TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIs
     EXPECT_EQ(metricGroupCount, 1u);
     EXPECT_NE(metricGroupHandle, nullptr);
 
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+
+    MockMetricScope mockMetricScope(scopeProperties, false);
+    auto hMockScope = mockMetricScope.toHandle();
+
     // metric groups from different source
     zet_intel_metric_calculation_exp_desc_t calculationDesc{
         ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
@@ -3699,6 +3706,8 @@ TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIs
         0,                  // timeWindowsCount
         nullptr,            // pCalculationTimeWindows
         1000,               // timeAggregationWindow
+        1,                  // metricScopesCount
+        &hMockScope,        // phMetricScopes
     };
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;

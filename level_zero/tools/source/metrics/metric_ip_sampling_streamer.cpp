@@ -105,9 +105,10 @@ uint32_t IpSamplingMetricStreamerImp::getMaxSupportedReportCount() {
     return ipSamplingSource.getMetricOsInterface()->getRequiredBufferSize(UINT32_MAX) / unitReportSize;
 }
 
-ze_result_t IpSamplingMetricCalcOpImp::create(IpSamplingMetricSourceImp &metricSource,
+ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
+                                              const std::vector<MetricScopeImp *> &metricScopes,
+                                              IpSamplingMetricSourceImp &metricSource,
                                               zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
-                                              bool isMultiDevice,
                                               zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
 
     // There is only one valid metric group in IP sampling and time filtering is not supported
@@ -140,9 +141,8 @@ ze_result_t IpSamplingMetricCalcOpImp::create(IpSamplingMetricSourceImp &metricS
         }
     }
 
-    auto calcOp = new IpSamplingMetricCalcOpImp(static_cast<uint32_t>(hMetrics.size()),
-                                                metricsInReport, includedMetricIndexes,
-                                                isMultiDevice);
+    auto calcOp = new IpSamplingMetricCalcOpImp(isMultiDevice, metricScopes, static_cast<uint32_t>(hMetrics.size()),
+                                                metricsInReport, includedMetricIndexes);
     *phCalculationOperation = calcOp->toHandle();
     ze_result_t status = ZE_RESULT_SUCCESS;
     if ((pCalculationDesc->timeWindowsCount > 0) || (pCalculationDesc->timeAggregationWindow != 0)) {

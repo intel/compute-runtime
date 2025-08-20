@@ -51,6 +51,7 @@ class MockMetricSource : public L0::MetricSource {
 
     ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
                                     zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
+                                    const std::vector<MetricScopeImp *> &metricScopes,
                                     zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
@@ -161,9 +162,10 @@ class MockMetric : public L0::MetricImp {
 class MockMetricCalcOp : public MetricCalcOpImp {
   public:
     ~MockMetricCalcOp() override = default;
-    MockMetricCalcOp(bool multiDevice, const std::vector<MetricImp *> &inMetricsInReport,
-                     uint32_t inExcludedMetricsCount, const std::vector<MetricImp *> &inExcludedMetrics)
-        : MetricCalcOpImp(multiDevice, inMetricsInReport, inExcludedMetricsCount, inExcludedMetrics) {}
+    MockMetricCalcOp(bool multiDevice, const std::vector<MetricScopeImp *> &metricScopes,
+                     const std::vector<MetricImp *> &metricsInReport,
+                     const std::vector<MetricImp *> &excludedMetrics)
+        : MetricCalcOpImp(multiDevice, metricScopes, metricsInReport, excludedMetrics) {}
 
     ze_result_t destroy() override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -199,8 +201,8 @@ class MockMetricDeviceContext : public MetricDeviceContext {
 class MockMetricScope : public MetricScopeImp {
   public:
     ~MockMetricScope() override = default;
-    MockMetricScope(zet_intel_metric_scope_properties_exp_t &properties)
-        : MetricScopeImp(properties) {}
+    MockMetricScope(zet_intel_metric_scope_properties_exp_t &properties, bool aggregated)
+        : MetricScopeImp(properties, aggregated) {}
     ze_result_t getProperties(zet_intel_metric_scope_properties_exp_t *pProperties) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }

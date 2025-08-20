@@ -17,6 +17,7 @@
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_ip_sampling.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_source.h"
 #include <level_zero/zet_api.h>
 
 namespace L0 {
@@ -597,17 +598,8 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCrea
         EXPECT_EQ(metricGroupCount, 1u);
         EXPECT_NE(metricGroupHandle, nullptr);
 
-        zet_intel_metric_calculation_exp_desc_t calculationDesc{
-            ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-            nullptr,            // pNext
-            1,                  // metricGroupCount
-            &metricGroupHandle, // phMetricGroups
-            0,                  // metricCount
-            nullptr,            // phMetrics
-            0,                  // timeWindowsCount
-            nullptr,            // pCalculationTimeWindows
-            0,                  // timeAggregationWindow
-        };
+        calculationDesc.metricGroupCount = 1;
+        calculationDesc.phMetricGroups = &metricGroupHandle;
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
@@ -647,17 +639,9 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupCreating
         EXPECT_EQ(metricGroupCount, 1u);
         EXPECT_NE(metricGroupHandle, nullptr);
 
-        zet_intel_metric_calculation_exp_desc_t calculationDesc{
-            ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-            nullptr,            // pNext
-            1,                  // metricGroupCount
-            &metricGroupHandle, // phMetricGroups
-            0,                  // metricCount
-            nullptr,            // phMetrics
-            0,                  // timeWindowsCount
-            nullptr,            // pCalculationTimeWindows
-            100,                // timeAggregationWindow, ip samping ingores it.
-        };
+        calculationDesc.metricGroupCount = 1;
+        calculationDesc.phMetricGroups = &metricGroupHandle;
+        calculationDesc.timeAggregationWindow = 1000;
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
         EXPECT_EQ(ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP,
@@ -694,17 +678,8 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetReportF
         EXPECT_EQ(metricGroupCount, 1u);
         EXPECT_NE(metricGroupHandle, nullptr);
 
-        zet_intel_metric_calculation_exp_desc_t calculationDesc{
-            ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-            nullptr,            // pNext
-            1,                  // metricGroupCount
-            &metricGroupHandle, // phMetricGroups
-            0,                  // metricCount
-            nullptr,            // phMetrics
-            0,                  // timeWindowsCount
-            nullptr,            // pCalculationTimeWindows
-            0,                  // timeAggregationWindow
-        };
+        calculationDesc.metricGroupCount = 1;
+        calculationDesc.phMetricGroups = &metricGroupHandle;
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
@@ -765,17 +740,8 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpGetReportForm
         uint32_t metricsToCalculateCount = static_cast<uint32_t>(metricsToCalculate.size());
         EXPECT_EQ(metricsToCalculateCount, 5u);
 
-        zet_intel_metric_calculation_exp_desc_t calculationDesc{
-            ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-            nullptr,                   // pNext
-            0,                         // metricGroupCount
-            nullptr,                   // phMetricGroups
-            metricsToCalculateCount,   // metricCount
-            metricsToCalculate.data(), // phMetrics
-            0,                         // timeWindowsCount
-            nullptr,                   // pCalculationTimeWindows
-            0,                         // timeAggregationWindow
-        };
+        calculationDesc.metricCount = metricsToCalculateCount;
+        calculationDesc.phMetrics = metricsToCalculate.data();
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
@@ -812,17 +778,8 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingCalcOpCanGetExclude
         EXPECT_EQ(metricGroupCount, 1u);
         EXPECT_NE(metricGroupHandle, nullptr);
 
-        zet_intel_metric_calculation_exp_desc_t calculationDesc{
-            ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-            nullptr,            // pNext
-            1,                  // metricGroupCount
-            &metricGroupHandle, // phMetricGroups
-            0,                  // metricCount
-            nullptr,            // phMetrics
-            0,                  // timeWindowsCount
-            nullptr,            // pCalculationTimeWindows
-            0,                  // timeAggregationWindow
-        };
+        calculationDesc.metricGroupCount = 1;
+        calculationDesc.phMetricGroups = &metricGroupHandle;
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
@@ -869,9 +826,12 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, WhenReadingMetricGroupTimeCalculat
     }
 }
 
-using MetricIpSamplingCalcOpTest = MetricIpSamplingCalculateSingleDevFixture;
+HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnRootDeviceExpectSuccess, EustallSupportedPlatforms) {
 
-HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnSubDeviceThenSuccessIsReturned, EustallSupportedPlatforms) {
+    auto device = testDevices[0];
+    ze_device_properties_t props = {};
+    device->getProperties(&props);
+    EXPECT_EQ(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, 0u);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
 
@@ -881,17 +841,34 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     EXPECT_EQ(metricGroupCount, 1u);
     EXPECT_NE(metricGroupHandle, nullptr);
 
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,            // pNext
-        1,                  // metricGroupCount
-        &metricGroupHandle, // phMetricGroups
-        0,                  // metricCount
-        nullptr,            // phMetrics
-        0,                  // timeWindowsCount
-        nullptr,            // pCalculationTimeWindows
-        0,                  // timeAggregationWindow
-    };
+    calculationDesc.metricGroupCount = 1;
+    calculationDesc.phMetricGroups = &metricGroupHandle;
+
+    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
+                                                                             device->toHandle(), &calculationDesc,
+                                                                             &hCalculationOperation));
+
+    std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader));
+    addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
+
+    uint32_t totalMetricReportCount = 0;
+    size_t offset = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateValuesExp(rawDataWithHeader.size(), &offset,
+                                                                                    reinterpret_cast<uint8_t *>(rawDataWithHeader.data()), hCalculationOperation,
+                                                                                    &totalMetricReportCount, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
+                                                                                 reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+                                                                                 &totalMetricReportCount, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
+}
+
+using MetricIpSamplingCalcOpTest = MetricIpSamplingCalculateSingleDevFixture;
+
+HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnSubDeviceThenSuccessIsReturned, EustallSupportedPlatforms) {
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
@@ -937,26 +914,6 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
 
 HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnSubDeviceThenHandleErrorConditions, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t metricGroupHandle = nullptr;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
-
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,            // pNext
-        1,                  // metricGroupCount
-        &metricGroupHandle, // phMetricGroups
-        0,                  // metricCount
-        nullptr,            // phMetrics
-        0,                  // timeWindowsCount
-        nullptr,            // pCalculationTimeWindows
-        0,                  // timeAggregationWindow
-    };
-
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
@@ -983,26 +940,6 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
 
 HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnSubDeviceCanDetectRawDataOverflow, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t metricGroupHandle = nullptr;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
-
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,            // pNext
-        1,                  // metricGroupCount
-        &metricGroupHandle, // phMetricGroups
-        0,                  // metricCount
-        nullptr,            // phMetrics
-        0,                  // timeWindowsCount
-        nullptr,            // pCalculationTimeWindows
-        0,                  // timeAggregationWindow
-    };
-
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
                                                                              device->toHandle(), &calculationDesc,
@@ -1021,14 +958,6 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
 }
 
 HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnSubDeviceFilterMetricsInReport, EustallSupportedPlatforms) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t metricGroupHandle = nullptr;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
 
     uint32_t metricCount = 0;
     EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
@@ -1049,17 +978,10 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     uint32_t metricsToCalculateCount = static_cast<uint32_t>(metricsToCalculate.size());
     EXPECT_EQ(metricsToCalculateCount, 5u);
 
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,                   // pNext
-        0,                         // metricGroupCount
-        nullptr,                   // phMetricGroups
-        metricsToCalculateCount,   // metricCount
-        metricsToCalculate.data(), // phMetrics
-        0,                         // timeWindowsCount
-        nullptr,                   // pCalculationTimeWindows
-        0,                         // timeAggregationWindow
-    };
+    calculationDesc.metricGroupCount = 0;
+    calculationDesc.phMetricGroups = nullptr;
+    calculationDesc.metricCount = metricsToCalculateCount;
+    calculationDesc.phMetrics = metricsToCalculate.data();
 
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
 
@@ -1093,24 +1015,6 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
 
 HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesDoesNotAllowLimitingResults, EustallSupportedPlatforms) {
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t metricGroupHandle = nullptr;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,            // pNext
-        metricGroupCount,   // metricGroupCount
-        &metricGroupHandle, // phMetricGroups
-        0,                  // metricCount
-        nullptr,            // phMetrics
-        0,                  // timeWindowsCount
-        nullptr,            // pCalculationTimeWindows
-        0,                  // timeAggregationWindow
-    };
-
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
                                                                              device->toHandle(), &calculationDesc,
@@ -1124,55 +1028,6 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
 
     // Request fewer reports
     totalMetricReportCount = 1;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                                 reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
-                                                                                 &totalMetricReportCount, nullptr));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
-}
-
-HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingCalcOpCallingMetricCalculateValuesOnRootDeviceExpectSuccess, EustallSupportedPlatforms) {
-
-    auto device = testDevices[0];
-    ze_device_properties_t props = {};
-    device->getProperties(&props);
-    EXPECT_EQ(props.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, 0u);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
-
-    uint32_t metricGroupCount = 1;
-    zet_metric_group_handle_t metricGroupHandle = nullptr;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-    EXPECT_NE(metricGroupHandle, nullptr);
-
-    zet_intel_metric_calculation_exp_desc_t calculationDesc{
-        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP,
-        nullptr,            // pNext
-        1,                  // metricGroupCount
-        &metricGroupHandle, // phMetricGroups
-        0,                  // metricCount
-        nullptr,            // phMetrics
-        0,                  // timeWindowsCount
-        nullptr,            // pCalculationTimeWindows
-        0,                  // timeAggregationWindow
-    };
-
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),
-                                                                             device->toHandle(), &calculationDesc,
-                                                                             &hCalculationOperation));
-
-    std::vector<uint8_t> rawDataWithHeader(rawDataVectorSize + sizeof(IpSamplingMetricDataHeader));
-    addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
-
-    uint32_t totalMetricReportCount = 0;
-    size_t offset = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateValuesExp(rawDataWithHeader.size(), &offset,
-                                                                                    reinterpret_cast<uint8_t *>(rawDataWithHeader.data()), hCalculationOperation,
-                                                                                    &totalMetricReportCount, nullptr));
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
                                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,

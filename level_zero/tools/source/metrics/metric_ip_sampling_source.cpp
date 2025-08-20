@@ -274,11 +274,12 @@ ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(zet_m
 
 ze_result_t IpSamplingMetricSourceImp::calcOperationCreate(MetricDeviceContext &metricDeviceContext,
                                                            zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
+                                                           const std::vector<MetricScopeImp *> &metricScopes,
                                                            zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
     ze_result_t status = ZE_RESULT_ERROR_UNKNOWN;
 
     bool isMultiDevice = (metricDeviceContext.isImplicitScalingCapable()) ? true : false;
-    status = IpSamplingMetricCalcOpImp::create(*this, pCalculationDesc, isMultiDevice, phCalculationOperation);
+    status = IpSamplingMetricCalcOpImp::create(isMultiDevice, metricScopes, *this, pCalculationDesc, phCalculationOperation);
     return status;
 }
 

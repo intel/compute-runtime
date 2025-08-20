@@ -107,6 +107,7 @@ class MetricSource {
     virtual ze_result_t appendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) = 0;
     virtual ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
                                             zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
+                                            const std::vector<MetricScopeImp *> &metricScopes,
                                             zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) = 0;
     virtual bool canDisable() = 0;
     virtual void initMetricScopes(MetricDeviceContext &metricDeviceContext) = 0;
@@ -479,26 +480,33 @@ struct MetricCalcOp : _zet_intel_metric_calculation_operation_exp_handle_t {
 
 struct MetricCalcOpImp : public MetricCalcOp {
     ~MetricCalcOpImp() override = default;
-    MetricCalcOpImp(bool multiDevice, const std::vector<MetricImp *> &inMetricsInReport,
-                    uint32_t inExcludedMetricsCount = 0, const std::vector<MetricImp *> &inExcludedMetrics = std::vector<MetricImp *>())
-        : isMultiDevice(multiDevice), metricInReportCount(static_cast<uint32_t>(inMetricsInReport.size())),
-          metricsInReport(inMetricsInReport), excludedMetricCount(inExcludedMetricsCount),
-          excludedMetrics(inExcludedMetrics) {}
+    MetricCalcOpImp(bool multiDevice,
+                    const std::vector<MetricScopeImp *> &metricScopes,
+                    const std::vector<MetricImp *> &metricsInReport,
+                    const std::vector<MetricImp *> &excludedMetrics = std::vector<MetricImp *>())
+        : isMultiDevice(multiDevice),
+          metricScopes(metricScopes),
+          metricsInReport(metricsInReport),
+          excludedMetrics(excludedMetrics) {}
 
     bool isRootDevice() { return isMultiDevice; }
     ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
     ze_result_t getExcludedMetrics(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
-    uint32_t getMetricsInReportCount() { return metricInReportCount; };
+    uint32_t getMetricsInReportCount() { return static_cast<uint32_t>(metricsInReport.size()); };
+    uint32_t getExcludedMetricsCount() { return static_cast<uint32_t>(excludedMetrics.size()); };
 
   protected:
     ze_result_t getMetricsFromCalcOp(uint32_t *pCount, zet_metric_handle_t *phMetrics, bool isExcludedMetrics = false);
     bool isMultiDevice = false;
-    uint32_t metricInReportCount = 0;
+    std::vector<MetricScopeImp *> metricScopes{};
     std::vector<MetricImp *> metricsInReport{};
-    uint32_t excludedMetricCount = 0;
     std::vector<MetricImp *> excludedMetrics{};
 };
 
+static constexpr std::string_view computeScopeNamePrefix = "COMPUTE_TILE_";
+static constexpr std::string_view computeScopeDescriptionPrefix = "Metrics results for tile ";
+static constexpr std::string_view aggregatedScopeName = "DEVICE_AGGREGATED";
+static constexpr std::string_view aggregatedScopeDescription = "Metrics results aggregated at device level";
 struct MetricScope : _zet_intel_metric_scope_exp_handle_t {
     virtual ~MetricScope() = default;
     MetricScope() {}
@@ -511,13 +519,15 @@ struct MetricScope : _zet_intel_metric_scope_exp_handle_t {
 
 struct MetricScopeImp : public MetricScope {
     ~MetricScopeImp() override = default;
-    MetricScopeImp(zet_intel_metric_scope_properties_exp_t &properties) : properties(properties){};
+    MetricScopeImp(zet_intel_metric_scope_properties_exp_t &properties, bool aggregated) : properties(properties), aggregated(aggregated) {}
 
     virtual ze_result_t getProperties(zet_intel_metric_scope_properties_exp_t *pProperties);
-    static std::unique_ptr<MetricScopeImp> create(zet_intel_metric_scope_properties_exp_t &scopeProperties);
+    static std::unique_ptr<MetricScopeImp> create(zet_intel_metric_scope_properties_exp_t &scopeProperties, bool aggregated);
+    bool isAggregated() const { return aggregated; }
 
   private:
     zet_intel_metric_scope_properties_exp_t properties;
+    bool aggregated = false;
 };
 
 // MetricGroup.
