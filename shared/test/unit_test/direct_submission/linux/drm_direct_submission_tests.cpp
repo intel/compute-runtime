@@ -79,7 +79,6 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::completionFenceValue;
     using BaseClass::currentRingBuffer;
     using BaseClass::currentTagData;
-    using BaseClass::disableMonitorFence;
     using BaseClass::dispatchMonitorFenceRequired;
     using BaseClass::dispatchSwitchRingBufferSection;
     using BaseClass::DrmDirectSubmission;
@@ -741,7 +740,6 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenDispatchSwitchRin
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    directSubmission.disableMonitorFence = true;
     directSubmission.ringStart = true;
 
     bool ret = directSubmission.allocateResources();
@@ -766,7 +764,6 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenUpdateTagValueThe
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    directSubmission.disableMonitorFence = true;
     directSubmission.ringStart = true;
 
     bool ret = directSubmission.allocateResources();
@@ -1231,8 +1228,6 @@ HWTEST_F(DrmDirectSubmissionTest,
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     EXPECT_FALSE(drmDirectSubmission.inputMonitorFenceDispatchRequirement);
-    drmDirectSubmission.disableMonitorFence = true;
-
     FlushStampTracker flushStamp(true);
 
     EXPECT_TRUE(drmDirectSubmission.initialize(false));
@@ -1289,7 +1284,6 @@ HWTEST_F(DrmDirectSubmissionTest,
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(drmDirectSubmission.inputMonitorFenceDispatchRequirement);
-    drmDirectSubmission.disableMonitorFence = true;
 
     FlushStampTracker flushStamp(true);
 
@@ -1382,11 +1376,7 @@ HWTEST2_F(DrmDirectSubmissionTest, givenRelaxedOrderingSchedulerRequiredWhenAski
     size_t expectedBaseEndSize = Dispatcher::getSizeStopCommandBuffer() +
                                  Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
                                  (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
-                                 MemoryConstants::cacheLineSize;
-    if (directSubmission.disableMonitorFence) {
-        expectedBaseEndSize += Dispatcher::getSizeMonitorFence(device->getRootDeviceEnvironment());
-    }
-
+                                 MemoryConstants::cacheLineSize + Dispatcher::getSizeMonitorFence(device->getRootDeviceEnvironment());
     EXPECT_EQ(expectedBaseEndSize + directSubmission.getSizeDispatchRelaxedOrderingQueueStall(), directSubmission.getSizeEnd(true));
     EXPECT_EQ(expectedBaseEndSize, directSubmission.getSizeEnd(false));
 }

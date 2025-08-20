@@ -50,7 +50,6 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     auto &compilerProductHelper = inputParams.rootDeviceEnvironment.getHelper<CompilerProductHelper>();
 
     disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
-    disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
 
     if (debugManager.flags.DirectSubmissionMaxRingBuffers.get() != -1) {
         this->maxRingBufferCount = debugManager.flags.DirectSubmissionMaxRingBuffers.get();
@@ -309,9 +308,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer(bool blocking) {
 
     void *flushPtr = ringCommandStream.getSpace(0);
     Dispatcher::dispatchCacheFlush(ringCommandStream, this->rootDeviceEnvironment, gpuVaForMiFlush);
-    if (disableMonitorFence) {
-        dispatchStopRingBufferSection();
-    }
+    dispatchStopRingBufferSection();
     Dispatcher::dispatchStopCommandBuffer(ringCommandStream);
 
     auto bytesToPad = Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer();
@@ -394,21 +391,15 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeStartSection() {
 
 template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress) {
-    if (disableMonitorFence) {
-        TagData currentTagData = {};
-        getTagAddressValueForRingSwitch(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
-    }
+    TagData currentTagData = {};
+    getTagAddressValueForRingSwitch(currentTagData);
+    Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
     Dispatcher::dispatchStartCommandBuffer(ringCommandStream, nextBufferGpuAddress);
 }
 
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSwitchRingBufferSection() {
-    size_t size = Dispatcher::getSizeStartCommandBuffer();
-    if (disableMonitorFence) {
-        size += Dispatcher::getSizeMonitorFence(rootDeviceEnvironment);
-    }
-    return size;
+    return Dispatcher::getSizeStartCommandBuffer() + Dispatcher::getSizeMonitorFence(rootDeviceEnvironment);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -416,10 +407,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd(bool relaxed
     size_t size = Dispatcher::getSizeStopCommandBuffer() +
                   Dispatcher::getSizeCacheFlush(rootDeviceEnvironment) +
                   (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
-                  MemoryConstants::cacheLineSize;
-    if (disableMonitorFence) {
-        size += dispatchStopRingBufferSectionSize();
-    }
+                  MemoryConstants::cacheLineSize + dispatchStopRingBufferSectionSize();
     if (this->relaxedOrderingEnabled && relaxedOrderingSchedulerRequired) {
         size += getSizeDispatchRelaxedOrderingQueueStall();
     }
@@ -780,7 +768,7 @@ inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRing
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(bool requireMonitorFence) {
-    return !this->disableMonitorFence;
+    return false;
 }
 
 template <typename GfxFamily, typename Dispatcher>

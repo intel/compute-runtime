@@ -529,11 +529,6 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     EXPECT_NE(expectedWaitFence, wddm->waitFromCpuResult.uint64ParamPassed);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, whenCreateWddmDirectSubmissionThenDisableMonitorFence) {
-    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    EXPECT_TRUE(wddmDirectSubmission.disableMonitorFence);
-}
-
 HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceAndStallingCmdsWhenUpdatingTagValueThenUpdateCompletionFence) {
     uint64_t address = 0xFF00FF0000ull;
     uint64_t value = 0x12345678ull;
@@ -542,7 +537,6 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceAndStallingCmdsWh
     contextFence.currentFenceValue = value;
 
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    wddmDirectSubmission.disableMonitorFence = true;
     EXPECT_TRUE(wddmDirectSubmission.allocateOsResources());
 
     uint64_t actualTagValue = wddmDirectSubmission.updateTagValue(wddmDirectSubmission.dispatchMonitorFenceRequired(true));
@@ -627,7 +621,6 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenHandleStopRin
     uint64_t value = 0x12345678ull;
 
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    wddmDirectSubmission.disableMonitorFence = true;
     wddmDirectSubmission.ringBufferEndCompletionTagData.tagValue = value;
     wddmDirectSubmission.handleStopRingBuffer();
     EXPECT_EQ(value + 1, wddmDirectSubmission.ringBufferEndCompletionTagData.tagValue);
@@ -637,7 +630,6 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDisableMonitorFenceWhenHandleSwitchR
     uint64_t value = 0x12345678ull;
 
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    wddmDirectSubmission.disableMonitorFence = true;
     wddmDirectSubmission.ringBufferEndCompletionTagData.tagValue = value;
     wddmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(value + 1, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFenceForSwitch);
@@ -808,7 +800,6 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
-    wddmDirectSubmission.disableMonitorFence = true;
 
     bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -873,7 +864,6 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
-    wddmDirectSubmission.disableMonitorFence = true;
 
     bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -907,41 +897,10 @@ HWTEST_F(WddmDirectSubmissionTest,
 }
 
 HWTEST_F(WddmDirectSubmissionTest,
-         givenDisableMonitorFenceIsFalseWhenDispatchArgumentIsFalseThenDispatchMonitorFenceReturnsTrue) {
-    using Dispatcher = RenderDispatcher<FamilyType>;
-
-    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    wddmDirectSubmission.disableMonitorFence = false;
-
-    EXPECT_TRUE(wddmDirectSubmission.dispatchMonitorFenceRequired(false));
-}
-
-HWTEST_F(WddmDirectSubmissionTest,
-         givenDisableMonitorFenceIsFalseWhenDispatchArgumentIsTrueThenDispatchMonitorFenceReturnsTrue) {
-    using Dispatcher = RenderDispatcher<FamilyType>;
-
-    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    wddmDirectSubmission.disableMonitorFence = false;
-
-    EXPECT_TRUE(wddmDirectSubmission.dispatchMonitorFenceRequired(true));
-}
-
-HWTEST_F(WddmDirectSubmissionTest,
-         givenDisableMonitorFenceIsTrueWhenDispatchArgumentIsFalseThenDispatchMonitorFenceReturnsFalse) {
-    using Dispatcher = RenderDispatcher<FamilyType>;
-
-    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    wddmDirectSubmission.disableMonitorFence = true;
-
-    EXPECT_FALSE(wddmDirectSubmission.dispatchMonitorFenceRequired(false));
-}
-
-HWTEST_F(WddmDirectSubmissionTest,
          givenDisableMonitorFenceIsTrueWhenDispatchArgumentIsTrueThenDispatchMonitorFenceReturnsTrue) {
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    wddmDirectSubmission.disableMonitorFence = true;
 
     EXPECT_TRUE(wddmDirectSubmission.dispatchMonitorFenceRequired(true));
 }
@@ -981,7 +940,6 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     EXPECT_FALSE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
-    wddmDirectSubmission.disableMonitorFence = true;
 
     bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -1043,7 +1001,6 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
-    wddmDirectSubmission.disableMonitorFence = true;
 
     bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -1257,10 +1214,7 @@ HWTEST2_F(WddmDirectSubmissionTest, givenRelaxedOrderingSchedulerRequiredWhenAsk
     size_t expectedBaseEndSize = Dispatcher::getSizeStopCommandBuffer() +
                                  Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
                                  (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
-                                 MemoryConstants::cacheLineSize;
-    if (directSubmission.disableMonitorFence) {
-        expectedBaseEndSize += 2 * Dispatcher::getSizeMonitorFence(device->getRootDeviceEnvironment());
-    }
+                                 MemoryConstants::cacheLineSize + 2 * Dispatcher::getSizeMonitorFence(device->getRootDeviceEnvironment());
     EXPECT_EQ(expectedBaseEndSize + directSubmission.getSizeDispatchRelaxedOrderingQueueStall(), directSubmission.getSizeEnd(true));
     EXPECT_EQ(expectedBaseEndSize, directSubmission.getSizeEnd(false));
 }

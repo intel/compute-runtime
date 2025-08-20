@@ -49,7 +49,6 @@ enum class DirectSubmissionSfenceMode : int32_t {
 
 namespace UllsDefaults {
 inline constexpr bool defaultDisableCacheFlush = true;
-inline constexpr bool defaultDisableMonitorFence = true;
 } // namespace UllsDefaults
 
 struct BatchBuffer;
@@ -268,7 +267,6 @@ class DirectSubmissionHw {
     bool ringStart = false;
     bool disableCpuCacheFlush = true;
     bool disableCacheFlush = false;
-    bool disableMonitorFence = false;
     bool partitionedMode = false;
     bool partitionConfigSet = true;
     bool miMemFenceRequired = false;

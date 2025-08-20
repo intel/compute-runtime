@@ -551,7 +551,6 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetEndSizeThenExpectCorr
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    directSubmission.disableMonitorFence = false;
 
     size_t expectedSize = Dispatcher::getSizeStopCommandBuffer() +
                           Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +

@@ -227,8 +227,6 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToTrueWhenCrea
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
             givenDirectSubmissionInPartitionModeWhenDispatchingCommandBufferThenExpectDispatchPartitionedPipeControlInCommandBuffer) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
@@ -244,7 +242,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(directSubmission.partitionConfigSet);
     directSubmission.partitionConfigSet = false;
-    directSubmission.disableMonitorFence = false;
     directSubmission.partitionedMode = true;
     directSubmission.workPartitionAllocation = ultCsr->getWorkPartitionAllocation();
 
@@ -286,25 +283,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
 
     EXPECT_EQ(directSubmission.getSizeDispatch(false, false, directSubmission.dispatchMonitorFenceRequired(false)) - directSubmission.getSizeNewResourceHandler(), directSubmission.ringCommandStream.getUsed());
     EXPECT_TRUE(directSubmission.ringStart);
-
-    HardwareParse hwParse;
-    hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
-    hwParse.findHardwareCommands<FamilyType>();
-
-    bool foundFenceUpdate = false;
-    for (auto &it : hwParse.pipeControlList) {
-        PIPE_CONTROL *pipeControl = reinterpret_cast<PIPE_CONTROL *>(it);
-        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            foundFenceUpdate = true;
-            EXPECT_EQ(directSubmission.tagAddressSetValue, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
-            uint64_t data = pipeControl->getImmediateData();
-            EXPECT_EQ(directSubmission.tagValueSetValue, data);
-            EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
-            break;
-        }
-    }
-    EXPECT_TRUE(foundFenceUpdate);
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenCopyCommandBufferIntoRingWhenDispatchCommandBufferThenCopyTaskStream) {
@@ -829,111 +807,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(0x221Cu, loadRegisterMem->getRegisterAddress());
     uint64_t gpuAddress = ultCsr->getWorkPartitionAllocation()->getGpuAddress();
     EXPECT_EQ(gpuAddress, loadRegisterMem->getMemoryAddress());
-}
-
-HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenRenderDirectSubmissionWhenDispatchWorkloadCalledWithMonitorFenceThenExpectPostSyncOperationWithoutNotifyFlag) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    using Dispatcher = RenderDispatcher<FamilyType>;
-
-    FlushStampTracker flushStamp(true);
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    directSubmission.disableMonitorFence = false;
-
-    bool ret = directSubmission.initialize(true);
-    EXPECT_TRUE(ret);
-
-    size_t sizeUsedBefore = directSubmission.ringCommandStream.getUsed();
-    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
-    EXPECT_TRUE(ret);
-
-    HardwareParse hwParse;
-    hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, sizeUsedBefore);
-    hwParse.findHardwareCommands<FamilyType>();
-
-    bool foundFenceUpdate = false;
-    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            foundFenceUpdate = true;
-            EXPECT_FALSE(pipeControl->getNotifyEnable());
-            break;
-        }
-    }
-    EXPECT_TRUE(foundFenceUpdate);
-}
-
-HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenBlitterDirectSubmissionWhenDispatchWorkloadCalledWithMonitorFenceThenExpectPostSyncOperationWithoutNotifyFlag) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    using Dispatcher = BlitterDispatcher<FamilyType>;
-
-    FlushStampTracker flushStamp(true);
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    directSubmission.disableMonitorFence = false;
-
-    bool ret = directSubmission.initialize(true);
-    EXPECT_TRUE(ret);
-
-    size_t sizeUsedBefore = directSubmission.ringCommandStream.getUsed();
-    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
-    EXPECT_TRUE(ret);
-
-    HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, sizeUsedBefore);
-    hwParse.findHardwareCommands<FamilyType>();
-    auto miFlushList = hwParse.getCommandsList<MI_FLUSH_DW>();
-
-    bool foundFenceUpdate = false;
-    for (auto it = miFlushList.begin(); it != miFlushList.end(); it++) {
-        auto miFlush = genCmdCast<MI_FLUSH_DW *>(*it);
-        if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
-            foundFenceUpdate = true;
-            EXPECT_FALSE(miFlush->getNotifyEnable());
-            break;
-        }
-    }
-    EXPECT_TRUE(foundFenceUpdate);
-}
-
-HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenRenderDirectSubmissionWhenDispatchWorkloadCalledWithMonitorFenceAndNotifyEnableRequiredThenExpectPostSyncOperationWithNotifyFlag) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    using Dispatcher = RenderDispatcher<FamilyType>;
-
-    FlushStampTracker flushStamp(true);
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    directSubmission.disableMonitorFence = false;
-    directSubmission.notifyKmdDuringMonitorFence = true;
-
-    bool ret = directSubmission.initialize(true);
-    EXPECT_TRUE(ret);
-
-    size_t sizeUsedBefore = directSubmission.ringCommandStream.getUsed();
-    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
-    EXPECT_TRUE(ret);
-
-    HardwareParse hwParse;
-    hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, sizeUsedBefore);
-    hwParse.findHardwareCommands<FamilyType>();
-
-    bool foundFenceUpdate = false;
-    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            foundFenceUpdate = true;
-            EXPECT_TRUE(pipeControl->getNotifyEnable());
-            break;
-        }
-    }
-    EXPECT_TRUE(foundFenceUpdate);
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenRingBufferRestartRequestWhenDispatchCommandBuffer) {

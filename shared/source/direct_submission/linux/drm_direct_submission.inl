@@ -237,9 +237,7 @@ inline void DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidencyContainer
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
-    if (this->disableMonitorFence) {
-        this->currentTagData.tagValue++;
-    }
+    this->currentTagData.tagValue++;
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -256,19 +254,17 @@ size_t DrmDirectSubmission<GfxFamily, Dispatcher>::dispatchStopRingBufferSection
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
-    if (this->disableMonitorFence) {
-        if (this->ringStart) {
-            this->currentTagData.tagValue++;
-        }
+    if (this->ringStart) {
+        this->currentTagData.tagValue++;
+    }
 
-        bool updateCompletionFences = true;
-        if (debugManager.flags.EnableRingSwitchTagUpdateWa.get() != -1) {
-            updateCompletionFences = !debugManager.flags.EnableRingSwitchTagUpdateWa.get() || this->ringStart;
-        }
+    bool updateCompletionFences = true;
+    if (debugManager.flags.EnableRingSwitchTagUpdateWa.get() != -1) {
+        updateCompletionFences = !debugManager.flags.EnableRingSwitchTagUpdateWa.get() || this->ringStart;
+    }
 
-        if (updateCompletionFences) {
-            this->ringBuffers[this->previousRingBuffer].completionFence = this->currentTagData.tagValue;
-        }
+    if (updateCompletionFences) {
+        this->ringBuffers[this->previousRingBuffer].completionFence = this->currentTagData.tagValue;
     }
 }
 

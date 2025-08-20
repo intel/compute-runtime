@@ -126,17 +126,13 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
-    if (this->disableMonitorFence) {
-        updateTagValueImplForSwitchRingBuffer(this->currentRingBuffer);
-        updateTagValueImpl(this->currentRingBuffer);
-    }
+    updateTagValueImplForSwitchRingBuffer(this->currentRingBuffer);
+    updateTagValueImpl(this->currentRingBuffer);
 }
 
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
-    if (this->disableMonitorFence) {
-        updateTagValueImplForSwitchRingBuffer(this->previousRingBuffer);
-    }
+    updateTagValueImplForSwitchRingBuffer(this->previousRingBuffer);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -160,7 +156,7 @@ uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool requir
 
 template <typename GfxFamily, typename Dispatcher>
 bool WddmDirectSubmission<GfxFamily, Dispatcher>::dispatchMonitorFenceRequired(bool requireMonitorFence) {
-    return !this->disableMonitorFence || requireMonitorFence;
+    return requireMonitorFence;
 }
 
 template <typename GfxFamily, typename Dispatcher>
