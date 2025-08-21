@@ -99,6 +99,7 @@ TEST_F(BlitPropertiesTests, givenBlitPropertiesWhenDstIs1DTiledArrayThenTransfor
     EXPECT_EQ(blitProperties.dstOffset.y, 0u);
     EXPECT_EQ(blitProperties.dstOffset.z, size.y);
 }
+
 TEST_F(BlitPropertiesTests, givenBlitPropertiesWhenDstAndSrcIsNot1DTiledArrayThenSizeAndOffsetNotchanged) {
     blitProperties.transform1DArrayTo2DArrayIfNeeded();
 
@@ -142,5 +143,25 @@ TEST_F(BlitPropertiesTests, givenGmmResInfoForTiled1DWhenIs1DTiledArrayCalledThe
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 1;
     EXPECT_FALSE(blitProperties.is1DTiledArray(resourceInfoSrc));
+}
+
+TEST_F(BlitPropertiesTests, givenNullSrcAllocationWhenCallingIsSrc1DTiledArrayThenFalseIsReturned) {
+    blitProperties.srcAllocation = nullptr;
+    EXPECT_FALSE(blitProperties.isSrc1DTiledArray());
+}
+
+TEST_F(BlitPropertiesTests, givenNullDstAllocationWhenCallingIsDst1DTiledArrayThenFalseIsReturned) {
+    blitProperties.dstAllocation = nullptr;
+    EXPECT_FALSE(blitProperties.isDst1DTiledArray());
+}
+
+TEST_F(BlitPropertiesTests, givenSrcAllocationWithNullGmmWhenCallingIsSrc1DTiledArrayThenFalseIsReturned) {
+    blitProperties.srcAllocation->setGmm(nullptr, 0);
+    EXPECT_FALSE(blitProperties.isSrc1DTiledArray());
+}
+
+TEST_F(BlitPropertiesTests, givenDstAllocationWithNullGmmWhenCallingIsDst1DTiledArrayThenFalseIsReturned) {
+    blitProperties.dstAllocation->setGmm(nullptr, 0);
+    EXPECT_FALSE(blitProperties.isDst1DTiledArray());
 }
 } // namespace NEO

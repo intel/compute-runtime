@@ -142,7 +142,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
     }
 
     DEBUG_BREAK_IF((AuxTranslationDirection::none != blitProperties.auxTranslationDirection) &&
-                   (dstAllocation != srcAllocation || !dstAllocation->isCompressionEnabled()));
+                   (dstAllocation != srcAllocation || (dstAllocation && !dstAllocation->isCompressionEnabled())));
 }
 
 template <>
@@ -209,8 +209,8 @@ void BlitCommandsHelper<Family>::encodeWa(LinearStream &cmdStream, const BlitPro
     const bool applyForDst = (debugManager.flags.EnableBcsSwControlWa.get() & dstInSystemMemOnly);
     const bool applyAlways = (debugManager.flags.EnableBcsSwControlWa.get() == enableAlways);
 
-    const bool enableWa = (!blitProperties.srcAllocation->isAllocatedInLocalMemoryPool() && applyForSrc) ||
-                          (!blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() && applyForDst) ||
+    const bool enableWa = ((blitProperties.srcAllocation && !blitProperties.srcAllocation->isAllocatedInLocalMemoryPool()) && applyForSrc) ||
+                          ((blitProperties.dstAllocation && !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool()) && applyForDst) ||
                           applyAlways;
 
     uint32_t newValue = enableWa ? waEnabledMMioValue : waDisabledMMioValue;
