@@ -42,6 +42,8 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
         }
     }
 
+    bool hasPriorityLevel() const { return priorityLevel.has_value(); }
+    int getPriorityLevel() const { return priorityLevel.value_or(0); }
     bool isRegular() const { return engineUsage == EngineUsage::regular; }
     bool isLowPriority() const { return engineUsage == EngineUsage::lowPriority; }
     bool isHighPriority() const { return engineUsage == EngineUsage::highPriority; }

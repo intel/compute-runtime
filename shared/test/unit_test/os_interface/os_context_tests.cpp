@@ -159,6 +159,40 @@ TEST(OSContext, givenOsContextWhenSetNewResourceBoundThenTlbFLushRequired) {
     EXPECT_FALSE(osContext->isTlbFlushRequired());
 }
 
+TEST(OSContext, givenOsContextWhenCreatedThenPriorityLevelIsNotSet) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    auto osContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
+
+    EXPECT_FALSE(osContext->hasPriorityLevel());
+    EXPECT_EQ(0, osContext->getPriorityLevel()); // Default value
+
+    delete osContext;
+}
+
+TEST(OSContext, givenOsContextWhenOverridingPriorityThenPriorityLevelIsSet) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    auto osContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
+
+    osContext->overridePriority(2);
+    EXPECT_TRUE(osContext->hasPriorityLevel());
+    EXPECT_EQ(2, osContext->getPriorityLevel());
+
+    delete osContext;
+}
+
+TEST(OSContext, givenOsContextWithPriorityLevelWhenOverridingAgainThenPriorityLevelRemainsUnchanged) {
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    auto osContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
+
+    osContext->overridePriority(3);
+    osContext->overridePriority(7); // Second override should be ignored
+
+    EXPECT_TRUE(osContext->hasPriorityLevel());
+    EXPECT_EQ(3, osContext->getPriorityLevel()); // Should remain 3
+
+    delete osContext;
+}
+
 struct DeferredOsContextCreationTests : ::testing::Test {
     void SetUp() override {
         device = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
