@@ -138,6 +138,7 @@ fi
 %{_includedir}/level_zero/driver_experimental/zex_memory.h
 %{_includedir}/level_zero/driver_experimental/zex_module.h
 %{_includedir}/level_zero/zes_intel_gpu_sysman.h
+%{_includedir}/level_zero/zet_intel_gpu_metric.h
 
 %doc
 

@@ -7,7 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/include/level_zero/zet_intel_gpu_metric.h"
+#include "level_zero/zet_intel_gpu_metric.h"
 #include <level_zero/zet_api.h>
 
 #include "gtest/gtest.h"
