@@ -214,8 +214,17 @@ bool IoctlHelperXe::initialize() {
 
     xeLog("DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY\t\t%#llx\n",
           config->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY]);
+    xeLog("  DRM_XE_QUERY_CONFIG_FLAG_HAS_LOW_LATENCY\t%s\n",
+          config->info[DRM_XE_QUERY_CONFIG_FLAGS] &
+                  DRM_XE_QUERY_CONFIG_FLAG_HAS_LOW_LATENCY
+              ? "ON"
+              : "OFF");
 
     maxExecQueuePriority = config->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] & 0xffff;
+    isLowLatencyHintAvailable = false;
+    if (debugManager.flags.ForceLowLatencyHint.get() != -1) {
+        isLowLatencyHintAvailable = !!debugManager.flags.ForceLowLatencyHint.get();
+    }
 
     memset(&queryConfig, 0, sizeof(queryConfig));
     queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
@@ -1332,6 +1341,12 @@ void IoctlHelperXe::xeShowBindTable() {
                   bindInfo[i].userptr,
                   bindInfo[i].addr);
         }
+    }
+}
+
+void IoctlHelperXe::applyContextFlags(void *execQueueCreate, bool allocateInterrupt) {
+    if (this->isLowLatencyHintAvailable) {
+        reinterpret_cast<drm_xe_exec_queue_create *>(execQueueCreate)->flags |= DRM_XE_EXEC_QUEUE_LOW_LATENCY_HINT;
     }
 }
 
