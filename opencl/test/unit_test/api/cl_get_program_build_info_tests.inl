@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
 #include "opencl/source/context/context.h"
+#include "opencl/source/program/create.inl"
 
 #include "cl_api_tests.h"
 

@@ -1747,11 +1747,11 @@ HWTEST_F(EventPoolCreateMultiDevice, GivenEnabledTimestampPoolAllocatorAndForced
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableTimestampPoolAllocator.set(1);
 
-    MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType> mockL0GfxCoreHelper0{};
-    MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType> mockL0GfxCoreHelper1{};
+    auto mockL0GfxCoreHelper0 = std::make_unique<MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType>>();
+    auto mockL0GfxCoreHelper1 = std::make_unique<MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType>>();
 
-    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup0(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper0));
-    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup1(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper1));
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup0(static_cast<ApiGfxCoreHelper *>(mockL0GfxCoreHelper0.get()));
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup1(static_cast<ApiGfxCoreHelper *>(mockL0GfxCoreHelper1.get()));
 
     ASSERT_GE(driverHandle->devices.size(), 2u);
 

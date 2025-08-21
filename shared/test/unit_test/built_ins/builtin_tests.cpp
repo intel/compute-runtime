@@ -78,7 +78,7 @@ TEST_F(BuiltInSharedTest, whenTryingToGetBuiltinResourceForUnregisteredPlatformT
     }
 }
 
-TEST_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAddressingIsStateless) {
+HWTEST2_F(BuiltInSharedTest, GivenStatelessBuiltinWhenGettingResourceNameThenAddressingIsStateless, HasStatefulSupport) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
