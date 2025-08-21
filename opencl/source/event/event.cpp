@@ -485,8 +485,14 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
 
     std::span<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
     auto waitStatus = WaitStatus::notReady;
-    auto waitedOnTimestamps = cmdQueue->waitForTimestamps(states, waitStatus, this->timestampPacketContainer.get(), nullptr);
-    waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, waitedOnTimestamps);
+    auto skipWaitOnTaskCount = cmdQueue->waitForTimestamps(states, waitStatus, this->timestampPacketContainer.get(), nullptr);
+
+    if (this->getWaitForTaskCountRequired()) {
+        skipWaitOnTaskCount = false;
+        this->setWaitForTaskCountRequired(false);
+    }
+
+    waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, skipWaitOnTaskCount);
     if (waitStatus == WaitStatus::gpuHang) {
         return WaitStatus::gpuHang;
     }
@@ -500,7 +506,7 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     {
         TakeOwnershipWrapper<CommandQueue> queueOwnership(*cmdQueue);
 
-        bool checkQueueCompletionForPostSyncOperations = !(waitedOnTimestamps && !cmdQueue->isOOQEnabled() &&
+        bool checkQueueCompletionForPostSyncOperations = !(skipWaitOnTaskCount && !cmdQueue->isOOQEnabled() &&
                                                            (this->timestampPacketContainer->peekNodes() == cmdQueue->getTimestampPacketContainer()->peekNodes()));
 
         cmdQueue->handlePostCompletionOperations(checkQueueCompletionForPostSyncOperations);

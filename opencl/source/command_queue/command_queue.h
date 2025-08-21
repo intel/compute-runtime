@@ -435,6 +435,18 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool waitOnDestructionNeeded() const;
 
+    bool getL3FlushDeferredIfNeeded() const {
+        return l3FlushDeferredIfNeeded;
+    }
+
+    void setL3FlushDeferredIfNeeded(bool newValue) {
+        l3FlushDeferredIfNeeded = newValue;
+    }
+
+    void setCheckIfDeferredL3FlushIsNeeded(bool newValue) {
+        checkIfDeferredL3FlushIsNeeded = newValue;
+    }
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);
@@ -550,6 +562,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool l3FlushAfterPostSyncEnabled = false;
     bool isWalkerWithProfilingEnqueued = false;
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
+    bool l3FlushDeferredIfNeeded = false;
+    bool checkIfDeferredL3FlushIsNeeded = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandQueue>);

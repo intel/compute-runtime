@@ -312,6 +312,14 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     void copyTimestamps(Event &srcEvent);
 
+    void setWaitForTaskCountRequired(bool newValue) {
+        waitForTaskCountRequired = newValue;
+    }
+
+    bool getWaitForTaskCountRequired() const {
+        return waitForTaskCountRequired;
+    }
+
   protected:
     Event(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType,
           TaskCountType taskLevel, TaskCountType taskCount);
@@ -367,6 +375,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     std::atomic<Command *> cmdToSubmit{nullptr};
     std::atomic<Command *> submittedCmd{nullptr};
     bool eventWithoutCommand = true;
+    bool waitForTaskCountRequired = false;
 
     Context *ctx = nullptr;
     CommandQueue *cmdQueue = nullptr;

@@ -25,6 +25,20 @@ cl_int CommandQueueHw<GfxFamily>::finish() {
 
     bool waitForTaskCountRequired = false;
 
+    if (l3FlushAfterPostSyncEnabled && this->checkIfDeferredL3FlushIsNeeded && this->l3FlushDeferredIfNeeded) {
+        csr.flushTagUpdate();
+
+        CompletionStamp completionStamp = {
+            csr.peekTaskCount(),
+            std::max(this->taskLevel, csr.peekTaskLevel()),
+            csr.obtainCurrentFlushStamp()};
+
+        this->updateFromCompletionStamp(completionStamp, nullptr);
+
+        this->l3FlushDeferredIfNeeded = false;
+        waitForTaskCountRequired = true;
+    }
+
     // Stall until HW reaches taskCount on all its engines
     const auto waitStatus = waitForAllEngines(true, nullptr, waitForTaskCountRequired);
     if (waitStatus == WaitStatus::gpuHang) {
@@ -33,4 +47,5 @@ cl_int CommandQueueHw<GfxFamily>::finish() {
 
     return CL_SUCCESS;
 }
+
 } // namespace NEO

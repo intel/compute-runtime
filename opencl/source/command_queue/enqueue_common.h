@@ -410,6 +410,27 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         } else {
             UNRECOVERABLE_IF(enqueueProperties.operation != EnqueueProperties::Operation::enqueueWithoutSubmission);
 
+            if (this->getL3FlushDeferredIfNeeded()) {
+                if (blocking) {
+                    this->setCheckIfDeferredL3FlushIsNeeded(true);
+                    this->finish();
+                    this->setCheckIfDeferredL3FlushIsNeeded(false);
+
+                } else if (event) {
+                    computeCommandStreamReceiver.flushBatchedSubmissions();
+                    computeCommandStreamReceiver.flushTagUpdate();
+
+                    CompletionStamp completionStamp = {
+                        computeCommandStreamReceiver.peekTaskCount(),
+                        std::max(taskLevel, computeCommandStreamReceiver.peekTaskLevel()),
+                        computeCommandStreamReceiver.obtainCurrentFlushStamp()};
+
+                    this->updateFromCompletionStamp(completionStamp, nullptr);
+                    this->l3FlushDeferredIfNeeded = false;
+                    eventBuilder.getEvent()->setWaitForTaskCountRequired(true);
+                }
+            }
+
             auto maxTaskCountCurrentRootDevice = this->taskCount;
 
             for (auto eventId = 0u; eventId < numEventsInWaitList; eventId++) {

@@ -107,8 +107,12 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         if constexpr (heaplessModeEnabled) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
             auto containsPrintBuffer = kernel.hasPrintfOutput();
+            bool l3FlushDeferredIfNeeded = false;
+
             bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation || containsPrintBuffer;
             bool flushL3AfterPostSyncForExternalAllocation = kernel.isUsingSharedObjArgs();
+
+            l3FlushDeferredIfNeeded = flushL3AfterPostSyncForHostUsm || flushL3AfterPostSyncForExternalAllocation;
 
             if (debugManager.flags.RedirectFlushL3HostUsmToExternal.get() && flushL3AfterPostSyncForHostUsm) {
                 flushL3AfterPostSyncForHostUsm = false;
@@ -127,6 +131,11 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
             if (walkerArgs.event != nullptr || walkerArgs.blocking || containsPrintBuffer || forceFlushL3) {
                 GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacketFlushL3<WalkerType>(&walkerCmd, productHelper, flushL3AfterPostSyncForHostUsm, flushL3AfterPostSyncForExternalAllocation);
+                l3FlushDeferredIfNeeded = false;
+            }
+
+            if (l3FlushDeferredIfNeeded) {
+                commandQueue.setL3FlushDeferredIfNeeded(true);
             }
         }
     }

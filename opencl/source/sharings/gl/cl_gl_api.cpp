@@ -275,8 +275,10 @@ cl_int CL_API_CALL clEnqueueReleaseGLObjects(cl_command_queue commandQueue, cl_u
             TRACING_EXIT(ClEnqueueReleaseGlObjects, &retVal);
             return retVal;
         }
-
+        pCommandQueue->setCheckIfDeferredL3FlushIsNeeded(true);
         pCommandQueue->finish();
+        pCommandQueue->setCheckIfDeferredL3FlushIsNeeded(false);
+
         retVal = pCommandQueue->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList, eventWaitList, event,
                                                             CL_COMMAND_RELEASE_GL_OBJECTS);
     }
