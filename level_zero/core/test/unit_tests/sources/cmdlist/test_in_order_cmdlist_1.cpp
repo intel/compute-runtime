@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -5971,6 +5972,48 @@ HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInO
     EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
 
     context->freeMem(devAddress);
+}
+
+HWTEST_F(InOrderCmdListTests, givenCopyOnlyCmdListAndDebugFlagWhenCounterSignaledThenProgramMiFlush) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto immCmdList = createCopyOnlyImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false, false);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto it = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), it);
+    }
+
+    debugManager.flags.InOrderCopyMiFlushSync.set(1);
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false, false);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        if (immCmdList->useAdditionalBlitProperties) {
+            auto it = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+
+            EXPECT_EQ(cmdList.end(), it);
+        } else {
+            auto it = cmdList.begin();
+            if (BlitCommandsHelper<FamilyType>::isDummyBlitWaNeeded(immCmdList->dummyBlitWa)) {
+                it++;
+            }
+
+            auto miFlush = genCmdCast<MI_FLUSH_DW *>(*it);
+            EXPECT_NE(nullptr, miFlush);
+        }
+    }
 }
 
 HWTEST_F(InOrderCmdListTests, givenExternalSyncStorageAndCopyOnlyCmdListWhenCallingAppendMemoryCopyWithDisabledInOrderSignalingThenSignalAtomicStorage) {
