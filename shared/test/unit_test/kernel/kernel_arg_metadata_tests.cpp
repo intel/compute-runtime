@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,8 +97,15 @@ TEST(KernelArgMetadata, WhenParseTypeQualifiersIsCalledThenQualifierIsProperlyPa
 
 TEST(KernelArgMetadata, WhenParseLimitedStringIsCalledThenReturnedStringDoesntContainExcessiveTrailingZeroes) {
     char str1[] = "abcd\0\0\0after\0";
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
     EXPECT_STREQ("abcd", NEO::parseLimitedString(str1, sizeof(str1)).c_str());
     EXPECT_EQ(4U, NEO::parseLimitedString(str1, sizeof(str1)).size());
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
     EXPECT_STREQ("ab", NEO::parseLimitedString(str1, 2).c_str());
     EXPECT_EQ(2U, NEO::parseLimitedString(str1, 2).size());

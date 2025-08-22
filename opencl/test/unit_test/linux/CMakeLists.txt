@@ -44,6 +44,8 @@ endif()
 
 target_link_libraries(igdrcl_${target_name} ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} igdrcl_mocks ${NEO_EXTRA_LIBS} gmock-gtest)
 
+target_compile_options(igdrcl_${target_name} PRIVATE -O0)
+
 set_property(TARGET igdrcl_${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 target_include_directories(igdrcl_${target_name} PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
