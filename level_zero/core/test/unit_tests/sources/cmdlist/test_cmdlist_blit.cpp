@@ -334,7 +334,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToImageCo
                                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
     CmdListMemoryCopyParams copyParams = {};
-    commandList->appendCopyImageBlit(mockAllocationSrc.getGpuAddress(), &mockAllocationSrc, mockAllocationDst.getGpuAddress(), &mockAllocationDst, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, event.get(), 0, nullptr, copyParams);
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, event.get(), 0, nullptr, copyParams);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
@@ -372,7 +372,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenWaitWhenWhenAppendBlitCalledThenProgramSem
     CmdListMemoryCopyParams copyParams = {};
 
     {
-        commandList->appendCopyImageBlit(mockAllocationSrc.getGpuAddress(), &mockAllocationSrc, mockAllocationDst.getGpuAddress(), &mockAllocationDst, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, event.get(), 0, nullptr, copyParams);
+        commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, event.get(), 0, nullptr, copyParams);
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
 
@@ -384,7 +384,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenWaitWhenWhenAppendBlitCalledThenProgramSem
         offset = cmdStream->getUsed();
         auto eventHandle = event->toHandle();
 
-        commandList->appendCopyImageBlit(mockAllocationSrc.getGpuAddress(), &mockAllocationSrc, mockAllocationDst.getGpuAddress(), &mockAllocationDst, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 1, &eventHandle, copyParams);
+        commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 1, &eventHandle, copyParams);
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
         auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
@@ -455,7 +455,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTiled1DArrayImagePassed
     size_t arrayLevels = 8;
     size_t depth = 1;
     CmdListMemoryCopyParams copyParams = {};
-    commandList->appendCopyImageBlit(mockAllocationSrc.getGpuAddress(), &mockAllocationSrc, mockAllocationDst.getGpuAddress(), &mockAllocationDst, {0, 0, 0}, {0, 0, 0}, 4, 4, 4, 4, 1, {1, arrayLevels, depth}, {1, arrayLevels, depth}, {1, arrayLevels, depth}, nullptr, 0, nullptr, copyParams);
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 4, 4, 4, 4, 1, {1, arrayLevels, depth}, {1, arrayLevels, depth}, {1, arrayLevels, depth}, nullptr, 0, nullptr, copyParams);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
@@ -490,7 +490,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenNotTiled1DArrayImagePas
     size_t arrayLevels = 8;
     size_t depth = 1;
     CmdListMemoryCopyParams copyParams = {};
-    commandList->appendCopyImageBlit(mockAllocationSrc.getGpuAddress(), &mockAllocationSrc, mockAllocationDst.getGpuAddress(), &mockAllocationDst, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, arrayLevels, depth}, {1, arrayLevels, depth}, {1, arrayLevels, depth}, nullptr, 0, nullptr, copyParams);
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, arrayLevels, depth}, {1, arrayLevels, depth}, {1, arrayLevels, depth}, nullptr, 0, nullptr, copyParams);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
@@ -637,7 +637,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
     CmdListMemoryCopyParams copyParams = {};
-    commandList->appendCopyImageBlit(mockAllocationSrc.getGpuAddress(), &mockAllocationSrc, mockAllocationDst.getGpuAddress(), &mockAllocationDst, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams);
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
 
@@ -649,7 +649,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
 
     commandList->useAdditionalBlitProperties = true;
 
-    commandList->appendCopyImageBlit(mockAllocationSrc.getGpuAddress(), &mockAllocationSrc, mockAllocationDst.getGpuAddress(), &mockAllocationDst, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams);
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(1u, commandList->appendSignalInOrderDependencyCounterCalled);
     if (commandList->inOrderCmdsPatchingEnabled()) {
@@ -674,7 +674,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
     EXPECT_EQ(0u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
     CmdListMemoryCopyParams copyParams = {};
-    commandList->appendCopyImageBlit(mockAllocationSrc.getGpuAddress(), &mockAllocationSrc, mockAllocationDst.getGpuAddress(), &mockAllocationDst, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams);
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
 }
@@ -885,7 +885,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
     EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
     EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
     CmdListMemoryCopyParams copyParams = {};
-    commandList->appendCopyImageBlit(mockAllocationSrc.getGpuAddress(), &mockAllocationSrc, mockAllocationDst.getGpuAddress(), &mockAllocationDst, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams);
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, commandList->additionalBlitPropertiesCalled);
     EXPECT_EQ(0u, commandList->appendSignalInOrderDependencyCounterCalled);
     if (commandList->inOrderCmdsPatchingEnabled()) {
@@ -905,18 +905,6 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPro
     } else {
         EXPECT_EQ(0u, commandList->inOrderPatchCmds.size());
     }
-}
-
-HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithNonZeroNumWaitEventsAndNullEventHandlesWhenCallingAppendCopyImageBlitThenErrorIsReturned) {
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
-    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::buffer, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, NEO::AllocationType::image, reinterpret_cast<void *>(0x2345), 0x1000, 0, sizeof(uint32_t), MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-
-    CmdListMemoryCopyParams copyParams = {};
-    auto result = commandList->appendCopyImageBlit(mockAllocationSrc.getGpuAddress(), &mockAllocationSrc, mockAllocationDst.getGpuAddress(), &mockAllocationDst, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, nullptr, 1, nullptr, copyParams);
-
-    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWithUseAdditionalBlitPropertiesWhenPatchingCommandsAfterCallingMemoryFillWithTwoBytesPatternThenCommandsRemainsTheSame) {

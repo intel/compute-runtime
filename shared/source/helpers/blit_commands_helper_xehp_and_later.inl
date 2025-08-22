@@ -80,7 +80,7 @@ template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
 
-    if (blitProperties.srcAllocation && blitProperties.srcAllocation->getDefaultGmm()) {
+    if (blitProperties.srcAllocation->getDefaultGmm()) {
         auto resInfo = blitProperties.srcAllocation->getDefaultGmm()->gmmResourceInfo.get();
         auto resourceType = resInfo->getResourceType();
         auto isArray = resInfo->getArraySize() > 1;
@@ -100,7 +100,7 @@ void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blit
         }
     }
 
-    if (blitProperties.dstAllocation && blitProperties.dstAllocation->getDefaultGmm()) {
+    if (blitProperties.dstAllocation->getDefaultGmm()) {
         auto resInfo = blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo.get();
         auto resourceType = resInfo->getResourceType();
         auto isArray = resInfo->getArraySize() > 1;
@@ -212,14 +212,10 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProper
     auto srcCompressionFormat = blitCmd.getSourceCompressionFormat();
     auto dstCompressionFormat = blitCmd.getDestinationCompressionFormat();
 
-    if (srcAllocation) {
-        getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, srcTileType, srcMipTailLod, srcCompressionFormat,
-                                    rootDeviceEnvironment, blitProperties.srcPlane);
-    }
-    if (dstAllocation) {
-        getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, dstTileType, dstMipTailLod, dstCompressionFormat,
-                                    rootDeviceEnvironment, blitProperties.dstPlane);
-    }
+    getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, srcTileType, srcMipTailLod, srcCompressionFormat,
+                                rootDeviceEnvironment, blitProperties.srcPlane);
+    getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, dstTileType, dstMipTailLod, dstCompressionFormat,
+                                rootDeviceEnvironment, blitProperties.dstPlane);
 
     srcSlicePitch = std::max(srcSlicePitch, srcRowPitch * srcQPitch);
     dstSlicePitch = std::max(dstSlicePitch, dstRowPitch * dstQPitch);

@@ -244,13 +244,13 @@ bool BlitProperties::isImageOperation() const {
            blitDirection == BlitterConstants::BlitDirection::imageToImage;
 }
 bool BlitProperties::isSrc1DTiledArray() const {
-    if (srcAllocation && srcAllocation->getDefaultGmm()) {
+    if (srcAllocation->getDefaultGmm()) {
         return is1DTiledArray(srcAllocation->getDefaultGmm()->gmmResourceInfo.get());
     }
     return false;
 }
 bool BlitProperties::isDst1DTiledArray() const {
-    if (dstAllocation && dstAllocation->getDefaultGmm()) {
+    if (dstAllocation->getDefaultGmm()) {
         return is1DTiledArray(dstAllocation->getDefaultGmm()->gmmResourceInfo.get());
     }
     return false;

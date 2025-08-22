@@ -286,8 +286,8 @@ struct CommandListCoreFamily : public CommandListImp {
                                                 uint32_t numWaitEvents,
                                                 ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams);
 
-    MOCKABLE_VIRTUAL ze_result_t appendCopyImageBlit(uintptr_t srcPtr, NEO::GraphicsAllocation *src,
-                                                     uintptr_t dstPtr, NEO::GraphicsAllocation *dst,
+    MOCKABLE_VIRTUAL ze_result_t appendCopyImageBlit(NEO::GraphicsAllocation *src,
+                                                     NEO::GraphicsAllocation *dst,
                                                      const Vec3<size_t> &srcOffsets, const Vec3<size_t> &dstOffsets,
                                                      size_t srcRowPitch, size_t srcSlicePitch,
                                                      size_t dstRowPitch, size_t dstSlicePitch,
@@ -416,8 +416,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool singleEventPacketRequired(bool inputSinglePacketEventRequest) const;
     void programEventL3Flush(Event *event);
     virtual ze_result_t flushInOrderCounterSignal(bool waitOnInOrderCounterRequired) { return ZE_RESULT_SUCCESS; };
-    bool isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation) const;
-    bool isSharedSystemEnabled() const;
+    bool isCopyOffloadAllowed(const NEO::GraphicsAllocation &srcAllocation, const NEO::GraphicsAllocation &dstAllocation) const;
     void setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const;
     void dispatchInOrderPostOperationBarrier(Event *signalOperation, bool dcFlushRequired, bool copyOperation);
     NEO::GraphicsAllocation *getDeviceCounterAllocForResidency(NEO::GraphicsAllocation *counterDeviceAlloc);

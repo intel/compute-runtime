@@ -68,35 +68,35 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
     auto dstAllocation = blitProperties.dstAllocation;
     auto srcAllocation = blitProperties.srcAllocation;
 
-    if (srcAllocation && srcAllocation->isCompressionEnabled()) {
+    if (srcAllocation->isCompressionEnabled()) {
         auto resourceFormat = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
         srcCompressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     }
 
-    if (dstAllocation && dstAllocation->isCompressionEnabled()) {
+    if (dstAllocation->isCompressionEnabled()) {
         auto resourceFormat = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
         dstCompressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
     }
 
     if (debugManager.flags.ForceBufferCompressionFormat.get() != -1) {
-        if (srcAllocation && srcAllocation->isCompressionEnabled()) {
+        if (srcAllocation->isCompressionEnabled()) {
             srcCompressionFormat = static_cast<uint8_t>(debugManager.flags.ForceBufferCompressionFormat.get());
         }
-        if (dstAllocation && dstAllocation->isCompressionEnabled()) {
+        if (dstAllocation->isCompressionEnabled()) {
             dstCompressionFormat = static_cast<uint8_t>(debugManager.flags.ForceBufferCompressionFormat.get());
         }
     }
 
     DEBUG_BREAK_IF((AuxTranslationDirection::none != blitProperties.auxTranslationDirection) &&
-                   (blitProperties.dstAllocation != blitProperties.srcAllocation || (blitProperties.dstAllocation && !blitProperties.dstAllocation->isCompressionEnabled())));
+                   (blitProperties.dstAllocation != blitProperties.srcAllocation || !blitProperties.dstAllocation->isCompressionEnabled()));
 
     blitCmd.setSourceCompressionFormat(static_cast<XY_BLOCK_COPY_BLT::SOURCE_COMPRESSION_FORMAT>(srcCompressionFormat));
     blitCmd.setDestinationCompressionFormat(static_cast<XY_BLOCK_COPY_BLT::DESTINATION_COMPRESSION_FORMAT>(dstCompressionFormat));
 
-    if (!dstAllocation || MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(blitProperties.dstAllocation->getMemoryPool())) {
         blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
-    if (!srcAllocation || MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(blitProperties.srcAllocation->getMemoryPool())) {
         blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
 

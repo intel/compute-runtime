@@ -291,14 +291,12 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitPropertie
     auto dstRowPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
     uint32_t mipTailLod = 0;
     auto compressionDetails = 0u;
-    if (srcAllocation) {
-        getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, tileType, mipTailLod, compressionDetails,
-                                    rootDeviceEnvironment, blitProperties.srcPlane);
-    }
-    if (dstAllocation) {
-        getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, tileType, mipTailLod, compressionDetails,
-                                    rootDeviceEnvironment, blitProperties.dstPlane);
-    }
+
+    getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, tileType, mipTailLod, compressionDetails,
+                                rootDeviceEnvironment, blitProperties.srcPlane);
+    getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, tileType, mipTailLod, compressionDetails,
+                                rootDeviceEnvironment, blitProperties.dstPlane);
+
     blitCmd.setSourcePitch(srcRowPitch);
     blitCmd.setDestinationPitch(dstRowPitch);
 
