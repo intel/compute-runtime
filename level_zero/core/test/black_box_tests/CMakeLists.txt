@@ -101,6 +101,7 @@ foreach(TEST_NAME ${TEST_TARGETS})
     endif()
   endif()
 
+  set(EXTRA_SOURCES "")
   if(${TEST_NAME} STREQUAL "zello_bindless_kernel")
     set(EXTRA_SOURCES ${NEO_SOURCE_DIR}/level_zero/core/source/image/image_format_desc_helper.cpp)
   endif()
