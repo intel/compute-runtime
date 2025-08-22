@@ -40,6 +40,8 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     void setUp(bool createInOrder);
     void tearDown();
 
+    std::unique_ptr<MockImmutableData> prepareKernelImmData();
+    std::unique_ptr<MockModule> prepareModule(MockImmutableData *immData);
     std::unique_ptr<MutableCommandList> createMutableCmdList();
     Event *createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool external);
     void *allocateUsm(size_t size);
@@ -69,7 +71,6 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     std::unique_ptr<MockKernel> kernel;
     std::unique_ptr<MockKernel> kernel2;
     std::unique_ptr<MockModule> module2;
-    std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData2;
     std::unique_ptr<VariableBackup<::NEO::HardwareInfo>> backupHwInfo;
 
     uint64_t commandId = 0;
