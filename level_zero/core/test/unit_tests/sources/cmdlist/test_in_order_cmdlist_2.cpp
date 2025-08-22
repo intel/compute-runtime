@@ -4187,11 +4187,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
             auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
             ASSERT_NE(nullptr, subCopyEventSemaphore);
         }
-
-        itor = ++semaphoreItor;
-
-        EXPECT_EQ(nullptr, genCmdCast<MI_FLUSH_DW *>(*itor)); // no marker event
-
+        itor = semaphoreItor;
     } else {
         for (uint32_t i = 0; i < numLinkCopyEngines; i++) {
             auto subCopyEventSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
@@ -4205,7 +4201,11 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         ASSERT_NE(nullptr, genCmdCast<MI_FLUSH_DW *>(*itor)); // marker event
     }
 
-    if (immCmdList.isHeaplessModeEnabled() && !aggregatedEventSplit) {
+    if (!device->getProductHelper().useAdditionalBlitProperties()) {
+        ASSERT_NE(nullptr, genCmdCast<MI_FLUSH_DW *>(*(++itor))); // in-order signal sync
+    }
+
+    if (immCmdList.inOrderAtomicSignalingEnabled) {
         auto inOrderAtomicSignalling = genCmdCast<MI_ATOMIC *>(*(++itor));
         ASSERT_NE(nullptr, inOrderAtomicSignalling);
     }

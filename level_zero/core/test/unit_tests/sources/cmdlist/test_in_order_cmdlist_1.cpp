@@ -5981,19 +5981,7 @@ HWTEST_F(InOrderCmdListTests, givenCopyOnlyCmdListAndDebugFlagWhenCounterSignale
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
-    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false, false);
 
-    {
-        GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
-
-        auto it = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
-        EXPECT_EQ(cmdList.end(), it);
-    }
-
-    debugManager.flags.InOrderCopyMiFlushSync.set(1);
-
-    offset = cmdStream->getUsed();
     immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false, false);
 
     {
@@ -6013,6 +6001,19 @@ HWTEST_F(InOrderCmdListTests, givenCopyOnlyCmdListAndDebugFlagWhenCounterSignale
             auto miFlush = genCmdCast<MI_FLUSH_DW *>(*it);
             EXPECT_NE(nullptr, miFlush);
         }
+    }
+
+    debugManager.flags.InOrderCopyMiFlushSync.set(0);
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false, false);
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto it = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), it);
     }
 }
 

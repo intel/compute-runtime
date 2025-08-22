@@ -3335,7 +3335,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
 
     auto cmdStream = commandContainer.getCommandStream();
 
-    if (isCopyOnly(copyOffloadOperation) && !this->useAdditionalBlitProperties && NEO::debugManager.flags.InOrderCopyMiFlushSync.get() == 1) {
+    if (isCopyOnly(copyOffloadOperation) && !this->useAdditionalBlitProperties && NEO::debugManager.flags.InOrderCopyMiFlushSync.get() != 0) {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         encodeMiFlush(0, 0, args);
     }
