@@ -1747,12 +1747,6 @@ HWTEST_F(EventPoolCreateMultiDevice, GivenEnabledTimestampPoolAllocatorAndForced
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableTimestampPoolAllocator.set(1);
 
-    auto mockL0GfxCoreHelper0 = std::make_unique<MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType>>();
-    auto mockL0GfxCoreHelper1 = std::make_unique<MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType>>();
-
-    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup0(static_cast<ApiGfxCoreHelper *>(mockL0GfxCoreHelper0.get()));
-    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup1(static_cast<ApiGfxCoreHelper *>(mockL0GfxCoreHelper1.get()));
-
     ASSERT_GE(driverHandle->devices.size(), 2u);
 
     auto device0 = driverHandle->devices[0];
@@ -1763,8 +1757,8 @@ HWTEST_F(EventPoolCreateMultiDevice, GivenEnabledTimestampPoolAllocatorAndForced
     ASSERT_TRUE(neoDevice0->getDeviceTimestampPoolAllocator().isEnabled());
     ASSERT_TRUE(neoDevice1->getDeviceTimestampPoolAllocator().isEnabled());
 
-    neoDevice0->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup0);
-    neoDevice1->getExecutionEnvironment()->rootDeviceEnvironments[1]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup1);
+    VariableBackup<std::unique_ptr<ApiGfxCoreHelper>> backupApiGfxCoreHelper0(&neoDevice0->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper, std::make_unique<MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType>>());
+    VariableBackup<std::unique_ptr<ApiGfxCoreHelper>> backupApiGfxCoreHelper1(&neoDevice1->getExecutionEnvironment()->rootDeviceEnvironments[1]->apiGfxCoreHelper, std::make_unique<MockL0GfxCoreHelperAlwaysAllocateEventInLocalMemHw<FamilyType>>());
 
     std::vector<std::unique_ptr<L0::EventPool>> eventPoolsDevice0;
     std::vector<std::unique_ptr<L0::EventPool>> eventPoolsDevice1;
@@ -1851,11 +1845,6 @@ HWTEST_F(EventPoolCreateMultiDevice, GivenEnabledTimestampPoolAllocatorAndForced
     EXPECT_NE(expectedSharedAllocationDevice0, expectedSharedAllocationDevice1);
     EXPECT_EQ(numEvents, gpuAddressesDevice0.size());
     EXPECT_EQ(numEvents, gpuAddressesDevice1.size());
-
-    neoDevice0->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup0);
-    neoDevice1->getExecutionEnvironment()->rootDeviceEnvironments[1]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup1);
-    l0GfxCoreHelperBackup0.release();
-    l0GfxCoreHelperBackup1.release();
 }
 
 using EventSynchronizeTest = Test<EventFixture<1, 0>>;
