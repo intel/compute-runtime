@@ -1095,6 +1095,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenMutableCommandListOnDcFlushPlatformAndSignalEventWithSignalScopeSelectedWhenAppendingWithSignalEventThenMutationIsPerformedOnDcFlushCommand) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
+    auto &productHelper = this->neoDevice->getProductHelper();
+    if (productHelper.isL3FlushAfterPostSyncRequired(true)) {
+        GTEST_SKIP();
+    }
+
     auto mockBaseCmdList = static_cast<L0::ult::MockCommandList *>(this->mutableCommandList.get()->base);
     mockBaseCmdList->dcFlushSupport = true;
 
@@ -1140,6 +1145,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             givenMutableCommandListOnDcFlushPlatformAndSignalEventWithTimestampSignalScopeSelectedWhenAppendingWithSignalEventThenMutationIsPerformedOnRegisterCommand) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
+    auto &productHelper = this->neoDevice->getProductHelper();
+    if (productHelper.isL3FlushAfterPostSyncRequired(true)) {
+        GTEST_SKIP();
+    }
     auto mockBaseCmdList = static_cast<L0::ult::MockCommandList *>(this->mutableCommandList.get()->base);
     mockBaseCmdList->dcFlushSupport = true;
 
@@ -1997,6 +2006,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto &productHelper = this->neoDevice->getProductHelper();
+    if (productHelper.isL3FlushAfterPostSyncRequired(true)) {
+        GTEST_SKIP();
+    }
 
     auto mockBaseCmdListHw = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(this->mutableCommandList.get()->base);
     mockBaseCmdListHw->dcFlushSupport = true;
@@ -2081,6 +2094,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    auto &productHelper = this->neoDevice->getProductHelper();
+    if (productHelper.isL3FlushAfterPostSyncRequired(true)) {
+        GTEST_SKIP();
+    }
 
     auto mockBaseCmdListHw = static_cast<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(this->mutableCommandList.get()->base);
     mockBaseCmdListHw->dcFlushSupport = true;
