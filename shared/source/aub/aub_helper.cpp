@@ -23,7 +23,6 @@ namespace NEO {
 
 bool AubHelper::isOneTimeAubWritableAllocationType(const AllocationType &type) {
     switch (type) {
-    case AllocationType::pipe:
     case AllocationType::constantSurface:
     case AllocationType::globalSurface:
     case AllocationType::kernelIsa:

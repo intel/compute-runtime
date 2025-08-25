@@ -359,7 +359,6 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, givenAllocationTypeWithCpuAccessRequired
         AllocationType::globalSurface,
         AllocationType::internalHeap,
         AllocationType::linearStream,
-        AllocationType::pipe,
         AllocationType::printfSurface,
         AllocationType::timestampPacketTagBuffer,
         AllocationType::ringBuffer,

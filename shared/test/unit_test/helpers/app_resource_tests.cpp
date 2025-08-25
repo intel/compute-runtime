@@ -73,7 +73,6 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationTyp
     {AllocationType::linearStream, "LINRSTRM"},
     {AllocationType::mapAllocation, "MAPALLOC"},
     {AllocationType::mcs, "MCS"},
-    {AllocationType::pipe, "PIPE"},
     {AllocationType::preemption, "PRMPTION"},
     {AllocationType::printfSurface, "PRNTSRFC"},
     {AllocationType::privateSurface, "PRVTSRFC"},

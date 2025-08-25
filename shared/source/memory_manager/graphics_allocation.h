@@ -219,7 +219,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
                allocationType == AllocationType::globalSurface ||
                allocationType == AllocationType::internalHeap ||
                allocationType == AllocationType::linearStream ||
-               allocationType == AllocationType::pipe ||
                allocationType == AllocationType::printfSurface ||
                allocationType == AllocationType::timestampPacketTagBuffer ||
                allocationType == AllocationType::ringBuffer ||

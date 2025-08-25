@@ -2533,7 +2533,7 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
         AllocationType::buffer,
         AllocationType::bufferHostMemory, AllocationType::externalHostPtr,
         AllocationType::globalSurface, AllocationType::image,
-        AllocationType::pipe, AllocationType::sharedImage,
+        AllocationType::sharedImage,
         AllocationType::sharedBuffer, AllocationType::sharedResourceCopy,
         AllocationType::svmZeroCopy, AllocationType::svmGpu,
         AllocationType::svmCpu, AllocationType::writeCombined,

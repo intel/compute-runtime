@@ -154,7 +154,6 @@ TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingCpuAccessRequiredThe
         case AllocationType::globalSurface:
         case AllocationType::internalHeap:
         case AllocationType::linearStream:
-        case AllocationType::pipe:
         case AllocationType::printfSurface:
         case AllocationType::timestampPacketTagBuffer:
         case AllocationType::ringBuffer:

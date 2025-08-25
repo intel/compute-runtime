@@ -161,8 +161,6 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "MAP_ALLOCATION";
     case AllocationType::mcs:
         return "MCS";
-    case AllocationType::pipe:
-        return "PIPE";
     case AllocationType::preemption:
         return "PREEMPTION";
     case AllocationType::printfSurface:

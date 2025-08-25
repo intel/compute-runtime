@@ -3109,7 +3109,6 @@ static const AllocationType allocation57Bit[] = {
     AllocationType::buffer,
     AllocationType::constantSurface,
     AllocationType::globalSurface,
-    AllocationType::pipe,
     AllocationType::printfSurface,
     AllocationType::privateSurface,
     AllocationType::sharedBuffer,

@@ -447,7 +447,7 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    std::array<std::pair<NEO::AllocationType, const char *>, 41> allocationTypeValues = {
+    std::array<std::pair<NEO::AllocationType, const char *>, 40> allocationTypeValues = {
         {{AllocationType::buffer, "BUFFER"},
          {AllocationType::bufferHostMemory, "BUFFER_HOST_MEMORY"},
          {AllocationType::commandBuffer, "COMMAND_BUFFER"},
@@ -465,7 +465,6 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
          {AllocationType::linearStream, "LINEAR_STREAM"},
          {AllocationType::mapAllocation, "MAP_ALLOCATION"},
          {AllocationType::mcs, "MCS"},
-         {AllocationType::pipe, "PIPE"},
          {AllocationType::preemption, "PREEMPTION"},
          {AllocationType::printfSurface, "PRINTF_SURFACE"},
          {AllocationType::privateSurface, "PRIVATE_SURFACE"},

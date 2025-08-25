@@ -229,7 +229,6 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest, givenAlloca
 
 static const AllocationType allocationTypesWith32BitAnd64KbPagesAllowed[] = {AllocationType::buffer,
                                                                              AllocationType::bufferHostMemory,
-                                                                             AllocationType::pipe,
                                                                              AllocationType::scratchSurface,
                                                                              AllocationType::workPartitionSurface,
                                                                              AllocationType::privateSurface,
@@ -583,14 +582,6 @@ TEST(MemoryManagerTest, givenMCSTypeWhenGetAllocationDataIsCalledThenSystemMemor
     AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::mcs, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_TRUE(allocData.flags.useSystemMemory);
-}
-
-TEST(MemoryManagerTest, givenPipeTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
-    AllocationData allocData;
-    MockMemoryManager mockMemoryManager;
-    AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::pipe, mockDeviceBitfield};
-    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
 TEST(MemoryManagerTest, givenGlobalSurfaceTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
@@ -1337,7 +1328,6 @@ static const AllocationType allocationHaveNotToBeForcedTo48Bit[] = {
     AllocationType::globalSurface,
     AllocationType::internalHostMemory,
     AllocationType::mapAllocation,
-    AllocationType::pipe,
     AllocationType::printfSurface,
     AllocationType::privateSurface,
     AllocationType::profilingTagBuffer,

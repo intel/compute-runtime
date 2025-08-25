@@ -271,10 +271,10 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalHostMemoryThenSucc
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalHostMemoryThenSuccessReturnedAndCacheableFlagIsOverriden) {
-    mock->ioctlExpected.gemWait = 49;
-    mock->ioctlExpected.gemCreateExt = 49;
-    mock->ioctlExpected.gemMmapOffset = 49;
-    mock->ioctlExpected.gemClose = 49;
+    mock->ioctlExpected.gemWait = static_cast<uint32_t>(AllocationType::count);
+    mock->ioctlExpected.gemCreateExt = static_cast<uint32_t>(AllocationType::count);
+    mock->ioctlExpected.gemMmapOffset = static_cast<uint32_t>(AllocationType::count);
+    mock->ioctlExpected.gemClose = static_cast<uint32_t>(AllocationType::count);
 
     std::vector<MemoryRegion> regionInfo(1);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};

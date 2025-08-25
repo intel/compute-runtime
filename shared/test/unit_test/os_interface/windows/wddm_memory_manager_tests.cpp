@@ -577,7 +577,6 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
                       AllocationType::kernelIsaInternal,
                       AllocationType::mapAllocation,
                       AllocationType::mcs,
-                      AllocationType::pipe,
                       AllocationType::preemption,
                       AllocationType::profilingTagBuffer,
                       AllocationType::sharedImage,

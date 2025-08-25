@@ -530,7 +530,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::bufferHostMemory:
     case AllocationType::constantSurface:
     case AllocationType::globalSurface:
-    case AllocationType::pipe:
     case AllocationType::printfSurface:
     case AllocationType::privateSurface:
     case AllocationType::scratchSurface:
@@ -570,7 +569,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::globalSurface:
     case AllocationType::image:
     case AllocationType::mapAllocation:
-    case AllocationType::pipe:
     case AllocationType::sharedBuffer:
     case AllocationType::sharedImage:
     case AllocationType::sharedResourceCopy:
@@ -909,7 +907,6 @@ bool MemoryManager::isExternalAllocation(AllocationType allocationType) {
         allocationType == AllocationType::fillPattern ||
         allocationType == AllocationType::image ||
         allocationType == AllocationType::mapAllocation ||
-        allocationType == AllocationType::pipe ||
         allocationType == AllocationType::sharedBuffer ||
         allocationType == AllocationType::sharedImage ||
         allocationType == AllocationType::sharedResourceCopy ||

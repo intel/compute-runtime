@@ -101,7 +101,6 @@ TEST(AubHelper, givenAllocationTypeWhenAskingIfOneTimeWritableThenReturnCorrectR
         bool isOneTimeWritable = AubHelper::isOneTimeAubWritableAllocationType(allocType);
 
         switch (allocType) {
-        case AllocationType::pipe:
         case AllocationType::constantSurface:
         case AllocationType::globalSurface:
         case AllocationType::kernelIsa:

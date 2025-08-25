@@ -1550,7 +1550,6 @@ HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenPageFaultManagerIsNotAvailableTh
 }
 
 static constexpr std::array onceWritableAllocTypesForTbx{
-    AllocationType::pipe,
     AllocationType::constantSurface,
     AllocationType::globalSurface,
     AllocationType::kernelIsa,

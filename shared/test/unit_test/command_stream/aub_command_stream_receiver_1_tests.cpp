@@ -745,7 +745,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     const AllocationType onlyOneTimeAubWritableTypes[] = {
-        AllocationType::pipe,
         AllocationType::constantSurface,
         AllocationType::globalSurface,
         AllocationType::kernelIsa,
