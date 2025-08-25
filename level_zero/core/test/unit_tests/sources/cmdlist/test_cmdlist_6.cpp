@@ -759,6 +759,7 @@ HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyFromMemoryThenCorrect
         commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
         commandList->heaplessModeEnabled = heaplessEnabled;
         commandList->scratchAddressPatchingEnabled = true;
+        commandList->statelessBuiltinsEnabled = false;
 
         void *srcPtr = reinterpret_cast<void *>(0x1234);
 
@@ -811,6 +812,7 @@ HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyToMemoryThenCorrectRo
         commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
         commandList->heaplessModeEnabled = heaplessEnabled;
         commandList->scratchAddressPatchingEnabled = true;
+        commandList->statelessBuiltinsEnabled = false;
 
         void *dstPtr = reinterpret_cast<void *>(0x1234);
 
@@ -843,6 +845,146 @@ HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyToMemoryThenCorrectRo
             EXPECT_EQ(0, memcmp(passedArgRowSlicePitch, expectedPitch, passedArgSizeRowSlicePitch));
         }
     }
+}
+
+HWTEST_F(CommandListTest, givenStatelessWhenAppendImageCopyFromMemoryThenCorrectRowAndSlicePitchArePassed) {
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(5);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+
+    commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::globalStateless;
+    commandList->scratchAddressPatchingEnabled = true;
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    ze_image_region_t dstImgRegion = {2, 1, 1, 4, 2, 2};
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcPtr, &dstImgRegion, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    auto passedArgSizeRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+    auto *passedArgRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].data();
+
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeRowSlicePitch);
+    auto bytesPerPixel = static_cast<uint32_t>(imageHw->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+    uint64_t expectedPitch[] = {dstImgRegion.width * bytesPerPixel, dstImgRegion.height * (dstImgRegion.width * bytesPerPixel)};
+    EXPECT_EQ(0, memcmp(passedArgRowSlicePitch, expectedPitch, passedArgSizeRowSlicePitch));
+}
+
+HWTEST_F(CommandListTest, givenStatelessWhenAppendImageCopyToMemoryThenCorrectRowAndSlicePitchArePassed) {
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(5);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+
+    commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::globalStateless;
+    commandList->scratchAddressPatchingEnabled = true;
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 4;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+
+    ze_image_region_t srcImgRegion = {2, 1, 1, 4, 2, 2};
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendImageCopyToMemory(dstPtr, imageHw->toHandle(), &srcImgRegion, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    auto passedArgSizeRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+    auto *passedArgRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].data();
+
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeRowSlicePitch);
+    auto bytesPerPixel = static_cast<uint32_t>(imageHw->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+    uint64_t expectedPitch[] = {srcImgRegion.width * bytesPerPixel, srcImgRegion.height * (srcImgRegion.width * bytesPerPixel)};
+    EXPECT_EQ(0, memcmp(passedArgRowSlicePitch, expectedPitch, passedArgSizeRowSlicePitch));
+}
+
+HWTEST_F(CommandListTest, givenBufferGreaterThan4GBWhenAppendImageCopyFromMemoryExtThenRowAndSlicePitchArgumentsAreSetAs64Bit) {
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3dBytes);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(5);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 4;
+    zeDesc.height = 4;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendImageCopyFromMemoryExt(imageHw->toHandle(), srcPtr, nullptr, 0x20000000, 0x80000000, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    auto argSizeRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+    EXPECT_EQ(sizeof(uint64_t) * 2, argSizeRowSlicePitch);
+}
+
+HWTEST_F(CommandListTest, givenImageBufferGreaterThan4GBWhenAppendImageCopyToMemoryExtThenRowAndSlicePitchArgumentsAreSetAs64Bit) {
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+    mockBuiltinKernel->checkPassedArgumentValues = true;
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+    mockBuiltinKernel->passedArgumentValues.clear();
+    mockBuiltinKernel->passedArgumentValues.resize(5);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.width = 4;
+    zeDesc.height = 4;
+    zeDesc.depth = 2;
+
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendImageCopyToMemoryExt(dstPtr, imageHw->toHandle(), nullptr, 0x20000000, 0x80000000, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+    auto argSizeRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+    EXPECT_EQ(sizeof(uint64_t) * 2, argSizeRowSlicePitch);
 }
 
 HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInExternalHostAllocationThenBuiltinFlagAndDestinationAllocSystemIsSet) {

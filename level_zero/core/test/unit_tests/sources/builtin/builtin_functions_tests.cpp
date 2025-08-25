@@ -251,6 +251,50 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenHeaplessImageBuiltinsWhenInitBuiltinK
     EXPECT_STREQ("CopyImage3dToImage3d", lib.kernelNamePassed.c_str());
 }
 
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenStatelessImageBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
+    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferToImage3d16BytesStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d2BytesStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferToImage3d2BytesStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d4BytesStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferToImage3d4BytesStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d8BytesStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferToImage3d8BytesStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyImage3dToBuffer16BytesStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer2BytesStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyImage3dToBuffer2BytesStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer4BytesStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyImage3dToBuffer4BytesStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBufferBytesStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyImage3dToBufferBytesStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer3BytesStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyImage3dToBuffer3BytesStateless", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer6BytesStateless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferStateless, lib.builtinPassed);
+    EXPECT_STREQ("CopyImage3dToBuffer6BytesStateless", lib.kernelNamePassed.c_str());
+}
+
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new NEO::MockCompilerInterfaceSpirv());

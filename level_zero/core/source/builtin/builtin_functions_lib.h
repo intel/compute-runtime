@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,36 +52,52 @@ enum class Builtin : uint32_t {
 
 enum class ImageBuiltin : uint32_t {
     copyBufferToImage3d16Bytes = 0u,
+    copyBufferToImage3d16BytesStateless,
     copyBufferToImage3d16BytesHeapless,
     copyBufferToImage3d2Bytes,
+    copyBufferToImage3d2BytesStateless,
     copyBufferToImage3d2BytesHeapless,
     copyBufferToImage3d4Bytes,
+    copyBufferToImage3d4BytesStateless,
     copyBufferToImage3d4BytesHeapless,
     copyBufferToImage3d3To4Bytes,
+    copyBufferToImage3d3To4BytesStateless,
     copyBufferToImage3d3To4BytesHeapless,
     copyBufferToImage3d8Bytes,
+    copyBufferToImage3d8BytesStateless,
     copyBufferToImage3d8BytesHeapless,
     copyBufferToImage3d6To8Bytes,
+    copyBufferToImage3d6To8BytesStateless,
     copyBufferToImage3d6To8BytesHeapless,
     copyBufferToImage3dBytes,
+    copyBufferToImage3dBytesStateless,
     copyBufferToImage3dBytesHeapless,
     copyImage3dToBuffer16Bytes,
+    copyImage3dToBuffer16BytesStateless,
     copyImage3dToBuffer16BytesHeapless,
     copyImage3dToBuffer2Bytes,
+    copyImage3dToBuffer2BytesStateless,
     copyImage3dToBuffer2BytesHeapless,
     copyImage3dToBuffer3Bytes,
+    copyImage3dToBuffer3BytesStateless,
     copyImage3dToBuffer3BytesHeapless,
     copyImage3dToBuffer4Bytes,
+    copyImage3dToBuffer4BytesStateless,
     copyImage3dToBuffer4BytesHeapless,
     copyImage3dToBuffer4To3Bytes,
+    copyImage3dToBuffer4To3BytesStateless,
     copyImage3dToBuffer4To3BytesHeapless,
     copyImage3dToBuffer6Bytes,
+    copyImage3dToBuffer6BytesStateless,
     copyImage3dToBuffer6BytesHeapless,
     copyImage3dToBuffer8Bytes,
+    copyImage3dToBuffer8BytesStateless,
     copyImage3dToBuffer8BytesHeapless,
     copyImage3dToBuffer8To6Bytes,
+    copyImage3dToBuffer8To6BytesStateless,
     copyImage3dToBuffer8To6BytesHeapless,
     copyImage3dToBufferBytes,
+    copyImage3dToBufferBytesStateless,
     copyImage3dToBufferBytesHeapless,
     copyImageRegion,
     copyImageRegionHeapless,
@@ -195,14 +211,20 @@ constexpr Builtin adjustBuiltinType<Builtin::fillBufferRightLeftover>(const bool
 }
 
 template <ImageBuiltin type>
-constexpr ImageBuiltin adjustImageBuiltinType(const bool isHeapless) {
+constexpr ImageBuiltin adjustImageBuiltinType(const bool isStateless, const bool isHeapless) {
     return type;
 }
 
-#define DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(type)                                   \
-    template <>                                                                  \
-    constexpr ImageBuiltin adjustImageBuiltinType<type>(const bool isHeapless) { \
-        return isHeapless ? type##Heapless : type;                               \
+#define DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(type)                                                           \
+    template <>                                                                                          \
+    constexpr ImageBuiltin adjustImageBuiltinType<type>(const bool isStateless, const bool isHeapless) { \
+        if (isHeapless) {                                                                                \
+            return type##Heapless;                                                                       \
+        } else if (isStateless) {                                                                        \
+            return type##Stateless;                                                                      \
+        } else {                                                                                         \
+            return type;                                                                                 \
+        }                                                                                                \
     }
 
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d16Bytes);
@@ -221,7 +243,14 @@ DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer6Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer8Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer8To6Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBufferBytes);
-DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImageRegion);
+
+template <>
+constexpr ImageBuiltin adjustImageBuiltinType<ImageBuiltin::copyImageRegion>(const bool isStateless, const bool isHeapless) {
+    if (isHeapless) {
+        return ImageBuiltin::copyImageRegionHeapless;
+    }
+    return ImageBuiltin::copyImageRegion;
+}
 
 } // namespace BuiltinTypeHelper
 

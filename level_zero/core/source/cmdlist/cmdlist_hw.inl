@@ -854,32 +854,37 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         return status;
     }
 
+    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
+    if (bufferSize >= 4ull * MemoryConstants::gigaByte) {
+        isStateless = true;
+    }
+
     bool isHeaplessEnabled = this->heaplessModeEnabled;
     ImageBuiltin builtInType = ImageBuiltin::copyBufferToImage3dBytes;
 
     switch (bytesPerPixel) {
     case 1u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3dBytes>(isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3dBytes>(isStateless, isHeaplessEnabled);
         break;
     case 2u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d2Bytes>(isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d2Bytes>(isStateless, isHeaplessEnabled);
         break;
     case 4u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d3To4Bytes>(isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d3To4Bytes>(isStateless, isHeaplessEnabled);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d4Bytes>(isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d4Bytes>(isStateless, isHeaplessEnabled);
         }
         break;
     case 8u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d6To8Bytes>(isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d6To8Bytes>(isStateless, isHeaplessEnabled);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d8Bytes>(isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d8Bytes>(isStateless, isHeaplessEnabled);
         }
         break;
     case 16u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16Bytes>(isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16Bytes>(isStateless, isHeaplessEnabled);
         break;
     default:
         UNRECOVERABLE_IF(true);
@@ -901,7 +906,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
                          0};
     builtinKernel->setArgumentValue(3u, sizeof(origin), &origin);
 
-    if (this->heaplessModeEnabled) {
+    if (this->heaplessModeEnabled || isStateless) {
         uint64_t pitch[] = {srcRowPitch, srcSlicePitch};
         builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
     } else {
@@ -1054,38 +1059,43 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         return status;
     }
 
+    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
+    if (bufferSize >= 4ull * MemoryConstants::gigaByte) {
+        isStateless = true;
+    }
+
     bool isHeaplessEnabled = this->heaplessModeEnabled;
     ImageBuiltin builtInType = ImageBuiltin::copyBufferToImage3dBytes;
 
     switch (bytesPerPixel) {
     case 1u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBufferBytes>(isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBufferBytes>(isStateless, isHeaplessEnabled);
         break;
     case 2u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer2Bytes>(isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer2Bytes>(isStateless, isHeaplessEnabled);
         break;
     case 3u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer3Bytes>(isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer3Bytes>(isStateless, isHeaplessEnabled);
         break;
     case 4u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4To3Bytes>(isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4To3Bytes>(isStateless, isHeaplessEnabled);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4Bytes>(isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4Bytes>(isStateless, isHeaplessEnabled);
         }
         break;
     case 6u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer6Bytes>(isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer6Bytes>(isStateless, isHeaplessEnabled);
         break;
     case 8u:
         if (image->isMimickedImage()) {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8To6Bytes>(isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8To6Bytes>(isStateless, isHeaplessEnabled);
         } else {
-            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8Bytes>(isHeaplessEnabled);
+            builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8Bytes>(isStateless, isHeaplessEnabled);
         }
         break;
     case 16u:
-        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16Bytes>(isHeaplessEnabled);
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16Bytes>(isStateless, isHeaplessEnabled);
         break;
     default: {
         CREATE_DEBUG_STRING(str, "Invalid bytesPerPixel of size: %u\n", bytesPerPixel);
@@ -1110,7 +1120,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     builtinKernel->setArgumentValue(2u, sizeof(origin), &origin);
     builtinKernel->setArgumentValue(3u, sizeof(size_t), &allocationStruct.offset);
 
-    if (this->heaplessModeEnabled) {
+    if (this->heaplessModeEnabled || isStateless) {
         uint64_t pitch[] = {destRowPitch, destSlicePitch};
         builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
     } else {
@@ -1271,7 +1281,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         return status;
     }
 
-    ImageBuiltin builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImageRegion>(this->heaplessModeEnabled);
+    ImageBuiltin builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImageRegion>(false, this->heaplessModeEnabled);
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(builtInType);
