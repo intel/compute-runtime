@@ -241,6 +241,8 @@ struct CommandList : _ze_command_list_handle_t {
         return alloc && alloc->getAllocationType() == NEO::AllocationType::externalHostPtr;
     }
 
+    static ze_result_t setKernelState(Kernel *kernel, const ze_group_size_t groupSizes, void **arguments);
+
     inline ze_command_list_handle_t toHandle() { return this; }
 
     uint32_t getCommandListPerThreadScratchSize(uint32_t slotId) const {
