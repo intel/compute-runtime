@@ -388,6 +388,7 @@ DECLARE_DEBUG_VARIABLE(bool, SetAssumeNotInUse, true, "Set AssumeNotInUse flag i
 DECLARE_DEBUG_VARIABLE(bool, MitigateHostVisibleSignal, false, "Reset host visible signal in CB events, flush L3 when synchronize")
 DECLARE_DEBUG_VARIABLE(bool, ForceZeroCopyForUseHostPtr, false, "When active all buffer allocations created with CL_MEM_USE_HOST_PTR flag will use share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(bool, DummyPageBackingEnabled, false, "When true, pass page backing flag to KMD to recover from page faults. Windows only.");
+DECLARE_DEBUG_VARIABLE(bool, Disable2MBSizeAlignment, false, "Disable 2MB alignment of user allocations on iGPU/XeKMD")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceNonCoherentModeForTimestamps, -1, "When active timestamp buffers are allocated in non coherent memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableReusingGpuTimestamps, -1, "Reuse GPU timestamp for next device time requests. -1: os-specific, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AllowZeroCopyWithoutCoherency, -1, "Use cacheline flush instead of memory copy for map/unmap mem object")

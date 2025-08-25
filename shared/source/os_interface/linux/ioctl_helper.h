@@ -253,6 +253,7 @@ class IoctlHelper {
     virtual void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) { return; }
     virtual bool isSmallBarConfigAllowed() const = 0;
     virtual bool overrideMaxSlicesSupported() const { return false; }
+    virtual bool is2MBSizeAlignmentRequired(AllocationType allocationType) const { return false; }
 
   protected:
     Drm &drm;

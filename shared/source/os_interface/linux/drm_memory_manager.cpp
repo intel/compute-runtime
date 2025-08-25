@@ -519,12 +519,13 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     size_t alignedStorageSize = cSize;
     size_t alignedVirtualAddressRangeSize = cSize;
     auto svmCpuAllocation = allocationData.type == AllocationType::svmCpu;
-    if (svmCpuAllocation) {
+    auto is2MBSizeAlignmentRequired = getDrm(allocationData.rootDeviceIndex).getIoctlHelper()->is2MBSizeAlignmentRequired(allocationData.type);
+    if (svmCpuAllocation || is2MBSizeAlignmentRequired) {
         // add padding in case reserved addr is not aligned
 
         auto &productHelper = getGmmHelper(allocationData.rootDeviceIndex)->getRootDeviceEnvironment().getHelper<ProductHelper>();
         if (alignedStorageSize >= 2 * MemoryConstants::megaByte &&
-            productHelper.is2MBLocalMemAlignmentEnabled() &&
+            (is2MBSizeAlignmentRequired || productHelper.is2MBLocalMemAlignmentEnabled()) &&
             cAlignment <= 2 * MemoryConstants::megaByte) {
             alignedStorageSize = alignUp(cSize, MemoryConstants::pageSize2M);
         } else {
@@ -937,13 +938,16 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     auto gmm = std::make_unique<Gmm>(gmmHelper, allocationData.hostPtr,
                                      allocationData.size, allocationData.alignment, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo()), systemMemoryStorageInfo, gmmRequirements);
     size_t bufferSize = allocationData.size;
+    auto &drm = getDrm(allocationData.rootDeviceIndex);
     auto alignment = allocationData.alignment;
     if (bufferSize >= 2 * MemoryConstants::megaByte) {
         alignment = MemoryConstants::pageSize2M;
+        if (drm.getIoctlHelper()->is2MBSizeAlignmentRequired(allocationData.type)) {
+            bufferSize = alignUp(bufferSize, MemoryConstants::pageSize2M);
+        }
     }
     uint64_t gpuRange = acquireGpuRangeWithCustomAlignment(bufferSize, allocationData.rootDeviceIndex, HeapIndex::heapStandard64KB, alignment);
 
-    auto &drm = getDrm(allocationData.rootDeviceIndex);
     int ret = -1;
     uint32_t handle;
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));

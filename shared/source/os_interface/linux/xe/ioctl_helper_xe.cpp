@@ -1896,4 +1896,18 @@ bool IoctlHelperXe::retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t
     return true;
 }
 
+bool IoctlHelperXe::is2MBSizeAlignmentRequired(AllocationType allocationType) const {
+    if (debugManager.flags.Disable2MBSizeAlignment.get()) {
+        return false;
+    }
+
+    auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto memoryManager = rootDeviceEnvironment.executionEnvironment.memoryManager.get();
+    if (hwInfo->capabilityTable.isIntegratedDevice) {
+        return memoryManager->isExternalAllocation(allocationType);
+    }
+    return false;
+}
+
 } // namespace NEO

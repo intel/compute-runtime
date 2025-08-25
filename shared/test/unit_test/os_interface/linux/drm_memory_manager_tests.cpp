@@ -9212,3 +9212,48 @@ TEST_F(DrmMemoryManagerTest, givenMmapAlignmentLessOrEqual2MBWhenAllocatingGraph
     EXPECT_EQ(2 * MemoryConstants::megaByte, memoryManager->passedAlignment);
     memoryManager->freeGraphicsMemory(allocation);
 }
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, given2MBAlignmentRequiredWhenUnalignedSizePassedToAllocateWithAlignmentThenSizeAlignedTo2MB) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    AllocationData allocationData;
+    allocationData.size = 4 * MemoryConstants::megaByte + 1 * MemoryConstants::megaByte;
+    allocationData.alignment = MemoryConstants::pageSize64k;
+    allocationData.type = AllocationType::buffer;
+    allocationData.rootDeviceIndex = mockRootDeviceIndex;
+
+    mockIoctlHelper->is2MBSizeAlignmentRequiredResult = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignmentImpl(allocationData);
+
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(2 * MemoryConstants::megaByte, memoryManager->passedAlignment);
+    EXPECT_EQ(6 * MemoryConstants::megaByte, allocation->getReservedAddressSize());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, given2MBAlignmentRequiredWhenUnalignedSizePassedToAllocateByKmdThenSizeAlignedTo2MB) {
+    mock->ioctlExpected.gemCreate = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    AllocationData allocationData;
+    allocationData.size = 4 * MemoryConstants::megaByte + 1 * MemoryConstants::megaByte;
+    allocationData.alignment = MemoryConstants::pageSize64k;
+    allocationData.type = AllocationType::buffer;
+    allocationData.rootDeviceIndex = mockRootDeviceIndex;
+
+    mockIoctlHelper->is2MBSizeAlignmentRequiredResult = true;
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(6 * MemoryConstants::megaByte, allocation->getReservedAddressSize());
+    memoryManager->freeGraphicsMemory(allocation);
+}

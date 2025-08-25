@@ -3093,3 +3093,28 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCallingOverrideMaxSlicesSupporte
     auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
     EXPECT_FALSE(xeIoctlHelper->overrideMaxSlicesSupported());
 }
+
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCallingIs2MBSizeAlignmentRequiredThenProperValueReturned) {
+    DebugManagerStateRestore restorer{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
+    auto drm = DrmMockXe::create(rootDeviceEnvironment);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    executionEnvironment->memoryManager.reset(new TestedDrmMemoryManager{*executionEnvironment});
+
+    auto hwInfo = drm->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.isIntegratedDevice = true;
+    EXPECT_TRUE(xeIoctlHelper->is2MBSizeAlignmentRequired(AllocationType::buffer));
+    EXPECT_FALSE(xeIoctlHelper->is2MBSizeAlignmentRequired(AllocationType::linearStream));
+
+    hwInfo->capabilityTable.isIntegratedDevice = false;
+    EXPECT_FALSE(xeIoctlHelper->is2MBSizeAlignmentRequired(AllocationType::buffer));
+    EXPECT_FALSE(xeIoctlHelper->is2MBSizeAlignmentRequired(AllocationType::linearStream));
+
+    hwInfo->capabilityTable.isIntegratedDevice = true;
+    debugManager.flags.Disable2MBSizeAlignment.set(true);
+    EXPECT_FALSE(xeIoctlHelper->is2MBSizeAlignmentRequired(AllocationType::buffer));
+}

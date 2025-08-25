@@ -143,6 +143,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool isSmallBarConfigAllowed() const override { return false; }
     void *pciBarrierMmap() override;
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
+    bool is2MBSizeAlignmentRequired(AllocationType allocationType) const override;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;

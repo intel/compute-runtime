@@ -90,6 +90,11 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
         topologyMap = topologyMapToSet;
         return true;
     }
+
+    bool is2MBSizeAlignmentRequired(AllocationType allocationType) const override {
+        return is2MBSizeAlignmentRequiredResult;
+    }
+
     DrmQueryTopologyData topologyDataToSet{};
     TopologyMap topologyMapToSet{};
     int getDrmParamValueResult = 1234;
@@ -98,6 +103,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
 
     bool releaseInterruptResult = true;
     bool callBaseVmAdviseAtomicAttribute = true;
+    bool is2MBSizeAlignmentRequiredResult = false;
     std::optional<uint32_t> vmAdviseAtomicAttribute{};
 };
 } // namespace NEO
