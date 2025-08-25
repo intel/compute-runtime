@@ -448,7 +448,7 @@ HWTEST_F(CommandListTest, givenComputeCommandListAnd2dRegionWhenMemoryCopyRegion
 HWTEST_F(CommandListTest, givenCooperativeDescriptorWithTrueValueWhenObtainLaunchParamsFromExtensionsIsCalledThenIsCooperativeIsSet) {
     L0::CmdListKernelLaunchParams launchParams = {};
     ze_command_list_append_launch_kernel_param_cooperative_desc_t cooperativeDesc = {};
-    cooperativeDesc.stype = static_cast<ze_structure_type_t>(ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC);
+    cooperativeDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC;
     cooperativeDesc.pNext = nullptr;
     cooperativeDesc.isCooperative = true;
 
