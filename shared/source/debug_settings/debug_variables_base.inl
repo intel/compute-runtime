@@ -621,7 +621,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintBOChunkingLogs, false, "Print some logs on BO 
 DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingPrefetch, false, "Enables prefetching of Shared Memory chunks")
 DECLARE_DEBUG_VARIABLE(bool, EnableBOChunkingPreferredLocationHint, false, "Enables preferred location advise on chunks")
 DECLARE_DEBUG_VARIABLE(bool, EnableCompatibilityMode, true, "Enables compatibility mode for platforms which can use precompiled base platform configuration")
-DECLARE_DEBUG_VARIABLE(bool, RedirectFlushL3HostUsmToExternal, true, "If L3 flush for host usm is needed it will be rerouted to folllow the external allocation flush logic")
+DECLARE_DEBUG_VARIABLE(bool, RedirectFlushL3HostUsmToExternal, false, "If L3 flush for host usm is needed it will be rerouted to folllow the external allocation flush logic")
 DECLARE_DEBUG_VARIABLE(bool, ForceFlushL3AfterPostSyncForHostUsm, false, "Force L3 flush for host usm after postSync")
 DECLARE_DEBUG_VARIABLE(bool, ForceFlushL3AfterPostSyncForExternalAllocation, false, "Force L3 flush for external allocation after postSync")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBOChunking, -1, "Enables use of chunking of BOs in the KMD, mask: -1 = default, 0 = no chunking, 1 = shared allocations only, 2 = multi-tile device allocations only, 3 = shared and multi-tile device allocations .")
