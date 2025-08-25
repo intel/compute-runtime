@@ -109,8 +109,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
             auto containsPrintBuffer = kernel.hasPrintfOutput();
             bool l3FlushDeferredIfNeeded = false;
 
-            bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation || containsPrintBuffer;
-            bool flushL3AfterPostSyncForExternalAllocation = kernel.isUsingSharedObjArgs();
+            bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation;
+            bool flushL3AfterPostSyncForExternalAllocation = kernel.isUsingSharedObjArgs() || containsPrintBuffer;
 
             l3FlushDeferredIfNeeded = flushL3AfterPostSyncForHostUsm || flushL3AfterPostSyncForExternalAllocation;
 
