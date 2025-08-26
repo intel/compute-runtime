@@ -49,9 +49,9 @@ template <>
 void BlitCommandsHelper<Family>::adjustControlSurfaceType(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {
     using CONTROL_SURFACE_TYPE = typename Family::XY_BLOCK_COPY_BLT::CONTROL_SURFACE_TYPE;
     using COMPRESSION_ENABLE = typename Family::XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE;
-    auto srcAllocation = blitProperties.srcAllocation;
 
-    if (srcAllocation->getDefaultGmm()) {
+    auto srcAllocation = blitProperties.srcAllocation;
+    if (srcAllocation && srcAllocation->getDefaultGmm()) {
         auto gmmResourceInfo = srcAllocation->getDefaultGmm()->gmmResourceInfo.get();
         auto resInfo = gmmResourceInfo->getResourceFlags()->Info;
         if (resInfo.MediaCompressed) {
@@ -62,7 +62,7 @@ void BlitCommandsHelper<Family>::adjustControlSurfaceType(const BlitProperties &
     }
 
     auto dstAllocation = blitProperties.dstAllocation;
-    if (dstAllocation->getDefaultGmm()) {
+    if (dstAllocation && dstAllocation->getDefaultGmm()) {
         auto gmmResourceInfo = dstAllocation->getDefaultGmm()->gmmResourceInfo.get();
         auto resInfo = gmmResourceInfo->getResourceFlags()->Info;
         if (resInfo.MediaCompressed) {
@@ -90,12 +90,13 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
         compressionEnabledField = static_cast<typename XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE>(debugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get());
     }
 
-    if (blitProperties.dstAllocation->isCompressionEnabled()) {
+    if (blitProperties.dstAllocation && blitProperties.dstAllocation->isCompressionEnabled()) {
         blitCmd.setDestinationCompressionEnable(compressionEnabledField);
         blitCmd.setDestinationAuxiliarysurfacemode(XY_BLOCK_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         blitCmd.setDestinationCompressionFormat(compressionFormat);
     }
-    if (blitProperties.srcAllocation->isCompressionEnabled()) {
+
+    if (blitProperties.srcAllocation && blitProperties.srcAllocation->isCompressionEnabled()) {
         blitCmd.setSourceCompressionEnable(compressionEnabledField);
         blitCmd.setSourceAuxiliarysurfacemode(XY_BLOCK_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         blitCmd.setSourceCompressionFormat(compressionFormat);
@@ -128,7 +129,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
     }
 
     DEBUG_BREAK_IF((AuxTranslationDirection::none != blitProperties.auxTranslationDirection) &&
-                   (blitProperties.dstAllocation != blitProperties.srcAllocation || !blitProperties.dstAllocation->isCompressionEnabled()));
+                   (blitProperties.dstAllocation != blitProperties.srcAllocation || (blitProperties.dstAllocation && !blitProperties.dstAllocation->isCompressionEnabled())));
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getUncachedMOCS();
 

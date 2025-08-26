@@ -1086,8 +1086,8 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
         if (blitProperties.blitSyncProperties.outputTimestampPacket) {
             bool deviceToHostPostSyncFenceRequired = getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
-                                                     !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() &&
-                                                     blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
+                                                     (blitProperties.dstAllocation && !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool()) &&
+                                                     (blitProperties.srcAllocation && blitProperties.srcAllocation->isAllocatedInLocalMemoryPool());
 
             if (deviceToHostPostSyncFenceRequired) {
                 MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), NEO::FenceType::release, peekRootDeviceEnvironment());
@@ -1106,8 +1106,12 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         }
 
         blitProperties.csrDependencies.makeResident(*this);
-        blitProperties.srcAllocation->prepareHostPtrForResidency(this);
-        blitProperties.dstAllocation->prepareHostPtrForResidency(this);
+        if (blitProperties.srcAllocation) {
+            blitProperties.srcAllocation->prepareHostPtrForResidency(this);
+        }
+        if (blitProperties.dstAllocation) {
+            blitProperties.dstAllocation->prepareHostPtrForResidency(this);
+        }
         makeResident(*blitProperties.srcAllocation);
         makeResident(*blitProperties.dstAllocation);
         if (blitProperties.clearColorAllocation) {
