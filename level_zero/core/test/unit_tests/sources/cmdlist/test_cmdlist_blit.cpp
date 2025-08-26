@@ -1261,6 +1261,31 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenRes
     context->freeMem(ptr);
 }
 
+HWTEST2_F(AggregatedBcsSplitTests, givenFullCmdBufferWhenAppendCalledThenAllocateNewBuffer, IsAtLeastXeHpcCore) {
+    auto ptr = allocHostMem();
+
+    auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
+
+    cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
+
+    std::vector<void *> cmdBuffers;
+
+    for (auto cmdList : bcsSplit->cmdLists) {
+        auto cmdStream = cmdList->getCmdContainer().getCommandStream();
+        cmdStream->getSpace(cmdStream->getAvailableSpace());
+        cmdBuffers.push_back(cmdStream->getCpuBase());
+    }
+
+    cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
+
+    for (size_t i = 0; i < bcsSplit->cmdLists.size(); i++) {
+        auto cmdStream = bcsSplit->cmdLists[i]->getCmdContainer().getCommandStream();
+        EXPECT_NE(cmdBuffers[i], cmdStream->getCpuBase());
+    }
+
+    context->freeMem(ptr);
+}
+
 struct MultiRootAggregatedBcsSplitTests : public AggregatedBcsSplitTests {
     void SetUp() override {
         expectedNumRootDevices = 2;

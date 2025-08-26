@@ -687,7 +687,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
             return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
         };
 
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, splitCall);
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
     } else if (this->isValidForStagingTransfer(dstptr, srcptr, size, numWaitEvents > 0)) {
         return this->appendStagingMemoryCopy(dstptr, srcptr, size, hSignalEvent, memoryCopyParams);
     } else {
@@ -749,7 +749,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
                                                                                             hSignalEventParam, 0u, nullptr, memoryCopyParams);
         };
 
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, uint32_t, uint32_t>(this, dstRegion->originX, srcRegion->originX, dstRegion->width, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, splitCall);
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, uint32_t, uint32_t>(this, dstRegion->originX, srcRegion->originX, dstRegion->width, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, dstRegion, dstPitch, dstSlicePitch,
                                                                            srcPtr, srcRegion, srcPitch, srcSlicePitch,
@@ -822,7 +822,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
             return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEventParam, false);
         };
 
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, uintptr_t, uintptr_t>(this, dstAddress, srcAddress, size, nullptr, 0u, nullptr, false, relaxedOrdering, direction, splitCall);
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, uintptr_t, uintptr_t>(this, dstAddress, srcAddress, size, nullptr, 0u, nullptr, false, relaxedOrdering, direction, commonImmediateCommandSize, splitCall);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
     }

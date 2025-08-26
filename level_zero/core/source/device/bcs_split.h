@@ -76,6 +76,7 @@ struct BcsSplit {
                                 bool performMigration,
                                 bool hasRelaxedOrderingDependencies,
                                 NEO::TransferDirection direction,
+                                size_t estimatedCmdBufferSize,
                                 std::function<ze_result_t(CommandListCoreFamilyImmediate<gfxCoreFamily> *, T, K, size_t, ze_event_handle_t)> appendCall) {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -108,6 +109,8 @@ struct BcsSplit {
         auto engineCount = cmdListsForSplit.size();
         for (size_t i = 0; i < cmdListsForSplit.size(); i++) {
             auto subCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(cmdListsForSplit[i]);
+
+            subCmdList->checkAvailableSpace(numWaitEvents, hasRelaxedOrderingDependencies, estimatedCmdBufferSize, false);
 
             if (barrierRequired) {
                 auto barrierEventHandle = this->events.barrier[markerEventIndex]->toHandle();
