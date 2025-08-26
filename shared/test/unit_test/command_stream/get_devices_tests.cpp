@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/create_command_stream.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
@@ -170,6 +171,13 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
         MockExecutionEnvironment exeEnv;
         exeEnv.prepareRootDeviceEnvironments(expectedDevices);
 
+        if (csrType == CommandStreamReceiverType::tbx || csrType == CommandStreamReceiverType::tbxWithAub) {
+            for (auto &rootDeviceEnvironment : exeEnv.rootDeviceEnvironments) {
+                auto mockProductHelper = std::make_unique<MockProductHelper>();
+                rootDeviceEnvironment->productHelper = std::move(mockProductHelper);
+            }
+        }
+
         const auto ret = prepareDeviceEnvironments(exeEnv);
         EXPECT_EQ(expectedDevices, exeEnv.rootDeviceEnvironments.size());
         for (auto i = 0u; i < expectedDevices; i++) {
@@ -246,6 +254,13 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
         debugManager.flags.ProductFamilyOverride.set(product);
         ExecutionEnvironment exeEnv{};
         exeEnv.prepareRootDeviceEnvironments(expectedDevices);
+
+        if (csrType == CommandStreamReceiverType::tbx || csrType == CommandStreamReceiverType::tbxWithAub) {
+            for (auto &rootDeviceEnvironment : exeEnv.rootDeviceEnvironments) {
+                auto mockProductHelper = std::make_unique<MockProductHelper>();
+                rootDeviceEnvironment->productHelper = std::move(mockProductHelper);
+            }
+        }
 
         const auto ret = prepareDeviceEnvironments(exeEnv);
         EXPECT_EQ(expectedDevices, exeEnv.rootDeviceEnvironments.size());
@@ -336,6 +351,13 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
         debugManager.flags.ProductFamilyOverride.set(productFamily);
         MockExecutionEnvironment exeEnv;
         exeEnv.prepareRootDeviceEnvironments(expectedDevices);
+
+        if (csrType == CommandStreamReceiverType::tbx || csrType == CommandStreamReceiverType::tbxWithAub) {
+            for (auto &rootDeviceEnvironment : exeEnv.rootDeviceEnvironments) {
+                auto mockProductHelper = std::make_unique<MockProductHelper>();
+                rootDeviceEnvironment->productHelper = std::move(mockProductHelper);
+            }
+        }
 
         auto ret = prepareDeviceEnvironments(exeEnv);
         EXPECT_EQ(expectedDevices, exeEnv.rootDeviceEnvironments.size());
