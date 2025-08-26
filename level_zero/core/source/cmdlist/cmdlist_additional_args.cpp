@@ -22,6 +22,30 @@ ze_result_t CommandList::validateLaunchParams(const Kernel &kernel, const CmdLis
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t CommandList::cloneAppendKernelExtensions(const ze_base_desc_t *desc, void *&outPnext) {
+    if (desc->stype == ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC) {
+        auto cooperativeDesc = reinterpret_cast<const ze_command_list_append_launch_kernel_param_cooperative_desc_t *>(desc);
+        auto cloneCooperativeDesc = new ze_command_list_append_launch_kernel_param_cooperative_desc_t;
+
+        cloneCooperativeDesc->stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC;
+        cloneCooperativeDesc->pNext = nullptr;
+        cloneCooperativeDesc->isCooperative = cooperativeDesc->isCooperative;
+
+        outPnext = cloneCooperativeDesc;
+    } else {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+void CommandList::freeClonedAppendKernelExtensions(void *pNext) {
+    auto desc = reinterpret_cast<ze_base_desc_t *>(pNext);
+    if (desc->stype == ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC) {
+        auto cooperativeDesc = reinterpret_cast<ze_command_list_append_launch_kernel_param_cooperative_desc_t *>(desc);
+        delete cooperativeDesc;
+    }
+}
+
 ze_result_t CommandList::obtainLaunchParamsFromExtensions(const ze_base_desc_t *desc, CmdListKernelLaunchParams &launchParams, ze_kernel_handle_t kernelHandle) const {
     while (desc) {
         if (desc->stype == ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC) {
