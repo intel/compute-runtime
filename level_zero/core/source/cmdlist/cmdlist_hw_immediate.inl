@@ -1924,6 +1924,10 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(co
     if (importedAlloc != nullptr) {
         return false;
     }
+    NEO::SvmAllocationData *allocData;
+    if (!driver->findAllocationDataForRange(const_cast<void *>(dstptr), size, allocData)) {
+        return false;
+    }
     auto neoDevice = this->getDevice()->getNEODevice();
     return driver->getStagingBufferManager()->isValidForStagingTransfer(*neoDevice, srcptr, size, hasDependencies);
 }

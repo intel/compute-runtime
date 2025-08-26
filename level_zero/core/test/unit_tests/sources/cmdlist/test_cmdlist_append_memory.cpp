@@ -1433,6 +1433,22 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithoutStagingThenImportAll
     EXPECT_FALSE(cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
 }
 
+HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndNonUsmDstThenImportAllocation) {
+    NEO::debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+
+    auto src = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto dst = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto res = cmdList.appendMemoryCopy(&dst, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_FALSE(cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    alignedFree(src);
+    alignedFree(dst);
+}
+
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingThenDontImportAllocation) {
     NEO::debugManager.flags.EnableCopyWithStagingBuffers.set(1);
 
