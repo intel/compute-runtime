@@ -73,10 +73,8 @@ struct SynchronizedDispatchMultiTileFixture : public SimpleMultiTileFixture {
         if (blitterMaskOverride.has_value()) {
             debugManager.flags.BlitterEnableMaskOverride.set(blitterMaskOverride.value());
         }
-        debugManagerRestorer.reset(new DebugManagerStateRestore());
         SimpleMultiTileFixture::setUp();
     }
-    std::unique_ptr<DebugManagerStateRestore> debugManagerRestorer;
 };
 
 using SynchronizedDispatchMultiTileL0AubTests = Test<SynchronizedDispatchMultiTileFixture>;
@@ -128,10 +126,8 @@ struct CopyOffloadMultiTileFixture : public SimpleMultiTileFixture {
         if (blitterMaskOverride.has_value()) {
             debugManager.flags.BlitterEnableMaskOverride.set(blitterMaskOverride.value());
         }
-        debugManagerRestorer.reset(new DebugManagerStateRestore());
         SimpleMultiTileFixture::setUp();
     }
-    std::unique_ptr<DebugManagerStateRestore> debugManagerRestorer;
 };
 
 using CopyOffloadMultiTileL0AubTests = Test<CopyOffloadMultiTileFixture>;
