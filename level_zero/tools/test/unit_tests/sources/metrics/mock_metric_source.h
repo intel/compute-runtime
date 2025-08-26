@@ -17,6 +17,11 @@ class MockMetricSource : public L0::MetricSource {
   public:
     uint32_t enableCallCount = 0;
     bool isAvailableReturn = false;
+    std::vector<std::pair<std::string, std::string>> testMetricScopeNames = {
+        {std::string(aggregatedScopeName), std::string(aggregatedScopeDescription)},
+        {std::string(computeScopeNamePrefix) + std::to_string(1), std::string(computeScopeDescriptionPrefix) + std::to_string(1)},
+        {std::string(computeScopeNamePrefix) + std::to_string(0), std::string(computeScopeDescriptionPrefix) + std::to_string(0)},
+        {std::string(computeScopeNamePrefix) + std::to_string(1), std::string(computeScopeDescriptionPrefix) + std::to_string(1)}};
     void enable() override { enableCallCount++; }
     bool isAvailable() override { return isAvailableReturn; }
     ze_result_t appendMetricMemoryBarrier(L0::CommandList &commandList) override { return ZE_RESULT_ERROR_UNKNOWN; }
@@ -57,10 +62,11 @@ class MockMetricSource : public L0::MetricSource {
     }
     bool canDisable() override { return false; }
     void initMetricScopes(MetricDeviceContext &metricDeviceContext) override {
-        if (!metricDeviceContext.isComputeMetricScopesInitialized()) {
-            initComputeMetricScopes(metricDeviceContext);
+        for (auto index = 0u; index < static_cast<uint32_t>(testMetricScopeNames.size()); index++) {
+            metricDeviceContext.addMetricScope(testMetricScopeNames[index].first, testMetricScopeNames[index].second);
         }
-    };
+        initComputeMetricScopes(metricDeviceContext);
+    }
 
     ~MockMetricSource() override = default;
 };

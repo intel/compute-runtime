@@ -190,9 +190,8 @@ class MetricDeviceContext {
     bool isMultiDeviceCapable() const {
         return multiDeviceCapable;
     }
-    void addMetricScope(std::unique_ptr<MetricScopeImp> metricScope) {
-        metricScopes.push_back(std::move(metricScope));
-    }
+
+    uint32_t addMetricScope(std::string_view scopeName, std::string_view scopeDescription);
 
     void setComputeMetricScopeInitialized() {
         computeMetricScopesInitialized = true;
@@ -524,6 +523,14 @@ struct MetricScopeImp : public MetricScope {
     virtual ze_result_t getProperties(zet_intel_metric_scope_properties_exp_t *pProperties);
     static std::unique_ptr<MetricScopeImp> create(zet_intel_metric_scope_properties_exp_t &scopeProperties, bool aggregated);
     bool isAggregated() const { return aggregated; }
+
+    uint32_t getId() const {
+        return properties.iD;
+    }
+
+    bool isName(std::string_view name) const {
+        return strcmp(properties.name, name.data()) == 0;
+    }
 
   private:
     zet_intel_metric_scope_properties_exp_t properties;
