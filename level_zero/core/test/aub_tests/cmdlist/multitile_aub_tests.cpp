@@ -20,9 +20,12 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
+#include <optional>
+
+extern std::optional<uint32_t> blitterMaskOverride;
+
 namespace L0 {
 namespace ult {
-
 struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
     virtual void setUp() {
         MulticontextL0AubFixture::setUp(2, EnabledCommandStreamers::single, true);
@@ -67,8 +70,13 @@ struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
 struct SynchronizedDispatchMultiTileFixture : public SimpleMultiTileFixture {
     void setUp() override {
         debugManager.flags.ForceSynchronizedDispatchMode.set(1);
+        if (blitterMaskOverride.has_value()) {
+            debugManager.flags.BlitterEnableMaskOverride.set(blitterMaskOverride.value());
+        }
+        debugManagerRestorer.reset(new DebugManagerStateRestore());
         SimpleMultiTileFixture::setUp();
     }
+    std::unique_ptr<DebugManagerStateRestore> debugManagerRestorer;
 };
 
 using SynchronizedDispatchMultiTileL0AubTests = Test<SynchronizedDispatchMultiTileFixture>;
@@ -117,8 +125,13 @@ struct CopyOffloadMultiTileFixture : public SimpleMultiTileFixture {
     void setUp() override {
         debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
         debugManager.flags.ForceInOrderImmediateCmdListExecution.set(1);
+        if (blitterMaskOverride.has_value()) {
+            debugManager.flags.BlitterEnableMaskOverride.set(blitterMaskOverride.value());
+        }
+        debugManagerRestorer.reset(new DebugManagerStateRestore());
         SimpleMultiTileFixture::setUp();
     }
+    std::unique_ptr<DebugManagerStateRestore> debugManagerRestorer;
 };
 
 using CopyOffloadMultiTileL0AubTests = Test<CopyOffloadMultiTileFixture>;

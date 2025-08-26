@@ -58,6 +58,11 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
     list(APPEND aub_tests_options ${aubstream_mode_flag})
   endif()
 
+  if(DEFINED aub_test_config_blitter_mask AND NOT "${aub_test_config_blitter_mask}" STREQUAL "")
+    list(APPEND aub_tests_options "--blitterMask")
+    list(APPEND aub_tests_options ${aub_test_config_blitter_mask})
+  endif()
+
   add_custom_command(
                      TARGET run_${product}_${revision_id}_aub_tests
                      POST_BUILD

@@ -34,6 +34,7 @@
 #include <fstream>
 #include <iostream>
 #include <mutex>
+#include <optional>
 #include <thread>
 #if !defined(__linux__)
 #include <regex>
@@ -86,6 +87,7 @@ void addUltListener(::testing::TestEventListeners &listener);
 void cleanTestHelpers();
 
 bool generateRandomInput = false;
+std::optional<uint32_t> blitterMaskOverride;
 
 std::string getRunPath(char *argv0) {
     std::string res(argv0);
@@ -307,6 +309,11 @@ int main(int argc, char **argv) {
                 testMode = TestMode::aubTestsWithoutOutputFiles;
             }
             initialHardwareTag = 0;
+        } else if (!strcmp("--blitterMask", argv[i])) {
+            ++i;
+            if (i < argc) {
+                blitterMaskOverride = static_cast<uint32_t>(std::stoi(argv[i]));
+            }
         }
     }
 
