@@ -1890,7 +1890,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
             }
         }
         ret = flushImmediate(ret, true, hasStallingCmds, relaxedOrdering,
-                             NEO::AppendOperations::kernel, true, hSignalEvent, false, nullptr, nullptr);
+                             NEO::AppendOperations::kernel, true, hSignalEvent, true, nullptr, nullptr);
         return ret;
     };
 

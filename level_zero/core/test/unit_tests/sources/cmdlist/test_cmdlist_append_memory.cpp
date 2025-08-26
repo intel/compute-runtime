@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -1436,6 +1437,7 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingThenDontImportAl
     NEO::debugManager.flags.EnableCopyWithStagingBuffers.set(1);
 
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.callBaseExecute = true;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
 
@@ -1443,7 +1445,16 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingThenDontImportAl
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(2u, cmdList.appendMemoryCopyKernelWithGACalledCount);
-    EXPECT_TRUE(cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    auto csr = cmdList.getCsr(false);
+    EXPECT_TRUE(csr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr);
+    if (L0GfxCoreHelper::useImmediateComputeFlushTask(device->getNEODevice()->getRootDeviceEnvironment())) {
+        ImmediateDispatchFlags &recordedImmediateDispatchFlags = ultCsr->recordedImmediateDispatchFlags;
+        EXPECT_TRUE(recordedImmediateDispatchFlags.requireTaskCountUpdate);
+    } else {
+        DispatchFlags &recordedDispatchFlags = ultCsr->recordedDispatchFlags;
+        EXPECT_TRUE(recordedDispatchFlags.guardCommandBufferWithPipeControl);
+    }
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingWhenAppendFailedThenPropagateError) {
