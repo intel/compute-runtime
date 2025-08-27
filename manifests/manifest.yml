@@ -42,11 +42,6 @@ components:
     type: git
     branch: kernels_bin
     revision: 3577-5151
-  kmdaf:
-    branch: kmdaf
-    dest_dir: kmdaf
-    revision: e73be7d107f5c18e8e2260da962239b33b7293ec
-    type: git
   level_zero:
     asset_name: level_zero
     dest_dir: level_zero
