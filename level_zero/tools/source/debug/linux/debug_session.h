@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -297,6 +297,8 @@ struct DebugSessionLinux : DebugSessionImp {
     void createTileSessionsIfEnabled();
     virtual DebugSessionImp *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) = 0;
     bool checkAllEventsCollected();
+    void scanThreadsWithAttRaisedUntilSteadyState(uint32_t tileIndex, std::vector<L0::EuThread::ThreadId> &threadsWithAttention);
+
     struct PageFaultEvent {
         uint64_t vmHandle;
         uint32_t tileIndex;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -741,7 +741,13 @@ void DebugSessionLinuxXe::handleAttentionEvent(NEO::EuDebugEventEuAttention *att
     }
 
     newAttentionRaised();
+
     std::vector<EuThread::ThreadId> threadsWithAttention;
+    if (interruptSent) {
+        auto tileIndex = 0u;
+        scanThreadsWithAttRaisedUntilSteadyState(tileIndex, threadsWithAttention);
+    }
+
     AttentionEventFields attentionEventFields;
     attentionEventFields.bitmask = attention->bitmask;
     attentionEventFields.bitmaskSize = attention->bitmaskSize;
