@@ -169,7 +169,7 @@ struct BcsSplit {
         return result;
     }
 
-    bool setupDevice(NEO::CommandStreamReceiver *csr);
+    bool setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnabled);
     void releaseResources();
     std::vector<CommandList *> &getCmdListsForSplit(NEO::TransferDirection direction);
     void setupEnginesMask(NEO::BcsSplitSettings &settings);

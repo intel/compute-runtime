@@ -1110,11 +1110,36 @@ HWTEST2_F(AggregatedBcsSplitTests, givenLimitedEnginesCountWhenCreatingBcsSplitT
 
     BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
 
-    bcsSplit.setupDevice(cmdList->getCsr(false));
+    bcsSplit.setupDevice(cmdList->getCsr(false), false);
 
     EXPECT_EQ(expectedEnginesCount, bcsSplit.cmdLists.size());
 
     bcsSplit.releaseResources();
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThenEnableBcsSplit, IsAtLeastXeHpcCore) {
+    debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {
+        .flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+    };
+    std::unique_ptr<L0::CommandList> commandList1(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    auto mockCmdList1 = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList1.get());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_NE(device->getProductHelper().isDcFlushAllowed(), commandList1->isCopyOffloadEnabled());
+    EXPECT_EQ(commandList1->isCopyOffloadEnabled(), mockCmdList1->isBcsSplitNeeded);
+
+    debugManager.flags.SplitBcsForCopyOffload.set(0);
+
+    std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
+    auto mockCmdList2 = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList2.get());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_FALSE(mockCmdList2->isBcsSplitNeeded);
 }
 
 HWTEST_F(AggregatedBcsSplitTests, givenTransferDirectionWhenAskingIfSplitIsNeededThenReturnCorrectValue) {
@@ -1133,7 +1158,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenPlatformSupporingAggregatedSplitModeWhen
 
     BcsSplit bcsSplit(static_cast<L0::DeviceImp &>(*device));
 
-    bcsSplit.setupDevice(cmdList->getCsr(false));
+    bcsSplit.setupDevice(cmdList->getCsr(false), false);
 
     EXPECT_EQ(device->getL0GfxCoreHelper().bcsSplitAggregatedModeEnabled(), bcsSplit.events.aggregatedEventsMode);
 

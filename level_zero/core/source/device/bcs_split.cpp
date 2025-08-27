@@ -19,7 +19,7 @@
 
 namespace L0 {
 
-bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr) {
+bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnabled) {
     auto &productHelper = this->device.getProductHelper();
     auto bcsSplitSettings = productHelper.getBcsSplitSettings(this->device.getHwInfo());
 
@@ -29,12 +29,12 @@ bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr) {
 
     // If expectedTileCount==1, route root device to Tile0, otherwise use all Tiles
     bool tileCountMatch = (bcsSplitSettings.requiredTileCount == 1) || (this->device.getNEODevice()->getNumSubDevices() == bcsSplitSettings.requiredTileCount);
+    bool engineMatch = (csr->getOsContext().getEngineType() == productHelper.getDefaultCopyEngine());
+    if (copyOffloadEnabled && NEO::debugManager.flags.SplitBcsForCopyOffload.get() != 0) {
+        engineMatch = NEO::EngineHelpers::isComputeEngine(csr->getOsContext().getEngineType());
+    }
 
-    auto initializeBcsSplit = this->device.getNEODevice()->isBcsSplitSupported() &&
-                              (csr->getOsContext().getEngineType() == productHelper.getDefaultCopyEngine()) &&
-                              tileCountMatch;
-
-    if (!initializeBcsSplit) {
+    if (!(engineMatch && tileCountMatch)) {
         return false;
     }
 

@@ -56,6 +56,7 @@ struct CommandListImp : public CommandList {
     uint64_t getInOrderExecDeviceGpuAddress() const;
     size_t getInOrderExecHostRequiredSize() const;
     uint64_t getInOrderExecHostGpuAddress() const;
+    void enableImmediateBcsSplit();
 
   protected:
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;

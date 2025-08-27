@@ -4042,7 +4042,7 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
 
         auto bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit.get();
 
-        cmdList->isBcsSplitNeeded = bcsSplit->setupDevice(cmdList->getCsr(false));
+        cmdList->isBcsSplitNeeded = bcsSplit->setupDevice(cmdList->getCsr(false), false);
 
         return cmdList;
     }

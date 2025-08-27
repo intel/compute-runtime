@@ -353,6 +353,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         enableCopyOperationOffload();
     }
 
+    enableImmediateBcsSplit();
+
     return returnType;
 }
 

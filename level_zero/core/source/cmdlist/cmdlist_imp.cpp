@@ -257,10 +257,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     commandList->isTbxMode = csr->isTbxMode();
     commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
 
-    if (!internalUsage) {
-        commandList->isBcsSplitNeeded = deviceImp->bcsSplit->setupDevice(csr);
-    }
-
     commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper);
 
     const bool cmdListSupportsCopyOffload = commandList->isInOrderExecutionEnabled() && !productHelper.isDcFlushAllowed();
@@ -269,7 +265,15 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->enableCopyOperationOffload();
     }
 
+    commandList->enableImmediateBcsSplit();
+
     return commandList;
+}
+
+void CommandListImp::enableImmediateBcsSplit() {
+    if (device->getNEODevice()->isBcsSplitSupported() && isImmediateType() && !internalUsage && !isBcsSplitNeeded) {
+        isBcsSplitNeeded = static_cast<DeviceImp *>(getDevice())->bcsSplit->setupDevice(getCsr(false), isCopyOffloadEnabled());
+    }
 }
 
 void CommandListImp::enableCopyOperationOffload() {
