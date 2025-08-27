@@ -742,7 +742,13 @@ void DebugSessionLinuxXe::handleAttentionEvent(NEO::EuDebugEventEuAttention *att
     }
 
     newAttentionRaised();
+
     std::vector<EuThread::ThreadId> threadsWithAttention;
+    if (interruptSent) {
+        auto tileIndex = 0u;
+        scanThreadsWithAttRaisedUntilSteadyState(tileIndex, threadsWithAttention);
+    }
+
     AttentionEventFields attentionEventFields;
     attentionEventFields.bitmask = attention->bitmask;
     attentionEventFields.bitmaskSize = attention->bitmaskSize;

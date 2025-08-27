@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -233,7 +234,30 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     }
 
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
+        threadControlCallCount++;
         numThreadsPassedToThreadControl = threads.size();
+        if (reachSteadyStateCount) {
+            reachSteadyStateCount--;
+            std::vector<EuThread::ThreadId> threads;
+            uint32_t lastThread = threadControlCallCount;
+            if (reachSteadyStateCount == 0) {
+                lastThread = threadControlCallCount - 1;
+            }
+
+            for (uint32_t i = 0; i < lastThread; i++) {
+                threads.push_back({0, 0, 0, 0, i});
+            }
+
+            std::unique_ptr<uint8_t[]> attBitmask;
+            size_t attBitmaskSize = 0;
+            auto &hwInfo = this->getConnectedDevice()->getNEODevice()->getHardwareInfo();
+            auto &l0GfxCoreHelper = this->getConnectedDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+            l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, attBitmask, attBitmaskSize);
+            bitmask = std::move(attBitmask);
+            bitmaskSize = attBitmaskSize;
+            return 0;
+        }
         return L0::DebugSessionLinuxi915::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
     }
 
@@ -386,6 +410,7 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     uint32_t writeRegistersCallCount = 0;
     uint32_t writeRegistersReg = 0;
     uint32_t handleEventCalledCount = 0;
+    uint32_t threadControlCallCount = 0;
     uint64_t vmHandle = UINT64_MAX;
     bool skipWriteResumeCommand = true;
     uint32_t writeResumeCommandCalled = 0;
@@ -409,6 +434,7 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     bool synchronousInternalEventRead = false;
     bool failInternalEventsThreadStart = false;
     float threadStartLimit = -1.0;
+    uint32_t reachSteadyStateCount = 0;
 };
 
 struct MockAsyncThreadDebugSessionLinuxi915 : public MockDebugSessionLinuxi915 {

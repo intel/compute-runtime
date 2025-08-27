@@ -1112,4 +1112,30 @@ void DebugSessionLinux::handlePageFaultEvent(PageFaultEvent &pfEvent) {
     return;
 }
 
+void DebugSessionLinux::scanThreadsWithAttRaisedUntilSteadyState(uint32_t tileIndex, std::vector<L0::EuThread::ThreadId> &threadsWithAttention) {
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize;
+
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+
+    constexpr int maxScanAttempts = 10;
+    size_t previousCount = 0u;
+
+    for (int i = 0; i < maxScanAttempts; i++) {
+        auto attReadResult = threadControl({}, tileIndex, ThreadControlCmd::stopped, bitmask, bitmaskSize);
+
+        if (attReadResult == 0) {
+            threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmask.get(), bitmaskSize);
+            PRINT_DEBUGGER_INFO_LOG("Threads with attention: %d", (int)threadsWithAttention.size());
+
+            if (threadsWithAttention.size() == previousCount) {
+                break;
+            }
+            NEO::sleep(std::chrono::milliseconds(10));
+            previousCount = threadsWithAttention.size();
+        }
+    }
+}
+
 } // namespace L0

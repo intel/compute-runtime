@@ -241,6 +241,29 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
 
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
         numThreadsPassedToThreadControl = threads.size();
+        threadControlCallCount++;
+        if (reachSteadyStateCount) {
+            reachSteadyStateCount--;
+            std::vector<EuThread::ThreadId> threads;
+            uint32_t lastThread = threadControlCallCount;
+            if (reachSteadyStateCount == 0) {
+                lastThread = threadControlCallCount - 1;
+            }
+
+            for (uint32_t i = 0; i < lastThread; i++) {
+                threads.push_back({0, 0, 0, 0, i});
+            }
+
+            std::unique_ptr<uint8_t[]> attBitmask;
+            size_t attBitmaskSize = 0;
+            auto &hwInfo = this->getConnectedDevice()->getNEODevice()->getHardwareInfo();
+            auto &l0GfxCoreHelper = this->getConnectedDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+            l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, attBitmask, attBitmaskSize);
+            bitmask = std::move(attBitmask);
+            bitmaskSize = attBitmaskSize;
+            return 0;
+        }
         return L0::DebugSessionLinuxXe::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
     }
 
@@ -312,6 +335,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
 
     uint32_t readSystemRoutineIdentCallCount = 0;
     uint32_t processPendingVmBindEventsCallCount = 0;
+    uint32_t threadControlCallCount = 0;
     uint32_t handleVmBindCallCount = 0;
     uint32_t addThreadToNewlyStoppedFromRaisedAttentionCallCount = 0;
     uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
@@ -325,6 +349,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     int64_t returnTimeDiff = -1;
     uint32_t handleAttentionEventCalled = 0;
     uint32_t handlePageFaultEventCalled = 0;
+    uint32_t reachSteadyStateCount = 0;
 };
 
 struct MockAsyncThreadDebugSessionLinuxXe : public MockDebugSessionLinuxXe {
