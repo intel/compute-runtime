@@ -30,7 +30,6 @@
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/os_interface/windows/dxcore_wrapper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
-#include "shared/source/os_interface/windows/kmdaf_listener.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
@@ -67,7 +66,6 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
     memset(gtSystemInfo.get(), 0, sizeof(*gtSystemInfo));
     memset(gfxPlatform.get(), 0, sizeof(*gfxPlatform));
     this->enablePreemptionRegValue = NEO::readEnablePreemptionRegKey();
-    kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     temporaryResources = std::make_unique<WddmResidentAllocationsContainer>(this);
     osMemory = OSMemory::create();
     bool forceCheck = false;
@@ -521,8 +519,6 @@ bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_
 
     sizeToTrim = evict.NumBytesToTrim;
 
-    kmDafListener->notifyEvict(featureTable->flags.ftrKmdDaf, getAdapter(), device, handleList, numOfHandles, getGdi()->escape);
-
     return status == STATUS_SUCCESS;
 }
 
@@ -559,7 +555,6 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
         return false;
     }
 
-    kmDafListener->notifyMakeResident(featureTable->flags.ftrKmdDaf, getAdapter(), device, handles, count, getGdi()->escape);
     this->setNewResourceBoundToPageTable();
 
     return success;
@@ -609,7 +604,6 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
         return false;
     }
 
-    kmDafListener->notifyMapGpuVA(featureTable->flags.ftrKmdDaf, getAdapter(), device, handle, mapGPUVA.VirtualAddress, getGdi()->escape);
     bool ret = true;
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (gmm->isCompressionEnabled() && productHelper.isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
@@ -656,8 +650,6 @@ bool Wddm::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) 
     freeGpuva.Size = size;
     status = getGdi()->freeGpuVirtualAddress(&freeGpuva);
     gpuPtr = static_cast<D3DGPU_VIRTUAL_ADDRESS>(0);
-
-    kmDafListener->notifyUnmapGpuVA(featureTable->flags.ftrKmdDaf, getAdapter(), device, freeGpuva.BaseAddress, getGdi()->escape);
 
     return status == STATUS_SUCCESS;
 }
@@ -724,7 +716,6 @@ NTSTATUS Wddm::createAllocation(const void *cpuPtr, const Gmm *gmm, D3DKMT_HANDL
         }
         *outSharedHandle = castToUint64(ntSharedHandle);
     }
-    kmDafListener->notifyWriteTarget(featureTable->flags.ftrKmdDaf, getAdapter(), device, outHandle, getGdi()->escape);
 
     return status;
 }
@@ -828,8 +819,6 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
             }
 
             allocationIndex++;
-
-            kmDafListener->notifyWriteTarget(featureTable->flags.ftrKmdDaf, getAdapter(), device, allocationInfo[i].hAllocation, getGdi()->escape);
         }
 
         status = STATUS_SUCCESS;
@@ -986,7 +975,6 @@ void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPrio
         return nullptr;
     }
 
-    kmDafLock(handle);
     return lock2.pData;
 }
 
@@ -996,25 +984,11 @@ void Wddm::unlockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPri
     unlock2.hAllocation = handle;
     unlock2.hDevice = this->device;
 
-    NTSTATUS status = getGdi()->unlock2(&unlock2);
+    getGdi()->unlock2(&unlock2);
 
     if (applyMakeResidentPriorToLock) {
         this->temporaryResources->evictResource(handle);
     }
-
-    if (status != STATUS_SUCCESS) {
-        return;
-    }
-
-    kmDafListener->notifyUnlock(featureTable->flags.ftrKmdDaf, getAdapter(), device, &handle, 1, getGdi()->escape);
-}
-
-void Wddm::kmDafLock(D3DKMT_HANDLE handle) {
-    kmDafListener->notifyLock(featureTable->flags.ftrKmdDaf, getAdapter(), device, handle, 0, getGdi()->escape);
-}
-
-bool Wddm::isKmDafEnabled() const {
-    return featureTable->flags.ftrKmdDaf;
 }
 
 bool Wddm::setLowPriorityContextParam(D3DKMT_HANDLE contextHandle) {

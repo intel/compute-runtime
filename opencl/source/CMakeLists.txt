@@ -35,7 +35,6 @@ endif()
 
 target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
                            ${CMAKE_CURRENT_BINARY_DIR}
-                           ${KMDAF_HEADERS_DIR}
 )
 
 target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC

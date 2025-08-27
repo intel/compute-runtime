@@ -28,7 +28,6 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}wddm_additional_apater_info_options_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_address_space_windows_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_command_stream_l0_tests.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_kmdaf_listener_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mapper_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_special_heap_test.cpp

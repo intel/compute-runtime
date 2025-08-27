@@ -4,12 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(KMDAF_HEADERS_DIR AND WIN32)
-  set(KMDAF_FILE_SUFFIX "")
-else()
-  set(KMDAF_FILE_SUFFIX "_stub")
-endif()
-
 set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.cpp
@@ -76,8 +70,6 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/init_wddm_os_interface.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener${KMDAF_FILE_SUFFIX}.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.h
     ${CMAKE_CURRENT_SOURCE_DIR}/max_chunk_size_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win.h

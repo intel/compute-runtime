@@ -28,9 +28,6 @@ struct MakeResidentCall : CallResult {
     bool cantTrimFurther{};
     size_t totalSize{};
 };
-struct KmDafLockCall : CallResult {
-    std::vector<D3DKMT_HANDLE> lockedAllocations;
-};
 struct WaitFromCpuResult : CallResult {
     const MonitoredFence *monitoredFence = nullptr;
 };

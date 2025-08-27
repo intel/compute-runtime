@@ -258,21 +258,6 @@ void WddmMock::unlockResource(const D3DKMT_HANDLE &handle, bool applyMakeResiden
     Wddm::unlockResource(handle, applyMakeResidentPriorToLock);
 }
 
-void WddmMock::kmDafLock(D3DKMT_HANDLE handle) {
-    kmDafLockResult.called++;
-    kmDafLockResult.success = true;
-    kmDafLockResult.lockedAllocations.push_back(handle);
-    Wddm::kmDafLock(handle);
-}
-
-bool WddmMock::isKmDafEnabled() const {
-    return kmDafEnabled;
-}
-
-void WddmMock::setKmDafEnabled(bool state) {
-    kmDafEnabled = state;
-}
-
 void WddmMock::setHwContextId(unsigned long hwContextId) {
     this->hwContextId = hwContextId;
 }

@@ -33,7 +33,6 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
 
   target_include_directories(${LIB_NAME} PUBLIC
                              ${AOT_CONFIG_HEADERS_DIR}
-                             ${KMDAF_HEADERS_DIR}
                              ${ENGINE_NODE_DIR}
                              ${NEO__GMM_INCLUDE_DIR}
                              ${CIF_BASE_DIR}

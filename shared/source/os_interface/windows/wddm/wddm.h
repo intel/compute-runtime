@@ -37,7 +37,6 @@ class WddmResidentAllocationsContainer;
 struct AllocationStorageData;
 struct FeatureTable;
 struct HardwareInfo;
-struct KmDafListener;
 struct MonitoredFence;
 struct OsHandleStorage;
 struct OSMemory;
@@ -84,8 +83,6 @@ class Wddm : public DriverModel {
     bool openNTHandle(const MemoryManager::OsHandleData &osHandleData, WddmAllocation *alloc);
     MOCKABLE_VIRTUAL void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size);
     MOCKABLE_VIRTUAL void unlockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock);
-    MOCKABLE_VIRTUAL void kmDafLock(D3DKMT_HANDLE handle);
-    MOCKABLE_VIRTUAL bool isKmDafEnabled() const;
 
     MOCKABLE_VIRTUAL bool setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority);
 
@@ -286,7 +283,6 @@ class Wddm : public DriverModel {
 
     std::unique_ptr<HwDeviceIdWddm> hwDeviceId;
     std::unique_ptr<GmmMemory> gmmMemory;
-    std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;
     std::unique_ptr<WddmResidentAllocationsContainer> temporaryResources;
     std::unique_ptr<WddmResidencyLogger> residencyLogger;

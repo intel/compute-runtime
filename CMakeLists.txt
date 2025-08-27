@@ -375,13 +375,6 @@ if(NOT NEO_SKIP_UNIT_TESTS)
   message(STATUS "GTest shuffle set to ${GTEST_SHUFFLE}")
 endif()
 
-if(NOT KMDAF_HEADERS_DIR)
-  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../kmdaf/inc/common/kmDaf.h")
-    get_filename_component(KMDAF_HEADERS_DIR "../kmdaf/inc/common/" ABSOLUTE)
-    message(STATUS "KM-DAF headers dir: ${KMDAF_HEADERS_DIR}")
-  endif()
-endif()
-
 get_filename_component(AUB_STREAM_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}aub_stream" ABSOLUTE)
 if(IS_DIRECTORY ${AUB_STREAM_HEADERS_DIR})
   message(STATUS "Aub Stream Headers dir: ${AUB_STREAM_HEADERS_DIR}")

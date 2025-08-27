@@ -42,7 +42,6 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     using CommandStreamReceiver::pageTableManager;
 
   protected:
-    void kmDafLockAllocations(ResidencyContainer &allocationsForResidency);
     void addToEvictionContainer(GraphicsAllocation &gfxAllocation) override;
     bool validForEnqueuePagingFence(uint64_t pagingFenceValue) const;
 

@@ -129,10 +129,6 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
         break;
     }
 
-    if (wddm->isKmDafEnabled()) {
-        this->kmDafLockAllocations(allocationsForResidency);
-    }
-
     auto osContextWin = static_cast<OsContextWin *>(this->osContext);
     WddmSubmitArguments submitArgs = {};
     submitArgs.contextHandle = osContextWin->getWddmContextHandle();
@@ -192,16 +188,6 @@ void WddmCommandStreamReceiver<GfxFamily>::flushMonitorFence(bool notifyKmd) {
         this->directSubmission->flushMonitorFence(notifyKmd);
     } else if (this->blitterDirectSubmission.get()) {
         this->blitterDirectSubmission->flushMonitorFence(notifyKmd);
-    }
-}
-template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContainer &allocationsForResidency) {
-    for (auto &graphicsAllocation : allocationsForResidency) {
-        if ((AllocationType::linearStream == graphicsAllocation->getAllocationType()) ||
-            (AllocationType::fillPattern == graphicsAllocation->getAllocationType()) ||
-            (AllocationType::commandBuffer == graphicsAllocation->getAllocationType())) {
-            wddm->kmDafLock(static_cast<WddmAllocation *>(graphicsAllocation)->getDefaultHandle());
-        }
     }
 }
 
