@@ -7,9 +7,16 @@
 
 #pragma once
 
+#include "shared/source/helpers/string.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/core/source/kernel/kernel_mutable_state.h"
+#include "level_zero/ze_api.h"
+
 #include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace L0 {
 
@@ -102,6 +109,13 @@ struct ClosureExternalStorage {
     }
 
     ze_event_handle_t *getEventsList(EventsListId id) {
+        if (invalidEventsListId == id) {
+            return nullptr;
+        }
+        return waitEvents.data() + id;
+    }
+
+    const ze_event_handle_t *getEventsList(EventsListId id) const {
         if (invalidEventsListId == id) {
             return nullptr;
         }
@@ -845,4 +859,21 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect> {
     ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage) const;
 };
 
+namespace GraphDumpHelper {
+
+template <CaptureApi api>
+std::vector<std::pair<std::string, std::string>> extractParameters(const Closure<api> &closure, const ClosureExternalStorage &storage) {
+    return {};
+}
+
+#define RR_CAPTURED_API(X)                                                             \
+    template <>                                                                        \
+    std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::X>( \
+        const Closure<CaptureApi::X> &closure, const ClosureExternalStorage &storage);
+
+RR_CAPTURED_APIS()
+
+#undef RR_CAPTURED_API
+
+} // namespace GraphDumpHelper
 } // namespace L0

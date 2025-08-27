@@ -10,6 +10,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/experimental/source/graph/graph.h"
+#include "level_zero/experimental/source/graph/graph_export.h"
 
 namespace L0 {
 

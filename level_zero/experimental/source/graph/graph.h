@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/helpers/string.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/kernel/kernel_mutable_state.h"
@@ -17,7 +16,6 @@
 
 #include <atomic>
 #include <memory>
-#include <optional>
 #include <span>
 #include <unordered_map>
 #include <variant>
@@ -178,6 +176,10 @@ struct Graph : _ze_graph_handle_t {
         return externalStorage;
     }
 
+    const ClosureExternalStorage &getExternalStorage() const {
+        return externalStorage;
+    }
+
   protected:
     void unregisterSignallingEvents();
 
@@ -286,31 +288,6 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     StackVec<std::unique_ptr<ExecutableGraph>, 16> subGraphs;
 
     GraphSubmissionChain submissionChain;
-};
-
-class GraphDotExporter {
-  public:
-    ze_result_t exportToFile(const Graph &graph, const char *filePath) const;
-
-  protected:
-    std::string exportToString(const Graph &graph) const;
-
-    void writeHeader(std::ostringstream &dot) const;
-    void writeNodes(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const;
-    void writeSubgraphs(std::ostringstream &dot, const Graph &graph, uint32_t level) const;
-    void writeEdges(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const;
-    void writeSequentialEdges(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const;
-    void writeForkJoinEdges(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const;
-    void writeUnjoinedForkEdges(std::ostringstream &dot, const Graph &graph, uint32_t level, uint32_t subgraphId) const;
-
-    std::optional<uint32_t> findSubgraphIndex(const StackVec<Graph *, 16> &subGraphs, const Graph *targetGraph) const;
-    std::optional<uint32_t> findSubgraphIndexByCommandList(const StackVec<Graph *, 16> &subGraphs, const L0::CommandList *cmdList) const;
-
-    std::string getCommandNodeLabel(const Graph &graph, CapturedCommandId cmdId) const;
-    std::string getCommandNodeAttributes(const Graph &graph, CapturedCommandId cmdId) const;
-    std::string generateNodeId(uint32_t level, uint32_t subgraphId, CapturedCommandId cmdId) const;
-    std::string generateSubgraphId(uint32_t level, uint32_t subgraphId) const;
-    std::string getSubgraphFillColor(uint32_t level) const;
 };
 
 constexpr size_t maxVariantSize = 2 * 64;
