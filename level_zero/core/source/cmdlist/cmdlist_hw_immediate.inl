@@ -1208,7 +1208,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                 }
 
                 this->storeFillPatternResourcesForReuse();
-                this->getDevice()->getDriverHandle()->getStagingBufferManager()->resetDetectedPtrs();
+                if (this->getDevice()->getDriverHandle()->getStagingBufferManager()) {
+                    this->getDevice()->getDriverHandle()->getStagingBufferManager()->resetDetectedPtrs();
+                }
             }
 
             bool hangDetected = status == ZE_RESULT_ERROR_DEVICE_LOST;

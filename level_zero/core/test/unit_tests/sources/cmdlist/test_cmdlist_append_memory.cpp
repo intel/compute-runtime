@@ -10,6 +10,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -1471,6 +1472,15 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingThenDontImportAl
         DispatchFlags &recordedDispatchFlags = ultCsr->recordedDispatchFlags;
         EXPECT_TRUE(recordedDispatchFlags.guardCommandBufferWithPipeControl);
     }
+}
+
+HWTEST_F(StagingBuffersFixture, givenStagingBufferManagerDestroyedAndHostSynchronizeCalledThenSuccessReturned) {
+    driverHandle->stagingBufferManager.reset();
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    auto res = cmdList.hostSynchronize(std::numeric_limits<uint64_t>::max());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingWhenAppendFailedThenPropagateError) {

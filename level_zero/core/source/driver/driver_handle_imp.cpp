@@ -241,13 +241,13 @@ DriverHandleImp::~DriverHandleImp() {
         }
     }
 
+    this->stagingBufferManager.reset();
     for (auto &device : this->devices) {
         if (device->getBuiltinFunctionsLib()) {
             device->getBuiltinFunctionsLib()->ensureInitCompletion();
         }
         delete device;
     }
-    this->stagingBufferManager.reset();
 
     for (auto &fabricVertex : this->fabricVertices) {
         delete fabricVertex;
