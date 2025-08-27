@@ -182,9 +182,9 @@ struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     uint32_t getCopyEngineOrdinal() const;
     std::optional<uint32_t> tryGetCopyEngineOrdinal() const;
     void bcsSplitReleaseResources() override;
+    static bool queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, bool &canAccess);
 
   protected:
-    static bool queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, bool &canAccess);
     bool submitCopyForP2P(DeviceImp *hPeerDevice, ze_result_t &result);
     ze_result_t getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);
     ze_result_t getGlobalTimestampsUsingOsInterface(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);

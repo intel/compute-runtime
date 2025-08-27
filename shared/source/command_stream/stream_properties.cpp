@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode) {
+void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, std::optional<bool> hasPeerAccess) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
@@ -47,7 +47,7 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
         this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(memoryAllocationForScratchAndMidthreadPreemptionBuffers);
     }
 
-    setPropertiesPerContext(requiresCoherency, devicePreemptionMode, false);
+    setPropertiesPerContext(requiresCoherency, devicePreemptionMode, false, hasPeerAccess);
 }
 
 void StateComputeModeProperties::copyPropertiesAll(const StateComputeModeProperties &properties) {
@@ -166,7 +166,7 @@ void StateComputeModeProperties::resetState() {
     resetStateExtra();
 }
 
-void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState) {
+void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState, std::optional<bool> hasPeerAccess) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     if (!clearDirtyState) {
@@ -183,7 +183,7 @@ void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency,
         setPipelinedEuThreadArbitration();
     }
 
-    setPropertiesExtraPerContext();
+    setPropertiesExtraPerContext(hasPeerAccess);
     if (clearDirtyState) {
         clearIsDirtyPerContext();
     }

@@ -574,11 +574,11 @@ HWTEST2_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNot
     StreamProperties streamProperties{};
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     streamProperties.initSupport(rootDeviceEnvironment);
-    streamProperties.stateComputeMode.setPropertiesAll(false, 128, 0u, PreemptionMode::Disabled);
-    streamProperties.stateComputeMode.setPropertiesAll(false, 128, 0u, PreemptionMode::Disabled);
+    streamProperties.stateComputeMode.setPropertiesAll(false, 128, 0u, PreemptionMode::Disabled, false);
+    streamProperties.stateComputeMode.setPropertiesAll(false, 128, 0u, PreemptionMode::Disabled, false);
     EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
 
-    streamProperties.stateComputeMode.setPropertiesAll(false, 256, 0u, PreemptionMode::Disabled);
+    streamProperties.stateComputeMode.setPropertiesAll(false, 256, 0u, PreemptionMode::Disabled, false);
     if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         EXPECT_TRUE(streamProperties.stateComputeMode.isDirty());
     } else {

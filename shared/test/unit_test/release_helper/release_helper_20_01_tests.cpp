@@ -114,3 +114,7 @@ TEST_F(ReleaseHelper2001Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorr
 TEST_F(ReleaseHelper2001Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
 }
+
+TEST_F(ReleaseHelper2001Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
+    whenShouldQueryPeerAccessCalledThenFalseReturned();
+}

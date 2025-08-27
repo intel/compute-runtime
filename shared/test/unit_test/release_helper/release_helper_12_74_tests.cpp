@@ -121,3 +121,7 @@ TEST_F(ReleaseHelper1274Tests, whenIsBlitImageAllowedForDepthFormatCalledThenFal
 TEST_F(ReleaseHelper1274Tests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned) {
     whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
 }
+
+TEST_F(ReleaseHelper1274Tests, whenShouldQueryPeerAccessCalledThenFalseReturned) {
+    whenShouldQueryPeerAccessCalledThenFalseReturned();
+}

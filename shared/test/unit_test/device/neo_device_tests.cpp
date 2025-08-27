@@ -2953,3 +2953,197 @@ TEST(DeviceCanAccessPeerTest, givenTwoSubDevicesFromTheSameRootDeviceThenCanAcce
     EXPECT_TRUE(res);
     EXPECT_TRUE(canAccess);
 }
+
+TEST(DevicePeerAccessInitializationTest, givenDeviceListWhenInitializePeerAccessThenQueryOnlyRelevantPeers) {
+    UltDeviceFactory deviceFactory{3, 0};
+    std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1], deviceFactory.rootDevices[2]};
+
+    auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
+    releaseHelper0->shouldQueryPeerAccessResult = false;
+    rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
+
+    auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
+    releaseHelper1->shouldQueryPeerAccessResult = true;
+    rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+
+    auto releaseHelper2 = std::make_unique<MockReleaseHelper>();
+    releaseHelper2->shouldQueryPeerAccessResult = true;
+    rootDevices[2]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper2);
+
+    uint32_t queryCalled = 0;
+    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, bool &canAccess) -> bool {
+        queryCalled++;
+        canAccess = true;
+        return true;
+    };
+
+    MockDevice::initializePeerAccessForDevices(queryPeerAccess, rootDevices);
+
+    // Check device[0] with none
+    // Check device[1] with device[0] and device[2] - 2 calls
+    // Check device[2] with device[0] and device[1] (cached) - 1 call
+    uint32_t numberOfCalls = 3;
+    EXPECT_EQ(numberOfCalls, queryCalled);
+}
+
+TEST(DevicePeerAccessInitializationTest, givenSubDevicesWhenInitializePeerAccessThenSkipPeerAccessQuery) {
+    UltDeviceFactory deviceFactory{1, 2};
+    std::vector<NEO::Device *> subDevices = {deviceFactory.subDevices[0], deviceFactory.subDevices[1]};
+
+    auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
+    releaseHelper0->shouldQueryPeerAccessResult = true;
+    subDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
+
+    auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
+    releaseHelper1->shouldQueryPeerAccessResult = true;
+    subDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+
+    uint32_t queryCalled = 0;
+    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, bool &canAccess) -> bool {
+        queryCalled++;
+        canAccess = true;
+        return true;
+    };
+
+    MockDevice::initializePeerAccessForDevices(queryPeerAccess, subDevices);
+
+    EXPECT_EQ(0u, queryCalled);
+}
+
+TEST(DevicePeerAccessInitializationTest, givenDevicesWithPeerAccessCachedWhenInitializePeerAccessForDevicesThenSkipPeerAccessQuery) {
+    UltDeviceFactory deviceFactory{2, 0};
+    std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+
+    auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
+    releaseHelper0->shouldQueryPeerAccessResult = true;
+    rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
+
+    auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
+    releaseHelper1->shouldQueryPeerAccessResult = true;
+    rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+
+    rootDevices[0]->updatePeerAccessCache(rootDevices[1], true);
+
+    uint32_t queryCalled = 0;
+    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, bool &canAccess) -> bool {
+        queryCalled++;
+        canAccess = false;
+        return true;
+    };
+
+    MockDevice::initializePeerAccessForDevices(queryPeerAccess, rootDevices);
+
+    EXPECT_EQ(0u, queryCalled);
+}
+
+TEST(DevicePeerAccessInitializationTest, givenDevicesWhenInitializePeerAccessForDevicesThenSetsHasAnyPeerAccessAccordingToP2PConnection) {
+    // Devices have P2P connection
+    {
+        UltDeviceFactory deviceFactory{2, 0};
+        std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+
+        auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
+        releaseHelper0->shouldQueryPeerAccessResult = true;
+        rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
+
+        auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
+        releaseHelper1->shouldQueryPeerAccessResult = true;
+        rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+
+        uint32_t queryCalled = 0;
+        auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, bool &canAccess) -> bool {
+            queryCalled++;
+            canAccess = true;
+            return true;
+        };
+
+        MockDevice::initializePeerAccessForDevices(queryPeerAccess, rootDevices);
+
+        EXPECT_EQ(1u, queryCalled);
+        ASSERT_TRUE(rootDevices[0]->hasAnyPeerAccess().has_value());
+        ASSERT_TRUE(rootDevices[1]->hasAnyPeerAccess().has_value());
+        EXPECT_TRUE(rootDevices[0]->hasAnyPeerAccess().value());
+        EXPECT_TRUE(rootDevices[1]->hasAnyPeerAccess().value());
+    }
+
+    // Devices do not have P2P connection
+    {
+        UltDeviceFactory deviceFactory{2, 0};
+        std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+
+        auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
+        releaseHelper0->shouldQueryPeerAccessResult = true;
+        rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
+
+        auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
+        releaseHelper1->shouldQueryPeerAccessResult = true;
+        rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+
+        uint32_t queryCalled = 0;
+        auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, bool &canAccess) -> bool {
+            queryCalled++;
+            canAccess = false;
+            return true;
+        };
+
+        MockDevice::initializePeerAccessForDevices(queryPeerAccess, rootDevices);
+
+        EXPECT_EQ(1u, queryCalled);
+        ASSERT_TRUE(rootDevices[0]->hasAnyPeerAccess().has_value());
+        ASSERT_TRUE(rootDevices[1]->hasAnyPeerAccess().has_value());
+        EXPECT_FALSE(rootDevices[0]->hasAnyPeerAccess().value());
+        EXPECT_FALSE(rootDevices[1]->hasAnyPeerAccess().value());
+    }
+}
+
+TEST(DevicePeerAccessInitializationTest, givenDevicesThatDontRequirePeerAccessQueryWhenInitializePeerAccessThenDontSetHasPeerAccess) {
+    UltDeviceFactory deviceFactory{2, 0};
+    std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+
+    auto releaseHelper0 = std::make_unique<MockReleaseHelper>();
+    releaseHelper0->shouldQueryPeerAccessResult = false;
+    rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper0);
+
+    auto releaseHelper1 = std::make_unique<MockReleaseHelper>();
+    releaseHelper1->shouldQueryPeerAccessResult = false;
+    rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper1);
+
+    uint32_t queryCalled = 0;
+    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, bool &canAccess) -> bool {
+        queryCalled++;
+        canAccess = true;
+        return true;
+    };
+
+    MockDevice::initializePeerAccessForDevices(queryPeerAccess, rootDevices);
+
+    EXPECT_EQ(0u, queryCalled);
+
+    EXPECT_FALSE(rootDevices[0]->hasAnyPeerAccess().has_value());
+    EXPECT_FALSE(rootDevices[1]->hasAnyPeerAccess().has_value());
+}
+
+TEST(DevicePeerAccessInitializationTest, givenDevicesWithoutReleaseHelperWhenInitializePeerAccessCalledThenDontSetHasPeerAccess) {
+    UltDeviceFactory deviceFactory{2, 0};
+    std::vector<NEO::Device *> rootDevices = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+
+    rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper.reset();
+    rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper.reset();
+
+    ASSERT_EQ(nullptr, rootDevices[0]->getRootDeviceEnvironmentRef().releaseHelper);
+    ASSERT_EQ(nullptr, rootDevices[1]->getRootDeviceEnvironmentRef().releaseHelper);
+
+    uint32_t queryCalled = 0;
+    auto queryPeerAccess = [&queryCalled](Device &device, Device &peerDevice, bool &canAccess) -> bool {
+        queryCalled++;
+        canAccess = true;
+        return true;
+    };
+
+    MockDevice::initializePeerAccessForDevices(queryPeerAccess, rootDevices);
+
+    EXPECT_EQ(0u, queryCalled);
+
+    EXPECT_FALSE(rootDevices[0]->hasAnyPeerAccess().has_value());
+    EXPECT_FALSE(rootDevices[1]->hasAnyPeerAccess().has_value());
+}

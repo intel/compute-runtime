@@ -29,6 +29,8 @@
 #include "log_manager.h"
 #include "neo_igfxfmid.h"
 
+#include <optional>
+
 namespace L0 {
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {
@@ -319,7 +321,7 @@ void CommandListImp::enableCopyOperationOffload() {
 
 void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties) {
     if (this->stateComputeModeTracking) {
-        streamProperties.stateComputeMode.setPropertiesPerContext(cmdListDefaultCoherency, this->commandListPreemptionMode, true);
+        streamProperties.stateComputeMode.setPropertiesPerContext(cmdListDefaultCoherency, this->commandListPreemptionMode, true, std::nullopt);
     }
 
     streamProperties.frontEndState.setPropertiesDisableOverdispatch(cmdListDefaultDisableOverdispatch, true);

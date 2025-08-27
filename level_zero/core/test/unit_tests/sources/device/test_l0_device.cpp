@@ -3547,6 +3547,59 @@ TEST_F(MultipleDevicesTest, givenCanAccessPeerFailsThenReturnsDeviceLost) {
     delete device0;
 }
 
+HWTEST_F(MultipleDevicesTest, givenCsrModeDifferentThanHardwareWhenQueryPeerAccessThenReturnsFalse) {
+    struct MockDeviceFail : public MockDeviceImp {
+        MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice()) {
+            this->driverHandle = device->getDriverHandle();
+            this->neoDevice->template setSpecializedDevice<L0::Device>(this);
+        }
+
+        ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth) override {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+
+        ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
+                                       ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createCommandList(const ze_command_list_desc_t *desc,
+                                      ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
+        ze_result_t createInternalCommandQueue(const ze_command_queue_desc_t *desc,
+                                               ze_command_queue_handle_t *commandQueue) override {
+            *commandQueue = &this->commandQueue;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t createInternalCommandList(const ze_command_list_desc_t *desc,
+                                              ze_command_list_handle_t *commandList) override {
+            *commandList = &this->commandList;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        MockCommandList commandList;
+        Mock<CommandQueue> commandQueue;
+    };
+
+    MockDeviceFail *device0 = new MockDeviceFail(driverHandle->devices[0]);
+    L0::Device *device1 = driverHandle->devices[1];
+
+    auto deviceInternalEngine = device0->getNEODevice()->getInternalEngine();
+    auto hwCsr = static_cast<CommandStreamReceiverHw<FamilyType> *>(deviceInternalEngine.commandStreamReceiver);
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(hwCsr);
+    ultCsr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    bool canAccess = false;
+    bool res = MockDeviceImp::queryPeerAccess(*device0->getNEODevice(), *device1->getNEODevice(), canAccess);
+    EXPECT_FALSE(res);
+    EXPECT_FALSE(canAccess);
+    delete device0;
+}
+
 TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenQueryPeerAccessReturnsFalse) {
     struct MockDeviceFail : public MockDeviceImp {
         struct MockCommandQueueImp : public Mock<CommandQueue> {

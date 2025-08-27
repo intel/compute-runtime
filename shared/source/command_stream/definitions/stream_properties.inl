@@ -7,6 +7,8 @@
 
 #include "shared/source/command_stream/stream_property.h"
 
+#include <optional>
+
 namespace NEO {
 enum PreemptionMode : uint32_t;
 struct HardwareInfo;
@@ -37,8 +39,8 @@ struct StateComputeModeProperties {
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();
 
-    void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode);
-    void setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState);
+    void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, std::optional<bool> hasPeerAccess);
+    void setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState, std::optional<bool> hasPeerAccess);
     void setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy);
 
     void copyPropertiesAll(const StateComputeModeProperties &properties);
@@ -55,7 +57,7 @@ struct StateComputeModeProperties {
     bool isDirtyExtra() const;
     void resetStateExtra();
 
-    void setPropertiesExtraPerContext();
+    void setPropertiesExtraPerContext(std::optional<bool> hasPeerAccess);
 
     void copyPropertiesExtra(const StateComputeModeProperties &properties);
 

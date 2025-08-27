@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
 
         pCsr->streamProperties.stateComputeMode = {};
         pCsr->streamProperties.stateComputeMode.initSupport(rootDeviceEnvironment);
-        pCsr->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::Disabled);
+        pCsr->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::Disabled, false);
         LinearStream stream(buff, 1024);
         pCsr->programComputeMode(stream, flags, *defaultHwInfo);
         EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -90,7 +90,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
 
     pCsr->streamProperties.stateComputeMode = {};
     pCsr->streamProperties.stateComputeMode.initSupport(rootDeviceEnvironment);
-    pCsr->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::Disabled);
+    pCsr->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::Disabled, false);
     LinearStream stream(buff, 1024);
     pCsr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());

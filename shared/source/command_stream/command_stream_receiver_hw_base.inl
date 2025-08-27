@@ -468,7 +468,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     handlePipelineSelectStateTransition(dispatchFlags);
 
     this->streamProperties.stateComputeMode.setPropertiesAll(false, dispatchFlags.numGrfRequired,
-                                                             dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode());
+                                                             dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), device.hasAnyPeerAccess());
 
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;

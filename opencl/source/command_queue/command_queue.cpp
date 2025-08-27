@@ -1033,7 +1033,7 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
     for (size_t i = 0; i < numberOfNodes; i++) {
         auto newTag = allocator->getTag();
 
-        if (csr.getType() != CommandStreamReceiverType::hardware) {
+        if (!csr.isHardwareMode()) {
             auto tagAlloc = newTag->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
 
             // initialize full page tables for the first time

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setPropertiesExtraPerContext() {
+void StateComputeModeProperties::setPropertiesExtraPerContext(std::optional<bool> hasPeerAccess) {
 }
 
 void StateComputeModeProperties::copyPropertiesExtra(const StateComputeModeProperties &properties) {

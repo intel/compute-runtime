@@ -501,6 +501,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     bool isTbxMode() const;
     bool isAubMode() const;
+    bool isHardwareMode() const;
     bool ensureTagAllocationForRootDeviceIndex(uint32_t rootDeviceIndex);
 
     L1CachePolicy *getStoredL1CachePolicy() {

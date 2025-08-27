@@ -3972,7 +3972,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.getStateComputeModeDirty());
 
-    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
+    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup, false);
 
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
@@ -4017,7 +4017,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.getStateComputeModeDirty());
 
-    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
+    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup, false);
 
     immediateFlushTaskFlags.dispatchOperation = NEO::AppendOperations::nonKernel;
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
@@ -6470,4 +6470,23 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenWaitOnWalkerPostSyncWhenImmediateFlus
 
         EXPECT_TRUE(commandStreamReceiver.isWalkerWithProfilingEnqueued);
     }
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenVariousCsrModeWhenGettingHardwareModeThenExpectOnlyWhenModeIsHarware) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+    EXPECT_TRUE(ultCsr.isHardwareMode());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::hardwareWithAub;
+    EXPECT_FALSE(ultCsr.isHardwareMode());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+    EXPECT_FALSE(ultCsr.isHardwareMode());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    EXPECT_FALSE(ultCsr.isHardwareMode());
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbxWithAub;
+    EXPECT_FALSE(ultCsr.isHardwareMode());
 }

@@ -37,7 +37,7 @@ HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenVariousValuesWhenCallingSetBarr
     }
 }
 template <PRODUCT_FAMILY productFamily>
-struct MockProductHelper : NEO::ProductHelperHw<productFamily> {
+struct TempMockProductHelper : NEO::ProductHelperHw<productFamily> {
     bool isAdjustWalkOrderAvailable(const ReleaseHelper *releaseHelper) const override { return true; }
 };
 
@@ -47,7 +47,7 @@ HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenRequiredWorkGroupOrderAndIsAdju
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
-    RAIIProductHelperFactory<MockProductHelper<productFamily>> raii(rootDeviceEnvironment);
+    RAIIProductHelperFactory<TempMockProductHelper<productFamily>> raii(rootDeviceEnvironment);
 
     DefaultWalkerType walkerCmd{};
     DefaultWalkerType walkerOnStart{};

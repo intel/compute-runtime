@@ -170,7 +170,7 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, giventhreadArbitrationPolicyWitho
     };
 
     getCsrHw<FamilyType>()->streamProperties.stateComputeMode.setPropertiesAll(false, flags.numGrfRequired,
-                                                                               flags.threadArbitrationPolicy, PreemptionMode::Disabled);
+                                                                               flags.threadArbitrationPolicy, PreemptionMode::Disabled, false);
 
     flushTask(true);
     findCmd(true); // first time

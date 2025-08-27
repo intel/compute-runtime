@@ -189,6 +189,12 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
 bool DeviceImp::queryPeerAccess(NEO::Device &device, NEO::Device &peerDevice, bool &canAccess) {
     ze_result_t retVal = ZE_RESULT_SUCCESS;
 
+    auto csr = device.getInternalEngine().commandStreamReceiver;
+    if (!csr->isHardwareMode()) {
+        canAccess = false;
+        return false;
+    }
+
     auto deviceImp = device.getSpecializedDevice<DeviceImp>();
     auto peerDeviceImp = peerDevice.getSpecializedDevice<DeviceImp>();
 

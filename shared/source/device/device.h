@@ -264,6 +264,16 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
 
     std::unordered_map<uint32_t, bool> crossAccessEnabledDevices;
     bool canAccessPeer(QueryPeerAccessFunc queryPeerAccess, Device *peerDevice, bool &canAccess);
+    static void initializePeerAccessForDevices(QueryPeerAccessFunc queryPeerAccess, const std::vector<NEO::Device *> &devices);
+
+    std::optional<bool> hasAnyPeerAccess() const {
+        return hasPeerAccess;
+    }
+
+    void updatePeerAccessCache(Device *peerDevice, bool value) {
+        this->crossAccessEnabledDevices[peerDevice->getRootDeviceIndex()] = value;
+        peerDevice->crossAccessEnabledDevices[this->getRootDeviceIndex()] = value;
+    }
 
   protected:
     Device() = delete;
@@ -347,6 +357,8 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     std::atomic_uint32_t bufferPoolCount = 0u;
     uint32_t maxBufferPoolCount = 0u;
     uint32_t microsecondResolution = 1000u;
+
+    std::optional<bool> hasPeerAccess = std::nullopt;
 
     struct {
         bool isValid = false;

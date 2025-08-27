@@ -196,3 +196,12 @@ void ReleaseHelperTestsBase::whenCallingAdjustMaxThreadsPerEuCountThenCorrectVal
         }
     }
 }
+
+void ReleaseHelperTestsBase::whenShouldQueryPeerAccessCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->shouldQueryPeerAccess());
+    }
+}

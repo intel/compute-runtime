@@ -186,4 +186,8 @@ uint32_t ReleaseHelperHw<releaseType>::adjustMaxThreadsPerEuCount(uint32_t maxTh
     return maxThreadsPerEuCount;
 }
 
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::shouldQueryPeerAccess() const {
+    return false;
+}
 } // namespace NEO

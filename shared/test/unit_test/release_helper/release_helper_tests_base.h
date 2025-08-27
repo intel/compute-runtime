@@ -37,6 +37,7 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenProgrammAdditionalStallPriorToBarrierWithTimestampCalledThenFalseReturned();
     void whenIsPostImageWriteFlushRequiredCalledThenFalseReturned();
     void whenCallingAdjustMaxThreadsPerEuCountThenCorrectValueIsReturned();
+    void whenShouldQueryPeerAccessCalledThenFalseReturned();
     virtual std::vector<uint32_t> getRevisions() = 0;
 
     std::unique_ptr<ReleaseHelper> releaseHelper;

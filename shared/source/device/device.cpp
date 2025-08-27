@@ -1363,18 +1363,42 @@ bool Device::canAccessPeer(QueryPeerAccessFunc queryPeerAccess, Device *peerDevi
         return retVal;
     }
 
-    auto setPeerAccess = [&](bool value) {
-        this->crossAccessEnabledDevices[peerRootDeviceIndex] = value;
-        peerDevice->crossAccessEnabledDevices[rootDeviceIndex] = value;
-    };
-
     auto lock = executionEnvironment->obtainPeerAccessQueryLock();
     if (this->crossAccessEnabledDevices.find(peerRootDeviceIndex) == this->crossAccessEnabledDevices.end()) {
         retVal = queryPeerAccess(*this, *peerDevice, canAccess);
-        setPeerAccess(canAccess);
+        this->updatePeerAccessCache(peerDevice, canAccess);
     }
     canAccess = this->crossAccessEnabledDevices[peerRootDeviceIndex];
 
     return retVal;
+}
+
+void Device::initializePeerAccessForDevices(QueryPeerAccessFunc queryPeerAccess, const std::vector<NEO::Device *> &devices) {
+    for (auto &device : devices) {
+        if (device->getReleaseHelper() && device->getReleaseHelper()->shouldQueryPeerAccess()) {
+            device->hasPeerAccess = false;
+            auto rootDeviceIndex = device->getRootDeviceIndex();
+
+            for (auto &peerDevice : devices) {
+                auto peerRootDeviceIndex = peerDevice->getRootDeviceIndex();
+                if (rootDeviceIndex == peerRootDeviceIndex) {
+                    continue;
+                }
+
+                bool canAccess = false;
+                if (device->crossAccessEnabledDevices.find(peerRootDeviceIndex) == device->crossAccessEnabledDevices.end()) {
+                    auto lock = device->getExecutionEnvironment()->obtainPeerAccessQueryLock();
+                    queryPeerAccess(*device, *peerDevice, canAccess);
+                    device->updatePeerAccessCache(peerDevice, canAccess);
+                } else {
+                    canAccess = device->crossAccessEnabledDevices[peerRootDeviceIndex];
+                }
+
+                if (canAccess) {
+                    device->hasPeerAccess = true;
+                }
+            }
+        }
+    }
 }
 } // namespace NEO
