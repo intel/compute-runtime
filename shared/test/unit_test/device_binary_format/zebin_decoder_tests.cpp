@@ -7315,6 +7315,21 @@ kernels:
     EXPECT_TRUE(kernelDescriptor->kernelAttributes.hasImageWriteArg);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenKernelWithIndirectCallsWhenPopulatingKernelDescriptorThenHasIndirectCallsIsSet) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+        has_indirect_calls: true
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.hasIndirectCalls);
+}
+
 TEST(PopulateInlineSamplers, GivenInvalidSamplerIndexThenPopulateInlineSamplersFails) {
     NEO::KernelDescriptor kd;
     std::string errors, warnings;

@@ -126,7 +126,7 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool usesSamplers : 1;
                 // 1
                 bool usesSyncBuffer : 1;
-                bool deprecatedDoNotUse : 1;
+                bool hasIndirectCalls : 1;
                 bool usesStatelessWrites : 1;
                 bool passInlineData : 1;
                 bool perThreadDataHeaderIsPresent : 1;

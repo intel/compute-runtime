@@ -726,6 +726,7 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     dst.kernelAttributes.flags.usesStatelessWrites = (false == execEnv.hasNoStatelessWrite);
     dst.kernelAttributes.flags.hasSample = execEnv.hasSample;
     dst.kernelAttributes.flags.requiresImplicitArgs = execEnv.requireImplicitArgBuffer;
+    dst.kernelAttributes.flags.hasIndirectCalls = execEnv.hasIndirectCalls;
     dst.kernelAttributes.barrierCount = execEnv.barrierCount;
     dst.kernelAttributes.bufferAddressingMode = (execEnv.has4GBBuffers) ? KernelDescriptor::Stateless : KernelDescriptor::BindfulAndStateless;
     dst.kernelAttributes.inlineDataPayloadSize = static_cast<uint16_t>(execEnv.inlineDataPayloadSize);
