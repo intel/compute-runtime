@@ -650,6 +650,11 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
         return CL_INVALID_VALUE;
     }
 
+    Event::waitForEvents(numEventsInWaitList, eventWaitList);
+    if (!this->isOOQEnabled()) {
+        this->finish();
+    }
+
     bool isImageReleased = false;
     bool isDisplayableReleased = false;
     for (unsigned int object = 0; object < numObjects; object++) {

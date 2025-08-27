@@ -1419,10 +1419,10 @@ TEST_F(VaSharingTests, givenInteropUserSyncIsNotSpecifiedDuringContextCreationWh
             : MockCommandQueue(context, device, props, false) {
         }
         cl_int finish() override {
-            finishCalled = true;
+            finishCalled++;
             return CL_SUCCESS;
         }
-        bool finishCalled = false;
+        uint32_t finishCalled = 0u;
     };
 
     MockContext mockContext;
@@ -1432,7 +1432,7 @@ TEST_F(VaSharingTests, givenInteropUserSyncIsNotSpecifiedDuringContextCreationWh
 
     for (bool specifyInteropUseSync : {false, true}) {
         mockContext.setInteropUserSyncEnabled(specifyInteropUseSync);
-        mockCommandQueue.finishCalled = false;
+        mockCommandQueue.finishCalled = 0u;
 
         errCode = clEnqueueAcquireVA_APIMediaSurfacesINTEL(&mockCommandQueue, 1, &sharedClMem, 0, nullptr, nullptr);
         EXPECT_EQ(CL_SUCCESS, errCode);
@@ -1440,7 +1440,11 @@ TEST_F(VaSharingTests, givenInteropUserSyncIsNotSpecifiedDuringContextCreationWh
         errCode = clEnqueueReleaseVA_APIMediaSurfacesINTEL(&mockCommandQueue, 1, &sharedClMem, 0, nullptr, nullptr);
         EXPECT_EQ(CL_SUCCESS, errCode);
 
-        EXPECT_EQ(!specifyInteropUseSync, mockCommandQueue.finishCalled);
+        if (specifyInteropUseSync) {
+            EXPECT_EQ(1u, mockCommandQueue.finishCalled);
+        } else {
+            EXPECT_EQ(2u, mockCommandQueue.finishCalled);
+        }
     }
 }
 
