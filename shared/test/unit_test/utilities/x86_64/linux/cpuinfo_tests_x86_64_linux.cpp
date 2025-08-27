@@ -41,7 +41,7 @@ TEST(CpuInfo, givenProcCpuinfoFileExistsWhenIsCpuFlagPresentIsCalledThenValidVal
     writeDataToFile(cpuinfoFile.c_str(), cpuinfoData);
     EXPECT_TRUE(virtualFileExists(cpuinfoFile));
 
-    CpuInfo::getCpuFlagsFunc = mockGetCpuFlags;
+    VariableBackup<decltype(CpuInfo::getCpuFlagsFunc)> funcBackup(&CpuInfo::getCpuFlagsFunc, mockGetCpuFlags);
     CpuInfo testCpuInfo;
     EXPECT_TRUE(testCpuInfo.isCpuFlagPresent("flag1"));
     EXPECT_TRUE(testCpuInfo.isCpuFlagPresent("flag2"));

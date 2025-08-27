@@ -24,9 +24,6 @@ extern bool mmapAllowExtendedPointers;
 } // namespace NEO
 
 static std::string mockCpuFlags;
-static void mockGetCpuFlagsFunc(std::string &cpuFlags) { cpuFlags = mockCpuFlags; }
-static void (*getCpuFlagsFuncSave)(std::string &) = nullptr;
-
 // CpuInfo is a singleton object so we have to patch it in place
 class CpuInfoOverrideVirtualAddressSizeAndFlags {
   public:
@@ -37,28 +34,15 @@ class CpuInfoOverrideVirtualAddressSizeAndFlags {
     } *mockCpuInfo = reinterpret_cast<MockCpuInfo *>(const_cast<CpuInfo *>(&CpuInfo::getInstance()));
 
     CpuInfoOverrideVirtualAddressSizeAndFlags(uint32_t newCpuVirtualAddressSize, const char *newCpuFlags = "") {
-        virtualAddressSizeSave = mockCpuInfo->getVirtualAddressSize();
         mockCpuInfo->virtualAddressSize = newCpuVirtualAddressSize;
 
-        getCpuFlagsFuncSave = mockCpuInfo->getCpuFlagsFunc;
-        mockCpuInfo->getCpuFlagsFunc = mockGetCpuFlagsFunc;
-        resetCpuFlags();
         mockCpuFlags = newCpuFlags;
     }
 
-    ~CpuInfoOverrideVirtualAddressSizeAndFlags() {
-        mockCpuInfo->virtualAddressSize = virtualAddressSizeSave;
-        resetCpuFlags();
-        mockCpuInfo->getCpuFlagsFunc = getCpuFlagsFuncSave;
-        getCpuFlagsFuncSave = nullptr;
-    }
-
-    void resetCpuFlags() {
-        mockCpuFlags = "";
-        mockCpuInfo->getCpuFlagsFunc(mockCpuInfo->cpuFlags);
-    }
-
-    uint32_t virtualAddressSizeSave = 0;
+    VariableBackup<decltype(MockCpuInfo::getCpuFlagsFunc)> funcBackup{&MockCpuInfo::getCpuFlagsFunc, [](std::string &flags) { flags = mockCpuFlags; }};
+    VariableBackup<decltype(MockCpuInfo::virtualAddressSize)> virtualAddressSizeBackup{&mockCpuInfo->virtualAddressSize};
+    VariableBackup<decltype(MockCpuInfo::cpuFlags)> cpuFlagsBackup{&mockCpuInfo->cpuFlags};
+    VariableBackup<decltype(mockCpuFlags)> mockFlagsBackup{&mockCpuFlags};
 };
 
 using namespace NEO;
