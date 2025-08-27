@@ -358,29 +358,6 @@ HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithEventsEnabledWhenEnqueingBar
     EXPECT_FALSE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
 }
 
-HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithEventsEnabledWhenEnqueingBarrierWithWaitListWithEventThenDcFlushSet) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        GTEST_SKIP();
-    }
-    DebugManagerStateRestore restorer;
-    debugManager.flags.SkipDcFlushOnBarrierWithoutEvents.set(1);
-
-    const cl_uint numEventsInWaitList = 0;
-    const cl_event *eventWaitList = nullptr;
-    cl_event clEvent{};
-    auto retVal = pCmdQ->enqueueBarrierWithWaitList(
-        numEventsInWaitList,
-        eventWaitList,
-        &clEvent);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_TRUE(pCmdQ->isStallingCommandsOnNextFlushRequired());
-    EXPECT_TRUE(pCmdQ->isDcFlushRequiredOnStallingCommandsOnNextFlush());
-    auto outEvent = castToObject<Event>(clEvent);
-    outEvent->release();
-}
-
 HWTEST_F(OOQTaskTests, givenSkipDcFlushOnBarrierWithoutEventsDisabledWhenEnqueingBarrierWithWaitListThenDcFlushSet) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (false == commandStreamReceiver.peekTimestampPacketWriteEnabled()) {

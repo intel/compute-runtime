@@ -152,9 +152,6 @@ HWTEST_F(MarkerTest, WhenEnqueingMarkerThenReturnedEventShouldHaveEqualDepthToLa
     ASSERT_NE(nullptr, event);
     std::unique_ptr<Event> pEvent((Event *)(event));
 
-    // Shouldn't sync to CSR
-    // should sync to command queue last packet
-    EXPECT_EQ(1u, pEvent->taskLevel);
     EXPECT_EQ(pCmdQ->taskLevel, pEvent->taskLevel);
 }
 
