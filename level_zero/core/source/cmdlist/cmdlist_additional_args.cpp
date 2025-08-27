@@ -26,11 +26,8 @@ ze_result_t CommandList::cloneAppendKernelExtensions(const ze_base_desc_t *desc,
     if (desc->stype == ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC) {
         auto cooperativeDesc = reinterpret_cast<const ze_command_list_append_launch_kernel_param_cooperative_desc_t *>(desc);
         auto cloneCooperativeDesc = new ze_command_list_append_launch_kernel_param_cooperative_desc_t;
-
-        cloneCooperativeDesc->stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC;
+        *cloneCooperativeDesc = *cooperativeDesc;
         cloneCooperativeDesc->pNext = nullptr;
-        cloneCooperativeDesc->isCooperative = cooperativeDesc->isCooperative;
-
         outPnext = cloneCooperativeDesc;
     } else {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
