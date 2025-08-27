@@ -1133,6 +1133,8 @@ int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &
 
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
+    bool shouldPrintBitmask = command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
+                              command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME;
 
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
         command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME ||
@@ -1145,8 +1147,9 @@ int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME) {
         applyResumeWa(bitmask.get(), bitmaskSize);
     }
-
-    printBitmask(bitmask.get(), bitmaskSize);
+    if (shouldPrintBitmask) {
+        printBitmask(bitmask.get(), bitmaskSize);
+    }
 
     auto euControlRetVal = ioctl(PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &euControl);
     if (euControlRetVal != 0) {
