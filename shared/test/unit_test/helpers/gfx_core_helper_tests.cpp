@@ -1149,6 +1149,11 @@ HWTEST2_F(ProductHelperCommonTest, givenBlitterPreferenceWhenEnablingBlitterOper
     EXPECT_EQ(expectedBlitterSupport, hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
+HWTEST2_F(ProductHelperCommonTest, whenCallIsAvailableExtendedSratchThenReturnFalse, IsAtMostXe3Core) {
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.isAvailableExtendedScratch());
+}
+
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForIsaSystemMemoryPlacementThenReturnFalseIfLocalMemorySupported) {
     DebugManagerStateRestore restorer;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
