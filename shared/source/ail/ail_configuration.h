@@ -120,8 +120,7 @@ template <PRODUCT_FAMILY product>
 class AILConfigurationHw : public AILConfiguration {
   public:
     static std::unique_ptr<AILConfiguration> create() {
-        auto ailConfiguration = std::unique_ptr<AILConfiguration>(new AILConfigurationHw());
-        return ailConfiguration;
+        return std::make_unique<AILConfigurationHw>();
     }
 
     void applyExt(HardwareInfo &hwInfo) override;

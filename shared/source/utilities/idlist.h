@@ -461,7 +461,7 @@ template <typename NodeObjectType, bool threadSafe = true, bool ownsNodes = true
 class IDRefList : public IDList<IDNodeRef<NodeObjectType>, threadSafe, ownsNodes> {
   public:
     void pushRefFrontOne(NodeObjectType &node) {
-        auto refNode = std::unique_ptr<IDNodeRef<NodeObjectType>>(new IDNodeRef<NodeObjectType>(&node));
+        auto refNode = std::make_unique<IDNodeRef<NodeObjectType>>(&node);
         this->pushFrontOne(*refNode);
         refNode.release();
     }
