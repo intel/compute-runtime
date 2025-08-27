@@ -186,6 +186,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     auto deviceImp = static_cast<DeviceImp *>(device);
     const auto &hwInfo = device->getHwInfo();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto &productHelper = device->getProductHelper();
 
     if (!csr) {
         if (internalUsage) {
@@ -197,6 +198,11 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 engineGroupType = deviceImp->getInternalEngineGroupType();
             }
         } else {
+            if (queueProperties.interruptHint && !productHelper.isInterruptSupported()) {
+                returnValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+                return commandList;
+            }
+
             returnValue = device->getCsrForOrdinalAndIndex(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, queueProperties.priorityLevel, queueProperties.interruptHint);
             if (returnValue != ZE_RESULT_SUCCESS) {
                 return commandList;
@@ -215,8 +221,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     if (NEO::debugManager.flags.MakeEachEnqueueBlocking.get()) {
         commandList->isSyncModeQueue |= true;
     }
-
-    auto &productHelper = device->getProductHelper();
 
     if (!internalUsage) {
         auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();

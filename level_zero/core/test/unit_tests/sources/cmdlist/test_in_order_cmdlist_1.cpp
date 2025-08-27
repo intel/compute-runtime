@@ -21,6 +21,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
@@ -86,6 +87,10 @@ HWTEST_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThenE
     ze_event_desc_t eventDesc = {};
     eventDesc.pNext = &syncModeDesc;
 
+    auto mockProductHelper = new MockProductHelper;
+    mockProductHelper->isInterruptSupportedResult = true;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
+
     eventDesc.index = 0;
     syncModeDesc.syncModeFlags = 0;
     auto event0 = DestroyableZeUniquePtr<InOrderFixtureMockEvent>(static_cast<InOrderFixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue)));
@@ -119,6 +124,13 @@ HWTEST_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThenE
     eventDesc.index = 5;
     syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT;
     EXPECT_ANY_THROW(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+
+    mockProductHelper->isInterruptSupportedResult = false;
+    eventDesc.index = 6;
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
+    auto event5 = Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue);
+    EXPECT_EQ(event5, nullptr);
+    EXPECT_EQ(returnValue, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxedOrdering) {
@@ -6207,6 +6219,10 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedTimestampHostVisibleSignalWhenCal
 HWTEST_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterruptIdThenAssign) {
     zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
     syncModeDesc.externalInterruptId = 123;
+
+    auto mockProductHelper = new MockProductHelper;
+    mockProductHelper->isInterruptSupportedResult = true;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
 
     syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
     auto event1 = createStandaloneCbEvent(reinterpret_cast<const ze_base_desc_t *>(&syncModeDesc));

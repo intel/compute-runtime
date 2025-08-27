@@ -765,6 +765,10 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
             kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
             externalInterruptWait = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT);
 
+            if (interruptMode && !device->getProductHelper().isInterruptSupported()) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
+
             if (externalInterruptWait) {
                 setExternalInterruptId(eventSyncModeDesc->externalInterruptId);
                 UNRECOVERABLE_IF(eventSyncModeDesc->externalInterruptId > 0 && eventDescriptor.eventPoolAllocation);

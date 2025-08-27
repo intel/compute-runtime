@@ -31,5 +31,6 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(is2MBLocalMemAlignmentEnabled, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDisableScratchPagesRequiredForDebugger, bool, true, ());
     ADDMETHOD_CONST_NOBASE(getStorageInfoLocalOnlyFlag, bool, false, (LocalMemAllocationMode, bool));
+    ADDMETHOD_CONST_NOBASE(isInterruptSupported, bool, false, ());
 };
 } // namespace NEO

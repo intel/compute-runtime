@@ -1269,6 +1269,10 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWa
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIsInterruptSupportedThenFalseReturned) {
+    EXPECT_FALSE(productHelper->isInterruptSupported());
+}
+
 HWTEST2_F(ProductHelperTest, givenDG1ProductHelperWhenCanShareMemoryWithoutNTHandleIsCalledThenFalseIsReturned, IsDG1) {
     EXPECT_FALSE(productHelper->canShareMemoryWithoutNTHandle());
 }

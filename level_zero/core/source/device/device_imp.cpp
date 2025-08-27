@@ -368,6 +368,10 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
 
     auto queueProperties = CommandQueue::extractQueueProperties(*desc);
 
+    if (queueProperties.interruptHint && !neoDevice->getProductHelper().isInterruptSupported()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, queueProperties.priorityLevel, queueProperties.interruptHint);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
