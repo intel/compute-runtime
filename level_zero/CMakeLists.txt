@@ -199,12 +199,6 @@ if(BUILD_WITH_L0)
   endif()
 
   include_directories(${COMPUTE_RUNTIME_DIR}/third_party/opencl_headers)
-  if(UNIX AND DEFINED NEO_SPDLOG_DIR)
-    set_source_files_properties(
-                                ${CMAKE_CURRENT_SOURCE_DIR}/experimental/source/log_utility/linux/linux_logging.cpp
-                                PROPERTIES INCLUDE_DIRECTORIES ${NEO_SPDLOG_DIR}
-    )
-  endif()
 
   if(CUSTOM_L0_INCLUDE_PATH)
     include_directories(${CUSTOM_L0_INCLUDE_PATH}/../)
@@ -375,12 +369,6 @@ if(BUILD_WITH_L0)
                                 COMPILE_DEFINITIONS
                                 "NEO_L0_VERSION_MAJOR=${NEO_L0_VERSION_MAJOR};NEO_L0_VERSION_MINOR=${NEO_L0_VERSION_MINOR}"
     )
-
-    if(DEFINED NEO_SPDLOG_DIR)
-      target_include_directories(${LIB_NAME} PRIVATE "experimental/source/log_utility")
-    else()
-      target_include_directories(${LIB_NAME} PRIVATE "experimental/source/log_utility_stub")
-    endif()
 
     if(${MOCKABLE})
       get_property(COMPUTE_RUNTIME_DEFINITIONS

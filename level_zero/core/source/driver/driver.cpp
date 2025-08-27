@@ -21,7 +21,6 @@
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "driver_version.h"
-#include "log_manager.h"
 
 #include <memory>
 #include <mutex>
@@ -62,9 +61,6 @@ void DriverImp::initialize(ze_result_t *result) {
         const auto dbgMode = NEO::getDebuggingMode(envVariables.programDebugging);
         executionEnvironment->setDebuggingMode(dbgMode);
     }
-
-    // Logging enablement if opted
-    NEO::initLogger();
 
     if (envVariables.fp64Emulation) {
         executionEnvironment->setFP64EmulationEnabled();

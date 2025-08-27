@@ -26,7 +26,6 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
-#include "log_manager.h"
 #include "neo_igfxfmid.h"
 
 #include <optional>
@@ -209,8 +208,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             }
         }
     }
-
-    LOG_CRITICAL_FOR_CORE(unlikely(csr == nullptr), "Error during creation of immediate command queue. Unable to create CSR object. Aborting!!");
 
     UNRECOVERABLE_IF(nullptr == csr);
 
