@@ -470,7 +470,8 @@ struct MetricCalcOp : _zet_intel_metric_calculation_operation_exp_handle_t {
     inline zet_intel_metric_calculation_operation_exp_handle_t toHandle() { return this; }
 
     virtual ze_result_t destroy() = 0;
-    virtual ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
+    virtual ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics,
+                                        zet_intel_metric_scope_exp_handle_t *phMetricScopes) = 0;
     virtual ze_result_t getExcludedMetrics(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
     virtual ze_result_t metricCalculateValues(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,
                                               uint32_t *pTotalMetricReportCount,
@@ -489,13 +490,14 @@ struct MetricCalcOpImp : public MetricCalcOp {
           excludedMetrics(excludedMetrics) {}
 
     bool isRootDevice() { return isMultiDevice; }
-    ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
+    ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics, zet_intel_metric_scope_exp_handle_t *phMetricScopes) override;
     ze_result_t getExcludedMetrics(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
     uint32_t getMetricsInReportCount() { return static_cast<uint32_t>(metricsInReport.size()); };
     uint32_t getExcludedMetricsCount() { return static_cast<uint32_t>(excludedMetrics.size()); };
+    uint32_t getMetricsScopesCount() { return static_cast<uint32_t>(metricScopes.size()); };
 
   protected:
-    ze_result_t getMetricsFromCalcOp(uint32_t *pCount, zet_metric_handle_t *phMetrics, bool isExcludedMetrics = false);
+    ze_result_t getMetricsFromCalcOp(uint32_t *pCount, zet_metric_handle_t *phMetrics, bool isExcludedMetrics, zet_intel_metric_scope_exp_handle_t *phMetricScopes);
     bool isMultiDevice = false;
     std::vector<MetricScopeImp *> metricScopes{};
     std::vector<MetricImp *> metricsInReport{};
@@ -595,7 +597,8 @@ ze_result_t metricCalculationOperationCreate(zet_context_handle_t hContext, zet_
 ze_result_t metricCalculationOperationDestroy(zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation);
 
 ze_result_t metricCalculationGetReportFormat(zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                             uint32_t *pCount, zet_metric_handle_t *phMetrics);
+                                             uint32_t *pCount, zet_metric_handle_t *phMetrics,
+                                             zet_intel_metric_scope_exp_handle_t *phMetricScopes);
 
 ze_result_t metricCalculationGetExcludedMetrics(zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
                                                 uint32_t *pCount, zet_metric_handle_t *phMetrics);

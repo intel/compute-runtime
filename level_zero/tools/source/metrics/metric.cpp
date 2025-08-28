@@ -772,7 +772,7 @@ bool MultiDomainDeferredActivationTracker::activateMetricGroupsDeferred(uint32_t
         return false;
     };
 
-    // Deactive existing metric groups which are not provided in phMetricGroups
+    // Deactivate existing metric groups which are not provided in phMetricGroups
     std::vector<uint32_t> deactivateList = {};
     for (const auto &[domainId, metricGroupPair] : domains) {
         const auto &hMetricGroup = metricGroupPair.first;
@@ -1002,30 +1002,46 @@ MetricImp *HomogeneousMultiDeviceMetricCreated::create(MetricSource &metricSourc
     return new (std::nothrow) HomogeneousMultiDeviceMetricCreated(metricSource, subDeviceMetrics);
 }
 
-ze_result_t MetricCalcOpImp::getMetricsFromCalcOp(uint32_t *pCount, zet_metric_handle_t *phMetrics, bool isExcludedMetrics) {
-    if (*pCount == 0) {
-        *pCount = isExcludedMetrics ? getExcludedMetricsCount() : getMetricsInReportCount();
+ze_result_t MetricCalcOpImp::getMetricsFromCalcOp(uint32_t *pCount, zet_metric_handle_t *phMetrics, bool isExcludedMetrics, zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
+    uint32_t requestedSize = *pCount;
+    uint32_t metricsInReportCount = getMetricsInReportCount();
+    uint16_t metricsScopesCount = getMetricsScopesCount();
+
+    *pCount = isExcludedMetrics ? getExcludedMetricsCount() : metricsInReportCount * metricsScopesCount;
+
+    if (requestedSize == 0) {
         return ZE_RESULT_SUCCESS;
-    } else if (*pCount < (isExcludedMetrics ? getExcludedMetricsCount() : getMetricsInReportCount())) {
-        METRICS_LOG_ERR("%s", "Metric can't be smaller than report size");
+    }
+
+    if (requestedSize < *pCount) {
+        METRICS_LOG_ERR("%s", "Metric count can't be smaller than report size");
         *pCount = 0;
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    *pCount = isExcludedMetrics ? getExcludedMetricsCount() : getMetricsInReportCount();
-    for (uint32_t index = 0; index < *pCount; index++) {
-        phMetrics[index] = isExcludedMetrics ? excludedMetrics[index]->toHandle() : metricsInReport[index]->toHandle();
+    if (isExcludedMetrics) {
+        for (uint32_t index = 0; index < *pCount; index++) {
+            phMetrics[index] = excludedMetrics[index]->toHandle();
+        }
+    } else {
+        for (uint32_t scopeIndex = 0; scopeIndex < metricsScopesCount; scopeIndex++) {
+            for (uint32_t metricIndex = 0; metricIndex < metricsInReportCount; metricIndex++) {
+                uint32_t outIndex = metricIndex + metricsInReportCount * scopeIndex;
+                phMetrics[outIndex] = metricsInReport[metricIndex]->toHandle();
+                phMetricScopes[outIndex] = metricScopes[scopeIndex]->toHandle();
+            }
+        }
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MetricCalcOpImp::getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
-    return getMetricsFromCalcOp(pCount, phMetrics, false);
+ze_result_t MetricCalcOpImp::getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics, zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
+    return getMetricsFromCalcOp(pCount, phMetrics, false, phMetricScopes);
 }
 
 ze_result_t MetricCalcOpImp::getExcludedMetrics(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
-    return getMetricsFromCalcOp(pCount, phMetrics, true);
+    return getMetricsFromCalcOp(pCount, phMetrics, true, nullptr);
 }
 
 ze_result_t metricProgrammableGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) {
@@ -1083,8 +1099,9 @@ ze_result_t metricCalculationOperationDestroy(
 ze_result_t metricCalculationGetReportFormat(
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
     uint32_t *pCount,
-    zet_metric_handle_t *phMetrics) {
-    return MetricCalcOp::fromHandle(hCalculationOperation)->getReportFormat(pCount, phMetrics);
+    zet_metric_handle_t *phMetrics,
+    zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
+    return MetricCalcOp::fromHandle(hCalculationOperation)->getReportFormat(pCount, phMetrics, phMetricScopes);
 }
 
 ze_result_t metricCalculationGetExcludedMetrics(

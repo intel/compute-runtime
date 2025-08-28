@@ -360,9 +360,12 @@ ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetReportFormatExp(
                                                                                 ///< calculation results report, then ZE_RESULT_ERROR_INVALID_ARGUMENT
                                                                                 ///< will be returned since this parameter is not intended for
                                                                                 ///< filtering metrics.
-    zet_metric_handle_t *phMetrics);                                            ///< [out][optional] [range(0, pMetricsCount)] array of metrics handles
+    zet_metric_handle_t *phMetrics,                                             ///< [out][optional] [range(0, pCount)] array of metrics handles
                                                                                 ///< with the order in which results will be found in output report of
                                                                                 ///< calculation operations
+    zet_intel_metric_scope_exp_handle_t *phMetricScopes);                       ///< [out] [range(0, *pCount)] array of metric scopes handles
+                                                                                ///< corresponding to each metric in phMetrics
+
 ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetExcludedMetricsExp(
     zet_intel_metric_calculation_operation_exp_handle_t phCalculationOperation, ///< [in] Calculation operation handle
     uint32_t *pCount,                                                           ///< [in,out] pointer to the number of metrics excluded from the output report.

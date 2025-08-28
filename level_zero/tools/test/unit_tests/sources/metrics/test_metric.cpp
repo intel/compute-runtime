@@ -259,12 +259,14 @@ TEST_F(CalcOperationFixture, WhenGettingMetricsInReportAndExcludedMetricsThenThe
 
     MockMetricCalcOp mockMetricCalcOp(false, metricScopes, mockMetricsInReport, mockExcludedMetrics);
     uint32_t metricCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, nullptr, nullptr));
     EXPECT_EQ(metricCount, 1U);
     zet_metric_handle_t metricHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, &metricHandle));
+    zet_intel_metric_scope_exp_handle_t metricScopeHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(mockMetricCalcOp.toHandle(), &metricCount, &metricHandle, &metricScopeHandle));
     EXPECT_EQ(metricCount, 1U);
     EXPECT_EQ(metricHandle, mockMetricInReport.toHandle());
+    EXPECT_EQ(metricScopeHandle, mockMetricScope->toHandle());
     EXPECT_EQ(metricCount, mockMetricCalcOp.getMetricsInReportCount());
 
     metricCount = 0;
