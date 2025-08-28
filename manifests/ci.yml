@@ -1,6 +1,6 @@
 components:
   i915_kmd:
-    version: dev-5963
+    version: rel-25.3-13
   xe_kmd:
     version: dev-1900
   ipldt:
