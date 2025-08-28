@@ -433,8 +433,8 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
     ASSERT_NE(nullptr, gpuAlloc);
 
     createKernel();
-    kernel->state.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
-    kernel->state.kernelHasIndirectAccess = true;
+    kernel->privateState.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->privateState.kernelHasIndirectAccess = true;
 
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
@@ -498,8 +498,8 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     ASSERT_NE(nullptr, gpuAlloc);
 
     createKernel();
-    kernel->state.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
-    kernel->state.kernelHasIndirectAccess = true;
+    kernel->privateState.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->privateState.kernelHasIndirectAccess = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -561,8 +561,8 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     ASSERT_NE(nullptr, gpuAlloc);
 
     createKernel();
-    kernel->state.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
-    kernel->state.kernelHasIndirectAccess = true;
+    kernel->privateState.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->privateState.kernelHasIndirectAccess = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->overrideAllocateAsPackReturn = 1u;
@@ -615,8 +615,8 @@ HWTEST_F(CommandQueueIndirectAllocations,
     ASSERT_NE(nullptr, gpuAlloc);
 
     createKernel();
-    kernel->state.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
-    kernel->state.kernelHasIndirectAccess = true;
+    kernel->privateState.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->privateState.kernelHasIndirectAccess = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->overrideAllocateAsPackReturn = 1u;
@@ -673,7 +673,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
     ASSERT_NE(nullptr, gpuAlloc);
 
     createKernel();
-    kernel->state.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->privateState.unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->overrideAllocateAsPackReturn = 1u;

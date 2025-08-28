@@ -61,9 +61,9 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::patchSamplerBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::printfBuffer;
     using ::L0::KernelImp::privateMemoryGraphicsAllocation;
+    using ::L0::KernelImp::privateState;
     using ::L0::KernelImp::rcsAvailable;
     using ::L0::KernelImp::setAssertBuffer;
-    using ::L0::KernelImp::state;
     using ::L0::KernelImp::surfaceStateAlignment;
     using ::L0::KernelImp::surfaceStateAlignmentMask;
     using ::L0::KernelImp::walkerInlineDataSize;
@@ -95,7 +95,7 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {}
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
         if (enableForcingOfGenerateLocalIdByHw) {
-            state.kernelRequiresGenerationOfLocalIdsByRuntime = !forceGenerateLocalIdByHw;
+            privateState.kernelRequiresGenerationOfLocalIdsByRuntime = !forceGenerateLocalIdByHw;
         }
     }
     ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *allocData) override {

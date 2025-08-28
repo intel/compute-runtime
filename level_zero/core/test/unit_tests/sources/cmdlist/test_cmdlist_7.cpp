@@ -361,7 +361,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchIndirect
 
     Mock<::L0::KernelImp> kernel;
     kernel.module = mockModule.get();
-    kernel.state.groupSize[0] = 2;
+    kernel.privateState.groupSize[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.workDim = 4;

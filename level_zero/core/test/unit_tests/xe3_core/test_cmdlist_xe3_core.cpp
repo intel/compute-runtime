@@ -141,7 +141,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core, givenAppendKernelWhenKernelNotUs
     ASSERT_NE(nullptr, allocData);
     auto kernelAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, kernelAllocation);
-    kernel.state.argumentsResidencyContainer.push_back(kernelAllocation);
+    kernel.privateState.argumentsResidencyContainer.push_back(kernelAllocation);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -203,7 +203,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
     ASSERT_NE(nullptr, allocData);
     auto kernelAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, kernelAllocation);
-    kernel.state.argumentsResidencyContainer.push_back(kernelAllocation);
+    kernel.privateState.argumentsResidencyContainer.push_back(kernelAllocation);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -317,9 +317,9 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
     ASSERT_NE(nullptr, allocData);
     auto kernelAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, kernelAllocation);
-    kernel.state.argumentsResidencyContainer.push_back(kernelAllocation);
+    kernel.privateState.argumentsResidencyContainer.push_back(kernelAllocation);
 
-    kernel.state.unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+    kernel.privateState.unifiedMemoryControls.indirectHostAllocationsAllowed = true;
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -383,7 +383,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
     ASSERT_NE(nullptr, allocData);
     auto kernelAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, kernelAllocation);
-    kernel.state.argumentsResidencyContainer.push_back(kernelAllocation);
+    kernel.privateState.argumentsResidencyContainer.push_back(kernelAllocation);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -445,7 +445,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
     ASSERT_NE(nullptr, allocData);
     auto kernelAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, kernelAllocation);
-    kernel.state.argumentsResidencyContainer.push_back(kernelAllocation);
+    kernel.privateState.argumentsResidencyContainer.push_back(kernelAllocation);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;

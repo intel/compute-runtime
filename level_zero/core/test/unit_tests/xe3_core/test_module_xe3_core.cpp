@@ -83,8 +83,8 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
         for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.state.numThreadsPerThreadGroup);
-            kernel.state.groupSize[0] = kernel.state.groupSize[1] = kernel.state.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.privateState.numThreadsPerThreadGroup);
+            kernel.privateState.groupSize[0] = kernel.privateState.groupSize[1] = kernel.privateState.groupSize[2] = 0;
         }
     }
     {
@@ -106,8 +106,8 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
         for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.state.numThreadsPerThreadGroup);
-            kernel.state.groupSize[0] = kernel.state.groupSize[1] = kernel.state.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.privateState.numThreadsPerThreadGroup);
+            kernel.privateState.groupSize[0] = kernel.privateState.groupSize[1] = kernel.privateState.groupSize[2] = 0;
         }
     }
     {
@@ -129,8 +129,8 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
         for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.state.numThreadsPerThreadGroup);
-            kernel.state.groupSize[0] = kernel.state.groupSize[1] = kernel.state.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.privateState.numThreadsPerThreadGroup);
+            kernel.privateState.groupSize[0] = kernel.privateState.groupSize[1] = kernel.privateState.groupSize[2] = 0;
         }
     }
     {
@@ -152,8 +152,8 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
         for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.state.numThreadsPerThreadGroup);
-            kernel.state.groupSize[0] = kernel.state.groupSize[1] = kernel.state.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.privateState.numThreadsPerThreadGroup);
+            kernel.privateState.groupSize[0] = kernel.privateState.groupSize[1] = kernel.privateState.groupSize[2] = 0;
         }
     }
     {
@@ -175,8 +175,8 @@ XE3_CORETEST_F(Xe3KernelSetupTests, givenParamsWhenSetupGroupSizeThenNumThreadsP
         for (auto &[simtSize, expectedNumThreadsPerThreadGroup] : values) {
             kernel.descriptor.kernelAttributes.simdSize = simtSize;
             kernel.setGroupSize(1024u, 1024u, 1024u);
-            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.state.numThreadsPerThreadGroup);
-            kernel.state.groupSize[0] = kernel.state.groupSize[1] = kernel.state.groupSize[2] = 0;
+            EXPECT_EQ(expectedNumThreadsPerThreadGroup, kernel.privateState.numThreadsPerThreadGroup);
+            kernel.privateState.groupSize[0] = kernel.privateState.groupSize[1] = kernel.privateState.groupSize[2] = 0;
         }
     }
 }

@@ -41,9 +41,9 @@ uint32_t KernelImpSuggestMaxCooperativeGroupCountFixture::getMaxWorkGroupCount()
     auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
     kernel.module = module.get();
     kernel.implicitScalingEnabled = device->getNEODevice()->getDeviceBitfield().count() > 1;
-    kernel.state.groupSize[0] = lws[0];
-    kernel.state.groupSize[1] = lws[1];
-    kernel.state.groupSize[2] = lws[2];
+    kernel.privateState.groupSize[0] = lws[0];
+    kernel.privateState.groupSize[1] = lws[1];
+    kernel.privateState.groupSize[2] = lws[2];
     uint32_t totalGroupCount = kernel.KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType::cooperativeCompute, false);
     return totalGroupCount;
 }

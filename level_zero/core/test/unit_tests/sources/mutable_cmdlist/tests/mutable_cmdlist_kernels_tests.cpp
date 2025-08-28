@@ -405,7 +405,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     mockKernelImmData2->kernelDescriptor->kernelAttributes.crossThreadDataSize = kernel2CrossThreadInitSize;
     mockKernelImmData2->crossThreadDataSize = kernel2CrossThreadInitSize;
     mockKernelImmData2->crossThreadDataTemplate.reset(new uint8_t[kernel2CrossThreadInitSize]);
-    kernel2->state.crossThreadData.resize(kernel2CrossThreadInitSize, 0x0);
+    kernel2->privateState.crossThreadData.resize(kernel2CrossThreadInitSize, 0x0);
 
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 

@@ -93,7 +93,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         using KernelImp::patchBindlessOffsetsInCrossThreadData;
         using KernelImp::printfBuffer;
         using KernelImp::privateMemoryGraphicsAllocation;
-        using KernelImp::state;
+        using KernelImp::privateState;
         using KernelImp::surfaceStateAlignment;
         using KernelImp::surfaceStateAlignmentMask;
         using KernelImp::walkerInlineDataSize;

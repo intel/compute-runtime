@@ -38,21 +38,21 @@ using KernelImpTest = Test<DeviceFixture>;
 
 TEST_F(KernelImpTest, GivenKernelMutableStateWhenPerThreadDataForWholeGroupReservedThenReallocatedIfNeeded) {
 
-    KernelMutableState state{};
+    KernelMutableState privateState{};
     constexpr size_t perThreadDataSize1{5U};
-    state.reservePerThreadDataForWholeThreadGroup(perThreadDataSize1);
+    privateState.reservePerThreadDataForWholeThreadGroup(perThreadDataSize1);
 
-    auto alloc1{state.perThreadDataForWholeThreadGroup};
+    auto alloc1{privateState.perThreadDataForWholeThreadGroup};
     EXPECT_NE(alloc1, nullptr);
-    EXPECT_EQ(state.perThreadDataSizeForWholeThreadGroup, perThreadDataSize1);
-    EXPECT_EQ(state.perThreadDataSizeForWholeThreadGroupAllocated, perThreadDataSize1);
+    EXPECT_EQ(privateState.perThreadDataSizeForWholeThreadGroup, perThreadDataSize1);
+    EXPECT_EQ(privateState.perThreadDataSizeForWholeThreadGroupAllocated, perThreadDataSize1);
 
     constexpr size_t perThreadDataSize2{3U};
-    state.reservePerThreadDataForWholeThreadGroup(perThreadDataSize2);
-    auto alloc2{state.perThreadDataForWholeThreadGroup};
+    privateState.reservePerThreadDataForWholeThreadGroup(perThreadDataSize2);
+    auto alloc2{privateState.perThreadDataForWholeThreadGroup};
     EXPECT_EQ(alloc1, alloc2);
-    EXPECT_EQ(state.perThreadDataSizeForWholeThreadGroupAllocated, perThreadDataSize1);
-    EXPECT_EQ(state.perThreadDataSizeForWholeThreadGroup, perThreadDataSize2);
+    EXPECT_EQ(privateState.perThreadDataSizeForWholeThreadGroupAllocated, perThreadDataSize1);
+    EXPECT_EQ(privateState.perThreadDataSizeForWholeThreadGroup, perThreadDataSize2);
 }
 
 TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssigningToItselfThenTheCurrentObjectReturned) {
@@ -240,26 +240,26 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenKernelImpClonedThenStateAssigne
     kernel1.module = &module;
 
     constexpr size_t mockSize{8U};
-    kernel1.state.crossThreadData.clear();
-    kernel1.state.crossThreadData.reserve(mockSize);
-    std::ranges::copy(std::to_array<uint8_t, mockSize>({91, 92, 93, 94, 95, 96, 97, 98}), std::back_inserter(kernel1.state.crossThreadData));
-    kernel1.state.reservePerThreadDataForWholeThreadGroup(mockSize);
-    std::memcpy(kernel1.state.perThreadDataForWholeThreadGroup, std::to_array<uint8_t>({81, 82, 83, 84, 85, 86, 87, 88}).data(), mockSize);
+    kernel1.privateState.crossThreadData.clear();
+    kernel1.privateState.crossThreadData.reserve(mockSize);
+    std::ranges::copy(std::to_array<uint8_t, mockSize>({91, 92, 93, 94, 95, 96, 97, 98}), std::back_inserter(kernel1.privateState.crossThreadData));
+    kernel1.privateState.reservePerThreadDataForWholeThreadGroup(mockSize);
+    std::memcpy(kernel1.privateState.perThreadDataForWholeThreadGroup, std::to_array<uint8_t>({81, 82, 83, 84, 85, 86, 87, 88}).data(), mockSize);
 
     // This state overrides the state of kernel1's clone
-    KernelMutableState state;
-    fillKernelMutableStateWithMockData(state);
+    KernelMutableState privateState;
+    fillKernelMutableStateWithMockData(privateState);
 
     // No need to check each and every member again
-    EXPECT_NE(0, std::memcmp(kernel1.state.crossThreadData.data(), state.crossThreadData.data(), mockSize));
-    EXPECT_NE(0, std::memcmp(kernel1.state.perThreadDataForWholeThreadGroup, state.perThreadDataForWholeThreadGroup, mockSize));
+    EXPECT_NE(0, std::memcmp(kernel1.privateState.crossThreadData.data(), privateState.crossThreadData.data(), mockSize));
+    EXPECT_NE(0, std::memcmp(kernel1.privateState.perThreadDataForWholeThreadGroup, privateState.perThreadDataForWholeThreadGroup, mockSize));
 
-    auto clonedKernel = kernel1.cloneWithStateOverride(&state);
+    auto clonedKernel = kernel1.cloneWithStateOverride(&privateState);
     auto kernel2 = static_cast<WhiteBox<KernelImp> *>(clonedKernel.get());
 
     // KernelMutableState part taken from `state`
-    EXPECT_EQ(0, std::memcmp(kernel2->state.crossThreadData.data(), state.crossThreadData.data(), mockSize));
-    EXPECT_EQ(0, std::memcmp(kernel2->state.perThreadDataForWholeThreadGroup, state.perThreadDataForWholeThreadGroup, mockSize));
+    EXPECT_EQ(0, std::memcmp(kernel2->privateState.crossThreadData.data(), privateState.crossThreadData.data(), mockSize));
+    EXPECT_EQ(0, std::memcmp(kernel2->privateState.perThreadDataForWholeThreadGroup, privateState.perThreadDataForWholeThreadGroup, mockSize));
 
     // KernelImp part taken from `kernel1`
     EXPECT_EQ(kernel2->cloneOrigin, &kernel1);
@@ -293,10 +293,10 @@ TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSi
 
     Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
-    kernel.state.crossThreadData.resize(sizeof(uint32_t[6]));
-    kernel.state.groupSize[0] = 2;
-    kernel.state.groupSize[1] = 3;
-    kernel.state.groupSize[2] = 5;
+    kernel.privateState.crossThreadData.resize(sizeof(uint32_t[6]));
+    kernel.privateState.groupSize[0] = 2;
+    kernel.privateState.groupSize[1] = 3;
+    kernel.privateState.groupSize[2] = 5;
 
     kernel.KernelImp::setGroupCount(7, 11, 13);
     auto crossThread = kernel.KernelImp::getCrossThreadData();
@@ -311,7 +311,7 @@ TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSi
     EXPECT_EQ(11U, numGroups[1]);
     EXPECT_EQ(13U, numGroups[2]);
 
-    kernel.state.crossThreadData.clear();
+    kernel.privateState.crossThreadData.clear();
 }
 
 TEST_F(KernelImpTest, givenExecutionMaskWithoutReminderWhenProgrammingItsValueThenSetValidNumberOfBits) {
@@ -325,9 +325,9 @@ TEST_F(KernelImpTest, givenExecutionMaskWithoutReminderWhenProgrammingItsValueTh
     kernel.module = &module;
 
     const std::array<uint32_t, 4> testedSimd = {{1, 8, 16, 32}};
-    kernel.state.groupSize[0] = 0;
-    kernel.state.groupSize[1] = 0;
-    kernel.state.groupSize[2] = 0;
+    kernel.privateState.groupSize[0] = 0;
+    kernel.privateState.groupSize[1] = 0;
+    kernel.privateState.groupSize[2] = 0;
 
     for (auto simd : testedSimd) {
         descriptor.kernelAttributes.simdSize = simd;
@@ -378,7 +378,7 @@ TEST_F(KernelImpTest, WhenSuggestingGroupSizeThenCacheValues) {
     Mock<KernelImp> kernel;
     kernel.kernelImmData = &kernelInfo;
     kernel.module = &module;
-    auto &suggestGroupSizeCache = kernel.state.suggestGroupSizeCache;
+    auto &suggestGroupSizeCache = kernel.privateState.suggestGroupSizeCache;
 
     EXPECT_EQ(suggestGroupSizeCache.size(), 0u);
     EXPECT_EQ(kernel.getSlmTotalSize(), 0u);
@@ -433,7 +433,7 @@ TEST_F(KernelImpTest, WhenSuggestingGroupSizeThenCacheValues) {
     EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[1], groupSize[1]);
     EXPECT_EQ(suggestGroupSizeCache[0].suggestedGroupSize[2], groupSize[2]);
 
-    kernel.state.slmArgsTotalSize = 1;
+    kernel.privateState.slmArgsTotalSize = 1;
     kernel.KernelImp::suggestGroupSize(2048, 1, 1, groupSize, groupSize + 1, groupSize + 2);
 
     EXPECT_EQ(suggestGroupSizeCache.size(), 3u);
@@ -743,7 +743,7 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     Mock<KernelImp> kernel;
     kernel.module = &module;
     kernel.kernelImmData = &kernelImmData;
-    kernel.state.dynamicStateHeapData.resize(64 + sizeof(SamplerState));
+    kernel.privateState.dynamicStateHeapData.resize(64 + sizeof(SamplerState));
 
     kernel.setInlineSamplers();
 
@@ -788,7 +788,7 @@ HWTEST2_F(KernelTest, givenTwoInlineSamplersWithBindlessAddressingWhenSettingInl
     Mock<KernelImp> kernel;
     kernel.module = &module;
     kernel.kernelImmData = &kernelImmData;
-    kernel.state.dynamicStateHeapData.resize(borderColorStateSize + 2 * sizeof(SamplerState));
+    kernel.privateState.dynamicStateHeapData.resize(borderColorStateSize + 2 * sizeof(SamplerState));
 
     kernel.setInlineSamplers();
 

@@ -64,13 +64,13 @@ struct KernelHw : public KernelImp {
             surfaceState = *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress);
 
         } else if (NEO::isValidOffset(argInfo.bindless)) {
-            state.isBindlessOffsetSet[argIndex] = false;
-            state.usingSurfaceStateHeap[argIndex] = false;
+            privateState.isBindlessOffsetSet[argIndex] = false;
+            privateState.usingSurfaceStateHeap[argIndex] = false;
             if (this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper() && !offsetedAddress) {
                 surfaceStateAddress = patchBindlessSurfaceState(alloc, argInfo.bindless);
-                state.isBindlessOffsetSet[argIndex] = true;
+                privateState.isBindlessOffsetSet[argIndex] = true;
             } else {
-                state.usingSurfaceStateHeap[argIndex] = true;
+                privateState.usingSurfaceStateHeap[argIndex] = true;
                 const auto surfaceStateOffset = getSurfaceStateIndexForBindlessOffset(argInfo.bindless) * sizeof(typename GfxFamily::RENDER_SURFACE_STATE);
                 surfaceStateAddress = &getSurfaceStateHeapDataSpan()[surfaceStateOffset];
             }
@@ -92,7 +92,7 @@ struct KernelHw : public KernelImp {
         }
 
         if (l3Enabled == false) {
-            this->state.kernelRequiresQueueUncachedMocsCount++;
+            this->privateState.kernelRequiresQueueUncachedMocsCount++;
         }
         auto isDebuggerActive = neoDevice->getDebugger() != nullptr;
         NEO::EncodeSurfaceStateArgs args;

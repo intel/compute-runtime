@@ -227,7 +227,7 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernel>::IndirectArgs::IndirectArgs
     this->launchKernelArgs = *apiArgs.launchKernelArgs;
 
     auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
-    L0::KernelMutableState stateSnapshot = kernel->getMutableState();
+    L0::KernelMutableState stateSnapshot = kernel->getPrivateState();
     this->kernelStateId = externalStorage.registerKernelState(std::move(stateSnapshot));
 }
 
@@ -244,7 +244,7 @@ Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>::IndirectArgs::I
     this->launchKernelArgs = *apiArgs.launchKernelArgs;
 
     auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
-    L0::KernelMutableState stateSnapshot = kernel->getMutableState();
+    L0::KernelMutableState stateSnapshot = kernel->getPrivateState();
     this->kernelStateId = externalStorage.registerKernelState(std::move(stateSnapshot));
 }
 
@@ -259,7 +259,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>::ins
 
 Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
     auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
-    L0::KernelMutableState stateSnapshot = kernel->getMutableState();
+    L0::KernelMutableState stateSnapshot = kernel->getPrivateState();
     this->kernelStateId = externalStorage.registerKernelState(std::move(stateSnapshot));
 }
 
@@ -275,7 +275,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect>::instan
 Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
     for (uint32_t i{0U}; i < apiArgs.numKernels; ++i) {
         auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.phKernels[i]));
-        L0::KernelMutableState stateSnapshot = kernel->getMutableState();
+        L0::KernelMutableState stateSnapshot = kernel->getPrivateState();
         const auto id = externalStorage.registerKernelState(std::move(stateSnapshot));
         if (i == 0U) {
             this->firstKernelStateId = id;

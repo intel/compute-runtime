@@ -307,9 +307,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelWithPrintfBufferCrea
     kernel->module = &module;
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
     kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
-    kernel->state.pImplicitArgs.reset(new ImplicitArgs());
-    kernel->state.pImplicitArgs->v0.header.structVersion = 0;
-    kernel->state.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
+    kernel->privateState.pImplicitArgs.reset(new ImplicitArgs());
+    kernel->privateState.pImplicitArgs->v0.header.structVersion = 0;
+    kernel->privateState.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel->immutableData.kernelDescriptor);
     kernel->createPrintfBuffer();
 
@@ -406,9 +406,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelAndPrintfBufferForSt
     kernel->module = &module;
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
     kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
-    kernel->state.pImplicitArgs.reset(new ImplicitArgs());
-    kernel->state.pImplicitArgs->v0.header.structVersion = 0;
-    kernel->state.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
+    kernel->privateState.pImplicitArgs.reset(new ImplicitArgs());
+    kernel->privateState.pImplicitArgs->v0.header.structVersion = 0;
+    kernel->privateState.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel->immutableData.kernelDescriptor);
     kernel->createPrintfBuffer();
 
@@ -556,9 +556,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     auto syncBufferAllocation = mockSyncBufferHandler->graphicsAllocation;
 
     EXPECT_NE(std::numeric_limits<size_t>::max(), kernel.getSyncBufferIndex());
-    auto syncBufferAllocationIt = std::find(kernel.state.internalResidencyContainer.begin(), kernel.state.internalResidencyContainer.end(), syncBufferAllocation);
-    ASSERT_NE(kernel.state.internalResidencyContainer.end(), syncBufferAllocationIt);
-    auto expectedIndex = static_cast<size_t>(std::distance(kernel.state.internalResidencyContainer.begin(), syncBufferAllocationIt));
+    auto syncBufferAllocationIt = std::find(kernel.privateState.internalResidencyContainer.begin(),
+                                            kernel.privateState.internalResidencyContainer.end(),
+                                            syncBufferAllocation);
+    ASSERT_NE(kernel.privateState.internalResidencyContainer.end(), syncBufferAllocationIt);
+    auto expectedIndex = static_cast<size_t>(std::distance(kernel.privateState.internalResidencyContainer.begin(), syncBufferAllocationIt));
     EXPECT_EQ(expectedIndex, kernel.getSyncBufferIndex());
 
     EXPECT_EQ(syncBufferAllocation, kernel.getSyncBufferAllocation());
@@ -580,11 +582,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
 
     // sync buffer index once set should not change
     EXPECT_EQ(expectedIndex, kernel.getSyncBufferIndex());
-    syncBufferAllocationIt = std::find(kernel.state.internalResidencyContainer.begin(), kernel.state.internalResidencyContainer.end(), syncBufferAllocation);
-    ASSERT_NE(kernel.state.internalResidencyContainer.end(), syncBufferAllocationIt);
+    syncBufferAllocationIt = std::find(kernel.privateState.internalResidencyContainer.begin(), kernel.privateState.internalResidencyContainer.end(), syncBufferAllocation);
+    ASSERT_NE(kernel.privateState.internalResidencyContainer.end(), syncBufferAllocationIt);
     // verify syncBufferAllocation is added only once
-    auto notFoundIt = std::find(syncBufferAllocationIt + 1, kernel.state.internalResidencyContainer.end(), syncBufferAllocation);
-    EXPECT_EQ(kernel.state.internalResidencyContainer.end(), notFoundIt);
+    auto notFoundIt = std::find(syncBufferAllocationIt + 1, kernel.privateState.internalResidencyContainer.end(), syncBufferAllocation);
+    EXPECT_EQ(kernel.privateState.internalResidencyContainer.end(), notFoundIt);
 
     {
         VariableBackup<std::array<bool, 4>> usesSyncBuffer{&kernelAttributes.flags.packed};
@@ -629,7 +631,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
 
     constexpr uint32_t crossThreadDataSize = 64;
-    kernel.state.crossThreadData.resize(crossThreadDataSize, 0x0);
+    kernel.privateState.crossThreadData.resize(crossThreadDataSize, 0x0);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -692,7 +694,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedSync
     kernel.module = pMockModule.get();
 
     constexpr uint32_t crossThreadDataSize = 64;
-    kernel.state.crossThreadData.resize(crossThreadDataSize, 0x0);
+    kernel.privateState.crossThreadData.resize(crossThreadDataSize, 0x0);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -799,7 +801,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     EXPECT_EQ(nullptr, kernel.getRegionGroupBarrierAllocation());
 
     constexpr uint32_t crossThreadDataSize = 64;
-    kernel.state.crossThreadData.resize(crossThreadDataSize, 0x0);
+    kernel.privateState.crossThreadData.resize(crossThreadDataSize, 0x0);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -830,9 +832,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     ASSERT_NE(ultCsr->makeResidentAllocations.end(), allocIter);
     auto regionGroupBarrierAllocation = allocIter->first;
 
-    auto regionGroupBarrierAllocIt = std::find(kernel.state.internalResidencyContainer.begin(), kernel.state.internalResidencyContainer.end(), regionGroupBarrierAllocation);
-    ASSERT_NE(kernel.state.internalResidencyContainer.end(), regionGroupBarrierAllocIt);
-    auto expectedIndex = static_cast<size_t>(std::distance(kernel.state.internalResidencyContainer.begin(), regionGroupBarrierAllocIt));
+    auto regionGroupBarrierAllocIt = std::find(kernel.privateState.internalResidencyContainer.begin(),
+                                               kernel.privateState.internalResidencyContainer.end(),
+                                               regionGroupBarrierAllocation);
+    ASSERT_NE(kernel.privateState.internalResidencyContainer.end(), regionGroupBarrierAllocIt);
+    auto expectedIndex = static_cast<size_t>(std::distance(kernel.privateState.internalResidencyContainer.begin(), regionGroupBarrierAllocIt));
     EXPECT_EQ(expectedIndex, kernel.getRegionGroupBarrierIndex());
 
     EXPECT_EQ(regionGroupBarrierAllocation, kernel.getRegionGroupBarrierAllocation());
@@ -841,11 +845,15 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
 
     // region group barrier index once set should not change
     EXPECT_EQ(expectedIndex, kernel.getRegionGroupBarrierIndex());
-    regionGroupBarrierAllocIt = std::find(kernel.state.internalResidencyContainer.begin(), kernel.state.internalResidencyContainer.end(), regionGroupBarrierAllocation);
-    ASSERT_NE(kernel.state.internalResidencyContainer.end(), regionGroupBarrierAllocIt);
+    regionGroupBarrierAllocIt = std::find(kernel.privateState.internalResidencyContainer.begin(),
+                                          kernel.privateState.internalResidencyContainer.end(),
+                                          regionGroupBarrierAllocation);
+    ASSERT_NE(kernel.privateState.internalResidencyContainer.end(), regionGroupBarrierAllocIt);
     // verify regionGroupBarrierAllocation is added only once
-    auto notFoundIt = std::find(regionGroupBarrierAllocIt + 1, kernel.state.internalResidencyContainer.end(), regionGroupBarrierAllocation);
-    EXPECT_EQ(kernel.state.internalResidencyContainer.end(), notFoundIt);
+    auto notFoundIt = std::find(regionGroupBarrierAllocIt + 1,
+                                kernel.privateState.internalResidencyContainer.end(),
+                                regionGroupBarrierAllocation);
+    EXPECT_EQ(kernel.privateState.internalResidencyContainer.end(), notFoundIt);
 
     auto patchPtr2 = *reinterpret_cast<uint64_t *>(&kernel.getCrossThreadDataSpan()[regionGroupBarrier.stateless]);
 
@@ -880,7 +888,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     EXPECT_EQ(nullptr, kernel.getRegionGroupBarrierAllocation());
 
     constexpr uint32_t crossThreadDataSize = 64;
-    kernel.state.crossThreadData.resize(crossThreadDataSize, 0x0);
+    kernel.privateState.crossThreadData.resize(crossThreadDataSize, 0x0);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -937,7 +945,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenPatchPreambleQueueWhenAppendedRegi
     kernel.module = pMockModule.get();
 
     constexpr uint32_t crossThreadDataSize = 64;
-    kernel.state.crossThreadData.resize(crossThreadDataSize, 0x0);
+    kernel.privateState.crossThreadData.resize(crossThreadDataSize, 0x0);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -1223,8 +1231,12 @@ struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKe
     uint64_t getIndirectHeapOffsetForImplicitArgsBuffer(const Mock<::L0::KernelImp> &kernel) {
         if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
             const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
-            auto implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.state.pImplicitArgs.get(), kernel.getKernelDescriptor(), !kernel.state.kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
-            return implicitArgsProgrammingSize - kernel.state.pImplicitArgs->getAlignedSize();
+            auto implicitArgsProgrammingSize =
+                ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.privateState.pImplicitArgs.get(),
+                                                                   kernel.getKernelDescriptor(),
+                                                                   !kernel.privateState.kernelRequiresGenerationOfLocalIdsByRuntime,
+                                                                   rootDeviceEnvironment);
+            return implicitArgsProgrammingSize - kernel.privateState.pImplicitArgs->getAlignedSize();
         } else {
             return 0u;
         }
@@ -1241,9 +1253,9 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
     kernel.immutableData.crossThreadDataSize = sizeof(uint64_t);
-    kernel.state.pImplicitArgs.reset(new ImplicitArgs());
-    kernel.state.pImplicitArgs->v0.header.structVersion = 0;
-    kernel.state.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
+    kernel.privateState.pImplicitArgs.reset(new ImplicitArgs());
+    kernel.privateState.pImplicitArgs->v0.header.structVersion = 0;
+    kernel.privateState.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel.immutableData.kernelDescriptor);
 
     kernel.setGroupSize(1, 1, 1);

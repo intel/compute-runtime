@@ -200,20 +200,20 @@ Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalS
 }
 
 void MutableCommandListFixtureInit::resizeKernelArg(uint32_t resize) {
-    kernel->state.kernelArgInfos.resize(resize);
-    kernel->state.isArgUncached.resize(resize);
-    kernel->state.argumentsResidencyContainer.resize(resize);
-    kernel->state.slmArgOffsetValues.resize(resize);
-    kernel->state.slmArgSizes.resize(resize);
-    kernel->state.kernelArgHandlers.resize(resize);
+    kernel->privateState.kernelArgInfos.resize(resize);
+    kernel->privateState.isArgUncached.resize(resize);
+    kernel->privateState.argumentsResidencyContainer.resize(resize);
+    kernel->privateState.slmArgOffsetValues.resize(resize);
+    kernel->privateState.slmArgSizes.resize(resize);
+    kernel->privateState.kernelArgHandlers.resize(resize);
     mockKernelImmData->resizeExplicitArgs(resize);
 
-    kernel2->state.kernelArgInfos.resize(resize);
-    kernel2->state.isArgUncached.resize(resize);
-    kernel2->state.argumentsResidencyContainer.resize(resize);
-    kernel2->state.slmArgOffsetValues.resize(resize);
-    kernel2->state.slmArgSizes.resize(resize);
-    kernel2->state.kernelArgHandlers.resize(resize);
+    kernel2->privateState.kernelArgInfos.resize(resize);
+    kernel2->privateState.isArgUncached.resize(resize);
+    kernel2->privateState.argumentsResidencyContainer.resize(resize);
+    kernel2->privateState.slmArgOffsetValues.resize(resize);
+    kernel2->privateState.slmArgSizes.resize(resize);
+    kernel2->privateState.kernelArgHandlers.resize(resize);
     mockKernelImmData2->resizeExplicitArgs(resize);
 
     this->kernelArgCount = resize;

@@ -94,7 +94,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenSettingAssertBufferThenAssertBufferI
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.stateless = 0;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.pointerSize = sizeof(uintptr_t);
-    kernel.state.crossThreadData.resize(16, 0x0);
+    kernel.privateState.crossThreadData.resize(16, 0x0);
 
     kernel.setAssertBuffer();
 
@@ -120,7 +120,7 @@ TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThe
     kernel.descriptor.kernelAttributes.flags.requiresImplicitArgs = true;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.stateless = 0;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.pointerSize = sizeof(uintptr_t);
-    kernel.state.crossThreadData.resize(16, 0x0);
+    kernel.privateState.crossThreadData.resize(16, 0x0);
 
     module.kernelImmData = &kernel.immutableData;
     char heap[8];
@@ -155,7 +155,7 @@ TEST(KernelAssert, GivenNoAssertHandlerWhenKernelWithAssertSetsAssertBufferThenA
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.stateless = 0;
     kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.pointerSize = sizeof(uintptr_t);
-    kernel.state.crossThreadData.resize(16, 0x0);
+    kernel.privateState.crossThreadData.resize(16, 0x0);
 
     kernel.setAssertBuffer();
     EXPECT_NE(nullptr, neoDevice->getRootDeviceEnvironmentRef().assertHandler.get());

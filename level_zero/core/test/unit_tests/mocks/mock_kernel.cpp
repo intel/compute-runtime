@@ -41,12 +41,12 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
     NEO::populateKernelDescriptor(descriptor, kernelTokens, 8);
     immutableData.kernelDescriptor = &descriptor;
     immutableData.kernelInfo = &info;
-    state.crossThreadData.clear();
-    state.crossThreadData.resize(100U, 0x0);
+    privateState.crossThreadData.clear();
+    privateState.crossThreadData.resize(100U, 0x0);
 
-    state.groupSize[0] = 1;
-    state.groupSize[1] = 1;
-    state.groupSize[2] = 1;
+    privateState.groupSize[0] = 1;
+    privateState.groupSize[1] = 1;
+    privateState.groupSize[2] = 1;
 }
 Mock<::L0::KernelImp>::~Mock() {
     delete immutableData.isaGraphicsAllocation.release();
