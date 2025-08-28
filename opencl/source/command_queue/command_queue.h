@@ -458,8 +458,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     virtual void obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType){};
     bool isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue, bool isMarkerWithProfiling) const;
 
-    bool isDependenciesFlushForMarkerRequired(const EventsRequest &eventsRequest) const;
-
     MOCKABLE_VIRTUAL void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies, CommandStreamReceiver &csr);
     void storeProperties(const cl_queue_properties *properties);
     void processProperties(const cl_queue_properties *properties);

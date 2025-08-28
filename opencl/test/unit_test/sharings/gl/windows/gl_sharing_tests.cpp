@@ -518,7 +518,6 @@ TEST_F(GlSharingTests, givenEnabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalle
     EXPECT_LT(CL_SUCCESS, event->peekExecutionStatus());
     EXPECT_TRUE(handler->peekIsRegisterListEmpty());
 
-    event->setStatus(CL_COMPLETE);
     event->release();
 }
 

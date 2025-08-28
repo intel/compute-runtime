@@ -161,6 +161,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     EventBuilder eventBuilder;
     setupEvent(eventBuilder, event, commandType);
 
+    const bool isFlushWithPostSyncWrite = isFlushForProfilingRequired(commandType) && ((eventBuilder.getEvent() && eventBuilder.getEvent()->isProfilingEnabled()) || multiDispatchInfo.peekBuiltinOpParams().bcsSplit);
+
     std::unique_ptr<KernelOperation> blockedCommandsData;
     std::unique_ptr<PrintfHandler> printfHandler;
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
@@ -187,8 +189,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     CsrDependencies csrDeps;
     BlitPropertiesContainer blitPropertiesContainer;
-
-    const bool isFlushWithPostSyncWrite = isFlushForProfilingRequired(commandType) && ((eventBuilder.getEvent() && eventBuilder.getEvent()->isProfilingEnabled()) || multiDispatchInfo.peekBuiltinOpParams().bcsSplit || this->isDependenciesFlushForMarkerRequired(eventsRequest));
 
     if (this->context->getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForRootDevices(csrDeps, computeCommandStreamReceiver);

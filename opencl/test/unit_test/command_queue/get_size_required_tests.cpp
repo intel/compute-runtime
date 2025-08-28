@@ -52,7 +52,10 @@ HWTEST_F(GetSizeRequiredTest, WhenFinishingThenHeapsAndCommandBufferAreNotConsum
     EXPECT_EQ(0u, ssh->getUsed() - usedBeforeSSH);
 }
 
-HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAreNotConsumed) {
+HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAndCommandBufferAreNotConsumed) {
+    auto &commandStream = pCmdQ->getCS(1024);
+    auto usedBeforeCS = commandStream.getUsed();
+
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
     cl_event eventBeingWaitedOn = &event1;
     cl_event eventReturned = nullptr;
@@ -61,6 +64,14 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAreNotConsumed) {
         &eventBeingWaitedOn,
         &eventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
+
+    size_t expectedStreamSize = 0;
+    if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && (!pCmdQ->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled())) {
+        expectedStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
+                                         pDevice->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData),
+                                     MemoryConstants::cacheLineSize);
+    }
+    EXPECT_EQ(expectedStreamSize, commandStream.getUsed() - usedBeforeCS);
     EXPECT_EQ(0u, dsh->getUsed() - usedBeforeDSH);
     EXPECT_EQ(0u, ioh->getUsed() - usedBeforeIOH);
     EXPECT_EQ(0u, ssh->getUsed() - usedBeforeSSH);
@@ -68,7 +79,10 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingMarkerThenHeapsAreNotConsumed) {
     clReleaseEvent(eventReturned);
 }
 
-HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAreNotConsumed) {
+HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAndCommandBufferAreNotConsumed) {
+    auto &commandStream = pCmdQ->getCS(1024);
+    auto usedBeforeCS = commandStream.getUsed();
+
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
     cl_event eventBeingWaitedOn = &event1;
     cl_event eventReturned = nullptr;
@@ -77,9 +91,16 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAreNotConsumed) {
         &eventBeingWaitedOn,
         &eventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0u, dsh->getUsed() - usedBeforeDSH);
-    EXPECT_EQ(0u, ioh->getUsed() - usedBeforeIOH);
-    EXPECT_EQ(0u, ssh->getUsed() - usedBeforeSSH);
+
+    size_t expectedStreamSize = 0;
+    if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        auto unalignedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData) +
+                             EncodeStoreMemory<FamilyType>::getStoreDataImmSize() +
+                             sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+        expectedStreamSize = alignUp(unalignedSize, MemoryConstants::cacheLineSize);
+    }
+
+    EXPECT_EQ(expectedStreamSize, commandStream.getUsed() - usedBeforeCS);
 
     clReleaseEvent(eventReturned);
 }

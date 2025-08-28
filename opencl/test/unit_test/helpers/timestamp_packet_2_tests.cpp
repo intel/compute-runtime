@@ -335,6 +335,19 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteDisabledWhenEnqueueingBa
     EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
 }
 
+HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenDontRequestPipeControlOnCsrFlush) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
+    EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
+    auto userEvent = makeReleaseable<UserEvent>();
+    cl_event waitlist[] = {userEvent.get()};
+    cmdQ.enqueueBarrierWithWaitList(1, waitlist, nullptr);
+    EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
+    userEvent->setStatus(CL_COMPLETE);
+}
+
 HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenEstimatingCsrStreamSizeThenAddSizeForPipeControl) {
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
@@ -564,12 +577,12 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
 
     auto outEvent = castToObject<Event>(clOutEvent);
 
-    EXPECT_NE(cmdQ->timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // new nodes obtained
+    EXPECT_EQ(cmdQ->timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // no new nodes obtained
     EXPECT_EQ(1u, cmdQ->timestampPacketContainer->peekNodes().size());
 
     auto &eventsNodes = outEvent->getTimestampPacketNodes()->peekNodes();
     EXPECT_EQ(numEventsWithContainer + 1, eventsNodes.size()); // numEventsWithContainer + command queue
-    EXPECT_EQ(cmdQ->timestampPacketContainer->peekNodes().at(0), eventsNodes.at(0));
+    EXPECT_EQ(cmdQNodes.peekNodes().at(0), eventsNodes.at(0));
     EXPECT_EQ(event0.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(1));
     EXPECT_EQ(event1.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(2));
 
@@ -630,7 +643,7 @@ HWTEST_TEMPLATED_F(TimestampPacketTestsWithMockCsrHw2, givenBlockedEnqueueWithou
         hwParserCmdQ.parseCommands<FamilyType>(taskStream, 0);
 
         auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
-        auto expectedQueueSemaphoresCount = commands[i] == CL_COMMAND_MARKER ? 2u : 3u;
+        auto expectedQueueSemaphoresCount = 2u;
         if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
             expectedQueueSemaphoresCount += 1;
         }
