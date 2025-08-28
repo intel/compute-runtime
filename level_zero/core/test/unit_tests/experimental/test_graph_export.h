@@ -99,9 +99,9 @@ class GraphDotExporterFileTest : public GraphDotExporterTest {
     uint32_t mockFcloseCalledBefore;
 };
 
-#define DEFINE_APIARGS_FIELDS(Api, ...)                                                                             \
+#define DEFINE_APIARGS_FIELDS(api, ...)                                                                             \
     template <>                                                                                                     \
-    std::set<std::string> ExtractParametersTestFixture::getApiArgsFieldNames<Closure<CaptureApi::Api>::ApiArgs>() { \
+    std::set<std::string> ExtractParametersTestFixture::getApiArgsFieldNames<Closure<CaptureApi::api>::ApiArgs>() { \
         return {__VA_ARGS__};                                                                                       \
     }
 
@@ -126,10 +126,10 @@ class ExtractParametersTestFixture : public ::testing::Test {
         dummyKernels[0] = &kernel;
     }
 
-    template <CaptureApi Api, typename ApiArgsT>
+    template <CaptureApi api, typename ApiArgsT>
     void expectAllApiArgsPresent(const ApiArgsT &args) {
-        Closure<Api> closure(args, storage);
-        auto params = GraphDumpHelper::extractParameters<Api>(closure, storage);
+        Closure<api> closure(args, storage);
+        auto params = GraphDumpHelper::extractParameters<api>(closure, storage);
         if (!closure.isSupported) {
             GTEST_SKIP();
         }
