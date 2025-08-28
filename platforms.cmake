@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -191,6 +191,12 @@ endmacro()
 
 macro(DISABLE_32BIT_FLAGS_FOR CORE_TYPE)
   DISABLE_FLAGS_FOR(${CORE_TYPE} ${ARGN})
+endmacro()
+
+macro(DISABLE_OCLOC_FLAGS_FOR)
+  foreach(SKU_NAME ${ARGN})
+    set(OCLOC_DISABLE_${SKU_NAME} TRUE CACHE BOOL "Disable ${SKU_NAME} in ocloc" FORCE)
+  endforeach()
 endmacro()
 
 macro(DISABLE_WDDM_LINUX_FOR CORE_TYPE)
