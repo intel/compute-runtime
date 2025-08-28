@@ -1915,9 +1915,6 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const void *dstptr, const void *srcptr, size_t size, bool hasDependencies) {
-    if (NEO::debugManager.flags.EnableCopyWithStagingBuffers.get() != 1) {
-        return false;
-    }
     if (this->useAdditionalBlitProperties) {
         return false;
     }

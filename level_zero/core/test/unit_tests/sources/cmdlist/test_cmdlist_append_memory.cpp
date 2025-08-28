@@ -1435,8 +1435,6 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithoutStagingThenImportAll
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndNonUsmDstThenImportAllocation) {
-    NEO::debugManager.flags.EnableCopyWithStagingBuffers.set(1);
-
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
@@ -1451,8 +1449,6 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndNonUsmDstThen
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingThenDontImportAllocation) {
-    NEO::debugManager.flags.EnableCopyWithStagingBuffers.set(1);
-
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.callBaseExecute = true;
     cmdList.cmdQImmediate = queue.get();
@@ -1484,8 +1480,6 @@ HWTEST_F(StagingBuffersFixture, givenStagingBufferManagerDestroyedAndHostSynchro
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingWhenAppendFailedThenPropagateError) {
-    NEO::debugManager.flags.EnableCopyWithStagingBuffers.set(1);
-
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
