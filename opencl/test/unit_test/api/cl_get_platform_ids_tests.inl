@@ -344,6 +344,11 @@ TEST(clGetPlatformIDsTest, givenDefaultFP64EmulationStateWhenGettingPlatformIdsT
 }
 
 TEST(clGetPlatformIDsTest, givenMultipleDifferentDevicesWhenGetPlatformIdsThenSeparatePlatformIsReturnedPerEachProductFamily) {
+    if (!hardwareInfoSetup[IGFX_LUNARLAKE] ||
+        !hardwareInfoSetup[IGFX_BMG] ||
+        !hardwareInfoSetup[IGFX_PTL]) {
+        GTEST_SKIP();
+    }
     platformsImpl->clear();
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     const size_t numRootDevices = 5u;

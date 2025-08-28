@@ -1694,6 +1694,12 @@ TEST(InitDriversTest, givenAllPossibleFlagCombinationsWhenInitDriversIsCalledThe
 }
 
 TEST(MultiDriverHandleTest, givenMultiplesDifferentDevicesWhenGetDriverHandleThenSeparateDriverHandleIsReturnedPerEachProductFamily) {
+    if (!NEO::hardwareInfoSetup[IGFX_LUNARLAKE] ||
+        !NEO::hardwareInfoSetup[IGFX_BMG] ||
+        !NEO::hardwareInfoSetup[IGFX_PTL]) {
+        GTEST_SKIP();
+    }
+
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     const size_t numRootDevices = 5u;
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, numRootDevices);
