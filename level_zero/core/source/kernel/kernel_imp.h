@@ -14,6 +14,7 @@
 
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_mutable_state.h"
+#include "level_zero/core/source/kernel/kernel_shared_state.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
 
@@ -27,6 +28,8 @@ struct ImplicitArgs;
 
 namespace L0 {
 
+struct KernelSharedState;
+
 struct KernelExt {
     virtual ~KernelExt() = default;
 };
@@ -37,7 +40,7 @@ struct KernelImp : Kernel {
     ~KernelImp() override;
 
     ze_result_t destroy() override {
-        if (this->devicePrintfKernelMutex == nullptr) {
+        if (this->sharedState->devicePrintfKernelMutex == nullptr) {
             delete this;
             return ZE_RESULT_SUCCESS;
         } else {
@@ -119,8 +122,10 @@ struct KernelImp : Kernel {
     uint32_t getNumThreadsPerThreadGroup() const override { return privateState.numThreadsPerThreadGroup; }
     uint32_t getThreadExecutionMask() const override { return privateState.threadExecutionMask; }
 
-    std::mutex *getDevicePrintfKernelMutex() override { return this->devicePrintfKernelMutex; }
-    NEO::GraphicsAllocation *getPrintfBufferAllocation() override { return this->printfBuffer; }
+    std::mutex *getDevicePrintfKernelMutex() override { return this->sharedState->devicePrintfKernelMutex; }
+    NEO::GraphicsAllocation *getPrintfBufferAllocation() override {
+        return this->sharedState->printfBuffer;
+    }
     void printPrintfOutput(bool hangDetected) override;
 
     bool usesSyncBuffer() override;
@@ -133,13 +138,13 @@ struct KernelImp : Kernel {
 
     const uint8_t *getDynamicStateHeapData() const override { return privateState.dynamicStateHeapData.data(); }
 
-    const KernelImmutableData *getImmutableData() const override { return kernelImmData; }
+    const KernelImmutableData *getImmutableData() const override { return sharedState->kernelImmData; }
 
     UnifiedMemoryControls getUnifiedMemoryControls() const override { return privateState.unifiedMemoryControls; }
     bool hasIndirectAllocationsAllowed() const override;
 
     const NEO::KernelDescriptor &getKernelDescriptor() const override {
-        return kernelImmData->getDescriptor();
+        return getImmutableData()->getDescriptor();
     }
     const uint32_t *getGroupSize() const override {
         return privateState.groupSize;
@@ -173,7 +178,7 @@ struct KernelImp : Kernel {
 
     ze_result_t setCacheConfig(ze_cache_config_flags_t flags) override;
     bool usesRayTracing() {
-        return kernelImmData->getDescriptor().kernelAttributes.flags.hasRTCalls;
+        return getImmutableData()->getDescriptor().kernelAttributes.flags.hasRTCalls;
     }
 
     ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) override;
@@ -193,7 +198,7 @@ struct KernelImp : Kernel {
     void patchSamplerBindlessOffsetsInCrossThreadData(uint64_t samplerStateOffset) const override;
 
     NEO::GraphicsAllocation *getPrivateMemoryGraphicsAllocation() override {
-        return privateMemoryGraphicsAllocation;
+        return this->sharedState->privateMemoryGraphicsAllocation;
     }
 
     ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) override;
@@ -242,7 +247,7 @@ struct KernelImp : Kernel {
     KernelMutableState &getPrivateState() { return privateState; }
 
   protected:
-    KernelImp() = default;
+    KernelImp();
 
     void patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint32_t z);
     void createPrintfBuffer();
@@ -255,19 +260,10 @@ struct KernelImp : Kernel {
     ArrayRef<uint8_t> getSurfaceStateHeapDataSpan() { return ArrayRef<uint8_t>(privateState.surfaceStateHeapData.data(), privateState.surfaceStateHeapData.size()); }
     ArrayRef<uint8_t> getDynamicStateHeapDataSpan() { return ArrayRef<uint8_t>(privateState.dynamicStateHeapData.data(), privateState.dynamicStateHeapData.size()); }
 
-    const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;
-    std::mutex *devicePrintfKernelMutex = nullptr;
     KernelImp *cloneOrigin = nullptr;
 
-    NEO::GraphicsAllocation *privateMemoryGraphicsAllocation = nullptr;
-    NEO::GraphicsAllocation *printfBuffer = nullptr;
-    uintptr_t surfaceStateAlignmentMask = 0;
-    uintptr_t surfaceStateAlignment = 0;
-
-    uint32_t implicitArgsVersion = 0;
-    uint32_t walkerInlineDataSize = 0;
-
+    std::shared_ptr<KernelSharedState> sharedState = nullptr;
     KernelMutableState privateState{};
 };
 

@@ -479,7 +479,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
             mockKernelImmutableData.kernelDescriptor = &mockKernelDescriptor;
             size_t stubKernelHeapSize = 42;
             mockKernelImmutableData.setIsaPerKernelAllocation(module->allocateKernelsIsaMemory(stubKernelHeapSize));
-            this->kernelImmData = &mockKernelImmutableData;
+            this->sharedState->kernelImmData = &mockKernelImmutableData;
         }
 
         ~MockQueryKernelTimestampsKernel() override {

@@ -70,7 +70,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenFunctionWhenB
         auto idd = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), cmd->getInterfaceDescriptorDataStartAddress()));
 
         if (NEO::EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
-            uint32_t numArgs = kernel->kernelImmData->getDescriptor().payloadMappings.bindingTable.numEntries;
+            uint32_t numArgs = kernel->getDescriptor().payloadMappings.bindingTable.numEntries;
             EXPECT_EQ(numArgs, idd->getBindingTableEntryCount());
         } else {
             EXPECT_EQ(0u, idd->getBindingTableEntryCount());

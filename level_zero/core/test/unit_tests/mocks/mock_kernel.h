@@ -43,14 +43,11 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::cloneOrigin;
     using ::L0::KernelImp::cooperativeSupport;
     using ::L0::KernelImp::createPrintfBuffer;
-    using ::L0::KernelImp::devicePrintfKernelMutex;
     using ::L0::KernelImp::getCrossThreadDataSpan;
     using ::L0::KernelImp::getDynamicStateHeapDataSpan;
     using ::L0::KernelImp::getSurfaceStateHeapDataSpan;
     using ::L0::KernelImp::heaplessEnabled;
-    using ::L0::KernelImp::implicitArgsVersion;
     using ::L0::KernelImp::implicitScalingEnabled;
-    using ::L0::KernelImp::kernelImmData;
     using ::L0::KernelImp::localDispatchSupport;
     using ::L0::KernelImp::maxWgCountPerTileCcs;
     using ::L0::KernelImp::maxWgCountPerTileCooperative;
@@ -59,14 +56,10 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::patchBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::patchBindlessSurfaceState;
     using ::L0::KernelImp::patchSamplerBindlessOffsetsInCrossThreadData;
-    using ::L0::KernelImp::printfBuffer;
-    using ::L0::KernelImp::privateMemoryGraphicsAllocation;
     using ::L0::KernelImp::privateState;
     using ::L0::KernelImp::rcsAvailable;
     using ::L0::KernelImp::setAssertBuffer;
-    using ::L0::KernelImp::surfaceStateAlignment;
-    using ::L0::KernelImp::surfaceStateAlignmentMask;
-    using ::L0::KernelImp::walkerInlineDataSize;
+    using ::L0::KernelImp::sharedState;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address,
                                NEO::GraphicsAllocation *alloc) override {}
@@ -75,6 +68,10 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
 
     uint32_t getIndirectSize() const override {
         return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
+    }
+
+    NEO::KernelDescriptor &getDescriptor() {
+        return const_cast<NEO::KernelDescriptor &>(this->sharedState->kernelImmData->getDescriptor());
     }
 
     WhiteBox() : ::L0::KernelImp(nullptr) {}

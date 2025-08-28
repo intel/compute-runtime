@@ -19,6 +19,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/core/source/kernel/kernel_shared_state.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/kernel_max_cooperative_groups_count_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -236,7 +237,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenKernelImpClonedThenStateAssigne
 
     Mock<Module> module(device, nullptr);
     WhiteBox<KernelImp> kernel1;
-    kernel1.kernelImmData = &kernelInfo;
+    kernel1.sharedState->kernelImmData = &kernelInfo;
     kernel1.module = &module;
 
     constexpr size_t mockSize{8U};
@@ -263,14 +264,14 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenKernelImpClonedThenStateAssigne
 
     // KernelImp part taken from `kernel1`
     EXPECT_EQ(kernel2->cloneOrigin, &kernel1);
-    EXPECT_EQ(kernel2->kernelImmData, &kernelInfo);
-    EXPECT_EQ(kernel2->devicePrintfKernelMutex, kernel1.devicePrintfKernelMutex);
-    EXPECT_EQ(kernel2->privateMemoryGraphicsAllocation, kernel1.privateMemoryGraphicsAllocation);
-    EXPECT_EQ(kernel2->printfBuffer, kernel1.printfBuffer);
-    EXPECT_EQ(kernel2->surfaceStateAlignmentMask, kernel1.surfaceStateAlignmentMask);
-    EXPECT_EQ(kernel2->surfaceStateAlignment, kernel1.surfaceStateAlignment);
-    EXPECT_EQ(kernel2->implicitArgsVersion, kernel1.implicitArgsVersion);
-    EXPECT_EQ(kernel2->walkerInlineDataSize, kernel1.walkerInlineDataSize);
+    EXPECT_EQ(kernel2->sharedState->kernelImmData, &kernelInfo);
+    EXPECT_EQ(kernel2->sharedState->devicePrintfKernelMutex, kernel1.sharedState->devicePrintfKernelMutex);
+    EXPECT_EQ(kernel2->sharedState->privateMemoryGraphicsAllocation, kernel1.sharedState->privateMemoryGraphicsAllocation);
+    EXPECT_EQ(kernel2->sharedState->printfBuffer, kernel1.sharedState->printfBuffer);
+    EXPECT_EQ(kernel2->sharedState->surfaceStateAlignmentMask, kernel1.sharedState->surfaceStateAlignmentMask);
+    EXPECT_EQ(kernel2->sharedState->surfaceStateAlignment, kernel1.sharedState->surfaceStateAlignment);
+    EXPECT_EQ(kernel2->sharedState->implicitArgsVersion, kernel1.sharedState->implicitArgsVersion);
+    EXPECT_EQ(kernel2->sharedState->walkerInlineDataSize, kernel1.sharedState->walkerInlineDataSize);
     EXPECT_EQ(kernel2->maxWgCountPerTileCcs, kernel1.maxWgCountPerTileCcs);
     EXPECT_EQ(kernel2->maxWgCountPerTileRcs, kernel1.maxWgCountPerTileRcs);
     EXPECT_EQ(kernel2->maxWgCountPerTileCooperative, kernel1.maxWgCountPerTileCooperative);
@@ -292,7 +293,7 @@ TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSi
     kernelInfo.kernelDescriptor->payloadMappings.dispatchTraits.numWorkGroups[2] = 5 * sizeof(uint32_t);
 
     Mock<KernelImp> kernel;
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
     kernel.privateState.crossThreadData.resize(sizeof(uint32_t[6]));
     kernel.privateState.groupSize[0] = 2;
     kernel.privateState.groupSize[1] = 3;
@@ -321,7 +322,7 @@ TEST_F(KernelImpTest, givenExecutionMaskWithoutReminderWhenProgrammingItsValueTh
 
     Mock<Module> module(device, nullptr);
     Mock<KernelImp> kernel;
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
     kernel.module = &module;
 
     const std::array<uint32_t, 4> testedSimd = {{1, 8, 16, 32}};
@@ -354,7 +355,7 @@ TEST_F(KernelImpTest, WhenSuggestingGroupSizeThenClampToMaxGroupSize) {
     module.getMaxGroupSizeResult = 8;
 
     Mock<KernelImp> kernel;
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
     kernel.module = &module;
     uint32_t groupSize[3];
     kernel.KernelImp::suggestGroupSize(256, 1, 1, groupSize, groupSize + 1, groupSize + 2);
@@ -376,7 +377,7 @@ TEST_F(KernelImpTest, WhenSuggestingGroupSizeThenCacheValues) {
     module.getMaxGroupSizeResult = 8;
 
     Mock<KernelImp> kernel;
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
     kernel.module = &module;
     auto &suggestGroupSizeCache = kernel.privateState.suggestGroupSizeCache;
 
@@ -491,7 +492,7 @@ TEST_P(KernelImpSuggestGroupSize, WhenSuggestingGroupThenProperGroupSizeChosen) 
     uint32_t size = GetParam();
 
     Mock<KernelImp> kernel;
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
     kernel.module = &module;
     uint32_t groupSize[3];
     kernel.KernelImp::suggestGroupSize(size, 1, 1, groupSize, groupSize + 1, groupSize + 2);
@@ -549,7 +550,7 @@ TEST_P(KernelImpSuggestGroupSize, WhenSlmSizeExceedsLocalMemorySizeAndSuggesting
     uint32_t size = GetParam();
 
     Mock<KernelImp> function;
-    function.kernelImmData = &funcInfo;
+    function.sharedState->kernelImmData = &funcInfo;
     function.module = &module;
     uint32_t groupSize[3];
 
@@ -584,7 +585,7 @@ TEST_F(KernelImpTest, givenSetGroupSizeWithGreaterGroupSizeThanAllowedThenCorrec
 
     Mock<Module> module(device, nullptr);
     Mock<KernelImp> kernel;
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
     kernel.module = &module;
 
     uint32_t maxGroupSizeX = static_cast<uint32_t>(device->getDeviceInfo().maxWorkItemSizes[0]);
@@ -604,7 +605,7 @@ TEST_F(KernelImpTest, GivenNumChannelsZeroWhenSettingGroupSizeThenLocalIdsNotGen
 
     Mock<Module> module(device, nullptr);
     Mock<KernelImp> kernel;
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
     kernel.module = &module;
 
     kernel.KernelImp::setGroupSize(16U, 16U, 1U);
@@ -742,7 +743,7 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     Mock<Module> module(device, nullptr);
     Mock<KernelImp> kernel;
     kernel.module = &module;
-    kernel.kernelImmData = &kernelImmData;
+    kernel.sharedState->kernelImmData = &kernelImmData;
     kernel.privateState.dynamicStateHeapData.resize(64 + sizeof(SamplerState));
 
     kernel.setInlineSamplers();
@@ -787,7 +788,7 @@ HWTEST2_F(KernelTest, givenTwoInlineSamplersWithBindlessAddressingWhenSettingInl
     Mock<Module> module(device, nullptr);
     Mock<KernelImp> kernel;
     kernel.module = &module;
-    kernel.kernelImmData = &kernelImmData;
+    kernel.sharedState->kernelImmData = &kernelImmData;
     kernel.privateState.dynamicStateHeapData.resize(borderColorStateSize + 2 * sizeof(SamplerState));
 
     kernel.setInlineSamplers();
@@ -1134,7 +1135,7 @@ TEST_F(KernelImpTest, GivenGroupSizeRequiresSwLocalIdsGenerationWhenNextGroupSiz
     NEO::KernelDescriptor descriptor;
     kernelInfo.kernelDescriptor = &descriptor;
     kernelInfo.kernelDescriptor->kernelAttributes.numLocalIdChannels = 3;
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
 
     kernel.enableForcingOfGenerateLocalIdByHw = true;
     kernel.forceGenerateLocalIdByHw = false;
@@ -1169,7 +1170,7 @@ TEST_F(KernelImpTest, GivenGroupSizeRequiresSwLocalIdsGenerationWhenKernelSpecif
     kernelInfo.kernelDescriptor->kernelAttributes.workgroupWalkOrder[2] = 0;
     kernelInfo.kernelDescriptor->kernelAttributes.simdSize = 32;
 
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
 
     kernel.enableForcingOfGenerateLocalIdByHw = true;
     kernel.forceGenerateLocalIdByHw = false;

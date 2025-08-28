@@ -1831,7 +1831,7 @@ HWTEST_F(CommandListCreate, givenCmdListWhenAllocateOrReuseCalledForSizeThatIsSt
     auto mockMem = std::make_unique<uint8_t[]>(0x1000);
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    const_cast<uint32_t &>(mockKernel.kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x1000;
+    const_cast<uint32_t &>(mockKernel.sharedState->kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x1000;
     mockKernel.module = &mockModule;
     MockGraphicsAllocation mockGA(mockMem.get(), 2 * sizePerHwThread * this->neoDevice->getDeviceInfo().computeUnitsUsedForScratch);
     PrivateAllocsToReuseContainer mapForReuse;
@@ -1849,7 +1849,7 @@ HWTEST_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPri
     auto mockMem = std::make_unique<uint8_t[]>(0x1000);
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    const_cast<uint32_t &>(mockKernel.kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = sizePerHwThread;
+    const_cast<uint32_t &>(mockKernel.sharedState->kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = sizePerHwThread;
     mockKernel.module = &mockModule;
     MockGraphicsAllocation mockGA(mockMem.get(), sizePerHwThread * this->neoDevice->getDeviceInfo().computeUnitsUsedForScratch / 2);
     PrivateAllocsToReuseContainer mapForReuse;
@@ -1868,7 +1868,7 @@ HWTEST_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPri
     auto mockMem = std::make_unique<uint8_t[]>(0x1000);
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    const_cast<uint32_t &>(mockKernel.kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = sizePerHwThread;
+    const_cast<uint32_t &>(mockKernel.sharedState->kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = sizePerHwThread;
     mockKernel.module = &mockModule;
     MockGraphicsAllocation mockGA(mockMem.get(), sizePerHwThread * this->neoDevice->getDeviceInfo().computeUnitsUsedForScratch / 2);
     PrivateAllocsToReuseContainer mapForReuse;

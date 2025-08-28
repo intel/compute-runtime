@@ -24,7 +24,7 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
     execEnv.LargestCompiledSIMDSize = 8;
     kernelTokens.tokens.executionEnvironment = &execEnv;
 
-    this->kernelImmData = &immutableData;
+    this->sharedState->kernelImmData = &immutableData;
 
     auto allocation = new NEO::GraphicsAllocation(0,
                                                   1u /*num gmms*/,

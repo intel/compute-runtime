@@ -37,7 +37,7 @@ uint32_t KernelImpSuggestMaxCooperativeGroupCountFixture::getMaxWorkGroupCount()
     kernelInfo.kernelDescriptor->kernelAttributes.barrierCount = usesBarriers;
 
     Mock<KernelImp> kernel;
-    kernel.kernelImmData = &kernelInfo;
+    kernel.sharedState->kernelImmData = &kernelInfo;
     auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
     kernel.module = module.get();
     kernel.implicitScalingEnabled = device->getNEODevice()->getDeviceBitfield().count() > 1;

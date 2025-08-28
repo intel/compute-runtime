@@ -576,7 +576,7 @@ HWTEST_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppend
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
     kernel.module = mockModule.get();
-    kernel.kernelImmData = kernelImmData.get();
+    kernel.sharedState->kernelImmData = kernelImmData.get();
 
     CmdListKernelLaunchParams launchParams = {};
     ze_group_count_t groupCount{1, 1, 1};
@@ -637,7 +637,7 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
     kernel.module = mockModule.get();
-    kernel.kernelImmData = kernelImmData.get();
+    kernel.sharedState->kernelImmData = kernelImmData.get();
 
     CmdListKernelLaunchParams launchParams = {};
     ze_group_count_t groupCount{1, 1, 1};

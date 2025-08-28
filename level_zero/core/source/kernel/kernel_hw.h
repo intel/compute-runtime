@@ -18,6 +18,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/source/kernel/kernel_shared_state.h"
 #include "level_zero/core/source/module/module.h"
 
 #include "encode_surface_state_args.h"
@@ -35,7 +36,7 @@ struct KernelHw : public KernelImp {
         uint64_t baseAddress = alloc->getGpuAddressToPatch();
 
         // Remove misaligned bytes, accounted for in bufferOffset patch token
-        baseAddress &= this->surfaceStateAlignmentMask;
+        baseAddress &= this->sharedState->surfaceStateAlignmentMask;
         auto misalignedSize = ptrDiff(alloc->getGpuAddressToPatch(), baseAddress);
         auto offset = ptrDiff(address, reinterpret_cast<void *>(baseAddress));
         size_t bufferSizeForSsh = alloc->getUnderlyingBufferSize();
@@ -43,7 +44,7 @@ struct KernelHw : public KernelImp {
         Device *device = module->getDevice();
         auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
 
-        auto argInfo = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+        auto argInfo = sharedState->kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         bool offsetWasPatched = NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(),
                                                                          argInfo.bufferOffset, static_cast<uint32_t>(offset));
         bool offsetedAddress = false;
@@ -52,7 +53,7 @@ struct KernelHw : public KernelImp {
             offsetedAddress = baseAddress != reinterpret_cast<uintptr_t>(address);
             baseAddress = reinterpret_cast<uintptr_t>(address);
             bufferSizeForSsh -= offset;
-            DEBUG_BREAK_IF(baseAddress != (baseAddress & this->surfaceStateAlignmentMask));
+            DEBUG_BREAK_IF(baseAddress != (baseAddress & this->sharedState->surfaceStateAlignmentMask));
 
             offset = 0;
         }
@@ -78,7 +79,7 @@ struct KernelHw : public KernelImp {
 
         uint64_t bufferAddressForSsh = baseAddress;
         bufferSizeForSsh += misalignedSize;
-        bufferSizeForSsh = alignUp(bufferSizeForSsh, this->surfaceStateAlignment);
+        bufferSizeForSsh = alignUp(bufferSizeForSsh, this->sharedState->surfaceStateAlignment);
 
         bool l3Enabled = true;
         // Allocation MUST be cacheline (64 byte) aligned in order to enable L3 caching otherwise Heap corruption will occur coming from the KMD.

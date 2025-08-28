@@ -2716,7 +2716,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
             auto releaseHelper = device->getNEODevice()->getReleaseHelper();
             const bool textureFlushRequired = releaseHelper && releaseHelper->isPostImageWriteFlushRequired() &&
-                                              kernel->kernelImmData->getKernelInfo()->kernelDescriptor.kernelAttributes.hasImageWriteArg;
+                                              kernel->getImmutableData()->getKernelInfo()->kernelDescriptor.kernelAttributes.hasImageWriteArg;
             EXPECT_EQ(textureFlushRequired, pcCmd->getTextureCacheInvalidationEnable());
         } else {
             if (!immCmdList->inOrderExecInfo->isAtomicDeviceSignalling()) {
