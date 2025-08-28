@@ -149,12 +149,15 @@ struct BcsSplit {
         }
 
         cmdList->addEventsToCmdList(static_cast<uint32_t>(eventHandles.size()), eventHandles.data(), nullptr, hasRelaxedOrderingDependencies, false, true, false, false);
+
+        const auto isCopyCmdList = cmdList->isCopyOnly(false);
+
         if (signalEvent) {
-            cmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, true, false, true);
+            cmdList->appendSignalEventPostWalker(signalEvent, nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
         }
 
         if (!aggregatedEventsMode) {
-            cmdList->appendEventForProfilingAllWalkers(this->events.marker[markerEventIndex], nullptr, nullptr, false, true, false, true);
+            cmdList->appendSignalEventPostWalker(this->events.marker[markerEventIndex], nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
         }
 
         if (cmdList->isInOrderExecutionEnabled()) {

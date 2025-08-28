@@ -23,6 +23,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 namespace L0 {
 namespace ult {
@@ -1012,7 +1013,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
 
         createDevice();
         context = Context::fromHandle(driverHandle->getDefaultContext());
-        cmdList = createCmdList();
+        cmdList = createCmdList(true);
     }
 
     void createDevice() {
@@ -1056,19 +1057,21 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         return 0;
     }
 
-    std::unique_ptr<L0::CommandList> createCmdList() {
+    DestroyableZeUniquePtr<L0::CommandList> createCmdList(bool copyOnly) {
         ze_result_t returnValue;
 
         ze_command_queue_desc_t desc = {};
         desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
-        desc.ordinal = queryCopyOrdinal();
+        desc.ordinal = copyOnly ? queryCopyOrdinal() : 0;
 
-        std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
-                                                                                  device,
-                                                                                  &desc,
-                                                                                  false,
-                                                                                  NEO::EngineGroupType::copy,
-                                                                                  returnValue));
+        DestroyableZeUniquePtr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
+                                                                                         device,
+                                                                                         &desc,
+                                                                                         false,
+                                                                                         copyOnly ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute,
+                                                                                         returnValue));
+
+        *static_cast<L0::CommandListImp *>(commandList.get())->getInOrderExecInfo()->getBaseHostAddress() = std::numeric_limits<uint64_t>::max();
 
         return commandList;
     }
@@ -1093,7 +1096,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
     CmdListMemoryCopyParams copyParams = {};
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     L0::Device *device = nullptr;
-    std::unique_ptr<L0::CommandList> cmdList;
+    DestroyableZeUniquePtr<L0::CommandList> cmdList;
     BcsSplit *bcsSplit = nullptr;
     Context *context = nullptr;
     const size_t copySize = 4 * MemoryConstants::megaByte;
@@ -1140,6 +1143,44 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThe
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_FALSE(mockCmdList2->isBcsSplitNeeded);
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenAppendWithEventCalledThenDontProgramBarriers, IsAtLeastXeHpcCore) {
+    if (device->getProductHelper().isDcFlushAllowed()) {
+        GTEST_SKIP();
+    }
+
+    debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+
+    ze_result_t returnValue;
+    auto computeCommandList = createCmdList(false);
+
+    auto ptr = allocHostMem();
+
+    ze_event_pool_desc_t eventPoolDesc = {.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, .count = 1};
+    ze_event_desc_t eventDesc = {};
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+
+    auto cmdStream = computeCommandList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    computeCommandList->appendMemoryCopy(ptr, ptr, copySize, event->toHandle(), 0, nullptr, copyParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto lriItor = find<typename FamilyType::MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), lriItor);
+
+    auto itor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), lriItor);
+    EXPECT_EQ(lriItor, itor);
+
+    itor = find<typename FamilyType::MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), itor);
+
+    context->freeMem(ptr);
 }
 
 HWTEST_F(AggregatedBcsSplitTests, givenTransferDirectionWhenAskingIfSplitIsNeededThenReturnCorrectValue) {
@@ -1267,6 +1308,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenRes
     auto ptr = allocHostMem();
 
     auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
+    *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 0;
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdListHw->inOrderExecInfo.get(), bcsSplit->events.marker[0]->getInOrderExecInfo().get());
@@ -1284,6 +1326,8 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenRes
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[0]->getInOrderExecBaseSignalValue());
 
     context->freeMem(ptr);
+
+    *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 3;
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, givenFullCmdBufferWhenAppendCalledThenAllocateNewBuffer, IsAtLeastXeHpcCore) {
@@ -1325,12 +1369,15 @@ HWTEST2_F(MultiRootAggregatedBcsSplitTests, givenRemoteAllocWhenCopyRequestedThe
     auto ptr = allocHostMem();
     auto remoteAlloc = allocDeviceMem(device1);
     auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
+    *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 0;
 
     cmdListHw->appendMemoryCopy(remoteAlloc, ptr, copySize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[0]->getInOrderExecBaseSignalValue());
 
     cmdListHw->appendMemoryCopy(ptr, remoteAlloc, copySize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.marker[1]->getInOrderExecBaseSignalValue());
+
+    *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 2;
 
     context->freeMem(ptr);
     context->freeMem(remoteAlloc);
@@ -1370,7 +1417,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenIncorrectNumberOfTilesWhenCreat
     bcsSplit->releaseResources();
     EXPECT_EQ(0u, bcsSplit->cmdLists.size());
 
-    cmdList = createCmdList();
+    cmdList = createCmdList(true);
     EXPECT_EQ(0u, bcsSplit->cmdLists.size());
 }
 

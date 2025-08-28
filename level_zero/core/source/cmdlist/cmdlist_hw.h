@@ -236,6 +236,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool kernelMemoryPrefetchEnabled() const override;
     void assignInOrderExecInfoToEvent(Event *event);
     bool hasInOrderDependencies() const;
+    void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
 
   protected:
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
@@ -341,7 +342,6 @@ struct CommandListCoreFamily : public CommandListImp {
     void writeKernelTimestamp(uint64_t baseAddr, Event *event, CommandToPatchContainer *outTimeStampSyncCmds, size_t offset, bool maskLsb, bool workloadPartition, bool copyOperation, bool isGlobalTimestamp);
     void appendEventForProfiling(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
     void appendEventForProfilingCopyCommand(Event *event, bool beforeWalker);
-    void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
     void programStateBaseAddress(NEO::CommandContainer &container, bool useSbaProperties);
     virtual void programStateBaseAddressHook(size_t cmdBufferOffset, bool surfaceBaseAddressModify) {
     }
