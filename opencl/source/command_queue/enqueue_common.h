@@ -161,8 +161,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     EventBuilder eventBuilder;
     setupEvent(eventBuilder, event, commandType);
 
-    const bool isFlushWithPostSyncWrite = isFlushForProfilingRequired(commandType) && ((eventBuilder.getEvent() && eventBuilder.getEvent()->isProfilingEnabled()) || multiDispatchInfo.peekBuiltinOpParams().bcsSplit);
-
     std::unique_ptr<KernelOperation> blockedCommandsData;
     std::unique_ptr<PrintfHandler> printfHandler;
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
@@ -190,6 +188,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     CsrDependencies csrDeps;
     BlitPropertiesContainer blitPropertiesContainer;
 
+    const bool isFlushWithPostSyncWrite = isFlushForProfilingRequired(commandType) && ((eventBuilder.getEvent() && eventBuilder.getEvent()->isProfilingEnabled()) || multiDispatchInfo.peekBuiltinOpParams().bcsSplit || this->isDependenciesFlushForMarkerRequired(eventsRequest));
+
     if (this->context->getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForRootDevices(csrDeps, computeCommandStreamReceiver);
     }
@@ -198,7 +198,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     const auto &hwInfo = this->getDevice().getHardwareInfo();
     auto &productHelper = getDevice().getProductHelper();
     bool canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = false;
-    bool isNonStallingIoqBarrier = (CL_COMMAND_BARRIER == commandType) && !isOOQEnabled() && (debugManager.flags.OptimizeIoqBarriersHandling.get() != 0);
+    bool isNonStallingIoqBarrier = isFlushForProfilingRequired(commandType) && !isOOQEnabled() && (debugManager.flags.OptimizeIoqBarriersHandling.get() != 0);
     const bool isNonStallingIoqBarrierWithDependencies = isNonStallingIoqBarrier && (eventsRequest.numEventsInWaitList > 0);
 
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {

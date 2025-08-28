@@ -552,7 +552,7 @@ HWTEST_F(EnqueueHandlerTest, givenExternallySynchronizedParentEventWhenRequestin
 
     Event *ouputEvent = castToObject<Event>(outEv);
     ASSERT_NE(nullptr, ouputEvent);
-    EXPECT_EQ(0U, ouputEvent->peekTaskCount());
+    EXPECT_EQ(mockCmdQ->taskCount, ouputEvent->peekTaskCount());
 
     ouputEvent->release();
     mockCmdQ->release();
