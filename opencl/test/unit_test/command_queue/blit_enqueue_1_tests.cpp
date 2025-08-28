@@ -1365,11 +1365,11 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenBlockedEnqueueWithoutKernelWh
     userEvent.setStatus(CL_COMPLETE);
 
     clWaitForEvents(1, &outEvent2);
-    EXPECT_EQ(2u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(1u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
     EXPECT_EQ(0u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
 
     clWaitForEvents(1, &outEvent1);
-    EXPECT_EQ(1u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(0u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
     EXPECT_EQ(0u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
 
     clReleaseEvent(outEvent1);
@@ -1486,7 +1486,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
 
     // make sure we wait for both
     clWaitForEvents(1, &outEvent1);
-    EXPECT_NE(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
+    EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
     EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);
 
     clWaitForEvents(1, &outEvent1);
@@ -1512,7 +1512,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
 
     // make sure we wait for both
     clWaitForEvents(1, &outEvent2);
-    EXPECT_NE(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
+    EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
     EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);
 
     clWaitForEvents(1, &outEvent2);
