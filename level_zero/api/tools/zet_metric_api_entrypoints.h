@@ -406,6 +406,14 @@ zetDeviceDisableMetricsExp(
     return L0::metricsDisable(hDevice);
 }
 
+ze_result_t ZE_APICALL
+zetCommandListAppendMarkerExp(
+    zet_command_list_handle_t hCommandList,
+    zet_metric_group_handle_t hMetricGroup,
+    uint32_t value) {
+    return L0::metricAppendMarker(hCommandList, hMetricGroup, value);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -875,5 +883,13 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zetDeviceDisableMetricsExp(
     zet_device_handle_t hDevice) {
     return L0::zetDeviceDisableMetricsExp(hDevice);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetCommandListAppendMarkerExp(
+    zet_command_list_handle_t hCommandList,
+    zet_metric_group_handle_t hMetricGroup,
+    uint32_t value) {
+    return L0::zetCommandListAppendMarkerExp(hCommandList, hMetricGroup, value);
 }
 } // extern "C"

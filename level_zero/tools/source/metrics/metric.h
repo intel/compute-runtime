@@ -623,5 +623,6 @@ ze_result_t metricsDisable(zet_device_handle_t hDevice);
 ze_result_t metricScopesGet(zet_context_handle_t hContext, zet_device_handle_t hDevice, uint32_t *pMetricScopesCount,
                             zet_intel_metric_scope_exp_handle_t *phMetricScopes);
 ze_result_t metricScopeGetProperties(zet_intel_metric_scope_exp_handle_t hMetricScope, zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties);
+ze_result_t metricAppendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value);
 
 } // namespace L0

@@ -52,7 +52,7 @@ DriverDispatch::DriverDispatch() {
     this->core.FabricEdgeExp = &this->coreFabricEdgeExp;
 
     this->tools.isValidFlag = true;
-    this->tools.version = ZE_API_VERSION_1_12;
+    this->tools.version = ZE_API_VERSION_1_13;
     this->tools.MetricProgrammableExp = &this->toolsMetricProgrammableExp;
     this->tools.MetricTracerExp = &this->toolsMetricTracerExp;
     this->tools.MetricDecoderExp = &this->toolsMetricDecoderExp;
@@ -60,6 +60,7 @@ DriverDispatch::DriverDispatch() {
     this->tools.DeviceExp = &this->toolsDeviceExp;
     this->tools.Context = &this->toolsContext;
     this->tools.CommandList = &this->toolsCommandList;
+    this->tools.CommandListExp = &this->toolsCommandListExp;
     this->tools.Module = &this->toolsModule;
     this->tools.Kernel = &this->toolsKernel;
     this->tools.Metric = &this->toolsMetric;
@@ -325,6 +326,7 @@ DriverDispatch::DriverDispatch() {
     this->toolsCommandList.pfnAppendMetricQueryBegin = L0::zetCommandListAppendMetricQueryBegin;
     this->toolsCommandList.pfnAppendMetricQueryEnd = L0::zetCommandListAppendMetricQueryEnd;
     this->toolsCommandList.pfnAppendMetricMemoryBarrier = L0::zetCommandListAppendMetricMemoryBarrier;
+    this->toolsCommandListExp.pfnAppendMarkerExp = L0::zetCommandListAppendMarkerExp;
     this->toolsModule.pfnGetDebugInfo = L0::zetModuleGetDebugInfo;
     this->toolsKernel.pfnGetProfileInfo = L0::zetKernelGetProfileInfo;
     this->toolsMetric.pfnGet = L0::zetMetricGet;

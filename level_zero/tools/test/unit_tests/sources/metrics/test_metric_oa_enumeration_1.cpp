@@ -3636,7 +3636,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenAppendMarkerIsCalledThenRet
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
 
-    EXPECT_EQ(zetIntelCommandListAppendMarkerExp(commandList->toHandle(), metricGroupHandle, 0), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetCommandListAppendMarkerExp(commandList->toHandle(), metricGroupHandle, 0), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIsCalled) {

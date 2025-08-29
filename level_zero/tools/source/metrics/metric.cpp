@@ -1149,4 +1149,9 @@ ze_result_t metricScopeGetProperties(
     return static_cast<MetricScopeImp *>(MetricScopeImp::fromHandle(hMetricScope))->getProperties(pMetricScopeProperties);
 }
 
+ze_result_t metricAppendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) {
+    auto metricGroupImp = static_cast<MetricGroupImp *>(L0::MetricGroup::fromHandle(hMetricGroup));
+    return metricGroupImp->getMetricSource().appendMarker(hCommandList, hMetricGroup, value);
+}
+
 } // namespace L0

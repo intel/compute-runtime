@@ -378,7 +378,7 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenUnsup
         static_cast<DeviceImp *>(device)->activateMetricGroups();
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
 
-        EXPECT_EQ(zetIntelCommandListAppendMarkerExp(nullptr, metricGroups[0], 0), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zetCommandListAppendMarkerExp(nullptr, metricGroups[0], 0), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     }
 }
 

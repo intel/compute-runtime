@@ -21,9 +21,7 @@ ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevi
 ze_result_t ZE_APICALL zetIntelCommandListAppendMarkerExp(zet_command_list_handle_t hCommandList,
                                                           zet_metric_group_handle_t hMetricGroup,
                                                           uint32_t value) {
-
-    auto metricGroupImp = static_cast<MetricGroupImp *>(L0::MetricGroup::fromHandle(hMetricGroup));
-    return metricGroupImp->getMetricSource().appendMarker(hCommandList, hMetricGroup, value);
+    return L0::metricAppendMarker(hCommandList, hMetricGroup, value);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricTracerCreateExp(zet_context_handle_t hContext,

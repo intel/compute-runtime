@@ -312,3 +312,16 @@ zetGetDeviceExpProcAddrTable(
 
     return result;
 }
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zetGetCommandListExpProcAddrTable(
+    ze_api_version_t version,
+    zet_command_list_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.tools.version) != ZE_MAJOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    fillDdiEntry(pDdiTable->pfnAppendMarkerExp, L0::globalDriverDispatch.toolsCommandListExp.pfnAppendMarkerExp, version, ZE_API_VERSION_1_13);
+    return result;
+}
