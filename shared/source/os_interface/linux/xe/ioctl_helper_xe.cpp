@@ -1360,7 +1360,7 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
 
     std::array<drm_xe_ext_set_property, maxContextSetProperties> extProperties{};
     uint32_t extPropertyIndex{0U};
-    setOptionalContextProperties(drm, &extProperties, extPropertyIndex);
+    setOptionalContextProperties(osContext, drm, &extProperties, extPropertyIndex);
     setContextProperties(osContext, deviceIndex, &extProperties, extPropertyIndex);
 
     drm_xe_exec_queue_create create{};
@@ -1716,12 +1716,13 @@ bool IoctlHelperXe::getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd
     return false;
 }
 
-void IoctlHelperXe::setOptionalContextProperties(Drm &drm, void *extProperties, uint32_t &extIndexInOut) {
+void IoctlHelperXe::setOptionalContextProperties(const OsContextLinux &osContext, Drm &drm, void *extProperties, uint32_t &extIndexInOut) {
 
     auto &ext = *reinterpret_cast<std::array<drm_xe_ext_set_property, maxContextSetProperties> *>(extProperties);
 
     if ((contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_RENDER) || (contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_COMPUTE)) {
-        if (drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
+        const bool isSecondaryContext = osContext.isPartOfContextGroup() && (nullptr != osContext.getPrimaryContext());
+        if (!isSecondaryContext && drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
             ext[extIndexInOut].base.next_extension = 0;
             ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
             ext[extIndexInOut].property = getEudebugExtProperty();
