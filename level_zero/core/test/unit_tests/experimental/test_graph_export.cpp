@@ -570,7 +570,7 @@ DEFINE_APIARGS_FIELDS(zeCommandListAppendWaitExternalSemaphoreExt, "hCommandList
 DEFINE_APIARGS_FIELDS(zeCommandListAppendImageCopyToMemoryExt, "hCommandList", "dstptr", "hSrcImage", "pSrcRegion", "destRowPitch", "destSlicePitch", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendImageCopyFromMemoryExt, "hCommandList", "hDstImage", "srcptr", "pDstRegion", "srcRowPitch", "srcSlicePitch", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendWriteGlobalTimestamp) {
+TEST_F(ExtractParametersTest, zeCommandListAppendWriteGlobalTimestamp) {
     Closure<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -578,7 +578,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendWriteGlobalTimestamp) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendBarrier) {
+TEST_F(ExtractParametersTest, zeCommandListAppendBarrier) {
     Closure<CaptureApi::zeCommandListAppendBarrier>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -586,7 +586,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendBarrier) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendBarrier>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryRangesBarrier) {
+TEST_F(ExtractParametersTest, zeCommandListAppendMemoryRangesBarrier) {
     Closure<CaptureApi::zeCommandListAppendMemoryRangesBarrier>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -597,7 +597,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryRangesBarrier) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendMemoryRangesBarrier>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryCopy) {
+TEST_F(ExtractParametersTest, zeCommandListAppendMemoryCopy) {
     Closure<CaptureApi::zeCommandListAppendMemoryCopy>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -605,7 +605,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryCopy) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendMemoryCopy>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryFill) {
+TEST_F(ExtractParametersTest, zeCommandListAppendMemoryFill) {
     Closure<CaptureApi::zeCommandListAppendMemoryFill>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -613,7 +613,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryFill) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendMemoryFill>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryCopyRegion) {
+TEST_F(ExtractParametersTest, zeCommandListAppendMemoryCopyRegion) {
     Closure<CaptureApi::zeCommandListAppendMemoryCopyRegion>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -621,7 +621,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryCopyRegion) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendMemoryCopyRegion>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryCopyFromContext) {
+TEST_F(ExtractParametersTest, zeCommandListAppendMemoryCopyFromContext) {
     Closure<CaptureApi::zeCommandListAppendMemoryCopyFromContext>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -629,7 +629,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryCopyFromContext) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendMemoryCopyFromContext>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopy) {
+TEST_F(ExtractParametersTest, zeCommandListAppendImageCopy) {
     Closure<CaptureApi::zeCommandListAppendImageCopy>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -637,7 +637,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopy) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendImageCopy>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopyRegion) {
+TEST_F(ExtractParametersTest, zeCommandListAppendImageCopyRegion) {
     Closure<CaptureApi::zeCommandListAppendImageCopyRegion>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -649,7 +649,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopyRegion) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendImageCopyRegion>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopyToMemory) {
+TEST_F(ExtractParametersTest, zeCommandListAppendImageCopyToMemory) {
     Closure<CaptureApi::zeCommandListAppendImageCopyToMemory>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -658,7 +658,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopyToMemory) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendImageCopyToMemory>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopyFromMemory) {
+TEST_F(ExtractParametersTest, zeCommandListAppendImageCopyFromMemory) {
     Closure<CaptureApi::zeCommandListAppendImageCopyFromMemory>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -667,34 +667,34 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopyFromMemory) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendImageCopyFromMemory>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemoryPrefetch) {
+TEST_F(ExtractParametersTest, zeCommandListAppendMemoryPrefetch) {
     Closure<CaptureApi::zeCommandListAppendMemoryPrefetch>::ApiArgs args{};
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendMemoryPrefetch>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendMemAdvise) {
+TEST_F(ExtractParametersTest, zeCommandListAppendMemAdvise) {
     Closure<CaptureApi::zeCommandListAppendMemAdvise>::ApiArgs args{};
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendMemAdvise>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendSignalEvent) {
+TEST_F(ExtractParametersTest, zeCommandListAppendSignalEvent) {
     Closure<CaptureApi::zeCommandListAppendSignalEvent>::ApiArgs args{};
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendSignalEvent>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendWaitOnEvents) {
+TEST_F(ExtractParametersTest, zeCommandListAppendWaitOnEvents) {
     Closure<CaptureApi::zeCommandListAppendWaitOnEvents>::ApiArgs args{};
     args.numEvents = 1;
     args.phEvents = dummyEvents;
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendWaitOnEvents>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendEventReset) {
+TEST_F(ExtractParametersTest, zeCommandListAppendEventReset) {
     Closure<CaptureApi::zeCommandListAppendEventReset>::ApiArgs args{};
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendEventReset>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendQueryKernelTimestamps) {
+TEST_F(ExtractParametersTest, zeCommandListAppendQueryKernelTimestamps) {
     Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps>::ApiArgs args{};
     args.numEvents = 1;
     args.phEvents = dummyEvents;
@@ -705,7 +705,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendQueryKernelTimestamps) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendQueryKernelTimestamps>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendLaunchKernel) {
+TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernel) {
     Closure<CaptureApi::zeCommandListAppendLaunchKernel>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -715,7 +715,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendLaunchKernel) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendLaunchKernel>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendLaunchCooperativeKernel) {
+TEST_F(ExtractParametersTest, zeCommandListAppendLaunchCooperativeKernel) {
     Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -725,7 +725,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendLaunchCooperativeKernel)
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendLaunchKernelIndirect) {
+TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelIndirect) {
     Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -735,16 +735,30 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendLaunchKernelIndirect) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendLaunchKernelIndirect>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendLaunchKernelWithParameters) {
+TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelWithParameters) {
     // currently skipped as zeCommandListAppendLaunchKernelWithParameters is not supported yet
+    GTEST_SKIP();
     Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::ApiArgs args{nullptr};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
     args.hSignalEvent = dummyEvents[0];
+    args.kernelHandle = &kernel;
+    args.pGroupCounts = &dummyLaunchArgs;
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendLaunchMultipleKernelsIndirect) {
+TEST_F(ExtractParametersTest, zeCommandListAppendLaunchKernelWithArguments) {
+    // currently skipped as zeCommandListAppendLaunchKernelWithArguments is not supported yet
+    GTEST_SKIP();
+    Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::ApiArgs args{nullptr};
+    args.numWaitEvents = 1;
+    args.phWaitEvents = dummyEvents;
+    args.hSignalEvent = dummyEvents[0];
+    args.kernelHandle = &kernel;
+    expectAllApiArgsPresent<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(args);
+}
+
+TEST_F(ExtractParametersTest, zeCommandListAppendLaunchMultipleKernelsIndirect) {
     Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -756,7 +770,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendLaunchMultipleKernelsInd
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendSignalExternalSemaphoreExt) {
+TEST_F(ExtractParametersTest, zeCommandListAppendSignalExternalSemaphoreExt) {
     Closure<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -767,7 +781,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendSignalExternalSemaphoreE
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendWaitExternalSemaphoreExt) {
+TEST_F(ExtractParametersTest, zeCommandListAppendWaitExternalSemaphoreExt) {
     Closure<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -778,7 +792,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendWaitExternalSemaphoreExt
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopyToMemoryExt) {
+TEST_F(ExtractParametersTest, zeCommandListAppendImageCopyToMemoryExt) {
     Closure<CaptureApi::zeCommandListAppendImageCopyToMemoryExt>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -787,7 +801,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopyToMemoryExt) {
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendImageCopyToMemoryExt>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopyFromMemoryExt) {
+TEST_F(ExtractParametersTest, zeCommandListAppendImageCopyFromMemoryExt) {
     Closure<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt>::ApiArgs args{};
     args.numWaitEvents = 1;
     args.phWaitEvents = dummyEvents;
@@ -796,7 +810,7 @@ TEST_F(ExtractParametersTestFixture, zeCommandListAppendImageCopyFromMemoryExt) 
     expectAllApiArgsPresent<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt>(args);
 }
 
-TEST_F(ExtractParametersTestFixture, GivenMultipleWaitEventsWhenExtractParametersIsCalledThenParametersAreExtractedCorrectly) {
+TEST_F(ExtractParametersTest, GivenMultipleWaitEventsWhenExtractParametersIsCalledThenParametersAreExtractedCorrectly) {
     ze_event_handle_t multipleWaitEvents[2] = {
         reinterpret_cast<ze_event_handle_t>(0x100),
         reinterpret_cast<ze_event_handle_t>(0x200)};
@@ -818,7 +832,7 @@ TEST_F(ExtractParametersTestFixture, GivenMultipleWaitEventsWhenExtractParameter
     EXPECT_EQ(getParamValue(params, "phWaitEvents[1]"), waitEventStr2);
 }
 
-TEST_F(ExtractParametersTestFixture, GivenMultipleEventsWhenExtractParametersIsCalledThenParametersAreExtractedCorrectly) {
+TEST_F(ExtractParametersTest, GivenMultipleEventsWhenExtractParametersIsCalledThenParametersAreExtractedCorrectly) {
     constexpr uintptr_t firstEventAddress = 0x400;
     constexpr uintptr_t secondEventAddress = 0x500;
     ze_event_handle_t multipleEvents[2] = {
@@ -842,7 +856,7 @@ TEST_F(ExtractParametersTestFixture, GivenMultipleEventsWhenExtractParametersIsC
     EXPECT_EQ(getParamValue(params, "phEvents[1]"), eventStr2);
 }
 
-TEST_F(ExtractParametersTestFixture, GivenMultipleSemaphoresWhenExtractParametersIsCalledThenParametersAreExtractedCorrectly) {
+TEST_F(ExtractParametersTest, GivenMultipleSemaphoresWhenExtractParametersIsCalledThenParametersAreExtractedCorrectly) {
     constexpr uintptr_t firstSemaphoreAddress = 0x600;
     constexpr uintptr_t secondSemaphoreAddress = 0x700;
     ze_external_semaphore_ext_handle_t multipleSemaphores[2] = {
@@ -867,7 +881,7 @@ TEST_F(ExtractParametersTestFixture, GivenMultipleSemaphoresWhenExtractParameter
     EXPECT_EQ(getParamValue(params, "phSemaphores[1]"), semaphoreStr2);
 }
 
-TEST_F(ExtractParametersTestFixture, GivenZeroEventsWhenExtractParametersIsCalledThenNoIndividualEntriesArePresent) {
+TEST_F(ExtractParametersTest, GivenZeroEventsWhenExtractParametersIsCalledThenNoIndividualEntriesArePresent) {
     Closure<CaptureApi::zeCommandListAppendWaitOnEvents>::ApiArgs args{};
     args.numEvents = 0;
     args.phEvents = nullptr;
@@ -881,7 +895,7 @@ TEST_F(ExtractParametersTestFixture, GivenZeroEventsWhenExtractParametersIsCalle
     EXPECT_FALSE(hasParam(params, "phEvents[0]"));
 }
 
-TEST_F(ExtractParametersTestFixture, GivenNoOptionalRegionParametersWhenExtractParametersIsCalledThenNoRegionEntriesArePresent) {
+TEST_F(ExtractParametersTest, GivenNoOptionalRegionParametersWhenExtractParametersIsCalledThenNoRegionEntriesArePresent) {
     Closure<CaptureApi::zeCommandListAppendImageCopyRegion>::ApiArgs args{};
     Closure<CaptureApi::zeCommandListAppendImageCopyRegion> closure(args, storage);
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendImageCopyRegion>(closure, storage);
@@ -891,7 +905,7 @@ TEST_F(ExtractParametersTestFixture, GivenNoOptionalRegionParametersWhenExtractP
     EXPECT_FALSE(hasParam(params, "pDstRegion"));
 }
 
-TEST_F(ExtractParametersTestFixture, GivenNoOptionalOffsetsParameterWhenExtractParametersIsCalledThenNoOffsetsEntryIsPresent) {
+TEST_F(ExtractParametersTest, GivenNoOptionalOffsetsParameterWhenExtractParametersIsCalledThenNoOffsetsEntryIsPresent) {
     Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps>::ApiArgs args{};
     Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps> closure(args, storage);
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendQueryKernelTimestamps>(closure, storage);

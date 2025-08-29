@@ -632,6 +632,13 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
 }
 
 template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(
+    const Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> &closure, const ClosureExternalStorage &storage) {
+    // does not have closure specialization yet
+    return {};
+}
+
+template <>
 std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>(
     const Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect> &closure, const ClosureExternalStorage &storage) {
 

@@ -12,6 +12,7 @@
 
 #include "level_zero/core/source/kernel/kernel_mutable_state.h"
 #include "level_zero/ze_api.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include <span>
 #include <string>
@@ -49,6 +50,7 @@ struct Event;
     RR_CAPTURED_API(zeCommandListAppendLaunchCooperativeKernel)       \
     RR_CAPTURED_API(zeCommandListAppendLaunchKernelIndirect)          \
     RR_CAPTURED_API(zeCommandListAppendLaunchKernelWithParameters)    \
+    RR_CAPTURED_API(zeCommandListAppendLaunchKernelWithArguments)     \
     RR_CAPTURED_API(zeCommandListAppendLaunchMultipleKernelsIndirect) \
     RR_CAPTURED_API(zeCommandListAppendSignalExternalSemaphoreExt)    \
     RR_CAPTURED_API(zeCommandListAppendWaitExternalSemaphoreExt)      \
@@ -852,6 +854,61 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect> {
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
         ClosureExternalStorage::KernelStateId firstKernelStateId = ClosureExternalStorage::invalidKernelStateId;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> {
+    inline static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        ze_kernel_handle_t kernelHandle;
+        const ze_group_count_t *pGroupCounts;
+        const void *pNext;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        ~IndirectArgs();
+        ze_group_count_t groupCounts;
+        void *pNext;
+        ClosureExternalStorage::KernelStateId kernelStateId = ClosureExternalStorage::invalidKernelStateId;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(CommandList &executionTarget, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
+    inline static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        ze_kernel_handle_t kernelHandle;
+        const ze_group_count_t groupCounts = {0, 0, 0};
+        const ze_group_size_t groupSizes = {0, 0, 0};
+        void **pArguments;
+        const void *pNext;
+        ze_event_handle_t hSignalEvent;
+        uint32_t numWaitEvents;
+        ze_event_handle_t *phWaitEvents;
+    } apiArgs;
+
+    struct IndirectArgs : IndirectArgsWithWaitEvents {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        ~IndirectArgs();
+        void *pNext;
+        ClosureExternalStorage::KernelStateId kernelStateId = ClosureExternalStorage::invalidKernelStateId;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}

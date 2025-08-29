@@ -105,7 +105,7 @@ class GraphDotExporterFileTest : public GraphDotExporterTest {
         return {__VA_ARGS__};                                                                                       \
     }
 
-class ExtractParametersTestFixture : public ::testing::Test {
+class ExtractParametersTestFixture {
   protected:
     ClosureExternalStorage storage;
 
@@ -122,9 +122,11 @@ class ExtractParametersTestFixture : public ::testing::Test {
     Mock<KernelImp> kernel;
     ze_kernel_handle_t dummyKernels[1];
 
-    void SetUp() override {
+    void setUp() {
         dummyKernels[0] = &kernel;
     }
+
+    void tearDown() {}
 
     template <CaptureApi api, typename ApiArgsT>
     void expectAllApiArgsPresent(const ApiArgsT &args) {
@@ -156,6 +158,8 @@ class ExtractParametersTestFixture : public ::testing::Test {
         return iter != params.end() ? iter->second : std::string{};
     }
 };
+
+using ExtractParametersTest = Test<ExtractParametersTestFixture>;
 
 } // namespace ult
 } // namespace L0
