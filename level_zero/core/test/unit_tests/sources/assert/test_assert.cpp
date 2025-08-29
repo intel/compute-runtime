@@ -42,7 +42,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenDestroyedThenAssertIsChecked) {
 
     {
         Mock<KernelImp> kernel;
-        kernel.module = &module;
+        kernel.setModule(&module);
 
         kernel.descriptor.kernelAttributes.flags.usesAssert = true;
     }
@@ -74,7 +74,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenNoAssertHandlerOnDestroyThenDestruct
 
     {
         Mock<KernelImp> kernel;
-        kernel.module = &module;
+        kernel.setModule(&module);
 
         kernel.descriptor.kernelAttributes.flags.usesAssert = true;
     }
@@ -113,7 +113,7 @@ TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThe
 
     MockModule module(&l0Device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
-    kernel.module = &module;
+    kernel.setModule(&module);
 
     kernel.descriptor.kernelMetadata.kernelName = "test";
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;

@@ -74,7 +74,13 @@ struct WhiteBoxKernelHw : public KernelHw<gfxCoreFamily> {
         return const_cast<NEO::KernelDescriptor &>(this->sharedState->kernelImmData->getDescriptor());
     }
 
-    WhiteBoxKernelHw() : ::L0::KernelHw<gfxCoreFamily>(nullptr) {}
+    void setModule(Module *module) {
+        this->module = module;
+        DEBUG_BREAK_IF(!this->sharedState);
+        this->sharedState->module = module;
+    }
+
+    WhiteBoxKernelHw() : ::L0::KernelHw<gfxCoreFamily>() {}
 };
 
 using KernelInitTest = Test<ModuleImmutableDataFixture>;
@@ -267,7 +273,7 @@ using SetKernelArgCacheTest = Test<ModuleFixture>;
 
 TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSetArgBufferWithAllocOnlyCalledIfNeeded) {
     MockKernelWithCallTracking mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
     mockKernel.initialize(&desc);
@@ -386,7 +392,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeEnabledWhenSett
     mockKernel.descriptor.kernelAttributes.simdSize = 1;
     mockKernel.privateState.kernelRequiresGenerationOfLocalIdsByRuntime = true; // although it is enabled for SIMD 1, make sure it is enforced
     mockKernel.descriptor.kernelAttributes.numLocalIdChannels = 3;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
     const auto &device = mockModule.getDevice();
     auto grfSize = device->getHwInfo().capabilityTable.grfSize;
     auto numGrf = GrfConfig::defaultGrfNumber;
@@ -434,7 +440,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeDisabledWhenSet
     Mock<KernelImp> mockKernel;
     Mock<Module> mockModule(this->device, nullptr);
     mockKernel.descriptor.kernelAttributes.simdSize = 1;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
     mockKernel.privateState.kernelRequiresGenerationOfLocalIdsByRuntime = false;
 
     uint32_t groupSize[3] = {2, 3, 5};
@@ -451,7 +457,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenIncorrectGroupSizeDimensionWhenSettingGro
     for (auto i = 0u; i < 3u; i++) {
         mockKernel.descriptor.kernelAttributes.requiredWorkgroupSize[i] = 2;
     }
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     uint32_t groupSize[3] = {1, 1, 1};
     mockKernel.privateState.groupSize[0] = 0;
@@ -465,7 +471,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenZeroGroupSizeWhenSettingGroupSizeThenInva
     for (auto i = 0u; i < 3u; i++) {
         mockKernel.descriptor.kernelAttributes.requiredWorkgroupSize[i] = 2;
     }
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     uint32_t groupSize[3] = {0, 0, 0};
     auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
@@ -475,7 +481,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenZeroGroupSizeWhenSettingGroupSizeThenInva
 TEST_F(KernelImpSetGroupSizeTest, givenValidGroupSizeWhenSetMultipleTimesThenSetGroupSizeIsOnlyExecutedIfNeeded) {
     MockKernelWithCallTracking mockKernel;
     Mock<Module> mockModule(this->device, nullptr);
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     // First call with {2u, 3u, 5u} group size - don't skip setGroupSize execution
     auto ret = mockKernel.setGroupSize(2u, 3u, 5u);
@@ -2474,7 +2480,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenBindlessKernelAndNoGlobalBindlessAlloc
     desc.pKernelName = kernelName.c_str();
 
     WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     EXPECT_FALSE(mockKernel.privateState.isBindlessOffsetSet[0]);
@@ -2488,7 +2494,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessTh
     desc.pKernelName = kernelName.c_str();
 
     WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
     arg.bindless = 0x40;
@@ -2526,7 +2532,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedBufferAddressWhenSettingSurf
     desc.pKernelName = kernelName.c_str();
 
     WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
     arg.bindless = 0x40;
@@ -2574,7 +2580,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenMisalignedAndAlignedBufferAddressWhenS
     desc.pKernelName = kernelName.c_str();
 
     WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
     arg.bindless = 0x40;
@@ -2623,7 +2629,7 @@ HWTEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulThe
     desc.pKernelName = kernelName.c_str();
 
     WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
@@ -2658,7 +2664,7 @@ HWTEST_F(KernelImpL3CachingTests, GivenKernelImpWhenSetSurfaceStateWithUnaligned
     desc.pKernelName = kernelName.c_str();
 
     WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
@@ -2699,7 +2705,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenValidBindlessOffsetWhenSetArgBufferWithA
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -2718,7 +2724,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenValidBindfulOffsetWhenSetArgBufferWithAl
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -2737,7 +2743,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenUndefiedBidfulAndBindlesstOffsetWhenSetA
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -2758,7 +2764,7 @@ TEST_F(KernelBindlessUncachedMemoryTests, givenBindlessKernelAndAllocDataNoTfoun
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -2777,7 +2783,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -2827,7 +2833,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -2879,7 +2885,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -2930,7 +2936,7 @@ TEST_F(KernelBindlessUncachedMemoryTests,
     desc.pKernelName = kernelName.c_str();
     MyMockKernel mockKernel;
 
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>());
@@ -3333,7 +3339,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCal
 
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
@@ -3427,7 +3433,7 @@ HWTEST_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgBuff
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
     WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
     auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
     arg.bindless = 0x40;
@@ -3452,7 +3458,7 @@ HWTEST_F(SetKernelArg, givenSlmPointerWhenSettingKernelArgThenPropertyIsSaved) {
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
     WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
+    mockKernel.setModule(module.get());
     mockKernel.initialize(&desc);
 
     {
@@ -3767,7 +3773,7 @@ TEST_F(KernelPrintHandlerTest, whenPrintPrintfOutputIsCalledThenPrintfBufferIsUs
     desc.pKernelName = kernelName.c_str();
 
     kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->initialize(&desc);
 
     EXPECT_FALSE(kernel->sharedState->printfBuffer == nullptr);
@@ -3816,7 +3822,7 @@ TEST_F(PrintfTest, givenKernelWithPrintfThenPrintfBufferIsCreated) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     EXPECT_TRUE(mockKernel.getImmutableData()->getDescriptor().kernelAttributes.flags.usesPrintf);
 
@@ -3828,7 +3834,7 @@ TEST_F(PrintfTest, GivenKernelNotUsingPrintfWhenCreatingPrintfBufferThenAllocati
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = false;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.createPrintfBuffer();
     EXPECT_EQ(nullptr, mockKernel.getPrintfBufferAllocation());
@@ -3838,7 +3844,7 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenAllocationAddedToResidencyContain
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.createPrintfBuffer();
 
@@ -3853,7 +3859,7 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.descriptor.payloadMappings.implicitArgs.printfSurfaceAddress.stateless = 0;
     mockKernel.descriptor.payloadMappings.implicitArgs.printfSurfaceAddress.pointerSize = sizeof(uintptr_t);
@@ -4224,7 +4230,7 @@ using BindlessKernelTest = Test<DeviceFixture>;
 TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCorrectBindlessOffsetsAreWritten) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
@@ -4288,7 +4294,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
 TEST_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
@@ -4339,7 +4345,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatc
 TEST_F(BindlessKernelTest, givenNoEntryInBindlessOffsetsMapWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
@@ -4365,7 +4371,7 @@ TEST_F(BindlessKernelTest, givenNoEntryInBindlessOffsetsMapWhenPatchingCrossThre
 TEST_F(BindlessKernelTest, givenNoStatefulArgsWhenPatchingBindlessOffsetsInCrossThreadDataThenMemoryIsNotPatched) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
@@ -4393,7 +4399,7 @@ TEST_F(BindlessKernelTest, givenGlobalBindlessAllocatorAndBindlessKernelWithImpl
 
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
@@ -4467,7 +4473,7 @@ TEST(KernelImmutableDataTest, givenBindlessKernelWhenInitializingImmDataThenSshT
 TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingSamplerOffsetsInCrossThreadDataThenCorrectBindlessOffsetsAreWritten) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
@@ -4531,7 +4537,7 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingSamplerOffsetsInCrossT
 TEST_F(BindlessKernelTest, givenBindlessKernelWithInlineSamplersWhenPatchingSamplerOffsetsInCrossThreadDataThenCorrectBindlessOffsetsAreWritten) {
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
-    mockKernel.module = &mockModule;
+    mockKernel.setModule(&mockModule);
 
     mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;

@@ -9,7 +9,6 @@
 
 #include "shared/source/utilities/stackvec.h"
 
-#include "level_zero/core/source/kernel/kernel_mutable_state.h"
 #include "level_zero/ze_api.h"
 
 #include "graph_captured_apis.h"

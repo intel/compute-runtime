@@ -35,9 +35,11 @@ struct KernelExt {
 };
 
 struct KernelImp : Kernel {
-    KernelImp(Module *module);
+    KernelImp(Module *module) : module(module),
+                                ownedSharedState(module ? std::make_unique<KernelSharedState>(module) : nullptr),
+                                sharedState(ownedSharedState.get()) {}
 
-    ~KernelImp() override;
+    ~KernelImp() override = default;
 
     ze_result_t destroy() override {
         if (this->sharedState->devicePrintfKernelMutex == nullptr) {
@@ -48,7 +50,7 @@ struct KernelImp : Kernel {
         }
     }
 
-    std::unique_ptr<KernelImp> cloneWithStateOverride(const KernelMutableState *stateOverride);
+    std::unique_ptr<KernelImp> makeDependentClone();
 
     ze_result_t getBaseAddress(uint64_t *baseAddress) override;
     ze_result_t getKernelProgramBinary(size_t *kernelSize, char *pKernelBinary) override;
@@ -258,7 +260,8 @@ struct KernelImp : Kernel {
     KernelMutableState &getPrivateState() { return privateState; }
 
   protected:
-    KernelImp();
+    KernelImp() : ownedSharedState(std::make_unique<KernelSharedState>(module)),
+                  sharedState(ownedSharedState.get()) {}
 
     void patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint32_t z);
     void createPrintfBuffer();
@@ -272,9 +275,9 @@ struct KernelImp : Kernel {
     ArrayRef<uint8_t> getDynamicStateHeapDataSpan() { return ArrayRef<uint8_t>(privateState.dynamicStateHeapData.data(), privateState.dynamicStateHeapData.size()); }
 
     Module *module = nullptr;
-    KernelImp *cloneOrigin = nullptr;
 
-    std::shared_ptr<KernelSharedState> sharedState = nullptr;
+    std::unique_ptr<KernelSharedState> ownedSharedState = nullptr;
+    KernelSharedState *sharedState = nullptr;
     KernelMutableState privateState{};
 };
 

@@ -926,7 +926,8 @@ class ExtractKernelParametersTestFixture : public ModuleImmutableDataFixture, pu
         mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
         mockKernelImmData->mockKernelInfo->kernelDescriptor.kernelMetadata.kernelName = kernelName;
         createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
-        mockKernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+        auto pModule = ModuleImmutableDataFixture::module.get();
+        mockKernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(pModule);
     }
 
     void tearDown() {

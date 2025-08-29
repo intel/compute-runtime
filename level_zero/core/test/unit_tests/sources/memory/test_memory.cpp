@@ -4321,7 +4321,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         desc.pKernelName = kernelName.c_str();
 
         kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
-        kernel->module = module.get();
+        kernel->setModule(module.get());
         kernel->initialize(&desc);
     }
 

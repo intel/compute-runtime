@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace std {
 class mutex;
 }
@@ -17,8 +19,17 @@ class GraphicsAllocation;
 
 namespace L0 {
 struct KernelImmutableData;
+struct Module;
 
 struct KernelSharedState {
+    KernelSharedState(Module *module);
+    KernelSharedState(const KernelSharedState &) = delete;
+    KernelSharedState(KernelSharedState &&) noexcept = default;
+    KernelSharedState &operator=(const KernelSharedState &) = delete;
+    KernelSharedState &operator=(KernelSharedState &&) noexcept = default;
+    ~KernelSharedState();
+
+    Module *module = nullptr;
     const KernelImmutableData *kernelImmData = nullptr;
 
     std::mutex *devicePrintfKernelMutex = nullptr;

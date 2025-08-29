@@ -230,7 +230,7 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenAssignmentOperatorUsedThenPrope
     EXPECT_EQ(state3.kernelHasIndirectAccess, state2.kernelHasIndirectAccess);
 }
 
-TEST_F(KernelImpTest, GivenKernelMutableStateWhenKernelImpClonedThenStateAssignedAndCloneOriginMarked) {
+TEST_F(KernelImpTest, GivenKernelPrivateStateWhenKernelImpClonedThenSharedStateIsSharedAndPrivateIsCopied) {
     NEO::KernelDescriptor descriptor;
     WhiteBox<::L0::KernelImmutableData> kernelInfo{};
     kernelInfo.kernelDescriptor = &descriptor;
@@ -247,23 +247,18 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenKernelImpClonedThenStateAssigne
     kernel1.privateState.reservePerThreadDataForWholeThreadGroup(mockSize);
     std::memcpy(kernel1.privateState.perThreadDataForWholeThreadGroup, std::to_array<uint8_t>({81, 82, 83, 84, 85, 86, 87, 88}).data(), mockSize);
 
-    // This state overrides the state of kernel1's clone
-    KernelMutableState privateState;
-    fillKernelMutableStateWithMockData(privateState);
-
-    // No need to check each and every member again
-    EXPECT_NE(0, std::memcmp(kernel1.privateState.crossThreadData.data(), privateState.crossThreadData.data(), mockSize));
-    EXPECT_NE(0, std::memcmp(kernel1.privateState.perThreadDataForWholeThreadGroup, privateState.perThreadDataForWholeThreadGroup, mockSize));
-
-    auto clonedKernel = kernel1.cloneWithStateOverride(&privateState);
+    EXPECT_NE(nullptr, kernel1.ownedSharedState.get());
+    EXPECT_EQ(kernel1.sharedState, kernel1.ownedSharedState.get());
+    auto clonedKernel = kernel1.makeDependentClone();
     auto kernel2 = static_cast<WhiteBox<KernelImp> *>(clonedKernel.get());
+    EXPECT_EQ(nullptr, kernel2->ownedSharedState.get());
+    EXPECT_EQ(kernel2->sharedState, kernel1.ownedSharedState.get());
 
     // KernelMutableState part taken from `state`
-    EXPECT_EQ(0, std::memcmp(kernel2->privateState.crossThreadData.data(), privateState.crossThreadData.data(), mockSize));
-    EXPECT_EQ(0, std::memcmp(kernel2->privateState.perThreadDataForWholeThreadGroup, privateState.perThreadDataForWholeThreadGroup, mockSize));
+    EXPECT_EQ(0, std::memcmp(kernel2->privateState.crossThreadData.data(), kernel1.privateState.crossThreadData.data(), mockSize));
+    EXPECT_EQ(0, std::memcmp(kernel2->privateState.perThreadDataForWholeThreadGroup, kernel1.privateState.perThreadDataForWholeThreadGroup, mockSize));
 
     // KernelImp part taken from `kernel1`
-    EXPECT_EQ(kernel2->cloneOrigin, &kernel1);
     EXPECT_EQ(kernel2->sharedState->kernelImmData, &kernelInfo);
     EXPECT_EQ(kernel2->sharedState->devicePrintfKernelMutex, kernel1.sharedState->devicePrintfKernelMutex);
     EXPECT_EQ(kernel2->sharedState->privateMemoryGraphicsAllocation, kernel1.sharedState->privateMemoryGraphicsAllocation);

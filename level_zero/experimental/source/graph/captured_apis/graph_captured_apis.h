@@ -11,7 +11,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "level_zero/core/source/kernel/kernel_mutable_state.h"
+#include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/ze_api.h"
 #include "level_zero/ze_intel_gpu.h"
 
@@ -105,12 +105,10 @@ struct ExternalCbEventInfoContainer {
 
 struct ClosureExternalStorage {
     using EventsListId = uint32_t;
-    using KernelStateId = uint32_t;
     using ImageRegionId = uint32_t;
     using CopyRegionId = uint32_t;
 
     static constexpr EventsListId invalidEventsListId = std::numeric_limits<EventsListId>::max();
-    static constexpr KernelStateId invalidKernelStateId = std::numeric_limits<KernelStateId>::max();
     static constexpr ImageRegionId invalidImageRegionId = std::numeric_limits<ImageRegionId>::max();
     static constexpr CopyRegionId invalidCopyRegionId = std::numeric_limits<CopyRegionId>::max();
 
@@ -121,12 +119,6 @@ struct ClosureExternalStorage {
         auto ret = waitEvents.size();
         waitEvents.insert(std::end(waitEvents), begin, end);
         return static_cast<EventsListId>(ret);
-    }
-
-    KernelStateId registerKernelState(KernelMutableState &&state) {
-        auto ret = kernelStates.size();
-        kernelStates.push_back(std::move(state));
-        return static_cast<KernelStateId>(ret);
     }
 
     ImageRegionId registerImageRegion(const ze_image_region_t *imageRegion) {
@@ -161,13 +153,6 @@ struct ClosureExternalStorage {
         return waitEvents.data() + id;
     }
 
-    KernelMutableState *getKernelMutableState(KernelStateId id) {
-        if (invalidKernelStateId == id) {
-            return nullptr;
-        }
-        return kernelStates.data() + id;
-    }
-
     ze_image_region_t *getImageRegion(ImageRegionId id) {
         if (invalidImageRegionId == id) {
             return nullptr;
@@ -184,7 +169,6 @@ struct ClosureExternalStorage {
 
   protected:
     std::vector<ze_event_handle_t> waitEvents;
-    std::vector<KernelMutableState> kernelStates;
     std::vector<ze_image_region_t> imageRegions;
     std::vector<ze_copy_region_t> copyRegions;
 };
@@ -818,7 +802,7 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernel> {
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
         ze_group_count_t launchKernelArgs;
-        ClosureExternalStorage::KernelStateId kernelStateId = ClosureExternalStorage::invalidKernelStateId;
+        std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -842,7 +826,7 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel> {
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
         ze_group_count_t launchKernelArgs;
-        ClosureExternalStorage::KernelStateId kernelStateId = ClosureExternalStorage::invalidKernelStateId;
+        std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -865,7 +849,7 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        ClosureExternalStorage::KernelStateId kernelStateId = ClosureExternalStorage::invalidKernelStateId;
+        std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -890,7 +874,7 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        ClosureExternalStorage::KernelStateId firstKernelStateId = ClosureExternalStorage::invalidKernelStateId;
+        std::vector<std::unique_ptr<KernelImp>> capturedKernels;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -914,10 +898,12 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        IndirectArgs(IndirectArgs &&) = default;
+        IndirectArgs &operator=(IndirectArgs &&) = default;
         ~IndirectArgs();
         ze_group_count_t groupCounts;
         void *pNext;
-        ClosureExternalStorage::KernelStateId kernelStateId = ClosureExternalStorage::invalidKernelStateId;
+        std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
@@ -943,9 +929,11 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
+        IndirectArgs(IndirectArgs &&) = default;
+        IndirectArgs &operator=(IndirectArgs &&) = default;
         ~IndirectArgs();
         void *pNext;
-        ClosureExternalStorage::KernelStateId kernelStateId = ClosureExternalStorage::invalidKernelStateId;
+        std::unique_ptr<KernelImp> capturedKernel;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}

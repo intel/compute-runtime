@@ -164,7 +164,7 @@ void ModuleFixture::createKernel() {
     desc.pKernelName = kernelName.c_str();
 
     kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->initialize(&desc);
     if (NEO::ApiSpecificConfig::getBindlessMode(*device->getNEODevice())) {
         const_cast<KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindless;
@@ -176,7 +176,7 @@ std::unique_ptr<WhiteBox<::L0::KernelImp>> ModuleFixture::createKernelWithName(s
     desc.pKernelName = name.c_str();
 
     auto kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->initialize(&desc);
     return kernel;
 }
@@ -217,7 +217,7 @@ void MultiDeviceModuleFixture::createKernel(uint32_t rootDeviceIndex) {
     desc.pKernelName = kernelName.c_str();
 
     kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
-    kernel->module = modules[rootDeviceIndex].get();
+    kernel->setModule(modules[rootDeviceIndex].get());
     kernel->initialize(&desc);
 }
 

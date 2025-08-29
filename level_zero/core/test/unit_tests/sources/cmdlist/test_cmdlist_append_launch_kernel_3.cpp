@@ -275,7 +275,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
 
-    kernel->module = &module;
+    kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
 
@@ -304,7 +304,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelWithPrintfBufferCrea
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
 
-    kernel->module = &module;
+    kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
     kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
     kernel->privateState.pImplicitArgs.reset(new ImplicitArgs());
@@ -342,7 +342,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenApp
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
 
-    kernel->module = &module;
+    kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
 
     ze_event_desc_t eventDesc = {};
@@ -369,7 +369,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhen
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
 
-    kernel->module = &module;
+    kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
 
@@ -403,7 +403,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNonPrintfKernelAndPrintfBufferForSt
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
 
-    kernel->module = &module;
+    kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
     kernel->descriptor.kernelAttributes.flags.useStackCalls = true;
     kernel->privateState.pImplicitArgs.reset(new ImplicitArgs());
@@ -446,7 +446,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenApp
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
     eventPoolDesc.count = 1;
 
-    kernel->module = &module;
+    kernel->setModule(&module);
     kernel->descriptor.kernelAttributes.flags.usesPrintf = false;
 
     ze_event_desc_t eventDesc = {};

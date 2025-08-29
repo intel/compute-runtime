@@ -236,7 +236,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
     ze_group_count_t groupCount{1, 1, 1};
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -254,7 +254,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
     ze_group_count_t groupCount{1, 1, 1};
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -277,7 +277,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynch
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -304,7 +304,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToAsync
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -339,7 +339,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchro
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -376,7 +376,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToCommandLi
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -419,7 +419,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToC
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -486,7 +486,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToC
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -548,7 +548,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAppendedToImmComman
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -575,7 +575,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -626,7 +626,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfAndEventAppendedToI
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel = new Mock<KernelImp>{};
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->descriptor.kernelAttributes.flags.usesPrintf = true;
     kernel->createPrintfBuffer();
     static_cast<ModuleImp *>(module.get())->getPrintfKernelContainer().push_back(std::shared_ptr<Kernel>{kernel});
@@ -1329,7 +1329,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenImmCmdListAndKernelWithImageWriteA
     device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
 
     auto kernel = std::make_unique<Mock<KernelImp>>();
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
 
     ze_command_queue_desc_t queueDesc = {};
@@ -1369,7 +1369,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenRegularCommandListAndOutOfOrderExe
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto kernel = std::make_unique<Mock<KernelImp>>();
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
 
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
@@ -1422,7 +1422,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendi
     device->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
     for (auto cmdListFlags : testedCmdListFlags) {
         auto kernel = std::make_unique<Mock<KernelImp>>();
-        kernel->module = module.get();
+        kernel->setModule(module.get());
         kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
 
         ze_group_count_t groupCount{1, 1, 1};
@@ -1475,7 +1475,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenKernelWithImageWriteArgWhenAppendi
 
 HWTEST2_F(CommandListAppendLaunchKernel, whenResettingRegularCommandListThenTextureCacheFlushPendingStateIsCleared, IsXeHpgCore) {
     auto kernel = std::make_unique<Mock<KernelImp>>();
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     kernel->immutableData.kernelInfo->kernelDescriptor.kernelAttributes.hasImageWriteArg = true;
 
     auto releaseHelper = std::make_unique<MockReleaseHelper>();

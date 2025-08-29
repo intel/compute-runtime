@@ -3864,7 +3864,7 @@ HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAll
     auto kernel = std::make_unique<Mock<KernelImp>>();
     ASSERT_NE(nullptr, kernel);
 
-    kernel->module = module.get();
+    kernel->setModule(module.get());
     ze_kernel_desc_t kernelDesc = {};
     kernelDesc.pKernelName = "test";
     kernel->initialize(&kernelDesc);

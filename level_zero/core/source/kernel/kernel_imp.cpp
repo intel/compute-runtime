@@ -328,6 +328,39 @@ KernelMutableState::~KernelMutableState() {
     }
 }
 
+KernelSharedState::KernelSharedState(Module *module) {
+    if (nullptr == module) {
+        return;
+    }
+    this->module = module;
+    this->implicitArgsVersion = module->getDevice()->getGfxCoreHelper().getImplicitArgsVersion();
+    ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);
+    if (moduleImp->getTranslationUnit()->programInfo.indirectAccessBufferMajorVersion > 0) {
+        this->implicitArgsVersion = moduleImp->getTranslationUnit()->programInfo.indirectAccessBufferMajorVersion;
+    }
+}
+
+KernelSharedState::~KernelSharedState() {
+    if (nullptr == this->module) {
+        return;
+    }
+
+    if (nullptr != this->privateMemoryGraphicsAllocation) {
+        this->module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->privateMemoryGraphicsAllocation);
+    }
+
+    const auto *kernelImmData = this->kernelImmData;
+    if (this->printfBuffer != nullptr) {
+        // not allowed to call virtual function on destructor, so calling printOutput directly
+        PrintfHandler::printOutput(kernelImmData, this->printfBuffer, this->module->getDevice(), false);
+        this->module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->printfBuffer);
+    }
+
+    if (kernelImmData && kernelImmData->getDescriptor().kernelAttributes.flags.usesAssert && this->module->getDevice()->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
+        this->module->getDevice()->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
+    }
+}
+
 ze_result_t KernelImp::getBaseAddress(uint64_t *baseAddress) {
     if (baseAddress) {
         auto gmmHelper = module->getDevice()->getNEODevice()->getGmmHelper();
@@ -335,41 +368,6 @@ ze_result_t KernelImp::getBaseAddress(uint64_t *baseAddress) {
                                              this->getImmutableData()->getIsaOffsetInParentAllocation());
     }
     return ZE_RESULT_SUCCESS;
-}
-
-KernelImp::KernelImp(Module *module) : module(module), sharedState{std::make_shared<KernelSharedState>()} {
-    if (module) {
-        this->sharedState->implicitArgsVersion = module->getDevice()->getGfxCoreHelper().getImplicitArgsVersion();
-        ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);
-        if (moduleImp->getTranslationUnit()->programInfo.indirectAccessBufferMajorVersion > 0) {
-            this->sharedState->implicitArgsVersion = moduleImp->getTranslationUnit()->programInfo.indirectAccessBufferMajorVersion;
-        }
-    }
-}
-
-KernelImp::KernelImp() : KernelImp(static_cast<Module *>(nullptr)) {}
-
-KernelImp::~KernelImp() {
-    /* Only original instance should release resources shared with clones */
-    if (nullptr != cloneOrigin) {
-        return;
-    }
-
-    if (nullptr != sharedState->privateMemoryGraphicsAllocation) {
-        module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(sharedState->privateMemoryGraphicsAllocation);
-    }
-
-    const auto *kernelImmData = this->sharedState->kernelImmData;
-    if (this->sharedState->printfBuffer != nullptr) {
-        // not allowed to call virtual function on destructor, so calling printOutput directly
-        PrintfHandler::printOutput(kernelImmData, this->sharedState->printfBuffer, module->getDevice(), false);
-        module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->sharedState->printfBuffer);
-    }
-
-    if (kernelImmData && kernelImmData->getDescriptor().kernelAttributes.flags.usesAssert && module &&
-        module->getDevice()->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
-        module->getDevice()->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
-    }
 }
 
 ze_result_t KernelImp::getKernelProgramBinary(size_t *kernelSize, char *pKernelBinary) {
@@ -1330,21 +1328,19 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     return ZE_RESULT_SUCCESS;
 }
 
-std::unique_ptr<KernelImp> KernelImp::cloneWithStateOverride(const KernelMutableState *stateOverride) {
+std::unique_ptr<KernelImp> KernelImp::makeDependentClone() {
+    DEBUG_BREAK_IF(nullptr == this->ownedSharedState.get());
+
     auto *device{static_cast<DeviceImp *>(this->module->getDevice())};
     const auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-
     KernelAllocatorFn allocator = kernelFactory[productFamily];
-    auto clone = static_cast<KernelImp *>(allocator(module));
+    auto clone = static_cast<KernelImp *>(allocator(nullptr));
     DEBUG_BREAK_IF(nullptr == clone);
+    DEBUG_BREAK_IF(clone->ownedSharedState);
 
-    clone->cloneOrigin = this;
-    clone->sharedState = this->sharedState;
-
-    if (stateOverride) {
-        clone->privateState = *stateOverride;
-    }
-
+    clone->module = this->module;
+    clone->sharedState = this->ownedSharedState.get();
+    clone->privateState = this->privateState;
     return std::unique_ptr<KernelImp>{clone};
 }
 

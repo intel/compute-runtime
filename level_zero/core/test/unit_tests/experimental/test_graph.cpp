@@ -422,15 +422,20 @@ TEST(GraphTestApiSubmit, GivenValidCmdListAndGraphThenGraphAppendReturnsSuccess)
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 }
 
-TEST(GraphTestApiCapture, GivenCommandListInRecordStateThenCaptureCommandsInsteadOfExecutingThem) {
+using GraphTestApiCaptureWithDevice = Test<DeviceFixture>;
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenCommandListInRecordStateThenCaptureCommandsInsteadOfExecutingThem) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<Context> otherCtx;
     Mock<CommandList> cmdlist;
     auto cmdListHandle = cmdlist.toHandle();
     Mock<Event> event;
+    Mock<Module> module(this->device, nullptr);
     Mock<KernelImp> kernel;
+    kernel.setModule(&module);
     Mock<KernelImp> kernel2;
+    kernel2.setModule(&module);
     ze_image_handle_t imgA = nullptr;
     ze_image_handle_t imgB = nullptr;
     ze_device_handle_t device = nullptr;
@@ -774,9 +779,9 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     Mock<Event> event;
     Mock<Module> module(this->device, nullptr);
     Mock<KernelImp> kernel;
-    kernel.module = &module;
+    kernel.setModule(&module);
     Mock<KernelImp> kernel2;
-    kernel2.module = &module;
+    kernel2.setModule(&module);
     ze_image_handle_t imgA = nullptr;
     ze_image_handle_t imgB = nullptr;
     zes_device_handle_t device = nullptr;
@@ -1277,29 +1282,6 @@ TEST(ClosureExternalStorage, GivenEventWaitListThenRecordsItProperly) {
     ASSERT_NE(nullptr, storage.getEventsList(waitList2Id));
     EXPECT_EQ(eventHandles[8], storage.getEventsList(waitList2Id)[0]);
     EXPECT_EQ(eventHandles[9], storage.getEventsList(waitList2Id)[1]);
-}
-
-TEST(ClosureExternalStorage, GivenKernelMutableStateThenRecordsItProperly) {
-    KernelMutableState s1;
-    s1.globalOffsets[0] = 5U;
-    KernelMutableState s2;
-    s2.globalOffsets[0] = 7U;
-
-    L0::ClosureExternalStorage storage;
-
-    auto kernelState1Id = storage.registerKernelState(std::move(s1));
-    auto kernelState2Id = storage.registerKernelState(std::move(s2));
-
-    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, kernelState1Id);
-    EXPECT_NE(L0::ClosureExternalStorage::invalidEventsListId, kernelState2Id);
-
-    EXPECT_EQ(nullptr, storage.getKernelMutableState(L0::ClosureExternalStorage::invalidKernelStateId));
-
-    ASSERT_NE(nullptr, storage.getKernelMutableState(kernelState1Id));
-    EXPECT_EQ(5U, storage.getKernelMutableState(kernelState1Id)->globalOffsets[0]);
-
-    ASSERT_NE(nullptr, storage.getKernelMutableState(kernelState2Id));
-    EXPECT_EQ(7U, storage.getKernelMutableState(kernelState2Id)->globalOffsets[0]);
 }
 
 TEST(ClosureExternalStorage, GivenImageRegionThenRecordsItProperly) {

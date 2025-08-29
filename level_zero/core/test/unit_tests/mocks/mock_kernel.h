@@ -40,12 +40,12 @@ template <>
 struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using BaseClass = ::L0::KernelImp;
     using BaseClass::BaseClass;
-    using ::L0::KernelImp::cloneOrigin;
     using ::L0::KernelImp::createPrintfBuffer;
     using ::L0::KernelImp::getCrossThreadDataSpan;
     using ::L0::KernelImp::getDynamicStateHeapDataSpan;
     using ::L0::KernelImp::getSurfaceStateHeapDataSpan;
     using ::L0::KernelImp::module;
+    using ::L0::KernelImp::ownedSharedState;
     using ::L0::KernelImp::patchBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::patchBindlessSurfaceState;
     using ::L0::KernelImp::patchSamplerBindlessOffsetsInCrossThreadData;
@@ -66,7 +66,13 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
         return const_cast<NEO::KernelDescriptor &>(this->sharedState->kernelImmData->getDescriptor());
     }
 
-    WhiteBox() : ::L0::KernelImp(nullptr) {}
+    void setModule(Module *module) {
+        this->module = module;
+        DEBUG_BREAK_IF(!this->sharedState);
+        this->sharedState->module = module;
+    }
+
+    WhiteBox() : ::L0::KernelImp() {}
 };
 
 template <>

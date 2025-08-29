@@ -9,10 +9,14 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 
 #include "level_zero/core/test/unit_tests/experimental/test_graph.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/experimental/source/graph/captured_apis/graph_captured_apis.h"
 #include "level_zero/experimental/source/graph/graph_export.h"
 
 #include "gtest/gtest.h"
+
+#include <memory>
 
 using namespace NEO;
 
@@ -105,7 +109,7 @@ class GraphDotExporterFileTest : public GraphDotExporterTest {
         return {__VA_ARGS__};                                                                                       \
     }
 
-class ExtractParametersTestFixture {
+class ExtractParametersTestFixture : public DeviceFixture {
   protected:
     ClosureExternalStorage storage;
 
@@ -119,14 +123,20 @@ class ExtractParametersTestFixture {
     ze_external_semaphore_wait_params_ext_t dummyWaitParams = {};
     uint32_t dummyCountBuffer[1] = {1};
     ze_group_count_t dummyLaunchArgs = {1, 1, 1};
+    std::unique_ptr<Mock<Module>> module = nullptr;
     Mock<KernelImp> kernel;
     ze_kernel_handle_t dummyKernels[1];
 
     void setUp() {
+        DeviceFixture::setUp();
+        module = std::make_unique<Mock<Module>>(this->device, nullptr);
+        kernel.setModule(module.get());
         dummyKernels[0] = &kernel;
     }
 
-    void tearDown() {}
+    void tearDown() {
+        DeviceFixture::tearDown();
+    }
 
     template <CaptureApi api, typename ApiArgsT>
     void expectAllApiArgsPresent(const ApiArgsT &args) {
