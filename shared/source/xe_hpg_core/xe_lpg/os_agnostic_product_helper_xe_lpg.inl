@@ -28,11 +28,6 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionConstantCacheInvalidationNee
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::blitEnqueuePreferred(bool isWriteToImageFromBuffer) const {
     return false;
 }

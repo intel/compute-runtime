@@ -173,8 +173,8 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemI
     EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
 }
 
-DG2TEST_F(ProductHelperTestDg2, givenDg2ProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
+DG2TEST_F(ProductHelperTestDg2, givenDg2ProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFALSE) {
+    EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsFalse) {

@@ -93,6 +93,11 @@ bool ProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInf
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
 bool isBaseDieA0(const HardwareInfo &hwInfo) {
     return (hwInfo.platform.usRevId & PVC::pvcBaseDieRevMask) == PVC::pvcBaseDieA0Masked;
 }
