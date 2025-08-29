@@ -158,7 +158,7 @@ zetMetricGroupGetExportDataExp(
 }
 
 ze_result_t ZE_APICALL
-zetDriverCalculateMetricExportDataExp(
+zetMetricGroupCalculateMetricExportDataExp(
     ze_driver_handle_t hDriver,
     zet_metric_group_calculation_type_t type,
     size_t exportDataSize,
@@ -616,7 +616,7 @@ zetMetricGroupGetExportDataExp(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zetDriverCalculateMetricExportDataExp(
+zetMetricGroupCalculateMetricExportDataExp(
     ze_driver_handle_t hDriver,
     zet_metric_group_calculation_type_t type,
     size_t exportDataSize,
@@ -626,8 +626,8 @@ zetDriverCalculateMetricExportDataExp(
     uint32_t *pTotalMetricValueCount,
     uint32_t *pMetricCounts,
     zet_typed_value_t *pMetricValues) {
-    return L0::zetDriverCalculateMetricExportDataExp(hDriver, type, exportDataSize, pExportData, pCalculationDescriptor,
-                                                     pSetCount, pTotalMetricValueCount, pMetricCounts, pMetricValues);
+    return L0::zetMetricGroupCalculateMetricExportDataExp(hDriver, type, exportDataSize, pExportData, pCalculationDescriptor,
+                                                          pSetCount, pTotalMetricValueCount, pMetricCounts, pMetricValues);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

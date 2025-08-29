@@ -340,7 +340,7 @@ DriverDispatch::DriverDispatch() {
     this->toolsMetricGroupExp.pfnCalculateMultipleMetricValuesExp = L0::zetMetricGroupCalculateMultipleMetricValuesExp;
     this->toolsMetricGroupExp.pfnGetGlobalTimestampsExp = L0::zetMetricGroupGetGlobalTimestampsExp;
     this->toolsMetricGroupExp.pfnGetExportDataExp = L0::zetMetricGroupGetExportDataExp;
-    this->toolsMetricGroupExp.pfnCalculateMetricExportDataExp = L0::zetDriverCalculateMetricExportDataExp;
+    this->toolsMetricGroupExp.pfnCalculateMetricExportDataExp = L0::zetMetricGroupCalculateMetricExportDataExp;
     this->toolsMetricGroupExp.pfnCreateExp = L0::zetMetricGroupCreateExp;
     this->toolsMetricGroupExp.pfnAddMetricExp = L0::zetMetricGroupAddMetricExp;
     this->toolsMetricGroupExp.pfnRemoveMetricExp = L0::zetMetricGroupRemoveMetricExp;
