@@ -173,31 +173,13 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
 
     virtual ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) = 0;
 
+    virtual uint32_t getMaxWgCountPerTile(NEO::EngineGroupType engineGroupType) const = 0;
+
     static Kernel *fromHandle(ze_kernel_handle_t handle) { return static_cast<Kernel *>(handle); }
 
     inline ze_kernel_handle_t toHandle() { return this; }
 
-    uint32_t getMaxWgCountPerTile(NEO::EngineGroupType engineGroupType) const {
-        auto value = maxWgCountPerTileCcs;
-        if (engineGroupType == NEO::EngineGroupType::renderCompute) {
-            value = maxWgCountPerTileRcs;
-        } else if (engineGroupType == NEO::EngineGroupType::cooperativeCompute) {
-            value = maxWgCountPerTileCooperative;
-        }
-        return value;
-    }
-
     virtual uint32_t getIndirectSize() const = 0;
-
-  protected:
-    uint32_t maxWgCountPerTileCcs = 0;
-    uint32_t maxWgCountPerTileRcs = 0;
-    uint32_t maxWgCountPerTileCooperative = 0;
-    bool heaplessEnabled = false;
-    bool implicitScalingEnabled = false;
-    bool localDispatchSupport = false;
-    bool rcsAvailable = false;
-    bool cooperativeSupport = false;
 };
 
 using KernelAllocatorFn = Kernel *(*)(Module *module);

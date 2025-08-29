@@ -3168,7 +3168,7 @@ HWTEST2_F(SetKernelArg, givenHeaplessWhenPatchingImageWithBindlessEnabledCorrect
     for (auto heaplessEnabled : {false, true}) {
 
         createKernel();
-        kernel->heaplessEnabled = heaplessEnabled;
+        kernel->sharedState->heaplessEnabled = heaplessEnabled;
 
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
                                                                                                                                  neoDevice->getNumGenericSubDevices() > 1);
@@ -3199,11 +3199,11 @@ HWTEST2_F(SetKernelArg, givenHeaplessWhenPatchingImageWithBindlessEnabledCorrect
         auto ssInHeap = imageHW->getBindlessSlot();
         auto patchLocation = ptrOffset(ctd, imageArg.bindless);
         uint64_t bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * NEO::BindlessImageSlot::redescribedImage;
-        uint64_t expectedPatchValue = kernel->heaplessEnabled
+        uint64_t expectedPatchValue = kernel->sharedState->heaplessEnabled
                                           ? bindlessSlotOffset
                                           : gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
 
-        if (kernel->heaplessEnabled) {
+        if (kernel->sharedState->heaplessEnabled) {
             uint64_t patchedValued = *(reinterpret_cast<uint64_t *>(patchLocation));
             EXPECT_EQ(expectedPatchValue, patchedValued);
         } else {

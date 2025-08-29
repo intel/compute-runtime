@@ -41,23 +41,15 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using BaseClass = ::L0::KernelImp;
     using BaseClass::BaseClass;
     using ::L0::KernelImp::cloneOrigin;
-    using ::L0::KernelImp::cooperativeSupport;
     using ::L0::KernelImp::createPrintfBuffer;
     using ::L0::KernelImp::getCrossThreadDataSpan;
     using ::L0::KernelImp::getDynamicStateHeapDataSpan;
     using ::L0::KernelImp::getSurfaceStateHeapDataSpan;
-    using ::L0::KernelImp::heaplessEnabled;
-    using ::L0::KernelImp::implicitScalingEnabled;
-    using ::L0::KernelImp::localDispatchSupport;
-    using ::L0::KernelImp::maxWgCountPerTileCcs;
-    using ::L0::KernelImp::maxWgCountPerTileCooperative;
-    using ::L0::KernelImp::maxWgCountPerTileRcs;
     using ::L0::KernelImp::module;
     using ::L0::KernelImp::patchBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::patchBindlessSurfaceState;
     using ::L0::KernelImp::patchSamplerBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::privateState;
-    using ::L0::KernelImp::rcsAvailable;
     using ::L0::KernelImp::setAssertBuffer;
     using ::L0::KernelImp::sharedState;
 

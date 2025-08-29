@@ -272,13 +272,13 @@ TEST_F(KernelImpTest, GivenKernelMutableStateWhenKernelImpClonedThenStateAssigne
     EXPECT_EQ(kernel2->sharedState->surfaceStateAlignment, kernel1.sharedState->surfaceStateAlignment);
     EXPECT_EQ(kernel2->sharedState->implicitArgsVersion, kernel1.sharedState->implicitArgsVersion);
     EXPECT_EQ(kernel2->sharedState->walkerInlineDataSize, kernel1.sharedState->walkerInlineDataSize);
-    EXPECT_EQ(kernel2->maxWgCountPerTileCcs, kernel1.maxWgCountPerTileCcs);
-    EXPECT_EQ(kernel2->maxWgCountPerTileRcs, kernel1.maxWgCountPerTileRcs);
-    EXPECT_EQ(kernel2->maxWgCountPerTileCooperative, kernel1.maxWgCountPerTileCooperative);
-    EXPECT_EQ(kernel2->heaplessEnabled, kernel1.heaplessEnabled);
-    EXPECT_EQ(kernel2->implicitScalingEnabled, kernel1.implicitScalingEnabled);
-    EXPECT_EQ(kernel2->rcsAvailable, kernel1.rcsAvailable);
-    EXPECT_EQ(kernel2->cooperativeSupport, kernel1.cooperativeSupport);
+    EXPECT_EQ(kernel2->sharedState->maxWgCountPerTileCcs, kernel1.sharedState->maxWgCountPerTileCcs);
+    EXPECT_EQ(kernel2->sharedState->maxWgCountPerTileRcs, kernel1.sharedState->maxWgCountPerTileRcs);
+    EXPECT_EQ(kernel2->sharedState->maxWgCountPerTileCooperative, kernel1.sharedState->maxWgCountPerTileCooperative);
+    EXPECT_EQ(kernel2->sharedState->heaplessEnabled, kernel1.sharedState->heaplessEnabled);
+    EXPECT_EQ(kernel2->sharedState->implicitScalingEnabled, kernel1.sharedState->implicitScalingEnabled);
+    EXPECT_EQ(kernel2->sharedState->rcsAvailable, kernel1.sharedState->rcsAvailable);
+    EXPECT_EQ(kernel2->sharedState->cooperativeSupport, kernel1.sharedState->cooperativeSupport);
 }
 
 TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSizeAndGroupCount) {
@@ -1201,41 +1201,41 @@ TEST_F(KernelImpTest, givenHeaplessAndLocalDispatchEnabledWheSettingGroupSizeThe
     Mock<::L0::KernelImp> kernel;
     kernel.module = &module;
 
-    kernel.heaplessEnabled = false;
-    kernel.localDispatchSupport = false;
+    kernel.sharedState->heaplessEnabled = false;
+    kernel.sharedState->localDispatchSupport = false;
     kernel.setGroupSize(128, 1, 1);
 
-    EXPECT_EQ(0u, kernel.maxWgCountPerTileCcs);
-    EXPECT_EQ(0u, kernel.maxWgCountPerTileRcs);
-    EXPECT_EQ(0u, kernel.maxWgCountPerTileCooperative);
+    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCcs);
+    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileRcs);
+    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCooperative);
 
-    kernel.heaplessEnabled = true;
+    kernel.sharedState->heaplessEnabled = true;
     kernel.setGroupSize(64, 2, 1);
 
-    EXPECT_EQ(0u, kernel.maxWgCountPerTileCcs);
-    EXPECT_EQ(0u, kernel.maxWgCountPerTileRcs);
-    EXPECT_EQ(0u, kernel.maxWgCountPerTileCooperative);
+    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCcs);
+    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileRcs);
+    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCooperative);
 
-    kernel.localDispatchSupport = true;
+    kernel.sharedState->localDispatchSupport = true;
     kernel.setGroupSize(32, 4, 1);
 
-    EXPECT_NE(0u, kernel.maxWgCountPerTileCcs);
-    EXPECT_EQ(0u, kernel.maxWgCountPerTileRcs);
-    EXPECT_EQ(0u, kernel.maxWgCountPerTileCooperative);
+    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileCcs);
+    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileRcs);
+    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCooperative);
 
-    kernel.rcsAvailable = true;
+    kernel.sharedState->rcsAvailable = true;
     kernel.setGroupSize(16, 8, 1);
 
-    EXPECT_NE(0u, kernel.maxWgCountPerTileCcs);
-    EXPECT_NE(0u, kernel.maxWgCountPerTileRcs);
-    EXPECT_EQ(0u, kernel.maxWgCountPerTileCooperative);
+    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileCcs);
+    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileRcs);
+    EXPECT_EQ(0u, kernel.sharedState->maxWgCountPerTileCooperative);
 
-    kernel.cooperativeSupport = true;
+    kernel.sharedState->cooperativeSupport = true;
     kernel.setGroupSize(8, 8, 2);
 
-    EXPECT_NE(0u, kernel.maxWgCountPerTileCcs);
-    EXPECT_NE(0u, kernel.maxWgCountPerTileRcs);
-    EXPECT_NE(0u, kernel.maxWgCountPerTileCooperative);
+    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileCcs);
+    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileRcs);
+    EXPECT_NE(0u, kernel.sharedState->maxWgCountPerTileCooperative);
 }
 
 TEST_F(KernelImpTest, givenCorrectEngineTypeWhenGettingMaxWgCountPerTileThenReturnActualValue) {
@@ -1243,9 +1243,9 @@ TEST_F(KernelImpTest, givenCorrectEngineTypeWhenGettingMaxWgCountPerTileThenRetu
     Mock<::L0::KernelImp> kernel;
     kernel.module = &module;
 
-    kernel.maxWgCountPerTileCcs = 4;
-    kernel.maxWgCountPerTileRcs = 2;
-    kernel.maxWgCountPerTileCooperative = 100;
+    kernel.sharedState->maxWgCountPerTileCcs = 4;
+    kernel.sharedState->maxWgCountPerTileRcs = 2;
+    kernel.sharedState->maxWgCountPerTileCooperative = 100;
 
     EXPECT_EQ(4u, kernel.getMaxWgCountPerTile(NEO::EngineGroupType::compute));
     EXPECT_EQ(2u, kernel.getMaxWgCountPerTile(NEO::EngineGroupType::renderCompute));

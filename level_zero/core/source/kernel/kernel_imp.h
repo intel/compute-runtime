@@ -205,6 +205,16 @@ struct KernelImp : Kernel {
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return privateState.pImplicitArgs.get(); }
 
+    uint32_t getMaxWgCountPerTile(NEO::EngineGroupType engineGroupType) const override {
+        auto value = this->sharedState->maxWgCountPerTileCcs;
+        if (engineGroupType == NEO::EngineGroupType::renderCompute) {
+            value = this->sharedState->maxWgCountPerTileRcs;
+        } else if (engineGroupType == NEO::EngineGroupType::cooperativeCompute) {
+            value = this->sharedState->maxWgCountPerTileCooperative;
+        }
+        return value;
+    }
+
     KernelExt *getExtension(uint32_t extensionType);
 
     bool checkKernelContainsStatefulAccess();

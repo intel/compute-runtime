@@ -31,6 +31,16 @@ struct KernelSharedState {
 
     uint32_t implicitArgsVersion = 0;
     uint32_t walkerInlineDataSize = 0;
+
+    uint32_t maxWgCountPerTileCcs = 0;
+    uint32_t maxWgCountPerTileRcs = 0;
+    uint32_t maxWgCountPerTileCooperative = 0;
+
+    bool heaplessEnabled = false;
+    bool implicitScalingEnabled = false;
+    bool localDispatchSupport = false;
+    bool rcsAvailable = false;
+    bool cooperativeSupport = false;
 };
 
 } // namespace L0
