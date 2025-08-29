@@ -1921,6 +1921,9 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(co
     if (this->useAdditionalBlitProperties) {
         return false;
     }
+    if (this->isSharedSystemEnabled()) {
+        return false;
+    }
     auto driver = this->getDevice()->getDriverHandle();
     auto importedAlloc = driver->findHostPointerAllocation(const_cast<void *>(srcptr), size, this->getDevice()->getRootDeviceIndex());
     if (importedAlloc != nullptr) {
