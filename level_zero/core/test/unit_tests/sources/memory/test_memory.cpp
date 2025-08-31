@@ -4999,6 +4999,9 @@ TEST_F(MultipleDevicePeerAllocationTest,
     EXPECT_EQ(peerAlloc0, peerAlloc1);
     EXPECT_EQ(peerGpuAddress0, peerGpuAddress1);
 
+    EXPECT_FALSE(peerAlloc0->isCompressionEnabled());
+    EXPECT_FALSE(peerAlloc1->isCompressionEnabled());
+
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }

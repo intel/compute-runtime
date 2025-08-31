@@ -1640,10 +1640,20 @@ ze_result_t ContextImp::createImage(ze_device_handle_t hDevice,
 bool ContextImp::isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize) {
     auto &hwInfo = device.getHwInfo();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
-    auto &l0GfxCoreHelper = device.getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto neoDevice = device.getNEODevice();
+    auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     if (!l0GfxCoreHelper.usmCompressionSupported(hwInfo) || !gfxCoreHelper.isBufferSizeSuitableForCompression(allocSize) || structuresLookupTable.uncompressedHint) {
         return false;
+    }
+
+    for (auto &dev : this->driverHandle->devices) {
+        auto peerRootDeviceIndex = dev->getRootDeviceIndex();
+        if (peerRootDeviceIndex != rootDeviceIndex &&
+            l0GfxCoreHelper.usmCompressionSupported(dev->getHwInfo()) && neoDevice->crossAccessEnabledDevices.find(peerRootDeviceIndex) != neoDevice->crossAccessEnabledDevices.end()) {
+            return false;
+        }
     }
 
     if (l0GfxCoreHelper.forceDefaultUsmCompressionSupport()) {
