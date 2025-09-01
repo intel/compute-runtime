@@ -1,10 +1,28 @@
 <!---
 
-Copyright (C) 2021-2024 Intel Corporation
+Copyright (C) 2021-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 -->
+
+# Release Notes v1.13
+
+Level Zero Core API.
+
+September 2025
+
+Changes in this release:
+
+The update involves changes introduced across Level Zero spec from v1.6 upto and including v1.13. Some of the important changes are as follows:
+
+| Feature	| Spec link	|
+| ------------------ | -------------------|
+| Support for RTAS Builder API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#rtasbuilder |
+| Support for Counter Based Event Pool API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#counterbasedeventpool |
+| Support for Bindless Images API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#bindlessimages |
+| Support for Immediate Command List Append API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#immediatecommandlistappend |
+| Support for Mutable Command List API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#mutablecommandlist |
 
 # Release Notes v1.6
 
