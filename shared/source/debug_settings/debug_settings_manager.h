@@ -113,6 +113,11 @@ struct DebugVarBase {
         return scopeMask;
     }
 
+    template <typename UserType>
+    UserType getIfNotDefault(UserType userValue) const {
+        return (value != defaultValue) ? static_cast<UserType>(value) : userValue;
+    }
+
   private:
     T value;
     T defaultValue;

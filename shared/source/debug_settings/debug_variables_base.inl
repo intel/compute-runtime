@@ -197,6 +197,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, CFEComputeDispatchAllWalkerEnable, -1, "Set Comp
 DECLARE_DEBUG_VARIABLE(int32_t, ComputeDispatchAllWalkerEnableInComputeWalker, -1, "Set Compute Dispatch All Walker flag in COMPUTE_WALKER on PVC+ platforms, -1: do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableMemoryPrefetch, -1, "-1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceCsStallForStatePrefetch, -1, "Set CSStall for STATE_PREFETCH cmd, -1:default, 0:disable, 1:enable")
+DECLARE_DEBUG_VARIABLE(int32_t, LimitIsaPrefetchSize, -1, "-1: default, >0: maximum size of ISA allocation prefetch in bytes")
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramGlobalFenceAsMiMemFenceCommandInCommandStream, -1, "-1: default, 0: disable, 1: enable, System Memory Fence executed as MI_MEM_FENCE command in command stream")
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramGlobalFenceAsPostSyncOperationInComputeWalker, -1, "-1: default, 0: disable, 1: enable, System Memory Fence executed as post-sync operation in COMPUTE_WALKER")
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramGlobalFenceAsKernelInstructionInEUKernel, -1, "-1: default, 0: disable, 1: enable, System Memory Fence executed as kernel instruction in EU kernel")

@@ -564,8 +564,10 @@ HWTEST2_F(MutableCommandListKernelTest,
     size_t expectedIohPrefetchPadding = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize() - expectedIohPrefetchSize,
                                                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
 
-    uint32_t expectedIsaPrefetchSize = kernel->getImmutableData()->getIsaSize();
-    size_t expectedIsaPrefetchPadding = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxIsaSize() - expectedIsaPrefetchSize,
+    auto maxIsaSize = std::min(mutation.kernelGroup->getMaxIsaSize(), static_cast<uint32_t>(MemoryConstants::kiloByte));
+
+    uint32_t expectedIsaPrefetchSize = std::min(kernel->getImmutableData()->getIsaSize(), static_cast<uint32_t>(MemoryConstants::kiloByte));
+    size_t expectedIsaPrefetchPadding = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(maxIsaSize - expectedIsaPrefetchSize,
                                                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
 
     GenCmdList cmdList;
@@ -662,7 +664,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     size_t expectedIohPrefetchPadding = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxAppendIndirectHeapSize() - expectedIohPrefetchSize,
                                                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
 
-    uint32_t expectedIsaPrefetchSize = kernel2->getImmutableData()->getIsaSize();
+    uint32_t expectedIsaPrefetchSize = std::min(kernel2->getImmutableData()->getIsaSize(), static_cast<uint32_t>(MemoryConstants::kiloByte));
     size_t expectedIsaPrefetchPadding = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mutation.kernelGroup->getMaxIsaSize() - expectedIsaPrefetchSize,
                                                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
 

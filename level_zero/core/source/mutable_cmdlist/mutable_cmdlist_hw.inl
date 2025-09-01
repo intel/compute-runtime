@@ -90,13 +90,15 @@ uint32_t MutableCommandListCoreFamily<gfxCoreFamily>::getIohSizeForPrefetch(cons
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::addKernelIsaMemoryPrefetchPadding(NEO::LinearStream &cmdStream, const Kernel &kernel, uint64_t cmdId) {
+void MutableCommandListCoreFamily<gfxCoreFamily>::addKernelIsaMemoryPrefetchPadding(NEO::LinearStream &cmdStream, const Kernel &kernel, uint32_t isaPrefetchSizeLimit, uint64_t cmdId) {
     auto kernelGroup = getKernelGroupForPrefetch(cmdId);
     if (!kernelGroup) {
         return;
     }
 
-    auto remainingSize = kernelGroup->getMaxIsaSize() - kernel.getImmutableData()->getIsaSize();
+    auto maxSize = std::min(isaPrefetchSizeLimit, kernelGroup->getMaxIsaSize());
+
+    auto remainingSize = maxSize - kernel.getImmutableData()->getIsaSize();
 
     auto paddingSize = NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(remainingSize, this->device->getNEODevice()->getRootDeviceEnvironment());
     NEO::EncodeNoop<GfxFamily>::emitNoop(cmdStream, paddingSize);

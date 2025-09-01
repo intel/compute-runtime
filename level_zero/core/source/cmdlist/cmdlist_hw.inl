@@ -20,6 +20,7 @@
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -388,8 +389,11 @@ void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStrea
     NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *iohAllocation, kernel.getIndirectSize(), iohOffset, rootExecEnv);
     addKernelIndirectDataMemoryPrefetchPadding(cmdStream, kernel, cmdId);
 
-    NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *kernel.getIsaAllocation(), kernel.getImmutableData()->getIsaSize(), kernel.getIsaOffsetInParentAllocation(), rootExecEnv);
-    addKernelIsaMemoryPrefetchPadding(cmdStream, kernel, cmdId);
+    uint32_t isaPrefetchSizeLimit = NEO::debugManager.flags.LimitIsaPrefetchSize.getIfNotDefault(static_cast<uint32_t>(MemoryConstants::kiloByte));
+    auto isaSizeToPrefetch = std::min(kernel.getImmutableData()->getIsaSize(), isaPrefetchSizeLimit);
+
+    NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *kernel.getIsaAllocation(), isaSizeToPrefetch, kernel.getIsaOffsetInParentAllocation(), rootExecEnv);
+    addKernelIsaMemoryPrefetchPadding(cmdStream, kernel, isaPrefetchSizeLimit, cmdId);
 
     if (outListCommands) {
         auto &prefetchToPatch = outListCommands->emplace_back();

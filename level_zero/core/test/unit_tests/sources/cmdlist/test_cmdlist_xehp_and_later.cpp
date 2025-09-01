@@ -3033,6 +3033,83 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughIohSpaceWhenLaunchingKern
     EXPECT_EQ(ioh->getGraphicsAllocation()->getGpuAddress(), statePrefetch->getAddress());
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThenLimitItsSize, IsAtLeastXeHpcCore) {
+    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableMemoryPrefetch.set(1);
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &commandContainer = commandList->getCmdContainer();
+    auto cmdStream = commandContainer.getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto isaAlloc = kernel.getImmutableData()->getIsaGraphicsAllocation();
+
+    uint32_t defaultIsaSize = static_cast<uint32_t>(5 * MemoryConstants::kiloByte);
+    isaAlloc->setSize(defaultIsaSize);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+        size_t prefetchedSize = 0;
+
+        auto itor = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
+        while (itor != cmdList.end()) {
+            auto statePrefetch = genCmdCast<STATE_PREFETCH *>(*itor);
+            if (statePrefetch) {
+                if (statePrefetch->getAddress() >= isaAlloc->getGpuAddress() &&
+                    statePrefetch->getAddress() < (isaAlloc->getGpuAddress() + isaAlloc->getUnderlyingBufferSize())) {
+                    prefetchedSize += statePrefetch->getPrefetchSize() * MemoryConstants::cacheLineSize;
+                }
+            } else {
+                break;
+            }
+            itor++;
+        }
+        EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), prefetchedSize); // limited to 1kb
+    }
+
+    NEO::debugManager.flags.LimitIsaPrefetchSize.set(2 * MemoryConstants::kiloByte);
+    offset = cmdStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+        size_t prefetchedSize = 0;
+
+        auto itor = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
+        while (itor != cmdList.end()) {
+            auto statePrefetch = genCmdCast<STATE_PREFETCH *>(*itor);
+            if (statePrefetch) {
+                if (statePrefetch->getAddress() >= isaAlloc->getGpuAddress() &&
+                    statePrefetch->getAddress() < (isaAlloc->getGpuAddress() + isaAlloc->getUnderlyingBufferSize())) {
+                    prefetchedSize += statePrefetch->getPrefetchSize() * MemoryConstants::cacheLineSize;
+                }
+            } else {
+                break;
+            }
+            itor++;
+        }
+        EXPECT_EQ(static_cast<uint32_t>(2 * MemoryConstants::kiloByte), prefetchedSize); // limited to 2kb by debug variable
+    }
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel,
           givenFlagMakeKernelCommandViewWhenAppendKernelWithSignalEventThenDispatchNoPostSyncInViewMemoryAndNoEventAllocationAddedToResidency,
           IsAtLeastXeCore) {
