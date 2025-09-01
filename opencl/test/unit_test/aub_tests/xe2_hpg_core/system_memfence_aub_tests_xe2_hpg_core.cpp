@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ XE2_HPG_CORETEST_F(SystemMemFenceViaMiMemFenceXe2HpgCore, WhenGeneratedAsMiMemFe
     const size_t bufferSize = MemoryConstants::kiloByte;
     std::vector<char> buffer(bufferSize, 0x11);
 
-    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device.get(), nullptr, bufferSize, 0, &retVal);
+    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device, nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, deviceMemAlloc);
 
@@ -91,7 +91,7 @@ XE2_HPG_CORETEST_F(SystemMemFenceViaComputeWalkerXe2HpgCore, WhenGeneratedAsPost
     const size_t bufferSize = MemoryConstants::kiloByte;
     std::vector<char> buffer(bufferSize, 0x11);
 
-    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device.get(), nullptr, bufferSize, 0, &retVal);
+    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device, nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, deviceMemAlloc);
 

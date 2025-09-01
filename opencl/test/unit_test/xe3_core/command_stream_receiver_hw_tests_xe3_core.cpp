@@ -369,8 +369,6 @@ XE3_CORETEST_F(Xe3BcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionIsE
     *bltCmd = Xe3CoreFamily::cmdInitXyCopyBlt;
 
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-    platformsImpl->clear();
-    EXPECT_EQ(platform(), nullptr);
 
     BlitCommandsHelper<Xe3CoreFamily>::appendBlitCommandsForBuffer<MEM_COPY>(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
 

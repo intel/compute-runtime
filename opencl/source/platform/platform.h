@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 
@@ -62,6 +63,8 @@ class Platform : public BaseObject<_cl_platform_id> {
 
     SVMAllocsManager *getSVMAllocsManager() const;
     StagingBufferManager *getStagingBufferManager() const;
+    UsmMemAllocPool &getHostMemAllocPool();
+    void initializeHostUsmAllocationPool();
 
     void incActiveContextCount();
     void decActiveContextCount();
@@ -84,6 +87,8 @@ class Platform : public BaseObject<_cl_platform_id> {
     SVMAllocsManager *svmAllocsManager = nullptr;
     StagingBufferManager *stagingBufferManager = nullptr;
     int32_t activeContextCount = 0;
+    UsmMemAllocPool usmHostMemAllocPool;
+    bool usmPoolInitialized = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<BaseObject<_cl_platform_id>>);

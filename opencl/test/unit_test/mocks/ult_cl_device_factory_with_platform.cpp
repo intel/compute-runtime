@@ -28,13 +28,27 @@ UltClDeviceFactoryWithPlatform::UltClDeviceFactoryWithPlatform(uint32_t rootDevi
 }
 
 void UltClDeviceFactoryWithPlatform::initialize(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment, MemoryManager *memoryManager) {
-    if (!NEO::platform(clExecutionEnvironment)) {
-        NEO::constructPlatform(clExecutionEnvironment);
+    auto platform = NEO::platform(clExecutionEnvironment);
+    if (!platform) {
+        platform = NEO::constructPlatform(clExecutionEnvironment);
         cleanupPlatformOnDestruction = true;
     }
 
-    UltClDeviceFactory::initialize(rootDevicesCount, subDevicesCount, clExecutionEnvironment, memoryManager);
-    NEO::initPlatform(rootDevices);
+    pUltDeviceFactory = std::make_unique<UltDeviceFactory>(rootDevicesCount, subDevicesCount, *clExecutionEnvironment);
+    if (memoryManager != nullptr) {
+        for (auto device : pUltDeviceFactory->rootDevices) {
+            device->injectMemoryManager(memoryManager);
+        }
+    }
+    NEO::initPlatform(pUltDeviceFactory->rootDevices);
+    auto clDevices = platform->getClDevices();
+    for (size_t i = 0; i < platform->getNumDevices(); i++) {
+        auto clDevice = static_cast<MockClDevice *>(clDevices[i]);
+        for (auto &clSubDevice : clDevice->subDevices) {
+            subDevices.push_back(clSubDevice.get());
+        }
+        rootDevices.push_back(clDevice);
+    }
 }
 
 UltClDeviceFactoryWithPlatform::~UltClDeviceFactoryWithPlatform() {

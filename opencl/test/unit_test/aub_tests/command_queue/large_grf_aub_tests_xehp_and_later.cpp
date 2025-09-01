@@ -248,7 +248,7 @@ class LargeGrfTest : public AUBFixture,
 
     Context *getContext() const override { return context; }
 
-    ClDevice *getDevice() const override { return device.get(); }
+    ClDevice *getDevice() const override { return device; }
 
     void SetUp() override {
         testHwInfo = *defaultHwInfo;

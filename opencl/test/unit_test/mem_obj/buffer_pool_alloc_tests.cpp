@@ -42,7 +42,7 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
         this->mockMemoryManager->failInDevicePoolWithError = shouldFail;
     }
 
-    std::unique_ptr<UltClDeviceFactory> deviceFactory;
+    std::unique_ptr<UltClDeviceFactoryWithPlatform> deviceFactory;
     MockClDevice *device;
     MockDevice *mockNeoDevice;
     std::unique_ptr<MockContext> context;
@@ -62,7 +62,7 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
         debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
         debugManager.flags.EnableHostUsmAllocationPool.set(0);
         debugManager.flags.RenderCompressedBuffersEnabled.set(1);
-        this->deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
+        this->deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(2, 0);
         this->device = deviceFactory->rootDevices[rootDeviceIndex];
         this->mockNeoDevice = static_cast<MockDevice *>(&this->device->getDevice());
         const auto bitfield = mockNeoDevice->getDeviceBitfield();
@@ -74,8 +74,7 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
         this->setAllocationToFail(failMainStorageAllocation);
         cl_device_id devices[] = {device};
         this->context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
-        this->context->usmPoolInitialized = false;
-        this->context->initializeUsmAllocationPools();
+        this->context->initializeDeviceUsmAllocationPool();
         EXPECT_EQ(retVal, CL_SUCCESS);
         this->setAllocationToFail(false);
         this->poolAllocator = static_cast<MockBufferPoolAllocator *>(&context->getBufferPoolAllocator());
@@ -590,7 +589,7 @@ TEST_F(AggregatedSmallBuffersEnabledTestDoNotRunSetup, givenProductWithAndWithou
     debugManager.flags.EnableHostUsmAllocationPool.set(0);
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
-    this->deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
+    this->deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(2, 0);
     this->device = deviceFactory->rootDevices[rootDeviceIndex];
     this->mockNeoDevice = static_cast<MockDevice *>(&this->device->getDevice());
 

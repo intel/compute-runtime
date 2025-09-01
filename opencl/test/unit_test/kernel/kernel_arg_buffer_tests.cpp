@@ -351,7 +351,7 @@ TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectStatelessAccessWhenHa
     if (svmAllocationsManager == nullptr) {
         return;
     }
-    pContext->getHostMemAllocPool().cleanup();
+    pContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().cleanup();
     svmAllocationsManager->cleanupUSMAllocCaches();
 
     mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed = true;

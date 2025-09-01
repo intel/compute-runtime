@@ -423,7 +423,7 @@ TEST_F(clSetKernelArgSVMPointerTests, givenSvmAndValidArgValueWhenAllocIdCacheHi
         EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
 
         auto expectedAllocationsCounter = 1u;
-        expectedAllocationsCounter += pContext->getHostMemAllocPool().isInitialized() ? 1u : 0u;
+        expectedAllocationsCounter += pContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().isInitialized() ? 1u : 0u;
         expectedAllocationsCounter += pContext->getDeviceMemAllocPool().isInitialized() ? 1u : 0u;
 
         EXPECT_EQ(expectedAllocationsCounter, mockSvmManager->allocationsCounter);

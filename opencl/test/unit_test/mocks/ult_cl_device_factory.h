@@ -22,7 +22,6 @@ struct UltDeviceFactory;
 struct UltClDeviceFactory {
   public:
     UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount);
-    UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount, MemoryManager *memoryManager);
     UltClDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment);
     ~UltClDeviceFactory();
 
@@ -31,8 +30,7 @@ struct UltClDeviceFactory {
     std::vector<ClDevice *> subDevices;
 
   protected:
-    UltClDeviceFactory();
-    void initialize(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment, MemoryManager *memoryManager);
+    void initialize(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment);
 };
 
 } // namespace NEO

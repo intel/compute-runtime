@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
@@ -24,6 +25,7 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 using namespace NEO;
 
@@ -622,10 +624,9 @@ INSTANTIATE_TEST_SUITE_P(
 using UsmDestructionTests = ::testing::Test;
 
 HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledThenWaitForCompletionIsCalled) {
-    MockDevice mockDevice;
-    mockDevice.incRefInternal();
-    MockClDevice mockClDevice(&mockDevice);
-    MockContext mockContext(&mockClDevice, false);
+    UltClDeviceFactoryWithPlatform deviceFactory(1, 0);
+    MockDevice &mockDevice = *deviceFactory.pUltDeviceFactory->rootDevices[0];
+    MockContext mockContext(deviceFactory.rootDevices[0], false);
 
     if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
         GTEST_SKIP();
@@ -656,10 +657,9 @@ HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledTh
 }
 
 HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWaitForCompletionIsCalled) {
-    MockDevice mockDevice;
-    mockDevice.incRefInternal();
-    MockClDevice mockClDevice(&mockDevice);
-    MockContext mockContext(&mockClDevice, false);
+    UltClDeviceFactoryWithPlatform deviceFactory(1, 0);
+    MockDevice &mockDevice = *deviceFactory.pUltDeviceFactory->rootDevices[0];
+    MockContext mockContext(deviceFactory.rootDevices[0], false);
 
     if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
         GTEST_SKIP();

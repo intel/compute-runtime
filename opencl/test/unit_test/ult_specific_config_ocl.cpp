@@ -20,7 +20,7 @@ using namespace NEO;
 
 void applyWorkarounds() {
     platformsImpl = new std::vector<std::unique_ptr<Platform>>;
-    platformsImpl->reserve(1);
+    platformsImpl->reserve(8);
 }
 
 void cleanTestHelpers() {

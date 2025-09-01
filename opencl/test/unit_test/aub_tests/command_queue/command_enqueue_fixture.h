@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ struct CommandEnqueueAUBFixture : public AUBFixture {
     void setUp() {
         AUBFixture::setUp(nullptr);
         pDevice = &device->device;
-        pClDevice = device.get();
+        pClDevice = device;
     }
 
     void tearDown() {

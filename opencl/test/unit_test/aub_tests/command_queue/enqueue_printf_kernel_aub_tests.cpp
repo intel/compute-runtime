@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,8 +23,8 @@ class AUBPrintfKernelFixture : public AUBFixture,
 
     void SetUp() override {
         AUBFixture::setUp(nullptr);
-        ASSERT_NE(nullptr, device.get());
-        HelloWorldKernelFixture::setUp(device.get(), programFile, kernelName);
+        ASSERT_NE(nullptr, device);
+        HelloWorldKernelFixture::setUp(device, programFile, kernelName);
     }
     void TearDown() override {
         if (IsSkipped()) {

@@ -598,8 +598,6 @@ XE2_HPG_CORETEST_F(Xe2BcsTests, givenBufferInDeviceMemoryWhenStatelessCompressio
     *bltCmd = Xe2HpgCoreFamily::cmdInitXyCopyBlt;
 
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-    platformsImpl->clear();
-    EXPECT_EQ(platform(), nullptr);
 
     BlitCommandsHelper<Xe2HpgCoreFamily>::appendBlitCommandsForBuffer<MEM_COPY>(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
 

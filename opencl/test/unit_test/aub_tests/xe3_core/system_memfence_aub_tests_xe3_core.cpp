@@ -45,7 +45,7 @@ XE3_CORETEST_F(SystemMemFenceViaMiMemFenceXe3Core, WhenGeneratedAsMiMemFenceComm
     const size_t bufferSize = MemoryConstants::kiloByte;
     std::vector<char> buffer(bufferSize, 0x11);
 
-    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device.get(), nullptr, bufferSize, 0, &retVal);
+    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device, nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, deviceMemAlloc);
 
@@ -93,7 +93,7 @@ XE3_CORETEST_F(SystemMemFenceViaComputeWalkerXe3Core, WhenGeneratedAsPostSyncOpe
     const size_t bufferSize = MemoryConstants::kiloByte;
     std::vector<char> buffer(bufferSize, 0x11);
 
-    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device.get(), nullptr, bufferSize, 0, &retVal);
+    auto deviceMemAlloc = clDeviceMemAllocINTEL(this->context, this->device, nullptr, bufferSize, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, deviceMemAlloc);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ struct MulticontextOclAubFixture : public MulticontextAubFixture {
     void createDevices(const HardwareInfo &hwInfo, uint32_t numTiles) override;
 
     std::vector<ClDevice *> tileDevices;
-    std::unique_ptr<MockClDevice> rootDevice;
+    MockClDevice *rootDevice;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<MockContext> multiTileDefaultContext;
     std::vector<std::vector<std::unique_ptr<CommandQueue>>> commandQueues;

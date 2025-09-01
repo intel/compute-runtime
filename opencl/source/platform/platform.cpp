@@ -14,16 +14,19 @@
 #include "shared/source/device/root_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/debug_env_reader.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/pin/pin.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
+#include "opencl/source/helpers/usm_pool_params.h"
 #include "opencl/source/platform/platform_info.h"
 #include "opencl/source/sharings/sharing_factory.h"
 
@@ -43,13 +46,13 @@ Platform::Platform(ExecutionEnvironment &executionEnvironmentIn) : executionEnvi
 Platform::~Platform() {
     executionEnvironment.prepareForCleanup();
 
-    devicesCleanup(false);
-
+    usmHostMemAllocPool.cleanup();
     if (isInitialized()) {
         delete stagingBufferManager;
         svmAllocsManager->cleanupUSMAllocCaches();
         delete svmAllocsManager;
     }
+    devicesCleanup(false);
 
     gtpinNotifyPlatformShutdown();
     executionEnvironment.decRefInternal();
@@ -288,6 +291,10 @@ StagingBufferManager *Platform::getStagingBufferManager() const {
     return this->stagingBufferManager;
 }
 
+UsmMemAllocPool &Platform::getHostMemAllocPool() {
+    return this->usmHostMemAllocPool;
+}
+
 void Platform::incActiveContextCount() {
     TakeOwnershipWrapper<Platform> platformOwnership(*this);
     this->activeContextCount++;
@@ -302,4 +309,49 @@ void Platform::decActiveContextCount() {
     }
 }
 
+void Platform::initializeHostUsmAllocationPool() {
+    if (this->usmPoolInitialized) {
+        return;
+    }
+    auto svmMemoryManager = this->getSVMAllocsManager();
+
+    TakeOwnershipWrapper<Platform> platformOwnership(*this);
+    if (this->usmPoolInitialized) {
+        return;
+    }
+
+    auto usmHostAllocPoolingEnabled = ApiSpecificConfig::isHostUsmPoolingEnabled();
+    for (auto &device : this->clDevices) {
+        usmHostAllocPoolingEnabled &= device->getProductHelper().isHostUsmPoolAllocatorSupported() && DeviceFactory::isHwModeSelected();
+    }
+
+    auto usmHostPoolParams = UsmPoolParams::getUsmHostPoolParams();
+    if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
+        usmHostAllocPoolingEnabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
+        usmHostPoolParams.poolSize = debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;
+    }
+    if (usmHostAllocPoolingEnabled) {
+        RootDeviceIndicesContainer rootDeviceIndices;
+        std::map<uint32_t, DeviceBitfield> deviceBitfields;
+
+        for (auto &device : this->clDevices) {
+            rootDeviceIndices.pushUnique(device->getRootDeviceIndex());
+        }
+
+        for (auto &rootDeviceIndex : rootDeviceIndices) {
+            DeviceBitfield deviceBitfield{};
+            for (const auto &pDevice : this->clDevices) {
+                if (pDevice->getRootDeviceIndex() == rootDeviceIndex) {
+                    deviceBitfield |= pDevice->getDeviceBitfield();
+                }
+            }
+            deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
+        }
+
+        SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
+                                                                   rootDeviceIndices, deviceBitfields);
+        this->usmHostMemAllocPool.initialize(svmMemoryManager, memoryProperties, usmHostPoolParams.poolSize, usmHostPoolParams.minServicedSize, usmHostPoolParams.maxServicedSize);
+    }
+    this->usmPoolInitialized = true;
+}
 } // namespace NEO

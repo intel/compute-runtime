@@ -61,7 +61,7 @@ struct AUBHelloWorldFixture
         ClHardwareParse::setUp();
 
         IndirectHeapFixture::setUp(pCmdQ);
-        KernelFixture::setUp(device.get(), kernelFilename, kernelName);
+        KernelFixture::setUp(device, kernelFilename, kernelName);
         ASSERT_NE(nullptr, pKernel);
 
         auto retVal = CL_INVALID_VALUE;

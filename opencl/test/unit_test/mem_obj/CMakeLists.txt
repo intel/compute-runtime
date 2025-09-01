@@ -41,6 +41,7 @@ set(IGDRCL_SRCS_tests_mem_obj
     ${CMAKE_CURRENT_SOURCE_DIR}/packed_yuv_image_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sub_buffer_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/zero_copy_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/usm_memory_pool_tests.cpp
 )
 
 if(TESTS_XEHP_AND_LATER)

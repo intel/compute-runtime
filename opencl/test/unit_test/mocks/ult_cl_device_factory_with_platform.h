@@ -12,15 +12,19 @@ namespace NEO {
 class ClExecutionEnvironment;
 class MemoryManager;
 
-class UltClDeviceFactoryWithPlatform : public UltClDeviceFactory {
+class UltClDeviceFactoryWithPlatform {
   public:
     UltClDeviceFactoryWithPlatform(uint32_t rootDevicesCount, uint32_t subDevicesCount);
     UltClDeviceFactoryWithPlatform(uint32_t rootDevicesCount, uint32_t subDevicesCount, MemoryManager *memoryManager);
     UltClDeviceFactoryWithPlatform(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment);
     ~UltClDeviceFactoryWithPlatform();
+    bool cleanupPlatformOnDestruction = false;
+
+    std::unique_ptr<UltDeviceFactory> pUltDeviceFactory;
+    std::vector<MockClDevice *> rootDevices;
+    std::vector<ClDevice *> subDevices;
 
   protected:
-    bool cleanupPlatformOnDestruction = false;
     void initialize(uint32_t rootDevicesCount, uint32_t subDevicesCount, ClExecutionEnvironment *clExecutionEnvironment, MemoryManager *memoryManager);
 };
 

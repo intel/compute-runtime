@@ -37,6 +37,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 
 #include "CL/cl.h"
 #include "memory_properties_flags.h"
@@ -835,6 +836,7 @@ TEST_P(CreateImageHostPtr, givenLinearImageWhenFailedAtCreationThenReturnError) 
 }
 
 TEST_P(CreateImageHostPtr, WhenWritingOutsideAllocatedMemoryWhileCreatingImageThenWriteIsHandledCorrectly) {
+    pClDevice->getPlatform()->getSVMAllocsManager()->cleanupUSMAllocCaches();
     auto mockMemoryManager = new MockMemoryManager(*pDevice->executionEnvironment);
     pDevice->injectMemoryManager(mockMemoryManager);
     context->memoryManager = mockMemoryManager;

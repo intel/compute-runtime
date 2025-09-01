@@ -52,12 +52,13 @@ class AUBFixture : public CommandQueueHwFixture {
         ultHwConfig.aubTestName = aubFileName.c_str();
 
         auto pDevice = MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex);
-        device = std::make_unique<MockClDevice>(pDevice);
         pDevice->disableSecondaryEngines = true;
+        initPlatform({pDevice});
+        device = static_cast<MockClDevice *>(platform(pDevice->getExecutionEnvironment())->getClDevice(0));
 
         this->csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
-        CommandQueueHwFixture::setUp(AUBFixture::device.get(), cl_command_queue_properties(0));
+        CommandQueueHwFixture::setUp(AUBFixture::device, cl_command_queue_properties(0));
     }
     void tearDown() {
         CommandQueueHwFixture::tearDown();
@@ -157,7 +158,7 @@ class AUBFixture : public CommandQueueHwFixture {
     const uint32_t rootDeviceIndex = 0;
     CommandStreamReceiver *csr = nullptr;
     volatile uint32_t *pTagMemory = nullptr;
-    std::unique_ptr<MockClDevice> device;
+    MockClDevice *device;
 
     ExecutionEnvironment *executionEnvironment;
 
@@ -173,7 +174,7 @@ struct KernelAUBFixture : public AUBFixture,
                           public KernelFixture {
     void setUp() {
         AUBFixture::setUp(nullptr);
-        KernelFixture::setUp(device.get(), context);
+        KernelFixture::setUp(device, context);
     }
 
     void tearDown() {

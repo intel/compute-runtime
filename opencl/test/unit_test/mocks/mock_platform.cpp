@@ -33,6 +33,18 @@ bool MockPlatform::initializeWithNewDevices() {
     return Platform::initialize(DeviceFactory::createDevices(executionEnvironment));
 }
 
+bool MockPlatform::initializeAsMockClDevices(std::vector<std::unique_ptr<Device>> devices) {
+    bool success = Platform::initialize(std::move(devices));
+    if (success) {
+        for (size_t i = 0; i < clDevices.size(); i++) {
+            auto mockClDevice = new MockClDevice(static_cast<MockDevice *>(&clDevices[i]->getDevice()));
+            delete clDevices[i];
+            clDevices[i] = mockClDevice;
+        }
+    }
+    return success;
+}
+
 Platform *platform() {
     if (platformsImpl->empty()) {
         return nullptr;
@@ -53,29 +65,29 @@ static std::mutex mutex;
 
 bool initPlatform() {
     std::unique_lock<std::mutex> lock(mutex);
-    auto pPlatform = platform();
-    return pPlatform->initialize(DeviceFactory::createDevices(*pPlatform->peekExecutionEnvironment()));
+    auto pPlatform = static_cast<MockPlatform *>(platform());
+    return pPlatform->initializeAsMockClDevices(DeviceFactory::createDevices(*pPlatform->peekExecutionEnvironment()));
 }
 
-bool initPlatform(std::vector<MockClDevice *> clDeviceVector) {
+bool initPlatform(std::vector<MockDevice *> deviceVector) {
     std::unique_lock<std::mutex> lock(mutex);
-    auto device = clDeviceVector[0];
-    auto pPlatform = platform(device->getExecutionEnvironment());
+    auto device = deviceVector[0];
+    auto pPlatform = static_cast<MockPlatform *>(platform(device->getExecutionEnvironment()));
 
     if (pPlatform->isInitialized()) {
         return true;
     }
     std::vector<std::unique_ptr<Device>> devices;
-    for (auto &pClDevice : clDeviceVector) {
-        devices.push_back(std::unique_ptr<Device>(&pClDevice->getDevice()));
+    for (auto &device : deviceVector) {
+        devices.push_back(std::unique_ptr<Device>(device));
     }
-    return pPlatform->initialize(std::move(devices));
+    return pPlatform->initializeAsMockClDevices(std::move(devices));
 }
 
 Platform *constructPlatform() {
     std::unique_lock<std::mutex> lock(mutex);
     if (platformsImpl->empty()) {
-        platformsImpl->push_back(std::make_unique<Platform>(*(new MockClExecutionEnvironment())));
+        platformsImpl->push_back(std::make_unique<MockPlatform>(*(new MockClExecutionEnvironment())));
     }
     return (*platformsImpl)[0].get();
 }
@@ -87,7 +99,7 @@ Platform *constructPlatform(ExecutionEnvironment *executionEnvironment) {
             return platform.get();
         }
     }
-    platformsImpl->push_back(std::make_unique<Platform>(*executionEnvironment));
+    platformsImpl->push_back(std::make_unique<MockPlatform>(*executionEnvironment));
     return platformsImpl->back().get();
 }
 

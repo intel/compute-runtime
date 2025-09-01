@@ -234,7 +234,7 @@ struct EnqueueWithWalkerPartitionFourTilesTests : public FourTilesSingleContextT
         kernelIds |= (1 << 8);
 
         FourTilesSingleContextTest::SetUp();
-        SimpleKernelFixture::setUp(rootDevice.get(), context.get());
+        SimpleKernelFixture::setUp(rootDevice, context.get());
 
         rootCsr = rootDevice->getDefaultEngine().commandStreamReceiver;
         EXPECT_EQ(4u, rootCsr->getOsContext().getNumSupportedDevices());
@@ -278,7 +278,7 @@ struct DynamicWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTile
 HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForKernelWithAtomicThenOutputDataIsValid, SupportsMultiTile) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
+    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice, nullptr);
 
     commandQueues[0][0].reset(mockCommandQueue);
 
@@ -336,7 +336,7 @@ HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForK
 
 HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForKernelWithoutAtomicThenOutputDataIsValid, SupportsMultiTile) {
 
-    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
+    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice, nullptr);
 
     commandQueues[0][0].reset(mockCommandQueue);
 
@@ -407,7 +407,7 @@ struct StaticWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTiles
 
 HWTEST2_F(StaticWalkerPartitionFourTilesTests, givenFourTilesWhenStaticWalkerPartitionIsEnabledForKernelThenOutputDataIsValid, SupportsMultiTile) {
 
-    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
+    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice, nullptr);
 
     commandQueues[0][0].reset(mockCommandQueue);
 

@@ -20,6 +20,7 @@
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callbacks.h"
+#include "opencl/source/helpers/usm_pool_params.h"
 #include "opencl/source/mem_obj/map_operations_handler.h"
 
 #include <map>
@@ -49,7 +50,6 @@ struct OpenCLObjectMapper<_cl_context> {
 };
 
 class Context : public BaseObject<_cl_context> {
-    using UsmHostMemAllocPool = UsmMemAllocPool;
     using UsmDeviceMemAllocPool = UsmMemAllocPool;
 
   public:
@@ -248,16 +248,12 @@ class Context : public BaseObject<_cl_context> {
     UsmMemAllocPool &getDeviceMemAllocPool() {
         return usmDeviceMemAllocPool;
     }
-    UsmMemAllocPool &getHostMemAllocPool() {
-        return usmHostMemAllocPool;
-    }
 
     TagAllocatorBase *getMultiRootDeviceTimestampPacketAllocator();
     std::unique_lock<std::mutex> obtainOwnershipForMultiRootDeviceAllocator();
     void setMultiRootDeviceTimestampPacketAllocator(std::unique_ptr<TagAllocatorBase> &allocator);
 
-    void initializeUsmAllocationPools();
-    void cleanupUsmAllocationPools();
+    void initializeDeviceUsmAllocationPool();
 
   protected:
     struct BuiltInKernel {
@@ -270,13 +266,6 @@ class Context : public BaseObject<_cl_context> {
         }
     };
 
-    struct UsmPoolParams {
-        size_t poolSize{0};
-        size_t minServicedSize{0};
-        size_t maxServicedSize{0};
-    };
-
-    UsmPoolParams getUsmHostPoolParams() const;
     UsmPoolParams getUsmDevicePoolParams() const;
 
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,
@@ -306,7 +295,6 @@ class Context : public BaseObject<_cl_context> {
     DriverDiagnostics *driverDiagnostics = nullptr;
     BufferPoolAllocator smallBufferPoolAllocator;
     UsmDeviceMemAllocPool usmDeviceMemAllocPool;
-    UsmHostMemAllocPool usmHostMemAllocPool;
 
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     cl_bool preferD3dSharedResources = 0u;

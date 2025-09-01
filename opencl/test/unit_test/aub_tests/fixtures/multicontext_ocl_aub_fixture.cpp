@@ -39,7 +39,7 @@ void MulticontextOclAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStre
     };
 
     {
-        cl_device_id deviceId = rootDevice.get();
+        cl_device_id deviceId = rootDevice;
         ClDeviceVector clDeviceVector{&deviceId, 1};
         if (numberOfTiles > 1) {
             for (uint32_t i = 0; i < numberOfTiles; i++) {
@@ -86,7 +86,7 @@ void MulticontextOclAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStre
 
     {
         cl_int retVal = CL_SUCCESS;
-        cl_device_id deviceId = rootDevice.get();
+        cl_device_id deviceId = rootDevice;
         multiTileDefaultContext.reset(MockContext::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
@@ -100,7 +100,10 @@ void MulticontextOclAubFixture::createDevices(const HardwareInfo &hwInfo, uint32
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;
 
-    rootDevice = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex));
+    auto device = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
+    auto platform = constructPlatform(device->getExecutionEnvironment());
+    initPlatform({device});
+    rootDevice = static_cast<MockClDevice *>(platform->getClDevice(0u));
 
     EXPECT_EQ(rootDeviceIndex, rootDevice->getRootDeviceIndex());
 

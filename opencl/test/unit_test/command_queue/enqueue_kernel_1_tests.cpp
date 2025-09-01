@@ -27,6 +27,7 @@
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory_with_platform.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 using namespace NEO;
 
@@ -114,7 +115,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
 
 TEST(EnqueueMultiDeviceKernelTest, givenMultiDeviceKernelWhenSetArgDeviceUSMThenOnlyOneKernelIsPatched) {
     USE_REAL_FILE_SYSTEM();
-    auto deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
+    auto deviceFactory = std::make_unique<UltClDeviceFactoryWithPlatform>(3, 0);
     auto device0 = deviceFactory->rootDevices[0];
     auto device1 = deviceFactory->rootDevices[1];
     auto device2 = deviceFactory->rootDevices[2];

@@ -847,7 +847,8 @@ TEST_F(ShareableUnifiedMemoryManagerPropertiesTest, givenShareableUnifiedPropert
 }
 
 TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedForTransferCallsThenUSMAllocationIsReused) {
-    MockContext mockContext;
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    MockContext mockContext(deviceFactory.rootDevices[0]);
 
     cl_context clContext = &mockContext;
 
@@ -891,7 +892,8 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedFo
 }
 
 TEST(UnifiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTransferCallsThenUsmAllocationIsReused) {
-    MockContext mockContext;
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    MockContext mockContext(deviceFactory.rootDevices[0]);
     cl_context clContext = &mockContext;
 
     auto status = CL_INVALID_PLATFORM;
@@ -933,7 +935,8 @@ TEST(UnifiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForT
 }
 
 TEST(UnifiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTransferCallsThenCPUPathIsNotChoosen) {
-    MockContext mockContext;
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    MockContext mockContext(deviceFactory.rootDevices[0]);
     cl_context clContext = &mockContext;
 
     auto status = CL_INVALID_PLATFORM;
@@ -978,7 +981,8 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTra
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(false);
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
-    MockContext mockContext;
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    MockContext mockContext(deviceFactory.rootDevices[0]);
     cl_context clContext = &mockContext;
 
     if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
@@ -1022,7 +1026,8 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTra
 }
 
 TEST(UnifiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTransferRequirementsThenErrorIsReturned) {
-    MockContext mockContext;
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    MockContext mockContext(deviceFactory.rootDevices[0]);
 
     cl_context clContext = &mockContext;
 
@@ -1056,7 +1061,8 @@ TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithoutLocalMemor
     DebugManagerStateRestore restore;
     debugManager.flags.EnableLocalMemory.set(0);
 
-    MockContext mockContext;
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    MockContext mockContext(deviceFactory.rootDevices[0]);
     cl_context clContext = &mockContext;
     cl_device_id clDevice = mockContext.getDevice(0u);
 
@@ -1101,7 +1107,8 @@ TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWh
     DebugManagerStateRestore restore;
     debugManager.flags.EnableLocalMemory.set(1);
 
-    MockContext mockContext;
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    MockContext mockContext(deviceFactory.rootDevices[0]);
     cl_context clContext = &mockContext;
     cl_device_id clDevice = mockContext.getDevice(0u);
 
@@ -1145,7 +1152,12 @@ TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWh
 
 class UnifiedSharedMemoryHWTest : public testing::Test {
   public:
-    MockContext mockContext;
+    void SetUp() {
+        mockContext = std::make_unique<MockContext>(deviceFactory.rootDevices[0]);
+    }
+
+    UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+    std::unique_ptr<MockContext> mockContext;
 };
 
 template <typename GfxFamily>
@@ -1174,93 +1186,93 @@ class TestCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
 HWTEST_F(UnifiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenWriteBufferThenCpuPtrIsNotUsed) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1,
-                                                                      mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
-    unifiedMemoryProperties.device = &mockContext.getDevice(0)->getDevice();
-    auto deviceMemory = mockContext.getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
-    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(deviceMemory);
-    GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+                                                                      mockContext->getRootDeviceIndices(), mockContext->getDeviceBitfields());
+    unifiedMemoryProperties.device = &mockContext->getDevice(0)->getDevice();
+    auto deviceMemory = mockContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto svmAllocation = mockContext->getSVMAllocsManager()->getSVMAlloc(deviceMemory);
+    GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext->getDevice(0)->getRootDeviceIndex());
 
     char *cpuPtr = static_cast<char *>(gpuAllocation->getUnderlyingBuffer());
     auto gpuAddress = gpuAllocation->getGpuAddress();
     void *gpuPtr = reinterpret_cast<void *>(gpuAddress);
-    auto gmmHelper = mockContext.getDevice(0)->getGmmHelper();
+    auto gmmHelper = mockContext->getDevice(0)->getGmmHelper();
 
     cl_mem_flags flags = 0;
     auto status = CL_INVALID_PLATFORM;
-    auto buffer = Buffer::create(&mockContext, flags, 4096u, nullptr, status);
+    auto buffer = Buffer::create(mockContext.get(), flags, 4096u, nullptr, status);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    TestCommandQueueHw<FamilyType> myCmdQ(&mockContext, mockContext.getDevice(0u), 0);
+    TestCommandQueueHw<FamilyType> myCmdQ(mockContext.get(), mockContext->getDevice(0u), 0);
     myCmdQ.enqueueWriteBuffer(buffer, false, 0u, 4096u, deviceMemory, nullptr, 0u, nullptr, nullptr);
     EXPECT_EQ(gpuPtr, myCmdQ.srcPtr);
 
     auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
     gpuAllocation->setCpuPtrAndGpuAddress(cpuPtr, canonizedGpuAddress);
     delete buffer;
-    clMemFreeINTEL(&mockContext, deviceMemory);
+    clMemFreeINTEL(mockContext.get(), deviceMemory);
 }
 
 HWTEST_F(UnifiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenReadBufferThenCpuPtrIsNotUsed) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1,
-                                                                      mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
-    unifiedMemoryProperties.device = &mockContext.getDevice(0)->getDevice();
-    auto deviceMemory = mockContext.getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
-    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(deviceMemory);
-    GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+                                                                      mockContext->getRootDeviceIndices(), mockContext->getDeviceBitfields());
+    unifiedMemoryProperties.device = &mockContext->getDevice(0)->getDevice();
+    auto deviceMemory = mockContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto svmAllocation = mockContext->getSVMAllocsManager()->getSVMAlloc(deviceMemory);
+    GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext->getDevice(0)->getRootDeviceIndex());
 
     char *cpuPtr = static_cast<char *>(gpuAllocation->getUnderlyingBuffer());
     auto gpuAddress = gpuAllocation->getGpuAddress();
     void *gpuPtr = reinterpret_cast<void *>(gpuAddress);
-    auto gmmHelper = mockContext.getDevice(0)->getGmmHelper();
+    auto gmmHelper = mockContext->getDevice(0)->getGmmHelper();
 
     cl_mem_flags flags = 0;
     auto status = CL_INVALID_PLATFORM;
-    auto buffer = Buffer::create(&mockContext, flags, 4096u, nullptr, status);
+    auto buffer = Buffer::create(mockContext.get(), flags, 4096u, nullptr, status);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    TestCommandQueueHw<FamilyType> myCmdQ(&mockContext, mockContext.getDevice(0u), 0);
+    TestCommandQueueHw<FamilyType> myCmdQ(mockContext.get(), mockContext->getDevice(0u), 0);
     myCmdQ.enqueueReadBuffer(buffer, false, 0u, 4096u, deviceMemory, nullptr, 0u, nullptr, nullptr);
     EXPECT_EQ(gpuPtr, myCmdQ.dstPtr);
 
     auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
     gpuAllocation->setCpuPtrAndGpuAddress(cpuPtr, canonizedGpuAddress);
     delete buffer;
-    clMemFreeINTEL(&mockContext, deviceMemory);
+    clMemFreeINTEL(mockContext.get(), deviceMemory);
 }
 
 HWTEST_F(UnifiedSharedMemoryHWTest, givenSharedUsmAllocationWhenWriteBufferThenCpuPtrIsNotUsed) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1,
-                                                                      mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
-    auto sharedMemory = mockContext.getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
-    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(sharedMemory);
-    GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+                                                                      mockContext->getRootDeviceIndices(), mockContext->getDeviceBitfields());
+    auto sharedMemory = mockContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto svmAllocation = mockContext->getSVMAllocsManager()->getSVMAlloc(sharedMemory);
+    GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext->getDevice(0)->getRootDeviceIndex());
 
     char *cpuPtr = static_cast<char *>(gpuAllocation->getUnderlyingBuffer());
     auto gpuAddress = gpuAllocation->getGpuAddress();
     void *gpuPtr = reinterpret_cast<void *>(gpuAddress);
-    auto gmmHelper = mockContext.getDevice(0)->getGmmHelper();
+    auto gmmHelper = mockContext->getDevice(0)->getGmmHelper();
 
     cl_mem_flags flags = 0;
     auto status = CL_INVALID_PLATFORM;
-    auto buffer = Buffer::create(&mockContext, flags, 4096u, nullptr, status);
+    auto buffer = Buffer::create(mockContext.get(), flags, 4096u, nullptr, status);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    TestCommandQueueHw<FamilyType> myCmdQ(&mockContext, mockContext.getDevice(0u), 0);
+    TestCommandQueueHw<FamilyType> myCmdQ(mockContext.get(), mockContext->getDevice(0u), 0);
     myCmdQ.enqueueWriteBuffer(buffer, false, 0u, 4096u, sharedMemory, nullptr, 0u, nullptr, nullptr);
     EXPECT_EQ(gpuPtr, myCmdQ.srcPtr);
 
     auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
     gpuAllocation->setCpuPtrAndGpuAddress(cpuPtr, canonizedGpuAddress);
     delete buffer;
-    clMemFreeINTEL(&mockContext, sharedMemory);
+    clMemFreeINTEL(mockContext.get(), sharedMemory);
 }
 
 HWTEST_F(UnifiedSharedMemoryHWTest, givenSharedUsmAllocationWhenReadBufferThenCpuPtrIsNotUsed) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1,
-                                                                      mockContext.getRootDeviceIndices(), mockContext.getDeviceBitfields());
-    auto sharedMemory = mockContext.getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
-    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(sharedMemory);
-    GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+                                                                      mockContext->getRootDeviceIndices(), mockContext->getDeviceBitfields());
+    auto sharedMemory = mockContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto svmAllocation = mockContext->getSVMAllocsManager()->getSVMAlloc(sharedMemory);
+    GraphicsAllocation *gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext->getDevice(0)->getRootDeviceIndex());
 
     char *cpuPtr = static_cast<char *>(gpuAllocation->getUnderlyingBuffer());
     auto gpuAddress = gpuAllocation->getGpuAddress();
@@ -1268,18 +1280,18 @@ HWTEST_F(UnifiedSharedMemoryHWTest, givenSharedUsmAllocationWhenReadBufferThenCp
 
     cl_mem_flags flags = 0;
     auto status = CL_INVALID_PLATFORM;
-    auto buffer = Buffer::create(&mockContext, flags, 4096u, nullptr, status);
+    auto buffer = Buffer::create(mockContext.get(), flags, 4096u, nullptr, status);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    TestCommandQueueHw<FamilyType> myCmdQ(&mockContext, mockContext.getDevice(0u), 0);
+    TestCommandQueueHw<FamilyType> myCmdQ(mockContext.get(), mockContext->getDevice(0u), 0);
     myCmdQ.enqueueReadBuffer(buffer, false, 0u, 4096u, sharedMemory, nullptr, 0u, nullptr, nullptr);
     EXPECT_EQ(gpuPtr, myCmdQ.dstPtr);
 
-    auto gmmHelper = mockContext.getDevice(0)->getGmmHelper();
+    auto gmmHelper = mockContext->getDevice(0)->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
     gpuAllocation->setCpuPtrAndGpuAddress(cpuPtr, canonizedGpuAddress);
     delete buffer;
-    clMemFreeINTEL(&mockContext, sharedMemory);
+    clMemFreeINTEL(mockContext.get(), sharedMemory);
 }
 
 TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocationIsCreatedThenAllocationTypeIsBufferCompressed) {
@@ -1287,12 +1299,14 @@ TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocati
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
     cl_int retVal = CL_SUCCESS;
-    MockContext mockContext;
-
-    auto device = mockContext.getDevice(0u);
-    auto allocationsManager = mockContext.getSVMAllocsManager();
 
     for (auto enable : {-1, 0, 1}) {
+        UltClDeviceFactoryWithPlatform deviceFactory{1, 0};
+        MockContext mockContext(deviceFactory.rootDevices[0]);
+
+        auto device = mockContext.getDevice(0u);
+        auto allocationsManager = mockContext.getSVMAllocsManager();
+
         debugManager.flags.EnableStatelessCompression.set(enable);
 
         auto deviceMemAllocPtr = clDeviceMemAllocINTEL(&mockContext, device, nullptr, 2048, 0, &retVal);

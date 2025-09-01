@@ -36,7 +36,7 @@ struct ApiFixture {
         debugManager.flags.ContextGroupSize.set(0);
         executionEnvironment = new ClExecutionEnvironment();
         prepareDeviceEnvironments(*executionEnvironment);
-        NEO::constructPlatform(executionEnvironment);
+        auto platform = NEO::constructPlatform(executionEnvironment);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
@@ -45,10 +45,9 @@ struct ApiFixture {
             rootDeviceEnvironmentBackup.swap(executionEnvironment->rootDeviceEnvironments[0]);
         }
 
-        pDevice = new MockClDevice(rootDevice);
+        NEO::initPlatform({rootDevice});
+        pDevice = static_cast<MockClDevice *>(platform->getClDevice(0u));
         ASSERT_NE(nullptr, pDevice);
-
-        NEO::initPlatform({pDevice});
 
         testedClDevice = pDevice;
         pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&testedClDevice, 1), nullptr, nullptr, retVal);
@@ -68,11 +67,10 @@ struct ApiFixture {
         pCommandQueue->release();
         pContext->release();
         pProgram->release();
-        NEO::cleanupPlatform(executionEnvironment);
         if (rootDeviceIndex != 0u) {
             rootDeviceEnvironmentBackup.swap(executionEnvironment->rootDeviceEnvironments[0]);
         }
-        pDevice->decRefInternal();
+        NEO::cleanupPlatform(executionEnvironment);
     }
 
     void disableQueueCapabilities(cl_command_queue_capabilities_intel capabilities) {

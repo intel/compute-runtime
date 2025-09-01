@@ -143,9 +143,6 @@ PVCTEST_F(PVcBcsTests, givenCompressibleBuffersWhenStatefulCompressionIsEnabledT
     auto bltCmd = stream.getSpaceForCmd<MEM_COPY>();
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
 
-    platformsImpl->clear();
-    EXPECT_EQ(platform(), nullptr);
-
     const auto &rootDeviceEnvironment = context->getDevice(0)->getRootDeviceEnvironment();
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, rootDeviceEnvironment);
 
@@ -177,8 +174,6 @@ PVCTEST_F(PVcBcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionIsEnable
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
 
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-    platformsImpl->clear();
-    EXPECT_EQ(platform(), nullptr);
 
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
 
@@ -206,8 +201,6 @@ PVCTEST_F(PVcBcsTests, givenBufferInSystemMemoryWhenStatelessCompressionIsEnable
     *bltCmd = FamilyType::cmdInitXyCopyBlt;
 
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(true);
-    platformsImpl->clear();
-    EXPECT_EQ(platform(), nullptr);
 
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForBuffer(blitProperties, *bltCmd, context->getDevice(0)->getRootDeviceEnvironment());
 

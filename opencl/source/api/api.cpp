@@ -3977,9 +3977,10 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
         return nullptr;
     }
 
-    neoContext->initializeUsmAllocationPools();
+    auto platform = neoContext->getDevice(0u)->getPlatform();
+    platform->initializeHostUsmAllocationPool();
 
-    auto allocationFromPool = neoContext->getHostMemAllocPool().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    auto allocationFromPool = platform->getHostMemAllocPool().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (allocationFromPool) {
         TRACING_EXIT(ClHostMemAllocINTEL, &allocationFromPool);
         return allocationFromPool;
@@ -4041,7 +4042,7 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
 
     unifiedMemoryProperties.device = &neoDevice->getDevice();
 
-    neoContext->initializeUsmAllocationPools();
+    neoContext->initializeDeviceUsmAllocationPool();
 
     auto allocationFromPool = neoContext->getDeviceMemAllocPool().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (allocationFromPool) {
@@ -4136,7 +4137,7 @@ CL_API_ENTRY cl_int CL_API_CALL clMemFreeCommon(cl_context context,
         successfulFree = true;
     }
 
-    if (!successfulFree && ptr && neoContext->getHostMemAllocPool().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
+    if (!successfulFree && ptr && neoContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
         successfulFree = true;
     }
 
@@ -4238,7 +4239,7 @@ CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
             TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
             return retVal;
         }
-        if (auto basePtrFromHostPool = pContext->getHostMemAllocPool().getPooledAllocationBasePtr(ptr)) {
+        if (auto basePtrFromHostPool = pContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().getPooledAllocationBasePtr(ptr)) {
             retVal = changeGetInfoStatusToCLResultType(info.set<uint64_t>(castToUint64(basePtrFromHostPool)));
             TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
             return retVal;
@@ -4258,7 +4259,7 @@ CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
             TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
             return retVal;
         }
-        if (auto sizeFromHostPool = pContext->getHostMemAllocPool().getPooledAllocationSize(ptr)) {
+        if (auto sizeFromHostPool = pContext->getDevice(0u)->getPlatform()->getHostMemAllocPool().getPooledAllocationSize(ptr)) {
             retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(sizeFromHostPool));
             TRACING_EXIT(ClGetMemAllocInfoINTEL, &retVal);
             return retVal;

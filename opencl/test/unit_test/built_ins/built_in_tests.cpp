@@ -80,6 +80,12 @@ class BuiltInTests
 
     void TearDown() override {
         allBuiltIns.clear();
+        auto builders = pClExecutionEnvironment->peekBuilders(pClDevice->getRootDeviceIndex());
+        if (builders) {
+            for (uint32_t i = 0; i < static_cast<uint32_t>(EBuiltInOps::count); ++i) {
+                builders[i].first.reset();
+            }
+        }
         BuiltInFixture::tearDown();
         ContextFixture::tearDown();
         ClDeviceFixture::tearDown();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,13 +30,13 @@ void *UnifiedMemoryAubFixture::allocateUSM(InternalMemoryType type) {
     if (!this->skipped) {
         switch (type) {
         case InternalMemoryType::deviceUnifiedMemory:
-            ptr = clDeviceMemAllocINTEL(this->context, this->device.get(), nullptr, dataSize, 0, &retVal);
+            ptr = clDeviceMemAllocINTEL(this->context, this->device, nullptr, dataSize, 0, &retVal);
             break;
         case InternalMemoryType::hostUnifiedMemory:
             ptr = clHostMemAllocINTEL(this->context, nullptr, dataSize, 0, &retVal);
             break;
         case InternalMemoryType::sharedUnifiedMemory:
-            ptr = clSharedMemAllocINTEL(this->context, this->device.get(), nullptr, dataSize, 0, &retVal);
+            ptr = clSharedMemAllocINTEL(this->context, this->device, nullptr, dataSize, 0, &retVal);
             break;
         default:
             ptr = new char[dataSize];

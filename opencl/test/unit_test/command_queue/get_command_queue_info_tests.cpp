@@ -62,6 +62,7 @@ TEST_P(GetCommandQueueInfoTest, GivenClQueueContextWhenGettingCommandQueueInfoTh
 
 TEST_P(GetCommandQueueInfoTest, GivenClQueueDeviceWhenGettingCommandQueueInfoThenSuccessIsReturned) {
     cl_device_id deviceExpected = pClDevice;
+
     cl_device_id deviceReturned = nullptr;
 
     auto retVal = pCmdQ->getCommandQueueInfo(
