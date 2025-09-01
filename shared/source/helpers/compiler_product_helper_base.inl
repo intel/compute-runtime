@@ -68,7 +68,6 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
                              "cl_intel_subgroups "
                              "cl_intel_required_subgroup_size "
                              "cl_intel_subgroups_short "
-                             "cl_khr_spir "
                              "cl_intel_accelerator "
                              "cl_intel_driver_diagnostics "
                              "cl_khr_priority_hints "
@@ -195,6 +194,10 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     if (isDotIntegerProductExtensionSupported()) {
         extensions += "cl_khr_integer_dot_product ";
     }
+    if (isSpirSupported(releaseHelper)) {
+        extensions += "cl_khr_spir ";
+    }
+
     return extensions;
 }
 
@@ -255,6 +258,15 @@ bool CompilerProductHelperHw<gfxProduct>::isDotProductAccumulateSystolicSupporte
     }
 
     return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isSpirSupported(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isSpirSupported();
+    }
+
+    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

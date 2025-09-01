@@ -258,7 +258,6 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_intel_subgroups ",
         "cl_intel_required_subgroup_size ",
         "cl_intel_subgroups_short ",
-        "cl_khr_spir ",
         "cl_intel_accelerator ",
         "cl_intel_driver_diagnostics ",
         "cl_khr_priority_hints ",
