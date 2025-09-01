@@ -1482,11 +1482,10 @@ void OfflineCompiler::storeBinary(
     DEBUG_BREAK_IF(!(pSrc && srcSize > 0));
 
     delete[] pDst;
-    pDst = new char[srcSize + 1];
+    pDst = new char[srcSize];
 
     dstSize = static_cast<uint32_t>(srcSize);
     memcpy_s(pDst, dstSize, pSrc, srcSize);
-    pDst[srcSize] = 0;
 }
 
 bool OfflineCompiler::generateElfBinary() {
