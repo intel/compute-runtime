@@ -221,7 +221,7 @@ bool IoctlHelperXe::initialize() {
               : "OFF");
 
     maxExecQueuePriority = config->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] & 0xffff;
-    isLowLatencyHintAvailable = false;
+    isLowLatencyHintAvailable = config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_LOW_LATENCY;
     if (debugManager.flags.ForceLowLatencyHint.get() != -1) {
         isLowLatencyHintAvailable = !!debugManager.flags.ForceLowLatencyHint.get();
     }
