@@ -1255,16 +1255,6 @@ const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelpe
 }
 
 template <>
-RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
-    return RasInterfaceType::netlink;
-}
-
-template <>
-RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
-    return RasInterfaceType::netlink;
-}
-
-template <>
 bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return true;
 }
