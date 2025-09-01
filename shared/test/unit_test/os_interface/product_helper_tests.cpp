@@ -1181,7 +1181,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperThenCompressionIsNotForbidden, Is
     EXPECT_FALSE(productHelper->isCompressionForbidden(hwInfo));
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperBeforeXe2WhenOverrideDirectSubmissionTimeoutsThenTimeoutsNotAdjusted, IsAtMostXeCore) {
+HWTEST2_F(ProductHelperTest, givenProductHelperBeforeXeLpgWhenOverrideDirectSubmissionTimeoutsThenTimeoutsNotAdjusted, IsAtMostDg2) {
     DebugManagerStateRestore restorer;
 
     uint64_t timeoutUs{5000};
