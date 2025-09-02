@@ -1171,14 +1171,54 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenAppendWithEventCal
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-    auto lriItor = find<typename FamilyType::MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), lriItor);
-
-    auto itor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), lriItor);
-    EXPECT_EQ(lriItor, itor);
-
-    itor = find<typename FamilyType::MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    auto itor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
+
+    context->freeMem(ptr);
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenAppendThenUseCopyQueue, IsAtLeastXeHpcCore) {
+    if (device->getProductHelper().isDcFlushAllowed()) {
+        GTEST_SKIP();
+    }
+
+    debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+
+    ze_result_t returnValue;
+    auto computeCommandList = createCmdList(false);
+
+    auto ptr = allocHostMem();
+
+    ze_event_pool_desc_t eventPoolDesc = {.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, .count = 1};
+    ze_event_desc_t eventDesc = {};
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+
+    auto cmdStream = computeCommandList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    auto computeTaskCount = computeCommandList->getCsr(false)->peekTaskCount();
+    TaskCountType copyTaskCount = 0;
+    if (computeCommandList->isDualStreamCopyOffloadOperation(true)) {
+        copyTaskCount = computeCommandList->getCsr(true)->peekTaskCount();
+    }
+
+    computeCommandList->appendMemoryCopy(ptr, ptr, copySize, event->toHandle(), 0, nullptr, copyParams);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+    auto itor = find<typename FamilyType::MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+
+    if (computeCommandList->isDualStreamCopyOffloadOperation(true)) {
+        EXPECT_EQ(computeTaskCount, computeCommandList->getCsr(false)->peekTaskCount());
+        EXPECT_EQ(copyTaskCount + 1, computeCommandList->getCsr(true)->peekTaskCount());
+
+        EXPECT_NE(cmdList.end(), itor);
+    } else {
+        EXPECT_EQ(computeTaskCount + 1, computeCommandList->getCsr(false)->peekTaskCount());
+        EXPECT_EQ(cmdList.end(), itor);
+    }
 
     context->freeMem(ptr);
 }

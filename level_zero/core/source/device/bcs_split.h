@@ -148,9 +148,11 @@ struct BcsSplit {
             }
         }
 
-        cmdList->addEventsToCmdList(static_cast<uint32_t>(eventHandles.size()), eventHandles.data(), nullptr, hasRelaxedOrderingDependencies, false, true, false, false);
+        const bool dualStreamCopyOffload = cmdList->isDualStreamCopyOffloadOperation(cmdList->isCopyOffloadEnabled());
 
-        const auto isCopyCmdList = cmdList->isCopyOnly(false);
+        cmdList->addEventsToCmdList(static_cast<uint32_t>(eventHandles.size()), eventHandles.data(), nullptr, hasRelaxedOrderingDependencies, false, true, false, dualStreamCopyOffload);
+
+        const auto isCopyCmdList = cmdList->isCopyOnly(dualStreamCopyOffload);
 
         if (signalEvent) {
             cmdList->appendSignalEventPostWalker(signalEvent, nullptr, nullptr, !isCopyCmdList, false, isCopyCmdList);
@@ -161,9 +163,9 @@ struct BcsSplit {
         }
 
         if (cmdList->isInOrderExecutionEnabled()) {
-            cmdList->appendSignalInOrderDependencyCounter(signalEvent, false, false, false);
+            cmdList->appendSignalInOrderDependencyCounter(signalEvent, dualStreamCopyOffload, false, false);
         }
-        cmdList->handleInOrderDependencyCounter(signalEvent, false, false);
+        cmdList->handleInOrderDependencyCounter(signalEvent, false, dualStreamCopyOffload);
 
         if (aggregatedEventsMode) {
             cmdList->assignInOrderExecInfoToEvent(this->events.marker[markerEventIndex]);

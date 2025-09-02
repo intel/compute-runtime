@@ -502,6 +502,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t getActiveScratchPatchElements() const {
         return activeScratchPatchElements;
     }
+    bool isDualStreamCopyOffloadOperation(bool offloadOperation) const { return (getCopyOffloadModeForOperation(offloadOperation) == CopyOffloadModes::dualStream); }
 
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
@@ -513,7 +514,6 @@ struct CommandList : _ze_command_list_handle_t {
     }
     MOCKABLE_VIRTUAL void synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t *waitEventList);
 
-    bool isDualStreamCopyOffloadOperation(bool offloadOperation) const { return (getCopyOffloadModeForOperation(offloadOperation) == CopyOffloadModes::dualStream); }
     bool isNonDualStreamCopyOffloadOperation(bool offloadOperation) const { return offloadOperation && !isDualStreamCopyOffloadOperation(offloadOperation); }
     void registerWalkerWithProfilingEnqueued(Event *event);
 

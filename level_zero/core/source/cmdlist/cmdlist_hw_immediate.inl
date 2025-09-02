@@ -644,6 +644,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush) {
+    memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1, false); // split generates more than 1 event
+    memoryCopyParams.forceDisableCopyOnlyInOrderSignaling = true;
+    memoryCopyParams.taskCountUpdateRequired = true;
+    memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadEnabled();
+    copyOffloadFlush = memoryCopyParams.copyOffloadAllowed;
+    hasStallingCmds = !memoryCopyParams.relaxedOrderingDispatch;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     void *dstptr,
     const void *srcptr,
@@ -652,6 +662,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     memoryCopyParams.relaxedOrderingDispatch |= isRelaxedOrderingDispatchAllowed(numWaitEvents, isCopyOffloadEnabled());
+    bool copyOffloadFlush = false;
 
     auto estimatedSize = commonImmediateCommandSize;
     if (isCopyOnly(true)) {
@@ -662,7 +673,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     }
     checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
 
-    bool hasStallindCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
+    bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
 
     ze_result_t ret;
     CpuMemCopyInfo cpuMemCopyInfo(dstptr, const_cast<void *>(srcptr), size);
@@ -678,16 +689,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     NEO::TransferDirection direction;
     auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size, direction);
     if (isSplitNeeded) {
-        memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1, false); // split generates more than 1 event
-        memoryCopyParams.forceDisableCopyOnlyInOrderSignaling = true;
-        memoryCopyParams.taskCountUpdateRequired = true;
-        hasStallindCmds = !memoryCopyParams.relaxedOrderingDispatch;
+        setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush);
 
         auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
         };
 
         ret = static_cast<DeviceImp *>(this->device)->bcsSplit->appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
+
     } else if (this->isValidForStagingTransfer(dstptr, srcptr, size, numWaitEvents > 0)) {
         return this->appendStagingMemoryCopy(dstptr, srcptr, size, hSignalEvent, memoryCopyParams);
     } else {
@@ -695,7 +704,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
                                                                      numWaitEvents, phWaitEvents, memoryCopyParams);
     }
 
-    return flushImmediate(ret, true, hasStallindCmds, memoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel, memoryCopyParams.copyOffloadAllowed, hSignalEvent, memoryCopyParams.taskCountUpdateRequired, nullptr, nullptr);
+    copyOffloadFlush |= memoryCopyParams.copyOffloadAllowed;
+
+    return flushImmediate(ret, true, hasStallingCmds, memoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel, copyOffloadFlush, hSignalEvent, memoryCopyParams.taskCountUpdateRequired, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -723,17 +734,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     }
     checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
 
-    bool hasStallindCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
+    bool hasStallingCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
+    bool copyOffloadFlush = false;
 
     ze_result_t ret;
 
     NEO::TransferDirection direction;
     auto isSplitNeeded = this->isAppendSplitNeeded(dstPtr, srcPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch), direction);
     if (isSplitNeeded) {
-        memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1, false); // split generates more than 1 event
-        memoryCopyParams.forceDisableCopyOnlyInOrderSignaling = true;
-        memoryCopyParams.taskCountUpdateRequired = true;
-        hasStallindCmds = !memoryCopyParams.relaxedOrderingDispatch;
+        setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush);
 
         auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             ze_copy_region_t dstRegionLocal = {};
@@ -756,7 +765,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
                                                                            hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
     }
 
-    return flushImmediate(ret, true, hasStallindCmds, memoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel, memoryCopyParams.copyOffloadAllowed, hSignalEvent, memoryCopyParams.taskCountUpdateRequired, nullptr, nullptr);
+    copyOffloadFlush |= memoryCopyParams.copyOffloadAllowed;
+
+    return flushImmediate(ret, true, hasStallingCmds, memoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel, copyOffloadFlush, hSignalEvent, memoryCopyParams.taskCountUpdateRequired, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
