@@ -11,6 +11,7 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
@@ -50,9 +51,14 @@ constexpr bool isIntermediateRepresentation(IGC::CodeType::CodeType_t codeType) 
     return false == ((IGC::CodeType::oclC == codeType) || (IGC::CodeType::oclCpp == codeType) || (IGC::CodeType::oclGenBin == codeType));
 }
 
-constexpr const char *getFileExtension(IGC::CodeType::CodeType_t codeType) {
+inline std::string getFileExtension(IGC::CodeType::CodeType_t codeType) {
     switch (codeType) {
     default:
+        return "." + StringHelpers::toLower(IGC::CodeType::CodeTypeCoder::Dec(codeType));
+    case IGC::CodeType::oclGenBin:
+    case IGC::CodeType::elf:
+    case IGC::CodeType::undefined:
+    case IGC::CodeType::invalid:
         return ".bin";
     case IGC::CodeType::llvmBc:
         return ".bc";
@@ -60,6 +66,10 @@ constexpr const char *getFileExtension(IGC::CodeType::CodeType_t codeType) {
         return ".ll";
     case IGC::CodeType::spirV:
         return ".spv";
+    case IGC::CodeType::oclC:
+        return ".cl";
+    case IGC::CodeType::oclCpp:
+        return ".cl";
     }
 }
 
@@ -186,8 +196,8 @@ All supported acronyms: %s.
     void updateBuildLog(const char *pErrorString, const size_t errorStringSize);
     MOCKABLE_VIRTUAL bool generateElfBinary();
     std::string generateFilePathForIr(const std::string &fileNameBase) {
-        const char *ext = getFileExtension(intermediateRepresentation);
-        return generateFilePath(outputDirectory, fileNameBase, ext);
+        auto ext = getFileExtension(intermediateRepresentation);
+        return generateFilePath(outputDirectory, fileNameBase, ext.c_str());
     }
 
     std::string generateOptsSuffix() {

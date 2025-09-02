@@ -1625,7 +1625,7 @@ void OfflineCompiler::writeOutAllFiles() {
         return;
     }
 
-    if (irBinary && (this->inputCodeType != IGC::CodeType::spirV)) {
+    if (irBinary && (this->inputCodeType == IGC::CodeType::oclC)) {
         std::string irOutputFileName = generateFilePathForIr(fileBase) + generateOptsSuffix();
 
         argHelper->saveOutput(irOutputFileName, irBinary, irBinarySize);
