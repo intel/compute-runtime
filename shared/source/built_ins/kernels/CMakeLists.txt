@@ -29,10 +29,8 @@ endmacro()
 
 add_subdirectories()
 
-function(get_builtin_options core_type neo_arch mode_type)
-  if("${neo_arch}" STREQUAL "x32")
-    set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATELESS}" PARENT_SCOPE)
-  elseif("${mode_type}" STREQUAL "stateless" OR "${mode_type}" STREQUAL "heapless")
+function(get_builtin_options mode_type)
+  if("${mode_type}" STREQUAL "stateless" OR "${mode_type}" STREQUAL "heapless")
     set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATELESS}" PARENT_SCOPE)
   else()
     set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATEFUL}" PARENT_SCOPE)
@@ -229,7 +227,7 @@ macro(macro_for_each_platform)
       continue()
     endif()
 
-    get_builtin_options(${CORE_TYPE} ${NEO_ARCH} ${MODE})
+    get_builtin_options(${MODE})
     get_generated_builtins(${CORE_TYPE} ${MODE})
 
     if(${AUX_TRANSLATION_SUPPORT})
