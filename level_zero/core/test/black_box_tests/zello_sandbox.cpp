@@ -5,11 +5,23 @@
  *
  */
 
+#include "level_zero/include/level_zero/ze_intel_gpu.h"
+
 #include "zello_common.h"
 #include "zello_compile.h"
 
 #include <cstring>
 #include <sstream>
+
+template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
+constexpr inline TNoRef alignUp(T before, size_t alignment) {
+    TNoRef mask = static_cast<TNoRef>(alignment - 1);
+    return (before + mask) & ~mask;
+}
+template <typename T>
+constexpr inline T *alignUp(T *ptrBefore, size_t alignment) {
+    return reinterpret_cast<T *>(alignUp(reinterpret_cast<uintptr_t>(ptrBefore), alignment));
+}
 
 void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_device_handle_t &device,
                                             bool &outputValidationSuccessful, bool aubMode, bool asyncMode) {
@@ -544,10 +556,59 @@ std::string testEventSyncForMultiTileAndCopy(bool immediate, bool tsEvent) {
     return testStream.str();
 }
 
+void executeMemoryCopyOnSystemMemory(ze_context_handle_t &context, ze_device_handle_t &device,
+                                     bool &outputValidationSuccessful, bool aubMode) {
+    ze_command_list_handle_t cmdList = nullptr;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
+    cmdQueueDesc.index = 0;
+    LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, true);
+
+    SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
+
+    constexpr size_t allocSize = 0x1000;
+    const uint8_t value = 0x55;
+
+    auto memory = malloc(2 * allocSize);
+    auto alignedMemory = alignUp(memory, 0x1000);
+
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC,
+                                                       nullptr, alignedMemory, allocSize};
+
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    hostDesc.flags = 0;
+    hostDesc.pNext = &sysMemDesc;
+
+    void *buffer1 = nullptr;
+    void *buffer2 = nullptr;
+
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &buffer1));
+    hostDesc.pNext = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &buffer2));
+
+    memset(buffer1, value, allocSize);
+    memset(buffer2, 0, allocSize);
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, buffer2, buffer1, allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdList, std::numeric_limits<uint64_t>::max()));
+
+    // Validate
+    if (!aubMode) {
+        outputValidationSuccessful = LevelZeroBlackBoxTests::validateToValue<uint8_t>(value, buffer2, allocSize);
+    }
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, buffer1));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, buffer2));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    free(memory);
+}
+
 int main(int argc, char *argv[]) {
     constexpr uint32_t bitNumberTestMemoryTransfer5x = 0u;
     constexpr uint32_t bitNumberTestEventSyncForMultiTileAndCopy = 1u;
     constexpr uint32_t bitNumberTestImmediateAndRegularCommandLists = 2u;
+    constexpr uint32_t bitNumberTestSystemMemory = 3u;
 
     const std::string blackBoxName = "Zello Sandbox";
     std::string currentTest;
@@ -646,6 +707,14 @@ int main(int argc, char *argv[]) {
         if (outputValidationSuccessful || aubMode) {
             currentTest = testNameImmediateAndRegularCommandLists(!asyncMode);
             executeImmediateAndRegularCommandLists(context, device, outputValidationSuccessful, aubMode, !asyncMode);
+            LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+        }
+    }
+
+    if (testMask.test(bitNumberTestSystemMemory)) {
+        if (outputValidationSuccessful || aubMode) {
+            currentTest = "executeMemoryCopyOnSystemMemory\n";
+            executeMemoryCopyOnSystemMemory(context, device, outputValidationSuccessful, aubMode);
             LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
         }
     }

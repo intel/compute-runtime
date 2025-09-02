@@ -170,6 +170,17 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(*ptr);
     }
 
+    if (lookupTable.isExternalMemmapSystem) {
+        unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(lookupTable.externalMemmapSystem.systemMemory);
+        auto usmPtr = this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(lookupTable.externalMemmapSystem.size,
+                                                                                          unifiedMemoryProperties);
+        if (usmPtr) {
+            *ptr = usmPtr;
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
     if (false == lookupTable.exportMemory) {
         if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPool.createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
             *ptr = usmPtrFromPool;

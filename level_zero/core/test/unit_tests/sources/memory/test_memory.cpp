@@ -42,6 +42,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/driver_experimental/zex_memory.h"
+#include "level_zero/include/level_zero/ze_intel_gpu.h"
+#include "level_zero/include/level_zero/ze_stypes.h"
 
 namespace L0 {
 struct ModuleBuildLog;
@@ -552,6 +554,58 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsExpectedPr
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenAllocatingHostMemThenHostPtrMemoryIsUsed) {
+    size_t size = 4096;
+    size_t alignment = 4096;
+    void *ptr = nullptr;
+    auto memory = malloc(size);
+
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC,
+                                                       nullptr, memory, size};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.pNext = &sysMemDesc;
+
+    ze_result_t result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(memory, ptr);
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_device_handle_t deviceHandle;
+
+    result = context->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
+
+    auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(alloc, nullptr);
+    EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
+    EXPECT_EQ(alloc->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), size);
+    EXPECT_EQ(alloc->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBuffer(), memory);
+    EXPECT_EQ(alloc->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress(), reinterpret_cast<uint64_t>(memory));
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    free(memory);
+}
+
+TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenMemoryAllocationFailsThenErrorIsReturned) {
+    size_t size = 4096;
+    size_t alignment = 4096;
+    void *ptr = nullptr;
+    auto memory = malloc(size);
+
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC,
+                                                       nullptr, memory, size};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.pNext = &sysMemDesc;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
+    ze_result_t result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+
+    free(memory);
 }
 
 TEST_F(MemoryTest, givenSharedPointerThenDriverGetAllocPropertiesReturnsExpectedProperties) {

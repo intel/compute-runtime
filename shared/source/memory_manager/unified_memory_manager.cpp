@@ -485,11 +485,11 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                                                       const UnifiedMemoryProperties &memoryProperties) {
     auto rootDeviceIndex = memoryProperties.getRootDeviceIndex();
     DeviceBitfield deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
-    constexpr size_t pageSizeForAlignment = MemoryConstants::pageSize64k;
-    const size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
     auto externalPtr = reinterpret_cast<void *>(memoryProperties.allocationFlags.hostptr);
     bool useExternalHostPtrForCpu = externalPtr != nullptr;
+    const size_t pageSizeForAlignment = useExternalHostPtrForCpu ? MemoryConstants::pageSize : MemoryConstants::pageSize64k;
+    const size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
     bool compressionEnabled = false;
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);

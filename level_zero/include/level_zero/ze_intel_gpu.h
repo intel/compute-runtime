@@ -705,5 +705,39 @@ static const ze_command_queue_desc_t defaultCommandQueueDesc = {
     ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,                                       // mode
     ZE_COMMAND_QUEUE_PRIORITY_NORMAL                                          // priority
 };
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZE_EXTERNAL_MEMORY_MAPPING_EXT_NAME
+/// @brief External Memory Mapping Extension Name
+#define ZE_EXTERNAL_MEMORY_MAPPING_EXT_NAME "ZE_extension_external_memmap_sysmem"
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief External Memory Mapping Extension Version(s)
+typedef enum _ze_external_memmap_sysmem_ext_version_t {
+    ZE_EXTERNAL_MEMMAP_SYSMEM_EXT_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_EXTERNAL_MEMMAP_SYSMEM_EXT_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_EXTERNAL_MEMMAP_SYSMEM_EXT_VERSION_FORCE_UINT32 = 0x7fffffff        ///< Value marking end of ZE_EXTERNAL_MEMMAP_SYSMEM_EXT_VERSION_* ENUMs
+
+} ze_external_memmap_sysmem_ext_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Maps external system memory for an allocation
+///
+/// @details
+///     - This structure may be passed to ::zeMemAllocHost, via the `pNext`
+///       member of ::ze_host_mem_alloc_desc_t to map system memory for a host
+///       allocation.
+///     - The system memory pointer and size being mapped must be page aligned
+///       based on the supported page sizes on the device.
+typedef struct _ze_external_memmap_sysmem_ext_desc_t {
+    ze_structure_type_ext_t stype; ///< [in] type of this structure
+    const void *pNext;             ///< [in][optional] must be null or a pointer to an extension-specific
+                                   ///< structure (i.e. contains stype and pNext).
+    const void *pSystemMemory;     ///< [in] system memory pointer to map; must be page-aligned.
+    const uint64_t size;           ///< [in] size of the system memory to map; must be page-aligned.
+
+} ze_external_memmap_sysmem_ext_desc_t;
+#endif // ZE_EXTERNAL_MEMORY_MAPPING_EXT_NAME
+
 #endif // ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
 #endif
