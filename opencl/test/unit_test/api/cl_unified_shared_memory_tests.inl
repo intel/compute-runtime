@@ -21,8 +21,8 @@
 
 using namespace NEO;
 
-struct clUnifiedSharedMemoryTests : ::testing::Test {
-    void SetUp() {
+struct ClUnifiedSharedMemoryTests : ::testing::Test {
+    void SetUp() override {
         debugManager.flags.ExperimentalEnableHostAllocationCache.set(0);
         debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(0);
         debugManager.flags.EnableHostUsmAllocationPool.set(0);
@@ -36,14 +36,14 @@ struct clUnifiedSharedMemoryTests : ::testing::Test {
     DebugManagerStateRestore restorer;
 };
 
-TEST_F(clUnifiedSharedMemoryTests, whenClHostMemAllocINTELisCalledWithoutContextThenInvalidContextIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClHostMemAllocINTELisCalledWithoutContextThenInvalidContextIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto ptr = clHostMemAllocINTEL(0, nullptr, 0, 0, &retVal);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledWithSizeZeroThenInvalidBufferSizeIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledWithSizeZeroThenInvalidBufferSizeIsReturned) {
 
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(mockContext.get(), nullptr, 0u, 0, &retVal);
@@ -51,7 +51,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledWithSizeZeroTh
     EXPECT_EQ(nullptr, unifiedMemoryHostAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesHostUnifiedMemoryAllocation) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesHostUnifiedMemoryAllocation) {
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(mockContext.get(), nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -69,7 +69,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocate
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, GivenForceExtendedUSMBufferSizeDebugFlagWhenUSMAllocationIsCreatedThenSizeIsProperlyExtended) {
+TEST_F(ClUnifiedSharedMemoryTests, GivenForceExtendedUSMBufferSizeDebugFlagWhenUSMAllocationIsCreatedThenSizeIsProperlyExtended) {
     DebugManagerStateRestore restorer;
 
     constexpr auto bufferSize = 16;
@@ -122,7 +122,7 @@ TEST_F(clUnifiedSharedMemoryTests, GivenForceExtendedUSMBufferSizeDebugFlagWhenU
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenMappedAllocationWhenClMemFreeIntelIscalledThenMappingIsRemoved) {
+TEST_F(ClUnifiedSharedMemoryTests, givenMappedAllocationWhenClMemFreeIntelIscalledThenMappingIsRemoved) {
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -136,21 +136,21 @@ TEST_F(clUnifiedSharedMemoryTests, givenMappedAllocationWhenClMemFreeIntelIscall
     EXPECT_EQ(nullptr, allocationsManager->getSvmMapOperation(unifiedMemorySharedAllocation));
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClDeviceMemAllocINTELisCalledWithWrongContextThenInvalidContextErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClDeviceMemAllocINTELisCalledWithWrongContextThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto ptr = clDeviceMemAllocINTEL(0, 0, nullptr, 0, 0, &retVal);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledWithSizeZeroThenItInvalidBufferSizeIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledWithSizeZeroThenItInvalidBufferSizeIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 0u, 0, &retVal);
     EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
     EXPECT_EQ(nullptr, unifiedMemoryDeviceAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledThenItAllocatesDeviceUnifiedMemoryAllocation) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledThenItAllocatesDeviceUnifiedMemoryAllocation) {
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -168,7 +168,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledThenItAlloca
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenUnifiedSharedMemoryAllocationCallsAreCalledWithSizeGreaterThenMaxMemAllocSizeThenErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenUnifiedSharedMemoryAllocationCallsAreCalledWithSizeGreaterThenMaxMemAllocSizeThenErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto maxMemAllocSize = mockContext->getDevice(0u)->getDevice().getDeviceInfo().maxMemAllocSize;
     size_t requestedSize = static_cast<size_t>(maxMemAllocSize) + 1u;
@@ -184,7 +184,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenUnifiedSharedMemoryAllocationCallsAreCall
     EXPECT_EQ(nullptr, unifiedMemoryDeviceAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenSharedMemAllocCallWhenAllocatingGraphicsMemoryFailsThenOutOfResourcesErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, givenSharedMemAllocCallWhenAllocatingGraphicsMemoryFailsThenOutOfResourcesErrorIsReturned) {
     UltClDeviceFactory deviceFactory{1, 0};
     auto executionEnvironment = deviceFactory.rootDevices[0]->getExecutionEnvironment();
     std::unique_ptr<MemoryManager> memoryManager = std::make_unique<FailMemoryManager>(0, *executionEnvironment);
@@ -199,21 +199,21 @@ TEST_F(clUnifiedSharedMemoryTests, givenSharedMemAllocCallWhenAllocatingGraphics
     std::swap(memoryManager, executionEnvironment->memoryManager);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongContextThenInvalidContextErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongContextThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto ptr = clSharedMemAllocINTEL(0, 0, nullptr, 0, 0, &retVal);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClSharedMemAllocIntelIsCalledWithSizeZeroThenInvalidBufferSizeIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClSharedMemAllocIntelIsCalledWithSizeZeroThenInvalidBufferSizeIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 0u, 0, &retVal);
     EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
     EXPECT_EQ(nullptr, unifiedMemorySharedAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongDeviceThenInvalidDeviceErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongDeviceThenInvalidDeviceErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     MockContext context0;
     MockContext context1;
@@ -222,7 +222,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongDev
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClSharedMemAllocIntelIsCalledThenItAllocatesSharedUnifiedMemoryAllocation) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClSharedMemAllocIntelIsCalledThenItAllocatesSharedUnifiedMemoryAllocation) {
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -240,22 +240,22 @@ TEST_F(clUnifiedSharedMemoryTests, whenClSharedMemAllocIntelIsCalledThenItAlloca
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithIncorrectContextThenReturnError) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithIncorrectContextThenReturnError) {
     auto retVal = clMemFreeINTEL(0, nullptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithNullPointerThenNoActionOccurs) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithNullPointerThenNoActionOccurs) {
     auto retVal = clMemFreeINTEL(mockContext.get(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClMemBlockingFreeINTELisCalledWithNullPointerThenNoActionOccurs) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClMemBlockingFreeINTELisCalledWithNullPointerThenNoActionOccurs) {
     auto retVal = clMemBlockingFreeINTEL(mockContext.get(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithValidUmPointerThenMemoryIsFreed) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithValidUmPointerThenMemoryIsFreed) {
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(mockContext.get(), nullptr, 4, 0, &retVal);
 
@@ -268,7 +268,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithValidUmPointerT
     EXPECT_EQ(0u, allocationsManager->getNumAllocs());
 }
 
-HWTEST_F(clUnifiedSharedMemoryTests, givenTemporaryAllocationWhenBlockingFreeCalledThenClearTemporaryStorage) {
+HWTEST_F(ClUnifiedSharedMemoryTests, givenTemporaryAllocationWhenBlockingFreeCalledThenClearTemporaryStorage) {
     auto device = mockContext->getDevice(0u);
 
     DebugManagerStateRestore restorer;
@@ -302,7 +302,7 @@ HWTEST_F(clUnifiedSharedMemoryTests, givenTemporaryAllocationWhenBlockingFreeCal
     EXPECT_TRUE(memManager->getTemporaryAllocationsList().peekIsEmpty());
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithInvalidUmPointerThenMemoryIsNotFreed) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithInvalidUmPointerThenMemoryIsNotFreed) {
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(mockContext.get(), nullptr, 4, 0, &retVal);
 
@@ -319,17 +319,17 @@ TEST_F(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithInvalidUmPointe
     EXPECT_EQ(0u, allocationsManager->getNumAllocs());
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutContextThenInvalidContextIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutContextThenInvalidContextIsReturned) {
     auto retVal = clGetMemAllocInfoINTEL(0, nullptr, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAllocationThenInvalidValueIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAllocationThenInvalidValueIsReturned) {
     auto retVal = clGetMemAllocInfoINTEL(mockContext.get(), nullptr, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAllocationAndWithPropertiesThenProperValueIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAllocationAndWithPropertiesThenProperValueIsReturned) {
     cl_int retVal = CL_INVALID_VALUE;
     size_t paramValueSize = sizeof(void *);
     size_t paramValueSizeRet = 0;
@@ -367,7 +367,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAllo
     }
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutSVMAllocationThenInvalidValueIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutSVMAllocationThenInvalidValueIsReturned) {
     SVMAllocsManager *svmAllocsManager = nullptr;
     std::swap(svmAllocsManager, mockContext->svmAllocsManager);
     auto retVal = clGetMemAllocInfoINTEL(mockContext.get(), nullptr, 0, 0, nullptr, nullptr);
@@ -375,7 +375,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutSVMA
     std::swap(svmAllocsManager, mockContext->svmAllocsManager);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationTypeParamNameAndWithoutUnifiedSharedMemoryAllocationThenProperFieldsAreSet) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationTypeParamNameAndWithoutUnifiedSharedMemoryAllocationThenProperFieldsAreSet) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_int);
     cl_int paramValue = 0;
@@ -388,7 +388,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocat
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemoryHostAllocationThenProperFieldsAreSet) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemoryHostAllocationThenProperFieldsAreSet) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_int);
     cl_int paramValue = 0;
@@ -408,7 +408,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUn
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidPropertiesTokenThenErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidPropertiesTokenThenErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {0x1234, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
 
@@ -418,7 +418,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidPropertiesTokenThe
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidWriteCombinedTokenThenSuccessIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidWriteCombinedTokenThenSuccessIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_FLAGS_INTEL, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
 
@@ -431,7 +431,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenHostMemAllocWithInvalidWriteCombinedToken
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenDeviceMemAllocWithInvalidPropertiesTokenThenErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenDeviceMemAllocWithInvalidPropertiesTokenThenErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {0x1234, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
 
@@ -441,7 +441,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenDeviceMemAllocWithInvalidPropertiesTokenT
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidPropertiesTokenThenErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidPropertiesTokenThenErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     const uint64_t invalidToken = 0x1234;
     cl_mem_properties_intel properties[] = {invalidToken, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
@@ -452,7 +452,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidPropertiesTokenT
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidWriteCombinedTokenThenSuccessIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidWriteCombinedTokenThenSuccessIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_FLAGS_INTEL, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
 
@@ -465,7 +465,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenSharedMemAllocWithInvalidWriteCombinedTok
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocWithoutPropertiesWhenGetMemAllocFlagsThenDefaultValueIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, givenUnifiedMemoryAllocWithoutPropertiesWhenGetMemAllocFlagsThenDefaultValueIsReturned) {
     uint64_t defaultValue = CL_MEM_ALLOC_DEFAULT_INTEL;
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_mem_properties_intel);
@@ -482,7 +482,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocWithoutPropertiesWhenG
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnifiedMemoryHostAllocationThenProperTypeIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnifiedMemoryHostAllocationThenProperTypeIsReturned) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_mem_properties_intel);
     cl_mem_properties_intel paramValue = 0;
@@ -499,7 +499,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnified
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnifiedMemoryDeviceAllocationThenProperTypeIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnifiedMemoryDeviceAllocationThenProperTypeIsReturned) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_mem_properties_intel);
     cl_mem_properties_intel paramValue = 0;
@@ -516,7 +516,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnified
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnifiedMemorySharedAllocationThenProperTypeIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnifiedMemorySharedAllocationThenProperTypeIsReturned) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_mem_properties_intel);
     cl_mem_properties_intel paramValue = 0;
@@ -533,7 +533,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocTypeIsCalledWithValidUnified
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemoryDeviceAllocationThenProperFieldsAreSet) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemoryDeviceAllocationThenProperFieldsAreSet) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_int);
     cl_int paramValue = 0;
@@ -554,7 +554,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUn
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemorySharedAllocationThenProperFieldsAreSet) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemorySharedAllocationThenProperFieldsAreSet) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_int);
     cl_int paramValue = 0;
@@ -575,7 +575,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUn
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenDeviceAllocationWhenItIsQueriedForDeviceThenProperDeviceIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, givenDeviceAllocationWhenItIsQueriedForDeviceThenProperDeviceIsReturned) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSizeRet = 0;
     auto device = mockContext->getDevice(0u);
@@ -594,7 +594,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenDeviceAllocationWhenItIsQueriedForDevice
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenSharedAllocationWhenItIsQueriedForDeviceThenProperDeviceIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, givenSharedAllocationWhenItIsQueriedForDeviceThenProperDeviceIsReturned) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSizeRet = 0;
     auto device = mockContext->getDevice(0u);
@@ -613,7 +613,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenSharedAllocationWhenItIsQueriedForDevice
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenSharedAllocationWithoutDeviceWhenItIsQueriedForDeviceThenNullIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, givenSharedAllocationWithoutDeviceWhenItIsQueriedForDeviceThenNullIsReturned) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSizeRet = 0;
     auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(mockContext.get(), nullptr, nullptr, 4, 0, &retVal);
@@ -630,7 +630,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenSharedAllocationWithoutDeviceWhenItIsQue
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenHostAllocationWhenItIsQueriedForDeviceThenProperDeviceIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, givenHostAllocationWhenItIsQueriedForDeviceThenProperDeviceIsReturned) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSizeRet = 0;
     auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(mockContext.get(), nullptr, 4, 0, &retVal);
@@ -647,7 +647,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenHostAllocationWhenItIsQueriedForDeviceTh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationBasePtrParamNameThenProperFieldsAreSet) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationBasePtrParamNameThenProperFieldsAreSet) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(uint64_t);
     uint64_t paramValue = 0;
@@ -668,7 +668,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocat
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationSizeParamNameThenProperFieldsAreSet) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationSizeParamNameThenProperFieldsAreSet) {
 
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(size_t);
@@ -690,7 +690,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocat
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoINTELisCalledWithAllocationSizeParamNameThenProperFieldsAreSet) {
+TEST_F(ClUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoINTELisCalledWithAllocationSizeParamNameThenProperFieldsAreSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableHostUsmAllocationPool.set(2);
     debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
@@ -750,7 +750,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoIN
     }
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoINTELisCalledWithAllocationBasePtrParamNameThenProperFieldsAreSet) {
+TEST_F(ClUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoINTELisCalledWithAllocationBasePtrParamNameThenProperFieldsAreSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableHostUsmAllocationPool.set(2);
     debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
@@ -809,7 +809,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoIN
     }
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutParamNameThenInvalidValueIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutParamNameThenInvalidValueIsReturned) {
     cl_int retVal = CL_SUCCESS;
     size_t paramValueSize = sizeof(cl_uint);
     cl_uint paramValue = 0;
@@ -823,12 +823,12 @@ TEST_F(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutPara
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithInvalidKernelThenInvaliKernelErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithInvalidKernelThenInvaliKernelErrorIsReturned) {
     auto retVal = clSetKernelArgMemPointerINTEL(0, 0, nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSystemPointerIsPassedThenItIsProperlySetInKernel) {
+TEST_F(ClUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSystemPointerIsPassedThenItIsProperlySetInKernel) {
     auto device = mockContext->getDevice(0u);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
 
@@ -850,7 +850,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSy
     EXPECT_EQ(*crossThreadLocation, systemAddress);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithValidUnifiedMemoryAllocationThenProperFieldsAreSet) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithValidUnifiedMemoryAllocationThenProperFieldsAreSet) {
     cl_int retVal = CL_SUCCESS;
     auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -867,12 +867,12 @@ TEST_F(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWith
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithoutIncorrectCommandQueueThenInvaliQueueErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithoutIncorrectCommandQueueThenInvaliQueueErrorIsReturned) {
     auto retVal = clEnqueueMemsetINTEL(0, nullptr, 0, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithProperParametersThenParametersArePassedCorrectly) {
+TEST_F(ClUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithProperParametersThenParametersArePassedCorrectly) {
     const ClDeviceInfo &devInfo = mockContext->getDevice(0u)->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
@@ -912,13 +912,13 @@ TEST_F(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithProperPar
     clMemFreeINTEL(mockContext.get(), unifiedMemoryDeviceAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithoutIncorrectCommandQueueThenInvaliQueueErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithoutIncorrectCommandQueueThenInvaliQueueErrorIsReturned) {
     cl_int setValue = 12u;
     auto retVal = clEnqueueMemFillINTEL(0, nullptr, &setValue, 0u, 0u, 0u, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithProperParametersThenParametersArePassedCorrectly) {
+TEST_F(ClUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithProperParametersThenParametersArePassedCorrectly) {
     const ClDeviceInfo &devInfo = mockContext->getDevice(0u)->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
@@ -958,11 +958,11 @@ TEST_F(clUnifiedSharedMemoryTests, whenclEnqueueMemFillINTELisCalledWithProperPa
     clMemFreeINTEL(mockContext.get(), unifiedMemoryDeviceAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClEnqueueMemcpyINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClEnqueueMemcpyINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
     auto retVal = clEnqueueMemcpyINTEL(0, 0, nullptr, nullptr, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
-TEST_F(clUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopiedThenProperParamtersArePassed) {
+TEST_F(ClUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopiedThenProperParamtersArePassed) {
     const ClDeviceInfo &devInfo = mockContext->getDevice(0u)->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
@@ -1003,12 +1003,12 @@ TEST_F(clUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCo
     clMemFreeINTEL(mockContext.get(), unifiedMemorySharedAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
     auto retVal = clEnqueueMigrateMemINTEL(0, nullptr, 0, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithProperParametersAndDebugKeyDisabledThenSuccessIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithProperParametersAndDebugKeyDisabledThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
     MockCommandQueue cmdQ;
     void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
@@ -1018,7 +1018,7 @@ TEST_F(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithPrope
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenUseKmdMigrationAndAppendMemoryPrefetchForKmdMigratedSharedAllocationsWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheDeviceAssociatedWithCommandQueue) {
+TEST_F(ClUnifiedSharedMemoryTests, givenUseKmdMigrationAndAppendMemoryPrefetchForKmdMigratedSharedAllocationsWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheDeviceAssociatedWithCommandQueue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -1041,7 +1041,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenUseKmdMigrationAndAppendMemoryPrefetchFo
     clMemFreeINTEL(mockContext.get(), unifiedMemorySharedAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheSubDeviceAssociatedWithCommandQueue) {
+TEST_F(ClUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheSubDeviceAssociatedWithCommandQueue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -1068,7 +1068,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnque
     clMemFreeINTEL(&multiTileContext, unifiedMemorySharedAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheRootDeviceAssociatedWithCommandQueue) {
+TEST_F(ClUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheRootDeviceAssociatedWithCommandQueue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -1097,12 +1097,12 @@ TEST_F(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnque
     clMemFreeINTEL(&multiTileContext, unifiedMemorySharedAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
     auto retVal = clEnqueueMemAdviseINTEL(0, nullptr, 0, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithProperParametersThenSuccessIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithProperParametersThenSuccessIsReturned) {
     MockCommandQueue cmdQ;
     void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
 
@@ -1111,10 +1111,10 @@ TEST_F(clUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithProper
 }
 
 class ClUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
-                                        public clUnifiedSharedMemoryTests {
+                                        public ClUnifiedSharedMemoryTests {
   public:
     void SetUp() override {
-        clUnifiedSharedMemoryTests::SetUp();
+        ClUnifiedSharedMemoryTests::SetUp();
         this->context = mockContext.get();
         this->pCmdQ = createCommandQueue(nullptr);
     }
@@ -1122,7 +1122,7 @@ class ClUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
         clReleaseEvent(event);
         context = nullptr;
         CommandQueueHwFixture::tearDown();
-        clUnifiedSharedMemoryTests::TearDown();
+        ClUnifiedSharedMemoryTests::TearDown();
     }
 
     cl_event event = nullptr;
@@ -1210,7 +1210,7 @@ TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMemFillINTELIsCalledWithEve
     clMemFreeINTEL(this->context, unifiedMemorySharedAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenDefaulMemPropertiesWhenClDeviceMemAllocIntelIsCalledThenItAllocatesDeviceUnifiedMemoryAllocationWithProperAllocationTypeAndSize) {
+TEST_F(ClUnifiedSharedMemoryTests, givenDefaulMemPropertiesWhenClDeviceMemAllocIntelIsCalledThenItAllocatesDeviceUnifiedMemoryAllocationWithProperAllocationTypeAndSize) {
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_FLAGS_INTEL, CL_MEM_ALLOC_DEFAULT_INTEL, 0};
     auto allocationSize = 4000u;
@@ -1232,7 +1232,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenDefaulMemPropertiesWhenClDeviceMemAllocI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenValidMemPropertiesWhenClDeviceMemAllocIntelIsCalledThenItAllocatesDeviceUnifiedMemoryAllocationWithProperAllocationTypeAndSize) {
+TEST_F(ClUnifiedSharedMemoryTests, givenValidMemPropertiesWhenClDeviceMemAllocIntelIsCalledThenItAllocatesDeviceUnifiedMemoryAllocationWithProperAllocationTypeAndSize) {
     cl_int retVal = CL_SUCCESS;
     auto allocationSize = 4000u;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_FLAGS_INTEL, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
@@ -1254,7 +1254,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenValidMemPropertiesWhenClDeviceMemAllocIn
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenInvalidMemPropertiesWhenClSharedMemAllocIntelIsCalledThenInvalidValueIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, givenInvalidMemPropertiesWhenClSharedMemAllocIntelIsCalledThenInvalidValueIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_WRITE_COMBINED_INTEL, 0};
     auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), properties, 4, 0, &retVal);
@@ -1262,7 +1262,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenInvalidMemPropertiesWhenClSharedMemAlloc
     EXPECT_EQ(nullptr, unifiedMemorySharedAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndClMemAllowUnrestrictedSizeFlagWhenCreateAllocationThenSuccessIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndClMemAllowUnrestrictedSizeFlagWhenCreateAllocationThenSuccessIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL, 0};
     auto bigSize = MemoryConstants::gigaByte * 10;
@@ -1304,7 +1304,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMa
     }
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndDebugFlagSetWhenCreateAllocationThenSuccessIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndDebugFlagSetWhenCreateAllocationThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.AllowUnrestrictedSize.set(1);
     cl_int retVal = CL_SUCCESS;
@@ -1346,7 +1346,7 @@ TEST_F(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMa
     }
 }
 
-TEST_F(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeWhenCreateAllocationThenErrorIsReturned) {
+TEST_F(ClUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeWhenCreateAllocationThenErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {0};
     auto bigSize = MemoryConstants::gigaByte * 20;

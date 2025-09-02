@@ -1152,7 +1152,7 @@ TEST(UnifiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWh
 
 class UnifiedSharedMemoryHWTest : public testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         mockContext = std::make_unique<MockContext>(deviceFactory.rootDevices[0]);
     }
 
