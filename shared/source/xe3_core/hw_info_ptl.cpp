@@ -34,7 +34,8 @@ const PLATFORM PTL::platform = {
 
 const RuntimeCapabilityTable PTL::capabilityTable{
     EngineDirectSubmissionInitVec{
-        {aub_stream::ENGINE_CCS, {true, false, false, true}}}, // directSubmissionEngines
+        {aub_stream::ENGINE_CCS, {true, false, false, true}},
+        {aub_stream::ENGINE_BCS, {true, false, true, true}}},  // directSubmissionEngines
     {0, 0, 0, 0, false, false, false, false},                  // kmdNotifyProperties
     MemoryConstants::max48BitAddress,                          // gpuAddressSpace
     0,                                                         // sharedSystemMemCapabilities
