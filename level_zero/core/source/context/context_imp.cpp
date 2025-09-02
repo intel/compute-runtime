@@ -1085,10 +1085,6 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
 
     if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS) {
         auto deviceAllocCapabilities = memProp.deviceAllocCapabilities;
-        if (isSharedSystemAlloc) {
-            deviceAllocCapabilities = memProp.sharedSystemAllocCapabilities;
-        }
-
         if (!(deviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -1096,9 +1092,6 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
     }
     if (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS) {
         auto hostAllocCapabilities = memProp.hostAllocCapabilities;
-        if (isSharedSystemAlloc) {
-            hostAllocCapabilities = memProp.sharedSystemAllocCapabilities;
-        }
         if (!(hostAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -1122,8 +1115,22 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
         mode = NEO::AtomicAccessMode::system;
     }
 
-    if ((attr == 0) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_HOST_ATOMICS) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_ATOMICS) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_DEVICE_ATOMICS) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_SYSTEM_ATOMICS)) {
-
+    if (sharedSystemAllocEnabled) {
+        if (attr == 0) {
+            if (isSharedSystemAlloc) {
+                auto sharedSystemAllocCapabilities = memProp.sharedSystemAllocCapabilities;
+                if (!(sharedSystemAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC)) {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                }
+            } else {
+                auto deviceAllocCapabilities = memProp.deviceAllocCapabilities;
+                if (!(deviceAllocCapabilities & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                }
+            }
+        }
+        mode = NEO::AtomicAccessMode::none;
+    } else if ((attr == 0) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_HOST_ATOMICS) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_ATOMICS) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_DEVICE_ATOMICS) || (attrEval & ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_SYSTEM_ATOMICS)) {
         mode = NEO::AtomicAccessMode::none;
     }
 
@@ -1131,15 +1138,17 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto memoryManager = device->getDriverHandle()->getMemoryManager();
-    if (isSharedSystemAlloc) {
-
-        DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
+    if (sharedSystemAllocEnabled) {
+        // For BO this feature will be available in the future. Currently only supporting SVM madvise.
+        if (allocData != nullptr) {
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "BO madvise not supported");
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
         auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
-
         unifiedMemoryManager->sharedSystemAtomicAccess(*deviceImp->getNEODevice(), mode, ptr, size);
 
     } else {
+        auto memoryManager = device->getDriverHandle()->getMemoryManager();
         auto alloc = allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex());
         memoryManager->setAtomicAccess(alloc, size, mode, deviceImp->getRootDeviceIndex());
         deviceImp->atomicAccessAllocations[allocData] = attr;
@@ -1151,18 +1160,49 @@ ze_result_t ContextImp::setAtomicAccessAttribute(ze_device_handle_t hDevice, con
 ze_result_t ContextImp::getAtomicAccessAttribute(ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t *pAttr) {
 
     auto device = Device::fromHandle(hDevice);
-
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    if (allocData == nullptr) {
+    const bool sharedSystemAllocEnabled = device->getNEODevice()->areSharedSystemAllocationsAllowed();
+
+    if (allocData == nullptr && !sharedSystemAllocEnabled) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     DeviceImp *deviceImp = static_cast<DeviceImp *>((L0::Device::fromHandle(hDevice)));
-    if (deviceImp->atomicAccessAllocations.find(allocData) != deviceImp->atomicAccessAllocations.end()) {
-        *pAttr = deviceImp->atomicAccessAllocations[allocData];
-        return ZE_RESULT_SUCCESS;
+
+    if (sharedSystemAllocEnabled) {
+        // For BO this feature will be available in the future. Currently only supporting SVM madvise.
+        if (allocData != nullptr) {
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "BO madvise not supported");
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
+        auto unifiedMemoryManager = driverHandle->getSvmAllocsManager();
+        auto mode = unifiedMemoryManager->getSharedSystemAtomicAccess(*deviceImp->getNEODevice(), ptr, size);
+        switch (mode) {
+        case NEO::AtomicAccessMode::device:
+            *pAttr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_DEVICE_ATOMICS;
+            break;
+        case NEO::AtomicAccessMode::host:
+            *pAttr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_HOST_ATOMICS;
+            break;
+        case NEO::AtomicAccessMode::system:
+            *pAttr = ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_SYSTEM_ATOMICS;
+            break;
+        case NEO::AtomicAccessMode::none:
+            *pAttr = 0;
+            break;
+        case NEO::AtomicAccessMode::invalid:
+        default:
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    } else {
+        if (deviceImp->atomicAccessAllocations.find(allocData) != deviceImp->atomicAccessAllocations.end()) {
+            *pAttr = deviceImp->atomicAccessAllocations[allocData];
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ContextImp::createModule(ze_device_handle_t hDevice,
