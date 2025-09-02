@@ -67,7 +67,6 @@ HWTEST2_F(XeLpgHwInfoTests, whenCheckDirectSubmissionEnginesThenProperValuesAreS
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
             EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
             break;
         default:
             EXPECT_FALSE(directSubmissionEngines.data[i].engineSupported);
@@ -75,7 +74,6 @@ HWTEST2_F(XeLpgHwInfoTests, whenCheckDirectSubmissionEnginesThenProperValuesAreS
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_FALSE(directSubmissionEngines.data[i].useRootDevice);
             EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
         }
     }
 }

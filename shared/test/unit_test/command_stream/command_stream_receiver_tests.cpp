@@ -1284,7 +1284,6 @@ HWTEST_F(InitDirectSubmissionTest, givenLowPriorityContextWhenDirectSubmissionDi
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
-    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useLowPriority = false;
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
 
     csr->setupContext(*osContext);
@@ -1292,26 +1291,6 @@ HWTEST_F(InitDirectSubmissionTest, givenLowPriorityContextWhenDirectSubmissionDi
     bool ret = csr->initDirectSubmission();
     EXPECT_TRUE(ret);
     EXPECT_FALSE(csr->isDirectSubmissionEnabled());
-
-    csr.reset();
-}
-
-HWTEST_F(InitDirectSubmissionTest, givenLowPriorityContextWhenDirectSubmissionEnabledOnLowPriorityThenExpectFeatureAvailable) {
-    auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
-    std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), device->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority},
-                                                                                                        PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
-    osContext->ensureContextInitialized(false);
-
-    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
-    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useLowPriority = true;
-    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
-    csr->setupContext(*osContext);
-    csr->initializeTagAllocation();
-    bool ret = csr->initDirectSubmission();
-    EXPECT_TRUE(ret);
-    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
 
     csr.reset();
 }

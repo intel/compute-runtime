@@ -18,7 +18,6 @@ struct DirectSubmissionProperties {
     bool useNonDefault = false;
     bool useRootDevice = false;
     bool useInternal = false;
-    bool useLowPriority = false;
     bool operator==(const DirectSubmissionProperties &) const = default;
 };
 

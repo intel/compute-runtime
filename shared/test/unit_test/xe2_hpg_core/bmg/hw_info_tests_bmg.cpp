@@ -98,7 +98,6 @@ BMGTEST_F(BmgHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSetT
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
             EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
             break;
         case aub_stream::ENGINE_CCS1:
         case aub_stream::ENGINE_BCS:
@@ -107,7 +106,6 @@ BMGTEST_F(BmgHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSetT
             EXPECT_TRUE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
             EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
             break;
         default:
             EXPECT_FALSE(directSubmissionEngines.data[i].engineSupported);
@@ -115,7 +113,6 @@ BMGTEST_F(BmgHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSetT
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_FALSE(directSubmissionEngines.data[i].useRootDevice);
             EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
         }
     }
 }

@@ -97,7 +97,6 @@ LNLTEST_F(LnlHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSetT
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
             EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
             break;
         default:
             EXPECT_FALSE(directSubmissionEngines.data[i].engineSupported);
@@ -105,7 +104,6 @@ LNLTEST_F(LnlHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSetT
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
             EXPECT_FALSE(directSubmissionEngines.data[i].useRootDevice);
             EXPECT_FALSE(directSubmissionEngines.data[i].useInternal);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
         }
     }
 }
