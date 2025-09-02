@@ -457,3 +457,58 @@ HWTEST2_F(BlitTests, givenSurfaceTypeAndSliceIndexWhenAppendBaseAddressOffsetIsC
         }
     }
 }
+
+HWTEST2_F(BlitTests, givenSurfaceTypeAndSliceIndexAndGraphicsAllocationAreNullWhenAppendBaseAddressOffsetIsCalledThenBaseAddressAndArrayIndexAreCorrectlySet, IsXe2HpgCore) {
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    BlitProperties properties{};
+    properties.srcGpuAddress = 0x1234;
+    properties.dstGpuAddress = 0x4321;
+    properties.srcRowPitch = 1;
+    properties.dstRowPitch = 1;
+    properties.srcSize.z = 129;
+    properties.dstSize.z = 129;
+    std::array<std::tuple<typename XY_BLOCK_COPY_BLT::SURFACE_TYPE, uint32_t, uint32_t, uint32_t>, 4> testParams =
+        {{{XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D, 0u, 0u, 0u},
+          {XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D, 64u, 64u, 64u},
+          {XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D, 64u, 128u, 128u},
+          {XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D, 4096u, 1u, 1u}}};
+    for (auto isSource : ::testing::Bool()) {
+        for (const auto &[surfaceType, qPitch, sliceIndex, anchorSliceIndex] : testParams) {
+            uint32_t y1Top = 0;
+            uint32_t yOffset = 0;
+            uint32_t xOffset = 0;
+            auto blitCmd = FamilyType::cmdInitXyBlockCopyBlt;
+            blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE4);
+            blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE4);
+            blitCmd.setSourceSurfaceType(surfaceType);
+            blitCmd.setDestinationSurfaceType(surfaceType);
+            blitCmd.setSourceBaseAddress(properties.srcGpuAddress);
+            blitCmd.setDestinationBaseAddress(properties.dstGpuAddress);
+            blitCmd.setSourceY1CoordinateTop(y1Top);
+            blitCmd.setDestinationY1CoordinateTop(y1Top);
+            blitCmd.setSourceXOffset(xOffset);
+            blitCmd.setDestinationXOffset(xOffset);
+            blitCmd.setSourceYOffset(yOffset);
+            blitCmd.setDestinationYOffset(yOffset);
+            blitCmd.setSourceSurfaceQpitch(qPitch);
+            blitCmd.setDestinationSurfaceQpitch(qPitch);
+            blitCmd.setSourceSurfaceDepth(static_cast<uint32_t>(properties.srcSize.z));
+            blitCmd.setDestinationSurfaceDepth(static_cast<uint32_t>(properties.dstSize.z));
+            BlitCommandsHelper<FamilyType>::appendBaseAddressOffset(properties, blitCmd, isSource);
+            auto gpuAddress = isSource ? properties.srcGpuAddress : properties.dstGpuAddress;
+            if (isSource) {
+                EXPECT_EQ(blitCmd.getSourceBaseAddress(), gpuAddress);
+                EXPECT_EQ(blitCmd.getSourceSurfaceDepth(), 1u);
+                EXPECT_EQ(blitCmd.getSourceArrayIndex(), 1u);
+                EXPECT_EQ(blitCmd.getSourceXOffset(), xOffset);
+                EXPECT_EQ(blitCmd.getSourceYOffset(), yOffset);
+            } else {
+                EXPECT_EQ(blitCmd.getDestinationBaseAddress(), gpuAddress);
+                EXPECT_EQ(blitCmd.getDestinationSurfaceDepth(), 1u);
+                EXPECT_EQ(blitCmd.getDestinationArrayIndex(), 1u);
+                EXPECT_EQ(blitCmd.getDestinationXOffset(), xOffset);
+                EXPECT_EQ(blitCmd.getDestinationYOffset(), yOffset);
+            }
+        }
+    }
+}

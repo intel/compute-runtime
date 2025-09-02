@@ -162,8 +162,8 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
         }
 
         bool deviceToHostPostSyncFenceRequired = rootDeviceEnvironment.getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
-                                                 !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() &&
-                                                 blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
+                                                 (blitProperties.dstAllocation && !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool()) &&
+                                                 (blitProperties.srcAllocation && blitProperties.srcAllocation->isAllocatedInLocalMemoryPool());
         if (deviceToHostPostSyncFenceRequired) {
             size += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
         }

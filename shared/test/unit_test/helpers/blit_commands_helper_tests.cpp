@@ -1123,6 +1123,70 @@ HWTEST_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlus
     EXPECT_NE(estimatedSizeWithoutNode, estimatedSizeWithNode);
 }
 
+HWTEST_F(BlitTests, givenBlitPropertiesContainerWithNullSrcOrDstAllocationWhenEstimatingCommandsSizeThenCalculateForAllAttachedProperties) {
+    const auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
+    const uint32_t numberOfBlts = 3;
+    const size_t bltSize = (3 * max2DBlitSize);
+    const uint32_t numberOfBlitOperations = 4;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+
+    EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
+
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize();
+    auto expectedBlitInstructionsSize = cmdsSizePerBlit * numberOfBlts;
+
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedBlitInstructionsSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    }
+
+    waArgs.isWaRequired = true;
+    auto baseSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+    auto syncSize = 2 * MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, pDevice->getRootDeviceEnvironment());
+
+    // Test both scenarios: dstAllocation=nullptr, srcAllocation=nullptr
+    for (auto isSourceAllocationNullptr : ::testing::Bool()) {
+        size_t expectedAlignedSize = baseSize + syncSize;
+
+        MockGraphicsAllocation bufferMockAllocation(0, 1u, AllocationType::buffer, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+        MockGraphicsAllocation hostMockAllocation(0, 1u, AllocationType::externalHostPtr, reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t), MemoryPool::system64KBPages, MemoryManager::maxOsContextCount);
+
+        BlitPropertiesContainer blitPropertiesContainer;
+        for (uint32_t i = 0; i < numberOfBlitOperations; i++) {
+            BlitProperties blitProperties;
+            blitProperties.blitDirection = BlitterConstants::BlitDirection::bufferToHostPtr;
+            blitProperties.auxTranslationDirection = AuxTranslationDirection::none;
+            blitProperties.copySize = {bltSize, 1, 1};
+
+            if (isSourceAllocationNullptr) {
+                blitProperties.dstAllocation = &hostMockAllocation;
+                blitProperties.srcAllocation = nullptr;
+            } else {
+                blitProperties.dstAllocation = nullptr;
+                blitProperties.srcAllocation = &bufferMockAllocation;
+            }
+
+            blitPropertiesContainer.push_back(blitProperties);
+
+            expectedAlignedSize += expectedBlitInstructionsSize;
+
+            bool deviceToHostPostSyncFenceRequired = rootDeviceEnvironment.getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
+                                                     ((blitProperties.srcAllocation && blitProperties.srcAllocation->isAllocatedInLocalMemoryPool()) ||
+                                                      (blitProperties.dstAllocation && !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool()));
+            if (deviceToHostPostSyncFenceRequired) {
+                expectedAlignedSize += MemorySynchronizationCommands<FamilyType>::getSizeForAdditionalSynchronization(NEO::FenceType::release, rootDeviceEnvironment);
+            }
+        }
+
+        expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
+
+        auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+            blitPropertiesContainer, false, false, false, false, pDevice->getRootDeviceEnvironment());
+
+        EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
+    }
+}
+
 HWTEST2_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitCommandForBufferPerRowThenTheResultsAreTheSame, MatchAny) {
     uint32_t src[] = {1, 2, 3, 4};
     uint32_t dst[] = {4, 3, 2, 1};

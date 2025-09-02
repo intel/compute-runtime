@@ -1108,12 +1108,12 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         blitProperties.csrDependencies.makeResident(*this);
         if (blitProperties.srcAllocation) {
             blitProperties.srcAllocation->prepareHostPtrForResidency(this);
+            makeResident(*blitProperties.srcAllocation);
         }
         if (blitProperties.dstAllocation) {
             blitProperties.dstAllocation->prepareHostPtrForResidency(this);
+            makeResident(*blitProperties.dstAllocation);
         }
-        makeResident(*blitProperties.srcAllocation);
-        makeResident(*blitProperties.dstAllocation);
         if (blitProperties.clearColorAllocation) {
             makeResident(*blitProperties.clearColorAllocation);
         }
