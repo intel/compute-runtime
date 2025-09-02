@@ -29,7 +29,9 @@ class MockGmm : public Gmm {
     ADDMETHOD_NOBASE(extraMemoryFlagsRequired, bool, false, ());
 
     static std::unique_ptr<Gmm> queryImgParams(GmmHelper *gmmHelper, ImageInfo &imgInfo, bool preferCompression) {
-        return std::unique_ptr<Gmm>(new Gmm(gmmHelper, imgInfo, {}, preferCompression));
+        StorageInfo storageInfo = {};
+        storageInfo.systemMemoryPlacement = !imgInfo.useLocalMemory;
+        return std::unique_ptr<Gmm>(new Gmm(gmmHelper, imgInfo, storageInfo, preferCompression));
     }
 
     static ImageInfo initImgInfo(ImageDescriptor &imgDesc, int baseMipLevel, const SurfaceFormatInfo *surfaceFormat) {
