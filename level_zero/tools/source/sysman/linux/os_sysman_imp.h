@@ -27,13 +27,14 @@ namespace L0 {
 class PmuInterface;
 class FirmwareUtil;
 
-class ExecutionEnvironmentRefCountRestore {
+class ExecutionEnvironmentRefCountRestore : public NEO::NonCopyableAndNonMovableClass {
   public:
     ExecutionEnvironmentRefCountRestore() = delete;
     ExecutionEnvironmentRefCountRestore(NEO::ExecutionEnvironment *executionEnvironmentRecevied) {
         executionEnvironment = executionEnvironmentRecevied;
         executionEnvironment->incRefInternal();
     }
+
     ~ExecutionEnvironmentRefCountRestore() {
         executionEnvironment->decRefInternal();
     }

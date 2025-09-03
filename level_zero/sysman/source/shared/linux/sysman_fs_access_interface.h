@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <level_zero/zes_api.h>
@@ -19,7 +20,7 @@
 namespace L0 {
 namespace Sysman {
 
-class FdCacheInterface {
+class FdCacheInterface : public NEO::NonCopyableAndNonMovableClass {
   public:
     FdCacheInterface() = default;
     ~FdCacheInterface();

@@ -30,7 +30,7 @@
 
 namespace L0 {
 
-class FdCache {
+class FdCache : public NEO::NonCopyableAndNonMovableClass {
   public:
     FdCache() = default;
     ~FdCache();
