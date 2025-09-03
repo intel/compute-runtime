@@ -94,6 +94,7 @@ struct ExternalCbEventInfoContainer {
             info.allocationOffset = allocationOffset;
         }
     }
+    void attachExternalCbEventsToExecutableGraph();
     const std::vector<ExternalCbEventInfo> &getCbEventInfos() const {
         return storage;
     }

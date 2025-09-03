@@ -26,6 +26,8 @@ decltype(&zeCommandListAppendLaunchKernelWithParameters) zeCommandListAppendLaun
 decltype(&zerTranslateIdentifierToDeviceHandle) zerTranslateIdentifierToDeviceHandleFunc = nullptr;
 decltype(&zerTranslateDeviceHandleToIdentifier) zerTranslateDeviceHandleToIdentifierFunc = nullptr;
 decltype(&zerGetLastErrorDescription) zerGetLastErrorDescriptionFunc = nullptr;
+pfnZexCounterBasedEventCreate2 zexCounterBasedEventCreate2Func = nullptr;
+
 struct LoadedDriverExtensions {
     std::vector<ze_driver_extension_properties_t> extensions;
     bool loaded = false;
@@ -427,6 +429,12 @@ bool counterBasedEventsExtensionPresent(ze_driver_handle_t &driverHandle) {
     extensionsToCheck.push_back(cbEventsExtension);
 
     return LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionsToCheck);
+}
+
+void loadCounterBasedEventCreateFunction(ze_driver_handle_t &driverHandle) {
+    if (zexCounterBasedEventCreate2Func == nullptr) {
+        SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexCounterBasedEventCreate2", reinterpret_cast<void **>(&zexCounterBasedEventCreate2Func)));
+    }
 }
 
 std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, uint32_t &subDevCount) {

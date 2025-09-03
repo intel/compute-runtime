@@ -942,6 +942,92 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenInst
     event->destroy();
 }
 
+TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExecuteTwoGraphsThenRecordedExternalCbEventAttachedToLatestExecutedGraph) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_GRAPH_EXTERNAL_EVENT);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &eventDesc, &eventHandle));
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph.get();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+    ze_group_count_t groupCount = {1, 1, 1};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    auto event = L0::Event::fromHandle(eventHandle);
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*(srcGraph.get()));
+
+    NEO::InOrderExecInfo *graphExecInfo = nullptr;
+    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer().getCbEventInfos();
+    for (const auto &entry : externalCbEventContainer) {
+        if (event == entry.event) {
+            graphExecInfo = entry.eventSharedPtrInfo.lock().get();
+            break;
+        }
+    }
+    EXPECT_NE(nullptr, graphExecInfo);
+
+    // 1st executable graph, event attached during instantiation
+    NEO::InOrderExecInfo *currentEventInOrderExecInfo = event->getInOrderExecInfo().get();
+    EXPECT_EQ(currentEventInOrderExecInfo, graphExecInfo);
+
+    ExecutableGraph execGraph2;
+    execGraph2.instantiateFrom(*(srcGraph.get()));
+
+    NEO::InOrderExecInfo *graph2ExecInfo = nullptr;
+    auto &externalCbEventContainer2 = execGraph2.getExternalCbEventInfoContainer().getCbEventInfos();
+    for (const auto &entry : externalCbEventContainer2) {
+        if (event == entry.event) {
+            graph2ExecInfo = entry.eventSharedPtrInfo.lock().get();
+            break;
+        }
+    }
+    EXPECT_NE(nullptr, graph2ExecInfo);
+    EXPECT_NE(graphExecInfo, graph2ExecInfo);
+
+    // 2nd executable graph, event attached during instantiation
+    currentEventInOrderExecInfo = event->getInOrderExecInfo().get();
+    EXPECT_EQ(currentEventInOrderExecInfo, graph2ExecInfo);
+
+    // 1st executable graph execution, event should be attached to 1st graphExecInfo
+    returnValue = execGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    currentEventInOrderExecInfo = event->getInOrderExecInfo().get();
+    EXPECT_EQ(currentEventInOrderExecInfo, graphExecInfo);
+
+    // 2nd executable graph execution, event should be attached to 2nd graphExecInfo
+    returnValue = execGraph2.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    currentEventInOrderExecInfo = event->getInOrderExecInfo().get();
+    EXPECT_EQ(currentEventInOrderExecInfo, graph2ExecInfo);
+
+    srcGraph.reset();
+    event->destroy();
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             GraphTestInstantiationTest,
             GivenExecutableGraphWhenSubmittingItToCommandListThenPatchPreambleIsUsed) {

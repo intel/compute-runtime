@@ -98,6 +98,13 @@ void handleExternalCbEvent(L0::Event *event, ExternalCbEventInfoContainer &conta
     }
 }
 
+void ExternalCbEventInfoContainer::attachExternalCbEventsToExecutableGraph() {
+    for (auto &info : storage) {
+        auto sharedPtr = info.eventSharedPtrInfo.lock();
+        info.event->updateInOrderExecState(sharedPtr, info.signalValue, info.allocationOffset);
+    }
+}
+
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopy>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     auto result = zeCommandListAppendMemoryCopy(&executionTarget, apiArgs.dstptr, apiArgs.srcptr, apiArgs.size, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
     handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
@@ -484,6 +491,7 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, void *pNe
         }
         executionTarget->appendSignalEvent(hSignalEvent, false);
     } else {
+        this->externalCbEventStorage.attachExternalCbEventsToExecutableGraph();
         L0::CommandList *const myLastCommandList = this->myCommandLists.rbegin()->get();
         {
             // first submission node

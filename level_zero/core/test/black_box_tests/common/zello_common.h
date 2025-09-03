@@ -40,6 +40,7 @@ namespace LevelZeroBlackBoxTests {
 
 using pfnZexZexEventGetDeviceAddress = ze_result_t(ZE_APICALL *)(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address);
 using pfnZexCounterBasedEventCreate2 = ze_result_t(ZE_APICALL *)(ze_context_handle_t hContext, ze_device_handle_t hDevice, const zex_counter_based_event_desc_t *desc, ze_event_handle_t *phEvent);
+extern pfnZexCounterBasedEventCreate2 zexCounterBasedEventCreate2Func;
 
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
@@ -130,6 +131,7 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_event_scope_flags_t waitScope);
 
 bool counterBasedEventsExtensionPresent(ze_driver_handle_t &driverHandle);
+void loadCounterBasedEventCreateFunction(ze_driver_handle_t &driverHandle);
 
 std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, uint32_t &subDevCount);
 
