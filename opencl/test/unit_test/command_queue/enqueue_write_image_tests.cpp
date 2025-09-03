@@ -22,11 +22,9 @@
 #include "opencl/test/unit_test/command_queue/enqueue_write_image_fixture.h"
 #include "opencl/test/unit_test/fixtures/one_mip_level_image_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
-#include "opencl/test/unit_test/mocks/mock_builder.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_image.h"
 
 using namespace NEO;
 
@@ -269,7 +267,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenWriteImageIsCalledThenRowPi
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
-    const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
+    const bool useStateless = false;
     auto copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(useStateless, pCmdQ->getHeaplessModeEnabled());
 
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
@@ -422,8 +420,7 @@ HWTEST_P(MipMapWriteImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalle
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
-    const bool useStateless = pDevice->getCompilerProductHelper().isForceToStatelessRequired();
-    EBuiltInOps::Type eBuiltInOp = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(useStateless, pCmdQ->getHeaplessModeEnabled());
+    EBuiltInOps::Type eBuiltInOp = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(false, pCmdQ->getHeaplessModeEnabled());
 
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         eBuiltInOp,
@@ -1002,48 +999,4 @@ HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledForMipMa
 
     auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, image.get(), false, origin, region, 4u, pitchSize, ptr, nullptr);
     EXPECT_EQ(res, CL_SUCCESS);
-}
-
-HWTEST_F(EnqueueWriteImageTest, given4gbBufferAndIsForceStatelessIsFalseWhenEnqueueWriteImageCallThenStatelessIsUsed) {
-    struct FourGbMockImage : MockImageBase {
-        size_t getSize() const override { return static_cast<size_t>(4ull * MemoryConstants::gigaByte); }
-    };
-
-    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-    if (is32bit) {
-        GTEST_SKIP();
-    }
-
-    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ);
-    mockCmdQ->isForceStateless = false;
-
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(true, pCmdQ->getHeaplessModeEnabled());
-
-    auto builtIns = new MockBuiltins();
-    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
-
-    // substitute original builder with mock builder
-    auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
-        copyBuiltIn,
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
-
-    FourGbMockImage dstImage;
-
-    auto mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        copyBuiltIn,
-        *pClDevice));
-
-    EXPECT_FALSE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
-
-    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, &dstImage);
-
-    EXPECT_TRUE(mockBuilder->wasBuildDispatchInfosWithBuiltinOpParamsCalled);
-
-    // restore original builder and retrieve mock builder
-    auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
-        rootDeviceIndex,
-        copyBuiltIn,
-        std::move(oldBuilder));
-    EXPECT_EQ(mockBuilder, newBuilder.get());
 }

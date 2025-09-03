@@ -25,8 +25,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    const bool isStateless = isForceStateless || forceStateless(srcBuffer->getSize());
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(isStateless, this->heaplessModeEnabled);
+    const bool useStateless = forceStateless(srcBuffer->getSize());
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToImage3d>(useStateless, this->heaplessModeEnabled);
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             this->getClDevice());
