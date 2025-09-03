@@ -9,6 +9,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include <level_zero/ze_api.h>
 
@@ -66,7 +67,8 @@ TEST(zeCommandListAppendMemoryFill, whenPatternSizeNotPowerOf2ThenReturnError) {
 
 TEST(zeCommandListAppendWaitOnEvent, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
-    ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
 
     auto result = zeCommandListAppendWaitOnEvents(commandList.toHandle(), 1, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -91,7 +93,8 @@ TEST(zeCommandListAppendLaunchKernel, whenCalledThenRedirectedToObject) {
 }
 TEST(zeCommandListAppendEventReset, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
-    ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
 
     auto result = zeCommandListAppendEventReset(commandList.toHandle(), event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -106,7 +109,8 @@ TEST(zeCommandListAppendExecutionBarrier, whenCalledThenRedirectedToObject) {
 
 TEST(zeCommandListAppendSignalEvent, WhenAppendingSignalEventThenSuccessIsReturned) {
     MockCommandList commandList;
-    ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
 
     auto result = zeCommandListAppendSignalEvent(commandList.toHandle(), event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

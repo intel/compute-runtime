@@ -234,6 +234,8 @@ struct ExecutableGraph;
 using GraphSubmissionSegment = std::variant<L0::CommandList *, ExecutableGraph *>;
 using GraphSubmissionChain = std::vector<GraphSubmissionSegment>;
 
+void handleExternalCbEvent(L0::Event *event, ExternalCbEventInfoContainer &container);
+
 struct GraphInstatiateSettings {
     GraphInstatiateSettings() = default;
     GraphInstatiateSettings(void *pNext) {
@@ -276,6 +278,9 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     }
 
     ze_result_t execute(L0::CommandList *executionTarget, void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ExternalCbEventInfoContainer &getExternalCbEventInfoContainer() {
+        return externalCbEventStorage;
+    }
 
   protected:
     L0::CommandList *allocateAndAddCommandListSubmissionNode();
@@ -284,6 +289,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     Graph *src = nullptr;
     L0::CommandList *executionTarget = nullptr;
     std::vector<std::unique_ptr<L0::CommandList>> myCommandLists;
+    ExternalCbEventInfoContainer externalCbEventStorage;
 
     StackVec<std::unique_ptr<ExecutableGraph>, 16> subGraphs;
 

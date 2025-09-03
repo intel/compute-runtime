@@ -92,76 +92,104 @@ auto getOptionalData(ContainerT &container) {
     return container.empty() ? nullptr : container.data();
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopy>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendMemoryCopy(&executionTarget, apiArgs.dstptr, apiArgs.srcptr, apiArgs.size, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+void handleExternalCbEvent(L0::Event *event, ExternalCbEventInfoContainer &container) {
+    if (event && event->isGraphExternalEvent()) {
+        container.addCbEventInfo(event, event->getInOrderExecInfo(), event->getInOrderExecBaseSignalValue(), event->getInOrderAllocationOffset());
+    }
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendBarrier>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendBarrier(&executionTarget, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopy>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendMemoryCopy(&executionTarget, apiArgs.dstptr, apiArgs.srcptr, apiArgs.size, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendWaitOnEvents>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+ze_result_t Closure<CaptureApi::zeCommandListAppendBarrier>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendBarrier(&executionTarget, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListAppendWaitOnEvents>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     return zeCommandListAppendWaitOnEvents(&executionTarget, apiArgs.numEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendWriteGlobalTimestamp(&executionTarget, apiArgs.dstptr, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+ze_result_t Closure<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendWriteGlobalTimestamp(&executionTarget, apiArgs.dstptr, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryRangesBarrier>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendMemoryRangesBarrier(&executionTarget, apiArgs.numRanges, getOptionalData(indirectArgs.rangeSizes), const_cast<const void **>(getOptionalData(indirectArgs.ranges)),
-                                                  apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryRangesBarrier>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendMemoryRangesBarrier(&executionTarget, apiArgs.numRanges, getOptionalData(indirectArgs.rangeSizes), const_cast<const void **>(getOptionalData(indirectArgs.ranges)),
+                                                         apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryFill>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendMemoryFill(&executionTarget, apiArgs.ptr, getOptionalData(indirectArgs.pattern), apiArgs.patternSize, apiArgs.size,
-                                         apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
-}
-
-ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopyRegion>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendMemoryCopyRegion(&executionTarget, apiArgs.dstptr, externalStorage.getCopyRegion(indirectArgs.dstRegion), apiArgs.dstPitch, apiArgs.dstSlicePitch,
-                                               apiArgs.srcptr, externalStorage.getCopyRegion(indirectArgs.srcRegion), apiArgs.srcPitch, apiArgs.srcSlicePitch,
-                                               apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
-}
-
-ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopyFromContext>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendMemoryCopyFromContext(&executionTarget, apiArgs.dstptr, apiArgs.hContextSrc, apiArgs.srcptr, apiArgs.size,
-                                                    apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
-}
-
-ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopy>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendImageCopy(&executionTarget, apiArgs.hDstImage, apiArgs.hSrcImage,
-                                        apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
-}
-
-ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyRegion>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendImageCopyRegion(&executionTarget, apiArgs.hDstImage, apiArgs.hSrcImage, externalStorage.getImageRegion(indirectArgs.dstRegion), externalStorage.getImageRegion(indirectArgs.srcRegion),
-                                              apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
-}
-
-ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyToMemory>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendImageCopyToMemory(&executionTarget,
-                                                apiArgs.dstptr,
-                                                apiArgs.hSrcImage,
-                                                externalStorage.getImageRegion(indirectArgs.srcRegion),
+ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryFill>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendMemoryFill(&executionTarget, apiArgs.ptr, getOptionalData(indirectArgs.pattern), apiArgs.patternSize, apiArgs.size,
                                                 apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyFromMemory>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendImageCopyFromMemory(&executionTarget,
-                                                  apiArgs.hDstImage,
-                                                  apiArgs.srcptr,
-                                                  externalStorage.getImageRegion(indirectArgs.dstRegion),
-                                                  apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopyRegion>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendMemoryCopyRegion(&executionTarget, apiArgs.dstptr, externalStorage.getCopyRegion(indirectArgs.dstRegion), apiArgs.dstPitch, apiArgs.dstSlicePitch,
+                                                      apiArgs.srcptr, externalStorage.getCopyRegion(indirectArgs.srcRegion), apiArgs.srcPitch, apiArgs.srcSlicePitch,
+                                                      apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryPrefetch>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopyFromContext>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendMemoryCopyFromContext(&executionTarget, apiArgs.dstptr, apiArgs.hContextSrc, apiArgs.srcptr, apiArgs.size,
+                                                           apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopy>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendImageCopy(&executionTarget, apiArgs.hDstImage, apiArgs.hSrcImage,
+                                               apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyRegion>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendImageCopyRegion(&executionTarget, apiArgs.hDstImage, apiArgs.hSrcImage, externalStorage.getImageRegion(indirectArgs.dstRegion), externalStorage.getImageRegion(indirectArgs.srcRegion),
+                                                     apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyToMemory>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendImageCopyToMemory(&executionTarget,
+                                                       apiArgs.dstptr,
+                                                       apiArgs.hSrcImage,
+                                                       externalStorage.getImageRegion(indirectArgs.srcRegion),
+                                                       apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyFromMemory>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendImageCopyFromMemory(&executionTarget,
+                                                         apiArgs.hDstImage,
+                                                         apiArgs.srcptr,
+                                                         externalStorage.getImageRegion(indirectArgs.dstRegion),
+                                                         apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryPrefetch>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     return zeCommandListAppendMemoryPrefetch(&executionTarget,
                                              apiArgs.ptr,
                                              apiArgs.size);
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendMemAdvise>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+ze_result_t Closure<CaptureApi::zeCommandListAppendMemAdvise>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     return zeCommandListAppendMemAdvise(&executionTarget,
                                         apiArgs.hDevice,
                                         apiArgs.ptr,
@@ -169,58 +197,70 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendMemAdvise>::instantiateTo(L0:
                                         apiArgs.advice);
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendSignalEvent>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendSignalEvent(&executionTarget,
-                                          apiArgs.hEvent);
+ze_result_t Closure<CaptureApi::zeCommandListAppendSignalEvent>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendSignalEvent(&executionTarget,
+                                                 apiArgs.hEvent);
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hEvent), externalCbEventStorage);
+    return result;
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendEventReset>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+ze_result_t Closure<CaptureApi::zeCommandListAppendEventReset>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     return zeCommandListAppendEventReset(&executionTarget, apiArgs.hEvent);
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendQueryKernelTimestamps(&executionTarget,
-                                                    apiArgs.numEvents,
-                                                    const_cast<ze_event_handle_t *>(getOptionalData(indirectArgs.events)),
-                                                    apiArgs.dstptr,
-                                                    getOptionalData(indirectArgs.offsets),
-                                                    apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+ze_result_t Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendQueryKernelTimestamps(&executionTarget,
+                                                           apiArgs.numEvents,
+                                                           const_cast<ze_event_handle_t *>(getOptionalData(indirectArgs.events)),
+                                                           apiArgs.dstptr,
+                                                           getOptionalData(indirectArgs.offsets),
+                                                           apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendSignalExternalSemaphoreExt(&executionTarget,
-                                                         apiArgs.numSemaphores,
-                                                         const_cast<ze_external_semaphore_ext_handle_t *>(getOptionalData(indirectArgs.semaphores)),
-                                                         const_cast<ze_external_semaphore_signal_params_ext_t *>(&indirectArgs.signalParams),
-                                                         apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+ze_result_t Closure<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendSignalExternalSemaphoreExt(&executionTarget,
+                                                                apiArgs.numSemaphores,
+                                                                const_cast<ze_external_semaphore_ext_handle_t *>(getOptionalData(indirectArgs.semaphores)),
+                                                                const_cast<ze_external_semaphore_signal_params_ext_t *>(&indirectArgs.signalParams),
+                                                                apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendWaitExternalSemaphoreExt(&executionTarget,
-                                                       apiArgs.numSemaphores,
-                                                       const_cast<ze_external_semaphore_ext_handle_t *>(getOptionalData(indirectArgs.semaphores)),
-                                                       const_cast<ze_external_semaphore_wait_params_ext_t *>(&indirectArgs.waitParams),
-                                                       apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+ze_result_t Closure<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendWaitExternalSemaphoreExt(&executionTarget,
+                                                              apiArgs.numSemaphores,
+                                                              const_cast<ze_external_semaphore_ext_handle_t *>(getOptionalData(indirectArgs.semaphores)),
+                                                              const_cast<ze_external_semaphore_wait_params_ext_t *>(&indirectArgs.waitParams),
+                                                              apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyToMemoryExt>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendImageCopyToMemoryExt(&executionTarget,
-                                                   apiArgs.dstptr,
-                                                   apiArgs.hSrcImage,
-                                                   externalStorage.getImageRegion(indirectArgs.srcRegion),
-                                                   apiArgs.destRowPitch,
-                                                   apiArgs.destSlicePitch,
-                                                   apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyToMemoryExt>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendImageCopyToMemoryExt(&executionTarget,
+                                                          apiArgs.dstptr,
+                                                          apiArgs.hSrcImage,
+                                                          externalStorage.getImageRegion(indirectArgs.srcRegion),
+                                                          apiArgs.destRowPitch,
+                                                          apiArgs.destSlicePitch,
+                                                          apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
-    return zeCommandListAppendImageCopyFromMemoryExt(&executionTarget,
-                                                     apiArgs.hDstImage,
-                                                     apiArgs.srcptr,
-                                                     externalStorage.getImageRegion(indirectArgs.dstRegion),
-                                                     apiArgs.srcRowPitch,
-                                                     apiArgs.srcSlicePitch,
-                                                     apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
+    auto result = zeCommandListAppendImageCopyFromMemoryExt(&executionTarget,
+                                                            apiArgs.hDstImage,
+                                                            apiArgs.srcptr,
+                                                            externalStorage.getImageRegion(indirectArgs.dstRegion),
+                                                            apiArgs.srcRowPitch,
+                                                            apiArgs.srcSlicePitch,
+                                                            apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
 Closure<CaptureApi::zeCommandListAppendLaunchKernel>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
@@ -231,13 +271,14 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernel>::IndirectArgs::IndirectArgs
     this->kernelStateId = externalStorage.registerKernelState(std::move(stateSnapshot));
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernel>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernel>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     auto *kernelOrig = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
     DEBUG_BREAK_IF(nullptr == kernelOrig);
 
     auto kernelClone = kernelOrig->cloneWithStateOverride(externalStorage.getKernelMutableState(this->indirectArgs.kernelStateId));
-
-    return zeCommandListAppendLaunchKernel(&executionTarget, kernelClone.get(), &indirectArgs.launchKernelArgs, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    auto result = zeCommandListAppendLaunchKernel(&executionTarget, kernelClone.get(), &indirectArgs.launchKernelArgs, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
 Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
@@ -248,13 +289,14 @@ Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>::IndirectArgs::I
     this->kernelStateId = externalStorage.registerKernelState(std::move(stateSnapshot));
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     auto *kernelOrig = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
     DEBUG_BREAK_IF(nullptr == kernelOrig);
 
     auto kernelClone = kernelOrig->cloneWithStateOverride(externalStorage.getKernelMutableState(this->indirectArgs.kernelStateId));
-
-    return zeCommandListAppendLaunchCooperativeKernel(&executionTarget, kernelClone.get(), &indirectArgs.launchKernelArgs, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    auto result = zeCommandListAppendLaunchCooperativeKernel(&executionTarget, kernelClone.get(), &indirectArgs.launchKernelArgs, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
 Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
@@ -263,13 +305,14 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect>::IndirectArgs::Indi
     this->kernelStateId = externalStorage.registerKernelState(std::move(stateSnapshot));
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     auto *kernelOrig = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
     DEBUG_BREAK_IF(nullptr == kernelOrig);
 
     auto kernelClone = kernelOrig->cloneWithStateOverride(externalStorage.getKernelMutableState(this->indirectArgs.kernelStateId));
-
-    return zeCommandListAppendLaunchKernelIndirect(&executionTarget, kernelClone.get(), apiArgs.launchArgsBuffer, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    auto result = zeCommandListAppendLaunchKernelIndirect(&executionTarget, kernelClone.get(), apiArgs.launchArgsBuffer, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
 Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
@@ -283,7 +326,7 @@ Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>::IndirectA
     }
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     std::vector<decltype(std::declval<KernelImp *>()->cloneWithStateOverride(nullptr))> kernelClonesOwner(apiArgs.numKernels);
     std::vector<ze_kernel_handle_t> phKernelClones(apiArgs.numKernels);
 
@@ -294,8 +337,9 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect
         kernelClonesOwner[i] = kernelOrig->cloneWithStateOverride(externalStorage.getKernelMutableState(kernelStateId));
         phKernelClones[i] = kernelClonesOwner[i].get();
     }
-
-    return zeCommandListAppendLaunchMultipleKernelsIndirect(&executionTarget, apiArgs.numKernels, phKernelClones.data(), apiArgs.pCountBuffer, apiArgs.launchArgsBuffer, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    auto result = zeCommandListAppendLaunchMultipleKernelsIndirect(&executionTarget, apiArgs.numKernels, phKernelClones.data(), apiArgs.pCountBuffer, apiArgs.launchArgsBuffer, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
 Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
@@ -314,13 +358,14 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::IndirectArgs
     CommandList::freeClonedAppendKernelExtensions(this->pNext);
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     auto *kernelOrig = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
     DEBUG_BREAK_IF(nullptr == kernelOrig);
 
     auto kernelClone = kernelOrig->cloneWithStateOverride(externalStorage.getKernelMutableState(this->indirectArgs.kernelStateId));
-
-    return zeCommandListAppendLaunchKernelWithParameters(&executionTarget, kernelClone.get(), &indirectArgs.groupCounts, indirectArgs.pNext, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    auto result = zeCommandListAppendLaunchKernelWithParameters(&executionTarget, kernelClone.get(), &indirectArgs.groupCounts, indirectArgs.pNext, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
 Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
@@ -341,13 +386,14 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs:
     CommandList::freeClonedAppendKernelExtensions(this->pNext);
 }
 
-ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage) const {
+ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::instantiateTo(L0::CommandList &executionTarget, ClosureExternalStorage &externalStorage, ExternalCbEventInfoContainer &externalCbEventStorage) const {
     auto *kernelOrig = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
     DEBUG_BREAK_IF(nullptr == kernelOrig);
 
     auto kernelClone = kernelOrig->cloneWithStateOverride(externalStorage.getKernelMutableState(this->indirectArgs.kernelStateId));
-
-    return zeCommandListAppendLaunchKernelWithParameters(&executionTarget, kernelClone.get(), &apiArgs.groupCounts, this->indirectArgs.pNext, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    auto result = zeCommandListAppendLaunchKernelWithParameters(&executionTarget, kernelClone.get(), &apiArgs.groupCounts, this->indirectArgs.pNext, apiArgs.hSignalEvent, apiArgs.numWaitEvents, externalStorage.getEventsList(indirectArgs.waitEvents));
+    handleExternalCbEvent(L0::Event::fromHandle(apiArgs.hSignalEvent), externalCbEventStorage);
+    return result;
 }
 
 ExecutableGraph::~ExecutableGraph() = default;
@@ -393,10 +439,10 @@ void ExecutableGraph::instantiateFrom(Graph &graph, const GraphInstatiateSetting
             switch (static_cast<CaptureApi>(cmd.index())) {
             default:
                 break;
-#define RR_CAPTURED_API(X)                                                                                         \
-    case CaptureApi::X:                                                                                            \
-        std::get<static_cast<size_t>(CaptureApi::X)>(cmd).instantiateTo(*currCmdList, graph.getExternalStorage()); \
-        DEBUG_BREAK_IF(err != ZE_RESULT_SUCCESS);                                                                  \
+#define RR_CAPTURED_API(X)                                                                                                                                  \
+    case CaptureApi::X:                                                                                                                                     \
+        std::get<static_cast<size_t>(CaptureApi::X)>(cmd).instantiateTo(*currCmdList, graph.getExternalStorage(), this->getExternalCbEventInfoContainer()); \
+        DEBUG_BREAK_IF(err != ZE_RESULT_SUCCESS);                                                                                                           \
         break;
                 RR_CAPTURED_APIS()
 #undef RR_CAPTURED_API

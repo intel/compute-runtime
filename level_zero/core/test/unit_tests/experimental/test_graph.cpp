@@ -15,6 +15,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+#include "level_zero/driver_experimental/zex_api.h"
 
 using namespace NEO;
 
@@ -849,6 +850,96 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     EXPECT_EQ(1U, graphHwCommands->appendLaunchKernelIndirectCalled);
     EXPECT_EQ(1U, graphHwCommands->appendLaunchMultipleKernelsIndirectCalled);
     EXPECT_EQ(2U, graphHwCommands->appendLaunchKernelWithParametersCalled); // +1 for zeCommandListAppendLaunchKernelWithArguments
+}
+
+TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventWhenInstantiateToGraphThenDoNotRecordExternalCbEvent) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &eventDesc, &eventHandle));
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph.get();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+    ze_group_count_t groupCount = {1, 1, 1};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*(srcGraph.get()));
+
+    auto event = L0::Event::fromHandle(eventHandle);
+    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer().getCbEventInfos();
+    EXPECT_EQ(0u, externalCbEventContainer.size());
+    srcGraph.reset();
+    event->destroy();
+}
+
+TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenInstantiateToGraphThenRecordExternalCbEvent) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
+    eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_GRAPH_EXTERNAL_EVENT);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &eventDesc, &eventHandle));
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph.get();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+    ze_group_count_t groupCount = {1, 1, 1};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*(srcGraph.get()));
+
+    auto event = L0::Event::fromHandle(eventHandle);
+    auto &externalCbEventContainer = execGraph.getExternalCbEventInfoContainer().getCbEventInfos();
+    // event used twice in the graph, but should be recorded only once
+    EXPECT_EQ(1u, externalCbEventContainer.size());
+    bool externalCbEventFound = false;
+    for (const auto &entry : externalCbEventContainer) {
+        if (event == entry.event) {
+            externalCbEventFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(externalCbEventFound);
+    srcGraph.reset();
+    event->destroy();
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
