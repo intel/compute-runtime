@@ -892,3 +892,24 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenXe3WhenSetStallOnlyBarrierThenRes
     GenCmdList::iterator itor = resourceBarrierList.begin();
     EXPECT_TRUE(hwParser.isStallingBarrier<FamilyType>(itor));
 }
+
+XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenXe3WhenSetStallOnlyBarrierWithL1FlagThenResourceBarrierProgrammedAndL1Flushed) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.InvalidateL1CacheInResourceBarrier.set(1);
+
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    constexpr static auto bufferSize = sizeof(RESOURCE_BARRIER);
+
+    char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+    PipeControlArgs args;
+    args.csStallOnly = true;
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, PostSyncMode::noWrite, 0u, 0u, args);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList resourceBarrierList = hwParser.getCommandsList<RESOURCE_BARRIER>();
+    EXPECT_EQ(1u, resourceBarrierList.size());
+    GenCmdList::iterator itor = resourceBarrierList.begin();
+    EXPECT_TRUE(reinterpret_cast<RESOURCE_BARRIER *>(*itor)->getL1DataportCacheInvalidate());
+}

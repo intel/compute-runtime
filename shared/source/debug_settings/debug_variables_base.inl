@@ -316,6 +316,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideCopyOffloadMode, -1, "-1: default, 0: di
 DECLARE_DEBUG_VARIABLE(int32_t, UseSingleListForTemporaryAllocations, -1, "-1: default, 0: disabled, 0: enabled. If enabled, use single list, instead of per CSR for tracking temporary allocations")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxMemAllocSizeMb, -1, "-1: default, >=0 override reported max mem alloc size in MB")
 DECLARE_DEBUG_VARIABLE(int32_t, DetectIncorrectPointersOnSetArgCalls, -1, "-1: default do not detect, 0: do not detect, 1: detect incorrect pointers and return error")
+DECLARE_DEBUG_VARIABLE(int32_t, InvalidateL1CacheInResourceBarrier, -1, "-1: default, 0: do not invalidate, 1: invalidate L1 cache when programming resource barrier")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
