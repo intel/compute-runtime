@@ -412,22 +412,22 @@ TEST_F(RTASTestExt, GivenUnderlyingBuilderDestroyFailsThenErrorIsReturned_Ext) {
 }
 
 TEST_F(RTASTestExt, GivenUnderlyingBuilderGetBuildPropertiesSucceedsThenSuccessIsReturned_Ext) {
-    RTASBuilderExt pRTASBuilderExt;
+    RTASBuilderExt pRTASBuilderExt{};
     builderGetBuildPropertiesExtImpl = &builderGetBuildProperties;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeRTASBuilderGetBuildPropertiesExt(pRTASBuilderExt.toHandle(), nullptr, nullptr));
     EXPECT_EQ(1u, builderGetBuildPropertiesCalled);
 }
 
 TEST_F(RTASTestExt, GivenUnderlyingBuilderGetBuildPropertiesFailsThenErrorIsReturned_Ext) {
-    RTASBuilderExt pRTASBuilderExt;
+    RTASBuilderExt pRTASBuilderExt{};
     builderGetBuildPropertiesExtImpl = &builderGetBuildPropertiesFail;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASBuilderGetBuildPropertiesExt(pRTASBuilderExt.toHandle(), nullptr, nullptr));
     EXPECT_EQ(1u, builderGetBuildPropertiesFailCalled);
 }
 
 TEST_F(RTASTestExt, GivenUnderlyingBuilderBuildSucceedsThenSuccessIsReturned_Ext) {
-    RTASBuilderExt pRTASBuilderExt;
-    RTASParallelOperationExt pParallelOperation;
+    RTASBuilderExt pRTASBuilderExt{};
+    RTASParallelOperationExt pParallelOperation{};
     builderBuildExtImpl = &builderBuild;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeRTASBuilderBuildExt(pRTASBuilderExt.toHandle(),
                                                            nullptr,
@@ -440,8 +440,8 @@ TEST_F(RTASTestExt, GivenUnderlyingBuilderBuildSucceedsThenSuccessIsReturned_Ext
 }
 
 TEST_F(RTASTestExt, GivenUnderlyingBuilderBuildFailsThenErrorIsReturned_Ext) {
-    RTASBuilderExt pRTASBuilderExt;
-    RTASParallelOperationExt pParallelOperation;
+    RTASBuilderExt pRTASBuilderExt{};
+    RTASParallelOperationExt pParallelOperation{};
     builderBuildExtImpl = &builderBuildFail;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASBuilderBuildExt(pRTASBuilderExt.toHandle(),
                                                                  nullptr,
@@ -505,28 +505,28 @@ TEST_F(RTASTestExt, GivenUnderlyingParallelOperationDestroyFailsThenErrorIsRetur
 }
 
 TEST_F(RTASTestExt, GivenUnderlyingParallelOperationGetPropertiesSucceedsThenSuccessIsReturned_Ext) {
-    RTASParallelOperationExt pParallelOperation;
+    RTASParallelOperationExt pParallelOperation{};
     parallelOperationGetPropertiesExtImpl = &parallelOperationGetProperties;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeRTASParallelOperationGetPropertiesExt(pParallelOperation.toHandle(), nullptr));
     EXPECT_EQ(1u, parallelOperationGetPropertiesCalled);
 }
 
 TEST_F(RTASTestExt, GivenUnderlyingParallelOperationGetPropertiesFailsThenErrorIsReturned_Ext) {
-    RTASParallelOperationExt pParallelOperation;
+    RTASParallelOperationExt pParallelOperation{};
     parallelOperationGetPropertiesExtImpl = &parallelOperationGetPropertiesFail;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASParallelOperationGetPropertiesExt(pParallelOperation.toHandle(), nullptr));
     EXPECT_EQ(1u, parallelOperationGetPropertiesFailCalled);
 }
 
 TEST_F(RTASTestExt, GivenUnderlyingParallelOperationJoinSucceedsThenSuccessIsReturned_Ext) {
-    RTASParallelOperationExt pParallelOperation;
+    RTASParallelOperationExt pParallelOperation{};
     parallelOperationJoinExtImpl = &parallelOperationJoin;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeRTASParallelOperationJoinExt(pParallelOperation.toHandle()));
     EXPECT_EQ(1u, parallelOperationJoinCalled);
 }
 
 TEST_F(RTASTestExt, GivenUnderlyingParallelOperationJoinFailsThenErrorIsReturned_Ext) {
-    RTASParallelOperationExt pParallelOperation;
+    RTASParallelOperationExt pParallelOperation{};
     parallelOperationJoinExtImpl = &parallelOperationJoinFail;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASParallelOperationJoinExt(pParallelOperation.toHandle()));
     EXPECT_EQ(1u, parallelOperationJoinFailCalled);

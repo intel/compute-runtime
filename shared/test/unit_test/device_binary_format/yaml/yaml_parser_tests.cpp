@@ -212,16 +212,9 @@ TEST(YamlConsumeNumberOrSign, GivenInvalidCharacterThenReturnCurrentParsePositio
 
     for (int c = std::numeric_limits<char>::min(); c <= std::numeric_limits<char>::max(); ++c) {
         bool isSignOrNumber = NEO::Yaml::isSign(static_cast<char>(c)) || NEO::Yaml::isNumber(static_cast<char>(c));
-        char numberStr[2] = {static_cast<char>(c), '\0'};
-        auto expected = numberStr + (isSignOrNumber ? 1 : 0);
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-        EXPECT_EQ(expected, NEO::Yaml::consumeNumberOrSign(ConstStringRef::fromArray(numberStr), numberStr)) << c;
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+        std::string numberStr(1, static_cast<char>(c));
+        auto expected = numberStr.c_str() + (isSignOrNumber ? 1 : 0);
+        EXPECT_EQ(expected, NEO::Yaml::consumeNumberOrSign(ConstStringRef(numberStr.c_str(), 1), numberStr.c_str())) << c;
     }
 }
 

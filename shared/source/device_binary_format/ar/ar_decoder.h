@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,10 @@ inline ConstStringRef readUnpaddedString(const char *paddedString) {
 }
 
 inline ConstStringRef readLongFileName(ConstStringRef longFileNamesSection, size_t offset) {
+    if (offset > longFileNamesSection.size()) {
+        offset = longFileNamesSection.size();
+    }
+
     size_t end = offset;
     while ((end < longFileNamesSection.size()) && (longFileNamesSection[end] != SpecialFileNames::fileNameTerminator)) {
         ++end;

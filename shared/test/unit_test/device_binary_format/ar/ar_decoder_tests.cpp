@@ -71,14 +71,8 @@ TEST(ArDecoderReadLongFileName, GivenOffsetThenParsesCorrectString) {
     auto name0 = readLongFileName(names, 0U);
     auto name1 = readLongFileName(names, 6U);
     auto name2 = readLongFileName(names, 10U);
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
     auto name3 = readLongFileName(names, 40U);
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+
     EXPECT_EQ(names, name0.begin());
     EXPECT_EQ(5U, name0.size());
 

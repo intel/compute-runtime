@@ -1824,8 +1824,6 @@ HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneIsCalledThen
     auto result = CommandList::cloneAppendKernelExtensions(&ext, outExtPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_EQ(nullptr, outExtPtr);
-
-    CommandList::freeClonedAppendKernelExtensions(&ext);
 }
 
 } // namespace ult

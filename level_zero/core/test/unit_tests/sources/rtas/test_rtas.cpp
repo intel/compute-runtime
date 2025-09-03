@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -357,7 +357,7 @@ TEST_F(RTASTest, GivenUnderlyingBuilderDestroyFailsThenErrorIsReturned) {
 }
 
 TEST_F(RTASTest, GivenUnderlyingBuilderGetBuildPropertiesSucceedsThenSuccessIsReturned) {
-    RTASBuilder pRTASBuilder;
+    RTASBuilder pRTASBuilder{};
     builderGetBuildPropertiesExpImpl = &builderGetBuildProperties;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeRTASBuilderGetBuildPropertiesExp(pRTASBuilder.toHandle(), nullptr, nullptr));
@@ -365,7 +365,7 @@ TEST_F(RTASTest, GivenUnderlyingBuilderGetBuildPropertiesSucceedsThenSuccessIsRe
 }
 
 TEST_F(RTASTest, GivenUnderlyingBuilderGetBuildPropertiesFailsThenErrorIsReturned) {
-    RTASBuilder pRTASBuilder;
+    RTASBuilder pRTASBuilder{};
     builderGetBuildPropertiesExpImpl = &builderGetBuildPropertiesFail;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASBuilderGetBuildPropertiesExp(pRTASBuilder.toHandle(), nullptr, nullptr));
@@ -373,8 +373,8 @@ TEST_F(RTASTest, GivenUnderlyingBuilderGetBuildPropertiesFailsThenErrorIsReturne
 }
 
 TEST_F(RTASTest, GivenUnderlyingBuilderBuildSucceedsThenSuccessIsReturned) {
-    RTASBuilder pRTASBuilder;
-    RTASParallelOperation pParallelOperation;
+    RTASBuilder pRTASBuilder{};
+    RTASParallelOperation pParallelOperation{};
     builderBuildExpImpl = &builderBuild;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeRTASBuilderBuildExp(pRTASBuilder.toHandle(),
@@ -388,8 +388,8 @@ TEST_F(RTASTest, GivenUnderlyingBuilderBuildSucceedsThenSuccessIsReturned) {
 }
 
 TEST_F(RTASTest, GivenUnderlyingBuilderBuildFailsThenErrorIsReturned) {
-    RTASBuilder pRTASBuilder;
-    RTASParallelOperation pParallelOperation;
+    RTASBuilder pRTASBuilder{};
+    RTASParallelOperation pParallelOperation{};
     builderBuildExpImpl = &builderBuildFail;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASBuilderBuildExp(pRTASBuilder.toHandle(),
@@ -461,7 +461,7 @@ TEST_F(RTASTest, GivenUnderlyingParallelOperationDestroyFailsThenErrorIsReturned
 }
 
 TEST_F(RTASTest, GivenUnderlyingParallelOperationGetPropertiesSucceedsThenSuccessIsReturned) {
-    RTASParallelOperation pParallelOperation;
+    RTASParallelOperation pParallelOperation{};
     parallelOperationGetPropertiesExpImpl = &parallelOperationGetProperties;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeRTASParallelOperationGetPropertiesExp(pParallelOperation.toHandle(), nullptr));
@@ -469,7 +469,7 @@ TEST_F(RTASTest, GivenUnderlyingParallelOperationGetPropertiesSucceedsThenSucces
 }
 
 TEST_F(RTASTest, GivenUnderlyingParallelOperationGetPropertiesFailsThenErrorIsReturned) {
-    RTASParallelOperation pParallelOperation;
+    RTASParallelOperation pParallelOperation{};
     parallelOperationGetPropertiesExpImpl = &parallelOperationGetPropertiesFail;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASParallelOperationGetPropertiesExp(pParallelOperation.toHandle(), nullptr));
@@ -477,7 +477,7 @@ TEST_F(RTASTest, GivenUnderlyingParallelOperationGetPropertiesFailsThenErrorIsRe
 }
 
 TEST_F(RTASTest, GivenUnderlyingParallelOperationJoinSucceedsThenSuccessIsReturned) {
-    RTASParallelOperation pParallelOperation;
+    RTASParallelOperation pParallelOperation{};
     parallelOperationJoinExpImpl = &parallelOperationJoin;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeRTASParallelOperationJoinExp(pParallelOperation.toHandle()));
@@ -485,7 +485,7 @@ TEST_F(RTASTest, GivenUnderlyingParallelOperationJoinSucceedsThenSuccessIsReturn
 }
 
 TEST_F(RTASTest, GivenUnderlyingParallelOperationJoinFailsThenErrorIsReturned) {
-    RTASParallelOperation pParallelOperation;
+    RTASParallelOperation pParallelOperation{};
     parallelOperationJoinExpImpl = &parallelOperationJoinFail;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASParallelOperationJoinExp(pParallelOperation.toHandle()));

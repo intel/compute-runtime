@@ -600,6 +600,8 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCrea
 
         calculationDesc.metricGroupCount = 1;
         calculationDesc.phMetricGroups = &metricGroupHandle;
+        calculationDesc.metricCount = 0;
+        calculationDesc.phMetrics = nullptr;
 
         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(),

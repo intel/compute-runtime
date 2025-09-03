@@ -876,13 +876,14 @@ if(NOT MSVC)
     endif()
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
       # Disable specific warnings due to GCC bug for version 12
-      if(CMAKE_CXX_COMPILER_VERSION STREQUAL "12")
+      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12 AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
         # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-restrict")
       endif()
-      # Disable specific warnings due to GCC bug for versions >= 13
-      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+      # Disable specific warnings due to GCC bug for versions >= 12
+      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
         # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105616
+        # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105562
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
       endif()
     endif()
