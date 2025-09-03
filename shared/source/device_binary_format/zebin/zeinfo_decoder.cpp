@@ -120,7 +120,7 @@ DecodeError extractZeInfoKernelSections(const NEO::Yaml::YamlParser &parser, con
 
 bool validateZeInfoSectionsCount(const ZeInfoSections &zeInfoSections, std::string &outErrReason) {
     ConstStringRef context = "DeviceBinaryFormat::zebin::ZeInfo";
-    bool valid = validateCountExactly(zeInfoSections.kernels, 1U, outErrReason, "kernels", context);
+    bool valid = validateCountAtMost(zeInfoSections.kernels, 1U, outErrReason, "kernels", context);
     valid &= validateCountAtMost(zeInfoSections.version, 1U, outErrReason, "version", context);
     valid &= validateCountAtMost(zeInfoSections.globalHostAccessTable, 1U, outErrReason, "global host access table", context);
     valid &= validateCountAtMost(zeInfoSections.functions, 1U, outErrReason, "functions", context);
@@ -518,15 +518,16 @@ DecodeError decodeZeInfoFunctions(ProgramInfo &dst, Yaml::YamlParser &parser, co
 }
 
 DecodeError decodeZeInfoKernels(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning, const Types::Version &srcZeInfoVersion) {
-    UNRECOVERABLE_IF(zeInfoSections.kernels.size() != 1U);
-    for (const auto &kernelNd : parser.createChildrenRange(*zeInfoSections.kernels[0])) {
-        auto kernelInfo = std::make_unique<KernelInfo>();
-        auto zeInfoErr = decodeZeInfoKernelEntry(kernelInfo->kernelDescriptor, parser, kernelNd, dst.grfSize, dst.minScratchSpaceSize, dst.samplerStateSize, dst.samplerBorderColorStateSize, outErrReason, outWarning, srcZeInfoVersion);
-        if (DecodeError::success != zeInfoErr) {
-            return zeInfoErr;
-        }
+    if (zeInfoSections.kernels.size() > 0) {
+        for (const auto &kernelNd : parser.createChildrenRange(*zeInfoSections.kernels[0])) {
+            auto kernelInfo = std::make_unique<KernelInfo>();
+            auto zeInfoErr = decodeZeInfoKernelEntry(kernelInfo->kernelDescriptor, parser, kernelNd, dst.grfSize, dst.minScratchSpaceSize, dst.samplerStateSize, dst.samplerBorderColorStateSize, outErrReason, outWarning, srcZeInfoVersion);
+            if (DecodeError::success != zeInfoErr) {
+                return zeInfoErr;
+            }
 
-        dst.kernelInfos.push_back(kernelInfo.release());
+            dst.kernelInfos.push_back(kernelInfo.release());
+        }
     }
     return DecodeError::success;
 }

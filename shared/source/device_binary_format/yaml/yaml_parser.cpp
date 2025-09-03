@@ -346,8 +346,10 @@ void finalizeNode(NodeId nodeId, const TokensCache &tokens, NodesCache &outNodes
 
 bool isEmptyVector(const Token &token, size_t lineId, std::string &outError) {
     if (isVectorDataType(token)) {
-        outError = constructYamlError(lineId, token.pos, token.pos + token.len, "Vector data type expects to have at least one value starting with -");
-        return false;
+        if (!allowEmptyVectorDataType(token)) {
+            outError = constructYamlError(lineId, token.pos, token.pos + token.len, "Vector data type expects to have at least one value starting with -");
+            return false;
+        }
     }
     return true;
 }
@@ -412,26 +414,28 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
                 auto collectionEnd = lines[lineId].last - 1;
                 UNRECOVERABLE_IF(tokens[collectionBeg].traits.type != Token::Type::collectionBeg || tokens[collectionEnd].traits.type != Token::Type::collectionEnd);
 
-                auto parentNodeId = outNodes.size() - 1;
-                auto previousSiblingId = std::numeric_limits<size_t>::max();
+                if (collectionEnd - collectionBeg > 1) {
+                    auto parentNodeId = outNodes.size() - 1;
+                    auto previousSiblingId = std::numeric_limits<size_t>::max();
 
-                for (auto currTokenId = collectionBeg + 1; currTokenId < collectionEnd; currTokenId += 2) {
-                    auto tokenType = tokens[currTokenId].traits.type;
-                    UNRECOVERABLE_IF(tokenType != Token::Type::literalNumber && tokenType != Token::Type::literalString);
-                    reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
+                    for (auto currTokenId = collectionBeg + 1; currTokenId < collectionEnd; currTokenId += 2) {
+                        auto tokenType = tokens[currTokenId].traits.type;
+                        UNRECOVERABLE_IF(tokenType != Token::Type::literalNumber && tokenType != Token::Type::literalString);
+                        reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
 
-                    auto &parentNode = outNodes[parentNodeId];
-                    if (previousSiblingId == std::numeric_limits<size_t>::max()) {
-                        addNode(outNodes, parentNode);
-                    } else {
-                        auto &previousSibling = outNodes[previousSiblingId];
-                        addNode(outNodes, previousSibling, parentNode);
+                        auto &parentNode = outNodes[parentNodeId];
+                        if (previousSiblingId == std::numeric_limits<size_t>::max()) {
+                            addNode(outNodes, parentNode);
+                        } else {
+                            auto &previousSibling = outNodes[previousSiblingId];
+                            addNode(outNodes, previousSibling, parentNode);
+                        }
+                        previousSiblingId = outNodes.size() - 1;
+                        outNodes[previousSiblingId].indent = currLineIndent + 1;
+                        outNodes[previousSiblingId].value = currTokenId;
                     }
-                    previousSiblingId = outNodes.size() - 1;
-                    outNodes[previousSiblingId].indent = currLineIndent + 1;
-                    outNodes[previousSiblingId].value = currTokenId;
+                    nesting.push_back(static_cast<NodeId>(parentNodeId));
                 }
-                nesting.push_back(static_cast<NodeId>(parentNodeId));
             } else if (('#' != tokens[lines[lineId].first + 2]) && ('\n' != tokens[lines[lineId].first + 2])) {
                 outNodes.rbegin()->value = lines[lineId].first + 2;
             }

@@ -3399,7 +3399,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenUnknownEntryInZeInfoGlobalScopeThenEmit
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEmitsError) {
+TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsUnknownAttributeAndNoKernelsSectionThenEmitsError) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
     ZebinTestData::ValidEmptyProgram zebin;
@@ -3413,10 +3413,26 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEm
     std::string errors;
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
-    EXPECT_STREQ("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"a\" in global scope of .ze_info\n"
-                 "DeviceBinaryFormat::zebin::ZeInfo : Expected exactly 1 of kernels, got : 0\n",
+    EXPECT_EQ(NEO::DecodeError::unkownZeinfoAttribute, error);
+    EXPECT_STREQ("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"a\" in global scope of .ze_info\n",
                  errors.c_str());
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenSuccessReturned) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    auto zeInfo = std::string("version:\'") + versionToString(Zebin::ZeInfo::zeInfoDecoderVersion) + "\'\n";
+    zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
+    EXPECT_EQ(NEO::DecodeError::success, error) << errors.c_str();
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThenFails) {
@@ -3434,7 +3450,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThen
     std::string warnings;
     auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, error);
-    EXPECT_STREQ("DeviceBinaryFormat::zebin::ZeInfo : Expected exactly 1 of kernels, got : 2\n", errors.c_str());
+    EXPECT_STREQ("DeviceBinaryFormat::zebin::ZeInfo : Expected at most 1 of kernels, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
@@ -3648,6 +3664,44 @@ functions:
     zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
     zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
     zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "some_kernel", {kernelIsa, sizeof(kernelIsa)});
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string errors;
+    std::string warnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
+    EXPECT_EQ(NEO::DecodeError::success, error);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    ASSERT_EQ(1U, programInfo.externalFunctions.size());
+    auto &funInfo = programInfo.externalFunctions[0];
+    EXPECT_STREQ("fun1", funInfo.functionName.c_str());
+    EXPECT_EQ(128U, funInfo.numGrfRequired);
+    EXPECT_EQ(8U, funInfo.simdSize);
+    EXPECT_EQ(1U, funInfo.barrierCount);
+    EXPECT_EQ(true, funInfo.hasRTCalls);
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoWithEmptyKernelsAndExternalFunctionsMetadataThenPopulatesExternalFunctionMetadataProperly) {
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+
+    std::string zeinfo = std::string("version :\'") + versionToString(Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:        []
+functions:
+    - name: fun1
+      execution_env:
+        grf_count: 128
+        simd_size: 8
+        barrier_count: 1
+        has_rtcalls: true
+)===";
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
 
     NEO::ProgramInfo programInfo;
     NEO::SingleDeviceBinary singleBinary;
@@ -7096,6 +7150,28 @@ kernels:
     parseResult = parser.parse(zeInfoMissingEntrySamePrevInd, errors, warnings);
     ASSERT_FALSE(parseResult);
     EXPECT_STREQ("NEO::Yaml : Could not parse line : [5] : [per_thread_payload_arguments:] <-- parser position on error. Reason : Vector data type expects to have at least one value starting with -\n", errors.c_str());
+}
+
+TEST(ParsingEmptyOptionalVectorTypesZeInfo, givenEmptyKernelsEntryInZeInfoWhenParsingZeInfoThenZeroKernelsAreParsed) {
+    NEO::Yaml::YamlParser parser;
+    bool parseResult = true;
+    std::string errors;
+    std::string warnings;
+
+    std::string zeinfo = std::string("version :\'") + versionToString(Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:         []
+functions:
+  - name:            test_function
+    execution_env:
+      grf_count:       16
+      simd_size:       32
+kernels_misc_info:
+  - name:            ''
+...
+)===";
+    parseResult = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseResult);
+    EXPECT_EQ(0u, errors.size());
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenValidInlineSamplersThenPopulateKernelDescriptorSucceeds) {

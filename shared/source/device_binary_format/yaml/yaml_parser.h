@@ -254,6 +254,14 @@ constexpr bool isVectorDataType(const Token &token) {
     return false;
 }
 
+constexpr bool allowEmptyVectorDataType(const Token &token) {
+    auto tokenString = ConstStringRef(token.pos, token.len);
+    if (equals(tokenString, "kernels")) {
+        return true;
+    }
+    return false;
+}
+
 struct Line {
     enum class LineType : uint8_t { empty,
                                     comment,
