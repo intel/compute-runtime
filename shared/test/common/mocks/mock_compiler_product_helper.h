@@ -23,7 +23,6 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     ADDMETHOD_CONST_NOBASE(isSplitMatrixMultiplyAccumulateSupported, bool, false, (const ReleaseHelper *releaseHelper));
     ADDMETHOD_CONST_NOBASE(isBFloat16ConversionSupported, bool, false, (const ReleaseHelper *releaseHelper));
     ADDMETHOD_CONST_NOBASE(isSubgroupLocalBlockIoSupported, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isDotAccumulateSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDotProductAccumulateSystolicSupported, bool, false, (const ReleaseHelper *releaseHelper));
     ADDMETHOD_CONST_NOBASE(isCreateBufferWithPropertiesSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isSubgroupNamedBarrierSupported, bool, false, ());

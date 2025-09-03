@@ -1698,15 +1698,11 @@ TEST_F(DeviceTest, givenNullDriverInfowhenPciPropertiesIsCalledThenUninitialized
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
 }
 
-TEST_F(DeviceTest, GivenFlagDp4aWhenGettingPropertiesFlagsThenBitIsSet) {
+TEST_F(DeviceTest, WhenGettingKernelPropertiesThenDp4aFlagIsSet) {
     ze_device_module_properties_t kernelProps = {};
 
     device->getKernelProperties(&kernelProps);
-    if (device->getNEODevice()->getCompilerProductHelper().isDotAccumulateSupported()) {
-        EXPECT_NE(0u, kernelProps.flags & ZE_DEVICE_MODULE_FLAG_DP4A);
-    } else {
-        EXPECT_EQ(0u, kernelProps.flags & ZE_DEVICE_MODULE_FLAG_DP4A);
-    }
+    EXPECT_NE(0u, kernelProps.flags & ZE_DEVICE_MODULE_FLAG_DP4A);
 }
 
 TEST_F(DeviceTest, givenValidPciExtPropertiesWhenPciPropertiesIsCalledThenSuccessIsReturned) {

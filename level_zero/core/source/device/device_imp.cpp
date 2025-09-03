@@ -905,9 +905,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
     }
 
     pKernelProperties->nativeKernelSupported.id[0] = 0;
-    if (compilerProductHelper.isDotAccumulateSupported()) {
-        pKernelProperties->flags |= ZE_DEVICE_MODULE_FLAG_DP4A;
-    }
+    pKernelProperties->flags |= ZE_DEVICE_MODULE_FLAG_DP4A;
     pKernelProperties->maxArgumentsSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().maxParameterSize);
     pKernelProperties->printfBufferSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().printfBufferSize);
 
@@ -964,9 +962,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
             ze_intel_device_module_dp_exp_properties_t *dpProperties =
                 reinterpret_cast<ze_intel_device_module_dp_exp_properties_t *>(extendedProperties);
             dpProperties->flags = 0u;
-            if (compilerProductHelper.isDotAccumulateSupported()) {
-                dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
-            }
+            dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
 
             auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
             auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();

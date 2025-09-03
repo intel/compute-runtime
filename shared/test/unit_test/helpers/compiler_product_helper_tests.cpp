@@ -65,18 +65,6 @@ HWTEST2_F(CompilerProductHelperFixture, GivenGen11AndLaterThenSubgroupLocalBlock
     EXPECT_TRUE(compilerProductHelper.isSubgroupLocalBlockIoSupported());
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenDotAccumulateIsSupported, IsAtLeastXeCore) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_TRUE(compilerProductHelper.isDotAccumulateSupported());
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenDotAccumulateIsNotSupported, IsGen12LP) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_FALSE(compilerProductHelper.isDotAccumulateSupported());
-}
-
 HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenCreateBufferWithPropertiesIsSupported, IsAtLeastXeCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
