@@ -188,8 +188,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
     inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
 
-    this->commandContainer.addToResidencyContainer(inOrderExecInfo->getDeviceCounterAllocation());
-    this->commandContainer.addToResidencyContainer(inOrderExecInfo->getHostCounterAllocation());
+    this->addResidency(std::initializer_list<NEO::GraphicsAllocation *>{inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation()});
 
     if (signalEvent && signalEvent->getInOrderIncrementValue() == 0) {
         if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining || (isImmediateType() && this->duplicatedInOrderCounterStorageEnabled)) {
@@ -1573,13 +1572,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     auto blitProperties = NEO::BlitProperties::constructPropertiesForSystemCopy(dstPtrAlloc, srcPtrAlloc, dstPtr, srcPtr, {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0}, 0, 0, 0, 0, clearColorAllocation);
     blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.highPriority = isHighPriorityImmediateCmdList();
-    if (dstPtrAlloc) {
-        commandContainer.addToResidencyContainer(dstPtrAlloc);
-    }
-    if (srcPtrAlloc) {
-        commandContainer.addToResidencyContainer(srcPtrAlloc);
-    }
-    commandContainer.addToResidencyContainer(clearColorAllocation);
+
+    addResidency(std::initializer_list<NEO::GraphicsAllocation *>{dstPtrAlloc, srcPtrAlloc, clearColorAllocation});
 
     size_t nBlitsPerRow = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, device->getNEODevice()->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
     bool useAdditionalTimestamp = nBlitsPerRow > 1;
@@ -1620,9 +1614,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAllocationData->alloc, srcAllocationData->alloc,
                                                                           dstPtrOffset, srcPtrOffset, copySizeModified, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation);
-    commandContainer.addToResidencyContainer(dstAllocationData->alloc);
-    commandContainer.addToResidencyContainer(srcAllocationData->alloc);
-    commandContainer.addToResidencyContainer(clearColorAllocation);
+
+    this->addResidency(std::initializer_list<NEO::GraphicsAllocation *>{dstAllocationData->alloc, srcAllocationData->alloc, clearColorAllocation});
 
     blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.highPriority = isHighPriorityImmediateCmdList();
@@ -1701,9 +1694,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;
 
-    commandContainer.addToResidencyContainer(dst);
-    commandContainer.addToResidencyContainer(src);
-    commandContainer.addToResidencyContainer(clearColorAllocation);
+    this->addResidency(std::initializer_list<NEO::GraphicsAllocation *>{dst, src, clearColorAllocation});
 
     bool useAdditionalTimestamp = blitProperties.copySize.z > 1;
     if (useAdditionalBlitProperties) {

@@ -430,6 +430,13 @@ struct CommandListCoreFamily : public CommandListImp {
     virtual void ensureCmdBufferSpaceForPrefetch() {}
     bool transferDirectionRequiresBcsSplit(NEO::TransferDirection direction) const;
 
+    template <typename Container>
+    void addResidency(const Container &allocs) {
+        for (auto alloc : allocs) {
+            this->commandContainer.addToResidencyContainer(alloc);
+        }
+    }
+
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
     bool latestOperationHasOptimizedCbEvent = false;
