@@ -362,6 +362,14 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         this->explicitlyMadeResident = explicitlyMadeResident;
     }
 
+    void setIsImported() {
+        isImported = true;
+    }
+
+    bool getIsImported() const {
+        return isImported;
+    }
+
   protected:
     struct UsageInfo {
         TaskCountType taskCount = objectNotUsed;
@@ -428,6 +436,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     bool shareableHostMemory = false;
     bool cantBeReadOnly = false;
     bool explicitlyMadeResident = false;
+    bool isImported = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<GraphicsAllocation>);

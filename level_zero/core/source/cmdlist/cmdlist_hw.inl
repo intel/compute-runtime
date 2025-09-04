@@ -1188,7 +1188,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
             (dstAllocationType == NEO::AllocationType::externalHostPtr);
 
         if constexpr (checkIfAllocationImportedRequired()) {
-            launchParams.isDestinationAllocationImported = this->isAllocationImported(allocationStruct.alloc, device->getDriverHandle()->getSvmAllocsManager());
+            launchParams.isDestinationAllocationImported = allocationStruct.alloc->getIsImported();
         }
     }
     launchParams.relaxedOrderingDispatch = memoryCopyParams.relaxedOrderingDispatch;
@@ -1540,7 +1540,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
         auto dstAllocationType = dstPtrAlloc->getAllocationType();
         launchParams.isDestinationAllocationInSystemMemory = this->isUsingSystemAllocation(dstAllocationType);
         if constexpr (checkIfAllocationImportedRequired()) {
-            launchParams.isDestinationAllocationImported = this->isAllocationImported(dstPtrAlloc, device->getDriverHandle()->getSvmAllocsManager());
+            launchParams.isDestinationAllocationImported = dstPtrAlloc->getIsImported();
         }
     } else {
         launchParams.isDestinationAllocationInSystemMemory = true;
@@ -2207,7 +2207,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
         (dstAllocationType == NEO::AllocationType::externalHostPtr);
 
     if constexpr (checkIfAllocationImportedRequired()) {
-        launchParams.isDestinationAllocationImported = this->isAllocationImported(dstAlignedAllocation->alloc, device->getDriverHandle()->getSvmAllocsManager());
+        launchParams.isDestinationAllocationImported = dstAlignedAllocation->alloc->getIsImported();
     }
     launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, signalEvent, numWaitEvents,
@@ -2279,7 +2279,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
         (dstAllocationType == NEO::AllocationType::externalHostPtr);
 
     if constexpr (CommandListCoreFamily<gfxCoreFamily>::checkIfAllocationImportedRequired()) {
-        launchParams.isDestinationAllocationImported = this->isAllocationImported(dstAlignedAllocation->alloc, device->getDriverHandle()->getSvmAllocsManager());
+        launchParams.isDestinationAllocationImported = dstAlignedAllocation->alloc->getIsImported();
     }
     launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(),
@@ -2453,7 +2453,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     launchParams.isDestinationAllocationInSystemMemory = hostPointerNeedsFlush;
     if (dstAllocation.alloc) {
         if constexpr (checkIfAllocationImportedRequired()) {
-            launchParams.isDestinationAllocationImported = this->isAllocationImported(dstAllocation.alloc, device->getDriverHandle()->getSvmAllocsManager());
+            launchParams.isDestinationAllocationImported = dstAllocation.alloc->getIsImported();
         }
     }
     CmdListFillKernelArguments fillArguments = {};
@@ -3676,7 +3676,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
         (dstAllocationType == NEO::AllocationType::externalHostPtr);
 
     if constexpr (checkIfAllocationImportedRequired()) {
-        launchParams.isDestinationAllocationImported = this->isAllocationImported(dstPtrAllocationStruct.alloc, device->getDriverHandle()->getSvmAllocsManager());
+        launchParams.isDestinationAllocationImported = dstPtrAllocationStruct.alloc->getIsImported();
     }
     auto appendResult = appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, hSignalEvent, numWaitEvents,
                                            phWaitEvents, launchParams);
@@ -4970,19 +4970,6 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchInOrderPostOperationBarrier(E
         NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isAllocationImported(NEO::GraphicsAllocation *gpuAllocation, NEO::SVMAllocsManager *svmManager) const {
-
-    if (svmManager) {
-        NEO::SvmAllocationData *allocData = svmManager->getSVMAlloc(reinterpret_cast<void *>(gpuAllocation->getGpuAddress()));
-        if (allocData && allocData->isImportedAllocation) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

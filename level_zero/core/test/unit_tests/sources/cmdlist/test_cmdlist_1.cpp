@@ -3656,15 +3656,6 @@ HWTEST2_F(CommandListCreateTests, givenDummyBlitNotRequiredWhenEncodeMiFlushThen
     EXPECT_EQ(commandContainer.getResidencyContainer().size(), 0u);
 }
 
-HWTEST_F(CommandListCreateTests, givenEmptySvmManagerWhenIsAllocationImportedThenFalseIsReturned) {
-    auto commandListCore = std::make_unique<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
-    commandListCore->initialize(device, NEO::EngineGroupType::compute, 0u);
-
-    NEO::SVMAllocsManager *svmManager = nullptr;
-
-    EXPECT_FALSE(commandListCore->isAllocationImported(nullptr, svmManager));
-}
-
 using CommandListAppendLaunchKernelWithArgumentsTests = Test<CommandListCreateFixture>;
 TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, givenNullptrInputWhenAppendLaunchKernelWithArgumentsThenErrorIsReturned) {
 

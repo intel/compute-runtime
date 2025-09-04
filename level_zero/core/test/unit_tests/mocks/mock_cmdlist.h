@@ -101,7 +101,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::inOrderPatchCmds;
     using BaseClass::internalUsage;
     using BaseClass::interruptEvents;
-    using BaseClass::isAllocationImported;
     using BaseClass::isInOrderNonWalkerSignalingRequired;
     using BaseClass::isQwordInOrderCounter;
     using BaseClass::isRelaxedOrderingDispatchAllowed;
