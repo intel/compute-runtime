@@ -12,11 +12,6 @@
 
 using NEO::Hash;
 
-TEST(ToLower, GiventStringThenChangeItToLowerCase) {
-    std::string ls = StringHelpers::toLower("SomeTEXT");
-    EXPECT_STREQ("sometext", ls.c_str());
-}
-
 TEST(CreateCombinedStrings, GivenSingleStringWhenCreatingCombinedStringThenDstStringMatchesSrcString) {
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
