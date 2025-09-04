@@ -853,7 +853,7 @@ class CompilerCacheHelperWhitelistedTest : public ::testing::Test, public Compil
   public:
     using CompilerCacheHelper::whitelistedIncludes;
 
-    bool isValidIncludeFormat(const std::string_view &entry) {
+    bool isValidIncludeFormat(std::string_view entry) {
         size_t spacePos = entry.find(' ');
         if (spacePos == std::string_view::npos) {
             return false;

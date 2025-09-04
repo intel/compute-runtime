@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ namespace Ocloc {
 using namespace NEO;
 
 void printOclocCmdLine(OclocArgHelper &wrapper, const std::vector<std::string> &args) {
-    auto areQuotesRequired = [](const std::string_view &argName) -> bool {
+    auto areQuotesRequired = [](std::string_view argName) -> bool {
         return argName == "-options" || argName == "-internal_options";
     };
     wrapper.printf("Command was:");

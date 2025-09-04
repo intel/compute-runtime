@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ static constexpr std::string_view nlaNestStartRoutine = "nla_nest_start";
 static constexpr std::string_view nlaNestEndRoutine = "nla_nest_end";
 
 template <class T>
-bool NlApi::getSymbolAddr(const std::string_view &name, T &sym) {
+bool NlApi::getSymbolAddr(std::string_view name, T &sym) {
     sym = reinterpret_cast<T>(genlLibraryHandle->getProcAddress(std::string(name)));
     return nullptr != sym;
 }

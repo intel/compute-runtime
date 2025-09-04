@@ -12,7 +12,7 @@
 namespace L0 {
 namespace Sysman {
 
-static ze_result_t getShiftValue(const std::string_view &readFile, FsAccessInterface *pFsAccess, uint32_t &shiftValue) {
+static ze_result_t getShiftValue(std::string_view readFile, FsAccessInterface *pFsAccess, uint32_t &shiftValue) {
 
     // The contents of the file passed as an argument is of the form 'config:<start_val>-<end_val>'
     // The start_val is the shift value. It is in decimal format.
@@ -40,7 +40,7 @@ static ze_result_t getShiftValue(const std::string_view &readFile, FsAccessInter
     return result;
 }
 
-int32_t PmuInterfaceImp::getConfigFromEventFile(const std::string_view &eventFile, uint64_t &config) {
+int32_t PmuInterfaceImp::getConfigFromEventFile(std::string_view eventFile, uint64_t &config) {
 
     // The event file from the events directory has following contents
     // event=0x02 --> for /sys/devices/xe_<bdf>/events/engine-active-ticks
@@ -63,7 +63,7 @@ int32_t PmuInterfaceImp::getConfigFromEventFile(const std::string_view &eventFil
     return 0;
 }
 
-int32_t PmuInterfaceImp::getConfigAfterFormat(const std::string_view &formatDir, uint64_t &config, uint64_t engineClass, uint64_t engineInstance, uint64_t gt) {
+int32_t PmuInterfaceImp::getConfigAfterFormat(std::string_view formatDir, uint64_t &config, uint64_t engineClass, uint64_t engineInstance, uint64_t gt) {
 
     // The final config is computed by the bitwise OR operation of the config fetched from the event file and value obtained by shifting the parameters gt,
     // engineClass and engineInstance with the shift value fetched from the corresponding file in /sys/devices/xe_<bdf>/format/ directory.
@@ -105,7 +105,7 @@ int32_t PmuInterfaceImp::getConfigAfterFormat(const std::string_view &formatDir,
     return 0;
 }
 
-int32_t PmuInterfaceImp::getPmuConfigs(const std::string_view &sysmanDeviceDir, uint64_t engineClass, uint64_t engineInstance, uint64_t gtId, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) {
+int32_t PmuInterfaceImp::getPmuConfigs(std::string_view sysmanDeviceDir, uint64_t engineClass, uint64_t engineInstance, uint64_t gtId, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) {
 
     // The PMU configs are first fetched by reading the corresponding values from the event file in /sys/devices/xe_<bdf>/events/ directory and then bitwise ORed with the values obtained by
     // shifting the parameters gt, engineClass and engineInstance with the shift value fetched from the corresponding file in /sys/devices/xe_<bdf>/format/ directory.
@@ -136,7 +136,7 @@ int32_t PmuInterfaceImp::getPmuConfigs(const std::string_view &sysmanDeviceDir, 
     return 0;
 }
 
-int32_t PmuInterfaceImp::getPmuConfigsForVf(const std::string_view &sysmanDeviceDir, uint64_t fnNumber, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) {
+int32_t PmuInterfaceImp::getPmuConfigsForVf(std::string_view sysmanDeviceDir, uint64_t fnNumber, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) {
 
     // The PMU configs for the VFs are fetched by performing bitwise OR of the PMU configs fetched from getPmuConfigs function with the value obtained by shifting the parameter fnNumber with the
     // shift value fetched from /sys/devices/xe_<bdf>/format/function file.

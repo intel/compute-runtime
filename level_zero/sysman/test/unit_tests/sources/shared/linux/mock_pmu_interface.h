@@ -62,7 +62,7 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         return 0;
     }
 
-    int32_t getConfigFromEventFile(const std::string_view &eventFile, uint64_t &config) override {
+    int32_t getConfigFromEventFile(std::string_view eventFile, uint64_t &config) override {
         int32_t returnValue = 0;
         if (!mockEventConfigReturnValue.empty()) {
             returnValue = mockEventConfigReturnValue.front();
@@ -71,7 +71,7 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         return returnValue;
     }
 
-    int32_t getConfigAfterFormat(const std::string_view &formatDir, uint64_t &config, uint64_t engineClass, uint64_t engineInstance, uint64_t gt) override {
+    int32_t getConfigAfterFormat(std::string_view formatDir, uint64_t &config, uint64_t engineClass, uint64_t engineInstance, uint64_t gt) override {
         int32_t returnValue = 0;
         if (!mockFormatConfigReturnValue.empty()) {
             returnValue = mockFormatConfigReturnValue.front();
@@ -88,7 +88,7 @@ class MockPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         return returnValue;
     }
 
-    int32_t getPmuConfigsForVf(const std::string_view &sysmanDeviceDir, uint64_t fnNumber, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) override {
+    int32_t getPmuConfigsForVf(std::string_view sysmanDeviceDir, uint64_t fnNumber, uint64_t &activeTicksConfig, uint64_t &totalTicksConfig) override {
         int32_t returnValue = 0;
         if (!mockVfConfigReturnValue.empty()) {
             returnValue = mockVfConfigReturnValue.front();

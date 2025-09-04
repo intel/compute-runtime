@@ -103,7 +103,7 @@ class NlApi : public NEO::NonCopyableAndNonMovableClass {
 
   protected:
     template <class T>
-    bool getSymbolAddr(const std::string_view &name, T &sym);
+    bool getSymbolAddr(std::string_view name, T &sym);
 
     std::unique_ptr<NEO::OsLibrary> genlLibraryHandle;
 
