@@ -5839,4 +5839,172 @@ TEST_F(OfflineCompilerTests, GivenDebugFlagWhenBuildingFromSourceThenTemporarySo
     std::string expectedSOption = "-s \"" + expectedTempFilePath.string() + "\"";
     EXPECT_TRUE(CompilerOptions::contains(mockOfflineCompiler.options, expectedSOption));
 }
+TEST_F(OfflineCompilerTests, GivenSpirvInputAndSpecConstFileWhenFileExistsThenSpecializationConstantsAreLoaded) {
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.uniqueHelper->filesMap = filesMap;
+
+    const std::array<uint8_t, 4> spirvMagic = {0x03, 0x02, 0x23, 0x07};
+    mockOfflineCompiler.uniqueHelper->filesMap["some_file.spv"] = std::string(spirvMagic.begin(), spirvMagic.end());
+
+    mockOfflineCompiler.uniqueHelper->filesMap["constants.txt"] = "0: 42\n1: 100";
+    mockOfflineCompiler.uniqueHelper->callBaseFileExists = false;
+    mockOfflineCompiler.uniqueHelper->callBaseLoadDataFromFile = false;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", "some_file.spv",
+        "-spirv_input",
+        "-device", gEnvironment->devicePrefix.c_str(),
+        "-spec_const", "constants.txt",
+        "-v"};
+
+    StreamCapture capture;
+    capture.captureStdout();
+
+    mockOfflineCompiler.initialize(argv.size(), argv);
+    std::string output = capture.getCapturedStdout();
+    EXPECT_NE(output.find("Loaded 2 specialization constants from: constants.txt"), std::string::npos);
+
+    auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
+    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
+
+    int retVal = mockOfflineCompiler.build();
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+    ASSERT_EQ(2u, mockOfflineCompiler.specConstants.size());
+    EXPECT_EQ(42u, mockOfflineCompiler.specConstants[0]);
+    EXPECT_EQ(100u, mockOfflineCompiler.specConstants[1]);
+}
+
+TEST_F(OfflineCompilerTests, GivenSpirvInputAndSpecConstFileWhenFileIsMissingThenInvalidFileErrorIsReturned) {
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.uniqueHelper->filesMap = filesMap;
+    const std::array<uint8_t, 4> spirvMagic = {0x03, 0x02, 0x23, 0x07};
+    mockOfflineCompiler.uniqueHelper->filesMap["some_file.spv"] = std::string(spirvMagic.begin(), spirvMagic.end());
+    mockOfflineCompiler.uniqueHelper->callBaseFileExists = false;
+    mockOfflineCompiler.uniqueHelper->callBaseLoadDataFromFile = false;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file", "some_file.spv",
+        "-spirv_input",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-spec_const", "constants.txt",
+        "-v"};
+
+    StreamCapture capture;
+    capture.captureStdout();
+
+    int initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(OCLOC_INVALID_FILE, initResult);
+
+    std::string output = capture.getCapturedStdout();
+    EXPECT_NE(output.find("Error: Spec constants file not found: constants.txt"), std::string::npos);
+}
+TEST_F(OfflineCompilerTests, GivenSpirvInputAndSpecConstFileAndNoVerboseModeWhenFileExistsThenSpecializationConstantsAreLoadedAndErrorMessageIsSuppressed) {
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.uniqueHelper->filesMap = filesMap;
+
+    const std::array<uint8_t, 4> spirvMagic = {0x03, 0x02, 0x23, 0x07};
+    mockOfflineCompiler.uniqueHelper->filesMap["some_file.spv"] = std::string(spirvMagic.begin(), spirvMagic.end());
+
+    mockOfflineCompiler.uniqueHelper->filesMap["constants.txt"] = "0: 42\n1: 100";
+    mockOfflineCompiler.uniqueHelper->callBaseFileExists = false;
+    mockOfflineCompiler.uniqueHelper->callBaseLoadDataFromFile = false;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "some_file.spv",
+        "-spirv_input",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-spec_const",
+        "constants.txt",
+    };
+
+    StreamCapture capture;
+    capture.captureStdout();
+
+    mockOfflineCompiler.initialize(argv.size(), argv);
+    std::string output = capture.getCapturedStdout();
+    EXPECT_EQ(output.find("Loaded 2 specialization constants from: constants.txt"), std::string::npos);
+
+    auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
+    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
+
+    int retVal = mockOfflineCompiler.build();
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+    ASSERT_EQ(2u, mockOfflineCompiler.specConstants.size());
+    EXPECT_EQ(42u, mockOfflineCompiler.specConstants[0]);
+    EXPECT_EQ(100u, mockOfflineCompiler.specConstants[1]);
+}
+TEST_F(OfflineCompilerTests, GivenVariousLinesInSpecConstFileWhenParsingThenFileIsValidatedWithProperErrorCodes) {
+    struct TestCase {
+        std::string fileContent;
+        int expectedReturnCode;
+        std::map<uint32_t, uint64_t> expectedConstants;
+    };
+
+    std::vector<TestCase> cases = {
+        {"0: 123", OCLOC_SUCCESS, {{0, 123}}},
+        {"1: 90", OCLOC_SUCCESS, {{1, 90}}},
+        {"abc: 2", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"1; 90", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"90", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"1: abc", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"abc: abc", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"   ", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"garbage", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"1234", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"123.0", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"123.0: 1", OCLOC_INVALID_COMMAND_LINE, {}},
+
+        {"0: 123\n1: 90", OCLOC_SUCCESS, {{0, 123}, {1, 90}}},
+        {"0: 123\n\n2: 456", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: 123\n   \n2: 456", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: 123\n1: abc\n2: 456", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: 123\n90\n2: 456", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: 123\n1; 90\n2: 456", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: 123\n2: 456\n", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: 123\n2: 456\n   ", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: 123\n1: 456\n0: 789", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"-1: 123", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: -1", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: 123\n1: 123abc\n2: 456", OCLOC_INVALID_COMMAND_LINE, {}},
+        {": 123", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"123:", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0:123", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: ", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"0: 184467440737095516160", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"1: 10\n2: 20", OCLOC_INVALID_COMMAND_LINE, {}},
+        {"", OCLOC_INVALID_FILE, {}}};
+
+    for (const auto &testCase : cases) {
+
+        MockOfflineCompiler mockOfflineCompiler;
+        mockOfflineCompiler.uniqueHelper->filesMap["constants.txt"] = testCase.fileContent;
+        mockOfflineCompiler.uniqueHelper->callBaseFileExists = false;
+        mockOfflineCompiler.uniqueHelper->callBaseLoadDataFromFile = false;
+
+        StreamCapture capture;
+        capture.captureStdout();
+
+        int result = mockOfflineCompiler.loadSpecializationConstants("constants.txt");
+        capture.getCapturedStdout();
+
+        EXPECT_EQ(testCase.expectedReturnCode, result);
+
+        if (testCase.expectedReturnCode == OCLOC_SUCCESS) {
+            EXPECT_EQ(testCase.expectedConstants.size(), mockOfflineCompiler.specConstants.size());
+
+            for (const auto &[id, value] : testCase.expectedConstants) {
+                ASSERT_NE(mockOfflineCompiler.specConstants.end(), mockOfflineCompiler.specConstants.find(id));
+                EXPECT_EQ(value, mockOfflineCompiler.specConstants.at(id));
+            }
+        } else {
+            EXPECT_TRUE(mockOfflineCompiler.specConstants.empty());
+        }
+    }
+}
 } // namespace NEO

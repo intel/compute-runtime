@@ -61,6 +61,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::irBinary;
     using OfflineCompiler::irBinarySize;
     using OfflineCompiler::irHash;
+    using OfflineCompiler::loadSpecializationConstants;
     using OfflineCompiler::onlySpirV;
     using OfflineCompiler::options;
     using OfflineCompiler::outputDirectory;
@@ -74,6 +75,8 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::revisionId;
     using OfflineCompiler::setStatelessToStatefulBufferOffsetFlag;
     using OfflineCompiler::sourceCode;
+    using OfflineCompiler::specConstants;
+    using OfflineCompiler::specConstantsFile;
     using OfflineCompiler::storeBinary;
     using OfflineCompiler::updateBuildLog;
     using OfflineCompiler::useGenFile;

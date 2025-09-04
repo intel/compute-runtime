@@ -17,6 +17,7 @@
 #include "ocl_igc_interface/code_type.h"
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -222,6 +223,8 @@ All supported acronyms: %s.
     CompilerOptions::HeaplessMode heaplessMode = CompilerOptions::HeaplessMode::defaultMode;
     std::string irHash, genHash, dbgHash, elfHash;
     std::string cacheDir;
+    std::string specConstantsFile;
+    std::map<uint32_t, uint64_t> specConstants;
 
     bool allowCaching = false;
     bool dumpFiles = true;
@@ -246,6 +249,7 @@ All supported acronyms: %s.
     bool forceStatelessToStatefulOptimization = false;
     bool showHelp = false;
     bool excludeIr = false;
+    int loadSpecializationConstants(const std::string &filename);
 
     std::vector<uint8_t> elfBinary;
     size_t elfBinarySize = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "ocloc_api.h"
 
-#include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_interface.h"
 
