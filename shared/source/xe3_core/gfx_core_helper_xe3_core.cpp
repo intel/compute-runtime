@@ -299,9 +299,6 @@ void MemorySynchronizationCommands<Family>::setStallingBarrier(void *commandsBuf
     resourceBarrier.setBarrierType(RESOURCE_BARRIER::BARRIER_TYPE::BARRIER_TYPE_IMMEDIATE);
     resourceBarrier.setWaitStage(RESOURCE_BARRIER::WAIT_STAGE::WAIT_STAGE_TOP);
     resourceBarrier.setSignalStage(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU);
-    if (debugManager.flags.InvalidateL1CacheInResourceBarrier.get() != -1) {
-        resourceBarrier.setL1DataportCacheInvalidate(debugManager.flags.InvalidateL1CacheInResourceBarrier.get() == 1);
-    }
     *reinterpret_cast<RESOURCE_BARRIER *>(commandsBuffer) = resourceBarrier;
 }
 
