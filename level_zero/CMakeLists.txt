@@ -337,8 +337,6 @@ if(BUILD_WITH_L0)
   )
 
   hide_subdir(api)
-  add_subdirectory_unique(source)
-
   hide_subdir(ddi)
   hide_subdir(experimental)
   hide_subdir(include)
