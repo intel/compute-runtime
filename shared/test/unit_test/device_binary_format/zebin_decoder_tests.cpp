@@ -1536,6 +1536,25 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::success, err);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenValidSingleChannelLocalSizeThenPopulateKernelDescriptorSucceeds) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        local_size
+          offset:          16
+          size:            4
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_EQ(16u, kernelDescriptor->payloadMappings.dispatchTraits.localWorkSize[0]);
+    EXPECT_EQ(NEO::undefined<CrossThreadDataOffset>, kernelDescriptor->payloadMappings.dispatchTraits.localWorkSize[1]);
+    EXPECT_EQ(NEO::undefined<CrossThreadDataOffset>, kernelDescriptor->payloadMappings.dispatchTraits.localWorkSize[2]);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenErrorWhileReadingExperimentalPropertiesThenPopulateKernelDescriptorFails) {
     ConstStringRef zeinfo = R"===(
 kernels:
