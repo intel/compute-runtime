@@ -38,7 +38,6 @@
 #include "test_traits_common.h"
 
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
 #include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 typedef EnqueueHandlerTestT<MockCsrBase> EnqueueHandlerTestWithMockCsrBase;
@@ -185,7 +184,7 @@ HWTEST_TEMPLATED_F(EnqueueHandlerWithAubSubCaptureTestsWithMockAubCsr, givenEnqu
     EXPECT_TRUE(cmdQ.waitUntilCompleteCalled);
 }
 
-HEAPFUL_HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCaptureWhenSubCaptureGetsActivatedThenTimestampPacketDependenciesAreClearedAndNextRemainUncleared) {
+HWTEST2_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCaptureWhenSubCaptureGetsActivatedThenTimestampPacketDependenciesAreClearedAndNextRemainUncleared, IsHeapfulRequired) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.AUBDumpSubCaptureMode.set(1);
     debugManager.flags.EnableTimestampPacket.set(true);
@@ -222,7 +221,7 @@ HEAPFUL_HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAu
     EXPECT_FALSE(cmdQ.timestampPacketDependenciesCleared);
 }
 
-HEAPFUL_HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenInputEventsWhenDispatchingEnqueueWithSubCaptureThenClearDependencies) {
+HWTEST2_F(EnqueueHandlerWithAubSubCaptureTests, givenInputEventsWhenDispatchingEnqueueWithSubCaptureThenClearDependencies, IsHeapfulRequired) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.AUBDumpSubCaptureMode.set(1);
     debugManager.flags.EnableTimestampPacket.set(true);
@@ -752,7 +751,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenImageUsedInKernelThenGetTota
     EXPECT_EQ(defaultBcsCacheFlushSize + cacheFlushCmdSize, sizeForBcsCacheFlush);
 }
 
-HEAPFUL_HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSshIsCorrectlyProgrammed) {
+HWTEST2_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSshIsCorrectlyProgrammed, IsHeapfulRequired) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 

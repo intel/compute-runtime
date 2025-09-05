@@ -742,7 +742,7 @@ INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
 
 using EnqueueKernelTests = ::testing::Test;
 
-HWTEST2_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy, IsHeapfulSupported) {
+HWTEST2_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy, IsHeapfulRequired) {
     struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
         using CommandStreamReceiverHw<FamilyType>::streamProperties;
     };
@@ -814,7 +814,7 @@ HWTEST2_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredTh
               csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
-HWTEST2_F(EnqueueKernelTests, givenAgeBasedThreadArbitrationPolicyWhenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy, IsHeapfulSupported) {
+HWTEST2_F(EnqueueKernelTests, givenAgeBasedThreadArbitrationPolicyWhenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy, IsHeapfulRequired) {
     struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
         using CommandStreamReceiverHw<FamilyType>::streamProperties;
     };

@@ -394,7 +394,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchIndirect
     context->freeMem(alloc);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenChangedFieldsAreDirty, IsHeapfulSupported) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStreamPropertiesIsCalledTwiceThenChangedFieldsAreDirty, IsHeapfulRequired) {
     DebugManagerStateRestore restorer;
     auto &productHelper = device->getProductHelper();
 
@@ -491,7 +491,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     }
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, IsHeapfulSupported) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, IsHeapfulRequired) {
     DebugManagerStateRestore restorer;
     auto &productHelper = device->getProductHelper();
 

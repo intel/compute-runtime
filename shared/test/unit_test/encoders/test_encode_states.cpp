@@ -143,7 +143,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     alignedFree(memory);
 }
 
-HWTEST2_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNotUsedWhenCopyingSamplerStateThenDynamicPatternIsUsedAndOffsetFromDshProgrammed, IsHeapfulSupported) {
+HWTEST2_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNotUsedWhenCopyingSamplerStateThenDynamicPatternIsUsedAndOffsetFromDshProgrammed, IsHeapfulRequired) {
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
@@ -409,7 +409,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenTemplateSurfaceStateBufferWhenEncodingSu
     alignedFree(templateStateBuffer);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStateBaseAddressCalledThenStateBaseAddressAreNotSet, IsHeapfulSupported) {
+HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStateBaseAddressCalledThenStateBaseAddressAreNotSet, IsHeapfulRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     cmdContainer->dirtyHeaps = 0;
 
@@ -505,7 +505,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, whenAdjustPipelineSelect
     EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotInitializedSshThenExpectCorrectSbaCommand, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotInitializedSshThenExpectCorrectSbaCommand, IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
@@ -536,7 +536,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotIniti
     EXPECT_EQ(commands.end(), itorCmd);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 

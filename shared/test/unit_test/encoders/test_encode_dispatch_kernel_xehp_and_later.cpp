@@ -1629,7 +1629,7 @@ HWTEST2_F(EncodeKernelScratchProgrammingTest, givenHeaplessModeDisabledWhenSetSc
     EXPECT_EQ(expectedScratchAddress, scratchAddress);
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetThenReturnWalkerInlineOffset, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetThenReturnWalkerInlineOffset, IsHeapfulRequiredAndAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     EncodeDispatchKernelArgs dispatchArgs = {};

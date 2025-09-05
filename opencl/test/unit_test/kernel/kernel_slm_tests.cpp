@@ -131,7 +131,7 @@ INSTANTIATE_TEST_SUITE_P(
     KernelSLMAndBarrierTest,
     testing::ValuesIn(slmSizeInKb));
 
-HWTEST2_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverrideSlmAllocationSizeIsSetThenSlmSizeIsOverwritten, IsHeapfulSupported) {
+HWTEST2_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverrideSlmAllocationSizeIsSetThenSlmSizeIsOverwritten, IsHeapfulRequired) {
 
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;

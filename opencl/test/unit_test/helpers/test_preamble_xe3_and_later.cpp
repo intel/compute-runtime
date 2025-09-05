@@ -14,7 +14,7 @@ using namespace NEO;
 
 using PreambleCfeStateXe3AndLater = PreambleFixture;
 
-HWTEST2_F(PreambleCfeStateXe3AndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue, IsHeapfulSupportedAndAtLeastXe3Core) {
+HWTEST2_F(PreambleCfeStateXe3AndLater, givenSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue, IsHeapfulRequiredAndAtLeastXe3Core) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     uint32_t expectedValue1 = 1u;

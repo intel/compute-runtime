@@ -207,7 +207,7 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
 }
 
 using CommandListTestsReserveSize = Test<DeviceFixture>;
-HWTEST2_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen16slotSpaceReturned, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen16slotSpaceReturned, IsHeapfulRequiredAndAtLeastXeCore) {
     L0::CommandListCoreFamily<FamilyType::gfxCoreFamily> commandList(1u);
     commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
 
@@ -215,7 +215,7 @@ HWTEST2_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen
 }
 
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
-HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamPropertiesIsCalledThenRequiredStateFinalStateAndCommandsToPatchAreCorrectlySet, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamPropertiesIsCalledThenRequiredStateFinalStateAndCommandsToPatchAreCorrectlySet, IsHeapfulRequiredAndAtLeastXeCore) {
     DebugManagerStateRestore restorer;
 
     debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
@@ -291,7 +291,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamProp
     EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowedWhenUpdateStreamPropertiesIsCalledThenCommandsToPatchAreEmpty, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowedWhenUpdateStreamPropertiesIsCalledThenCommandsToPatchAreEmpty, IsHeapfulRequiredAndAtLeastXeCore) {
     DebugManagerStateRestore restorer;
 
     Mock<::L0::KernelImp> defaultKernel;
@@ -2170,7 +2170,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
 
 HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
           givenImmediateFlushOnCsrSharedHeapsWhenAppendingSecondKernelWithScratchThenExpectScratchStateAndAllocation,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 

@@ -586,7 +586,7 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenForceEnableGpuIdleImplicitFlushThenExp
     EXPECT_TRUE(commandStreamReceiver->useGpuIdleImplicitFlush);
 }
 
-HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectComputeOverdispatchDisableValueIsProgrammed, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectComputeOverdispatchDisableValueIsProgrammed, IsHeapfulRequiredAndAtLeastXeCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     UltDeviceFactory deviceFactory{1, 0};

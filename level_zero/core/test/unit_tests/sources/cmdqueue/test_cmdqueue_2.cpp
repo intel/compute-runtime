@@ -745,7 +745,7 @@ struct DeviceWithDualStorage : Test<DeviceFixture> {
     std::unique_ptr<L0::ult::Module> mockModule;
 };
 
-HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAndBlitterDisabledWhenExecuteCmdListThenCfeStateOnceProgrammed, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAndBlitterDisabledWhenExecuteCmdListThenCfeStateOnceProgrammed, IsHeapfulRequiredAndAtLeastXeCore) {
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {

@@ -1376,7 +1376,7 @@ HWTEST_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandLi
 }
 
 using ImmediateCmdListSharedHeapsTest = Test<ImmediateCmdListSharedHeapsFixture>;
-HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedHeapsWhenDispatchingKernelThenExpectSingleSbaCommandAndHeapsReused, IsHeapfulSupported) {
+HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedHeapsWhenDispatchingKernelThenExpectSingleSbaCommandAndHeapsReused, IsHeapfulRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
@@ -1516,7 +1516,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
 }
 
 using CommandListStateBaseAddressGlobalStatelessTest = Test<CommandListGlobalHeapsFixture<static_cast<int32_t>(NEO::HeapAddressModel::globalStateless)>>;
-HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessWhenExecutingCommandListThenMakeAllocationResident, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessWhenExecutingCommandListThenMakeAllocationResident, IsHeapfulRequiredAndAtLeastXeCore) {
 
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandList->cmdListHeapAddressModel);
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandListImmediate->cmdListHeapAddressModel);
@@ -1649,7 +1649,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenGlobalStatelessWhenExecutingImmediateCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatched,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -1794,7 +1794,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenGlobalStatelessWhenExecutingImmediateCommandListAndRegularCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatchedOnlyOnce,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -2088,7 +2088,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenGlobalStatelessWhenExecutingPrivateHeapsCommandListAndRegularCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatched,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -2317,7 +2317,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenGlobalStatelessWhenExecutingImmediateCommandListAndPrivateHeapsCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatched,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -2499,7 +2499,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenGlobalStatelessWhenExecutingPrivateHeapsCommandListAndImmediateCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatched,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -2686,7 +2686,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenGlobalStatelessKernelUsingScratchSpaceWhenExecutingRegularCommandListThenBaseAddressAndFrontEndStateCommandsProperlyDispatched,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using CFE_STATE = typename FamilyType::CFE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
@@ -2747,7 +2747,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenGlobalStatelessKernelUsingScratchSpaceWhenExecutingImmediateCommandListThenBaseAddressAndFrontEndStateCommandsProperlyDispatched,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
 
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using CFE_STATE = typename FamilyType::CFE_STATE;
@@ -2803,7 +2803,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenCommandListNotUsingPrivateSurfaceHeapWhenCommandListDestroyedThenCsrDoesNotDispatchStateCacheFlush,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csr.commandStream;
 
@@ -2831,7 +2831,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenCommandListUsingGlobalHeapsWhenCommandListCreatedThenNoStateHeapAllocationsCreated,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     auto &container = commandList->getCmdContainer();
 
     auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
@@ -2842,7 +2842,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 }
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenUserKernelCreatedByIgcUsingStatefulAccessWhenAppendingKernelOnGlobalStatelessThenExpectError,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     module->translationUnit->isGeneratedByIgc = true;
     module->type = ModuleType::user;
     mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.resize(1);
@@ -2866,7 +2866,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenUserKernelNotCreatedByIgcUsingStatefulAccessWhenAppendingKernelOnGlobalStatelessThenExpectSuccess,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     module->translationUnit->isGeneratedByIgc = false;
     module->type = ModuleType::user;
     mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.resize(1);
@@ -2890,7 +2890,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenBuiltinKernelCreatedByIgcUsingStatefulAccessWhenAppendingKernelOnGlobalStatelessThenExpectSuccess,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     module->translationUnit->isGeneratedByIgc = true;
     module->type = ModuleType::builtin;
     mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.resize(1);
@@ -2914,7 +2914,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenUserKernelCreatedByIgcUsingStatelessAccessWhenAppendingKernelOnGlobalStatelessThenExpectSuccess,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     module->translationUnit->isGeneratedByIgc = true;
     module->type = ModuleType::user;
     mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.resize(1);
@@ -2932,7 +2932,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenCommandListUsingGlobalHeapsWhenAppendingCopyKernelThenStatelessKernelUsedAndNoSurfaceHeapUsed,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     auto &container = commandList->getCmdContainer();
 
     auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
@@ -2962,7 +2962,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenCommandListUsingGlobalHeapsWhenAppendingFillKernelThenStatelessKernelUsedAndNoSurfaceHeapUsed,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     auto &container = commandList->getCmdContainer();
 
     auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
@@ -2990,7 +2990,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenCommandListUsingGlobalHeapsWhenAppendingPageFaultCopyThenStatelessKernelUsedAndNoSurfaceHeapUsed,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     auto &container = commandList->getCmdContainer();
 
     auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
@@ -3012,7 +3012,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenCommandQueueUsingGlobalStatelessWhenQueueInHeaplessModeThenUsingScratchControllerAndHeapAllocationFromPrimaryCsr,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
     defaultCsr->createGlobalStatelessHeap();
 
@@ -3053,7 +3053,7 @@ struct ContextGroupStateBaseAddressGlobalStatelessFixture : public CommandListGl
 using ContextGroupStateBaseAddressGlobalStatelessTest = Test<ContextGroupStateBaseAddressGlobalStatelessFixture>;
 HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
           givenContextGroupEnabledAndCommandQueueUsingGlobalStatelessWhenQueueInHeaplessModeThenUsingScratchControllerAndHeapAllocationFromPrimaryCsr,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
 
     HardwareInfo hwInfo = *defaultHwInfo;
     if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
@@ -3098,7 +3098,7 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
           givenHeaplessModeAndContextGroupEnabledWhenExecutingImmCommandListThenScratchControllerAndHeapAllocationFromPrimaryCsrIsUsed,
-          IsHeapfulSupportedAndAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
 
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     constexpr bool heaplessModeEnabled = FamilyType::template isHeaplessMode<DefaultWalkerType>();
@@ -3153,7 +3153,7 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     commandListImmediate.reset();
 }
 
-HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessAndHeaplessModeWhenExecutingCommandListThenMakeAllocationResident, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessAndHeaplessModeWhenExecutingCommandListThenMakeAllocationResident, IsHeapfulRequiredAndAtLeastXeCore) {
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandList->cmdListHeapAddressModel);
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandListImmediate->cmdListHeapAddressModel);
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandQueue->cmdListHeapAddressModel);

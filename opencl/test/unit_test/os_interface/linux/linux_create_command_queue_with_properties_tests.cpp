@@ -108,7 +108,7 @@ TEST_F(ClCreateCommandQueueWithPropertiesLinux, givenPossiblePropertiesWithClQue
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenCallFlushTaskAndSliceCountIsSet, IsHeapfulSupported) {
+HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenCallFlushTaskAndSliceCountIsSet, IsHeapfulRequired) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
     clGetDeviceInfo(clDevice, CL_DEVICE_SLICE_COUNT_INTEL, sizeof(size_t), &maxSliceCount, nullptr);
@@ -156,7 +156,7 @@ HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSli
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlySetWhenCreateCommandQueueThenSetQueueSliceCountNotCalled, IsHeapfulSupported) {
+HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlySetWhenCreateCommandQueueThenSetQueueSliceCountNotCalled, IsHeapfulRequired) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
 
@@ -202,7 +202,7 @@ HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecently
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenSetReturnFalseAndLastSliceCountNotModify, IsHeapfulSupported) {
+HWTEST2_F(ClCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSliceCountWhenCreateCommandQueueThenSetReturnFalseAndLastSliceCountNotModify, IsHeapfulRequired) {
     uint64_t newSliceCount = 1;
     size_t maxSliceCount;
     clGetDeviceInfo(clDevice, CL_DEVICE_SLICE_COUNT_INTEL, sizeof(size_t), &maxSliceCount, nullptr);

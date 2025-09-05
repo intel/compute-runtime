@@ -148,7 +148,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PreambleCfeStateXeHPAndLater, givenScratchEnabledWh
     }
 }
 
-HWTEST2_F(PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveNotSetValue, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(PreambleCfeStateXeHPAndLater, givenNotSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveNotSetValue, IsHeapfulRequiredAndAtLeastXeCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     auto cfeState = reinterpret_cast<CFE_STATE *>(linearStream.getSpace(sizeof(CFE_STATE)));
@@ -216,7 +216,7 @@ HWTEST2_F(PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhenPreambleCfeStateIsP
 }
 
 using XeHpCommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
-HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamReceiverThenExpectStateBaseAddressEqualsIndirectObjectBaseAddress, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamReceiverThenExpectStateBaseAddressEqualsIndirectObjectBaseAddress, IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (commandStreamReceiver.heaplessModeEnabled) {
@@ -236,7 +236,7 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamRece
     }
 }
 
-HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseAddressHasAllCachesOn, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseAddressHasAllCachesOn, IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto gmmHelper = pDevice->getRootDeviceEnvironment().getGmmHelper();
@@ -261,7 +261,7 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseA
     EXPECT_EQ(expectedMocsForStateless, stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseAddressHasAllCachesOffWhenDebugFlagIsPresent, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseAddressHasAllCachesOffWhenDebugFlagIsPresent, IsHeapfulRequiredAndAtLeastXeCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DisableCachingForHeaps.set(1);
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -287,7 +287,7 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseA
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlState());
 }
 
-HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, givenL3ToL1DebugFlagWhenStatelessMocsIsProgrammedThenItHasL1CachingOn, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, givenL3ToL1DebugFlagWhenStatelessMocsIsProgrammedThenItHasL1CachingOn, IsHeapfulRequiredAndAtLeastXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ForceL1Caching.set(1u);
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -303,7 +303,7 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, givenL3ToL1DebugFlagWhenState
     EXPECT_EQ(expectedMocs, stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, givenForceL1CachingDebugFlagDisabledWhenStatelessMocsIsProgrammedThenItHasL3CachingOn, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, givenForceL1CachingDebugFlagDisabledWhenStatelessMocsIsProgrammedThenItHasL3CachingOn, IsHeapfulRequiredAndAtLeastXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ForceL1Caching.set(0u);
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -322,7 +322,7 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, givenForceL1CachingDebugFlagD
     EXPECT_EQ(expectedMocs, stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamReceiverThenExpectBindlessBaseAddressEqualSurfaceStateBaseAddress, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamReceiverThenExpectBindlessBaseAddressEqualSurfaceStateBaseAddress, IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
@@ -343,7 +343,7 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamRece
     EXPECT_EQ(bindlessSurfaceSize, stateBaseAddress->getBindlessSurfaceStateSize());
 }
 
-HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamReceiverThenSetBindlessSamplerStateBaseAddressModifyEnable, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamReceiverThenSetBindlessSamplerStateBaseAddressModifyEnable, IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (commandStreamReceiver.heaplessModeEnabled) {

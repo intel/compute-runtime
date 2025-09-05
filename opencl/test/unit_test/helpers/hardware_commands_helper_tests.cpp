@@ -873,7 +873,7 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     delete pKernel;
 }
 
-HWTEST2_F(HardwareCommandsTest, givenNoBTEntriesInKernelDescriptorAndGTPinInitializedWhenSettingBTPointerThenBTPointerIsSet, IsHeapfulSupported) {
+HWTEST2_F(HardwareCommandsTest, givenNoBTEntriesInKernelDescriptorAndGTPinInitializedWhenSettingBTPointerThenBTPointerIsSet, IsHeapfulRequired) {
     isGTPinInitialized = true;
 
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
@@ -1077,7 +1077,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhen
     delete[] mockDsh;
 }
 
-HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirectStateThenSurfaceStateIsCopiedToHeapAndCrossThreadDataIsCorrectlyPatched, IsHeapfulSupportedAndAtLeastXeCore) {
+HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirectStateThenSurfaceStateIsCopiedToHeapAndCrossThreadDataIsCorrectlyPatched, IsHeapfulRequiredAndAtLeastXeCore) {
 
     using WalkerType = typename FamilyType::COMPUTE_WALKER;
     using InterfaceDescriptorType = typename WalkerType::InterfaceDescriptorType;

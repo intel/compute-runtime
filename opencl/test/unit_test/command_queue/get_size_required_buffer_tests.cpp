@@ -439,7 +439,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenOutEventForMultiDeviceContextWhenCalcul
     EXPECT_EQ(baseCommandStreamSize + MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pContext.getDevices()[0]->getRootDeviceEnvironment(), NEO::PostSyncMode::immediateData), extendedCommandStreamSize);
 }
 
-HWTEST2_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSizeIsComputedThenItIsProperlyAligned, IsHeapfulSupported) {
+HWTEST2_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSizeIsComputedThenItIsProperlyAligned, IsHeapfulRequired) {
     USE_REAL_FILE_SYSTEM();
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
                                                                             pCmdQ->getClDevice());

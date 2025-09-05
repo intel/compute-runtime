@@ -36,7 +36,6 @@
 #include "test_traits_common.h"
 
 using namespace NEO;
-#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
 #include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 using CommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
@@ -957,7 +956,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
     }
 }
 
-HEAPFUL_HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeStore32bitWhenFlushingTaskThenScratchAllocationIsNotReused) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeStore32bitWhenFlushingTaskThenScratchAllocationIsNotReused, IsHeapfulRequired) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.Force32bitAddressing.set(true);
 
@@ -991,7 +990,7 @@ HEAPFUL_HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocation
     }
 }
 
-HEAPFUL_HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeStore32bitWhenFlushingTaskThenScratchAllocationStoredOnTemporaryAllocationList) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeStore32bitWhenFlushingTaskThenScratchAllocationStoredOnTemporaryAllocationList, IsHeapfulRequired) {
     if constexpr (is64bit) {
         DebugManagerStateRestore dbgRestorer;
         debugManager.flags.Force32bitAddressing.set(true);

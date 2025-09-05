@@ -7,7 +7,7 @@
 
 #include "test_traits_common.h"
 
-struct IsHeapfulSupported {
+struct IsHeapfulRequired {
     template <PRODUCT_FAMILY prodFamily>
     static constexpr bool isMatched() {
         return TestTraits<NEO::template ToGfxCoreFamily<prodFamily>::get()>::heaplessRequired == false;
@@ -22,14 +22,14 @@ struct IsHeaplessRequired {
 };
 
 template <typename DependentMatcher>
-struct IsHeapfulSupportedAnd {
+struct IsHeapfulRequiredAnd {
     template <PRODUCT_FAMILY prodFamily>
     static constexpr bool isMatched() {
-        return IsHeapfulSupported::template isMatched<prodFamily>() && DependentMatcher::template isMatched<prodFamily>();
+        return IsHeapfulRequired::template isMatched<prodFamily>() && DependentMatcher::template isMatched<prodFamily>();
     }
 };
 
-using IsHeapfulSupportedAndAtLeastXeCore = IsHeapfulSupportedAnd<IsAtLeastXeCore>;
-using IsHeapfulSupportedAndAtLeastXeHpcCore = IsHeapfulSupportedAnd<IsAtLeastXeHpcCore>;
-using IsHeapfulSupportedAndAtLeastXe2HpgCore = IsHeapfulSupportedAnd<IsAtLeastXe2HpgCore>;
-using IsHeapfulSupportedAndAtLeastXe3Core = IsHeapfulSupportedAnd<IsAtLeastXe3Core>;
+using IsHeapfulRequiredAndAtLeastXeCore = IsHeapfulRequiredAnd<IsAtLeastXeCore>;
+using IsHeapfulRequiredAndAtLeastXeHpcCore = IsHeapfulRequiredAnd<IsAtLeastXeHpcCore>;
+using IsHeapfulRequiredAndAtLeastXe2HpgCore = IsHeapfulRequiredAnd<IsAtLeastXe2HpgCore>;
+using IsHeapfulRequiredAndAtLeastXe3Core = IsHeapfulRequiredAnd<IsAtLeastXe3Core>;
