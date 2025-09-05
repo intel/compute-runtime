@@ -41,7 +41,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 3598-5241
+    revision: 3598-5250
   level_zero:
     asset_name: level_zero
     dest_dir: level_zero
