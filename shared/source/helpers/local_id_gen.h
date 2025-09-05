@@ -47,9 +47,11 @@ inline uint32_t getPerThreadSizeLocalIDs(uint32_t simd, uint32_t grfSize, uint32
 }
 
 struct LocalIDHelper {
+#if !defined(__riscv)
     static void (*generateSimd8)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize);
     static void (*generateSimd16)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize);
     static void (*generateSimd32)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize);
+#endif
 
     static LocalIDHelper initializer;
 
