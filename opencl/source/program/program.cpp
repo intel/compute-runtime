@@ -231,7 +231,6 @@ cl_int Program::createProgramFromBinary(
                 if (rebuild) {
                     return CL_INVALID_BINARY;
                 }
-                rebuild = 0;
             } else {
                 rebuild |= flagRebuild;
             }
