@@ -147,7 +147,11 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
 #define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, scope, description) \
     DebugVarBase<dataType> variableName{defaultValue, scope};
 #include "debug_variables.inl"
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)
 #include "release_variables.inl"
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
 #undef S_OCLOC
 #undef S_RT
 #undef S_L0

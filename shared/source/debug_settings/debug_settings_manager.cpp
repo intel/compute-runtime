@@ -112,16 +112,20 @@ void DebugSettingsManager<debugLevel>::getStringWithFlags(std::string &allFlags,
 #include "debug_variables.inl"
     }
 #undef DECLARE_DEBUG_VARIABLE
-
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                 \
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                               \
     {                                                                                                             \
         std::string neoKey = convPrefixToString(flags.variableName.getPrefixType());                              \
         neoKey += #variableName;                                                                                  \
         allFlagsStream << neoKey.c_str() << " = " << flags.variableName.get() << '\n';                            \
         dumpNonDefaultFlag<dataType>(neoKey.c_str(), flags.variableName.get(), defaultValue, changedFlagsStream); \
     }
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
+    if constexpr (enabled) {                                                                     \
+        DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)              \
+    }
 #include "release_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
 
     allFlags = allFlagsStream.str();
     changedFlags = changedFlagsStream.str();
@@ -162,9 +166,8 @@ void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
-
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                  \
+#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)                \
     {                                                                                              \
         DebugVarPrefix type;                                                                       \
         dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get(), type); \
@@ -173,8 +176,14 @@ void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
             flags.variableName.set(tempData);                                                      \
         }                                                                                          \
     }
+
+#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) \
+    if constexpr (enabled) {                                                                     \
+        DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description)              \
+    }
 #include "release_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE
+#undef DECLARE_RELEASE_VARIABLE_OPT
+#undef DECLARE_RELEASE_VARIABLE
 } // namespace NEO
 
 void logDebugString(std::string_view debugString) {
