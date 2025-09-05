@@ -1144,7 +1144,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXP_PROPERTIES) {
                 ze_rtas_device_exp_properties_t *rtasProperties = reinterpret_cast<ze_rtas_device_exp_properties_t *>(extendedProperties);
                 rtasProperties->flags = 0;
-                rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormat();
+                rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormatExp();
                 rtasProperties->rtasBufferAlignment = 128;
 
                 if (releaseHelper && releaseHelper->isRayTracingSupported()) {
@@ -1154,6 +1154,21 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
                     ze_result_t result = driverHandleImp->loadRTASLibrary();
                     if (result != ZE_RESULT_SUCCESS) {
                         rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXP_INVALID;
+                    }
+                }
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXT_PROPERTIES) {
+                ze_rtas_device_ext_properties_t *rtasProperties = reinterpret_cast<ze_rtas_device_ext_properties_t *>(extendedProperties);
+                rtasProperties->flags = 0;
+                rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormatExt();
+                rtasProperties->rtasBufferAlignment = 128;
+
+                if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+                    auto driverHandle = this->getDriverHandle();
+                    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
+
+                    ze_result_t result = driverHandleImp->loadRTASLibrary();
+                    if (result != ZE_RESULT_SUCCESS) {
+                        rtasProperties->rtasFormat = ZE_RTAS_FORMAT_EXT_INVALID;
                     }
                 }
             } else if (static_cast<uint32_t>(extendedProperties->stype) == ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC) {

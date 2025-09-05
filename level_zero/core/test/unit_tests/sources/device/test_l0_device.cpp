@@ -6456,6 +6456,109 @@ HWTEST_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASPropter
     EXPECT_EQ(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
 }
 
+HWTEST_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesExtThenCorrectPropertiesIsReturned) {
+    MockOsLibrary::libraryLoaded = false;
+    MockOsLibrary::failLibraryLoad = false;
+    MockOsLibrary::failGetProcAddress = false;
+
+    ze_device_properties_t devProps = {};
+    ze_rtas_device_ext_properties_t rtasProperties = {};
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
+    driverHandle->rtasLibraryHandle.reset();
+
+    devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    devProps.pNext = &rtasProperties;
+
+    rtasProperties.stype = ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXT_PROPERTIES;
+    rtasProperties.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
+
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
+
+    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+        EXPECT_NE(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
+    }
+}
+
+HWTEST_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesExtThenCorrectPropertiesIsReturned) {
+    MockOsLibrary::libraryLoaded = false;
+    MockOsLibrary::failLibraryLoad = false;
+    MockOsLibrary::failGetProcAddress = false;
+
+    ze_device_properties_t devProps = {};
+    ze_rtas_device_ext_properties_t rtasProperties = {};
+    driverHandle->rtasLibraryHandle = std::make_unique<MockOsLibrary>();
+
+    devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    devProps.pNext = &rtasProperties;
+
+    rtasProperties.stype = ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXT_PROPERTIES;
+    rtasProperties.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
+
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
+
+    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+        EXPECT_NE(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
+    }
+}
+
+HWTEST_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASPropertiesExtThenCorrectPropertiesIsReturned) {
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
+
+    if (!releaseHelper || !releaseHelper->isRayTracingSupported()) {
+        GTEST_SKIP();
+    }
+    MockOsLibrary::libraryLoaded = false;
+    MockOsLibrary::failLibraryLoad = true;
+    MockOsLibrary::failGetProcAddress = true;
+
+    ze_device_properties_t devProps = {};
+    ze_rtas_device_ext_properties_t rtasProperties = {};
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
+    driverHandle->rtasLibraryHandle.reset();
+
+    devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    devProps.pNext = &rtasProperties;
+
+    rtasProperties.stype = ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXT_PROPERTIES;
+    rtasProperties.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
+    EXPECT_EQ(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
+}
+
+HWTEST_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesExtThenCorrectPropertiesIsReturned) {
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
+
+    if (!releaseHelper || !releaseHelper->isRayTracingSupported()) {
+        GTEST_SKIP();
+    }
+    MockOsLibrary::libraryLoaded = false;
+    MockOsLibrary::failLibraryLoad = false;
+    MockOsLibrary::failGetProcAddress = true;
+
+    ze_device_properties_t devProps = {};
+    ze_rtas_device_ext_properties_t rtasProperties = {};
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
+    driverHandle->rtasLibraryHandle.reset();
+
+    devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+    devProps.pNext = &rtasProperties;
+
+    rtasProperties.stype = ZE_STRUCTURE_TYPE_RTAS_DEVICE_EXT_PROPERTIES;
+    rtasProperties.pNext = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
+    EXPECT_EQ(ZE_RTAS_FORMAT_EXT_INVALID, rtasProperties.rtasFormat);
+}
+
 TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZexCommandListAppendWaitOnMemory64ThenReturnCorrectValue) {
     EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zexCommandListAppendWaitOnMemory64"));
 }

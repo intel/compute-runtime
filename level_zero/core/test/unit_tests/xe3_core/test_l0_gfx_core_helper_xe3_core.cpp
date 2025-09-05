@@ -107,9 +107,14 @@ XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenCheckingL0HelperForPlatformSu
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
 }
 
-XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingSupportedRTASFormatThenExpectedFormatIsReturned) {
+XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingSupportedRTASFormatExpThenExpectedFormatIsReturned) {
     const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(RTASDeviceFormatInternal::version2, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormat()));
+    EXPECT_EQ(RTASDeviceFormatInternal::version2, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormatExp()));
+}
+
+XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3CoreWhenGettingSupportedRTASFormatExtThenExpectedFormatIsReturned) {
+    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(RTASDeviceFormatInternal::version2, static_cast<RTASDeviceFormatInternal>(l0GfxCoreHelper.getSupportedRTASFormatExt()));
 }
 
 XE3_CORETEST_F(L0GfxCoreHelperTestXe3, GivenXe3WhenGettingCmdlistUpdateCapabilityThenReturnCorrectValue) {
