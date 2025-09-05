@@ -507,18 +507,6 @@ typedef struct _ze_queue_priority_desc_t {
     int priority;              ///< [in] priority of the queue
 } ze_queue_priority_desc_t;
 
-#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
-
-/// @brief Get default context associated with driver
-///
-/// @details
-///     - The application may call this function from simultaneous threads.
-///     - The implementation of this function should be lock-free.
-///     - Default context contains all devices within driver instance
-/// @returns
-///     - Context handle associated with driver
-ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(ze_driver_handle_t hDriver); ///> [in] handle of the driver
-
 /// @brief Get default context associated with default driver
 ///
 /// @details
@@ -549,6 +537,45 @@ uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t hDev
 /// @returns
 ///     - device handle associated with the identifier
 ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(uint32_t identifier); ///< [in] integer identifier of the device
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieves a string describing the last error code returned by the
+///        default driver in the current thread.
+///
+/// @details
+///     - String returned is thread local.
+///     - String is only updated on calls returning an error, i.e., not on calls
+///       returning ::ZE_RESULT_SUCCESS.
+///     - String may be empty if driver considers error code is already explicit
+///       enough to describe cause.
+///     - Memory pointed to by ppString is owned by the driver.
+///     - String returned is null-terminated.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ppString`
+ze_result_t ZE_APICALL
+zerGetLastErrorDescription(
+    const char **ppString ///< [in,out] pointer to a null-terminated array of characters describing
+                          ///< cause of error.
+);
+
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
+
+/// @brief Get default context associated with driver
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///     - Default context contains all devices within driver instance
+/// @returns
+///     - Context handle associated with driver
+ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(ze_driver_handle_t hDriver); ///> [in] handle of the driver
 
 /// @brief Global device synchronization
 ///
@@ -647,32 +674,6 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithParameter
     ze_event_handle_t hSignalEvent,        ///< [in][optional] handle of the event to signal on completion
     uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before launching
     ze_event_handle_t *phWaitEvents        ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait on before launching
-);
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Retrieves a string describing the last error code returned by the
-///        default driver in the current thread.
-///
-/// @details
-///     - String returned is thread local.
-///     - String is only updated on calls returning an error, i.e., not on calls
-///       returning ::ZE_RESULT_SUCCESS.
-///     - String may be empty if driver considers error code is already explicit
-///       enough to describe cause.
-///     - Memory pointed to by ppString is owned by the driver.
-///     - String returned is null-terminated.
-///
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-///     - ::ZE_RESULT_ERROR_UNINITIALIZED
-///     - ::ZE_RESULT_ERROR_DEVICE_LOST
-///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
-///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
-///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
-///         + `nullptr == ppString`
-ze_result_t ZE_APICALL
-zerGetLastErrorDescription(
-    const char **ppString ///< [in,out] pointer to a null-terminated array of characters describing
-                          ///< cause of error.
 );
 
 #endif // ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
