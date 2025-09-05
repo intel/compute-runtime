@@ -860,7 +860,7 @@ TEST_F(MemoryTest, whenAllocatingHostMemoryWithDefaultDescriptorThenCachedResour
     size_t alignment = 1u;
     void *ptr = nullptr;
 
-    ze_result_t result = context->allocHostMem(&defaultHostMemDesc, size, alignment, &ptr);
+    ze_result_t result = context->allocHostMem(&defaultIntelHostMemDesc, size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
@@ -878,7 +878,7 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryWithDefaultDescriptorThenCachedReso
     void *ptr = nullptr;
 
     ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &defaultDeviceMemDesc,
+                                                 &defaultIntelDeviceMemDesc,
                                                  size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
@@ -897,8 +897,8 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithDefaultDescriptorsThenCachedRes
     void *ptr = nullptr;
 
     ze_result_t result = context->allocSharedMem(device->toHandle(),
-                                                 &defaultDeviceMemDesc,
-                                                 &defaultHostMemDesc,
+                                                 &defaultIntelDeviceMemDesc,
+                                                 &defaultIntelHostMemDesc,
                                                  size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);

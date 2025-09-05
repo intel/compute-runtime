@@ -682,22 +682,20 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithParameter
 } // extern "C"
 #endif
 
-#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
-
-static const ze_device_mem_alloc_desc_t defaultDeviceMemDesc = {
+static const ze_device_mem_alloc_desc_t defaultIntelDeviceMemDesc = {
     ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, // stype
     nullptr,                                 // pNext
     ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED,    // flags
     0                                        // ordinal
 };
 
-static const ze_host_mem_alloc_desc_t defaultHostMemDesc = {
+static const ze_host_mem_alloc_desc_t defaultIntelHostMemDesc = {
     ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,                                             // stype
     nullptr,                                                                           // pNext
     ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED | ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT // flags
 };
 
-static const ze_command_queue_desc_t defaultCommandQueueDesc = {
+static const ze_command_queue_desc_t defaultIntelCommandQueueDesc = {
     ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,                                     // stype
     nullptr,                                                                  // pNext
     0,                                                                        // ordinal
@@ -706,6 +704,8 @@ static const ze_command_queue_desc_t defaultCommandQueueDesc = {
     ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,                                       // mode
     ZE_COMMAND_QUEUE_PRIORITY_NORMAL                                          // priority
 };
+
+#if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 13)
 
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef ZE_EXTERNAL_MEMORY_MAPPING_EXT_NAME

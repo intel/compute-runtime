@@ -201,7 +201,7 @@ typedef struct _zex_counter_based_event_desc_t {
                                                ///< additional cache hierarchies are invalidated.
 } zex_counter_based_event_desc_t;
 
-static const zex_counter_based_event_desc_t defaultCounterBasedEventDesc = {
+static const zex_counter_based_event_desc_t defaultIntelCounterBasedEventDesc = {
     ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC, // stype
     nullptr,                                // pNext
     ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE |
