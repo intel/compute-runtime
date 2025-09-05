@@ -21,7 +21,7 @@
 using namespace NEO;
 
 struct MockOSIface : OSInterface {
-    bool isSizeWithinThresholdForStaging(size_t size, bool isIGPU) const override {
+    bool isSizeWithinThresholdForStaging(size_t size) const override {
         return isSizeWithinThresholdValue;
     }
     bool isSizeWithinThresholdValue = true;

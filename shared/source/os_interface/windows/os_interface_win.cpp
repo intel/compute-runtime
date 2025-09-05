@@ -26,7 +26,7 @@ bool OSInterface::isLockablePointer(bool isLockable) const {
     return isLockable;
 }
 
-bool OSInterface::isSizeWithinThresholdForStaging(size_t size, bool isIGPU) const {
+bool OSInterface::isSizeWithinThresholdForStaging(size_t size) const {
     return true;
 }
 

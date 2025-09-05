@@ -407,9 +407,8 @@ bool StagingBufferManager::isValidForStaging(const Device &device, const void *p
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
     }
-    auto isIntegrated = device.getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice;
     auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
-    bool sizeWithinThreshold = osInterface ? osInterface->isSizeWithinThresholdForStaging(size, isIntegrated) : true;
+    bool sizeWithinThreshold = osInterface ? osInterface->isSizeWithinThresholdForStaging(size) : true;
     auto detectedHostPtr = this->registerHostPtr(ptr);
     return stagingCopyEnabled && !hasDependencies && !detectedHostPtr && sizeWithinThreshold;
 }
