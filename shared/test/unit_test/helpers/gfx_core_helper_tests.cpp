@@ -2075,7 +2075,7 @@ HWTEST_F(GfxCoreHelperTest, givenCommandCacheInvalidateFlagSetWhenProgrammingBar
     EXPECT_TRUE(pipeControl->getCommandCacheInvalidateEnable());
 }
 
-TEST_F(GfxCoreHelperTest, whenGetQueuePriorityLevelsQueriedThen2IsReturned) {
+HWTEST2_F(GfxCoreHelperTest, whenGetQueuePriorityLevelsQueriedThen2IsReturned, IsAtMostXe3Core) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(2u, gfxCoreHelper.getQueuePriorityLevels());
 }
