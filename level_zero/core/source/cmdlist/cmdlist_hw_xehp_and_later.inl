@@ -220,11 +220,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
+    constexpr bool checkIfImported = checkIfAllocationImportedRequired();
     bool isKernelUsingSystemAllocation = false;
     bool isKernelUsingExternalAllocation = false;
 
     if (!launchParams.isBuiltInKernel) {
-        auto verifyKernelUsingSystemAllocations = [&](const NEO::ResidencyContainer &kernelResidencyContainer) {
+        auto verifyKernelUsingSystemAllocations = [&]<bool checkImported>(const NEO::ResidencyContainer &kernelResidencyContainer) {
             for (const auto &allocation : kernelResidencyContainer) {
                 if (allocation == nullptr) {
                     continue;
@@ -235,18 +236,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     isKernelUsingSystemAllocation = true;
                 }
 
-                if constexpr (checkIfAllocationImportedRequired()) {
+                if constexpr (checkImported) {
                     isKernelUsingExternalAllocation = allocation->getIsImported();
                 }
             }
         };
 
-        verifyKernelUsingSystemAllocations(kernel->getArgumentsResidencyContainer());
-        verifyKernelUsingSystemAllocations(kernel->getInternalResidencyContainer());
+        verifyKernelUsingSystemAllocations.template operator()<checkIfImported>(kernel->getArgumentsResidencyContainer());
+        verifyKernelUsingSystemAllocations.template operator()<false>(kernel->getInternalResidencyContainer());
 
     } else {
         isKernelUsingSystemAllocation = launchParams.isDestinationAllocationInSystemMemory;
-        isKernelUsingExternalAllocation = launchParams.isDestinationAllocationImported;
+        if constexpr (checkIfImported) {
+            isKernelUsingExternalAllocation = launchParams.isDestinationAllocationImported;
+        }
     }
 
     if (kernel->hasIndirectAllocationsAllowed()) {
