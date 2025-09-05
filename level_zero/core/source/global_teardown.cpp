@@ -67,5 +67,6 @@ void globalDriverTeardown() {
     globalDriverDispatch.core.isValidFlag = false;
     globalDriverDispatch.tools.isValidFlag = false;
     globalDriverDispatch.sysman.isValidFlag = false;
+    globalDriverDispatch.runtime.isValidFlag = false;
 }
 } // namespace L0

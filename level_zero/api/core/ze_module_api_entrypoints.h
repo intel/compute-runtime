@@ -266,6 +266,12 @@ ze_result_t zeKernelSchedulingHintExp(
     return L0::Kernel::fromHandle(hKernel)->setSchedulingHintExp(pHint);
 }
 
+ze_result_t zeKernelGetAllocationPropertiesExp(
+    ze_kernel_handle_t hKernel,
+    uint32_t *pCount,
+    ze_kernel_allocation_exp_properties_t *pAllocationProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
 } // namespace L0
 
 extern "C" {
@@ -565,5 +571,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeKernelSchedulingHintExp(
     ze_kernel_handle_t hKernel,
     ze_scheduling_hint_exp_desc_t *pHint) {
     return L0::zeKernelSchedulingHintExp(hKernel, pHint);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeKernelGetAllocationPropertiesExp(
+    ze_kernel_handle_t hKernel,
+    uint32_t *pCount,
+    ze_kernel_allocation_exp_properties_t *pAllocationProperties) {
+    return L0::zeKernelGetAllocationPropertiesExp(hKernel, pCount, pAllocationProperties);
 }
 }

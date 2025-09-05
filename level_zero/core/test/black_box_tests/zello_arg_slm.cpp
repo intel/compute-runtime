@@ -19,7 +19,7 @@ void executeKernelAndValidate(ze_context_handle_t context, uint32_t deviceIdentf
         std::cout << "Testing for device " << deviceIdentfier << std::endl;
     }
     ze_command_list_handle_t cmdList;
-    auto device = LevelZeroBlackBoxTests::zerTranslateIdentifierToDeviceHandleFunc(deviceIdentfier);
+    auto device = zerTranslateIdentifierToDeviceHandle(deviceIdentfier);
     SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &defaultIntelCommandQueueDesc, &cmdList));
 
     constexpr ze_group_count_t groupCounts{16, 1, 1};
@@ -90,9 +90,9 @@ void executeKernelAndValidate(ze_context_handle_t context, uint32_t deviceIdentf
             &initValues            // initial values for output sums
         };
 
-        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::zeCommandListAppendLaunchKernelWithArgumentsFunc(cmdList, kernel, groupCounts, groupSizes, kernelArgs, nullptr, nullptr, 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernelWithArguments(cmdList, kernel, groupCounts, groupSizes, kernelArgs, nullptr, nullptr, 0, nullptr));
 
-        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::zeDeviceSynchronizeFunc(device));
+        SUCCESS_OR_TERMINATE(zeDeviceSynchronize(device));
 
         // Validate
         outputValidationSuccessful = true;
@@ -138,16 +138,16 @@ int main(int argc, char *argv[]) {
     ze_context_handle_t context = nullptr;
     const char *errorMsg = nullptr;
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::zerGetLastErrorDescriptionFunc(&errorMsg));
+    SUCCESS_OR_TERMINATE(zerGetLastErrorDescription(&errorMsg));
 
     if (errorMsg != nullptr && errorMsg[0] != 0) {
         std::cerr << "Error initializing context: " << (errorMsg ? errorMsg : "Unknown error") << std::endl;
         return 1;
     }
 
-    uint32_t deviceOrdinal = LevelZeroBlackBoxTests::zerTranslateDeviceHandleToIdentifierFunc(devices[0]);
+    uint32_t deviceOrdinal = zerTranslateDeviceHandleToIdentifier(devices[0]);
 
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::zerGetLastErrorDescriptionFunc(&errorMsg));
+    SUCCESS_OR_TERMINATE(zerGetLastErrorDescription(&errorMsg));
 
     if (errorMsg != nullptr && errorMsg[0] != 0) {
         std::cerr << "Error zerTranslateDeviceHandleToIdentifier: " << errorMsg << std::endl;

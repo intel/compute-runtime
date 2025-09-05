@@ -10,6 +10,7 @@
 #include "level_zero/driver_experimental/zex_event.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_intel_gpu.h>
+#include <level_zero/zer_api.h>
 
 #include <bitset>
 #include <fstream>
@@ -22,13 +23,6 @@
 namespace LevelZeroBlackBoxTests {
 template <bool terminateOnFailure, typename ResulT>
 inline void validate(ResulT result, const char *message);
-extern decltype(&zerGetDefaultContext) zerGetDefaultContextFunc;
-extern decltype(&zeDeviceSynchronize) zeDeviceSynchronizeFunc;
-extern decltype(&zeCommandListAppendLaunchKernelWithArguments) zeCommandListAppendLaunchKernelWithArgumentsFunc;
-extern decltype(&zeCommandListAppendLaunchKernelWithParameters) zeCommandListAppendLaunchKernelWithParametersFunc;
-extern decltype(&zerTranslateIdentifierToDeviceHandle) zerTranslateIdentifierToDeviceHandleFunc;
-extern decltype(&zerTranslateDeviceHandleToIdentifier) zerTranslateDeviceHandleToIdentifierFunc;
-extern decltype(&zerGetLastErrorDescription) zerGetLastErrorDescriptionFunc;
 } // namespace LevelZeroBlackBoxTests
 
 #define SUCCESS_OR_TERMINATE(CALL) LevelZeroBlackBoxTests::validate<true>(CALL, #CALL)

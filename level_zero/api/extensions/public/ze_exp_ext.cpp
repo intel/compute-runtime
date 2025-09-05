@@ -190,12 +190,6 @@ ze_result_t zeRTASBuilderGetBuildPropertiesExt(ze_rtas_builder_ext_handle_t hBui
     return L0::RTASBuilderExt::fromHandle(hBuilder)->getProperties(pBuildOpDescriptor, pProperties);
 }
 
-ze_result_t zeDriverRTASFormatCompatibilityCheckExt(ze_driver_handle_t hDriver,
-                                                    ze_rtas_format_ext_t rtasFormatA,
-                                                    ze_rtas_format_ext_t rtasFormatB) {
-    return L0::DriverHandle::fromHandle(hDriver)->formatRTASCompatibilityCheckExt(rtasFormatA, rtasFormatB);
-}
-
 ze_result_t zeRTASBuilderBuildExt(ze_rtas_builder_ext_handle_t hBuilder,
                                   const ze_rtas_builder_build_op_ext_desc_t *pBuildOpDescriptor,
                                   void *pScratchBuffer,
@@ -481,14 +475,6 @@ zeRTASBuilderGetBuildPropertiesExt(
     const ze_rtas_builder_build_op_ext_desc_t *pBuildOpDescriptor,
     ze_rtas_builder_ext_properties_t *pProperties) {
     return L0::zeRTASBuilderGetBuildPropertiesExt(hBuilder, pBuildOpDescriptor, pProperties);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverRTASFormatCompatibilityCheckExt(
-    ze_driver_handle_t hDriver,
-    ze_rtas_format_ext_t rtasFormatA,
-    ze_rtas_format_ext_t rtasFormatB) {
-    return L0::zeDriverRTASFormatCompatibilityCheckExt(hDriver, rtasFormatA, rtasFormatB);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

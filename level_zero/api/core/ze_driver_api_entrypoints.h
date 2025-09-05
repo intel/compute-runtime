@@ -66,17 +66,15 @@ ze_result_t zeDriverGetExtensionFunctionAddress(
     return L0::BaseDriver::fromHandle(hDriver)->getExtensionFunctionAddress(name, ppFunctionAddress);
 }
 
+ze_result_t zeDriverRTASFormatCompatibilityCheckExt(ze_driver_handle_t hDriver,
+                                                    ze_rtas_format_ext_t rtasFormatA,
+                                                    ze_rtas_format_ext_t rtasFormatB) {
+    return L0::DriverHandle::fromHandle(hDriver)->formatRTASCompatibilityCheckExt(rtasFormatA, rtasFormatB);
+}
+
 ze_context_handle_t zeDriverGetDefaultContext(
     ze_driver_handle_t hDriver) {
     return L0::DriverHandle::fromHandle(hDriver)->getDefaultContext();
-}
-
-ze_context_handle_t zerGetDefaultContext() {
-    return L0::DriverHandle::fromHandle(L0::globalDriverHandles->front())->getDefaultContext();
-}
-
-ze_result_t zerGetLastErrorDescription(const char **ppString) {
-    return L0::DriverHandle::fromHandle(L0::globalDriverHandles->front())->getErrorDescription(ppString);
 }
 } // namespace L0
 
@@ -153,15 +151,15 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGetExtensionFunctionAddress(
         ppFunctionAddress);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverRTASFormatCompatibilityCheckExt(
+    ze_driver_handle_t hDriver,
+    ze_rtas_format_ext_t rtasFormatA,
+    ze_rtas_format_ext_t rtasFormatB) {
+    return L0::zeDriverRTASFormatCompatibilityCheckExt(hDriver, rtasFormatA, rtasFormatB);
+}
+
 ZE_APIEXPORT ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(
     ze_driver_handle_t hDriver) {
     return L0::zeDriverGetDefaultContext(hDriver);
-}
-
-ZE_APIEXPORT ze_context_handle_t ZE_APICALL zerGetDefaultContext() {
-    return L0::zerGetDefaultContext();
-}
-ZE_APIEXPORT ze_result_t ZE_APICALL zerGetLastErrorDescription(const char **ppString) {
-    return L0::zerGetLastErrorDescription(ppString);
 }
 }

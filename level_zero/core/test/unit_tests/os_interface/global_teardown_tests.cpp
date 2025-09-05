@@ -200,12 +200,14 @@ TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenGlobalSetupAndTeardownA
     EXPECT_TRUE(globalDriverDispatch.core.isValidFlag);
     EXPECT_TRUE(globalDriverDispatch.tools.isValidFlag);
     EXPECT_TRUE(globalDriverDispatch.sysman.isValidFlag);
+    EXPECT_TRUE(globalDriverDispatch.runtime.isValidFlag);
 
     globalDriverTeardown();
 
     EXPECT_FALSE(globalDriverDispatch.core.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.tools.isValidFlag);
     EXPECT_FALSE(globalDriverDispatch.sysman.isValidFlag);
+    EXPECT_FALSE(globalDriverDispatch.runtime.isValidFlag);
 }
 } // namespace ult
 } // namespace L0

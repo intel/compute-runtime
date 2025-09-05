@@ -8,9 +8,7 @@
 #pragma once
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
@@ -157,24 +155,6 @@ ze_result_t zeDeviceGetVectorWidthPropertiesExt(
     uint32_t *pCount,
     ze_device_vector_width_properties_ext_t *pVectorWidthProperties) {
     return L0::Device::fromHandle(hDevice)->getVectorWidthPropertiesExt(pCount, pVectorWidthProperties);
-}
-
-uint32_t zerTranslateDeviceHandleToIdentifier(ze_device_handle_t device) {
-    if (!device) {
-        auto driverHandle = static_cast<L0::DriverHandleImp *>(L0::globalDriverHandles->front());
-        driverHandle->setErrorDescription("Invalid device handle");
-        return std::numeric_limits<uint32_t>::max();
-    }
-    return L0::Device::fromHandle(device)->getIdentifier();
-}
-
-ze_device_handle_t zerTranslateIdentifierToDeviceHandle(uint32_t identifier) {
-    auto driverHandle = static_cast<L0::DriverHandleImp *>(L0::globalDriverHandles->front());
-    if (identifier >= driverHandle->devicesToExpose.size()) {
-        driverHandle->setErrorDescription("Invalid device identifier");
-        return nullptr;
-    }
-    return driverHandle->devicesToExpose[identifier];
 }
 
 ze_result_t zeDeviceSynchronize(ze_device_handle_t hDevice) {
@@ -362,14 +342,6 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetVectorWidthPropertiesExt(
     uint32_t *pCount,
     ze_device_vector_width_properties_ext_t *pVectorWidthProperties) {
     return L0::zeDeviceGetVectorWidthPropertiesExt(hDevice, pCount, pVectorWidthProperties);
-}
-
-ZE_APIEXPORT uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t device) {
-    return L0::zerTranslateDeviceHandleToIdentifier(device);
-}
-
-ZE_APIEXPORT ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(uint32_t identifier) {
-    return L0::zerTranslateIdentifierToDeviceHandle(identifier);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceSynchronize(ze_device_handle_t hDevice) {
