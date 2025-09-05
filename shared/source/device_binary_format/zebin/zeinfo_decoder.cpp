@@ -519,11 +519,19 @@ DecodeError decodeZeInfoFunctions(ProgramInfo &dst, Yaml::YamlParser &parser, co
 
 DecodeError decodeZeInfoKernels(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning, const Types::Version &srcZeInfoVersion) {
     if (zeInfoSections.kernels.size() > 0) {
+        bool programHasConstStringSectionForPrintf = dst.globalStrings.size > 0;
+
         for (const auto &kernelNd : parser.createChildrenRange(*zeInfoSections.kernels[0])) {
             auto kernelInfo = std::make_unique<KernelInfo>();
             auto zeInfoErr = decodeZeInfoKernelEntry(kernelInfo->kernelDescriptor, parser, kernelNd, dst.grfSize, dst.minScratchSpaceSize, dst.samplerStateSize, dst.samplerBorderColorStateSize, outErrReason, outWarning, srcZeInfoVersion);
             if (DecodeError::success != zeInfoErr) {
                 return zeInfoErr;
+            }
+
+            if (dst.indirectAccessBufferMajorVersion == 2 &&
+                kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs &&
+                programHasConstStringSectionForPrintf) {
+                kernelInfo->kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
             }
 
             dst.kernelInfos.push_back(kernelInfo.release());

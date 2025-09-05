@@ -203,6 +203,7 @@ cl_int Program::createProgramFromBinary(
             SingleDeviceBinary binary = {};
             binary.deviceBinary = blob;
             binary.targetDevice = NEO::getTargetDevice(clDevice.getRootDeviceEnvironment());
+            binary.generatorFeatureVersions = singleDeviceBinary.generatorFeatureVersions;
 
             auto &gfxCoreHelper = clDevice.getGfxCoreHelper();
             std::tie(decodedSingleDeviceBinary.decodeError, std::ignore) = NEO::decodeSingleDeviceBinary(decodedSingleDeviceBinary.programInfo,
