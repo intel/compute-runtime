@@ -16,6 +16,19 @@
 
 using namespace NEO;
 
+struct PtlProductHelperLinux : ProductHelperTestLinux {
+    void SetUp() override {
+        ProductHelperTestLinux::SetUp();
+
+        drm = new DrmMockExtended(*executionEnvironment->rootDeviceEnvironments[0]);
+        osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    }
+};
+
+PTLTEST_F(PtlProductHelperLinux, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnCorrectValue) {
+    EXPECT_EQ(1ull, productHelper->getSharedSystemPatIndex());
+}
+
 using PtlHwInfoLinux = ::testing::Test;
 
 PTLTEST_F(PtlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {

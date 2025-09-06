@@ -950,6 +950,11 @@ uint64_t ProductHelperHw<gfxProduct>::getPatIndex(CacheRegion cacheRegion, Cache
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
+    return 0;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getGmmResourceUsageOverride(uint32_t usageType) const {
     return 0u;
 }

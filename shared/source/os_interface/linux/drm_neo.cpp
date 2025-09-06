@@ -1722,12 +1722,14 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     if (ret == 0) {
         drmVmId = ctl.vmId;
         if (isSharedSystemAllocEnabled()) {
+            auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
             VmBindParams vmBind{};
             vmBind.vmId = static_cast<uint32_t>(ctl.vmId);
             vmBind.flags = DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR;
             vmBind.length = this->getSharedSystemAllocAddressRange();
             vmBind.sharedSystemUsmEnabled = true;
             vmBind.sharedSystemUsmBind = true;
+            vmBind.patIndex = productHelper.getSharedSystemPatIndex();
             VmBindExtUserFenceT vmBindExtUserFence{};
             ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence,
                                                 castToUint64(ioctlHelper->getPagingFenceAddress(0, nullptr)),

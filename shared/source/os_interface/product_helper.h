@@ -261,6 +261,7 @@ class ProductHelper {
     virtual uint32_t getNumCacheRegions() const = 0;
     virtual uint32_t adjustMaxThreadsPerThreadGroup(uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount, bool isHeaplessModeEnabled) const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
+    virtual uint64_t getSharedSystemPatIndex() const = 0;
     virtual uint32_t getGmmResourceUsageOverride(uint32_t usageType) const = 0;
     virtual bool isSharingWith3dOrMediaAllowed() const = 0;
     virtual bool isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const = 0;

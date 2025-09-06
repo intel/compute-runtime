@@ -39,5 +39,10 @@ bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
     return false;
 }
 
+template <>
+uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
+    return 1;
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

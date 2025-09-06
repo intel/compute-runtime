@@ -517,6 +517,10 @@ HWTEST2_F(ProductHelperTest, givenProductHelperAndForceTlbFlushNotSetWhenAskedIf
     EXPECT_FALSE(productHelper->isTlbFlushRequired());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedGetSharedSystemPatIndexThenReturnDefaultValue, IsPVC) {
+    EXPECT_EQ(0ull, productHelper->getSharedSystemPatIndex());
+}
+
 HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {
     DebugManagerStateRestore restore{};
 
