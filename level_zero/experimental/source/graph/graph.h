@@ -80,6 +80,7 @@ struct Graph : _ze_graph_handle_t {
     static Graph *fromHandle(ze_graph_handle_t handle) {
         return static_cast<Graph *>(handle);
     }
+    inline ze_graph_handle_t toHandle() { return this; }
 
     bool wasPreallocated() const {
         return preallocated;
@@ -264,6 +265,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     static ExecutableGraph *fromHandle(ze_executable_graph_handle_t handle) {
         return static_cast<ExecutableGraph *>(handle);
     }
+    inline ze_executable_graph_handle_t toHandle() { return this; }
 
     bool empty() {
         return myCommandLists.empty();

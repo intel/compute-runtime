@@ -16,6 +16,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/driver_experimental/zex_api.h"
+#include "level_zero/ze_api.h"
 
 using namespace NEO;
 
@@ -26,38 +27,40 @@ namespace ult {
 TEST(GraphTestApiCreate, GivenNonNullPNextThenGraphCreateReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
-    ze_graph_handle_t graph = nullptr;
+    auto ctxHandle = ctx.toHandle();
+    ze_graph_handle_t graphHandle = nullptr;
     ze_base_desc_t ext = {};
     ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
     ext.pNext = nullptr;
-    auto err = ::zeGraphCreateExp(&ctx, &graph, &ext);
+    auto err = zeGraphCreateExp(ctxHandle, &graphHandle, &ext);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
-    EXPECT_EQ(nullptr, graph);
+    EXPECT_EQ(nullptr, graphHandle);
 }
 
 TEST(GraphTestApiCreate, GivenNullContextThenGraphCreateReturnsError) {
     GraphsCleanupGuard graphCleanup;
-    ze_graph_handle_t graph = nullptr;
-    auto err = ::zeGraphCreateExp(nullptr, &graph, nullptr);
+    ze_graph_handle_t graphHandle = nullptr;
+    auto err = zeGraphCreateExp(nullptr, &graphHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
-    EXPECT_EQ(nullptr, graph);
+    EXPECT_EQ(nullptr, graphHandle);
 }
 
 TEST(GraphTestApiCreate, GivenValidContextThenGraphCreateReturnsSuccess) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
-    ze_graph_handle_t graph = nullptr;
-    auto err = ::zeGraphCreateExp(&ctx, &graph, nullptr);
+    auto ctxHandle = ctx.toHandle();
+    ze_graph_handle_t graphHandle = nullptr;
+    auto err = zeGraphCreateExp(ctxHandle, &graphHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
-    EXPECT_NE(nullptr, graph);
+    EXPECT_NE(nullptr, graphHandle);
 
-    err = ::zeGraphDestroyExp(graph);
+    err = zeGraphDestroyExp(graphHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 }
 
 TEST(GraphTestApiCreate, GivenInvalidGraphThenGraphDestroyReturnsError) {
     GraphsCleanupGuard graphCleanup;
-    auto err = ::zeGraphDestroyExp(nullptr);
+    auto err = zeGraphDestroyExp(nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
@@ -65,23 +68,25 @@ TEST(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphBeginCaptureReturnsE
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
     ze_base_desc_t ext = {};
     ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
     ext.pNext = nullptr;
 
-    auto err = ::zeCommandListBeginGraphCaptureExp(&cmdlist, &ext);
+    auto err = zeCommandListBeginGraphCaptureExp(cmdListHandle, &ext);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
 
     L0::Graph graph(&ctx, true);
-    err = ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &graph, &ext);
+    auto graphHandle = graph.toHandle();
+    err = zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, &ext);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
 }
 
 TEST(GraphTestApiCaptureBeginEnd, GivenNullDestinyGraphThenBeginCaptureReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<CommandList> cmdlist;
-
-    auto err = ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, nullptr, nullptr);
+    auto cmdListHandle = cmdlist.toHandle();
+    auto err = zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
 }
 
@@ -90,15 +95,16 @@ TEST(GraphTestApiCaptureBeginEnd, GivenValidDestinyGraphThenBeginCaptureReturnsS
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
     cmdlist.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
-
+    auto cmdListHandle = cmdlist.toHandle();
     L0::Graph graph(&ctx, true);
-    auto err = ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &graph, nullptr);
+    auto graphHandle = graph.toHandle();
+    auto err = zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 
     ze_graph_handle_t retGraph = nullptr;
-    err = ::zeCommandListEndGraphCaptureExp(&cmdlist, &retGraph, nullptr);
+    err = zeCommandListEndGraphCaptureExp(cmdListHandle, &retGraph, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
-    EXPECT_EQ(retGraph, &graph);
+    EXPECT_EQ(retGraph, graphHandle);
 
     EXPECT_EQ(static_cast<ze_command_list_flags_t>(ZE_COMMAND_LIST_FLAG_IN_ORDER), graph.getCaptureTargetDesc().desc.flags);
 }
@@ -107,15 +113,16 @@ TEST(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphEndCaptureReturnsErr
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
     ze_base_desc_t ext = {};
     ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
     ext.pNext = nullptr;
 
-    auto err = ::zeCommandListBeginGraphCaptureExp(&cmdlist, nullptr);
+    auto err = zeCommandListBeginGraphCaptureExp(cmdListHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 
     ze_graph_handle_t retGraph = nullptr;
-    err = ::zeCommandListEndGraphCaptureExp(&cmdlist, &retGraph, &ext);
+    err = zeCommandListEndGraphCaptureExp(cmdListHandle, &retGraph, &ext);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
     EXPECT_EQ(nullptr, retGraph);
 }
@@ -124,23 +131,24 @@ TEST(GraphTestApiCaptureBeginEnd, WhenNoDestinyGraphProvidedThenEndCaptureReturn
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
-
-    auto err = ::zeCommandListBeginGraphCaptureExp(&cmdlist, nullptr);
+    auto cmdListHandle = cmdlist.toHandle();
+    auto err = zeCommandListBeginGraphCaptureExp(cmdListHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 
     ze_graph_handle_t retGraph = nullptr;
-    err = ::zeCommandListEndGraphCaptureExp(&cmdlist, &retGraph, nullptr);
+    err = zeCommandListEndGraphCaptureExp(cmdListHandle, &retGraph, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
     EXPECT_NE(nullptr, retGraph);
 
-    ::zeGraphDestroyExp(retGraph);
+    zeGraphDestroyExp(retGraph);
 }
 
 TEST(GraphTestApiCaptureBeginEnd, WhenCommandListIsNotRecordingThenEndCaptureReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
     ze_graph_handle_t retGraph = nullptr;
-    auto err = ::zeCommandListEndGraphCaptureExp(&cmdlist, &retGraph, nullptr);
+    auto err = zeCommandListEndGraphCaptureExp(cmdListHandle, &retGraph, nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
     EXPECT_EQ(nullptr, retGraph);
 }
@@ -148,10 +156,11 @@ TEST(GraphTestApiCaptureBeginEnd, WhenCommandListIsNotRecordingThenEndCaptureRet
 TEST(GraphTestApiCaptureBeginEnd, WhenNoDestinyGraphProvidedThenEndCaptureRequiresOutputGraphPlaceholder) {
     GraphsCleanupGuard graphCleanup;
     Mock<CommandList> cmdlist;
-    auto err = ::zeCommandListBeginGraphCaptureExp(&cmdlist, nullptr);
+    auto cmdListHandle = cmdlist.toHandle();
+    auto err = zeCommandListBeginGraphCaptureExp(cmdListHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 
-    err = ::zeCommandListEndGraphCaptureExp(&cmdlist, nullptr, nullptr);
+    err = zeCommandListEndGraphCaptureExp(cmdListHandle, nullptr, nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
@@ -159,11 +168,13 @@ TEST(GraphTestApiCaptureBeginEnd, WhenDestinyGraphProvidedThenEndCaptureDoesNotR
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
     L0::Graph graph(&ctx, true);
-    auto err = ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &graph, nullptr);
+    auto graphHandle = graph.toHandle();
+    auto err = zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 
-    err = ::zeCommandListEndGraphCaptureExp(&cmdlist, nullptr, nullptr);
+    err = zeCommandListEndGraphCaptureExp(cmdListHandle, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 }
 
@@ -173,28 +184,31 @@ TEST(GraphTestApiCaptureBeginEnd, WhenCommandListIsAlreadyRecordingThenBeginCapt
     Mock<CommandList> cmdlist;
 
     L0::Graph graph1(&ctx, true);
+    auto graphHandle1 = graph1.toHandle();
     L0::Graph graph2(&ctx, true);
-    auto err = ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &graph1, nullptr);
+    auto graphHandle2 = graph2.toHandle();
+    auto cmdlistHandle = cmdlist.toHandle();
+    auto err = zeCommandListBeginCaptureIntoGraphExp(cmdlistHandle, graphHandle1, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 
-    err = ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &graph2, nullptr);
+    err = zeCommandListBeginCaptureIntoGraphExp(cmdlistHandle, graphHandle2, nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 
-    err = ::zeCommandListBeginGraphCaptureExp(&cmdlist, nullptr);
+    err = zeCommandListBeginGraphCaptureExp(cmdlistHandle, nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 
     ze_graph_handle_t retGraph = nullptr;
-    err = ::zeCommandListEndGraphCaptureExp(&cmdlist, &retGraph, nullptr);
+    err = zeCommandListEndGraphCaptureExp(cmdlistHandle, &retGraph, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
-    EXPECT_EQ(retGraph, &graph1);
+    EXPECT_EQ(retGraph, graphHandle1);
 }
 
 TEST(GraphTestApiInstantiate, GivenInvalidSourceGraphThenInstantiateGraphReturnsError) {
     GraphsCleanupGuard graphCleanup;
-    ze_executable_graph_handle_t execGraph = nullptr;
-    auto err = ::zeCommandListInstantiateGraphExp(nullptr, &execGraph, nullptr);
+    ze_executable_graph_handle_t execGraphHandle = nullptr;
+    auto err = zeCommandListInstantiateGraphExp(nullptr, &execGraphHandle, nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
-    EXPECT_EQ(nullptr, execGraph);
+    EXPECT_EQ(nullptr, execGraphHandle);
 }
 
 TEST(GraphTestApiInstantiate, GivenInvalidOutputGraphPlaceholderThenInstantiateGraphReturnsError) {
@@ -202,8 +216,9 @@ TEST(GraphTestApiInstantiate, GivenInvalidOutputGraphPlaceholderThenInstantiateG
     Mock<Context> ctx;
     L0::Graph srcGraph(&ctx, true);
     srcGraph.stopCapturing();
+    auto srcGraphHandle = srcGraph.toHandle();
 
-    auto err = ::zeCommandListInstantiateGraphExp(&srcGraph, nullptr, nullptr);
+    auto err = zeCommandListInstantiateGraphExp(srcGraphHandle, nullptr, nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
@@ -211,36 +226,38 @@ TEST(GraphTestApiInstantiate, GivenNonNullPNextThenInstantiateGraphReturnsError)
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     L0::Graph srcGraph(&ctx, true);
+    auto srcGraphHandle = srcGraph.toHandle();
     srcGraph.stopCapturing();
 
     ze_base_desc_t ext = {};
     ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
     ext.pNext = nullptr;
 
-    ze_executable_graph_handle_t execGraph = nullptr;
-    auto err = ::zeCommandListInstantiateGraphExp(&srcGraph, &execGraph, &ext);
+    ze_executable_graph_handle_t execGraphHandle = nullptr;
+    auto err = zeCommandListInstantiateGraphExp(srcGraphHandle, &execGraphHandle, &ext);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
-    EXPECT_EQ(nullptr, execGraph);
+    EXPECT_EQ(nullptr, execGraphHandle);
 }
 
 TEST(GraphTestApiInstantiate, GivenValidSourceGraphThenInstantiateReturnsValidExecutableGraph) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     L0::Graph srcGraph(&ctx, true);
+    auto srcGraphHandle = srcGraph.toHandle();
     srcGraph.stopCapturing();
 
-    ze_executable_graph_handle_t execGraph = nullptr;
-    auto err = ::zeCommandListInstantiateGraphExp(&srcGraph, &execGraph, nullptr);
+    ze_executable_graph_handle_t execGraphHandle = nullptr;
+    auto err = zeCommandListInstantiateGraphExp(srcGraphHandle, &execGraphHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
-    EXPECT_NE(nullptr, execGraph);
+    EXPECT_NE(nullptr, execGraphHandle);
 
-    err = ::zeExecutableGraphDestroyExp(execGraph);
+    err = zeExecutableGraphDestroyExp(execGraphHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 }
 
 TEST(GraphTestApiInstantiate, GivenInvalidExecutableGraphThenGraphDestroyReturnsError) {
     GraphsCleanupGuard graphCleanup;
-    auto err = ::zeExecutableGraphDestroyExp(nullptr);
+    auto err = zeExecutableGraphDestroyExp(nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
@@ -248,60 +265,66 @@ TEST(GraphTestApiInstantiate, GivenUnclosedGraphThenInstantiateFails) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     L0::Graph srcGraph(&ctx, true);
+    auto srcGraphHandle = srcGraph.toHandle();
 
-    ze_executable_graph_handle_t execGraph = nullptr;
-    auto err = ::zeCommandListInstantiateGraphExp(&srcGraph, &execGraph, nullptr);
+    ze_executable_graph_handle_t execGraphHandle = nullptr;
+    auto err = zeCommandListInstantiateGraphExp(srcGraphHandle, &execGraphHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
-    EXPECT_EQ(nullptr, execGraph);
+    EXPECT_EQ(nullptr, execGraphHandle);
 }
 
 TEST(GraphTestDebugApis, GivenNullGraphWhenIsGraphCaptureEnabledIsCalledThenReturnError) {
     GraphsCleanupGuard graphCleanup;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ::zeCommandListIsGraphCaptureEnabledExp(nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeCommandListIsGraphCaptureEnabledExp(nullptr));
 }
 
 TEST(GraphTestDebugApis, GivenCommandListWithoutCaptureEnabledWhenIsGraphCaptureEnabledIsCalledThenReturnFalse) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
-    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, ::zeCommandListIsGraphCaptureEnabledExp(&cmdlist));
+    auto cmdListHandle = cmdlist.toHandle();
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
 }
 
 TEST(GraphTestDebugApis, GivenCommandListWithCaptureEnabledWhenIsGraphCaptureEnabledIsCalledThenReturnTrue) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    auto cmdListHandle = cmdlist.toHandle();
 
     Graph srcGraph(&ctx, true);
     cmdlist.setCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
 
-    EXPECT_EQ(ZE_RESULT_QUERY_TRUE, ::zeCommandListIsGraphCaptureEnabledExp(&cmdlist));
+    EXPECT_EQ(ZE_RESULT_QUERY_TRUE, zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
 
-    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, nullptr, 0U, nullptr);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 0U, nullptr);
 
     srcGraph.stopCapturing();
     cmdlist.setCaptureTarget(nullptr);
 
-    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, ::zeCommandListIsGraphCaptureEnabledExp(&cmdlist));
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, zeCommandListIsGraphCaptureEnabledExp(cmdListHandle));
 }
 
 TEST(GraphTestDebugApis, GivenNullGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
     GraphsCleanupGuard graphCleanup;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ::zeGraphIsEmptyExp(nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeGraphIsEmptyExp(nullptr));
 }
 
 TEST(GraphTestDebugApis, GivenInvalidGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext subCmdlist{&ctx};
     Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
 
     Graph srcGraph(&ctx, true);
+    auto srcGraphHandle = srcGraph.toHandle();
     cmdlist.setCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
-    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &forkEvent, 0U, nullptr);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
 
     Graph *srcSubGraph = nullptr;
     srcGraph.forkTo(subCmdlist, srcSubGraph, forkEvent);
@@ -310,49 +333,54 @@ TEST(GraphTestDebugApis, GivenInvalidGraphWhenGraphIsEmptyIsCalledThenErrorIsRet
     srcGraph.stopCapturing();
     cmdlist.setCaptureTarget(nullptr);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GRAPH, ::zeGraphIsEmptyExp(&srcGraph));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GRAPH, zeGraphIsEmptyExp(srcGraphHandle));
 }
 
 TEST(GraphTestDebugApis, GivenEmptyGraphWhenGraphIsEmptyIsCalledThenTrue) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Graph srcGraph(&ctx, true);
+    auto srcGraphHandle = srcGraph.toHandle();
 
-    EXPECT_EQ(ZE_RESULT_QUERY_TRUE, ::zeGraphIsEmptyExp(&srcGraph));
+    EXPECT_EQ(ZE_RESULT_QUERY_TRUE, zeGraphIsEmptyExp(srcGraphHandle));
 }
 
 TEST(GraphTestDebugApis, GivenNonEmptyGraphWhenGraphIsEmptyIsCalledThenErrorIsReturned) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    auto cmdListHandle = cmdlist.toHandle();
 
     Graph srcGraph(&ctx, true);
+    auto srcGraphHandle = srcGraph.toHandle();
     cmdlist.setCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
 
-    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, nullptr, 0U, nullptr);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 0U, nullptr);
 
     srcGraph.stopCapturing();
     cmdlist.setCaptureTarget(nullptr);
 
-    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, ::zeGraphIsEmptyExp(&srcGraph));
+    EXPECT_EQ(ZE_RESULT_QUERY_FALSE, zeGraphIsEmptyExp(srcGraphHandle));
 }
 
 TEST(GraphTestApiSubmit, GivenNonNullPNextThenGraphAppendReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
     L0::Graph srcGraph(&ctx, true);
     srcGraph.stopCapturing();
 
     L0::ExecutableGraph execGraph;
+    auto execGraphHandle = execGraph.toHandle();
     execGraph.instantiateFrom(srcGraph);
 
     ze_base_desc_t ext = {};
     ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;
     ext.pNext = nullptr;
 
-    auto err = ::zeCommandListAppendGraphExp(&cmdlist, &execGraph, &ext, nullptr, 0, nullptr);
+    auto err = zeCommandListAppendGraphExp(cmdListHandle, execGraphHandle, &ext, nullptr, 0, nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
@@ -363,16 +391,18 @@ TEST(GraphTestApiSubmit, GivenInvalidCmdListThenGraphAppendReturnsError) {
     srcGraph.stopCapturing();
 
     L0::ExecutableGraph execGraph;
+    auto execGraphHandle = execGraph.toHandle();
     execGraph.instantiateFrom(srcGraph);
-    auto err = ::zeCommandListAppendGraphExp(nullptr, &execGraph, nullptr, nullptr, 0, nullptr);
+    auto err = zeCommandListAppendGraphExp(nullptr, execGraphHandle, nullptr, nullptr, 0, nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
 TEST(GraphTestApiSubmit, GivenInvalidGraphThenGraphAppendReturnsError) {
     GraphsCleanupGuard graphCleanup;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
 
-    auto err = ::zeCommandListAppendGraphExp(&cmdlist, nullptr, nullptr, nullptr, 0, nullptr);
+    auto err = zeCommandListAppendGraphExp(cmdListHandle, nullptr, nullptr, nullptr, 0, nullptr);
     EXPECT_NE(ZE_RESULT_SUCCESS, err);
 }
 
@@ -380,13 +410,15 @@ TEST(GraphTestApiSubmit, GivenValidCmdListAndGraphThenGraphAppendReturnsSuccess)
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
     L0::Graph srcGraph(&ctx, true);
     srcGraph.stopCapturing();
 
     L0::ExecutableGraph execGraph;
+    auto execGraphHandle = execGraph.toHandle();
     execGraph.instantiateFrom(srcGraph);
 
-    auto err = ::zeCommandListAppendGraphExp(&cmdlist, &execGraph, nullptr, nullptr, 0, nullptr);
+    auto err = zeCommandListAppendGraphExp(cmdListHandle, execGraphHandle, nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
 }
 
@@ -395,18 +427,19 @@ TEST(GraphTestApiCapture, GivenCommandListInRecordStateThenCaptureCommandsInstea
     Mock<Context> ctx;
     Mock<Context> otherCtx;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
     Mock<Event> event;
     Mock<KernelImp> kernel;
     Mock<KernelImp> kernel2;
     ze_image_handle_t imgA = nullptr;
     ze_image_handle_t imgB = nullptr;
     ze_device_handle_t device = nullptr;
-    ze_kernel_handle_t kernelHandle = &kernel;
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
     ze_external_semaphore_ext_handle_t sem = nullptr;
-    ze_event_handle_t eventHandle = &event;
+    ze_event_handle_t eventHandle = event.toHandle();
     ze_external_semaphore_signal_params_ext_t semSignalParams = {};
     ze_external_semaphore_wait_params_ext_t semWaitParams = {};
-    ze_kernel_handle_t pKernelHandles[] = {&kernel, &kernel2};
+    ze_kernel_handle_t pKernelHandles[] = {kernel.toHandle(), kernel2.toHandle()};
     const uint32_t numKernels = 2U;
     const auto *pCountBuffer = &numKernels;
 
@@ -427,38 +460,38 @@ TEST(GraphTestApiCapture, GivenCommandListInRecordStateThenCaptureCommandsInstea
     ze_group_size_t groupSize = {1, 1, 1};
 
     L0::Graph graph(&ctx, true);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &graph, nullptr));
+    ze_graph_handle_t graphHandle = graph.toHandle();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendBarrier(&cmdlist, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopy(&cmdlist, memA, memB, sizeof(memA), nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWaitOnEvents(&cmdlist, 1, &eventHandle));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWriteGlobalTimestamp(&cmdlist, memA, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryRangesBarrier(&cmdlist, 1, &rangeSize, &memRange, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryFill(&cmdlist, memA, memB, 4, sizeof(memA), nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopyRegion(&cmdlist, memA, &copyRegion, 16, 16, memB, &copyRegion, 16, 16, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopyFromContext(&cmdlist, memA, &otherCtx, memB, 4, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopy(&cmdlist, imgA, imgB, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyRegion(&cmdlist, imgA, imgB, &imgRegion, &imgRegion, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemory(&cmdlist, memA, imgA, &imgRegion, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemory(&cmdlist, imgA, memA, &imgRegion, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryPrefetch(&cmdlist, memA, 4));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemAdvise(&cmdlist, device, memA, 4, ZE_MEMORY_ADVICE_BIAS_CACHED));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendSignalEvent(&cmdlist, &event));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendEventReset(&cmdlist, &event));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendQueryKernelTimestamps(&cmdlist, 1, &eventHandle, memA, nullptr, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendSignalExternalSemaphoreExt(&cmdlist, 1, &sem, &semSignalParams, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWaitExternalSemaphoreExt(&cmdlist, 1, &sem, &semWaitParams, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemoryExt(&cmdlist, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemoryExt(&cmdlist, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchCooperativeKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernelIndirect(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchMultipleKernelsIndirect(&cmdlist, numKernels, pKernelHandles, pCountBuffer, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernelWithParameters(&cmdlist, kernelHandle, &groupCount, nullptr, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernelWithArguments(&cmdlist, kernelHandle, groupCount, groupSize, nullptr, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(cmdListHandle, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopy(cmdListHandle, memA, memB, sizeof(memA), nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(cmdListHandle, 1, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWriteGlobalTimestamp(cmdListHandle, memA, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryRangesBarrier(cmdListHandle, 1, &rangeSize, &memRange, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryFill(cmdListHandle, memA, memB, 4, sizeof(memA), nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopyRegion(cmdListHandle, memA, &copyRegion, 16, 16, memB, &copyRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopyFromContext(cmdListHandle, memA, &otherCtx, memB, 4, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopy(cmdListHandle, imgA, imgB, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopyRegion(cmdListHandle, imgA, imgB, &imgRegion, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopyToMemory(cmdListHandle, memA, imgA, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopyFromMemory(cmdListHandle, imgA, memA, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryPrefetch(cmdListHandle, memA, 4));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemAdvise(cmdListHandle, device, memA, 4, ZE_MEMORY_ADVICE_BIAS_CACHED));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEvent(cmdListHandle, &event));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendEventReset(cmdListHandle, &event));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendQueryKernelTimestamps(cmdListHandle, 1, &eventHandle, memA, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalExternalSemaphoreExt(cmdListHandle, 1, &sem, &semSignalParams, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitExternalSemaphoreExt(cmdListHandle, 1, &sem, &semWaitParams, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopyToMemoryExt(cmdListHandle, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopyFromMemoryExt(cmdListHandle, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(cmdListHandle, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchCooperativeKernel(cmdListHandle, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(cmdListHandle, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchMultipleKernelsIndirect(cmdListHandle, numKernels, pKernelHandles, pCountBuffer, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithParameters(cmdListHandle, kernelHandle, &groupCount, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithArguments(cmdListHandle, kernelHandle, groupCount, groupSize, nullptr, nullptr, nullptr, 0, nullptr));
 
-    ze_graph_handle_t hgraph = &graph;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(&cmdlist, &hgraph, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListEndGraphCaptureExp(cmdListHandle, &graphHandle, nullptr));
 
     ASSERT_EQ(27U, graph.getCapturedCommands().size());
     uint32_t i = 0;
@@ -520,9 +553,10 @@ TEST(GraphForks, GivenRegularEventDependencyThenCommandlistDoesNotStartRecording
     Graph graph{&ctx, true};
 
     Mock<Event> regularEvent;
-    ze_event_handle_t hEvent = &regularEvent;
+    ze_event_handle_t regularEventHandle = regularEvent.toHandle();
     Mock<CommandList> cmdlist;
-    auto err = L0::zeCommandListAppendWaitOnEvents(&cmdlist, 1, &hEvent);
+    auto cmdListHandle = cmdlist.toHandle();
+    auto err = zeCommandListAppendWaitOnEvents(cmdListHandle, 1, &regularEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
     EXPECT_EQ(nullptr, cmdlist.getCaptureTarget());
 }
@@ -532,10 +566,11 @@ TEST(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly) {
 
     MockGraphContextReturningSpecificCmdList ctx;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
     Mock<CommandList> subCmdlist;
     Mock<Event> signalEvents[3];
     Mock<Event> waitEvents[3];
-    ze_event_handle_t waitEventsList[3] = {&waitEvents[0], &waitEvents[1], &waitEvents[2]};
+    ze_event_handle_t waitEventsList[3] = {waitEvents[0].toHandle(), waitEvents[1].toHandle(), waitEvents[2].toHandle()};
     ctx.cmdListToReturn = new Mock<CommandList>();
     auto *graphCmdList = ctx.cmdListToReturn;
     uint64_t memA[16] = {};
@@ -544,8 +579,8 @@ TEST(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly) {
     Graph srcGraph(&ctx, true);
     cmdlist.setCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
-    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &signalEvents[0], 2U, waitEventsList);
-    cmdlist.capture<CaptureApi::zeCommandListAppendMemoryCopy>(&cmdlist, memA, memB, sizeof(memA), &signalEvents[1], 3U, waitEventsList);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, signalEvents[0].toHandle(), 2U, waitEventsList);
+    cmdlist.capture<CaptureApi::zeCommandListAppendMemoryCopy>(cmdListHandle, memA, memB, sizeof(memA), signalEvents[1].toHandle(), 3U, waitEventsList);
     srcGraph.stopCapturing();
     EXPECT_FALSE(srcGraph.isSubGraph());
 
@@ -595,20 +630,21 @@ TEST(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecutab
 
     MockGraphContextReturningNewCmdList ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext subCmdlist{&ctx};
     Mock<Event> forkEvent;
     Mock<Event> joinEvent;
-    ze_event_handle_t hForkEvent = &forkEvent;
-    ze_event_handle_t hJoinEvent = &joinEvent;
+    ze_event_handle_t forkEventHandle = forkEvent.toHandle();
+    ze_event_handle_t joinEventHandle = joinEvent.toHandle();
 
     Graph srcGraph(&ctx, true);
     cmdlist.setCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
-    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &forkEvent, 0U, nullptr);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
 
-    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, &joinEvent, 1U, &hForkEvent);
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, &joinEvent, 1U, &forkEventHandle);
 
-    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, nullptr, 1U, &hJoinEvent);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 1U, &joinEventHandle);
 
     srcGraph.stopCapturing();
 
@@ -644,13 +680,15 @@ TEST(GraphInstantiationValidation, WhenGraphHasUnjoinedForksThenItIsNotValidForI
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext childCmdlist{&ctx};
     Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
     { // missing join
         Graph srcGraph(&ctx, true);
         Graph *srcGraphPtr = &srcGraph;
-        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, &cmdlist, &forkEvent, 0U, nullptr);
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
         Graph *childGraph = nullptr;
         srcGraph.forkTo(childCmdlist, childGraph, forkEvent);
         srcGraph.stopCapturing();
@@ -661,7 +699,7 @@ TEST(GraphInstantiationValidation, WhenGraphHasUnjoinedForksThenItIsNotValidForI
     { // correct graph
         Graph srcGraph(&ctx, true);
         Graph *srcGraphPtr = &srcGraph;
-        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, &cmdlist, &forkEvent, 0U, nullptr);
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
         Graph *childGraph = nullptr;
         srcGraph.forkTo(childCmdlist, childGraph, forkEvent);
         srcGraph.tryJoinOnNextCommand(childCmdlist, joinEvent);
@@ -674,22 +712,26 @@ TEST(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThenW
     GraphsCleanupGuard graphCleanup;
     Mock<Context> ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
+    auto cmdListHandle = cmdlist.toHandle();
     MockGraphCmdListWithContext childCmdlist{&ctx};
     MockGraphCmdListWithContext grandChildCmdlist{&ctx};
     Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> forkEventLvl2;
+    auto forkEventHandleLvl2 = forkEventLvl2.toHandle();
     Mock<Event> joinEvent;
     Mock<Event> joinEventLvl2;
+    auto joinEventHandleLvl2 = joinEventLvl2.toHandle();
     { // missing join
         Graph srcGraph(&ctx, true);
         Graph *srcGraphPtr = &srcGraph;
-        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, &cmdlist, &forkEvent, 0U, nullptr);
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
         Graph *childGraph = nullptr;
         srcGraph.forkTo(childCmdlist, childGraph, forkEvent);
 
         {
             Graph *grandChildGraph = nullptr;
-            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, &forkEventLvl2, 0U, nullptr);
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, forkEventHandleLvl2, 0U, nullptr);
             childGraph->forkTo(grandChildCmdlist, grandChildGraph, forkEventLvl2);
             grandChildCmdlist.setCaptureTarget(nullptr);
         }
@@ -702,15 +744,15 @@ TEST(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThenW
     { // correct graph
         Graph srcGraph(&ctx, true);
         Graph *srcGraphPtr = &srcGraph;
-        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, &cmdlist, &forkEvent, 0U, nullptr);
+        L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, cmdListHandle, forkEventHandle, 0U, nullptr);
         Graph *childGraph = nullptr;
         srcGraph.forkTo(childCmdlist, childGraph, forkEvent);
 
         {
             Graph *grandChildGraph = nullptr;
-            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, &forkEventLvl2, 0U, nullptr);
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, &childCmdlist, forkEventHandleLvl2, 0U, nullptr);
             childGraph->forkTo(grandChildCmdlist, grandChildGraph, forkEventLvl2);
-            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildGraph, &grandChildCmdlist, &joinEventLvl2, 0U, nullptr);
+            L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(grandChildCmdlist, grandChildGraph, &grandChildCmdlist, joinEventHandleLvl2, 0U, nullptr);
             childGraph->tryJoinOnNextCommand(grandChildCmdlist, joinEventLvl2);
         }
 
@@ -728,6 +770,7 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     MockGraphContextReturningSpecificCmdList ctx;
     MockGraphContextReturningSpecificCmdList otherCtx;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
     Mock<Event> event;
     Mock<Module> module(this->device, nullptr);
     Mock<KernelImp> kernel;
@@ -738,9 +781,9 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     ze_image_handle_t imgB = nullptr;
     zes_device_handle_t device = nullptr;
     ze_external_semaphore_ext_handle_t sem = nullptr;
-    ze_event_handle_t eventHandle = &event;
-    ze_kernel_handle_t kernelHandle = &kernel;
-    ze_kernel_handle_t pKernelHandles[] = {&kernel, &kernel2};
+    ze_event_handle_t eventHandle = event.toHandle();
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+    ze_kernel_handle_t pKernelHandles[] = {kernel.toHandle(), kernel2.toHandle()};
     const uint32_t numKernels = 2U;
     const auto *pCountBuffer = &numKernels;
     ze_external_semaphore_signal_params_ext_t semSignalParams = {};
@@ -762,38 +805,38 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     ze_group_size_t groupSize = {1, 1, 1};
 
     L0::Graph srcGraph(&ctx, true);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(&cmdlist, &srcGraph, nullptr));
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, srcGraphHandle, nullptr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendBarrier(&cmdlist, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopy(&cmdlist, memA, memB, sizeof(memA), nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWaitOnEvents(&cmdlist, 1, &eventHandle));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWriteGlobalTimestamp(&cmdlist, memA, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryRangesBarrier(&cmdlist, 1, &rangeSize, &memRange, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryFill(&cmdlist, memA, memB, 4, sizeof(memA), nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopyRegion(&cmdlist, memA, &copyRegion, 16, 16, memB, &copyRegion, 16, 16, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryCopyFromContext(&cmdlist, memA, &otherCtx, memB, 4, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopy(&cmdlist, imgA, imgB, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyRegion(&cmdlist, imgA, imgB, &imgRegion, &imgRegion, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemory(&cmdlist, memA, imgA, &imgRegion, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemory(&cmdlist, imgA, memA, &imgRegion, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemoryPrefetch(&cmdlist, memA, 4));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendMemAdvise(&cmdlist, device, memA, 4, ZE_MEMORY_ADVICE_BIAS_CACHED));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendSignalEvent(&cmdlist, &event));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendEventReset(&cmdlist, &event));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendQueryKernelTimestamps(&cmdlist, 1, &eventHandle, memA, nullptr, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendSignalExternalSemaphoreExt(&cmdlist, 1, &sem, &semSignalParams, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendWaitExternalSemaphoreExt(&cmdlist, 1, &sem, &semWaitParams, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyToMemoryExt(&cmdlist, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendImageCopyFromMemoryExt(&cmdlist, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchCooperativeKernel(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernelIndirect(&cmdlist, kernelHandle, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchMultipleKernelsIndirect(&cmdlist, numKernels, pKernelHandles, pCountBuffer, &groupCount, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernelWithParameters(&cmdlist, kernelHandle, &groupCount, nullptr, nullptr, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernelWithArguments(&cmdlist, kernelHandle, groupCount, groupSize, nullptr, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(cmdListHandle, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopy(cmdListHandle, memA, memB, sizeof(memA), nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(cmdListHandle, 1, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWriteGlobalTimestamp(cmdListHandle, memA, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryRangesBarrier(cmdListHandle, 1, &rangeSize, &memRange, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryFill(cmdListHandle, memA, memB, 4, sizeof(memA), nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopyRegion(cmdListHandle, memA, &copyRegion, 16, 16, memB, &copyRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopyFromContext(cmdListHandle, memA, &otherCtx, memB, 4, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopy(cmdListHandle, imgA, imgB, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopyRegion(cmdListHandle, imgA, imgB, &imgRegion, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopyToMemory(cmdListHandle, memA, imgA, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopyFromMemory(cmdListHandle, imgA, memA, &imgRegion, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryPrefetch(cmdListHandle, memA, 4));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemAdvise(cmdListHandle, device, memA, 4, ZE_MEMORY_ADVICE_BIAS_CACHED));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEvent(cmdListHandle, &event));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendEventReset(cmdListHandle, &event));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendQueryKernelTimestamps(cmdListHandle, 1, &eventHandle, memA, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalExternalSemaphoreExt(cmdListHandle, 1, &sem, &semSignalParams, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitExternalSemaphoreExt(cmdListHandle, 1, &sem, &semWaitParams, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopyToMemoryExt(cmdListHandle, memA, imgA, &imgRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendImageCopyFromMemoryExt(cmdListHandle, imgA, memA, &imgRegion, 16, 16, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(cmdListHandle, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchCooperativeKernel(cmdListHandle, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(cmdListHandle, kernelHandle, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchMultipleKernelsIndirect(cmdListHandle, numKernels, pKernelHandles, pCountBuffer, &groupCount, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithParameters(cmdListHandle, kernelHandle, &groupCount, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithArguments(cmdListHandle, kernelHandle, groupCount, groupSize, nullptr, nullptr, nullptr, 0, nullptr));
 
-    ze_graph_handle_t hgraph = &srcGraph;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(&cmdlist, &hgraph, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListEndGraphCaptureExp(cmdListHandle, &srcGraphHandle, nullptr));
 
     ctx.cmdListToReturn = new Mock<CommandList>();
     ExecutableGraph execGraph;
@@ -866,21 +909,21 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventWhenInsta
     zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &eventDesc, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
 
     std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
-    ze_graph_handle_t graphHandle = srcGraph.get();
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
 
     Mock<Module> module(this->device, nullptr);
     Mock<KernelImp> kernel;
     kernel.module = &module;
     ze_kernel_handle_t kernelHandle = kernel.toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
 
     ExecutableGraph execGraph;
     execGraph.instantiateFrom(*(srcGraph.get()));
@@ -906,22 +949,22 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenInst
     zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_GRAPH_EXTERNAL_EVENT);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &eventDesc, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
 
     std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
-    ze_graph_handle_t graphHandle = srcGraph.get();
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
 
     Mock<Module> module(this->device, nullptr);
     Mock<KernelImp> kernel;
     kernel.module = &module;
     ze_kernel_handle_t kernelHandle = kernel.toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
 
     ExecutableGraph execGraph;
     execGraph.instantiateFrom(*(srcGraph.get()));
@@ -956,22 +999,22 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
     zex_counter_based_event_desc_t eventDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC};
     eventDesc.flags = static_cast<uint32_t>(ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_GRAPH_EXTERNAL_EVENT);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &eventDesc, &eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
 
     std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
-    ze_graph_handle_t graphHandle = srcGraph.get();
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
 
     Mock<Module> module(this->device, nullptr);
     Mock<KernelImp> kernel;
     kernel.module = &module;
     ze_kernel_handle_t kernelHandle = kernel.toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
 
     auto event = L0::Event::fromHandle(eventHandle);
 
@@ -1046,7 +1089,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     Graph srcGraph(context, true);
     immCmdListHw->setCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(*immCmdListHw, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeCommandListAppendBarrier(immCmdList, nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdList, nullptr, 0U, nullptr));
     srcGraph.stopCapturing();
     immCmdListHw->setCaptureTarget(nullptr);
 
@@ -1092,7 +1135,7 @@ TEST(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenT
     GraphsCleanupGuard graphCleanup;
     Mock<Event> signalEvents[2];
     Mock<Event> waitEvents[3];
-    ze_event_handle_t waitEventsList[3] = {&waitEvents[0], &waitEvents[1], &waitEvents[2]};
+    ze_event_handle_t waitEventsList[3] = {waitEvents[0].toHandle(), waitEvents[1].toHandle(), waitEvents[2].toHandle()};
 
     Mock<CommandList> cmdlist;
     ExecutableGraph graph;
@@ -1104,13 +1147,13 @@ TEST(GraphExecution, GivenEmptyExecutableGraphWhenSubmittingItToCommandListThenT
     EXPECT_EQ(0U, cmdlist.appendWaitOnEventsCalled);
     EXPECT_EQ(0U, cmdlist.appendSignalEventCalled);
 
-    res = graph.execute(&cmdlist, nullptr, &signalEvents[0], 0, nullptr);
+    res = graph.execute(&cmdlist, nullptr, signalEvents[0].toHandle(), 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0U, cmdlist.appendCommandListsCalled);
     EXPECT_EQ(0U, cmdlist.appendWaitOnEventsCalled);
     EXPECT_EQ(1U, cmdlist.appendSignalEventCalled);
 
-    res = graph.execute(&cmdlist, nullptr, &signalEvents[0], 2, waitEventsList);
+    res = graph.execute(&cmdlist, nullptr, signalEvents[0].toHandle(), 2, waitEventsList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0U, cmdlist.appendCommandListsCalled);
     EXPECT_EQ(1U, cmdlist.appendWaitOnEventsCalled);
@@ -1128,13 +1171,14 @@ TEST(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppend
 
     MockGraphContextReturningSpecificCmdList ctx;
     Mock<CommandList> cmdlist;
+    auto cmdListHandle = cmdlist.toHandle();
 
     ctx.cmdListToReturn = new Mock<CommandList>();
 
     Graph srcGraph(&ctx, true);
     cmdlist.setCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
-    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&cmdlist, nullptr, 0U, nullptr);
+    cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 0U, nullptr);
     srcGraph.stopCapturing();
     cmdlist.setCaptureTarget(nullptr);
 
@@ -1155,23 +1199,25 @@ TEST(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToCommandL
     MockGraphCmdListWithContext mainRecordCmdlist{&ctx};
     MockGraphCmdListWithContext mainExecCmdlist{&ctx};
     MockGraphCmdListWithContext subCmdlist{&ctx};
+    auto subCmdlistHandle = subCmdlist.toHandle();
 
     Mock<Event> signalEventParent; // fork
     Mock<Event> signalEventChild;  // join
 
-    ze_event_handle_t hSignalEventParent = &signalEventParent;
-    ze_event_handle_t hSignalEventChild = &signalEventChild;
+    ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
+    ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
 
     Graph srcGraph(&ctx, true);
     mainRecordCmdlist.setCaptureTarget(&srcGraph);
+    auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
     srcGraph.startCapturingFrom(mainRecordCmdlist, false);
-    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&mainRecordCmdlist, &signalEventParent, 0U, nullptr);
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, signalEventParentHandle, 0U, nullptr);
 
     Graph *srcSubGraph = nullptr;
     srcGraph.forkTo(subCmdlist, srcSubGraph, signalEventParent);
-    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&subCmdlist, &signalEventChild, 1U, &hSignalEventParent);
+    subCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(subCmdlistHandle, signalEventChildHandle, 1U, &signalEventParentHandle);
 
-    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(&mainRecordCmdlist, nullptr, 1U, &hSignalEventChild);
+    mainRecordCmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(mainRecordCmdlistHandle, nullptr, 1U, &signalEventChildHandle);
 
     srcGraph.stopCapturing();
     mainRecordCmdlist.setCaptureTarget(nullptr);
@@ -1206,7 +1252,7 @@ TEST(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToCommandL
 TEST(ClosureExternalStorage, GivenEventWaitListThenRecordsItProperly) {
     MockEvent events[10];
     ze_event_handle_t eventHandles[10];
-    std::transform(events, events + 10, eventHandles, [](auto &ev) { return &ev; });
+    std::transform(events, events + 10, eventHandles, [](auto &ev) { return ev.toHandle(); });
 
     L0::ClosureExternalStorage storage;
     EXPECT_EQ(L0::ClosureExternalStorage::invalidEventsListId, storage.registerEventsList(eventHandles, eventHandles));

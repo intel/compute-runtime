@@ -320,7 +320,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendSignalExternalSemaphoreEx
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendSignalExternalSemaphores(numSemaphores, phSemaphores, signalParams, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::zeCommandListAppendSignalExternalSemaphoreExt(hCommandList, numSemaphores, phSemaphores, signalParams, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitExternalSemaphoreExt(
@@ -331,7 +331,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWaitExternalSemaphoreExt(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendWaitExternalSemaphores(numSemaphores, phSemaphores, waitParams, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::zeCommandListAppendWaitExternalSemaphoreExt(hCommandList, numSemaphores, phSemaphores, waitParams, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelWithArguments(
