@@ -1370,40 +1370,6 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenRes
     *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 3;
 }
 
-HWTEST2_F(AggregatedBcsSplitTests, givenUserPtrWhenAppendCalledThenCreateOnlyOneTempAlloc, IsAtLeastXeHpcCore) {
-    auto ptr = allocHostMem();
-    uint64_t hostPtr = 0;
-
-    auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
-
-    auto &tempAllocList = device->getNEODevice()->getMemoryManager()->getTemporaryAllocationsList();
-
-    auto countElements = [&tempAllocList]() {
-        auto current = tempAllocList.peekHead();
-        uint32_t count = 0;
-        while (current) {
-            count++;
-            current = current->next;
-        }
-
-        return count;
-    };
-
-    EXPECT_EQ(0u, countElements());
-
-    cmdListHw->appendMemoryCopy(ptr, &hostPtr, copySize, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(1u, countElements());
-
-    cmdListHw->hostSynchronize(1, true);
-    EXPECT_EQ(0u, countElements());
-
-    ze_copy_region_t region = {0, 0, 0, static_cast<uint32_t>(copySize), 1, 1};
-    cmdListHw->appendMemoryCopyRegion(ptr, &region, 0, 0, &hostPtr, &region, 0, 0, nullptr, 0, nullptr, copyParams);
-    EXPECT_EQ(1u, countElements());
-
-    context->freeMem(ptr);
-}
-
 HWTEST2_F(AggregatedBcsSplitTests, givenFullCmdBufferWhenAppendCalledThenAllocateNewBuffer, IsAtLeastXeHpcCore) {
     auto ptr = allocHostMem();
 

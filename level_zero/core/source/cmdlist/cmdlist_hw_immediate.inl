@@ -644,18 +644,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamilyImmediate<gfxCoreFamily>::setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize) {
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush) {
     memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1, false); // split generates more than 1 event
     memoryCopyParams.forceDisableCopyOnlyInOrderSignaling = true;
     memoryCopyParams.taskCountUpdateRequired = true;
     memoryCopyParams.copyOffloadAllowed = this->isCopyOffloadEnabled();
     copyOffloadFlush = memoryCopyParams.copyOffloadAllowed;
     hasStallingCmds = !memoryCopyParams.relaxedOrderingDispatch;
-
-    memoryCopyParams.bcsSplitBaseDstPtr = dstPtr;
-    memoryCopyParams.bcsSplitBaseSrcPtr = srcPtr;
-    memoryCopyParams.bcsSplitTotalDstSize = dstSize;
-    memoryCopyParams.bcsSplitTotalSrcSize = srcSize;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -694,7 +689,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     NEO::TransferDirection direction;
     auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size, direction);
     if (isSplitNeeded) {
-        setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush, srcptr, dstptr, size, size);
+        setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush);
 
         auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
@@ -747,9 +742,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     NEO::TransferDirection direction;
     auto isSplitNeeded = this->isAppendSplitNeeded(dstPtr, srcPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch), direction);
     if (isSplitNeeded) {
-        setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush, srcPtr, dstPtr,
-                              this->getTotalSizeForCopyRegion(srcRegion, srcPitch, srcSlicePitch),
-                              this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch));
+        setupFlagsForBcsSplit(memoryCopyParams, hasStallingCmds, copyOffloadFlush);
 
         auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             ze_copy_region_t dstRegionLocal = {};
