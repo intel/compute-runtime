@@ -507,7 +507,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableBOMmapCreate, -1, "Create BOs using mmap, 
 DECLARE_DEBUG_VARIABLE(int32_t, EnableGemCloseWorker, -1, "Use asynchronous gem object closing, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPtrValidation, -1, "Validate BO from GEM_USERPTR, -1:default(enable), 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBlitterOperationsSupport, -1, "-1: default, 0: disable, 1: enable")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableBlitterForEnqueueOperations, -1, "Use Blitter engine for enqueue operations. -1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableBlitterForEnqueueOperations, -1, "Use Blitter engine for enqueue operations. -1: default, 0: disabled, 1: enabled for every enqueue, 2: disabled, except image from buffer writes")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBlitterForEnqueueImageOperations, -1, "Use Blitter engine for read/write/copy image operations. -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCacheFlushAfterWalker, -1, "-1: platform behavior, 0: disabled, 1: enabled. Adds dedicated cache flush command after WALKER command when surfaces used by kernel require to flush the cache")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableLocalMemory, -1, "-1: default behavior, 0: disabled, 1: enabled, Allows allocating graphics memory in Local Memory")

@@ -3499,6 +3499,41 @@ HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenImageFromBufferThenBcsAl
     }
 }
 
+HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenEnableBlitterForEnqueueOperationsSetToTwoWhenSelectCsrForImageFromBufferThenBcsAlwaysPreferredOtherwiseUseCcs) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(2);
+    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+
+    cl_command_queue_properties queueProperties[5] = {};
+    auto queue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), queueProperties, false);
+    auto ccsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&queue->getGpgpuCommandStreamReceiver());
+    auto bcsCsr = queue->getBcsCommandStreamReceiver(*queue->bcsQueueEngineType);
+
+    {
+        auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
+        size_t origin[3] = {0, 0, 0};
+        size_t region[3] = {1, 1, 1};
+        MockImageBase dstImage{};
+        dstImage.associatedMemObject = buffer.get();
+
+        CsrSelectionArgs args{CL_COMMAND_WRITE_IMAGE, nullptr, &dstImage, 0u, region, nullptr, origin};
+        EXPECT_TRUE(args.dstResource.image->isImageFromBuffer());
+
+        EXPECT_EQ(bcsCsr, &queue->selectCsrForBuiltinOperation(args));
+    }
+    {
+        auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
+        size_t origin[3] = {0, 0, 0};
+        size_t region[3] = {1, 1, 1};
+        MockImageBase dstImage{};
+
+        CsrSelectionArgs args{CL_COMMAND_WRITE_IMAGE, nullptr, &dstImage, 0u, region, nullptr, origin};
+        EXPECT_FALSE(args.dstResource.image->isImageFromBuffer());
+
+        EXPECT_EQ(ccsCsr, &queue->selectCsrForBuiltinOperation(args));
+    }
+}
+
 HWTEST_F(CommandQueueTests, GivenOOQCommandQueueWhenIsGpgpuSubmissionForBcsRequiredCalledThenReturnCorrectValue) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(device.get());

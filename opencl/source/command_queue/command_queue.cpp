@@ -293,6 +293,8 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
         preferBcs = device->getRootDeviceEnvironment().isWddmOnLinux() || productHelper.blitEnqueuePreferred(isWriteToImageFromBuffer);
         if (debugManager.flags.EnableBlitterForEnqueueOperations.get() == 1) {
             preferBcs = true;
+        } else if (debugManager.flags.EnableBlitterForEnqueueOperations.get() == 2) {
+            preferBcs = isWriteToImageFromBuffer;
         }
         auto preferredBCSType = true;
 
