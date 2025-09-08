@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -460,6 +461,27 @@ HWTEST_F(CommandListTest, givenCooperativeDescriptorWithTrueValueWhenObtainLaunc
     ze_result_t result = commandList->obtainLaunchParamsFromExtensions(desc, launchParams, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(launchParams.isCooperative);
+}
+
+HWTEST_F(CommandListTest, givenUnrecognizedDescriptorWhenObtainLaunchParamsFromExtensionsIsCalledThenUnsupportedFeatureErrorIsReturnedAndDebugMessageIsProduced) {
+    L0::CmdListKernelLaunchParams launchParams = {};
+    ze_base_desc_t baseDesc = {};
+    baseDesc.stype = static_cast<ze_structure_type_t>(0x12);
+    baseDesc.pNext = nullptr;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    StreamCapture capture;
+    capture.captureStderr();
+    {
+        DebugManagerStateRestore restorer{};
+        debugManager.flags.PrintDebugMessages.set(true);
+        ze_result_t result = commandList->obtainLaunchParamsFromExtensions(&baseDesc, launchParams, nullptr);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    }
+    std::string output = capture.getCapturedStderr();
+    EXPECT_EQ(std::string("Could not recognize provided extension, stype: 0x12.\n"), output);
 }
 
 HWTEST_F(CommandListTest, givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInUsmHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet) {
