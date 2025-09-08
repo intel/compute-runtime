@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/sleep.h"
@@ -985,7 +986,23 @@ ze_result_t DebugSessionImp::readEvent(uint64_t timeout, zet_debug_event_t *outp
     return ZE_RESULT_NOT_READY;
 }
 
+void DebugSessionImp::dumpDebugSurfaceToFile(uint64_t vmHandle, uint64_t gpuVa, const std::string &path) {
+    auto stateSaveAreaSize = getContextStateSaveAreaSize(vmHandle);
+    std::vector<char> data(stateSaveAreaSize);
+    auto retVal = readGpuMemory(vmHandle, data.data(), data.size(), gpuVa);
+    if (retVal != ZE_RESULT_SUCCESS) {
+        PRINT_DEBUGGER_ERROR_LOG("Reading context state save area failed, error = %d\n", retVal);
+        return;
+    }
+    writeDataToFile(path.c_str(), std::string_view(data.data(), data.size()));
+}
+
 void DebugSessionImp::validateAndSetStateSaveAreaHeader(uint64_t vmHandle, uint64_t gpuVa) {
+    const std::string dumpDebugSurfacePath = NEO::debugManager.flags.DumpDebugSurfaceFile.get();
+    if (dumpDebugSurfacePath != "unk") {
+        dumpDebugSurfaceToFile(vmHandle, gpuVa, dumpDebugSurfacePath);
+    }
+
     auto headerSize = sizeof(NEO::StateSaveAreaHeader);
     std::vector<char> data(headerSize);
     auto retVal = readGpuMemory(vmHandle, data.data(), sizeof(SIP::StateSaveArea), gpuVa);

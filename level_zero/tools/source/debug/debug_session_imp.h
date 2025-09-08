@@ -118,6 +118,7 @@ struct DebugSessionImp : DebugSession {
     MOCKABLE_VIRTUAL void generateEventsForPendingInterrupts();
 
     const NEO::StateSaveAreaHeader *getStateSaveAreaHeader();
+    void dumpDebugSurfaceToFile(uint64_t vmHandle, uint64_t gpuVa, const std::string &path);
     void validateAndSetStateSaveAreaHeader(uint64_t vmHandle, uint64_t gpuVa);
     virtual void readStateSaveAreaHeader(){};
     MOCKABLE_VIRTUAL ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention);

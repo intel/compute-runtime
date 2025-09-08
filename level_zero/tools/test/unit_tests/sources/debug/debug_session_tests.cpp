@@ -26,6 +26,10 @@
 #include "common/StateSaveAreaHeader.h"
 #include "encode_surface_state_args.h"
 
+namespace NEO {
+extern std::map<std::string, std::stringstream> virtualFileList;
+}
+
 namespace L0 {
 namespace ult {
 
@@ -1183,7 +1187,7 @@ TEST(DebugSessionTest, givenMultipleStoppedThreadsAndInvalidStateSaveAreaWhenRes
     MockDeviceImp deviceImp(neoDevice);
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
-    sessionMock->forceZeroStateSaveAreaSize = true;
+    sessionMock->forceStateSaveAreaSize = 0;
 
     auto threadCount = hwInfo.gtSystemInfo.NumThreadsPerEu;
     for (uint32_t i = 0; i < threadCount; i++) {
@@ -2120,6 +2124,54 @@ TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadi
     SIP::fifo_node invalidNode = {0, 1, 1, 0, 0};
     session->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+}
+
+TEST_F(DebugSessionTest, givenDumpDebugSurfaceFileWhenStateSaveAreaIsReadThenDebugSurfaceFileIsDumped) {
+    static constexpr const char *filePath = "test_dump_file.bin";
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DumpDebugSurfaceFile.set(filePath);
+
+    const std::vector<uint8_t> stateSaveAreaContent = {0xaa, 0xbb, 0xcc, 0xdd};
+
+    MockDeviceImp deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+
+    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &deviceImp);
+    session->readMemoryBuffer.assign(stateSaveAreaContent.cbegin(), stateSaveAreaContent.cend());
+    session->forceStateSaveAreaSize = session->readMemoryBuffer.size();
+    session->validateAndSetStateSaveAreaHeader(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()));
+
+    EXPECT_EQ(1u, NEO::virtualFileList.size());
+    EXPECT_TRUE(NEO::virtualFileList.find(filePath) != NEO::virtualFileList.end());
+    auto content = NEO::virtualFileList.at(filePath).str();
+    EXPECT_EQ(stateSaveAreaContent, std::vector<uint8_t>(content.cbegin(), content.cend()));
+}
+
+TEST_F(DebugSessionTest, givenNoDumpDebugSurfaceFileWhenStateSaveAreaIsReadThenDebugSurfaceFileIsNotDumped) {
+    const std::vector<uint8_t> stateSaveAreaContent = {0xaa, 0xbb, 0xcc, 0xdd};
+
+    MockDeviceImp deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &deviceImp);
+
+    session->readMemoryBuffer.assign(stateSaveAreaContent.cbegin(), stateSaveAreaContent.cend());
+    session->forceStateSaveAreaSize = session->readMemoryBuffer.size();
+
+    session->validateAndSetStateSaveAreaHeader(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()));
+
+    EXPECT_EQ(0u, NEO::virtualFileList.size());
+}
+
+TEST_F(DebugSessionTest, givenDumpDebugSurfaceFileWhenStateSaveAreaIsReadAndReadGpuMemoryFailsThenDebugSurfaceFileIsNotDumped) {
+    static constexpr const char *filePath = "test_dump_file.bin";
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DumpDebugSurfaceFile.set(filePath);
+
+    MockDeviceImp deviceImp(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+
+    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, &deviceImp);
+    session->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
+    session->validateAndSetStateSaveAreaHeader(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()));
+
+    EXPECT_EQ(0u, NEO::virtualFileList.size());
 }
 
 TEST_F(DebugSessionTest, givenTssMagicCorruptedWhenStateSaveAreIsReadThenHeaderIsNotSet) {

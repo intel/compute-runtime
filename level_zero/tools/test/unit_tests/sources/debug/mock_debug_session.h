@@ -155,6 +155,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::calculateSrMagicOffset;
     using L0::DebugSessionImp::calculateThreadSlotOffset;
     using L0::DebugSessionImp::checkTriggerEventsForAttention;
+    using L0::DebugSessionImp::dumpDebugSurfaceToFile;
     using L0::DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped;
     using L0::DebugSessionImp::generateEventsAndResumeStoppedThreads;
     using L0::DebugSessionImp::generateEventsForPendingInterrupts;
@@ -494,8 +495,8 @@ struct MockDebugSession : public L0::DebugSessionImp {
     };
 
     size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override {
-        if (forceZeroStateSaveAreaSize) {
-            return 0;
+        if (forceStateSaveAreaSize.has_value()) {
+            return forceStateSaveAreaSize.value();
         }
         if (stateSaveAreaHeader.size()) {
             auto header = getStateSaveAreaHeader();
@@ -589,7 +590,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     int64_t returnTimeDiff = -1;
     bool returnStateSaveAreaGpuVa = true;
-    bool forceZeroStateSaveAreaSize = false;
+    std::optional<size_t> forceStateSaveAreaSize = std::nullopt;
 
     bool attachTileCalled = false;
     bool detachTileCalled = false;
