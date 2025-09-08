@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/ail/ail_configuration_base.inl"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "aubstream/engine_node.h"
@@ -35,6 +36,10 @@ void AILConfigurationHw<gfxProduct>::applyExt(HardwareInfo &hwInfo) {
             switch (search->second[i]) {
             case AILEnumeration::disableDirectSubmission:
                 hwInfo.capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported = false;
+                break;
+            case AILEnumeration::directSubmissionControllerConfig:
+                debugManager.flags.DirectSubmissionControllerTimeout.set(1000);
+                debugManager.flags.DirectSubmissionControllerMaxTimeout.set(1000);
             default:
                 break;
             }
