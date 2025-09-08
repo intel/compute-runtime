@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_library.h"
@@ -1012,20 +1013,21 @@ ze_result_t OaMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronize
             *globalTimestamp = deviceTimestamp;
         }
 
-        uint32_t cpuId;
-        MetricsDiscovery::ECompletionCode mdapiRetVal;
-        MetricsDiscovery::IMetricsDevice_1_13 *metricDevice;
-        metricDevice = getMetricSource()->getMetricEnumeration().getMdapiDevice();
-
-        // MDAPI returns GPU timestamps in nanoseconds
-        mdapiRetVal = metricDevice->GetGpuCpuTimestamps(metricTimestamp, &hostTimestamp, &cpuId);
-        if (mdapiRetVal != MetricsDiscovery::CC_OK) {
-            *globalTimestamp = 0;
-            *metricTimestamp = 0;
-            result = ZE_RESULT_ERROR_NOT_AVAILABLE;
-        } else {
-            result = ZE_RESULT_SUCCESS;
+        if (!metricSource->isFrequencyDataAvailable) {
+            metricSource->csTimestampPeriodNs = metricSource->getMetricDeviceContext().getDevice().getNEODevice()->getProfilingTimerResolution();
+            result = metricSource->getTimerResolution(metricSource->oaTimestampFrequency);
+            if (result != ZE_RESULT_SUCCESS) {
+                METRICS_LOG_ERR("Could not fetch oaTimestampFrequency from getTimerResolution(). Return status recieved %x ", result);
+                *globalTimestamp = 0;
+                *metricTimestamp = 0;
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+            metricSource->isFrequencyDataAvailable = true;
         }
+
+        const uint64_t csTimestampFrequency = static_cast<uint64_t>(CommonConstants::nsecPerSec / metricSource->csTimestampPeriodNs);
+        *metricTimestamp = deviceTimestamp * (metricSource->oaTimestampFrequency / csTimestampFrequency);
+        result = ZE_RESULT_SUCCESS;
     }
 
     return result;

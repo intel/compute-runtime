@@ -72,6 +72,10 @@ class OaMetricSourceImp : public MetricSource {
     }
     bool canDisable() override;
     void initMetricScopes(MetricDeviceContext &metricDeviceContext) override;
+    ze_result_t getTimerResolution(uint64_t &resolution);
+    double csTimestampPeriodNs = 0;
+    uint64_t oaTimestampFrequency = 0;
+    bool isFrequencyDataAvailable = false;
 
   protected:
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -81,7 +85,6 @@ class OaMetricSourceImp : public MetricSource {
     MetricStreamer *pMetricStreamer = nullptr;
     bool useCompute = false;
     std::unique_ptr<MultiDomainDeferredActivationTracker> activationTracker{};
-    ze_result_t getTimerResolution(uint64_t &resolution);
     void getTimestampValidBits(uint64_t &validBits);
 };
 

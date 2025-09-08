@@ -860,7 +860,7 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFreq
     EXPECT_NE(metricTimestamp, 0UL);
 }
 
-TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadMetricsOrDeviceTimestampsThenValuesAreZero) {
+TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadDeviceTimestampsOrMetricFrequencyThenValuesAreZero) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -922,7 +922,7 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadMetri
     ze_bool_t synchronizedWithHost = true;
     uint64_t globalTimestamp = 1;
     uint64_t metricTimestamp = 1;
-    metricsDevice.forceGetGpuCpuTimestampsFail = true;
+    metricsDevice.forceGetSymbolByNameFail = true;
 
     EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroupHandle, synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(globalTimestamp, 0UL);
@@ -931,6 +931,7 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadMetri
 
     globalTimestamp = 1;
     metricTimestamp = 1;
+    metricsDevice.forceGetGpuCpuTimestampsFail = true;
     neoDevice->setOSTime(new FalseGpuCpuTime());
     EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroupHandle, synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_ERROR_DEVICE_LOST);
     EXPECT_EQ(globalTimestamp, 0UL);
