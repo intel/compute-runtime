@@ -69,17 +69,6 @@
 
 namespace L0 {
 
-inline ze_result_t parseErrorCode(NEO::CommandContainer::ErrorCode returnValue) {
-    switch (returnValue) {
-    case NEO::CommandContainer::ErrorCode::outOfDeviceMemory:
-        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-    default:
-        return ZE_RESULT_SUCCESS;
-    }
-
-    return ZE_RESULT_SUCCESS;
-}
-
 template <GFXCORE_FAMILY gfxCoreFamily>
 CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
     clearCommandsToPatch();
@@ -332,7 +321,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         commandContainer.systolicModeSupportRef() = this->systolicModeSupport;
     }
 
-    ze_result_t returnType = parseErrorCode(returnValue);
+    ze_result_t returnType = (returnValue == NEO::CommandContainer::ErrorCode::outOfDeviceMemory)
+                                 ? ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+                                 : ZE_RESULT_SUCCESS;
     if (returnType == ZE_RESULT_SUCCESS) {
         if (!isCopyOnly(false)) {
             postInitComputeSetup();
