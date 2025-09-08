@@ -515,7 +515,7 @@ typedef struct _ze_queue_priority_desc_t {
 ///     - Default context contains all devices within default driver instance
 /// @returns
 ///     - Context handle associated with default driver
-ze_context_handle_t ZE_APICALL zerGetDefaultContext();
+ZE_APIEXPORT ze_context_handle_t ZE_APICALL zerGetDefaultContext();
 
 /// @brief Get Device Identifier
 ///
@@ -526,7 +526,7 @@ ze_context_handle_t ZE_APICALL zerGetDefaultContext();
 ///     - The identifier can be used then in zerTranslateIdentifierToDeviceHandle to get the device handle.
 /// @returns
 ///     - 32-bit unsigned integer identifier
-uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t hDevice); ///< [in] handle of the device
+ZE_APIEXPORT uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t hDevice); ///< [in] handle of the device
 
 /// @brief Translate Device Identifier to Device Handle from default Driver
 ///
@@ -536,7 +536,7 @@ uint32_t ZE_APICALL zerTranslateDeviceHandleToIdentifier(ze_device_handle_t hDev
 ///    - Returned device is associated to default driver handle.
 /// @returns
 ///     - device handle associated with the identifier
-ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(uint32_t identifier); ///< [in] integer identifier of the device
+ZE_APIEXPORT ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(uint32_t identifier); ///< [in] integer identifier of the device
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Retrieves a string describing the last error code returned by the
@@ -559,7 +559,7 @@ ze_device_handle_t ZE_APICALL zerTranslateIdentifierToDeviceHandle(uint32_t iden
 ///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
 ///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
 ///         + `nullptr == ppString`
-ze_result_t ZE_APICALL
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zerGetLastErrorDescription(
     const char **ppString ///< [in,out] pointer to a null-terminated array of characters describing
                           ///< cause of error.

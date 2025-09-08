@@ -158,10 +158,10 @@ ze_context_handle_t ZE_APICALL zeDriverGetDefaultContext(
     return L0::zeDriverGetDefaultContext(hDriver);
 }
 
-ze_context_handle_t ZE_APICALL zerGetDefaultContext() {
+ZE_APIEXPORT ze_context_handle_t ZE_APICALL zerGetDefaultContext() {
     return L0::zerGetDefaultContext();
 }
-ze_result_t ZE_APICALL zerGetLastErrorDescription(const char **ppString) {
+ZE_APIEXPORT ze_result_t ZE_APICALL zerGetLastErrorDescription(const char **ppString) {
     return L0::zerGetLastErrorDescription(ppString);
 }
 }
