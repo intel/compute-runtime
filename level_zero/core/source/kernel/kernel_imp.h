@@ -73,6 +73,7 @@ struct KernelImp : Kernel {
     ze_result_t getKernelName(size_t *pSize, char *pName) override;
     ze_result_t getArgumentSize(uint32_t argIndex, uint32_t *argSize) const override;
     ze_result_t getArgumentType(uint32_t argIndex, uint32_t *pSize, char *pString) const override;
+    void populateMetadata() const;
 
     uint32_t suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineGroupType, bool forceSingleTileQuery) override {
         UNRECOVERABLE_IF(0 == this->privateState.groupSize[0]);

@@ -1698,8 +1698,7 @@ ze_result_t KernelImp::getArgumentSize(uint32_t argIndex, uint32_t *argSize) con
 }
 
 ze_result_t KernelImp::getArgumentType(uint32_t argIndex, uint32_t *pSize, char *pString) const {
-    this->module->populateZebinExtendedArgsMetadata();
-    this->module->generateDefaultExtendedArgsMetadata();
+    this->populateMetadata();
 
     if (argIndex >= privateState.kernelArgHandlers.size()) {
         return ZE_RESULT_ERROR_INVALID_KERNEL_ARGUMENT_INDEX;
@@ -1719,6 +1718,11 @@ ze_result_t KernelImp::getArgumentType(uint32_t argIndex, uint32_t *pSize, char 
         strncpy_s(pString, *pSize, argMetadata.type.c_str(), argMetadata.type.length());
     }
     return ZE_RESULT_SUCCESS;
+}
+
+void KernelImp::populateMetadata() const {
+    this->module->populateZebinExtendedArgsMetadata();
+    this->module->generateDefaultExtendedArgsMetadata();
 }
 
 KernelExt *KernelImp::getExtension(uint32_t extensionType) {

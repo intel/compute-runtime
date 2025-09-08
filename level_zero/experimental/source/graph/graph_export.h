@@ -48,6 +48,7 @@ namespace GraphDumpHelper {
 
 std::string formatPointer(const void *ptr);
 std::string formatGroupCount(const ze_group_count_t &groupCount);
+void addKernelInformation(std::vector<std::pair<std::string, std::string>> &params, const ze_kernel_handle_t kernelHandle);
 
 } // namespace GraphDumpHelper
 

@@ -7,11 +7,15 @@
 
 #include "level_zero/experimental/source/graph/graph_export.h"
 
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/kernel/kernel.h"
+#include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/experimental/source/graph/graph.h"
+#include "level_zero/ze_api.h"
 
 #include "graph_export.inl"
 
@@ -218,7 +222,7 @@ std::string GraphDotExporter::getCommandNodeLabel(const Graph &graph, CapturedCo
 
     for (const auto &param : params) {
         label << indent << "  ";
-        label << "<TR><TD BGCOLOR=\"azure\">" << param.first << "</TD>";
+        label << "<TR><TD ALIGN=\"LEFT\" BGCOLOR=\"azure\">" << param.first << "</TD>";
         label << "<TD ALIGN=\"LEFT\" BGCOLOR=\"white\"><FONT FACE=\"monospace\">" << param.second << "</FONT></TD></TR>\n";
     }
 
@@ -361,6 +365,26 @@ void addOptionalRegionParameters(std::vector<std::pair<std::string, std::string>
     }
 }
 
+void addKernelInformation(std::vector<std::pair<std::string, std::string>> &params, const ze_kernel_handle_t kernelHandle) {
+    auto *kernelImp = static_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
+
+    const auto &kernelImmutableData = kernelImp->getImmutableData();
+    const auto &kernelName = kernelImmutableData->getKernelInfo()->kernelDescriptor.kernelMetadata.kernelName;
+    const auto &kernelArgInfos = kernelImp->getKernelArgInfos();
+
+    params.emplace_back("hKernel", formatPointer(kernelHandle));
+    params.emplace_back("kernelName", kernelName);
+
+    if (kernelArgInfos.size() > 0U) {
+        kernelImp->populateMetadata();
+
+        for (size_t i = 0; i < kernelImmutableData->getDescriptor().explicitArgsExtendedMetadata.size(); ++i) {
+            const auto &arg = kernelImmutableData->getDescriptor().explicitArgsExtendedMetadata[i];
+            params.emplace_back("arg[" + std::to_string(i) + "]: " + arg.type + " " + arg.argName, "not_implemented_yet");
+        }
+    }
+}
+
 template <>
 std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListAppendMemoryCopy>(
     const Closure<CaptureApi::zeCommandListAppendMemoryCopy> &closure, const ClosureExternalStorage &storage) {
@@ -395,9 +419,8 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     const Closure<CaptureApi::zeCommandListAppendLaunchKernel> &closure, const ClosureExternalStorage &storage) {
 
     auto params = createBaseParams(closure.apiArgs);
-    params.emplace_back("hKernel", formatPointer(closure.apiArgs.kernelHandle));
+    addKernelInformation(params, closure.apiArgs.kernelHandle);
     params.emplace_back("launchFuncArgs", formatGroupCount(closure.indirectArgs.launchKernelArgs));
-
     addCommonEventParameters(params, closure, storage);
 
     return params;
@@ -603,9 +626,8 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     const Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel> &closure, const ClosureExternalStorage &storage) {
 
     auto params = createBaseParams(closure.apiArgs);
-    params.emplace_back("hKernel", formatPointer(closure.apiArgs.kernelHandle));
+    addKernelInformation(params, closure.apiArgs.kernelHandle);
     params.emplace_back("launchFuncArgs", formatGroupCount(closure.indirectArgs.launchKernelArgs));
-
     addCommonEventParameters(params, closure, storage);
 
     return params;
@@ -616,9 +638,8 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     const Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect> &closure, const ClosureExternalStorage &storage) {
 
     auto params = createBaseParams(closure.apiArgs);
-    params.emplace_back("hKernel", formatPointer(closure.apiArgs.kernelHandle));
+    addKernelInformation(params, closure.apiArgs.kernelHandle);
     params.emplace_back("pLaunchArgumentsBuffer", formatPointer(closure.apiArgs.launchArgsBuffer));
-
     addCommonEventParameters(params, closure, storage);
 
     return params;

@@ -9,6 +9,8 @@
 
 #include "shared/test/common/mocks/mock_io_functions.h"
 
+#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/experimental/source/graph/captured_apis/graph_captured_apis.h"
 #include "level_zero/experimental/source/graph/graph_export.h"
 
@@ -560,10 +562,10 @@ DEFINE_APIARGS_FIELDS(zeCommandListAppendSignalEvent, "hCommandList", "hEvent");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendWaitOnEvents, "hCommandList", "numEvents", "phEvents", "phEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendEventReset, "hCommandList", "hEvent");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendQueryKernelTimestamps, "hCommandList", "numEvents", "phEvents", "phEvents[0]", "dstptr", "pOffsets", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
-DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernel, "hCommandList", "hKernel", "launchFuncArgs", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
-DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchCooperativeKernel, "hCommandList", "hKernel", "launchFuncArgs", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
-DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernelIndirect, "hCommandList", "hKernel", "pLaunchArgumentsBuffer", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
-DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernelWithParameters, "hCommandList", "hKernel", "pGroupCounts", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernel, "hCommandList", "hKernel", "kernelName", "launchFuncArgs", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchCooperativeKernel, "hCommandList", "hKernel", "kernelName", "launchFuncArgs", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernelIndirect, "hCommandList", "hKernel", "kernelName", "pLaunchArgumentsBuffer", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
+DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchKernelWithParameters, "hCommandList", "hKernel", "kernelName", "pGroupCounts", "pNext", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendLaunchMultipleKernelsIndirect, "hCommandList", "numKernels", "phKernels", "pCountBuffer", "pLaunchArgumentsBuffer", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendSignalExternalSemaphoreExt, "hCommandList", "numSemaphores", "phSemaphores", "phSemaphores[0]", "signalParams", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
 DEFINE_APIARGS_FIELDS(zeCommandListAppendWaitExternalSemaphoreExt, "hCommandList", "numSemaphores", "phSemaphores", "phSemaphores[0]", "waitParams", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
@@ -912,6 +914,75 @@ TEST_F(ExtractParametersTest, GivenNoOptionalOffsetsParameterWhenExtractParamete
 
     EXPECT_TRUE(hasParam(params, "hCommandList"));
     EXPECT_FALSE(hasParam(params, "pOffsets"));
+}
+
+class ExtractKernelParametersTestFixture : public ModuleImmutableDataFixture, public ExtractParametersTestFixture {
+  public:
+    void setUp() {
+        ModuleImmutableDataFixture::setUp();
+        ExtractParametersTestFixture::setUp();
+
+        uint32_t perHwThreadPrivateMemorySizeRequested = 0u;
+        mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+        mockKernelImmData->mockKernelInfo->kernelDescriptor.kernelMetadata.kernelName = kernelName;
+        createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+        mockKernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    }
+
+    void tearDown() {
+        mockKernel.reset(nullptr);
+        mockKernelImmData.reset(nullptr);
+        ModuleImmutableDataFixture::tearDown();
+        ExtractParametersTestFixture::tearDown();
+    }
+
+    ze_kernel_handle_t kernelHandle;
+    std::unique_ptr<MockImmutableData> mockKernelImmData;
+    std::unique_ptr<MockKernel> mockKernel;
+};
+
+using ExtractKernelParametersTest = Test<ExtractKernelParametersTestFixture>;
+
+TEST_F(ExtractKernelParametersTest, GivenKernelArgWhenExtractParametersIsCalledThenKernelArgIsPresent) {
+    constexpr ConstStringRef argType = "uint32_t";
+
+    mockKernelImmData->resizeExplicitArgs(1);
+    ArgTypeMetadataExtended metadata;
+    metadata.type = argType.data();
+    mockKernelImmData->mockKernelDescriptor->explicitArgsExtendedMetadata.push_back(metadata);
+    createKernel(mockKernel.get());
+
+    Closure<CaptureApi::zeCommandListAppendLaunchKernel>::ApiArgs args{};
+    args.numWaitEvents = 1;
+    args.phWaitEvents = dummyEvents;
+    args.hSignalEvent = dummyEvents[0];
+    args.kernelHandle = mockKernel->toHandle();
+    args.launchKernelArgs = &dummyLaunchArgs;
+
+    Closure<CaptureApi::zeCommandListAppendLaunchKernel> closure(args, storage);
+    auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernel>(closure, storage);
+
+    const std::string expectedKernelArgParam = "arg[0]: uint32_t ";
+    const std::string expectedKernelArgValue = "not_implemented_yet";
+    EXPECT_TRUE(hasParam(params, expectedKernelArgParam));
+    EXPECT_EQ(getParamValue(params, expectedKernelArgParam), expectedKernelArgValue);
+}
+
+TEST_F(ExtractKernelParametersTest, GivenKernelNameWhenExtractParametersIsCalledThenKernelNameIsPresent) {
+    createKernel(mockKernel.get());
+
+    Closure<CaptureApi::zeCommandListAppendLaunchKernel>::ApiArgs args{};
+    args.numWaitEvents = 1;
+    args.phWaitEvents = dummyEvents;
+    args.hSignalEvent = dummyEvents[0];
+    args.kernelHandle = mockKernel->toHandle();
+    args.launchKernelArgs = &dummyLaunchArgs;
+
+    Closure<CaptureApi::zeCommandListAppendLaunchKernel> closure(args, storage);
+    auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernel>(closure, storage);
+
+    EXPECT_TRUE(hasParam(params, "kernelName"));
+    EXPECT_EQ(getParamValue(params, "kernelName"), kernelName);
 }
 
 } // namespace ult
