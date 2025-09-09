@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/gmm_helper/resource_info.h"
 
 using Family = NEO::Gen12LpFamily;
@@ -25,14 +26,14 @@ static auto gfxCore = IGFX_GEN12LP_CORE;
 template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::are4GbHeapsAvailable() const { return true; }
 
-template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
+template <>
+size_t CommandStreamReceiverHw<Gen12LpFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
     size_t size = 0;
     const auto &productHelper = getProductHelper();
     if (productHelper.is3DPipelineSelectWARequired()) {
-        size += (2 * PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekRootDeviceEnvironment()));
+        size += (2 * PreambleHelper<Gen12LpFamily>::getCmdSizeForPipelineSelect(peekRootDeviceEnvironment()));
     }
-    size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
+    size += sizeof(typename Gen12LpFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     return size;
 }
 

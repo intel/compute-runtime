@@ -23,6 +23,10 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
+
 namespace L0 {
 namespace ult {
 
@@ -122,7 +126,7 @@ HWTEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCreatedThenPerContextS
 
 using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
 
-HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsExecutedThenProgramGsbaWritesToSbaTrackingBuffer) {
+SBA_HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsExecutedThenProgramGsbaWritesToSbaTrackingBuffer) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
@@ -384,7 +388,6 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
         GTEST_SKIP();
     }
 
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     DebugManagerStateRestore dbgRestorer;
@@ -406,14 +409,16 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceAfter));
 
-    auto sbaItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), sbaItor);
-    auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*sbaItor);
-
-    uint64_t sshGpuVa = cmdSba->getSurfaceStateBaseAddress();
-    auto expectedGpuVa = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState)->getHeapGpuBase();
-    EXPECT_EQ(expectedGpuVa, sshGpuVa);
-    EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+        auto sbaItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), sbaItor);
+        auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*sbaItor);
+        uint64_t sshGpuVa = cmdSba->getSurfaceStateBaseAddress();
+        auto expectedGpuVa = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState)->getHeapGpuBase();
+        EXPECT_EQ(expectedGpuVa, sshGpuVa);
+        EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
+    }
 
     auto bbStartList = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
     for (const auto &bbStartIt : bbStartList) {

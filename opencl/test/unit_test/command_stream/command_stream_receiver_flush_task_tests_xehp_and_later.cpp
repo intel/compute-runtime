@@ -27,6 +27,8 @@
 #include "test_traits_common.h"
 
 using namespace NEO;
+#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskXeHPAndLaterTests;
 using CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw = UltCommandStreamReceiverTestWithCsrT<MockCsrHw>;
@@ -108,54 +110,58 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, wh
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToItWithTextureCacheFlushAndHdc) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
-        GTEST_SKIP();
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+        auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+        if (commandStreamReceiver.heaplessStateInitialized) {
+            GTEST_SKIP();
+        }
+
+        configureCSRtoNonDirtyState<FamilyType>(false);
+        ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
+        flushTask(commandStreamReceiver);
+        parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+        auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        auto pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), stateBaseAddressItor);
+        EXPECT_NE(stateBaseAddressItor, pipeControlItor);
+        auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
+        EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment()), pipeControlCmd->getDcFlushEnable());
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
     }
-
-    configureCSRtoNonDirtyState<FamilyType>(false);
-    ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
-    flushTask(commandStreamReceiver);
-    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
-
-    auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    auto pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), stateBaseAddressItor);
-    EXPECT_NE(stateBaseAddressItor, pipeControlItor);
-    auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
-    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment()), pipeControlCmd->getDcFlushEnable());
-    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledAndStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        DebugManagerStateRestore dbgRestorer;
+        debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+        using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+        auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    if (commandStreamReceiver.heaplessStateInitialized) {
-        GTEST_SKIP();
+        if (commandStreamReceiver.heaplessStateInitialized) {
+            GTEST_SKIP();
+        }
+
+        configureCSRtoNonDirtyState<FamilyType>(false);
+        ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
+        flushTask(commandStreamReceiver);
+        parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+        auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        auto pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), stateBaseAddressItor);
+        EXPECT_NE(stateBaseAddressItor, pipeControlItor);
+        auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
+        EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
+        EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+        EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+        EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
+        EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
+        EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
     }
-
-    configureCSRtoNonDirtyState<FamilyType>(false);
-    ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
-    flushTask(commandStreamReceiver);
-    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
-
-    auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    auto pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), stateBaseAddressItor);
-    EXPECT_NE(stateBaseAddressItor, pipeControlItor);
-    auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
-    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
-    EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
-    EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-    EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
-    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
-    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
 HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenSBACommandToProgramOnSingleCCSSetupThenThereIsPipeControlPriorToIt, IsXeCore) {
@@ -457,31 +463,33 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, wh
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, WhenFlushingTaskThenStateBaseAddressProgrammingShouldMatchTracking) {
-    typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-    auto gmmHelper = pDevice->getGmmHelper();
-    auto stateHeapMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
-    auto l1CacheOnMocs = gmmHelper->getL1EnabledMOCS();
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+        auto gmmHelper = pDevice->getGmmHelper();
+        auto stateHeapMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
+        auto l1CacheOnMocs = gmmHelper->getL1EnabledMOCS();
+        auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    if (commandStreamReceiver.heaplessStateInitialized) {
-        GTEST_SKIP();
+        if (commandStreamReceiver.heaplessStateInitialized) {
+            GTEST_SKIP();
+        }
+
+        flushTask(commandStreamReceiver);
+
+        auto &commandStreamCSR = commandStreamReceiver.commandStream;
+        parseCommands<FamilyType>(commandStreamCSR, 0);
+        HardwareParse::findHardwareCommands<FamilyType>();
+
+        ASSERT_NE(nullptr, cmdStateBaseAddress);
+        auto &cmd = *reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
+
+        EXPECT_EQ(dsh.getCpuBase(), reinterpret_cast<void *>(cmd.getDynamicStateBaseAddress()));
+        EXPECT_EQ(commandStreamReceiver.getMemoryManager()->getInternalHeapBaseAddress(commandStreamReceiver.rootDeviceIndex, ioh.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()), cmd.getInstructionBaseAddress());
+        EXPECT_EQ(ssh.getCpuBase(), reinterpret_cast<void *>(cmd.getSurfaceStateBaseAddress()));
+
+        EXPECT_EQ(l1CacheOnMocs, cmd.getStatelessDataPortAccessMemoryObjectControlState());
+        EXPECT_EQ(stateHeapMocs, cmd.getInstructionMemoryObjectControlState());
     }
-
-    flushTask(commandStreamReceiver);
-
-    auto &commandStreamCSR = commandStreamReceiver.commandStream;
-    parseCommands<FamilyType>(commandStreamCSR, 0);
-    HardwareParse::findHardwareCommands<FamilyType>();
-
-    ASSERT_NE(nullptr, cmdStateBaseAddress);
-    auto &cmd = *reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
-
-    EXPECT_EQ(dsh.getCpuBase(), reinterpret_cast<void *>(cmd.getDynamicStateBaseAddress()));
-    EXPECT_EQ(commandStreamReceiver.getMemoryManager()->getInternalHeapBaseAddress(commandStreamReceiver.rootDeviceIndex, ioh.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()), cmd.getInstructionBaseAddress());
-    EXPECT_EQ(ssh.getCpuBase(), reinterpret_cast<void *>(cmd.getSurfaceStateBaseAddress()));
-
-    EXPECT_EQ(l1CacheOnMocs, cmd.getStatelessDataPortAccessMemoryObjectControlState());
-    EXPECT_EQ(stateHeapMocs, cmd.getInstructionMemoryObjectControlState());
 }
 
 HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTestsWithMockCsrHw, GivenBlockingWhenFlushingTaskThenPipeControlProgrammedCorrectly) {

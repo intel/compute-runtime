@@ -227,14 +227,18 @@ HWTEST2_F(XeHpAndLaterSbaTest, givenMemoryCompressionEnabledWhenAppendingSbaThen
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpAndLaterSbaTest, givenNonZeroInternalHeapBaseAddressWhenSettingIsDisabledThenExpectCommandValueZero) {
-    constexpr uint64_t ihba = 0x80010000ull;
+    if constexpr (FamilyType::isHeaplessRequired()) {
+        GTEST_SKIP();
+    } else {
+        constexpr uint64_t ihba = 0x80010000ull;
 
-    auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
-    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
-    args.indirectObjectHeapBaseAddress = ihba;
+        auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
+        StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
+        args.indirectObjectHeapBaseAddress = ihba;
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
-    EXPECT_EQ(0ull, sbaCmd.getGeneralStateBaseAddress());
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
+        EXPECT_EQ(0ull, sbaCmd.getGeneralStateBaseAddress());
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenEncodeDataInMemoryWhenProgrammingFeCmdThenExpectFeCmdDataInDispatchedCommand) {

@@ -20,6 +20,7 @@
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/fixtures/front_window_fixture.h"
@@ -453,7 +454,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetSta
     }
 }
 
-HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenSetStateBaseAddressCalledThenStateBaseAddressIsSetCorrectly) {
+SBA_HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenSetStateBaseAddressCalledThenStateBaseAddressIsSetCorrectly) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     cmdContainer->dirtyHeaps = 0;
 
@@ -581,7 +582,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetTh
     EXPECT_EQ(bindingTablePoolSize, bindTablePoolCmd->getBindingTablePoolBufferSize());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenGeneralBaseAddressSetThenExpectAddressFromPropertiesUsedNotFromContainer, IsAtLeastXeCore) {
+HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenGeneralBaseAddressSetThenExpectAddressFromPropertiesUsedNotFromContainer, IsSbaRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto indirectHeapBaseAddress = cmdContainer->getIndirectObjectHeapBaseAddress();

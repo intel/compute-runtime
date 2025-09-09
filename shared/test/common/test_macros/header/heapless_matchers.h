@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/state_base_address_helper.h"
+
 #include "test_traits_common.h"
 
 struct IsHeapfulRequired {
@@ -29,7 +31,29 @@ struct IsHeapfulRequiredAnd {
     }
 };
 
+struct IsSbaRequired {
+    template <PRODUCT_FAMILY prodFamily>
+    static constexpr bool isMatched() {
+        [[maybe_unused]] const GFXCORE_FAMILY gfxCoreFamily = NEO::ToGfxCoreFamily<prodFamily>::get();
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        if constexpr (NEO::GfxFamilyWithSBA<FamilyType>) {
+            return true;
+        }
+
+        return false;
+    }
+};
+
+template <typename DependentMatcher>
+struct IsSbaRequiredAnd {
+    template <PRODUCT_FAMILY prodFamily>
+    static constexpr bool isMatched() {
+        return IsSbaRequired::template isMatched<prodFamily>() && DependentMatcher::template isMatched<prodFamily>();
+    }
+};
+
 using IsHeapfulRequiredAndAtLeastXeCore = IsHeapfulRequiredAnd<IsAtLeastXeCore>;
+using IsSbaRequiredAndAtLeastXeCore = IsSbaRequiredAnd<IsAtLeastXeCore>;
 using IsHeapfulRequiredAndAtLeastXeHpcCore = IsHeapfulRequiredAnd<IsAtLeastXeHpcCore>;
 using IsHeapfulRequiredAndAtLeastXe2HpgCore = IsHeapfulRequiredAnd<IsAtLeastXe2HpgCore>;
 using IsHeapfulRequiredAndAtLeastXe3Core = IsHeapfulRequiredAnd<IsAtLeastXe3Core>;

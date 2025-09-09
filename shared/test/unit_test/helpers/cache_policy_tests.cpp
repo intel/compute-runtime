@@ -25,13 +25,27 @@ HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenUnsupportedL1PoliciesAn
 
 HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
     using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
-    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
-    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
+    auto policy = [&]() -> uint32_t {
+        if constexpr (GfxFamily::isHeaplessRequired()) {
+            return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
+        } else {
+            return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP;
+        }
+    }();
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), policy);
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), policy);
 }
 
 HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreWhenGetUncached1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {
     using GfxFamily = typename HwMapper<productFamily>::GfxFamily;
-    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getUncachedL1CachePolicy(), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC);
+    auto policy = [&]() -> uint32_t {
+        if constexpr (GfxFamily::isHeaplessRequired()) {
+            return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_UC;
+        } else {
+            return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC;
+        }
+    }();
+    EXPECT_EQ(L1CachePolicyHelper<productFamily>::getUncachedL1CachePolicy(), policy);
 }
 
 HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndWriteBackPolicyWhenGetL1CachePolicyThenReturnCorrectValue, IsAtLeastXeCore) {

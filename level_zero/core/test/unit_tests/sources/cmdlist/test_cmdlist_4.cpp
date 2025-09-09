@@ -1124,7 +1124,7 @@ HWTEST_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest, givenMultipleCommand
 
 HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
           givenImmediateCommandListWhenFirstAppendIsNonKernelAppendAndSecondAppendIsKernelAppendThenExpectAllBaseAddressSbaCommandBeforeSecondAppend,
-          IsAtLeastXeCore) {
+          IsSbaRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();

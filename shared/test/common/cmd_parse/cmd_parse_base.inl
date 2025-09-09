@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
 // clang-format off
@@ -19,7 +20,7 @@ using MI_STORE_REGISTER_MEM           = GenStruct::MI_STORE_REGISTER_MEM;
 using MI_NOOP                         = GenStruct::MI_NOOP;
 using PIPE_CONTROL                    = GenStruct::PIPE_CONTROL;
 using PIPELINE_SELECT                 = GenStruct::PIPELINE_SELECT;
-using STATE_BASE_ADDRESS              = GenStruct::STATE_BASE_ADDRESS;
+using STATE_BASE_ADDRESS              = typename StateBaseAddressTypeHelper<GenStruct>::type;
 using MI_REPORT_PERF_COUNT            = GenStruct::MI_REPORT_PERF_COUNT;
 using MI_MATH                         = GenStruct::MI_MATH;
 using MI_LOAD_REGISTER_REG            = GenStruct::MI_LOAD_REGISTER_REG;
@@ -32,16 +33,38 @@ using XY_BLOCK_COPY_BLT               = GenGfxFamily::XY_BLOCK_COPY_BLT;
 using XY_COLOR_BLT                    = GenGfxFamily::XY_COLOR_BLT;
 // clang-format on
 
+template <typename SBAType>
+SBAType *genSBACast(void *buffer) {
+    if constexpr (std::is_same_v<SBAType, SBAPlaceholder>) {
+        return nullptr;
+    } else {
+        auto pCmd = reinterpret_cast<SBAType *>(buffer);
+
+        return SBAType::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
+                       SBAType::COMMAND_SUBTYPE_GFXPIPE_COMMON == pCmd->TheStructure.Common.CommandSubtype &&
+                       SBAType::_3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED == pCmd->TheStructure.Common._3DCommandOpcode &&
+                       SBAType::_3D_COMMAND_SUB_OPCODE_STATE_BASE_ADDRESS == pCmd->TheStructure.Common._3DCommandSubOpcode
+                   ? pCmd
+                   : nullptr;
+    }
+}
+
 template <>
 STATE_BASE_ADDRESS *genCmdCast<STATE_BASE_ADDRESS *>(void *buffer) {
-    auto pCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(buffer);
+    return genSBACast<STATE_BASE_ADDRESS>(buffer);
+}
 
-    return STATE_BASE_ADDRESS::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
-                   STATE_BASE_ADDRESS::COMMAND_SUBTYPE_GFXPIPE_COMMON == pCmd->TheStructure.Common.CommandSubtype &&
-                   STATE_BASE_ADDRESS::_3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED == pCmd->TheStructure.Common._3DCommandOpcode &&
-                   STATE_BASE_ADDRESS::_3D_COMMAND_SUB_OPCODE_STATE_BASE_ADDRESS == pCmd->TheStructure.Common._3DCommandSubOpcode
-               ? pCmd
-               : nullptr;
+template <typename SBAType>
+size_t getSBALength(void *cmd) {
+    if constexpr (std::is_same_v<SBAType, SBAPlaceholder>) {
+        return 0u;
+    } else {
+        auto pCmd = genCmdCast<SBAType *>(cmd);
+        if (pCmd) {
+            return pCmd->TheStructure.Common.DwordLength + 2;
+        }
+        return 0u;
+    }
 }
 
 template <>
@@ -241,9 +264,9 @@ MI_ARB_CHECK *genCmdCast<MI_ARB_CHECK *>(void *buffer) {
 template <class T>
 size_t CmdParse<T>::getCommandLength(void *cmd) {
     {
-        auto pCmd = genCmdCast<STATE_BASE_ADDRESS *>(cmd);
-        if (pCmd) {
-            return pCmd->TheStructure.Common.DwordLength + 2;
+        auto sbaLength = getSBALength<STATE_BASE_ADDRESS>(cmd);
+        if (sbaLength != 0) {
+            return sbaLength;
         }
     }
     {

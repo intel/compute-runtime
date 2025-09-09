@@ -39,6 +39,10 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
+
 namespace L0 {
 namespace ult {
 
@@ -3133,7 +3137,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListCreateTests, whenCommandListIsCreatedT
     EXPECT_EQ(gmmHelper->getL3EnabledMOCS(), cmdSba->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST_F(CommandListCreateTests, givenCommandListWithCopyOnlyWhenCreatedThenStateBaseAddressCmdIsNotProgrammedAndHeapIsNotAllocated) {
+SBA_HWTEST_F(CommandListCreateTests, givenCommandListWithCopyOnlyWhenCreatedThenStateBaseAddressCmdIsNotProgrammedAndHeapIsNotAllocated) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_result_t returnValue;
@@ -3205,15 +3209,7 @@ HWTEST_F(CommandListCreateTests, whenCommandListIsResetThenContainsStatelessUnca
     EXPECT_FALSE(commandList->getContainsStatelessUncachedResource());
 }
 
-HWTEST_F(CommandListCreateTests, givenBindlessModeDisabledWhenCommandListsResetThenSbaReloaded) {
-
-    auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-
-    if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
-        GTEST_SKIP();
-    }
-
+HEAPFUL_HWTEST_F(CommandListCreateTests, givenBindlessModeDisabledWhenCommandListsResetThenSbaReloaded) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(0);
     debugManager.flags.EnableStateBaseAddressTracking.set(0);
@@ -3236,7 +3232,7 @@ HWTEST_F(CommandListCreateTests, givenBindlessModeDisabledWhenCommandListsResetT
     ASSERT_NE(cmdList.end(), itor);
 }
 
-HWTEST_F(CommandListCreateTests, givenCommandListWithCopyOnlyWhenResetThenStateBaseAddressNotProgrammed) {
+SBA_HWTEST_F(CommandListCreateTests, givenCommandListWithCopyOnlyWhenResetThenStateBaseAddressNotProgrammed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_result_t returnValue;

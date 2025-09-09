@@ -26,6 +26,10 @@
 
 #include "test_traits_common.h"
 
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
+
 namespace L0 {
 
 namespace ult {
@@ -2538,7 +2542,6 @@ using PrimaryBatchBufferPreamblelessCmdListTest = Test<PrimaryBatchBufferPreambl
 HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
           givenPrimaryBatchBufferWhenExecutingSingleCommandListTwiceInSingleCallAndFirstTimeNotExpectsPreambleThenProperlyDispatchPreambleForSecondInstance,
           IsAtLeastXeCore) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     if (device->getProductHelper().isNewCoherencyModelSupported()) {
         GTEST_SKIP();
@@ -2590,12 +2593,15 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
         ptrOffset(cmdQueueStream.getCpuBase(), queueSizeUsed),
         cmdQueueStream.getUsed() - queueSizeUsed));
 
-    auto cmdQueueSbaDirtyCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    ASSERT_TRUE(cmdQueueSbaDirtyCmds.size() >= 1u);
-    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*cmdQueueSbaDirtyCmds[0]);
+    if constexpr (GfxFamilyWithSBA<FamilyType>) {
+        using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+        auto cmdQueueSbaDirtyCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        ASSERT_TRUE(cmdQueueSbaDirtyCmds.size() >= 1u);
+        auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*cmdQueueSbaDirtyCmds[0]);
 
-    auto uncachedMocs = device->getMOCS(false, false) >> 1;
-    EXPECT_EQ((uncachedMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+        auto uncachedMocs = device->getMOCS(false, false) >> 1;
+        EXPECT_EQ((uncachedMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+    }
 }
 
 HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
@@ -2725,7 +2731,6 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
           givenPrimaryBatchBufferWhenExecutingMultipleCommandListsAndSecondWithPreambleThenUseCommandListBufferAsStartingBufferAndChainFirstListToQueuePreambleAndAfterToSecondList,
           IsAtLeastXeCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     if (device->getProductHelper().isNewCoherencyModelSupported()) {
         GTEST_SKIP();
@@ -2788,8 +2793,11 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueUsedSize),
         cmdQueueStream.getUsed() - queueUsedSize));
-    auto cmdQueueSbaDirtyCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    ASSERT_TRUE(cmdQueueSbaDirtyCmds.size() >= 1u);
+    if constexpr (GfxFamilyWithSBA<FamilyType>) {
+        using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+        auto cmdQueueSbaDirtyCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        ASSERT_TRUE(cmdQueueSbaDirtyCmds.size() >= 1u);
+    }
 
     auto cmdQueueBbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, cmdQueueBbStartCmds.size());
@@ -2810,13 +2818,16 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(cmdContainer3rdCmdList.getEndCmdPtr());
     ASSERT_NE(nullptr, bbStartCmd);
 
-    size_t sbaSize = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
-    if (commandQueue->doubleSbaWa) {
-        sbaSize += sizeof(STATE_BASE_ADDRESS);
-    }
+    if constexpr (GfxFamilyWithSBA<FamilyType>) {
+        using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+        size_t sbaSize = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier();
+        if (commandQueue->doubleSbaWa) {
+            sbaSize += sizeof(STATE_BASE_ADDRESS);
+        }
 
-    gpuReturnAddress += sizeof(MI_BATCH_BUFFER_START) + sbaSize;
-    EXPECT_EQ(gpuReturnAddress, bbStartCmd->getBatchBufferStartAddress());
+        gpuReturnAddress += sizeof(MI_BATCH_BUFFER_START) + sbaSize;
+        EXPECT_EQ(gpuReturnAddress, bbStartCmd->getBatchBufferStartAddress());
+    }
 }
 
 HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromFromMemoryExtThenNotAlignedSrcPtrPassedToBltDispatch) {

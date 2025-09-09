@@ -50,7 +50,6 @@ namespace NEO {
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
-    using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
 
     UNRECOVERABLE_IF(args.makeCommandView && (args.cpuWalkerBuffer == nullptr || args.cpuPayloadBuffer == nullptr));
 
@@ -296,40 +295,43 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
     }
 
-    if (args.isHeaplessStateInitEnabled == false && !args.makeCommandView) {
-        if (container.isAnyHeapDirty() ||
-            args.requiresUncachedMocs) {
+    if constexpr (NEO::GfxFamilyWithSBA<Family>) {
+        if (args.isHeaplessStateInitEnabled == false && !args.makeCommandView) {
+            if (container.isAnyHeapDirty() ||
+                args.requiresUncachedMocs) {
 
-            PipeControlArgs syncArgs;
-            syncArgs.dcFlushEnable = args.postSyncArgs.dcFlushEnable;
-            MemorySynchronizationCommands<Family>::addSingleBarrier(*container.getCommandStream(), syncArgs);
-            STATE_BASE_ADDRESS sbaCmd;
-            auto gmmHelper = container.getDevice()->getGmmHelper();
-            uint32_t statelessMocsIndex =
-                args.requiresUncachedMocs ? (gmmHelper->getUncachedMOCS() >> 1) : (gmmHelper->getL3EnabledMOCS() >> 1);
-            auto l1CachePolicy = container.l1CachePolicyDataRef()->getL1CacheValue(false);
-            auto l1CachePolicyDebuggerActive = container.l1CachePolicyDataRef()->getL1CacheValue(true);
+                PipeControlArgs syncArgs;
+                syncArgs.dcFlushEnable = args.postSyncArgs.dcFlushEnable;
+                MemorySynchronizationCommands<Family>::addSingleBarrier(*container.getCommandStream(), syncArgs);
+                using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
+                STATE_BASE_ADDRESS sbaCmd;
+                auto gmmHelper = container.getDevice()->getGmmHelper();
+                uint32_t statelessMocsIndex =
+                    args.requiresUncachedMocs ? (gmmHelper->getUncachedMOCS() >> 1) : (gmmHelper->getL3EnabledMOCS() >> 1);
+                auto l1CachePolicy = container.l1CachePolicyDataRef()->getL1CacheValue(false);
+                auto l1CachePolicyDebuggerActive = container.l1CachePolicyDataRef()->getL1CacheValue(true);
 
-            EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
-                &container,                  // container
-                sbaCmd,                      // sbaCmd
-                nullptr,                     // sbaProperties
-                statelessMocsIndex,          // statelessMocsIndex
-                l1CachePolicy,               // l1CachePolicy
-                l1CachePolicyDebuggerActive, // l1CachePolicyDebuggerActive
-                args.partitionCount > 1,     // multiOsContextCapable
-                args.isRcs,                  // isRcs
-                container.doubleSbaWaRef(),  // doubleSbaWa
-                heaplessModeEnabled          // heaplessModeEnabled
-            };
-            EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
-            container.setDirtyStateForAllHeaps(false);
+                EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
+                    &container,                  // container
+                    sbaCmd,                      // sbaCmd
+                    nullptr,                     // sbaProperties
+                    statelessMocsIndex,          // statelessMocsIndex
+                    l1CachePolicy,               // l1CachePolicy
+                    l1CachePolicyDebuggerActive, // l1CachePolicyDebuggerActive
+                    args.partitionCount > 1,     // multiOsContextCapable
+                    args.isRcs,                  // isRcs
+                    container.doubleSbaWaRef(),  // doubleSbaWa
+                    heaplessModeEnabled          // heaplessModeEnabled
+                };
+                EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
+                container.setDirtyStateForAllHeaps(false);
 
-            bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(args.isInternal) && args.device->getL0Debugger();
-            NEO::EncodeStateBaseAddress<Family>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
-                                                                                      *args.device,
-                                                                                      *container.getCommandStream(),
-                                                                                      sbaCmd, container.isUsingPrimaryBuffer());
+                bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(args.isInternal) && args.device->getL0Debugger();
+                NEO::EncodeStateBaseAddress<Family>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
+                                                                                          *args.device,
+                                                                                          *container.getCommandStream(),
+                                                                                          sbaCmd, container.isUsingPrimaryBuffer());
+            }
         }
     }
 
@@ -765,13 +767,13 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
 
 template <typename Family>
 size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container, bool isRcs) {
-    if constexpr (!Family::isHeaplessRequired()) {
+    if constexpr (Family::isHeaplessRequired() == false) {
         auto &hwInfo = device.getHardwareInfo();
         auto &productHelper = device.getProductHelper();
 
-        size_t size = sizeof(typename Family::STATE_BASE_ADDRESS);
+        size_t size = sizeof(STATE_BASE_ADDRESS);
         if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
-            size += sizeof(typename Family::STATE_BASE_ADDRESS);
+            size += sizeof(STATE_BASE_ADDRESS);
         }
         if (container.isHeapDirty(HeapType::surfaceState)) {
             size += sizeof(typename Family::_3DSTATE_BINDING_TABLE_POOL_ALLOC);

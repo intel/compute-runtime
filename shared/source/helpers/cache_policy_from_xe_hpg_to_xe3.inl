@@ -14,12 +14,11 @@ namespace NEO {
 template <PRODUCT_FAMILY gfxProduct>
 const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) {
     using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
-
     static constexpr const char *writeBackCachingPolicy = "-cl-store-cache-default=7 -cl-load-cache-default=4";
     static constexpr const char *writeByPassCachingPolicy = "-cl-store-cache-default=2 -cl-load-cache-default=4";
     static constexpr const char *uncachedCachingPolicy = "-cl-store-cache-default=2 -cl-load-cache-default=2";
-
-    switch (L1CachePolicyHelper<gfxProduct>::getL1CachePolicy(isDebuggerActive)) {
+    auto policy = L1CachePolicyHelper<gfxProduct>::getL1CachePolicy(isDebuggerActive);
+    switch (policy) {
     case GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP:
         return writeByPassCachingPolicy;
     case GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB:

@@ -14,6 +14,7 @@
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/dirty_state_helpers.h"
 #include "shared/source/helpers/pipeline_select_args.h"
+#include "shared/source/helpers/state_base_address_helper.h"
 
 namespace NEO {
 class TagNodeBase;
@@ -25,7 +26,7 @@ template <typename GfxFamily>
 class CommandStreamReceiverHw : public CommandStreamReceiver {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+    using STATE_BASE_ADDRESS = typename StateBaseAddressTypeHelper<GfxFamily>::type;
 
     struct ImmediateFlushData {
         PipelineSelectArgs pipelineSelectArgs{};

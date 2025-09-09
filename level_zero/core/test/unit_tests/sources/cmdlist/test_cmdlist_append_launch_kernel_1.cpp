@@ -1087,7 +1087,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
 
     auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
 
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     createKernel();
 
     ze_result_t returnValue;
@@ -1150,13 +1149,16 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
     auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
     auto heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
 
-    if (!heaplessStateInitEnabled) {
-        GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-            cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+        if (!heaplessStateInitEnabled) {
+            GenCmdList cmdList;
+            ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+                cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
 
-        auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-        EXPECT_NE(cmdList.end(), itor);
+            auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+            EXPECT_NE(cmdList.end(), itor);
+        }
     }
 }
 

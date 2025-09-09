@@ -29,6 +29,7 @@
 
 using namespace NEO;
 
+#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
 #include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskTests;
@@ -588,7 +589,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, WhenFlushing
     EXPECT_EQ(stateHeapMocs, cmd.getInstructionMemoryObjectControlState());
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDebugVariableSetWhenProgrammingSbaThenSetStatelessMocsEncryptionBit) {
+SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDebugVariableSetWhenProgrammingSbaThenSetStatelessMocsEncryptionBit) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     DebugManagerStateRestore restorer;
@@ -611,7 +612,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDebugVariableSetWhenProgrammi
     EXPECT_EQ(1u, cmd->getStatelessDataPortAccessMemoryObjectControlState() & 1);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToItWithTextureCacheFlush) {
+SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToItWithTextureCacheFlush) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (commandStreamReceiver.heaplessStateInitialized) {
         GTEST_SKIP();
@@ -631,7 +632,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsRequi
     EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment()), pipeControlCmd->getDcFlushEnable());
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableL3ConfigWhenFlushingTaskThenDontReloadSba) {
+SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableL3ConfigWhenFlushingTaskThenDontReloadSba) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -657,7 +658,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableL3ConfigWhenFlus
     }
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableGrfConfigWhenFlushingTaskThenDontReloadSba) {
+SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableGrfConfigWhenFlushingTaskThenDontReloadSba) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -918,7 +919,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
     EXPECT_GE(sizeNeeded, csrCS.getUsed());
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAndSbaWhenFlushingTaskThenOnlyAvailableMemoryIsUsed) {
+SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAndSbaWhenFlushingTaskThenOnlyAvailableMemoryIsUsed) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;

@@ -43,6 +43,7 @@ extern ApiSpecificConfig::ApiType apiTypeForUlts;
 }
 
 using namespace NEO;
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 ProductHelperTest::ProductHelperTest() {
     executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -709,33 +710,51 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsImplicitScalingSupportedThe
     EXPECT_FALSE(productHelper->isImplicitScalingSupported(*defaultHwInfo));
 }
 
+template <typename GfxFamily>
+struct CacheControlStructHelper;
+
+template <typename GfxFamily>
+    requires GfxFamilyWithSBA<GfxFamily>
+struct CacheControlStructHelper<GfxFamily> {
+    using type = typename GfxFamily::STATE_BASE_ADDRESS;
+};
+
+template <typename GfxFamily>
+    requires(!GfxFamilyWithSBA<GfxFamily>)
+struct CacheControlStructHelper<GfxFamily> {
+    using type = typename GfxFamily::RENDER_SURFACE_STATE;
+};
+
 HWTEST2_F(ProductHelperTest, givenProductHelperAndDebugFlagWhenGetL1CachePolicyThenReturnCorrectPolicy, IsAtLeastXeCore) {
     DebugManagerStateRestore restorer;
 
+    using CacheControlType = typename CacheControlStructHelper<FamilyType>::type;
+
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(0);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(true));
 
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WB, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WB, productHelper->getL1CachePolicy(true));
 
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(3);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WT, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WT, productHelper->getL1CachePolicy(true));
 
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WS, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WS, productHelper->getL1CachePolicy(true));
 
     debugManager.flags.ForceAllResourcesUncached.set(true);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_UC, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_UC, productHelper->getL1CachePolicy(true));
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetL1CachePolicyThenReturnWriteByPass, IsAtLeastXeCore) {
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(true));
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetL1CachePolicyThenReturnWriteByPass, IsSbaRequiredAndAtLeastXeCore) {
+    using CacheControlType = typename CacheControlStructHelper<FamilyType>::type;
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(CacheControlType::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(true));
 }
 
 HWTEST2_F(ProductHelperTest, givenPlatformWithUnsupportedL1CachePoliciesWhenGetL1CachePolicyThenReturnZero, IsGen12LP) {

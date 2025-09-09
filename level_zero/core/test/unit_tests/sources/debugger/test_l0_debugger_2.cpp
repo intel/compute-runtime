@@ -24,6 +24,10 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
+
 namespace L0 {
 namespace ult {
 
@@ -36,14 +40,8 @@ struct L0DebuggerWithBlitterTest : public L0DebuggerHwParameterizedFixture {
     CmdListMemoryCopyParams copyParams = {};
 };
 
-HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionEnabledWhenCommandListIsInititalizedOrResetThenCaptureSbaIsNotCalled) {
+HEAPFUL_HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionEnabledWhenCommandListIsInititalizedOrResetThenCaptureSbaIsNotCalled) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
-        GTEST_SKIP();
-    }
 
     DebugManagerStateRestore restorer;
 

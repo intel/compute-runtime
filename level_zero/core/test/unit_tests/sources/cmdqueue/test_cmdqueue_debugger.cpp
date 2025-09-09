@@ -21,6 +21,10 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
+using namespace NEO;
+#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
+
 namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandQueueHw;
@@ -28,7 +32,7 @@ struct CommandQueueHw;
 namespace ult {
 
 using L0CmdQueueDebuggerTest = Test<L0DebuggerPerContextAddressSpaceFixture>;
-HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaProgrammingExecutedThenProgramSbaWritesToSbaTrackingBufferForNonInternalQueues) {
+SBA_HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaProgrammingExecutedThenProgramSbaWritesToSbaTrackingBufferForNonInternalQueues) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableStateBaseAddressTracking.set(1);
 

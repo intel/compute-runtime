@@ -35,17 +35,16 @@
 #include "test_traits_common.h"
 
 using namespace NEO;
+#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
 #include "shared/test/common/test_macros/header/heapless_matchers.h"
 
 namespace L0 {
 namespace ult {
 
 using CommandListTests = Test<DeviceFixture>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed) {
-
-    auto &compilerProductHelper = device->getNEODevice()->getCompilerProductHelper();
-    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
-    if (isHeaplessEnabled) {
+HEAPFUL_HWTEST_F(CommandListTests, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed) {
+    auto shouldBeTested = FamilyType::supportsCmdSet(IGFX_XE_HP_CORE);
+    if (shouldBeTested == false) {
         GTEST_SKIP();
     }
 
@@ -118,7 +117,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
     EXPECT_EQ(gmmHelper->getL1EnabledMOCS(), cmdSba->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandIsEnabledThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed, IsAtLeastXeCore) {
+HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandIsEnabledThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed, IsSbaRequiredAndAtLeastXeCore) {
 
     auto &compilerProductHelper = device->getNEODevice()->getCompilerProductHelper();
     auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
@@ -1906,7 +1905,6 @@ using ImmediateFlushTaskGlobalStatelessCmdListTest = Test<ImmediateFlushTaskGlob
 HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
           givenImmediateFlushOnGlobalStatelessWhenAppendingKernelThenExpectStateBaseAddressCommandDispatchedOnce,
           IsAtLeastXeCore) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csrImmediate.storeMakeResidentAllocations = true;
@@ -1934,14 +1932,16 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
-    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
-    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+        auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+        auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
 
-    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
-    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
-
-    EXPECT_EQ(ioBaseAddress, sbaCmd->getGeneralStateBaseAddress());
+        EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+        EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+        EXPECT_EQ(ioBaseAddress, sbaCmd->getGeneralStateBaseAddress());
+    }
 
     EXPECT_TRUE(csrImmediate.isMadeResident(ioHeap->getGraphicsAllocation()));
     EXPECT_TRUE(csrImmediate.isMadeResident(globalSurfaceHeap->getGraphicsAllocation()));
@@ -1956,13 +1956,16 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
-    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(0u, sbaCmds.size());
+    if constexpr (FamilyType::isHeaplessRequired() == false) {
+        using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+        auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(0u, sbaCmds.size());
+    }
 }
 
 HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
           givenImmediateFlushOnGlobalStatelessWhenAppendingSecondKernelWithChangedMocsThenExpectStateBaseAddressCommandDispatchedTwiceWithChangedMocs,
-          IsAtLeastXeCore) {
+          IsSbaRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     if (neoDevice->getProductHelper().isNewCoherencyModelSupported()) {
@@ -2022,15 +2025,12 @@ using ImmediateFlushTaskCsrSharedHeapCmdListTest = Test<ImmediateFlushTaskCsrSha
 
 HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
           givenImmediateFlushOnCsrSharedHeapsWhenAppendingKernelThenExpectStateBaseAddressCommandDispatchedOnce,
-          IsAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csrImmediate.storeMakeResidentAllocations = true;
-    if (csrImmediate.heaplessModeEnabled) {
-        GTEST_SKIP();
-    }
     auto &csrStream = csrImmediate.commandStream;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -2097,7 +2097,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
 
 HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
           givenImmediateFlushOnCsrSharedHeapsWhenAppendingSecondKernelWithChangedMocsThenExpectStateBaseAddressCommandDispatchedTwiceWithChangedMocs,
-          IsAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     if (neoDevice->getProductHelper().isNewCoherencyModelSupported()) {
@@ -2233,7 +2233,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
 
 HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
           givenImmediateFlushOnCsrSharedHeapsWhenAppendingBarrierThenNoSurfaceHeapAllocated,
-          IsAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -2264,7 +2264,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
 
 HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
           givenImmediateFlushOnCsrSharedHeapsFirstWhenExecuteRegularCommandListSecondAndImmediateThirdThenExpectSharedHeapBaseAddressRestored,
-          IsAtLeastXeCore) {
+          IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
@@ -2361,7 +2361,7 @@ using ImmediateFlushTaskPrivateHeapCmdListTest = Test<ImmediateFlushTaskPrivateH
 
 HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
           givenImmediateFlushOnPrivateHeapsWhenAppendingKernelThenExpectStateBaseAddressCommandDispatchedOnce,
-          IsAtLeastXeCore) {
+          IsSbaRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
@@ -2438,7 +2438,7 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
 }
 
 using CommandListCreate = Test<DeviceFixture>;
-HWTEST2_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppendWriteGlobalTimestampThenExpectNoCacheFlushInPostSyncCommand, IsAtLeastXeCore) {
+HWTEST2_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppendWriteGlobalTimestampThenExpectNoCacheFlushInPostSyncCommand, IsSbaRequiredAndAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;

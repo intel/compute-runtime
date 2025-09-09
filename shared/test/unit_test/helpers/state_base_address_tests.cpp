@@ -18,6 +18,11 @@
 
 #include "encode_surface_state_args.h"
 
+using namespace NEO;
+
+#include "shared/test/common/test_macros/header/heapful_test_definitions.h"
+#include "shared/test/common/test_macros/header/heapless_matchers.h"
+
 HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, IsGen12LP) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
@@ -35,7 +40,7 @@ HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
     EXPECT_TRUE(stateBaseAddress.getBindlessSurfaceStateBaseAddressModifyEnable());
 }
 
-HWTEST2_F(SbaTest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, MatchAny) {
+HWTEST2_F(SbaTest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, IsSbaRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     STATE_BASE_ADDRESS stateBaseAddress;
@@ -59,7 +64,7 @@ HWTEST2_F(SbaTest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
 }
 
 HWTEST2_F(SbaTest,
-          givenProgramSurfaceStateBaseAddressUsingHeapBaseWhenOverrideSurfaceStateBaseAddressUsedThenSbaDispatchedWithOverrideValue, MatchAny) {
+          givenProgramSurfaceStateBaseAddressUsingHeapBaseWhenOverrideSurfaceStateBaseAddressUsedThenSbaDispatchedWithOverrideValue, IsSbaRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     constexpr uint64_t surfaceStateBaseAddress = 0xBADA550000;
@@ -78,7 +83,7 @@ HWTEST2_F(SbaTest,
 
 using SbaForBindlessTests = SbaTest;
 
-HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, MatchAny) {
+HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, IsSbaRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
@@ -113,7 +118,7 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
 }
 
 HWTEST2_F(SbaForBindlessTests,
-          givenGlobalBindlessBaseAddressOverriddenSurfaceStateBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, MatchAny) {
+          givenGlobalBindlessBaseAddressOverridenSurfaceStateBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, IsSbaRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
@@ -170,7 +175,7 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirect
     EXPECT_EQ(cmd->getIndirectObjectBaseAddress(), indirectObjectBaseAddress);
 }
 
-HWTEST2_F(SbaTest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSurfaceBaseIsNotSet, MatchAny) {
+HWTEST2_F(SbaTest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSurfaceBaseIsNotSet, IsSbaRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     STATE_BASE_ADDRESS stateBaseAddress;
@@ -186,7 +191,7 @@ HWTEST2_F(SbaTest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSur
     EXPECT_EQ(0u, stateBaseAddress.getBindlessSurfaceStateBaseAddress());
 }
 
-HWTEST2_F(SbaTest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurfaceBaseIsGlobalHeapBase, MatchAny) {
+HWTEST2_F(SbaTest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurfaceBaseIsGlobalHeapBase, IsSbaRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
@@ -203,7 +208,7 @@ HWTEST2_F(SbaTest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurf
 
     EXPECT_EQ(cmd->getBindlessSurfaceStateBaseAddress(), globalBindlessHeapsBaseAddress);
 }
-HWTEST2_F(SbaTest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSurfaceBaseIsSshBase, MatchAny) {
+HWTEST2_F(SbaTest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSurfaceBaseIsSshBase, IsSbaRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
@@ -220,7 +225,7 @@ HWTEST2_F(SbaTest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
     EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getBindlessSurfaceStateBaseAddress());
 }
 
-HWTEST2_F(SbaTest, givenNotUsedGlobalHeapBaseAndSshPassedWhenBindlessSurfStateBaseIsPassedThenBindlessSurfaceBaseIsSetToPassedValue, MatchAny) {
+HWTEST2_F(SbaTest, givenNotUsedGlobalHeapBaseAndSshPassedWhenBindlessSurfStateBaseIsPassedThenBindlessSurfaceBaseIsSetToPassedValue, IsSbaRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
@@ -259,7 +264,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
     EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
 }
 
-HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenProgramCorrectL1CachePolicy, IsAtLeastXeCore) {
+HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenProgramCorrectL1CachePolicy, IsSbaRequiredAndAtLeastXeCore) {
     auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
 
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&stateBaseAddress, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);
@@ -329,7 +334,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
     }
 }
 
-HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePolicy, IsAtLeastXeCore) {
+HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePolicy, IsSbaRequiredAndAtLeastXeCore) {
     auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
 
     struct {
@@ -363,7 +368,7 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
     }
 }
 
-HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingRssThenProgramCorrectL1CachePolicy, IsAtLeastXeCore) {
+HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingRssThenProgramCorrectL1CachePolicy, IsSbaRequiredAndAtLeastXeCore) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
     AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::buffer, pDevice->getDeviceBitfield());
@@ -420,7 +425,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, SbaTest, whenGeneralStateBaseAddressIsProgrammedT
     EXPECT_EQ(gmmHelper->decanonize(generalStateBaseAddress), sbaCmd.getGeneralStateBaseAddress());
 }
 
-HWTEST_F(SbaTest, givenNonZeroGeneralStateBaseAddressWhenProgrammingIsDisabledThenExpectCommandValueZero) {
+SBA_HWTEST_F(SbaTest, givenNonZeroGeneralStateBaseAddressWhenProgrammingIsDisabledThenExpectCommandValueZero) {
     constexpr uint64_t generalStateBaseAddress = 0x80010000ull;
 
     typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
@@ -437,7 +442,7 @@ HWTEST_F(SbaTest, givenNonZeroGeneralStateBaseAddressWhenProgrammingIsDisabledTh
     EXPECT_FALSE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
 }
 
-HWTEST_F(SbaTest, givenNonZeroInternalHeapBaseAddressWhenProgrammingIsDisabledThenExpectCommandValueZero) {
+SBA_HWTEST_F(SbaTest, givenNonZeroInternalHeapBaseAddressWhenProgrammingIsDisabledThenExpectCommandValueZero) {
     constexpr uint64_t internalHeapBaseAddress = 0x80010000ull;
 
     typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
@@ -497,9 +502,13 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, SbaTest, givenSbaProgrammingWhenHeapsAreNotProvid
     EXPECT_EQ(0xfffffu, sbaCmd.getGeneralStateBufferSize());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
-            givenNoHeapsProvidedWhenSBAIsProgrammedThenBaseAddressesAreNotSetAndBindlessSurfaceStateSizeSetToMax) {
+HEAPFUL_HWTEST_F(SbaTest,
+                 givenNoHeapsProvidedWhenSBAIsProgrammedThenBaseAddressesAreNotSetAndBindlessSurfaceStateSizeSetToMax) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    auto shouldBeTested = FamilyType::supportsCmdSet(IGFX_XE_HP_CORE);
+    if (shouldBeTested == false) {
+        GTEST_SKIP();
+    }
 
     auto gmmHelper = pDevice->getGmmHelper();
 
@@ -545,9 +554,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
     EXPECT_EQ(defaultBindlessSurfaceStateSize, sbaCmd.getBindlessSurfaceStateSize());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
-            givenNoHeapsProvidedAndBindlessBaseSetWhenSBAIsProgrammedThenBindlessSurfaceStateSizeSetToZeroAndBaseAddressSetToPassedValue) {
+HEAPFUL_HWTEST_F(SbaTest,
+                 givenNoHeapsProvidedAndBindlessBaseSetWhenSBAIsProgrammedThenBindlessSurfaceStateSizeSetToZeroAndBaseAddressSetToPassedValue) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    auto shouldBeTested = FamilyType::supportsCmdSet(IGFX_XE_HP_CORE);
+    if (shouldBeTested == false) {
+        GTEST_SKIP();
+    }
 
     auto gmmHelper = pDevice->getGmmHelper();
 
@@ -594,12 +607,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
     EXPECT_EQ(surfaceStateCount, sbaCmd.getBindlessSurfaceStateSize());
 }
 
-HWTEST2_F(SbaTest, GivenPlatformNotSupportingIndirectHeapBaseWhenProgramIndirectHeapThenNothingHappens, IsAtLeastXeCore) {
+HWTEST2_F(SbaTest, GivenPlatformNotSupportingIndirectHeapBaseWhenProgramIndirectHeapThenNothingHappens, IsSbaRequiredAndAtLeastXeCore) {
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(nullptr, nullptr);
     StateBaseAddressHelper<FamilyType>::appendIohParameters(args);
 }
 
-HWTEST_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingDynamicStateSurfaceStateMocsPropertiesThenCommandDispatchedCorrectly) {
+SBA_HWTEST_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingDynamicStateSurfaceStateMocsPropertiesThenCommandDispatchedCorrectly) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     DebugManagerStateRestore restore;
@@ -682,9 +695,9 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingIndirectStateProper
     EXPECT_EQ(indirectHeapSize, sbaCmd.getIndirectObjectBufferSize());
 }
 
-using GlobalBaseAddressPlatforms = IsAtLeastXeCore;
+using GlobalBaseAddressPlatforms = IsSbaRequiredAndAtLeastXeCore;
 
-using BindlessSurfaceAddressPlatforms = MatchAny;
+using BindlessSurfaceAddressPlatforms = IsSbaRequired;
 
 HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStatePropertyThenCommandDispatchedCorrectlyBindlessBaseAddress, BindlessSurfaceAddressPlatforms) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

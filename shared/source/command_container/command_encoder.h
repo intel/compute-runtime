@@ -16,6 +16,7 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_execution_type.h"
 
@@ -497,7 +498,7 @@ struct EncodeMediaInterfaceDescriptorLoad {
 
 template <typename GfxFamily>
 struct EncodeStateBaseAddressArgs {
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+    using STATE_BASE_ADDRESS = typename StateBaseAddressTypeHelper<GfxFamily>::type;
 
     CommandContainer *container = nullptr;
     STATE_BASE_ADDRESS &sbaCmd;
@@ -515,7 +516,7 @@ struct EncodeStateBaseAddressArgs {
 
 template <typename GfxFamily>
 struct EncodeStateBaseAddress {
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+    using STATE_BASE_ADDRESS = StateBaseAddressTypeHelper<GfxFamily>::type;
     static void encode(EncodeStateBaseAddressArgs<GfxFamily> &args);
     static size_t getRequiredSizeForStateBaseAddress(Device &device, CommandContainer &container, bool isRcs);
     static void setSbaTrackingForL0DebuggerIfEnabled(bool trackingEnabled,
