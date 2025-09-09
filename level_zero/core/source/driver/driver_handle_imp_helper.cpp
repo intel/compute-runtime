@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/driver_experimental/zex_common.h"
+#include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/ze_intel_gpu.h"
 #include "level_zero/zet_intel_gpu_metric.h"
 
@@ -44,6 +45,7 @@ const std::vector<std::pair<std::string, uint32_t>> DriverHandleImp::extensionsS
     {ZE_RTAS_EXT_NAME, ZE_RTAS_BUILDER_EXT_VERSION_1_0},
     {ZE_DRIVER_DDI_HANDLES_EXT_NAME, ZE_DRIVER_DDI_HANDLES_EXT_VERSION_1_0},
     {ZE_EU_COUNT_EXT_NAME, ZE_EU_COUNT_EXT_VERSION_1_0},
+    {ZE_RECORD_REPLAY_GRAPH_EXP_NAME, ZE_RECORD_REPLAY_GRAPH_EXP_VERSION_1_0},
 
     // Driver experimental extensions
     {ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME, ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_VERSION_CURRENT},
