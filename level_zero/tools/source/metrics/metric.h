@@ -201,6 +201,10 @@ class MetricDeviceContext {
         return computeMetricScopesInitialized;
     }
 
+    const std::vector<std::unique_ptr<MetricScopeImp>> &getMetricScopes() const {
+        return metricScopes;
+    }
+
   protected:
     bool areMetricGroupsFromSameSource(uint32_t count, zet_metric_group_handle_t *phMetricGroups, uint32_t *sourceType);
     bool areMetricsFromSameSource(uint32_t count, zet_metric_handle_t *phMetrics, uint32_t *sourceType);
@@ -256,6 +260,10 @@ struct MetricImp : public Metric {
     bool isPredefined = true;
     bool isMultiDevice = false;
     MultiDeviceMetricImp *rootDeviceMetricImp = nullptr;
+    std::vector<zet_intel_metric_scope_exp_handle_t> scopes = {};
+
+  public:
+    ze_result_t getScopes(uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes);
 };
 
 struct MultiDeviceMetricImp : public MetricImp {
@@ -626,5 +634,6 @@ ze_result_t metricScopesGet(zet_context_handle_t hContext, zet_device_handle_t h
                             zet_intel_metric_scope_exp_handle_t *phMetricScopes);
 ze_result_t metricScopeGetProperties(zet_intel_metric_scope_exp_handle_t hMetricScope, zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties);
 ze_result_t metricAppendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value);
+ze_result_t getMetricSupportedScopes(zet_metric_handle_t *phMetric, uint32_t *pScopesCount, zet_intel_metric_scope_exp_handle_t *phMetricScopes);
 
 } // namespace L0

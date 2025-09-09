@@ -581,6 +581,51 @@ TEST_F(MetricIpSamplingStreamerTest, whenGetConcurrentMetricGroupsIsCalledThenCo
     }
 }
 
+using MetricIpSamplingMetricSupportedScopeTest = MetricIpSamplingStreamerTest;
+
+class MockMetricImp : public MetricImp {
+  public:
+    using MetricImp::MetricImp;
+
+    void setScopes(const std::vector<zet_intel_metric_scope_exp_handle_t> &newScopes) {
+        scopes = newScopes;
+    }
+};
+
+TEST_F(MetricIpSamplingMetricSupportedScopeTest, givenMetricWhenGettingSupportedMetricScopesThenExpectedCountAndHandlesAreReturned) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    EXPECT_EQ(testDevices[0]->getMetricDeviceContext().getMetricScopes().size(), 0u);
+
+    zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(testDevices[0]);
+    uint32_t metricCount = 0;
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    metricCount = 1;
+    zet_metric_handle_t phMetric{};
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, &phMetric), ZE_RESULT_SUCCESS);
+
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+
+    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesHandles;
+    MockMetricScope *mockMetricScope = new MockMetricScope(scopeProperties, false);
+    metricScopesHandles.push_back(mockMetricScope->toHandle());
+
+    auto metricImp = static_cast<MockMetricImp *>(Metric::fromHandle(phMetric));
+    metricImp->setScopes(metricScopesHandles);
+
+    uint32_t metricScopesCount = 0;
+    EXPECT_EQ(zetIntelMetricSupportedScopesGetExp(&phMetric, &metricScopesCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricScopesCount, 1u);
+
+    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesHandle(metricScopesCount);
+    EXPECT_EQ(zetIntelMetricSupportedScopesGetExp(&phMetric, &metricScopesCount, metricScopesHandle.data()), ZE_RESULT_SUCCESS);
+    EXPECT_NE(metricScopesHandle[0], nullptr);
+
+    delete mockMetricScope;
+}
+
 using MetricIpSamplingCalcOpMultiDevTest = MetricIpSamplingCalculateMultiDevFixture;
 
 HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, givenIpSamplingMetricGroupThenCreateAndDestroyCalcOpIsSuccessful, EustallSupportedPlatforms) {

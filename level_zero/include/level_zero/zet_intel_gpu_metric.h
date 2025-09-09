@@ -196,7 +196,8 @@ ze_result_t ZE_APICALL zetIntelMetricTracerDecodeExp(
 #endif // ZET_INTEL_METRIC_SCOPES_EXP_NAME
 typedef enum _zet_intel_metric_scopes_exp_version_t {
     ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                       ///< version 1.0
-    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_0, ///< latest known version
+    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_1 = ZE_MAKE_VERSION(1, 1),                       ///< version 1.1
+    ZET_INTEL_METRIC_SCOPES_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_SCOPES_EXP_VERSION_1_1, ///< latest known version
     ZET_INTEL_METRIC_SCOPES_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zet_intel_metric_scopes_exp_version_t;
 
@@ -235,6 +236,16 @@ ze_result_t ZE_APICALL zetIntelMetricScopesGetExp(
 ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(
     zet_intel_metric_scope_exp_handle_t hMetricScope,                 ///< [in] handle of the metric scope
     zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties); ///< [out] pointer to the metric scope properties structure
+
+ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(
+    zet_metric_handle_t *phMetric,                  ///< [in] handle of the metric
+    uint32_t *pCount,                               ///< [in,out] pointer to the number of metric scopes available for the metric.
+                                                    ///< If set to zero, then the driver shall update the value with the total
+                                                    ///< number of metric scopes available for the metric.
+    zet_intel_metric_scope_exp_handle_t *phScopes); ///< [out][optional] [range(0, *pCount)] array of metric scopes handles
+                                                    ///< available for the metric. If pCount is greater than zero but
+                                                    ///< less than the total number of metric scopes available for the metric,
+                                                    ///< then driver shall only return that number of metric scopes.
 
 #ifndef ZET_INTEL_METRIC_CALCULATION_EXP_NAME
 /// @brief Extension name to query Intel Metric Calculation operations

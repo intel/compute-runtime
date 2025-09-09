@@ -743,6 +743,19 @@ MetricImp *MultiDeviceMetricImp::getMetricAtSubDeviceIndex(uint32_t index) {
     return nullptr;
 }
 
+ze_result_t MetricImp::getScopes(uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
+    if (*pCount == 0) {
+        *pCount = static_cast<uint32_t>(scopes.size());
+        return ZE_RESULT_SUCCESS;
+    }
+
+    *pCount = std::min(*pCount, static_cast<uint32_t>(scopes.size()));
+    for (uint32_t i = 0; i < *pCount; i++) {
+        phScopes[i] = scopes[i];
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) {
     auto device = Device::fromHandle(hDevice);
     return device->getMetricDeviceContext().metricGroupGet(pCount, phMetricGroups);
@@ -1153,6 +1166,15 @@ ze_result_t metricScopeGetProperties(
 ze_result_t metricAppendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) {
     auto metricGroupImp = static_cast<MetricGroupImp *>(L0::MetricGroup::fromHandle(hMetricGroup));
     return metricGroupImp->getMetricSource().appendMarker(hCommandList, hMetricGroup, value);
+}
+
+ze_result_t getMetricSupportedScopes(
+    zet_metric_handle_t *phMetric,
+    uint32_t *pScopesCount,
+    zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
+
+    auto metricImp = static_cast<MetricImp *>(Metric::fromHandle(*phMetric));
+    return metricImp->getScopes(pScopesCount, phMetricScopes);
 }
 
 } // namespace L0

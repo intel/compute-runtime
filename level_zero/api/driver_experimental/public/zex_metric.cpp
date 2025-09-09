@@ -127,6 +127,10 @@ ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(zet_intel_metric_scop
     return L0::metricScopeGetProperties(hMetricScope, pMetricScopeProperties);
 }
 
+ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t *phMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
+    return L0::getMetricSupportedScopes(phMetric, pCount, phScopes);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -267,6 +271,10 @@ ze_result_t ZE_APICALL zetIntelMetricScopesGetExp(zet_context_handle_t hContext,
 
 ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(zet_intel_metric_scope_exp_handle_t hMetricScope, zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties) {
     return L0::zetIntelMetricScopeGetPropertiesExp(hMetricScope, pMetricScopeProperties);
+}
+
+ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t *phMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
+    return L0::getMetricSupportedScopes(phMetric, pCount, phScopes);
 }
 
 } // extern "C"
