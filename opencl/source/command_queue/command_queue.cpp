@@ -288,13 +288,14 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     case TransferDirection::hostToHost:
     case TransferDirection::hostToLocal:
     case TransferDirection::localToHost: {
-        auto isWriteToImageFromBuffer = args.dstResource.image && args.dstResource.image->isImageFromBuffer();
+        auto isAccessToImageFromBuffer = (args.dstResource.image && args.dstResource.image->isImageFromBuffer()) ||
+                                         (args.srcResource.image && args.srcResource.image->isImageFromBuffer());
         auto &productHelper = device->getProductHelper();
-        preferBcs = device->getRootDeviceEnvironment().isWddmOnLinux() || productHelper.blitEnqueuePreferred(isWriteToImageFromBuffer);
+        preferBcs = device->getRootDeviceEnvironment().isWddmOnLinux() || productHelper.blitEnqueuePreferred(isAccessToImageFromBuffer);
         if (debugManager.flags.EnableBlitterForEnqueueOperations.get() == 1) {
             preferBcs = true;
         } else if (debugManager.flags.EnableBlitterForEnqueueOperations.get() == 2) {
-            preferBcs = isWriteToImageFromBuffer;
+            preferBcs = isAccessToImageFromBuffer;
         }
         auto preferredBCSType = true;
 

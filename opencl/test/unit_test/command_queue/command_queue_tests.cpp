@@ -3474,7 +3474,7 @@ HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenWddmOnLinuxThenBcsAlways
     EXPECT_EQ(bcsCsr, &queue->selectCsrForBuiltinOperation(args));
 }
 
-HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenImageFromBufferThenBcsAlwaysPreferred) {
+HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenDstImageFromBufferThenBcsAlwaysPreferred) {
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
 
@@ -3489,6 +3489,31 @@ HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenImageFromBufferThenBcsAl
 
     CsrSelectionArgs args{CL_COMMAND_WRITE_IMAGE, nullptr, &dstImage, 0u, region, nullptr, origin};
     EXPECT_TRUE(args.dstResource.image && args.dstResource.image->isImageFromBuffer());
+
+    auto ccsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&queue->getGpgpuCommandStreamReceiver());
+    auto bcsCsr = queue->getBcsCommandStreamReceiver(*queue->bcsQueueEngineType);
+    if (device->getProductHelper().blitEnqueuePreferred(true)) {
+        EXPECT_EQ(bcsCsr, &queue->selectCsrForBuiltinOperation(args));
+    } else {
+        EXPECT_EQ(ccsCsr, &queue->selectCsrForBuiltinOperation(args));
+    }
+}
+
+HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenSrcImageFromBufferThenBcsAlwaysPreferred) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {1, 1, 1};
+    MockImageBase srcImage{};
+    srcImage.associatedMemObject = buffer.get();
+
+    cl_command_queue_properties queueProperties[5] = {};
+    auto queue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), queueProperties, false);
+
+    CsrSelectionArgs args{CL_COMMAND_READ_IMAGE, &srcImage, nullptr, 0u, region, nullptr, origin};
+    EXPECT_TRUE(args.srcResource.image && args.srcResource.image->isImageFromBuffer());
 
     auto ccsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&queue->getGpgpuCommandStreamReceiver());
     auto bcsCsr = queue->getBcsCommandStreamReceiver(*queue->bcsQueueEngineType);
