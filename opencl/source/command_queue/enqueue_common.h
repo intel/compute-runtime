@@ -1406,8 +1406,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         bcsCsr.ensurePrimaryCsrInitialized(this->device->getDevice());
     }
 
+    TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
     auto bcsCommandStreamReceiverOwnership = bcsCsr.obtainUniqueOwnership();
     std::unique_lock<NEO::CommandStreamReceiver::MutexType> commandStreamReceiverOwnership;
+    if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 1) {
+        commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    }
 
     registerBcsCsrClient(bcsCsr);
 
@@ -1427,10 +1431,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     const bool profilingEnabled = isProfilingEnabled() && pEventBuilder->getEvent();
 
     std::unique_ptr<KernelOperation> blockedCommandsData;
-    TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
-    if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 1) {
-        commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
-    }
 
     auto blockQueue = false;
     bool migratedMemory = false;
