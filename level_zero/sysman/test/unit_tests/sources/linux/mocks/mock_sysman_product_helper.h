@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,24 @@ static std::map<std::string, std::map<std::string, uint64_t>> mockGuidToKeyOffse
      {{"PACKAGE_ENERGY", 0x420},
       {"COMPUTE_TEMPERATURES", 0x68},
       {"SOC_TEMPERATURES", 0x60},
-      {"CORE_TEMPERATURES", 0x6c}}}};
+      {"CORE_TEMPERATURES", 0x6c}}},
+    {"0x12345",
+     {{"FATAL_ARRAY_BIST", 8},
+      {"FATAL_IDI_PARITY", 16},
+      {"ENGINE_RESET", 24},
+      {"EU_ATTENTION", 32},
+      {"SOC_FATAL_PSF", 40},
+      {"SOC_FATAL_PUNIT", 48},
+      {"FATAL_FPU", 56},
+      {"FATAL_EU_GRF", 64},
+      {"DRIVER_OBJECT_MIGRATION", 72},
+      {"DRIVER_ENGINE_OTHER", 80},
+      {"SOC_FATAL_MDFI", 88},
+      {"FATAL_L3_FABRIC", 96},
+      {"CORRECTABLE_L3_SNG", 104},
+      {"SGUNIT_CORRECTABLE", 112},
+      {"CORRECTABLE_EU", 120},
+      {"CORRECTABLE_GUC", 128}}}};
 
 struct MockSysmanProductHelper : public L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
     MockSysmanProductHelper() = default;
