@@ -34,6 +34,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/driver/extension_function_address.h"
+#include "level_zero/core/source/driver/extension_injector.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -204,6 +205,13 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
     if (devices[0]->getProductHelper().isInterruptSupported()) {
         additionalExtensions.emplace_back(ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT);
     }
+
+    NEO::OSInterface *osInterface = devices[0]->getOsInterface();
+    if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::drm) {
+        additionalExtensions.emplace_back(ZE_CACHE_RESERVATION_EXT_NAME, ZE_CACHE_RESERVATION_EXT_VERSION_CURRENT);
+    }
+
+    ExtensionInjectorHelper::addAdditionalExtensions(additionalExtensions, devices[0]);
 
     auto extensionCount = static_cast<uint32_t>(this->extensionsSupported.size() + additionalExtensions.size());
 
