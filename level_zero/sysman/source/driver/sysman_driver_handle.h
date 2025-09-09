@@ -17,7 +17,7 @@ namespace L0 {
 namespace Sysman {
 
 struct SysmanDriverHandle : BaseDriver, NEO::NonCopyableAndNonMovableClass {
-    static SysmanDriverHandle *fromHandle(zes_driver_handle_t handle) { return static_cast<SysmanDriverHandle *>(handle); }
+    static SysmanDriverHandle *fromHandle(zes_driver_handle_t handle);
     inline zes_driver_handle_t toHandle() { return this; }
 
     static SysmanDriverHandle *create(NEO::ExecutionEnvironment &executionEnvironment, ze_result_t *returnValue);

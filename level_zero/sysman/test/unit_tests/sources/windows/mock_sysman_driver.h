@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,12 +71,14 @@ class SysmanDriverHandleTest : public ::testing::Test {
 
         driverHandle = std::make_unique<L0::Sysman::SysmanDriverHandleImp>();
         driverHandle->initialize(*execEnv);
+        L0::Sysman::globalSysmanDriver = driverHandle.get();
 
         L0::Sysman::sysmanOnlyInit = true;
     }
 
     void TearDown() override {
         L0::Sysman::sysmanOnlyInit = false;
+        L0::Sysman::globalSysmanDriver = nullptr;
     }
 
     NEO::ExecutionEnvironment *execEnv = nullptr;

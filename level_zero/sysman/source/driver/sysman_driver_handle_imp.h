@@ -31,15 +31,19 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) override;
     struct OsSysmanDriver *pOsSysmanDriver = nullptr;
     SysmanDevice *getSysmanDeviceFromCoreDeviceHandle(ze_device_handle_t hDevice);
+    SysmanDriverHandle *getSysmanDriverHandleFromCoreDriverHandle(ze_driver_handle_t handle);
 
   private:
     void updateUuidMap(SysmanDevice *sysmanDevice);
     SysmanDevice *findSysmanDeviceFromCoreToSysmanDeviceMap(ze_device_handle_t handle);
+    SysmanDriverHandle *findSysmanDriverHandleFromCoreToSysmanDriverMap(ze_driver_handle_t handle);
     std::mutex coreToSysmanDeviceMapLock;
     std::unordered_map<ze_device_handle_t, SysmanDevice *> coreToSysmanDeviceMap{};
 
   protected:
     std::unordered_map<std::string, SysmanDevice *> uuidDeviceMap{};
+    std::unordered_map<ze_driver_handle_t, SysmanDriverHandle *> coreToSysmanDriverMap{};
+    std::mutex coreToSysmanDriverMapLock;
 };
 
 extern struct SysmanDriverHandleImp *globalSysmanDriver;
