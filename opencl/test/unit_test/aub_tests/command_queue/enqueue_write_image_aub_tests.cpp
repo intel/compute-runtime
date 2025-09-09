@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -149,7 +149,7 @@ struct AUBWriteImage
         retVal = pCmdQ->enqueueReadImage(dstImage.get(), CL_TRUE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        retVal = pCmdQ->finish();
+        retVal = pCmdQ->finish(false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         auto pDstMemory = readMemory;
@@ -269,7 +269,7 @@ struct AUBWriteImage
             nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        pCmdQ->finish();
+        pCmdQ->finish(false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         auto imageRowPitch = image->getImageDesc().image_row_pitch;

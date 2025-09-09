@@ -490,6 +490,6 @@ HWTEST_F(EnqueueThreading, WhenFinishingThenKernelHasOwnership) {
     csr->latestSentTaskCount = 1;
     csr->latestFlushedTaskCount = 1;
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 }
 } // namespace ULT

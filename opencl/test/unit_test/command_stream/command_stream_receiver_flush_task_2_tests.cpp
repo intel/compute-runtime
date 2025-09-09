@@ -181,9 +181,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEmptyQueueWhenFinishingThenTa
     commandStreamReceiver.taskCount = taskCount;
 
     EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 1u : 0u, commandStreamReceiver.peekLatestSentTaskCount());
-    mockCmdQueue.finish();
+    mockCmdQueue.finish(false);
     EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 1u : 0u, commandStreamReceiver.peekLatestSentTaskCount());
-    mockCmdQueue.finish();
+    mockCmdQueue.finish(false);
     // nothings sent to the HW, no need to bump tags
     EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 1u : 0u, commandStreamReceiver.peekLatestSentTaskCount());
     EXPECT_EQ(0u, mockCmdQueue.latestTaskCountWaited);
@@ -222,13 +222,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonDcFlushWithInitialTaskCoun
 
     // finish after enqueued kernel(cmdq task count = 1)
     mockCmdQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
-    mockCmdQueue.finish();
+    mockCmdQueue.finish(false);
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
     EXPECT_EQ(1u, mockCmdQueue.latestTaskCountWaited);
     EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
 
     // finish again - dont call flush task
-    mockCmdQueue.finish();
+    mockCmdQueue.finish(false);
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
     EXPECT_EQ(1u, mockCmdQueue.latestTaskCountWaited);
     EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
@@ -263,12 +263,12 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenDcFlushWhenFinishingThenTaskC
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
 
     // cmdQ task count = 2, finish again
-    mockCmdQueue.finish();
+    mockCmdQueue.finish(false);
 
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
 
     // finish again - dont flush task again
-    mockCmdQueue.finish();
+    mockCmdQueue.finish(false);
 
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
 
@@ -370,7 +370,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingMapEnqueueWhenFini
 
     EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
 
-    commandQueue.finish();
+    commandQueue.finish(false);
 
     EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
 

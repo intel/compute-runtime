@@ -594,7 +594,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnableL3FlushAfterPostSyncWithSignalingEventWh
     auto event = std::make_unique<MockEvent<Event>>(context, nullptr, 0, 0, 0);
     cl_event clEvent = event.get();
 
-    mockCmdQ->setL3FlushDeferredIfNeeded(true);
+    mockCmdQ->setPendingL3FlushForHostVisibleResources(true);
 
     MultiDispatchInfo multiDispatch;
     const auto enqueueResult = mockCmdQ->template enqueueHandler<CL_COMMAND_SVM_MAP>(nullptr, 0, false, multiDispatch, 0, nullptr, &clEvent);
@@ -624,7 +624,7 @@ HWTEST_F(EnqueueHandlerTest, givenL3FlushDeferredIfNeededWhenEnqueueWithoutKerne
     csr.timestampPacketAllocator.reset(mockTagAllocator);
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
 
-    mockCmdQ->setL3FlushDeferredIfNeeded(true);
+    mockCmdQ->setPendingL3FlushForHostVisibleResources(true);
 
     MultiDispatchInfo multiDispatch;
     auto finishCalledCountBefore = mockCmdQ->finishCalledCount;

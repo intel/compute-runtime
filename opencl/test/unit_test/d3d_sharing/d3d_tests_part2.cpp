@@ -36,7 +36,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenRel
     class MockCmdQ : public MockCommandQueue {
       public:
         MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties, false){};
-        cl_int finish() override {
+        cl_int finish(bool resolvePendingL3Flushes) override {
             finishCalled++;
             return CL_SUCCESS;
         }
@@ -66,7 +66,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncDisabledWhe
     class MockCmdQ : public MockCommandQueue {
       public:
         MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties, false){};
-        cl_int finish() override {
+        cl_int finish(bool resolvePendingL3Flushes) override {
             finishCalled++;
             return CL_SUCCESS;
         }
@@ -98,7 +98,7 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenRe
     class MockCmdQ : public MockCommandQueue {
       public:
         MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties, false){};
-        cl_int finish() override {
+        cl_int finish(bool resolvePendingL3Flushes) override {
             finishCalled++;
             return CL_SUCCESS;
         }
@@ -128,7 +128,7 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncEnabledWhen
     class MockCmdQ : public MockCommandQueue {
       public:
         MockCmdQ(Context *context, ClDevice *device, const cl_queue_properties *properties) : MockCommandQueue(context, device, properties, false){};
-        cl_int finish() override {
+        cl_int finish(bool resolvePendingL3Flushes) override {
             finishCalled++;
             return CL_SUCCESS;
         }

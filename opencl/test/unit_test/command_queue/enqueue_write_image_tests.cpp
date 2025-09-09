@@ -574,7 +574,7 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageThenBuiltinKernelIsResolved
     EXPECT_TRUE(pCommand->peekKernel()->isPatched());
     userEvent.setStatus(CL_COMPLETE);
     pEvent->release();
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 }
 
 HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageThenKernelRequiresMigration) {
@@ -622,7 +622,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageTh
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     pEvent->release();
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
 }
@@ -703,7 +703,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageIs
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     pEvent0->release();
     pEvent1->release();
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
 }
@@ -726,7 +726,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWr
     EXPECT_TRUE(ultCsr.flushBatchedSubmissionsCalled);
     EXPECT_TRUE(ultCsr.flushTagUpdateCalled);
     EXPECT_LT(currentTaskCount, ultCsr.peekTaskCount());
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
 }
@@ -748,7 +748,7 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWr
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ1, pImage, CL_FALSE);
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
 
     {
         HardwareParse hwParser;
@@ -788,7 +788,7 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrThenDontImportAll
                                                             nullptr,
                                                             nullptr);
     EXPECT_EQ(res, CL_SUCCESS);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
@@ -813,7 +813,7 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrAndSizeLowerThanR
                                                             nullptr,
                                                             nullptr);
     EXPECT_EQ(res, CL_INVALID_OPERATION);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
     svmManager->freeSVMAlloc(usmPtr);
 }
 
@@ -823,11 +823,11 @@ HWTEST_F(EnqueueWriteImageTest, whenisValidForStagingTransferCalledThenReturnCor
 
     std::unique_ptr<Image> image(Image1dHelperUlt<>::create(context));
     EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, image->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     image.reset(Image2dHelperUlt<>::create(context));
     EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, image->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     image.reset(Image3dHelperUlt<>::create(context));
     EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, image->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));

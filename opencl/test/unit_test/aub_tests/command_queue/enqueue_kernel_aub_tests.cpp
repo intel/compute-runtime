@@ -589,7 +589,7 @@ HWTEST_F(AUBSimpleAtomicTest, givenKernelWithAtomicWhenExecutedThenExpectAtomicV
         event);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
     expectMemory<FamilyType>(bufferGpuAddress, this->expectedMemory, sizeWrittenMemory - sizeof(int));
 
     size_t testGlobalMax = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
@@ -1034,7 +1034,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenRes
 
     EXPECT_TRUE(this->kernel->getKernelInfo().kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>().isPureStateful());
 
-    this->pCmdQ->finish();
+    this->pCmdQ->finish(false);
     expectMemory<FamilyType>(addrToPtr(ptrOffset(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), pBufferDst->getOffset())),
                              bufferDataSrc, bufferSize);
 }
@@ -1129,7 +1129,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
         event);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = this->pCmdQ->finish();
+    retVal = this->pCmdQ->finish(false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     expectMemory<FamilyType>(reinterpret_cast<void *>(image->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),

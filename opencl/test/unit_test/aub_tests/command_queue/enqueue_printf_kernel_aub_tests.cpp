@@ -56,5 +56,5 @@ HWTEST_F(AUBPrintfKernelFixture, GivenPrintfKernelThenEnqueuingSucceeds) {
         &bufferMem);
 
     pCmdQ->enqueueKernel(pKernel, 1, offset, gws, lws, 0, 0, 0);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 }

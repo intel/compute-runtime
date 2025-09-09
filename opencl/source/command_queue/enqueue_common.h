@@ -410,11 +410,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         } else {
             UNRECOVERABLE_IF(enqueueProperties.operation != EnqueueProperties::Operation::enqueueWithoutSubmission);
 
-            if (this->getL3FlushDeferredIfNeeded()) {
+            if (this->getPendingL3FlushForHostVisibleResources()) {
                 if (blocking) {
-                    this->setCheckIfDeferredL3FlushIsNeeded(true);
-                    this->finish();
-                    this->setCheckIfDeferredL3FlushIsNeeded(false);
+                    this->finish(true);
 
                 } else if (event) {
                     computeCommandStreamReceiver.flushBatchedSubmissions();
@@ -426,7 +424,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                         computeCommandStreamReceiver.obtainCurrentFlushStamp()};
 
                     this->updateFromCompletionStamp(completionStamp, nullptr);
-                    this->l3FlushDeferredIfNeeded = false;
+                    this->setPendingL3FlushForHostVisibleResources(false);
                     eventBuilder.getEvent()->setWaitForTaskCountRequired(true);
                 }
             }
@@ -1395,7 +1393,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     }
 
     if (blocking) {
-        ret = this->finish();
+        ret = this->finish(false);
     }
 
     return ret;

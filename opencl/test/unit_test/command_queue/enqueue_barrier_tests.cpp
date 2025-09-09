@@ -270,7 +270,7 @@ HWTEST_F(BarrierTest, givenBlockedCommandQueueAndEnqueueBarrierWithWaitlistRetur
     EXPECT_EQ(pEvent->peekTaskCount(), CompletionStamp::notReady);
     event2.setStatus(CL_COMPLETE);
     clReleaseEvent(event);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 }
 
 HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEventIsSignaledThenNewCommandStreamIsNotAcquired) {
@@ -314,5 +314,5 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
     EXPECT_GE(commandStream.getMaxAvailableSpace(), commandStream.getMaxAvailableSpace());
 
     clReleaseEvent(event);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 }

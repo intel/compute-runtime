@@ -338,7 +338,7 @@ HWTEST2_P(LargeGrfTest, givenLargeGrfKernelWhenExecutedThenResultsAreCorrect, Is
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     auto largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(pCmdQ->getGpgpuCommandStreamReceiver(),
                                                                                        pCmdQ->getCS(0));
@@ -377,7 +377,7 @@ HWTEST2_P(LargeGrfTest, givenKernelWithSpillWhenExecutedInLargeGrfThenDontSpillA
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     auto largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(pCmdQ->getGpgpuCommandStreamReceiver(),
                                                                                        pCmdQ->getCS(0));
@@ -435,7 +435,7 @@ HWTEST2_P(LargeGrfTest, givenMixedLargeGrfAndSmallGrfKernelsWhenExecutedThenResu
                                   globalWorkSize, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     auto largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(pCmdQ->getGpgpuCommandStreamReceiver(),
                                                                                        pCmdQ->getCS(0));
@@ -536,8 +536,8 @@ HWTEST2_P(MultiContextLargeGrfKernelAubTest, givenLargeAndSmallGrfWhenParallelRu
                                           nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    largeGrfQueue->finish();
-    smallGrfQueue->finish();
+    largeGrfQueue->finish(false);
+    smallGrfQueue->finish(false);
 
     MulticontextOclAubFixture::expectMemory<FamilyType>(
         AUBFixture::getGpuPointer(destinationBuffer->getGraphicsAllocation(rootDeviceIndex), destinationBuffer->getOffset()),

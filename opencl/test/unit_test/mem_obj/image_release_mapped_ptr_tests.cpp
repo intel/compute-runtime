@@ -40,7 +40,7 @@ class MyMockCommandQueue : public CommandQueueHw<Family> {
         enqueueWriteImageCalled++;
         return CL_SUCCESS;
     }
-    cl_int finish() override {
+    cl_int finish(bool resolvePendingL3Flushes) override {
         finishCalled++;
         return CL_SUCCESS;
     }

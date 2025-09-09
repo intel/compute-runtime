@@ -136,7 +136,7 @@ clEnqueueReleaseVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
         status = pCommandQueue->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                             eventWaitList, event, CL_COMMAND_RELEASE_VA_API_MEDIA_SURFACES_INTEL);
         if (!pCommandQueue->getContext().getInteropUserSyncEnabled()) {
-            pCommandQueue->finish();
+            pCommandQueue->finish(false);
         }
     }
     return status;

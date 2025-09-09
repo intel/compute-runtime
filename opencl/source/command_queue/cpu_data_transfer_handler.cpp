@@ -110,9 +110,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         }
         // wait for the completness of previous commands
         if (transferProperties.finishRequired) {
-            this->setCheckIfDeferredL3FlushIsNeeded(true);
-            auto ret = finish();
-            this->setCheckIfDeferredL3FlushIsNeeded(false);
+            auto ret = finish(true);
 
             if (ret != CL_SUCCESS) {
                 err.set(ret);

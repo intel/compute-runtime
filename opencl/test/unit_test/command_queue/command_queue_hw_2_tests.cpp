@@ -104,8 +104,8 @@ HWTEST_F(MultiIoqCmdQSynchronizationTest, givenTwoIoqCmdQsWhenEnqueuesSynchroniz
         EXPECT_TRUE(pipeControlForBcsSemaphoreFound);
     }
 
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
-    EXPECT_EQ(CL_SUCCESS, pCmdQ2->finish());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ2->finish(false));
 
     clReleaseEvent(outEvent);
     // tearDown
@@ -1367,7 +1367,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitAfterBarrierWhenEnqueueingCommandTh
         EXPECT_EQ(bcsHwParser.cmdList.end(), pipeControlItor);
     }
 
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
 }
 
 HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandThenWaitForBlitBeforeBarrier) {
@@ -1454,7 +1454,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
         EXPECT_EQ(1u, findAll<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), blitItor).size());
     }
 
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
 }
 
 HWTEST_F(OoqCommandQueueHwBlitTest, givenBlockedBlitAfterBarrierWhenEnqueueingCommandThenWaitForBlitBeforeBarrier) {
@@ -1518,7 +1518,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlockedBlitAfterBarrierWhenEnqueueingCo
         EXPECT_EQ(bcsHwParser.cmdList.end(), find<PIPE_CONTROL *>(semaphoreItor, bcsHwParser.cmdList.end()));
     }
 
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
 }
 
 HWTEST_F(CommandQueueHwTest, GivenBuiltinKernelWhenBuiltinDispatchInfoBuilderIsProvidedThenThisBuilderIsUsedForCreatingDispatchInfo) {
@@ -1630,7 +1630,7 @@ HWTEST_F(ImageTextureCacheFlushTest, givenTextureCacheFlushNotRequiredWhenEnqueu
 
     auto pipeControls = findAll<PIPE_CONTROL *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
     EXPECT_TRUE(pipeControls.empty());
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
 }
 
 HWTEST_F(ImageTextureCacheFlushTest, givenTextureCacheFlushRequiredWhenEnqueueReadImageThenNoCacheFlushSubmitted) {
@@ -1668,7 +1668,7 @@ HWTEST_F(ImageTextureCacheFlushTest, givenTextureCacheFlushRequiredWhenEnqueueRe
 
     auto pipeControls = findAll<PIPE_CONTROL *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
     EXPECT_TRUE(pipeControls.empty());
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
 }
 
 HWTEST_F(ImageTextureCacheFlushTest, givenTextureCacheFlushRequiredWhenEnqueueWriteImageThenCacheFlushSubmitted) {
@@ -1717,7 +1717,7 @@ HWTEST_F(ImageTextureCacheFlushTest, givenTextureCacheFlushRequiredWhenEnqueueWr
         }
     }
     EXPECT_TRUE(isPipeControlWithTextureCacheFlush);
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
 }
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenImageWithHostPtrWhenCreateImageThenStopRegularBcs) {

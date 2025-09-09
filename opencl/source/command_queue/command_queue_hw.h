@@ -365,8 +365,10 @@ class CommandQueueHw : public CommandQueue {
                                   const cl_event *eventWaitList,
                                   cl_event *event) override;
 
-    cl_int finish() override;
+    cl_int finish(bool resolvePendingL3Flushes) override;
     cl_int flush() override;
+
+    void programPendingL3Flushes(CommandStreamReceiver &csr, bool &waitForTaskCountRequired, bool resolvePendingL3Flushes) override;
 
     template <uint32_t enqueueType>
     cl_int enqueueHandler(Surface **surfacesForResidency,

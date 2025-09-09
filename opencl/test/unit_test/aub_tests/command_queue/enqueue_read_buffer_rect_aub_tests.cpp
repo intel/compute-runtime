@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,7 +181,7 @@ struct AUBReadBufferRectUnaligned
         expectMemory<FamilyType>(dstMemoryGPUPtr, referenceMemory, offset);
         expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), &srcMemory[rowPitch * bufferOrigin[1]], size);
         expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, size + offset), referenceMemory, bufferSize - offset - size);
-        pCmdQ->finish();
+        pCmdQ->finish(false);
         alignedFree(dstMemory);
     }
 };

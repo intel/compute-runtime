@@ -82,7 +82,7 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, GENERATEONLY_givenCompress
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     expectNotEqualMemory<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation1), writePattern, bufferSize);
 
@@ -91,7 +91,7 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, GENERATEONLY_givenCompress
     retVal = pCmdQ->enqueueCopyBuffer(compressedBuffer2.get(), unCompressedBuffer.get(), 0, 0, bufferSize, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     expectMemory<FamilyType>(AUBFixture::getGpuPointer(unCompressedAllocation), writePattern, bufferSize);
 }
@@ -184,7 +184,7 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, givenUncompressibleBufferI
     size_t globalWorkSize[3] = {bufferSize, 1, 1};
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     expectNotEqualMemory<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation), writePattern, bufferSize);
 
@@ -193,7 +193,7 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, givenUncompressibleBufferI
     retVal = pCmdQ->enqueueCopyBuffer(uncompressibleBufferInHostMemory.get(), unCompressedBuffer.get(), 0, 0, bufferSize, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     expectMemory<FamilyType>(AUBFixture::getGpuPointer(unCompressedAllocation), writePattern, bufferSize);
 }
@@ -532,7 +532,7 @@ XE_HPG_CORETEST_F(XeHpgCoreStatelessCompressionInSBAWithBCS, GENERATEONLY_givenC
     retVal = commandQueues[0][0]->enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    commandQueues[0][0]->finish();
+    commandQueues[0][0]->finish(false);
 
     expectMemoryNotEqual<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation, compressedBuffer->getOffset()), writePattern, bufferSize, 0, 0);
 
@@ -568,7 +568,7 @@ XE_HPG_CORETEST_F(XeHpgCoreStatelessCompressionInSBAWithBCS, givenUncompressible
     retVal = commandQueues[0][0]->enqueueKernel(kernel, 1, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    commandQueues[0][0]->finish();
+    commandQueues[0][0]->finish(false);
 
     expectMemoryNotEqual<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation, compressedBuffer->getOffset()), writePattern, bufferSize, 0, 0);
 

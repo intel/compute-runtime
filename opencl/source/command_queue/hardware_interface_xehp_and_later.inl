@@ -85,13 +85,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto &queueCsr = commandQueue.getGpgpuCommandStreamReceiver();
     auto &device = commandQueue.getDevice();
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
-
-    bool kernelSystemAllocation = false;
-    if (kernel.isBuiltInKernel()) {
-        kernelSystemAllocation = kernel.getDestinationAllocationInSystemMemory();
-    } else {
-        kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
-    }
+    bool kernelSystemAllocation = kernel.isBuiltInKernel() ? kernel.getDestinationAllocationInSystemMemory()
+                                                           : kernel.isAnyKernelArgumentUsingSystemMemory();
 
     TagNodeBase *timestampPacketNode = nullptr;
     if (walkerArgs.currentTimestampPacketNodes && (walkerArgs.currentTimestampPacketNodes->peekNodes().size() > walkerArgs.currentDispatchIndex)) {
@@ -106,40 +101,17 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
         if constexpr (heaplessModeEnabled) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-            auto containsPrintBuffer = kernel.hasPrintfOutput();
-            bool l3FlushDeferredIfNeeded = false;
-
-            bool flushL3AfterPostSyncForHostUsm = kernelSystemAllocation || containsPrintBuffer;
-            bool flushL3AfterPostSyncForExternalAllocation = kernel.isUsingSharedObjArgs();
-
-            l3FlushDeferredIfNeeded = flushL3AfterPostSyncForHostUsm || flushL3AfterPostSyncForExternalAllocation;
-
-            if (debugManager.flags.RedirectFlushL3HostUsmToExternal.get() && flushL3AfterPostSyncForHostUsm) {
-                flushL3AfterPostSyncForHostUsm = false;
-                flushL3AfterPostSyncForExternalAllocation = true;
-            }
-
-            bool forceFlushL3 = false;
-            if (debugManager.flags.ForceFlushL3AfterPostSyncForHostUsm.get()) {
-                forceFlushL3 = true;
-                flushL3AfterPostSyncForHostUsm = true;
-            }
-            if (debugManager.flags.ForceFlushL3AfterPostSyncForExternalAllocation.get()) {
-                forceFlushL3 = true;
-                flushL3AfterPostSyncForExternalAllocation = true;
-            }
-
-            if (walkerArgs.event != nullptr || walkerArgs.blocking || containsPrintBuffer || forceFlushL3) {
-                GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacketFlushL3<WalkerType>(&walkerCmd, productHelper, flushL3AfterPostSyncForHostUsm, flushL3AfterPostSyncForExternalAllocation);
-                l3FlushDeferredIfNeeded = false;
-            }
-
-            if (l3FlushDeferredIfNeeded) {
-                commandQueue.setL3FlushDeferredIfNeeded(true);
+            if (productHelper.isL3FlushAfterPostSyncRequired(true)) {
+                GpgpuWalkerHelper<GfxFamily>::setupTimestampPacketFlushL3(walkerCmd,
+                                                                          commandQueue,
+                                                                          FlushL3Args{.containsPrintBuffer = kernel.hasPrintfOutput(),
+                                                                                      .usingSharedObjects = kernel.isUsingSharedObjArgs(),
+                                                                                      .signalEvent = walkerArgs.event != nullptr,
+                                                                                      .blocking = walkerArgs.blocking,
+                                                                                      .usingSystemAllocation = kernelSystemAllocation});
             }
         }
     }
-
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
 
     if constexpr (heaplessModeEnabled == false) {

@@ -226,12 +226,15 @@ class MockCommandQueue : public CommandQueue {
     cl_int enqueueResourceBarrier(BarrierCommand *resourceBarrier, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
                                   cl_event *event) override { return CL_SUCCESS; }
 
-    cl_int finish() override {
+    cl_int finish(bool resolvePendingL3Flushes) override {
         ++finishCalledCount;
         return CL_SUCCESS;
     }
 
     cl_int flush() override { return CL_SUCCESS; }
+
+    void programPendingL3Flushes(CommandStreamReceiver &csr, bool &waitForTaskCountRequired, bool resolvePendingL3Flushes) override {
+    }
 
     bool waitForTimestamps(std::span<CopyEngineState> copyEnginesToWait, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override {
         waitForTimestampsCalled = true;
@@ -521,9 +524,9 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return BaseClass::enqueueSVMMemcpy(blockingCopy, dstPtr, srcPtr, size, numEventsInWaitList, eventWaitList, event, csrParam);
     }
 
-    cl_int finish() override {
+    cl_int finish(bool resolvePendingL3Flushes) override {
         finishCalledCount++;
-        return BaseClass::finish();
+        return BaseClass::finish(resolvePendingL3Flushes);
     }
 
     LinearStream *peekCommandStream() {

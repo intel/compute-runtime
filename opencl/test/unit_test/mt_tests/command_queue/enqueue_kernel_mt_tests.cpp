@@ -80,7 +80,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
         thread.join();
     }
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     EXPECT_GE(mockCsr->flushCalledCount, 1u);
 

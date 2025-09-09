@@ -1418,7 +1418,7 @@ TEST_F(VaSharingTests, givenInteropUserSyncIsNotSpecifiedDuringContextCreationWh
         MockCommandQueueToTestFinish(Context *context, ClDevice *device, const cl_queue_properties *props)
             : MockCommandQueue(context, device, props, false) {
         }
-        cl_int finish() override {
+        cl_int finish(bool resolvePendingL3Flushes) override {
             finishCalled++;
             return CL_SUCCESS;
         }

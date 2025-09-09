@@ -58,7 +58,7 @@ HWTEST_F(FinishTest, GivenCsGreaterThanCqWhenFinishIsCalledThenPipeControlIsNotA
     commandStreamReceiver.taskLevel = originalCSRLevel; // Must be greater than or equal to HW
     pCmdQ->taskLevel = originalCQLevel;
 
-    auto retVal = pCmdQ->finish();
+    auto retVal = pCmdQ->finish(false);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // Don't need to artificially execute PIPE_CONTROL.
@@ -80,7 +80,7 @@ HWTEST_F(FinishTest, GivenCsGreaterThanCqWhenFinishIsCalledThenPipeControlIsNotA
 HWTEST_F(FinishTest, WhenFinishIsCalledThenPipeControlIsNotAddedToCqCommandStream) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
-    auto retVal = pCmdQ->finish();
+    auto retVal = pCmdQ->finish(false);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // Check for PIPE_CONTROL
@@ -93,7 +93,7 @@ HWTEST_F(FinishTest, givenFreshQueueWhenFinishIsCalledThenCommandStreamIsNotAllo
     MockContext contextWithMockCmdQ(pClDevice, true);
     MockCommandQueueHw<FamilyType> cmdQ(&contextWithMockCmdQ, pClDevice, 0);
 
-    auto retVal = cmdQ.finish();
+    auto retVal = cmdQ.finish(false);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(nullptr, cmdQ.peekCommandStream());
@@ -113,16 +113,15 @@ HWTEST_F(FinishTest, givenL3FlushAfterPostSyncEnabledWhenFlushTagUpdateIsCalledT
     MockContext contextWithMockCmdQ(pClDevice, true);
     MockCommandQueueHw<FamilyType> cmdQ(&contextWithMockCmdQ, pClDevice, 0);
 
-    cmdQ.setL3FlushDeferredIfNeeded(true);
+    cmdQ.setPendingL3FlushForHostVisibleResources(true);
     cmdQ.l3FlushAfterPostSyncEnabled = true;
-    cmdQ.setCheckIfDeferredL3FlushIsNeeded(true);
 
     auto &csr = cmdQ.getUltCommandStreamReceiver();
     auto used = csr.commandStream.getUsed();
 
     auto taskCountBeforeFinish = csr.taskCount.load();
     auto beforeWaitForAllEnginesCalledCount = cmdQ.waitForAllEnginesCalledCount;
-    auto retVal = cmdQ.finish();
+    auto retVal = cmdQ.finish(true);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(taskCountBeforeFinish + 1, cmdQ.latestTaskCountWaited);
@@ -157,7 +156,7 @@ HWTEST_F(FinishTest, givenL3FlushDeferredIfNeededAndL3FlushAfterPostSyncEnabledW
 
     MockContext contextWithMockCmdQ(pClDevice, true);
     MockCommandQueueHw<FamilyType> cmdQ(&contextWithMockCmdQ, pClDevice, 0);
-    cmdQ.setL3FlushDeferredIfNeeded(true);
+    cmdQ.setPendingL3FlushForHostVisibleResources(true);
     cmdQ.l3FlushAfterPostSyncEnabled = true;
 
     size_t offset = 0;

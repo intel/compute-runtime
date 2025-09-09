@@ -505,7 +505,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
         EXPECT_EQ(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.workgroupWalkOrder[i], HwWalkOrderHelper::compatibleDimensionOrders[walker->getWalkOrder()][i]);
     }
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     // we expect sequence of local ids from 0..256
     auto expectedMemory = reinterpret_cast<uint32_t *>(variables[0].expectedMemory);

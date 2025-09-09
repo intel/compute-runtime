@@ -162,9 +162,6 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(bool reserveProfi
 
 template <typename GfxFamily>
 template <typename WalkerType>
-void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacketFlushL3(WalkerType *walkerCmd,
-                                                               const ProductHelper &productHelper,
-                                                               bool flushL3AfterPostSyncForHostUsm,
-                                                               bool flushL3AfterPostSyncForExternalAllocation) {
+void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacketFlushL3(WalkerType &walkerCmd, CommandQueue &commandQueue, const FlushL3Args &args) {
 }
 } // namespace NEO

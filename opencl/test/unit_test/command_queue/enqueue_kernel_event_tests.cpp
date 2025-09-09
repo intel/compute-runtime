@@ -97,7 +97,7 @@ TEST_F(EventTests, WhenWaitingForEventThenPipeControlIsNotInserted) {
     }
     EXPECT_EQ(expectedTaskLevel, csr.peekTaskLevel());
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     // Check CL_EVENT_COMMAND_TYPE
     {
@@ -145,7 +145,7 @@ TEST_F(EventTests, GivenTwoEnqueuesWhenWaitingForBothEventsThenTaskLevelIsCorrec
         expectedTaskLevel1++;
     }
     EXPECT_EQ(expectedTaskLevel1, csr.peekTaskLevel());
-    pCmdQ->finish();
+    pCmdQ->finish(false);
     EXPECT_EQ(expectedTaskLevel1, csr.peekTaskLevel());
     // Check CL_EVENT_COMMAND_TYPE
     {
@@ -198,7 +198,7 @@ TEST_F(EventTests, GivenNoEventsWhenEnqueuingKernelThenTaskLevelIsIncremented) {
     }
     EXPECT_EQ(taskLevelEvent, csr.peekTaskLevel());
 
-    pCmdQ->finish();
+    pCmdQ->finish(false);
     EXPECT_EQ(taskLevelEvent, csr.peekTaskLevel());
 
     // Check CL_EVENT_COMMAND_TYPE
@@ -281,6 +281,6 @@ HWTEST_F(EventTests, givenEnqueueKernelBlockedOnserEventWhenEnqueueHasOutEventWi
         EXPECT_NE(pipeControlItor, ccsHwParser.cmdList.end());
     }
 
-    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish(false));
     clReleaseEvent(outEvent);
 }

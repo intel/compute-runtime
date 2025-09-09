@@ -222,9 +222,11 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     virtual cl_int enqueueResourceBarrier(BarrierCommand *resourceBarrier, cl_uint numEventsInWaitList,
                                           const cl_event *eventWaitList, cl_event *event) = 0;
 
-    virtual cl_int finish() = 0;
+    virtual cl_int finish(bool resolvePendingL3Flushes) = 0;
 
     virtual cl_int flush() = 0;
+
+    virtual void programPendingL3Flushes(CommandStreamReceiver &csr, bool &waitForTaskCountRequired, bool resolvePendingL3Flushes) = 0;
 
     void updateFromCompletionStamp(const CompletionStamp &completionStamp, Event *outEvent);
 
@@ -436,16 +438,12 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool waitOnDestructionNeeded() const;
 
-    bool getL3FlushDeferredIfNeeded() const {
-        return l3FlushDeferredIfNeeded;
+    bool getPendingL3FlushForHostVisibleResources() const {
+        return pendingL3FlushForHostVisibleResources;
     }
 
-    void setL3FlushDeferredIfNeeded(bool newValue) {
-        l3FlushDeferredIfNeeded = newValue;
-    }
-
-    void setCheckIfDeferredL3FlushIsNeeded(bool newValue) {
-        checkIfDeferredL3FlushIsNeeded = newValue;
+    void setPendingL3FlushForHostVisibleResources(bool newValue) {
+        pendingL3FlushForHostVisibleResources = newValue;
     }
 
   protected:
@@ -566,8 +564,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool l3FlushAfterPostSyncEnabled = false;
     bool isWalkerWithProfilingEnqueued = false;
     bool shouldRegisterEnqueuedWalkerWithProfiling = false;
-    bool l3FlushDeferredIfNeeded = false;
-    bool checkIfDeferredL3FlushIsNeeded = false;
+    bool pendingL3FlushForHostVisibleResources = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandQueue>);

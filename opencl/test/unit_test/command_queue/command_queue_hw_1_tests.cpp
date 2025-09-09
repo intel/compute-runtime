@@ -415,7 +415,7 @@ HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingWhenMappingBufferThenWi
             : CommandQueueHw<FamilyType>(context, device, 0, false) {
             finishWasCalled = false;
         }
-        cl_int finish() override {
+        cl_int finish(bool resolvePendingL3Flushes) override {
             finishWasCalled = true;
             return 0;
         }
@@ -462,7 +462,7 @@ HWTEST2_F(CommandQueueHwTest, GivenFillBufferBlockedOnUserEventWhenEventIsAborte
     auto waitingEvent = castToObject<Event>(clWaitingEvent);
 
     clSetUserEventStatus(clUserEvent, CL_INVALID_VALUE);
-    cmdQ.finish();
+    cmdQ.finish(false);
 
     auto timestampPacketNodes = waitingEvent->getTimestampPacketNodes();
     ASSERT_NE(timestampPacketNodes, nullptr);
@@ -1177,7 +1177,7 @@ HWTEST_F(CommandQueueHwTest, givenCsrClientWhenCallingSyncPointsThenUnregister) 
 
     EXPECT_EQ(baseNumClients + 1, csr.getNumClients());
 
-    mockCmdQueueHw.finish();
+    mockCmdQueueHw.finish(false);
 
     EXPECT_EQ(baseNumClients, csr.getNumClients()); // queue synchronized
 
@@ -1276,7 +1276,7 @@ HWTEST_F(CommandQueueHwTest, givenFinishWhenFlushBatchedSubmissionsFailsThenErro
     MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, pClDevice, nullptr, false);
     MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0, pDevice->getDeviceBitfield());
     cmdQueue.csr = &csr;
-    cl_int errorCode = cmdQueue.finish();
+    cl_int errorCode = cmdQueue.finish(false);
     EXPECT_EQ(CL_OUT_OF_RESOURCES, errorCode);
 }
 
@@ -1286,7 +1286,7 @@ HWTEST_F(CommandQueueHwTest, givenGpuHangWhenFinishingCommandQueueHwThenWaitForE
     mockCmdQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
     mockCmdQueueHw.getUltCommandStreamReceiver().shouldFlushBatchedSubmissionsReturnSuccess = true;
 
-    const auto finishResult = mockCmdQueueHw.finish();
+    const auto finishResult = mockCmdQueueHw.finish(false);
     EXPECT_EQ(1, mockCmdQueueHw.waitForAllEnginesCalledCount);
     EXPECT_EQ(CL_OUT_OF_RESOURCES, finishResult);
 }
@@ -1297,7 +1297,7 @@ HWTEST_F(CommandQueueHwTest, givenNoGpuHangWhenFinishingCommandQueueHwThenWaitFo
     mockCmdQueueHw.waitForAllEnginesReturnValue = WaitStatus::ready;
     mockCmdQueueHw.getUltCommandStreamReceiver().shouldFlushBatchedSubmissionsReturnSuccess = true;
 
-    const auto finishResult = mockCmdQueueHw.finish();
+    const auto finishResult = mockCmdQueueHw.finish(false);
     EXPECT_EQ(1, mockCmdQueueHw.waitForAllEnginesCalledCount);
     EXPECT_EQ(CL_SUCCESS, finishResult);
 }

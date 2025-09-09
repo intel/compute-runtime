@@ -16,7 +16,7 @@ using Family = Xe2HpgCoreFamily;
 
 template class GpgpuWalkerHelper<Family>;
 
-template void GpgpuWalkerHelper<Family>::setupTimestampPacketFlushL3<Family::DefaultWalkerType>(Family::DefaultWalkerType *walkerCmd, const ProductHelper &productHelper, bool flushL3AfterPostSyncForHostUsm, bool flushL3AfterPostSyncForExternalAllocation);
+template void GpgpuWalkerHelper<Family>::setupTimestampPacketFlushL3<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, CommandQueue &commandQueue, const FlushL3Args &args);
 template void GpgpuWalkerHelper<Family>::setupTimestampPacket<Family::DefaultWalkerType>(LinearStream *cmdStream, Family::DefaultWalkerType *walkerCmd, TagNodeBase *timestampPacketNode, const RootDeviceEnvironment &rootDeviceEnvironment);
 template size_t GpgpuWalkerHelper<Family>::setGpgpuWalkerThreadData<Family::DefaultWalkerType>(Family::DefaultWalkerType *walkerCmd, const KernelDescriptor &kernelDescriptor, const size_t startWorkGroups[3],
                                                                                                const size_t numWorkGroups[3], const size_t localWorkSizesIn[3], uint32_t simd, uint32_t workDim, bool localIdsGenerationByRuntime, bool inlineDataProgrammingRequired, uint32_t requiredWorkGroupOrder);

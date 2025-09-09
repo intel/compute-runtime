@@ -75,7 +75,7 @@ HWTEST_P(OOMCommandQueueTest, WhenFinishingThenMaxAvailableSpaceIsNotExceeded) {
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
-    auto retVal = pCmdQ->finish();
+    auto retVal = pCmdQ->finish(false);
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();

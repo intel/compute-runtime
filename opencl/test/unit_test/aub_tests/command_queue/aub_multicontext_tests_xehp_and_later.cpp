@@ -576,8 +576,8 @@ HWTEST2_F(SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDiffere
     commandQueues[0][0]->enqueueWriteBuffer(buffer.get(), CL_FALSE, 0, halfBufferSize, writePattern1, nullptr, 0, nullptr, nullptr);
     commandQueues[0][1]->enqueueWriteBuffer(buffer.get(), CL_FALSE, halfBufferSize, halfBufferSize, writePattern2, nullptr, 0, nullptr, nullptr);
 
-    commandQueues[0][1]->finish(); // submit second enqueue first to make sure that residency flow is correct
-    commandQueues[0][0]->finish();
+    commandQueues[0][1]->finish(false); // submit second enqueue first to make sure that residency flow is correct
+    commandQueues[0][0]->finish(false);
 
     auto gpuPtr = reinterpret_cast<void *>(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + buffer->getOffset());
     expectMemory<FamilyType>(gpuPtr, writePattern1, halfBufferSize, 0, 0);

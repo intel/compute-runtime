@@ -654,7 +654,7 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
 
     Event::waitForEvents(numEventsInWaitList, eventWaitList);
     if (!this->isOOQEnabled()) {
-        this->finish();
+        this->finish(false);
     }
 
     bool isImageReleased = false;
@@ -679,7 +679,7 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
                 TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
                 this->taskCount = this->getGpgpuCommandStreamReceiver().peekTaskCount();
             }
-            this->finish();
+            this->finish(false);
         } else if (isImageReleased) {
             this->getGpgpuCommandStreamReceiver().sendRenderStateCacheFlush();
         }

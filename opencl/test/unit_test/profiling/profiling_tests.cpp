@@ -467,7 +467,7 @@ HWTEST_F(ProfilingTests, givenBarrierEnqueueWhenNonBlockedEnqueueThenSetGpuPath)
     pCmdQ->enqueueBarrierWithWaitList(0, nullptr, &event);
     auto eventObj = static_cast<Event *>(event);
     EXPECT_FALSE(eventObj->isCPUProfilingPath());
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     uint64_t queued, submit;
     cl_int retVal;
@@ -488,7 +488,7 @@ HWTEST_F(ProfilingTests, givenMarkerEnqueueWhenNonBlockedEnqueueThenSetGpuPath) 
     pCmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
     auto eventObj = static_cast<Event *>(event);
     EXPECT_FALSE(eventObj->isCPUProfilingPath());
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     uint64_t queued, submit;
     cl_int retVal;
@@ -559,7 +559,7 @@ HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPat
         &event);
     auto eventObj = static_cast<Event *>(event);
     EXPECT_TRUE(eventObj->isCPUProfilingPath() == CL_TRUE);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     uint64_t queued, submit, start, end;
 

@@ -165,7 +165,7 @@ cl_int CommandQueue::postStagingTransferSync(const StagingTransferStatus &status
     }
 
     if (isBlocking) {
-        ret = this->finish();
+        ret = this->finish(false);
     }
     return ret;
 }

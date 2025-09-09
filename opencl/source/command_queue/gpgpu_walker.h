@@ -23,6 +23,14 @@ struct RootDeviceEnvironment;
 template <typename GfxFamily>
 using MI_STORE_REG_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM_CMD;
 
+struct FlushL3Args {
+    bool containsPrintBuffer;
+    bool usingSharedObjects;
+    bool signalEvent;
+    bool blocking;
+    bool usingSystemAllocation;
+};
+
 template <typename GfxFamily>
 class GpgpuWalkerHelper {
     using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
@@ -71,10 +79,7 @@ class GpgpuWalkerHelper {
 
     template <typename WalkerType>
     static void setupTimestampPacketFlushL3(
-        WalkerType *walkerCmd,
-        const ProductHelper &productHelper,
-        bool flushL3AfterPostSyncForHostUsm,
-        bool flushL3AfterPostSyncForExternalAllocation);
+        WalkerType &walkerCmd, CommandQueue &commandQueue, const FlushL3Args &args);
 
     static void adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxFamily> *storeCmd);
 

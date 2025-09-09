@@ -94,7 +94,7 @@ HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageThenBuiltinKernelIsResolved) 
     EXPECT_TRUE(pCommand->peekKernel()->isPatched());
     userEvent.setStatus(CL_COMPLETE);
     pEvent->release();
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 }
 
 template <typename GfxFamily>
@@ -266,7 +266,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageThen
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     pEvent->release();
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
 }
@@ -347,7 +347,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     pEvent0->release();
     pEvent1->release();
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
 }
@@ -370,7 +370,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueRea
     EXPECT_TRUE(ultCsr.flushBatchedSubmissionsCalled);
     EXPECT_TRUE(ultCsr.flushTagUpdateCalled);
     EXPECT_LT(currentTaskCount, ultCsr.peekTaskCount());
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
 }
@@ -389,7 +389,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueRea
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ1, pImage, CL_FALSE);
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
 
     {
         HardwareParse hwParser;
@@ -444,7 +444,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
     EXPECT_TRUE(ultCsr1.flushTagUpdateCalled);
     EXPECT_FALSE(ultCsr2.flushBatchedSubmissionsCalled);
     EXPECT_LT(currentTaskCount1, ultCsr1.peekTaskCount());
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ2, pImage, CL_FALSE,
                                                EnqueueReadImageTraits::origin,
@@ -461,7 +461,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
     EXPECT_TRUE(ultCsr2.flushBatchedSubmissionsCalled);
     EXPECT_TRUE(ultCsr2.flushTagUpdateCalled);
     EXPECT_LT(currentTaskCount2, ultCsr2.peekTaskCount());
-    pCmdQ2->finish();
+    pCmdQ2->finish(false);
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ1, pImage, CL_FALSE,
                                                EnqueueReadImageTraits::origin,
@@ -475,7 +475,7 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
                                                nullptr);
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pCmdQ2->release();
     pImage->release();
@@ -536,7 +536,7 @@ HWTEST2_F(EnqueueReadImageTest, givenImageFromBufferThatRequiresMigrationWhenEnq
 
     EXPECT_EQ(0u, pBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     pEvent->release();
-    pCmdQ1->finish();
+    pCmdQ1->finish(false);
     pCmdQ1->release();
     pImage->release();
     pBuffer->release();
@@ -1094,7 +1094,7 @@ HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageWithUsmPtrThenDontImportAlloc
                                                0u,
                                                nullptr,
                                                nullptr);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);

@@ -695,7 +695,7 @@ HWTEST_F(WriteBufferStagingBufferTest, whenHostPtrRegisteredThenDontUseStagingUn
     EXPECT_TRUE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, MemoryConstants::cacheLineSize, CL_COMMAND_WRITE_BUFFER, false, false));
     EXPECT_FALSE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, MemoryConstants::cacheLineSize, CL_COMMAND_WRITE_BUFFER, false, false));
 
-    mockCommandQueueHw.finish();
+    mockCommandQueueHw.finish(false);
     EXPECT_TRUE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, MemoryConstants::cacheLineSize, CL_COMMAND_WRITE_BUFFER, false, false));
 }
 

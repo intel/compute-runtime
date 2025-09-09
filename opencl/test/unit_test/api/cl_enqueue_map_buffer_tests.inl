@@ -136,7 +136,7 @@ TEST_F(ClEnqueueMapBufferTests, GivenFinishFailsWhenMappingBufferThenOutOfResour
     struct MockCommandQueueWithFinishFailure : public MockCommandQueue {
         MockCommandQueueWithFinishFailure(Context *context) : MockCommandQueue(*context) {}
 
-        cl_int finish() override {
+        cl_int finish(bool resolvePendingL3Flushes) override {
             return CL_OUT_OF_RESOURCES;
         }
     } mockQueue(pContext);

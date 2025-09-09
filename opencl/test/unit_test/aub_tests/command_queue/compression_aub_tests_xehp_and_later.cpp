@@ -107,7 +107,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedBuffersWhenWriting
 
     pCmdQ->enqueueWriteBuffer(compressedBuffer.get(), CL_FALSE, 0, bufferSize, writePattern, nullptr, 0, nullptr, nullptr);
     pCmdQ->enqueueCopyBuffer(compressedBuffer.get(), notCompressedBuffer.get(), 0, 0, bufferSize, 0, nullptr, nullptr);
-    pCmdQ->finish();
+    pCmdQ->finish(false);
 
     expectNotEqualMemory<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation),
                                      writePattern, bufferSize);

@@ -43,7 +43,7 @@ HWTEST_F(GetSizeRequiredTest, WhenFinishingThenHeapsAndCommandBufferAreNotConsum
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
 
-    auto retVal = pCmdQ->finish();
+    auto retVal = pCmdQ->finish(false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, commandStream.getUsed() - usedBeforeCS);
