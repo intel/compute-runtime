@@ -653,7 +653,12 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
         return CL_INVALID_VALUE;
     }
 
-    Event::waitForEvents(numEventsInWaitList, eventWaitList);
+    std::for_each(eventWaitList, eventWaitList + numEventsInWaitList, [](const auto event) {
+        auto eventObject = castToObjectOrAbort<Event>(event);
+        if (!eventObject->isUserEvent()) {
+            eventObject->wait(false, false);
+        };
+    });
     if (!this->isOOQEnabled()) {
         this->finish(false);
     }

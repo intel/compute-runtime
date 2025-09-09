@@ -1450,6 +1450,41 @@ TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandler
     clReleaseEvent(clEventRelease);
 }
 
+TEST(CommandQueue, givenEventWaitlistWhenEnqueueReleaseSharedObjectsThenWaitForNonUserEvents) {
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context;
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+    MockSharingHandler *mockSharingHandler = new MockSharingHandler;
+
+    auto image = std::unique_ptr<Image>(ImageHelperUlt<Image2dDefaults>::create(&context));
+    image->setSharingHandler(mockSharingHandler);
+
+    cl_mem memObject = image.get();
+    cl_uint numObjects = 1;
+    cl_mem *memObjects = &memObject;
+
+    MockEvent<Event> events[] = {
+        {&cmdQ, CL_COMMAND_READ_BUFFER, 0, 0},
+        {&cmdQ, CL_COMMAND_READ_BUFFER, 0, 0},
+        {&cmdQ, CL_COMMAND_READ_BUFFER, 0, 0},
+    };
+    MockEvent<UserEvent> userEvent{&context};
+    const cl_event waitList[] = {events, events + 1, events + 2, &userEvent};
+    const cl_uint waitListSize = static_cast<cl_uint>(arrayCount(waitList));
+
+    events[0].waitReturnValue = WaitStatus::ready;
+    events[1].waitReturnValue = WaitStatus::ready;
+    events[2].waitReturnValue = WaitStatus::ready;
+    userEvent.waitReturnValue = WaitStatus::ready;
+
+    cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, waitListSize, waitList, nullptr, CL_COMMAND_NDRANGE_KERNEL);
+
+    EXPECT_EQ(events[0].waitCalled, 1);
+    EXPECT_EQ(events[1].waitCalled, 1);
+    EXPECT_EQ(events[2].waitCalled, 1);
+    EXPECT_EQ(userEvent.waitCalled, 0);
+}
+
 TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenIncorrectArgumentsThenReturnProperError) {
     MockContext context;
     MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);

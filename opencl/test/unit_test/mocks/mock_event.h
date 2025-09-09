@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,7 @@ struct MockEvent : public BaseEventType {
     using Event::timestampPacketContainer;
 
     WaitStatus wait(bool blocking, bool useQuickKmdSleep) override {
+        ++waitCalled;
         if (waitReturnValue.has_value()) {
             return *waitReturnValue;
         }
@@ -55,6 +56,7 @@ struct MockEvent : public BaseEventType {
     }
 
     std::optional<WaitStatus> waitReturnValue{};
+    int waitCalled = 0;
 };
 
 #undef FORWARD_CONSTRUCTOR
