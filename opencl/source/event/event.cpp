@@ -115,6 +115,8 @@ Event::~Event() {
         {
             TakeOwnershipWrapper<CommandQueue> queueOwnership(*cmdQueue);
             cmdQueue->handlePostCompletionOperations(true);
+
+            this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocations(true);
         }
         if (timeStampNode != nullptr) {
             timeStampNode->returnTag();

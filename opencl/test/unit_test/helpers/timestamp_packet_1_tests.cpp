@@ -920,6 +920,27 @@ HWTEST_F(TimestampPacketTests, whenReleaseEventThenWait) {
     cmdQ.reset();
 }
 
+HWTEST_F(TimestampPacketTests, whenReleaseEventThenDownloadAllocations) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableTimestampWaitForQueues.set(0);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), props);
+
+    cl_event event;
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
+    cmdQ->finish(false);
+    EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 1u);
+
+    clReleaseEvent(event);
+
+    EXPECT_NE(csr.downloadAllocationsCalledCount.load(), 0u);
+}
+
 HWTEST_F(TimestampPacketTests, givenEventWhenReleasingThenCheckQueueResources) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UpdateTaskCountFromWait.set(3);
