@@ -435,6 +435,11 @@ struct CommandListCoreFamily : public CommandListImp {
             this->commandContainer.addToResidencyContainer(alloc);
         }
     }
+    template <typename... T>
+        requires(std::convertible_to<T, NEO::GraphicsAllocation *> && ...)
+    void addResidency(T... alloc) {
+        (this->commandContainer.addToResidencyContainer(alloc), ...);
+    }
 
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 

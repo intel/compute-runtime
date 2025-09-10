@@ -177,7 +177,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
     inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
 
-    this->addResidency(std::initializer_list<NEO::GraphicsAllocation *>{inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation()});
+    this->addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
 
     if (signalEvent && signalEvent->getInOrderIncrementValue() == 0) {
         if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining || (isImmediateType() && this->duplicatedInOrderCounterStorageEnabled)) {
@@ -1564,7 +1564,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.highPriority = isHighPriorityImmediateCmdList();
 
-    addResidency(std::initializer_list<NEO::GraphicsAllocation *>{dstPtrAlloc, srcPtrAlloc, clearColorAllocation});
+    addResidency(dstPtrAlloc, srcPtrAlloc, clearColorAllocation);
 
     size_t nBlitsPerRow = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, device->getNEODevice()->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
     bool useAdditionalTimestamp = nBlitsPerRow > 1;
@@ -1606,7 +1606,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
                                                                           dstPtrOffset, srcPtrOffset, copySizeModified, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation);
 
-    this->addResidency(std::initializer_list<NEO::GraphicsAllocation *>{dstAllocationData->alloc, srcAllocationData->alloc, clearColorAllocation});
+    this->addResidency(dstAllocationData->alloc, srcAllocationData->alloc, clearColorAllocation);
 
     blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.highPriority = isHighPriorityImmediateCmdList();
@@ -1685,7 +1685,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(uintptr_t 
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;
 
-    this->addResidency(std::initializer_list<NEO::GraphicsAllocation *>{dst, src, clearColorAllocation});
+    this->addResidency(dst, src, clearColorAllocation);
 
     bool useAdditionalTimestamp = blitProperties.copySize.z > 1;
     if (useAdditionalBlitProperties) {
