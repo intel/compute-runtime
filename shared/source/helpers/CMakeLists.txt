@@ -169,6 +169,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/indirect_detection_versions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}image_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}blit_properties_ext.h
 )
 
 if(WIN32)

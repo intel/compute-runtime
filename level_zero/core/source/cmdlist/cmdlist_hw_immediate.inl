@@ -827,9 +827,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
         uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
 
         auto splitCall = [&](CommandListCoreFamilyImmediate<gfxCoreFamily> *subCmdList, uintptr_t dstAddressParam, uintptr_t srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
+            CmdListMemoryCopyParams memoryCopyParams{};
             subCmdList->appendMemoryCopyBlit(dstAddressParam, dstAllocation, 0u,
                                              srcAddressParam, srcAllocation, 0u,
-                                             sizeParam, nullptr);
+                                             sizeParam, nullptr, memoryCopyParams);
             return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEventParam, false);
         };
 

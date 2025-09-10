@@ -14,6 +14,8 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/vec.h"
 
+#include "blit_properties_ext.h"
+
 #include <cstdint>
 
 namespace NEO {
@@ -114,6 +116,8 @@ struct BlitProperties {
     GMM_YUV_PLANE_ENUM srcPlane = GMM_YUV_PLANE_ENUM::GMM_NO_PLANE;
     bool isSystemMemoryPoolUsed = false;
     bool highPriority = false;
+
+    BlitPropertiesExt propertiesExt{};
 };
 
 } // namespace NEO

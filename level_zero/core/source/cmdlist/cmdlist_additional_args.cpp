@@ -62,4 +62,11 @@ ze_result_t CommandList::obtainLaunchParamsFromExtensions(const ze_base_desc_t *
     return ZE_RESULT_SUCCESS;
 }
 
+void CommandList::setAdditionalBlitPropertiesFromMemoryCopyParams(NEO::BlitProperties &blitProperties, const CmdListMemoryCopyParams &memoryCopyParams) const {
+}
+
+ze_result_t CommandList::obtainMemoryCopyParamsFromExtensions(const ze_base_desc_t *desc, CmdListMemoryCopyParams &memoryCopyParams) const {
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0

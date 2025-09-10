@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
@@ -154,6 +155,10 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
                                          ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                          ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
+    virtual ze_result_t appendMemoryCopyWithParameters(void *dstptr, const void *srcptr, size_t size,
+                                                       const void *pNext,
+                                                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                                       ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr, size_t size, bool flushHost) = 0;
     virtual ze_result_t appendMemoryCopyRegion(void *dstPtr,
                                                const ze_copy_region_t *dstRegion,
@@ -169,6 +174,9 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendMemoryFill(void *ptr, const void *pattern,
                                          size_t patternSize, size_t size, ze_event_handle_t hSignalEvent,
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
+    virtual ze_result_t appendMemoryFillWithParameters(void *ptr, const void *pattern,
+                                                       size_t patternSize, size_t size, const void *pNext, ze_event_handle_t hSignalEvent,
+                                                       uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t appendMemoryPrefetch(const void *ptr, size_t count) = 0;
     virtual ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) = 0;
     virtual ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
@@ -255,6 +263,8 @@ struct CommandList : _ze_command_list_handle_t {
     void setAdditionalDispatchKernelArgsFromKernel(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const Kernel *kernel) const;
 
     ze_result_t validateLaunchParams(const Kernel &kernel, const CmdListKernelLaunchParams &launchParams) const;
+
+    void setAdditionalBlitPropertiesFromMemoryCopyParams(NEO::BlitProperties &blitProperties, const CmdListMemoryCopyParams &memoryCopyParams) const;
 
     void setOrdinal(uint32_t ord) { ordinal = ord; }
     void setCommandListPerThreadScratchSize(uint32_t slotId, uint32_t size) {
@@ -457,6 +467,7 @@ struct CommandList : _ze_command_list_handle_t {
         return closedCmdList;
     }
     ze_result_t obtainLaunchParamsFromExtensions(const ze_base_desc_t *desc, CmdListKernelLaunchParams &launchParams, ze_kernel_handle_t kernelHandle) const;
+    ze_result_t obtainMemoryCopyParamsFromExtensions(const ze_base_desc_t *desc, CmdListMemoryCopyParams &memoryCopyParams) const;
 
     void setCaptureTarget(Graph *graph) {
         this->captureTarget = graph;

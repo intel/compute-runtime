@@ -1551,7 +1551,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
                                                                        NEO::GraphicsAllocation *srcPtrAlloc,
                                                                        uint64_t srcOffset,
                                                                        uint64_t size,
-                                                                       Event *signalEvent) {
+                                                                       Event *signalEvent,
+                                                                       CmdListMemoryCopyParams &memoryCopyParams) {
     if (dstPtrAlloc) {
         dstOffset += ptrDiff<uintptr_t>(dstPtr, dstPtrAlloc->getGpuAddress());
     }
@@ -1567,6 +1568,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
         0, 0, 0, 0, clearColorAllocation);
     blitProperties.computeStreamPartitionCount = this->partitionCount;
     blitProperties.highPriority = isHighPriorityImmediateCmdList();
+
+    setAdditionalBlitPropertiesFromMemoryCopyParams(blitProperties, memoryCopyParams);
 
     addResidency(dstPtrAlloc, srcPtrAlloc, clearColorAllocation);
 
@@ -1737,9 +1740,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
     uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
     ze_result_t ret = ZE_RESULT_ERROR_UNKNOWN;
     if (isCopyOnly(false)) {
+        CmdListMemoryCopyParams memoryCopyParams{};
         return appendMemoryCopyBlit(dstAddress, dstAllocation, 0u,
                                     srcAddress, srcAllocation, 0u,
-                                    size, nullptr);
+                                    size, nullptr, memoryCopyParams);
     } else {
         CmdListKernelLaunchParams launchParams = {};
         launchParams.isKernelSplitOperation = rightSize > 0;
@@ -1931,7 +1935,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                    dstAllocationStruct.alloc, dstAllocationStruct.offset,
                                    srcAllocationStruct.alignedAllocationPtr,
-                                   srcAllocationStruct.alloc, srcAllocationStruct.offset, size, signalEvent);
+                                   srcAllocationStruct.alloc, srcAllocationStruct.offset, size, signalEvent, memoryCopyParams);
     } else {
         if (NEO::debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
             NEO::PipeControlArgs args;
@@ -2027,6 +2031,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     }
 
     return ret;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyWithParameters(void *dstptr,
+                                                                                 const void *srcptr,
+                                                                                 size_t size,
+                                                                                 const void *pNext,
+                                                                                 ze_event_handle_t hSignalEvent,
+                                                                                 uint32_t numWaitEvents,
+                                                                                 ze_event_handle_t *phWaitEvents) {
+    CmdListMemoryCopyParams memoryCopyParams{};
+    obtainMemoryCopyParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), memoryCopyParams);
+
+    return appendMemoryCopy(dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2660,6 +2678,21 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFillWithParameters(void *ptr,
+                                                                                 const void *pattern,
+                                                                                 size_t patternSize,
+                                                                                 size_t size,
+                                                                                 const void *pNext,
+                                                                                 ze_event_handle_t hSignalEvent,
+                                                                                 uint32_t numWaitEvents,
+                                                                                 ze_event_handle_t *phWaitEvents) {
+    CmdListMemoryCopyParams memoryCopyParams{};
+    obtainMemoryCopyParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), memoryCopyParams);
+
+    return appendMemoryFill(ptr, pattern, patternSize, size, hSignalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, const void *pattern, size_t patternSize, size_t size, Event *signalEvent, uint32_t numWaitEvents,
                                                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
 
@@ -2722,6 +2755,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr, cons
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
+
+        setAdditionalBlitPropertiesFromMemoryCopyParams(blitProperties, memoryCopyParams);
 
         if (useAdditionalBlitProperties) {
             setAdditionalBlitProperties(blitProperties, signalEvent, useAdditionalTimestamp);

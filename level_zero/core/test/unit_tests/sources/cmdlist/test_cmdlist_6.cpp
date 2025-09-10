@@ -484,6 +484,17 @@ HWTEST_F(CommandListTest, givenUnrecognizedDescriptorWhenObtainLaunchParamsFromE
     EXPECT_EQ(std::string("Could not recognize provided extension, stype: 0x12.\n"), output);
 }
 
+HWTEST_F(CommandListTest, WhenObtainMemoryCopyParamsFromExtensionsIsCalledThenSuccessIsReturned) {
+    CmdListMemoryCopyParams memoryCopyParams{};
+    ze_base_desc_t desc{};
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_result_t result = commandList->obtainMemoryCopyParamsFromExtensions(&desc, memoryCopyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 HWTEST_F(CommandListTest, givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInUsmHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);

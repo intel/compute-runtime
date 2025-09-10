@@ -493,6 +493,15 @@ struct Mock<CommandList> : public CommandList {
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams));
 
+    ADDMETHOD_NOBASE(appendMemoryCopyWithParameters, ze_result_t, ZE_RESULT_SUCCESS,
+                     (void *dstptr,
+                      const void *srcptr,
+                      size_t size,
+                      const void *pNext,
+                      ze_event_handle_t hEvent,
+                      uint32_t numWaitEvents,
+                      ze_event_handle_t *phWaitEvents));
+
     ADDMETHOD_NOBASE(appendPageFaultCopy, ze_result_t, ZE_RESULT_SUCCESS,
                      (NEO::GraphicsAllocation * dstptr,
                       NEO::GraphicsAllocation *srcptr,
@@ -524,6 +533,16 @@ struct Mock<CommandList> : public CommandList {
                       ze_event_handle_t hEvent,
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams));
+
+    ADDMETHOD_NOBASE(appendMemoryFillWithParameters, ze_result_t, ZE_RESULT_SUCCESS,
+                     (void *ptr,
+                      const void *pattern,
+                      size_t pattern_size,
+                      size_t size,
+                      const void *pNext,
+                      ze_event_handle_t hEvent,
+                      uint32_t numWaitEvents,
+                      ze_event_handle_t *phWaitEvents));
 
     ADDMETHOD_NOBASE(appendSignalEvent, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_event_handle_t hEvent, bool relaxedOrderingDispatch));
@@ -670,7 +689,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                       uint64_t dstOffset, uintptr_t srcPtr,
                       NEO::GraphicsAllocation *srcPtrAlloc,
                       uint64_t srcOffset,
-                      uint64_t size, Event *signalEvent));
+                      uint64_t size, Event *signalEvent, CmdListMemoryCopyParams &memoryCopyParams));
 
     ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemory,
                          false,

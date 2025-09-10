@@ -156,6 +156,10 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
                                  ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
+    ze_result_t appendMemoryCopyWithParameters(void *dstptr, const void *srcptr, size_t size,
+                                               const void *pNext,
+                                               ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                               ze_event_handle_t *phWaitEvents) override;
     ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
                                     NEO::GraphicsAllocation *srcAllocation,
                                     size_t size,
@@ -177,6 +181,11 @@ struct CommandListCoreFamily : public CommandListImp {
                                  ze_event_handle_t hSignalEvent,
                                  uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
+    ze_result_t appendMemoryFillWithParameters(void *ptr, const void *pattern,
+                                               size_t patternSize, size_t size,
+                                               const void *pNext,
+                                               ze_event_handle_t hSignalEvent,
+                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
 
     ze_result_t appendMIBBStart(uint64_t address, size_t predication, bool secondLevel) override;
     ze_result_t appendMIBBEnd() override;
@@ -254,7 +263,8 @@ struct CommandListCoreFamily : public CommandListImp {
                                                       NEO::GraphicsAllocation *srcPtrAlloc,
                                                       uint64_t srcOffset,
                                                       uint64_t size,
-                                                      Event *signalEvent);
+                                                      Event *signalEvent,
+                                                      CmdListMemoryCopyParams &memoryCopyParams);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
                                                             AlignedAllocationData *dstAllocationData,
