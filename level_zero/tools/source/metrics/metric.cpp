@@ -1113,12 +1113,13 @@ ze_result_t metricCalculationGetExcludedMetrics(
 
 ze_result_t metricCalculateValues(
     const size_t rawDataSize,
-    size_t *pOffset,
     const uint8_t *pRawData,
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
+    bool final,
+    size_t *usedSize,
     uint32_t *pTotalMetricReportsCount,
     zet_intel_metric_result_exp_t *pMetricResults) {
-    return MetricCalcOp::fromHandle(hCalculationOperation)->metricCalculateValues(rawDataSize, pOffset, pRawData, pTotalMetricReportsCount, pMetricResults);
+    return MetricCalcOp::fromHandle(hCalculationOperation)->metricCalculateValues(rawDataSize, pRawData, final, usedSize, pTotalMetricReportsCount, pMetricResults);
 }
 
 ze_result_t metricsEnable(zet_device_handle_t hDevice) {

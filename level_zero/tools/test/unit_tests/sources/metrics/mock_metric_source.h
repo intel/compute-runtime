@@ -177,7 +177,8 @@ class MockMetricCalcOp : public MetricCalcOpImp {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     };
 
-    ze_result_t metricCalculateValues(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,
+    ze_result_t metricCalculateValues(const size_t rawDataSize, const uint8_t *pRawData,
+                                      bool final, size_t *usedSize,
                                       uint32_t *pTotalMetricReportCount,
                                       zet_intel_metric_result_exp_t *pMetricResults) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

@@ -938,13 +938,14 @@ HWTEST2_F(MetricIpSamplingCalcOpMultiDevTest, GivenIpSamplingCalcOpCallingMetric
     addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
 
     uint32_t totalMetricReportCount = 0;
-    size_t offset = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateValuesExp(rawDataWithHeader.size(), &offset,
-                                                                                    reinterpret_cast<uint8_t *>(rawDataWithHeader.data()), hCalculationOperation,
+    bool final = true;
+    size_t usedSize = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateValuesExp(rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                                    hCalculationOperation, final, &usedSize,
                                                                                     &totalMetricReportCount, nullptr));
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                                 reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                                 hCalculationOperation, final, &usedSize,
                                                                                  &totalMetricReportCount, nullptr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
@@ -973,18 +974,19 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     }
 
     uint32_t totalMetricReportCount = 0;
-    size_t offset = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+    bool final = true;
+    size_t usedSize = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                  hCalculationOperation, final, &usedSize,
                                                                   &totalMetricReportCount, nullptr));
     EXPECT_EQ(totalMetricReportCount, 3U);
     std::vector<zet_intel_metric_result_exp_t> metricResults(totalMetricReportCount * metricsInReportCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                  hCalculationOperation, final, &usedSize,
                                                                   &totalMetricReportCount, metricResults.data()));
     EXPECT_EQ(totalMetricReportCount, 3U);
-    EXPECT_EQ(offset, rawDataVectorSize);
+    EXPECT_EQ(usedSize, rawDataVectorSize);
 
     for (uint32_t i = 0; i < totalMetricReportCount; i++) {
         for (uint32_t j = 0; j < metricsInReportCount; j++) {
@@ -1010,15 +1012,18 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     addHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataVector.data()), rawDataVectorSize, 0);
 
     uint32_t totalMetricReportCount = 0;
-    size_t offset = 0;
+    bool final = true;
+    size_t usedSize = 0;
     // sub-device cal op does not accept root device data
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawDataWithHeader.size(), &offset,
-                                                                                 reinterpret_cast<uint8_t *>(rawDataWithHeader.data()), hCalculationOperation,
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
+                                                                                 hCalculationOperation,
+                                                                                 final, &usedSize,
                                                                                  &totalMetricReportCount, nullptr));
 
     // invalid input raw data size
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zetIntelMetricCalculateValuesExp(rawDataVectorSize / 30, &offset,
-                                                                             reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zetIntelMetricCalculateValuesExp(rawDataVectorSize / 30, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                             hCalculationOperation,
+                                                                             final, &usedSize,
                                                                              &totalMetricReportCount, nullptr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
@@ -1031,14 +1036,16 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
                                                                              device->toHandle(), &calculationDesc,
                                                                              &hCalculationOperation));
     uint32_t totalMetricReportCount = 2;
-    size_t offset = 0;
+    bool final = true;
+    size_t usedSize = 0;
     std::vector<zet_intel_metric_result_exp_t> metricResults(totalMetricReportCount * 10);
 
-    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zetIntelMetricCalculateValuesExp(rawDataVectorOverflowSize, &offset,
-                                                                               reinterpret_cast<uint8_t *>(rawDataVectorOverflow.data()), hCalculationOperation,
+    EXPECT_EQ(ZE_RESULT_WARNING_DROPPED_DATA, zetIntelMetricCalculateValuesExp(rawDataVectorOverflowSize, reinterpret_cast<uint8_t *>(rawDataVectorOverflow.data()),
+                                                                               hCalculationOperation,
+                                                                               final, &usedSize,
                                                                                &totalMetricReportCount, metricResults.data()));
     EXPECT_EQ(totalMetricReportCount, 2U);
-    EXPECT_EQ(offset, rawDataVectorOverflowSize);
+    EXPECT_EQ(usedSize, rawDataVectorOverflowSize);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));
 }
@@ -1079,17 +1086,21 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
     EXPECT_EQ(metricsInReportCount, 5u);
 
     uint32_t totalMetricReportCount = 0;
-    size_t offset = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+
+    bool final = true;
+    size_t usedSize = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                  hCalculationOperation,
+                                                                  final, &usedSize,
                                                                   &totalMetricReportCount, nullptr));
 
     std::vector<zet_intel_metric_result_exp_t> metricResults(totalMetricReportCount * metricsInReportCount);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                  hCalculationOperation,
+                                                                  final, &usedSize,
                                                                   &totalMetricReportCount, metricResults.data()));
     EXPECT_EQ(totalMetricReportCount, 3U);
-    EXPECT_EQ(offset, rawDataVectorSize);
+    EXPECT_EQ(usedSize, rawDataVectorSize);
 
     // Expect only odd index metrics results of the first report
     for (uint32_t j = 0; j < metricsInReportCount; j++) {
@@ -1106,17 +1117,20 @@ HWTEST2_F(MetricIpSamplingCalcOpTest, GivenIpSamplingCalcOpCallingMetricCalculat
                                                                              device->toHandle(), &calculationDesc,
                                                                              &hCalculationOperation));
     uint32_t totalMetricReportCount = 0;
-    size_t offset = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                  reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+    bool final = true;
+    size_t usedSize = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                  hCalculationOperation,
+                                                                  final, &usedSize,
                                                                   &totalMetricReportCount, nullptr));
     EXPECT_EQ(totalMetricReportCount, 3U);
 
     // Request fewer reports
     totalMetricReportCount = 1;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawDataVectorSize, &offset,
-                                                                                 reinterpret_cast<uint8_t *>(rawDataVector.data()), hCalculationOperation,
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetIntelMetricCalculateValuesExp(rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                                 hCalculationOperation,
+                                                                                 final, &usedSize,
                                                                                  &totalMetricReportCount, nullptr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalculationOperation));

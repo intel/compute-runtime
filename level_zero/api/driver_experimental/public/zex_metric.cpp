@@ -101,10 +101,13 @@ ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetExcludedMetricsExp(
     return L0::metricCalculationGetExcludedMetrics(hCalculationOperation, pCount, phMetrics);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,
+ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize, const uint8_t *pRawData,
                                                         zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                                        uint32_t *pTotalMetricReportsCount, zet_intel_metric_result_exp_t *pMetricResults) {
-    return L0::metricCalculateValues(rawDataSize, pOffset, pRawData, hCalculationOperation, pTotalMetricReportsCount, pMetricResults);
+                                                        bool final, size_t *usedSize, uint32_t *pTotalMetricReportsCount,
+                                                        zet_intel_metric_result_exp_t *pMetricResults) {
+    return L0::metricCalculateValues(rawDataSize, pRawData, hCalculationOperation,
+                                     final, usedSize,
+                                     pTotalMetricReportsCount, pMetricResults);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricDecodeCalculateMultipleValuesExp(zet_intel_metric_decoder_exp_handle_t hMetricDecoder,
@@ -238,10 +241,14 @@ ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetExcludedMetricsExp(
     return L0::zetIntelMetricCalculationOperationGetExcludedMetricsExp(hCalculationOperation, pCount, phMetrics);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData, zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                                        uint32_t *pTotalMetricReportsCount, zet_intel_metric_result_exp_t *pMetricResults) {
+ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize, const uint8_t *pRawData,
+                                                        zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
+                                                        bool final, size_t *usedSize,
+                                                        uint32_t *pTotalMetricReportsCount,
+                                                        zet_intel_metric_result_exp_t *pMetricResults) {
 
-    return L0::zetIntelMetricCalculateValuesExp(rawDataSize, pOffset, pRawData, hCalculationOperation,
+    return L0::zetIntelMetricCalculateValuesExp(rawDataSize, pRawData, hCalculationOperation,
+                                                final, usedSize,
                                                 pTotalMetricReportsCount, pMetricResults);
 }
 

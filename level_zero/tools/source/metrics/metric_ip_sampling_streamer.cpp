@@ -178,16 +178,17 @@ void IpSamplingMetricCalcOpImp::fillStallDataMap(const size_t rawDataSize, const
     return;
 }
 
-ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValuesSingle(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,
+ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValuesSingle(const size_t rawDataSize, const uint8_t *pRawData,
                                                                    uint32_t *pTotalMetricReportCount,
                                                                    L0::L0GfxCoreHelper &l0GfxCoreHelper,
                                                                    IpSamplingMetricGroupBase *metricGroupBase,
                                                                    bool getSize,
+                                                                   size_t *usedSize,
                                                                    bool &dataOverflow,
                                                                    std::map<uint64_t, void *> &stallReportDataMap) {
     ze_result_t status = ZE_RESULT_ERROR_UNKNOWN;
     uint32_t resultCount = 0;
-    *pOffset = 0;
+    *usedSize = 0;
 
     status = static_cast<IpSamplingMetricGroupImp *>(metricGroupBase)->getCalculatedMetricCount(pRawData, rawDataSize, resultCount);
     if (status != ZE_RESULT_SUCCESS) {
@@ -207,26 +208,28 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValuesSingle(const size_t 
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    fillStallDataMap(rawDataSize, pRawData, pOffset, l0GfxCoreHelper, stallReportDataMap,
+    fillStallDataMap(rawDataSize, pRawData, usedSize, l0GfxCoreHelper, stallReportDataMap,
                      &dataOverflow);
 
     *pTotalMetricReportCount = static_cast<uint32_t>(stallReportDataMap.size());
     return status;
 }
 
-ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValuesMulti(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,
+ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValuesMulti(const size_t rawDataSize, const uint8_t *pRawData,
                                                                   uint32_t *pTotalMetricReportCount,
                                                                   L0::L0GfxCoreHelper &l0GfxCoreHelper,
                                                                   IpSamplingMetricGroupBase *metricGroupBase,
                                                                   bool getSize,
                                                                   uint32_t numSubDevices,
+                                                                  size_t *usedSize,
                                                                   bool &dataOverflow,
                                                                   std::map<uint64_t, void *> &stallReportDataMap) {
     ze_result_t status = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     return status;
 }
 
-ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDataSize, size_t *pOffset, const uint8_t *pRawData,
+ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDataSize, const uint8_t *pRawData,
+                                                             bool final, size_t *usedSize,
                                                              uint32_t *pTotalMetricReportCount,
                                                              zet_intel_metric_result_exp_t *pMetricResults) {
     ze_result_t status = ZE_RESULT_ERROR_UNKNOWN;
@@ -240,8 +243,6 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
     DeviceImp *deviceImp = static_cast<DeviceImp *>(&metricGroupBase->getMetricSource().getMetricDeviceContext().getDevice());
     L0::L0GfxCoreHelper &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    pRawData += *pOffset; // Input Offset
-
     bool getSize = (*pTotalMetricReportCount == 0);
     std::map<uint64_t, void *> stallReportDataMap;
 
@@ -251,17 +252,17 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        status = metricCalculateValuesSingle(rawDataSize, pOffset, pRawData, pTotalMetricReportCount,
-                                             l0GfxCoreHelper, metricGroupBase, getSize, dataOverflow, stallReportDataMap);
+        status = metricCalculateValuesSingle(rawDataSize, pRawData, pTotalMetricReportCount,
+                                             l0GfxCoreHelper, metricGroupBase, getSize, usedSize, dataOverflow, stallReportDataMap);
     } else {
         if (!isMultiDeviceData) {
             METRICS_LOG_ERR("%s", "Cannot use sub-device raw data in a root device calculation operation handle");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        status = metricCalculateValuesMulti(rawDataSize, pOffset, pRawData, pTotalMetricReportCount,
+        status = metricCalculateValuesMulti(rawDataSize, pRawData, pTotalMetricReportCount,
                                             l0GfxCoreHelper, metricGroupBase, getSize, deviceImp->numSubDevices,
-                                            dataOverflow, stallReportDataMap);
+                                            usedSize, dataOverflow, stallReportDataMap);
     }
 
     if ((status != ZE_RESULT_SUCCESS) || (getSize)) {

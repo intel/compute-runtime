@@ -431,11 +431,14 @@ zetIntelMetricDecodeToBinaryBufferExp(
 ze_result_t ZE_APICALL
 zetIntelMetricCalculateValuesExp(
     const size_t rawDataSize,                                                  ///< [in] size in bytes of raw data buffer.
-    size_t *pOffset,                                                           ///< [in,out] On input, the offset from the beginning of the pRawData.
-                                                                               ///< On output, the number raw bytes processed
     const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
                                                                                ///< data in raw format
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation, ///< [in] Calculation operation handle
+    bool final,                                                                ///< [in] flag to indicate the if the current is the final call for the given data.
+                                                                               ///< If false, the driver may cache data as needed for subsequent calls.
+                                                                               ///< If true, the driver will finalize the calculations using available data and clear caches.
+    size_t *usedDataSize,                                                      ///< [out] The number raw bytes processed. User is expected to advance pRawData
+                                                                               ///< pointer by this amount if calling this function subsequently.
     uint32_t *pTotalMetricReportCount,                                         ///< [in,out] [optional] pointer to the total number of metric reports calculated,
                                                                                ///< If count is zero, then the driver shall update the value with the total number of
                                                                                ///< metric reports to be calculated. If count is greater than zero but less than the
