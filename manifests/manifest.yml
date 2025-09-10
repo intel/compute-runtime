@@ -41,7 +41,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 3606-5273
+    revision: 3612-5279
   level_zero:
     asset_name: level_zero
     dest_dir: level_zero
@@ -85,7 +85,7 @@ components:
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-3606
+converter: M-3612
 include:
 - infra.yml
 version: '1'
